@@ -5,6 +5,7 @@
 module BOUNDARY_BCS
     use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, efile
     use TLAB_PROCS
+    use TLAB_ARRAYS, only: wrk3d
     implicit none
     save
     private
@@ -104,7 +105,7 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine BOUNDARY_BCS_INITIALIZE(wrk3d)
+    subroutine BOUNDARY_BCS_INITIALIZE()
         use TLAB_TYPES, only: profiles_dt
         use TLAB_CONSTANTS, only: tag_flow, tag_scal, lfile, efile
 #ifdef TRACE_ON
@@ -125,8 +126,6 @@ contains
         use TLAB_MPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
         use TLAB_MPI_PROCS
 #endif
-
-        real(wp), dimension(*) :: wrk3d(:)
 
 ! -------------------------------------------------------------------
         integer j, is

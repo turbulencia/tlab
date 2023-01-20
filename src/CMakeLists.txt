@@ -65,10 +65,10 @@ add_subdirectory(thermodynamics)
 add_subdirectory(io)
 add_subdirectory(fdm)
 add_subdirectory(filters)
+add_subdirectory(ibm)
 add_subdirectory(operators)
 add_subdirectory(mappings)
 add_subdirectory(particles)
-add_subdirectory(ibm)
 
 # produce executables
 add_subdirectory(tools)

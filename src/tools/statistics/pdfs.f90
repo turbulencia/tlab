@@ -14,10 +14,13 @@ program PDFS
 #ifdef USE_MPI
     use TLAB_MPI_PROCS
 #endif
+    use FI_SOURCES, only: FI_BUOYANCY
     use THERMO_VARS, only: imixture
     use IO_FIELDS
+    use FI_VECTORCALCULUS
     use OPR_FILTERS
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 
@@ -245,12 +248,10 @@ program PDFS
     end do
 
     if (ifourier == 1) then         ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
-    if (iread_flow == 1) then       ! We need array space
-        call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
-    end if
+    call OPR_CHECK()
 
     y_aux(:) = 0                        ! Reduced vertical grid
     do ij = 1, jmax_aux*opt_block
@@ -279,7 +280,7 @@ program PDFS
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
         end if
 
-        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
         ! -------------------------------------------------------------------
         ! Calculate intermittency
@@ -297,7 +298,7 @@ program PDFS
 
             call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
-                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate, wrk2d, wrk3d)
+                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
 
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE_INT1(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, gate, wrk1d)
@@ -321,7 +322,7 @@ program PDFS
             ifield = ifield + 1; vars(ifield)%field => q(:, 2); vars(ifield)%tag = 'v'
             ifield = ifield + 1; vars(ifield)%field => q(:, 3); vars(ifield)%tag = 'w'
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'p'
             else
                 ifield = ifield + 1; vars(ifield)%field => q(:, 6); vars(ifield)%tag = 'p'
@@ -387,7 +388,7 @@ program PDFS
                 call FI_VORTICITY_BAROCLINIC(imax, jmax, kmax, q(1, 5), q(1, 6), txc(1, 4), txc(1, 3), txc(1, 7), wrk2d, wrk3d)
             end if
             ! result vector in txc1, txc2, txc3
-            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 7), wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 7))
             ! scalar product, store in txc8
       txc(1:isize_field,8) = txc(1:isize_field,1)*txc(1:isize_field,4) + txc(1:isize_field,2)*txc(1:isize_field,5) + txc(1:isize_field,3)*txc(1:isize_field,6)
 
@@ -400,7 +401,7 @@ program PDFS
 
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
 
-            call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+            call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5))
 
             txc(1:isize_field, 5) = txc(1:isize_field, 4)*txc(1:isize_field, 3) ! -w^2 div(u)
             txc(1:isize_field, 4) = txc(1:isize_field, 1)/txc(1:isize_field, 3) ! production rate
@@ -421,7 +422,7 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing strain equation...')
 
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
             else
@@ -454,9 +455,9 @@ program PDFS
         case (5)
             call TLAB_WRITE_ASCII(lfile, 'Computing velocity gradient invariants...')
 
-      CALL FI_INVARIANT_R(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-          call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
-            call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+  call FI_INVARIANT_R(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+            call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 3); vars(ifield)%tag = 'InvP'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'InvQ'; ibc(ifield) = 2
@@ -567,7 +568,7 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing eigenvalues of Sij...')
 
      CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-            call FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
+            call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 7); vars(ifield)%tag = 'Lambda1'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => txc(:, 8); vars(ifield)%tag = 'Lambda2'; ibc(ifield) = 2
@@ -580,9 +581,9 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing eigenframe of Sij...')
 
      CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
-            call FI_TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
-            call FI_TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc1-txc6
-            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), wrk2d, wrk3d)
+            call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
+            call TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc1-txc6
+            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10))
 
             do ij = 1, isize_field ! local direction cosines of vorticity vector
                 dummy = sqrt(txc(ij, 7)*txc(ij, 7) + txc(ij, 8)*txc(ij, 8) + txc(ij, 9)*txc(ij, 9))
@@ -637,7 +638,7 @@ program PDFS
         case (14)
             call TLAB_WRITE_ASCII(lfile, 'Computing potntial vorticity...')
 
-            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 6) = txc(1:isize_field, 1)**2 + txc(1:isize_field, 2)**2 + txc(1:isize_field, 3)**2 ! Enstrophy
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, 1), txc(1, 4), wrk3d, wrk2d, wrk3d)
             txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 4)
@@ -745,7 +746,7 @@ program PDFS
 
             ! -------------------------------------------------------------------
             bbackground = C_0_R
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4), wrk3d, wrk2d, wrk3d)
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)

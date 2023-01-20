@@ -12,7 +12,7 @@ SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : area,visc
   USE AVGS, ONLY: AVG_IK_V
-
+    use OPR_PARTIAL
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: flag ! 0 for tau_ji  * u_i,j

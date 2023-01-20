@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #include "dns_const_mpi.h"
@@ -9,9 +8,8 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-
     use TLAB_TYPES, only: filter_dt, grid_dt, discrete_dt
-    use TLAB_CONSTANTS, only: efile, lfile
+    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
@@ -20,6 +18,7 @@ module BOUNDARY_INFLOW
     use TLAB_VARS, only: g, qbg, epbackground, pbackground
     use TLAB_VARS, only: rtime, itime
     use TLAB_VARS, only: visc, damkohler
+    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use IO_FIELDS
@@ -31,19 +30,20 @@ module BOUNDARY_INFLOW
     use TLAB_MPI_VARS, only: ims_offset_k
     use TLAB_MPI_PROCS
 #endif
+    use OPR_PARTIAL
 
     implicit none
     save
     private
 
     type(grid_dt), public :: g_inf(3)
-    TREAL, allocatable :: x_inf(:, :), y_inf(:, :), z_inf(:, :)
-    TREAL, allocatable :: q_inf(:, :, :, :), s_inf(:, :, :, :)
+    real(wp), allocatable :: x_inf(:, :), y_inf(:, :), z_inf(:, :)
+    real(wp), allocatable :: q_inf(:, :, :, :), s_inf(:, :, :, :)
 
-    TINTEGER, public :: inflow_mode, inflow_ifield
-    TREAL, public :: inflow_adapt
+    integer(wi), public :: inflow_mode, inflow_ifield
+    real(wp), public :: inflow_adapt
     type(filter_dt), public :: FilterInflow(3)
-    ! TINTEGER :: FilterInflowStep
+    ! integer(wi) :: FilterInflowStep
     type(discrete_dt), public :: fp ! Discrete forcing
 
     target :: x_inf, y_inf, z_inf
@@ -57,25 +57,20 @@ contains
     !########################################################################
     !########################################################################
     !# Initializing inflow fields for broadband forcing case.
-    subroutine BOUNDARY_INFLOW_INITIALIZE(etime, txc, wrk1d, wrk2d, wrk3d)
-        implicit none
-
-#include "integers.h"
-
-        TREAL etime
-        TREAL, intent(INOUT) :: txc(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size)
-        TREAL, intent(INOUT) :: wrk1d(*), wrk2d(*), wrk3d(*)
+    subroutine BOUNDARY_INFLOW_INITIALIZE(etime, txc)
+        real(wp) etime
+        real(wp), intent(INOUT) :: txc(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size)
 
         ! -------------------------------------------------------------------
-        TINTEGER is, itimetmp, bcs(2, 1)
-        TINTEGER joffset, jglobal, j, iwrk_size
-        TREAL tolerance, dy
-        TREAL visctmp, rtimetmp
+        integer(wi) is, itimetmp, bcs(2, 2)
+        integer(wi) joffset, jglobal, j, iwrk_size
+        real(wp) tolerance, dy
+        real(wp) visctmp, rtimetmp
         character*32 fname, sname, str
         character*128 line
 
 #ifdef USE_MPI
-        TINTEGER isize_loc, id
+        integer(wi) isize_loc, id
 #endif
 
         ! ###################################################################
@@ -91,19 +86,19 @@ contains
         end if
 #endif
 
-        if (.not. ALLOCATED(x_inf)) allocate (x_inf(g_inf(1)%size, g_inf(1)%inb_grid))
-        if (.not. ALLOCATED(y_inf)) allocate (y_inf(g_inf(2)%size, g_inf(2)%inb_grid))
-        if (.not. ALLOCATED(z_inf)) allocate (z_inf(g_inf(3)%size, g_inf(3)%inb_grid))
-        if (.not. ALLOCATED(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))
-        if (.not. ALLOCATED(s_inf)) allocate (s_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_scal_array))
+        if (.not. allocated(x_inf)) allocate (x_inf(g_inf(1)%size, g_inf(1)%inb_grid))
+        if (.not. allocated(y_inf)) allocate (y_inf(g_inf(2)%size, g_inf(2)%inb_grid))
+        if (.not. allocated(z_inf)) allocate (z_inf(g_inf(3)%size, g_inf(3)%inb_grid))
+        if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))
+        if (.not. allocated(s_inf)) allocate (s_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_scal_array))
 
         if (g_inf(1)%size > 1) then ! Inflow fields for spatial simulations
-            if (.not. ASSOCIATED(g_inf(1)%nodes)) &
+            if (.not. associated(g_inf(1)%nodes)) &
                 call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
                                   g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, x_inf, y_inf, z_inf)
             call FDM_INITIALIZE(x_inf, g_inf(1), wrk1d)
-            if (.not. ASSOCIATED(g_inf(2)%nodes)) g_inf(2)%nodes => y_inf(:, 1)
-            if (.not. ASSOCIATED(g_inf(3)%nodes)) g_inf(3)%nodes => z_inf(:, 1)
+            if (.not. associated(g_inf(2)%nodes)) g_inf(2)%nodes => y_inf(:, 1)
+            if (.not. associated(g_inf(3)%nodes)) g_inf(3)%nodes => z_inf(:, 1)
         end if
 
         ! #######################################################################
@@ -114,7 +109,7 @@ contains
             call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for inflow filter.')
             id = TLAB_MPI_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
-            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, i1, i1, i1, i1, &
+            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             FilterInflow(3)%mpitype = id
         end if
@@ -130,11 +125,11 @@ contains
         if (inflow_mode == 2 .or. inflow_mode == 3 .or. inflow_mode == 4) then
 
             ! Checking the matching; we could move this outside...
-            tolerance = C_1EM10_R
+            tolerance = 1.0e-10_wp
             joffset = (jmax - g_inf(2)%size)/2
             do j = 1, g_inf(2)%size
                 jglobal = joffset + j
-                dy = ABS(g(2)%nodes(jglobal) - g_inf(2)%nodes(j))
+                dy = abs(g(2)%nodes(jglobal) - g_inf(2)%nodes(j))
                 if (dy > tolerance) then
                     call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INFLOW. Inflow domain does not match.')
                     call TLAB_STOP(DNS_ERROR_INFLOWDOMAIN)
@@ -144,20 +139,20 @@ contains
             ! Reading fields
             fname = 'flow.inf'
             sname = 'scal.inf'
-            inflow_ifield = INT(qbg(1)%mean*etime/g_inf(1)%scale) + 1
+            inflow_ifield = int(qbg(1)%mean*etime/g_inf(1)%scale) + 1
             if (inflow_mode == 3) then
                 write (str, *) inflow_ifield
-                fname = TRIM(ADJUSTL(fname))//TRIM(ADJUSTL(str))
-                sname = TRIM(ADJUSTL(sname))//TRIM(ADJUSTL(str))
-                line = 'Reading InflowFile '//TRIM(ADJUSTL(str))
+                fname = trim(adjustl(fname))//trim(adjustl(str))
+                sname = trim(adjustl(sname))//trim(adjustl(str))
+                line = 'Reading InflowFile '//trim(adjustl(str))
                 call TLAB_WRITE_ASCII(lfile, line)
             end if
 
             rtimetmp = rtime
             itimetmp = itime
             visctmp = visc
-            call IO_READ_FIELDS(fname, IO_FLOW, g_inf(1)%size, g_inf(2)%size, kmax, inb_flow, i0, q_inf, wrk3d)
-            call IO_READ_FIELDS(sname, IO_SCAL, g_inf(1)%size, g_inf(2)%size, kmax, inb_scal, i0, s_inf, wrk3d)
+            call IO_READ_FIELDS(fname, IO_FLOW, g_inf(1)%size, g_inf(2)%size, kmax, inb_flow, 0, q_inf, wrk3d)
+            call IO_READ_FIELDS(sname, IO_SCAL, g_inf(1)%size, g_inf(2)%size, kmax, inb_scal, 0, s_inf, wrk3d)
             rtime = rtimetmp
             itime = itimetmp
             visc = visctmp
@@ -201,17 +196,15 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, txc, wrk1d, wrk2d, wrk3d)
-        implicit none
-
-        TREAL etime
-        TREAL, intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
-        TREAL, intent(INOUT) :: wrk1d(*), wrk2d(*), wrk3d(*), txc(*)
+    subroutine BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, txc)
+        real(wp) etime
+        real(wp), intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
+        real(wp), intent(INOUT) :: txc(*)
 
         ! -------------------------------------------------------------------
-        TREAL xaux, dx_loc, vmult
-        TINTEGER joffset, jglobal, ileft, iright, j, k, is, ip
-        TREAL BSPLINES3P, BSPLINES3
+        real(wp) xaux, dx_loc, vmult
+        integer(wi) joffset, jglobal, ileft, iright, j, k, is, ip
+        real(wp) BSPLINES3P, BSPLINES3
 
         ! ###################################################################
 #ifdef TRACE_ON
@@ -219,15 +212,15 @@ contains
 #endif
 
         ! Transient factor
-        if (inflow_adapt > C_0_R .and. etime <= inflow_adapt) then
+        if (inflow_adapt > 0.0_wp .and. etime <= inflow_adapt) then
             vmult = etime/inflow_adapt
         else
-            vmult = C_1_R
+            vmult = 1.0_wp
         end if
 
         ! check if we need to read again inflow data
-        if (inflow_mode == 3 .and. INT(qbg(1)%mean*etime/g_inf(1)%scale) + 1 /= inflow_ifield) then
-            call BOUNDARY_INFLOW_INITIALIZE(etime, txc, wrk1d, wrk2d, wrk3d)
+        if (inflow_mode == 3 .and. int(qbg(1)%mean*etime/g_inf(1)%scale) + 1 /= inflow_ifield) then
+            call BOUNDARY_INFLOW_INITIALIZE(etime, txc)
         end if
 
         ! ###################################################################
@@ -237,13 +230,13 @@ contains
 
         xaux = qbg(1)%mean*etime
         ! Remove integral length scales of box
-        xaux = xaux - INT(xaux/g_inf(1)%scale)*g_inf(1)%scale
+        xaux = xaux - int(xaux/g_inf(1)%scale)*g_inf(1)%scale
         ! Set distance from box initial length
         xaux = g_inf(1)%scale - xaux
 
         dx_loc = g_inf(1)%nodes(2) - g_inf(1)%nodes(1)
         ! Get left index
-        ileft = INT(xaux/dx_loc) + 1
+        ileft = int(xaux/dx_loc) + 1
         ! Check bounds
         if (ileft > g_inf(1)%size) then
             ileft = 1
@@ -308,10 +301,10 @@ contains
         ! Filling the rest
         ! ###################################################################
         do j = 1, joffset
-            inf_rhs(j, :, :) = inf_rhs(j, :, :) + C_0_R
+            inf_rhs(j, :, :) = inf_rhs(j, :, :) + 0.0_wp
         end do
         do j = jmax - joffset + 1, jmax
-            inf_rhs(j, :, :) = inf_rhs(j, :, :) + C_0_R
+            inf_rhs(j, :, :) = inf_rhs(j, :, :) + 0.0_wp
         end do
 
 #ifdef TRACE_ON
@@ -322,24 +315,22 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk1d, wrk2d)
+    subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
         use TLAB_TYPES, only: profiles_dt
+        use TLAB_CONSTANTS, only: pi_wp
         use PROFILES
-        implicit none
 
-        TREAL etime
-        TREAL, intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
-        TREAL, intent(INOUT) :: wrk1d(jmax, 2)
-        TREAL, intent(INOUT) :: wrk2d(kmax, 3)
+        real(wp) etime
+        real(wp), intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
 
         ! -------------------------------------------------------------------
-        TINTEGER j, k, im, kdsp
-        TREAL wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
+        integer(wi) j, k, im, kdsp
+        real(wp) wx, wz, wx_1, wz_1, xaux, vmult, factorx, factorz, dummy
 
-        TREAL yr
+        real(wp) yr
         type(profiles_dt) prof_loc
 
-        TREAL, dimension(:), pointer :: y, z
+        real(wp), dimension(:), pointer :: y, z
 
         ! ###################################################################
 #ifdef TRACE_ON
@@ -360,11 +351,11 @@ contains
 
         prof_loc%type = PROFILE_GAUSSIAN
         prof_loc%thick = fp%parameters(1)
-        prof_loc%delta = C_1_R
-        prof_loc%mean = C_0_R
-        prof_loc%lslope = C_0_R
-        prof_loc%uslope = C_0_R
-        prof_loc%parameters = C_0_R
+        prof_loc%delta = 1.0_wp
+        prof_loc%mean = 0.0_wp
+        prof_loc%lslope = 0.0_wp
+        prof_loc%uslope = 0.0_wp
+        prof_loc%parameters = 0.0_wp
 
         ! ###################################################################
         ! Shape function
@@ -379,16 +370,16 @@ contains
             end do
 
         case (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
-            prof_loc%ymean = qbg(1)%ymean - C_05_R*qbg(1)%diam
+            prof_loc%ymean = qbg(1)%ymean - 0.5_wp*qbg(1)%diam
             do j = 1, jmax
-                yr = y(j) - prof_loc%ymean 
+                yr = y(j) - prof_loc%ymean
                 wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
                 wrk1d(j, 2) = -yr/(prof_loc%thick**2)*wrk1d(j, 1)
             end do
 
-            prof_loc%ymean = qbg(1)%ymean + C_05_R*qbg(1)%diam
-            if (fp%type == PROFILE_GAUSSIAN_ANTISYM) then; factorx = -C_1_R ! varicose
-            elseif (fp%type == PROFILE_GAUSSIAN_SYM) then; factorx = C_1_R ! Sinuous
+            prof_loc%ymean = qbg(1)%ymean + 0.5_wp*qbg(1)%diam
+            if (fp%type == PROFILE_GAUSSIAN_ANTISYM) then; factorx = -1.0_wp ! varicose
+            elseif (fp%type == PROFILE_GAUSSIAN_SYM) then; factorx = 1.0_wp ! Sinuous
             end if
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
@@ -402,25 +393,25 @@ contains
         ! ###################################################################
         ! Fourier series
         ! ###################################################################
-        wx_1 = C_2_R*C_PI_R/fp%parameters(2) ! Fundamental wavelengths
-        wz_1 = C_2_R*C_PI_R/g(3)%scale
+        wx_1 = 2.0_wp*pi_wp/fp%parameters(2) ! Fundamental wavelengths
+        wz_1 = 2.0_wp*pi_wp/g(3)%scale
 
-        wrk2d = C_0_R
+        wrk2d = 0.0_wp
         do im = 1, fp%size
-            wx = M_REAL(fp%modex(im))*wx_1
-            wz = M_REAL(fp%modez(im))*wz_1
+            wx = real(fp%modex(im), wp)*wx_1
+            wz = real(fp%modez(im), wp)*wz_1
 
             ! Factor to impose solenoidal constraint
             if (fp%modex(im) == 0 .and. fp%modez(im) == 0) then; exit
-            elseif (fp%modez(im) == 0) then; factorx = C_1_R/wx; factorz = C_0_R
-            elseif (fp%modex(im) == 0) then; factorx = C_0_R; factorz = C_1_R/wz
-            else; factorx = C_05_R/wx; factorz = C_05_R/wz
+            elseif (fp%modez(im) == 0) then; factorx = 1.0_wp/wx; factorz = 0.0_wp
+            elseif (fp%modex(im) == 0) then; factorx = 0.0_wp; factorz = 1.0_wp/wz
+            else; factorx = 0.5_wp/wx; factorz = 0.5_wp/wz
             end if
 
             do k = 1, kmax
-                wrk2d(k, 2) = wrk2d(k, 2) + fp%amplitude(im)*COS(wx*xaux + fp%phasex(im))*COS(wz*z(kdsp + k) + fp%phasez(im))
-               wrk2d(k, 1) = wrk2d(k, 1) + fp%amplitude(im)*SIN(wx*xaux + fp%phasex(im))*COS(wz*z(kdsp + k) + fp%phasez(im))*factorx
-               wrk2d(k, 3) = wrk2d(k, 3) + fp%amplitude(im)*COS(wx*xaux + fp%phasex(im))*SIN(wz*z(kdsp + k) + fp%phasez(im))*factorz
+                wrk2d(k, 2) = wrk2d(k, 2) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))
+               wrk2d(k, 1) = wrk2d(k, 1) + fp%amplitude(im)*sin(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))*factorx
+               wrk2d(k, 3) = wrk2d(k, 3) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*sin(wz*z(kdsp + k) + fp%phasez(im))*factorz
             end do
 
         end do
@@ -429,10 +420,10 @@ contains
         ! Forcing
         ! ###################################################################
         ! Transient factor
-        if (inflow_adapt > C_0_R .and. etime <= inflow_adapt) then
+        if (inflow_adapt > 0.0_wp .and. etime <= inflow_adapt) then
             vmult = etime/inflow_adapt
         else
-            vmult = C_1_R
+            vmult = 1.0_wp
         end if
 
         do k = 1, kmax
@@ -456,22 +447,19 @@ contains
     ! This should be integrated into the inflow buffer, as the filter contribution
     ! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
 
-    subroutine BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q, s, txc, wrk1d, wrk2d, wrk3d)
-        implicit none
-
-        TREAL, dimension(imax, jmax, kmax, *), intent(INOUT) :: q, s
-        TREAL, dimension(jmax, kmax, *), intent(IN) :: bcs_vi, bcs_vi_scal
-        TREAL, dimension(imax*jmax*kmax, 2), intent(INOUT) :: txc
-        TREAL, dimension(*), intent(INOUT) :: wrk1d, wrk2d, wrk3d
+    subroutine BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q, s, txc)
+        real(wp), dimension(imax, jmax, kmax, *), intent(INOUT) :: q, s
+        real(wp), dimension(jmax, kmax, *), intent(IN) :: bcs_vi, bcs_vi_scal
+        real(wp), dimension(imax*jmax*kmax, 2), intent(INOUT) :: txc
 
         target q
 
         ! -----------------------------------------------------------------------
-        TINTEGER i, j, k, ip, iq, iq_loc(inb_flow), is
-        TINTEGER j1, imx, jmx, ifltmx, jfltmx
+        integer(wi) i, j, k, ip, iq, iq_loc(inb_flow), is
+        integer(wi) j1, imx, jmx, ifltmx, jfltmx
 
         ! Pointers to existing allocated space
-        TREAL, dimension(:, :, :), pointer :: e, rho, p, T, vis
+        real(wp), dimension(:, :, :), pointer :: e, rho, p, T, vis
 
         ! ###################################################################
         ! #######################################################################
@@ -494,8 +482,8 @@ contains
         imx = FilterInflow(1)%size
         j1 = (jmax - FilterInflow(2)%size)/2 + 1
         jmx = (jmax + FilterInflow(2)%size)/2
-        j1 = MIN(MAX(j1, 1), jmax)
-        jmx = MIN(MAX(jmx, 1), jmax)
+        j1 = min(max(j1, 1), jmax)
+        jmx = min(max(jmx, 1), jmax)
 
         ifltmx = imx - 1 + 1
         jfltmx = jmx - j1 + 1
@@ -577,7 +565,7 @@ contains
         ! #######################################################################
         ! recalculation of diagnostic variables
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= C_0_R) then
+            if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
                 call THERMO_AIRWATER_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1), epbackground, pbackground)
 
             else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then

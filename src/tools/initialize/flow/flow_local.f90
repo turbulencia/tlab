@@ -13,6 +13,9 @@ module FLOW_LOCAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
+    use FI_VECTORCALCULUS
+    use OPR_PARTIAL
+    use OPR_ELLIPTIC
     implicit none
     save
     private
@@ -202,6 +205,7 @@ contains
     ! ###################################################################
     subroutine VELOCITY_BROADBAND(u, v, w, ax, ay, az, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
         use TLAB_VARS, only: visc
+        use FI_VECTORCALCULUS
 
         real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: ax, ay, az, tmp4, tmp5, wrk3d
@@ -265,13 +269,13 @@ contains
             end if
 
         case (PERT_BROADBAND_VORTICITY)     ! Vorticity given, solve lap(u) = - rot(vort), vort = rot(u)
-            call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4)
             do j = 1, jmax
                 ax(:, j, :) = -ax(:, j, :)*wrk1d(j, 2)
                 ay(:, j, :) = -ay(:, j, :)*wrk1d(j, 1)
                 az(:, j, :) = -az(:, j, :)*wrk1d(j, 2)
             end do
-            call FI_CURL(imax, jmax, kmax, ax, ay, az, u, v, w, tmp4, wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, ax, ay, az, u, v, w, tmp4)
 
             ! Solve lap(u) = - (rot(vort))_x
             if (flag_wall == 0) then; ibc = 3         ! FreeSlip
@@ -279,8 +283,7 @@ contains
             end if  ! NoSlip
             if (g(1)%periodic .and. g(3)%periodic) then
                 wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                     u, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
             else                                          ! General treatment, need global variable ipos,jpos,kpos,ci,cj,ck
 #ifdef USE_CGLOC
                 call CGPOISSON(1, imax, jmax, kmax, g(3)%size, u, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
@@ -291,8 +294,7 @@ contains
             ibc = 0                                       ! No penetration
             if (g(1)%periodic .and. g(3)%periodic) then
                 wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                     v, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
             else                                          ! General treatment
 #ifdef USE_CGLOC
                 call CGPOISSON(1, imax, jmax, kmax, g(3)%size, v, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
@@ -306,8 +308,7 @@ contains
                 end if  ! NoSlip
                 if (g(1)%periodic .and. g(3)%periodic) then
                     wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                    call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, ibc, &
-                                         w, wrk3d, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
                 else                                          ! General treatment
 #ifdef USE_CGLOC
                     call CGPOISSON(1, imax, jmax, kmax, g(3)%size, w, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, wrk2d)
@@ -319,7 +320,7 @@ contains
 
         ! ###################################################################
         if (RemoveDilatation) then  ! Remove dilatation (vort was not really a vorticity field because it was not solenoidal)
-            call FI_SOLENOIDAL(flag_wall, imax, jmax, kmax, u, v, w, ax, ay, az, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
+            call FI_SOLENOIDAL(imax, jmax, kmax, u, v, w, ax, ay, az)
         end if
 
         if (g(3)%size == 1) w = 0.0_wp       ! Impose zero spanwise velocity in 2D case
@@ -532,14 +533,13 @@ contains
     !# solve Poisson equation for p', nabla^2 p' = d/dx_i d/dx_j (rho_0 u_i u_j),
     !# assuming p/rho^\gamma0 constant(Homentropic conditions)
     ! ###################################################################
-    subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4, wrk1d, wrk2d, wrk3d)
+    subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4, wrk2d, wrk3d)
         use THERMO_VARS, only: gama0
 
         real(wp), dimension(imax, jmax, kmax), intent(in) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: rho, p, pprime
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: txc1, txc2, txc3, txc4, wrk3d
         real(wp), dimension(imax, kmax, *), intent(inout) :: wrk2d
-        real(wp), dimension(jmax, *), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
         integer(wi) bcs(2, 2)
@@ -576,8 +576,7 @@ contains
         if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
             wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
             pprime = -txc4          ! change of forcing term sign
-            call OPR_POISSON_FXZ(.false., imax, jmax, kmax, g, 0, &
-                                 pprime, wrk3d, txc1, txc2, wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
+            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 0, pprime, txc1, txc2, wrk2d(1, 1, 1), wrk2d(1, 1, 2))
         else                                      ! General treatment
 #ifdef USE_CGLOC
             ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,

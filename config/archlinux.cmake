@@ -26,7 +26,7 @@ else() # compiler for serial build
     set(CMAKE_BUILD_TYPE RELEASE)
 
   else()
-    #     set(USER_Fortran_FLAGS_DEBUG "-O0 -p -ggdb -Wall -fbacktrace -ffpe-trap=invalid,zero,overflow,underflow,precision,denormal")
+    # set(USER_Fortran_FLAGS_DEBUG "-O0 -pg -Wall -fbacktrace -fconvert=little-endian -fallow-argument-mismatch -ffpe-trap=invalid,zero,overflow -ffast-math -mtune=native -march=native")#,underflow,precision,denormal")
     set(USER_Fortran_FLAGS_DEBUG "-O0 -ggdb -Wall -fbacktrace -fconvert=little-endian -fallow-argument-mismatch -ffpe-trap=invalid,zero,overflow")
     add_definitions(-D_DEBUG)
     set(CMAKE_BUILD_TYPE DEBUG)

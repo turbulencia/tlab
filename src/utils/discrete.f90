@@ -1,9 +1,8 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
 subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
-    use TLAB_TYPES, only: discrete_dt, MAX_MODES, MAX_PARS, wp
+    use TLAB_TYPES, only: discrete_dt, MAX_MODES, MAX_PARS, wp, wi
     use TLAB_CONSTANTS, only: efile
     use TLAB_PROCS
     implicit none
@@ -12,7 +11,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     type(discrete_dt), intent(out) :: var
 
 ! -------------------------------------------------------------------
-    TINTEGER idummy
+    integer(wi) idummy
     character(LEN=512) sRes
 
 ! -------------------------------------------------------------------
@@ -94,7 +93,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         call TLAB_STOP(DNS_ERROR_INFDISCR)
     end if
 
-    var%parameters(:) = C_0_R
+    var%parameters(:) = 0.0_wp
     call SCANINICHAR(bakfile, inifile, 'Discrete', 'Parameters', '-1.0,-1.0', sRes)
     idummy = MAX_PARS
     call LIST_REAL(sRes, idummy, var%parameters)

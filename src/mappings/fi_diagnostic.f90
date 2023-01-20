@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -6,44 +5,44 @@
 !# Calculate diagnostic variables
 !#
 !########################################################################
-SUBROUTINE FI_DIAGNOSTIC( nx,ny,nz, q,s, wrk3d )
+subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: inb_flow_array, inb_scal_array
+    use TLAB_VARS, only: imode_eqns, itransport, damkohler
+    use TLAB_VARS, only: epbackground, pbackground
+    use TLAB_ARRAYS, only: wrk3d
+    use THERMO_VARS, only: imixture
 
-  USE TLAB_VARS,     ONLY : inb_flow_array, inb_scal_array
-  USE TLAB_VARS,     ONLY : imode_eqns, itransport, damkohler
-  USE TLAB_VARS,     ONLY : epbackground,pbackground
-  USE THERMO_VARS,  ONLY : imixture
+    implicit none
 
-  IMPLICIT NONE
+    integer(wi), intent(IN) :: nx, ny, nz
+    real(wp), intent(INOUT) :: q(nx*ny*nz, inb_flow_array)
+    real(wp), intent(INOUT) :: s(nx*ny*nz, inb_scal_array)
 
-  TINTEGER, INTENT(IN   ) :: nx,ny,nz
-  TREAL,    INTENT(INOUT) :: q(nx*ny*nz,inb_flow_array)
-  TREAL,    INTENT(INOUT) :: s(nx*ny*nz,inb_scal_array)
-  TREAL,    INTENT(INOUT) :: wrk3d(nx*ny*nz)
+    ! -------------------------------------------------------------------
+    ! ###################################################################
+    select case (imode_eqns)
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
+            call THERMO_AIRWATER_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
 
-  ! -------------------------------------------------------------------
-  ! ###################################################################
-  SELECT CASE( imode_eqns )
-  CASE( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC )
-    IF      ( imixture == MIXT_TYPE_AIRWATER .AND. damkohler(3) <= C_0_R ) THEN ! Calculate q_l
-      CALL THERMO_AIRWATER_PH(nx,ny,nz, s(1,2), s(1,1), epbackground,pbackground)
+        else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            call THERMO_AIRWATER_LINEAR(nx, ny, nz, s, s(1, inb_scal_array))
 
-    ELSE IF ( imixture == MIXT_TYPE_AIRWATER_LINEAR                      ) THEN
-      CALL THERMO_AIRWATER_LINEAR(nx,ny,nz, s, s(1,inb_scal_array))
+        end if
 
-    ENDIF
-
-  CASE( DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL )
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
 #define e(j)    q(j,4)
 #define rho(j)  q(j,5)
 #define p(j)    q(j,6)
 #define T(j)    q(j,7)
 #define vis(j)  q(j,8)
 
-    CALL THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s, e(1), rho(1), T(1), wrk3d)
-    CALL THERMO_THERMAL_PRESSURE(nx,ny,nz, s, rho(1), T(1), p(1))
-    IF ( itransport == EQNS_TRANS_SUTHERLAND .OR. itransport == EQNS_TRANS_POWERLAW ) CALL THERMO_VISCOSITY(nx,ny,nz, T(1), vis(1))
+        call THERMO_CALORIC_TEMPERATURE(nx, ny, nz, s, e(1), rho(1), T(1), wrk3d)
+        call THERMO_THERMAL_PRESSURE(nx, ny, nz, s, rho(1), T(1), p(1))
+     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(nx, ny, nz, T(1), vis(1))
 
-  END SELECT
+    end select
 
-  RETURN
-END SUBROUTINE FI_DIAGNOSTIC
+    return
+end subroutine FI_DIAGNOSTIC

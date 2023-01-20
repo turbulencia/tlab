@@ -24,6 +24,7 @@ SUBROUTINE RHS_FLOW_CONDUCTION_DIVERGENCE&
   USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl
   USE THERMO_VARS, ONLY : imixture
   USE BOUNDARY_BCS
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 
@@ -70,9 +71,9 @@ SUBROUTINE RHS_FLOW_CONDUCTION_DIVERGENCE&
   ENDIF
 
 ! total flux
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
   h4 = h4 +tmp2 +tmp3 +tmp4
 
 #ifdef TRACE_ON

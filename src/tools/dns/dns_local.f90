@@ -91,6 +91,7 @@ contains
 #ifdef USE_MPI
         use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
+        use FI_VECTORCALCULUS
 
         ! -------------------------------------------------------------------
         integer(wi) idummy(3)
@@ -133,15 +134,15 @@ contains
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 2), txc(1, 4))
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 3), txc(1, 5))
                 if (istagger == 1) then
-          call FI_INVARIANT_P_STAG(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2), txc(1, 6), wrk2d, wrk3d)
+                    call FI_INVARIANT_P_STAG(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2), txc(1, 6))
                 else
-                    call FI_INVARIANT_P(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+                    call FI_INVARIANT_P(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2))
                 end if
             else
                 if (istagger == 1) then
-                call FI_INVARIANT_P_STAG(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 6), wrk2d, wrk3d)
+                    call FI_INVARIANT_P_STAG(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 6))
                 else
-                    call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+                    call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2))
                 end if
             end if
 
@@ -218,5 +219,5 @@ module DNS_ARRAYS
     real(wp), allocatable, public :: l_hq(:, :)     ! Right-hand sides Lagrangian fields
 
     target hq, hs, l_hq
-    
+
 end module DNS_ARRAYS

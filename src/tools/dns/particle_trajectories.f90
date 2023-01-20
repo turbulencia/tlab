@@ -12,6 +12,7 @@ module PARTICLE_TRAJECTORIES
     use MPI
     use TLAB_MPI_VARS, only: ims_pro, ims_err
 #endif
+    use FI_VECTORCALCULUS
     implicit none
     save
     private
@@ -96,6 +97,7 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rtime
         use TLAB_ARRAYS
+        use FI_VECTORCALCULUS
         use DNS_ARRAYS
         use PARTICLE_ARRAYS
         use PARTICLE_INTERPOLATE
@@ -129,7 +131,7 @@ contains
 
 ! Additional information
         if (imode_traj == TRAJ_TYPE_VORTICITY) then
-            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 1); data(nvar)%field => l_hq(:, 1)
             nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 2); data(nvar)%field => l_hq(:, 2)
             nvar = nvar + 1; data_in(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 3); data(nvar)%field => l_hq(:, 3)

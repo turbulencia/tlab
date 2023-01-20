@@ -35,6 +35,7 @@ SUBROUTINE AVG_FLOW_ZT_REDUCE(q, hq,txc, mean1d, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : nstatavg, statavg, nstatavg_points
   USE TLAB_PROCS
   USE AVGS, ONLY: SUM1V1D_V
+  use OPR_PARTIAL
   IMPLICIT NONE
 
   TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN   ), TARGET :: q

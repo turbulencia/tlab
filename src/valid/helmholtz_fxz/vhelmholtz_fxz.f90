@@ -15,6 +15,7 @@ program VHELMHOLTZ_FXZ
     use TLAB_MPI_PROCS
 #endif
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 
@@ -77,8 +78,8 @@ program VHELMHOLTZ_FXZ
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
-
+    call OPR_FOURIER_INITIALIZE()
+    call OPR_FOURIER_INITIALIZE()
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################

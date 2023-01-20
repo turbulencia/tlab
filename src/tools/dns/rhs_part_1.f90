@@ -14,6 +14,7 @@ subroutine RHS_PART_1()
     use PARTICLE_ARRAYS
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
+    use OPR_PARTIAL
 
     implicit none
 

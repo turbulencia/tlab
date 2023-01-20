@@ -13,7 +13,7 @@ SUBROUTINE RHS_FLOW_EULER_DIVERGENCE(rho,u,v,w,p,e, h0,h1,h2,h3,h4, tmp1,tmp2,tm
   USE TLAB_VARS,    ONLY : g, buoyancy
   USE TLAB_VARS,    ONLY : mach
   USE THERMO_VARS, ONLY : gama0
-
+    use OPR_PARTIAL
   IMPLICIT NONE
 
   TREAL, DIMENSION(isize_field), INTENT(IN)    :: rho,u,v,w,p,e

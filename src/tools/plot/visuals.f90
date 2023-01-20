@@ -20,6 +20,7 @@ program VISUALS
     use TLAB_MPI_VARS, only: ims_pro
     use TLAB_MPI_PROCS
 #endif
+    use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
     use THERMO_VARS, only: NSP, THERMO_SPNAME
     use PARTICLE_VARS
@@ -27,7 +28,9 @@ program VISUALS
     use PARTICLE_PROCS
     use IBM_VARS
     use IO_FIELDS
+    use FI_VECTORCALCULUS
     use OPR_FOURIER
+    use OPR_PARTIAL
 
     implicit none
 
@@ -315,12 +318,10 @@ program VISUALS
     call FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
 
     if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
-    if (iread_flow == 1 .and. inb_txc >= 3) then ! We need array space
-        call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
-    end if
+    call OPR_CHECK()
 
     if (imode_ibm == 1) then
         call IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
@@ -375,7 +376,7 @@ program VISUALS
             if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
-        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
         if (iread_part == 1) then ! Particle variables
             write (part_file, *) itime; part_file = trim(adjustl(tag_part))//trim(adjustl(part_file))
@@ -400,7 +401,7 @@ program VISUALS
 
             call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
-                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate, wrk2d, wrk3d)
+                         imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
         end if
 
         ! -------------------------------------------------------------------
@@ -478,7 +479,7 @@ program VISUALS
 
                 else if (opt_vec(iv) == 8) then ! pressure
                     plot_file = 'Pressure'//time_str(1:MaskSize)
-                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
@@ -513,7 +514,7 @@ program VISUALS
 
                     plot_file = 'PressureHydrostatic'//time_str(1:MaskSize)
                     q = C_0_R
-                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
 
                     plot_file = 'PressureHydrodynamic'//time_str(1:MaskSize)
@@ -633,7 +634,7 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 4) then ! VorticityVector
                 plot_file = 'VorticityVector'//time_str(1:MaskSize)
-                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i3, subdomain, txc(1, 1), wrk3d)
             end if
 
@@ -658,7 +659,7 @@ program VISUALS
                 call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 4), txc(1, 1), wrk3d, wrk2d, wrk3d)
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 4), txc(1, 2), wrk3d, wrk2d, wrk3d)
                 call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 4), txc(1, 3), wrk3d, wrk2d, wrk3d)
-                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 4) &
                                         + txc(1:isize_field, 2)*txc(1:isize_field, 5) &
                                         + txc(1:isize_field, 3)*txc(1:isize_field, 6)
@@ -733,16 +734,16 @@ program VISUALS
             ! -------------------------------------------------------------------
             if (opt_vec(iv) == iscal_offset + 10) then ! Invariants
                 plot_file = 'InvariantP'//time_str(1:MaskSize)
-                call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+                call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'InvariantQ'//time_str(1:MaskSize)
-          call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'InvariantR'//time_str(1:MaskSize)
                 call FI_INVARIANT_R(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
             end if
@@ -791,7 +792,7 @@ program VISUALS
                     txc(1:isize_field, 2) = txc(1:isize_field, 2)*txc(1:isize_field, 3)*dummy
                 else
                     call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), wrk2d, wrk3d)
-                    call FI_BUOYANCY_SOURCE(buoyancy, isize_field, s, txc(1, 1), txc(1, 2))
+                    call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
                 end if
                 dummy = visc/schmidt(1)/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 2)*dummy
@@ -934,7 +935,7 @@ program VISUALS
 
                 plot_file = 'Pressure'//time_str(1:MaskSize)
                 bbackground = C_0_R
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'PressureGradientY'//time_str(1:MaskSize)

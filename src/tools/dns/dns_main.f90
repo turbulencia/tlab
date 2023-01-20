@@ -43,9 +43,9 @@ program DNS
     call DNS_READ_LOCAL(ifile)
     if (imode_ibm == 1) then
         call IBM_READ_INI(ifile)
-        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:), &
-                                        BcsScalJmin%type(:), BcsScalJmax%type(:), &
-                                        BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
+        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:),    BcsFlowJmax%type(:), &
+                                                   BcsScalJmin%type(:),    BcsScalJmax%type(:), &
+                                                   BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
     end if
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -93,10 +93,10 @@ program DNS
     end do
 
     if (ifourier == 1) then
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
-    call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
+    call OPR_CHECK()
 
     ! ###################################################################
     ! Initialize fields
@@ -113,7 +113,7 @@ program DNS
     write (fname, *) nitera_first; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
     call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
 
-    call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)  ! Initialize diagnostic thermodynamic quantities
+    call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)  ! Initialize diagnostic thermodynamic quantities
 
     if (part%type /= PART_TYPE_NONE) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
@@ -152,10 +152,10 @@ program DNS
     ! ###################################################################
     call BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
 
-    call BOUNDARY_BCS_INITIALIZE(wrk3d)
+    call BOUNDARY_BCS_INITIALIZE()
 
     if (imode_sim == DNS_MODE_SPATIAL) then
-        call BOUNDARY_INFLOW_INITIALIZE(rtime, txc, wrk1d, wrk2d, wrk3d)
+        call BOUNDARY_INFLOW_INITIALIZE(rtime, txc)
     end if
 
     ! ###################################################################
@@ -178,7 +178,7 @@ program DNS
     ! Initialize time marching scheme
     ! ###################################################################
     call TIME_INITIALIZE()
-    call TIME_COURANT(q, wrk3d)
+    call TIME_COURANT()
 
     ! ###################################################################
     ! Check-pointing: Initialize logfiles
@@ -219,7 +219,7 @@ program DNS
             end if
         end if
 
-        call TIME_COURANT(q, wrk3d)
+        call TIME_COURANT()
 
         ! -------------------------------------------------------------------
         ! The rest: Logging, postprocessing and check-pointing
@@ -282,7 +282,7 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_pln) == 0) then
-            call PLANES_SAVE(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk1d, wrk2d, wrk3d)
+            call PLANES_SAVE()
         end if
 
     end do

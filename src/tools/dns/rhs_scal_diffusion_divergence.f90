@@ -22,6 +22,7 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
   USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl, schmidt
   USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
   USE BOUNDARY_BCS
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 
@@ -100,9 +101,9 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
   tmp2 = diff *vis *tmp2
   tmp3 = diff *vis *tmp3
   
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
   zh1 = zh1 + tmp2 + tmp3 + tmp4
 
 ! ###################################################################
@@ -138,9 +139,9 @@ SUBROUTINE RHS_SCAL_DIFFUSION_DIVERGENCE&
         tmp3(i) = diff *vis(i) *tmp3(i) *dummy
      ENDDO
 
-     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(1,2,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(1,2,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
-     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(1,2,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
+     CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
      zh1 = zh1 + tmp2 + tmp3 + tmp4
 
   ENDIF

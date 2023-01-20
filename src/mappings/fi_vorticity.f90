@@ -18,7 +18,7 @@ SUBROUTINE FI_VORTICITY(nx,ny,nz, u,v,w, result, tmp1,tmp2, wrk2d,wrk3d)
   USE TLAB_VARS, ONLY : g
   USE TLAB_VARS, ONLY : imode_ibm
   USE IBM_VARS,  ONLY : ibm_partial
-  
+  use OPR_PARTIAL
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -65,7 +65,8 @@ END SUBROUTINE FI_VORTICITY
 SUBROUTINE FI_VORTICITY_PRODUCTION(nx,ny,nz, u,v,w, result, vort_x,vort_y,vort_z, tmp1,tmp2, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -135,7 +136,8 @@ END SUBROUTINE FI_VORTICITY_PRODUCTION
 SUBROUTINE FI_VORTICITY_DIFFUSION(nx,ny,nz, u,v,w, result, vort, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz
@@ -197,7 +199,8 @@ END SUBROUTINE FI_VORTICITY_DIFFUSION
 SUBROUTINE FI_VORTICITY_BAROCLINIC(nx,ny,nz, r,p, result, tmp1,tmp2, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+  use OPR_PARTIAL
+
   IMPLICIT NONE
 
   TINTEGER,                     INTENT(IN)    :: nx,ny,nz

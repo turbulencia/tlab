@@ -3,6 +3,7 @@
 PROGRAM VPARTIAL2
 
   USE TLAB_TYPES, ONLY : grid_dt
+  use OPR_PARTIAL
   IMPLICIT NONE
 
 #include "integers.h"

@@ -44,13 +44,11 @@ module OPR_FOURIER
 contains
 ! #######################################################################
 ! #######################################################################
-    subroutine OPR_FOURIER_INITIALIZE(tmp, wrk1d, wrk2d, wrk3d)
+    subroutine OPR_FOURIER_INITIALIZE()
+        use TLAB_ARRAYS, only: wrk1d, wrk3d, txc
 #ifdef USE_FFTW
 #include "fftw3.f"
 #endif
-
-        real(wp), dimension(isize_txc_field), intent(INOUT) :: tmp, wrk3d
-        real(wp), dimension(g(1)%size + 2), intent(INOUT) :: wrk1d, wrk2d
 
         ! -----------------------------------------------------------------------
         integer(wi) isize_stride, isize_disp, isize_fft_z, isize_fft_y, isize_fft_x
@@ -87,19 +85,19 @@ contains
         if (g(3)%size > 1) then
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
-                                     tmp, g(3)%size, isize_stride, 1, &
+                                     txc(:,1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_FORWARD, FFTW_ESTIMATE)
 
             call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
-                                     tmp, g(3)%size, isize_stride, 1, &
+                                     txc(:,1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
-                                     tmp, g(3)%size, isize_stride, 1, &
+                                     txc(:,1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_FORWARD, FFTW_MEASURE)
 
             call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
-                                     tmp, g(3)%size, isize_stride, 1, &
+                                     txc(:,1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
@@ -124,9 +122,10 @@ contains
 #endif
             isize_disp = g(1)%size/2 + 1
 #ifdef _DEBUG
-            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d, wrk2d, FFTW_ESTIMATE)
+            ! wrk1d(:,2) should be complex with size n/2+1, i.e., n+2 real, but there is space at the end of wrk1d(:,2)
+            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:,1), wrk1d(:,2), FFTW_ESTIMATE)
 #else
-            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d, wrk2d, FFTW_MEASURE)
+            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:,1), wrk1d(:,2), FFTW_MEASURE)
 #endif
 #ifdef USE_MPI
         end if
@@ -134,17 +133,17 @@ contains
 
 #ifdef _DEBUG
         call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
-                                     tmp, g(1)%size, 1, g(1)%size, &
+                                     txc(:,1), g(1)%size, 1, g(1)%size, &
                                      wrk3d, g(1)%size/2 + 1, 1, isize_disp, FFTW_ESTIMATE)
         call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
-                                     tmp, g(1)%size/2 + 1, 1, isize_disp, &
+                                     txc(:,1), g(1)%size/2 + 1, 1, isize_disp, &
                                      wrk3d, g(1)%size, 1, g(1)%size, FFTW_ESTIMATE)
 #else
         call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
-                                     tmp, g(1)%size, 1, g(1)%size, &
+                                     txc(:,1), g(1)%size, 1, g(1)%size, &
                                      wrk3d, g(1)%size/2 + 1, 1, isize_disp, FFTW_MEASURE)
         call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
-                                     tmp, g(1)%size/2 + 1, 1, isize_disp, &
+                                     txc(:,1), g(1)%size/2 + 1, 1, isize_disp, &
                                      wrk3d, g(1)%size, 1, g(1)%size, FFTW_MEASURE)
 #endif
 
@@ -158,19 +157,19 @@ contains
         if (g(2)%size > 1) then
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
-                                     tmp, g(2)%size, isize_stride, 1, &
+                                     txc(:,1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_FORWARD, FFTW_ESTIMATE)
 
             call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
-                                     tmp, g(2)%size, isize_stride, 1, &
+                                     txc(:,1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
-                                     tmp, g(2)%size, isize_stride, 1, &
+                                     txc(:,1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_FORWARD, FFTW_MEASURE)
 
             call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
-                                     tmp, g(2)%size, isize_stride, 1, &
+                                     txc(:,1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if

@@ -51,8 +51,8 @@ program VFFT
         wrk3d(isize_fft3d), &
         wrk2d(isize_fft3d))
 
-    call OPR_FOURIER_INITIALIZE(tmp1, tmp2, wrk2d, wrk3d)
-
+        call OPR_FOURIER_INITIALIZE()
+        
     call FFT_CHECK(2, err_count, case_count, &
                    trans, &
                    trans_ref, &

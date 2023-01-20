@@ -1,7 +1,7 @@
 #include "types.h"
 
 !########################################################################
-!# Tool/Library 
+!# Tool/Library
 !#
 !########################################################################
 !# HISTORY
@@ -15,274 +15,274 @@
 !# DESCRIPTION
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
-SUBROUTINE SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, amin, y, a, at, surface, wrk2d)
+subroutine SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, amin, y, a, at, surface, wrk2d)
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER imax, jmax, kmax, jmin_loc
-  TREAL y(jmax), amin
-  TREAL a(*), at(jmax,imax*kmax)
-  TREAL surface(*), wrk2d(imax*kmax)
+    TINTEGER imax, jmax, kmax, jmin_loc
+    TREAL y(jmax), amin
+    TREAL a(*), at(jmax, imax*kmax)
+    TREAL surface(*), wrk2d(imax*kmax)
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j, jkmax, ikmax
+    TINTEGER i, j, jkmax, ikmax
 
 ! ###################################################################
-  jkmax = jmax*kmax
-  ikmax = imax*kmax
-
-! -------------------------------------------------------------------
-! Make y direction the first one; x becomes the last one
-! -------------------------------------------------------------------
-  CALL DNS_TRANSPOSE(a, imax, jkmax, imax, at, jkmax)
-
-  DO i = 1,ikmax
-     DO j = jmin_loc+1,jmax
-        IF ( at(j,i) .GT. amin ) EXIT
-     ENDDO
-     IF ( j .EQ. jmax+1 ) THEN
-        wrk2d(i) = y(jmax)
-     ELSE
-        wrk2d(i) = y(j-1) + (y(j)-y(j-1))/(at(j,i)-at(j-1,i))*(amin-at(j-1,i))
-     ENDIF
-  ENDDO
-
-! -------------------------------------------------------------------
-! Put array in right order
-! -------------------------------------------------------------------
-  CALL DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
-
-  RETURN
-END SUBROUTINE SL_LOWER_BOUNDARY
-
-!########################################################################
-!########################################################################
-
-SUBROUTINE SL_UPPER_BOUNDARY(imax,jmax,kmax, jmax_loc, amin, y, a, at, surface, wrk2d)
-  
-  IMPLICIT NONE
-
-  TINTEGER imax, jmax, kmax, jmax_loc
-  TREAL y(jmax), amin
-  TREAL a(*), at(jmax,imax*kmax)
-  TREAL surface(*), wrk2d(imax*kmax)
-
-! -------------------------------------------------------------------
-  TINTEGER i, j, jkmax, ikmax
-
-! ###################################################################
-  jkmax = jmax*kmax
-  ikmax = imax*kmax
+    jkmax = jmax*kmax
+    ikmax = imax*kmax
 
 ! -------------------------------------------------------------------
 ! Make y direction the first one; x becomes the last one
 ! -------------------------------------------------------------------
-  CALL DNS_TRANSPOSE(a, imax, jkmax, imax, at, jkmax)
+    call DNS_TRANSPOSE(a, imax, jkmax, imax, at, jkmax)
 
-  DO i = 1,ikmax
-     DO j = jmax_loc-1,1,-1
-        IF ( at(j,i) .GT. amin ) EXIT
-     ENDDO
-     IF ( j .EQ. 0 ) THEN
-        wrk2d(i) = y(1)
-     ELSE
-        wrk2d(i) = y(j+1) + (y(j)-y(j+1))/(at(j,i)-at(j+1,i))*(amin-at(j+1,i))
-     ENDIF
-  ENDDO
+    do i = 1, ikmax
+        do j = jmin_loc + 1, jmax
+            if (at(j, i) > amin) exit
+        end do
+        if (j == jmax + 1) then
+            wrk2d(i) = y(jmax)
+        else
+            wrk2d(i) = y(j - 1) + (y(j) - y(j - 1))/(at(j, i) - at(j - 1, i))*(amin - at(j - 1, i))
+        end if
+    end do
 
 ! -------------------------------------------------------------------
 ! Put array in right order
 ! -------------------------------------------------------------------
-  CALL DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
 
-  RETURN
-END SUBROUTINE SL_UPPER_BOUNDARY
+    return
+end subroutine SL_LOWER_BOUNDARY
 
 !########################################################################
 !########################################################################
-SUBROUTINE BOUNDARY_LOWER_INT1(imax,jmax,kmax, avalue, y, a, at, surface, wrk2d)
 
-  IMPLICIT NONE
+subroutine SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, amin, y, a, at, surface, wrk2d)
 
-  TINTEGER imax,jmax,kmax
-  TREAL,      DIMENSION(jmax),           INTENT(IN)    :: y
-  INTEGER(1),                            INTENT(IN)    :: avalue
-  INTEGER(1), DIMENSION(jmax,imax*kmax), INTENT(IN)    :: a ! real shape is imax*jmax*kmax
-  INTEGER(1), DIMENSION(jmax,imax*kmax), INTENT(INOUT) :: at(jmax,imax*kmax)
-  TREAL,      DIMENSION(imax*kmax),      INTENT(INOUT) :: wrk2d
-  TREAL,      DIMENSION(imax*kmax),      INTENT(OUT)   :: surface
+    implicit none
+
+    TINTEGER imax, jmax, kmax, jmax_loc
+    TREAL y(jmax), amin
+    TREAL a(*), at(jmax, imax*kmax)
+    TREAL surface(*), wrk2d(imax*kmax)
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j, jkmax, ikmax
+    TINTEGER i, j, jkmax, ikmax
 
 ! ###################################################################
-  jkmax = jmax*kmax
-  ikmax = imax*kmax
+    jkmax = jmax*kmax
+    ikmax = imax*kmax
+
+! -------------------------------------------------------------------
+! Make y direction the first one; x becomes the last one
+! -------------------------------------------------------------------
+    call DNS_TRANSPOSE(a, imax, jkmax, imax, at, jkmax)
+
+    do i = 1, ikmax
+        do j = jmax_loc - 1, 1, -1
+            if (at(j, i) > amin) exit
+        end do
+        if (j == 0) then
+            wrk2d(i) = y(1)
+        else
+            wrk2d(i) = y(j + 1) + (y(j) - y(j + 1))/(at(j, i) - at(j + 1, i))*(amin - at(j + 1, i))
+        end if
+    end do
+
+! -------------------------------------------------------------------
+! Put array in right order
+! -------------------------------------------------------------------
+    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+
+    return
+end subroutine SL_UPPER_BOUNDARY
+
+!########################################################################
+!########################################################################
+subroutine BOUNDARY_LOWER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2d)
+
+    implicit none
+
+    TINTEGER imax, jmax, kmax
+    TREAL, dimension(jmax), intent(IN) :: y
+    integer(1), intent(IN) :: avalue
+    integer(1), dimension(jmax, imax*kmax), intent(IN) :: a ! real shape is imax*jmax*kmax
+    integer(1), dimension(jmax, imax*kmax), intent(INOUT) :: at(jmax, imax*kmax)
+    TREAL, dimension(imax*kmax), intent(INOUT) :: wrk2d
+    TREAL, dimension(imax*kmax), intent(OUT) :: surface
+
+! -------------------------------------------------------------------
+    TINTEGER i, j, jkmax, ikmax
+
+! ###################################################################
+    jkmax = jmax*kmax
+    ikmax = imax*kmax
 
 ! Make y direction the first one; x becomes the last one
-  IF ( imax .GT. 1 ) THEN
-     CALL DNS_TRANSPOSE_INT1(a, imax, jkmax, imax, at, jkmax)
-  ELSE
-     at = a
-  ENDIF
+    if (imax > 1) then
+        call DNS_TRANSPOSE_INT1(a, imax, jkmax, imax, at, jkmax)
+    else
+        at = a
+    end if
 
-  DO i = 1,ikmax
-     DO j = 1,jmax
-        IF ( at(j,i) .EQ. avalue ) EXIT
-     ENDDO
-     IF ( j .EQ. jmax+1 ) THEN
-        wrk2d(i) = y(jmax) ! in case the avalue is never attained
-     ELSE
-        wrk2d(i) = y(j)
-     ENDIF
-  ENDDO
+    do i = 1, ikmax
+        do j = 1, jmax
+            if (at(j, i) == avalue) exit
+        end do
+        if (j == jmax + 1) then
+            wrk2d(i) = y(jmax) ! in case the avalue is never attained
+        else
+            wrk2d(i) = y(j)
+        end if
+    end do
 
 ! Put array in right order
-  CALL DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
 
-  RETURN
-END SUBROUTINE BOUNDARY_LOWER_INT1
+    return
+end subroutine BOUNDARY_LOWER_INT1
 
 ! ###################################################################
 ! ###################################################################
 
-SUBROUTINE BOUNDARY_UPPER_INT1(imax,jmax,kmax, avalue, y, a, at, surface, wrk2d)
-  
-  IMPLICIT NONE
+subroutine BOUNDARY_UPPER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2d)
 
-  TINTEGER imax,jmax,kmax
-  TREAL,      DIMENSION(jmax),           INTENT(IN)    :: y
-  INTEGER(1),                            INTENT(IN)    :: avalue
-  INTEGER(1), DIMENSION(jmax,imax*kmax), INTENT(IN)    :: a ! real shape is imax*jmax*kmax
-  INTEGER(1), DIMENSION(jmax,imax*kmax), INTENT(INOUT) :: at(jmax,imax*kmax)
-  TREAL,      DIMENSION(imax*kmax),      INTENT(INOUT) :: wrk2d
-  TREAL,      DIMENSION(imax*kmax),      INTENT(OUT)   :: surface
+    implicit none
+
+    TINTEGER imax, jmax, kmax
+    TREAL, dimension(jmax), intent(IN) :: y
+    integer(1), intent(IN) :: avalue
+    integer(1), dimension(jmax, imax*kmax), intent(IN) :: a ! real shape is imax*jmax*kmax
+    integer(1), dimension(jmax, imax*kmax), intent(INOUT) :: at(jmax, imax*kmax)
+    TREAL, dimension(imax*kmax), intent(INOUT) :: wrk2d
+    TREAL, dimension(imax*kmax), intent(OUT) :: surface
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j, jkmax, ikmax
+    TINTEGER i, j, jkmax, ikmax
 
 ! ###################################################################
-  jkmax = jmax*kmax
-  ikmax = imax*kmax
+    jkmax = jmax*kmax
+    ikmax = imax*kmax
 
 ! Make y direction the first one; x becomes the last one
-  IF ( imax .GT. 1 ) THEN
-     CALL DNS_TRANSPOSE_INT1(a, imax, jkmax, imax, at, jkmax)
-  ELSE
-     at = a
-  ENDIF
+    if (imax > 1) then
+        call DNS_TRANSPOSE_INT1(a, imax, jkmax, imax, at, jkmax)
+    else
+        at = a
+    end if
 
-  DO i = 1,ikmax
-     DO j = jmax,1,-1
-        IF ( at(j,i) .EQ. avalue ) EXIT
-     ENDDO
-     IF ( j .EQ. 0 ) THEN; wrk2d(i) = y(  1) ! in case the avalue is never attained
-     ELSE;                 wrk2d(i) = y(MIN(j+1,jmax)); ENDIF ! +1 so that it coincides with lower boundary
-  ENDDO
+    do i = 1, ikmax
+        do j = jmax, 1, -1
+            if (at(j, i) == avalue) exit
+        end do
+        if (j == 0) then; wrk2d(i) = y(1) ! in case the avalue is never attained
+        else; wrk2d(i) = y(min(j + 1, jmax)); end if ! +1 so that it coincides with lower boundary
+    end do
 
 ! Put array in right order
-  CALL DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
 
-  RETURN
-END SUBROUTINE BOUNDARY_UPPER_INT1
-
-! ###################################################################
-! ###################################################################
-
-FUNCTION UPPER_THRESHOLD(jmax, uc, u, y)
-  
-  IMPLICIT NONE
-  
-  TINTEGER,               INTENT(IN) :: jmax
-  TREAL, DIMENSION(jmax), INTENT(IN) :: u, y
-  TREAL,                  INTENT(IN) :: uc
-  TREAL UPPER_THRESHOLD
-  
-! -------------------------------------------------------------------
-  TINTEGER j
-  
-! ###################################################################
-  UPPER_THRESHOLD = C_0_R
-  DO j = jmax-1,1,-1
-     IF ( (u(j)-uc)*(u(j+1)-uc) .LT. C_0_R ) THEN
-        UPPER_THRESHOLD = y(j) + (uc-u(j))*(y(j+1)-y(j))/(u(j+1)-u(j))
-        EXIT
-     ENDIF
-  ENDDO
-  
-  RETURN
-END FUNCTION UPPER_THRESHOLD
+    return
+end subroutine BOUNDARY_UPPER_INT1
 
 ! ###################################################################
 ! ###################################################################
 
-FUNCTION LOWER_THRESHOLD(jmax, uc, u, y)
-  
-  IMPLICIT NONE
-  
-  TINTEGER,               INTENT(IN) :: jmax
-  TREAL, DIMENSION(jmax), INTENT(IN) :: u, y
-  TREAL,                  INTENT(IN) :: uc
-  TREAL LOWER_THRESHOLD
-  
-! -------------------------------------------------------------------
-  TINTEGER j
-  
-! ###################################################################
-  LOWER_THRESHOLD = C_0_R
-  DO j = 1,jmax-1
-     IF ( (u(j)-uc)*(u(j+1)-uc) .LT. C_0_R ) THEN
-        LOWER_THRESHOLD = y(j) + (uc-u(j))*(y(j+1)-y(j))/(u(j+1)-u(j))
-        EXIT
-     ENDIF
-  ENDDO
-  
-  RETURN
-END FUNCTION LOWER_THRESHOLD
+function UPPER_THRESHOLD(jmax, uc, u, y)
 
-! ###################################################################
-! ###################################################################
+    implicit none
 
-SUBROUTINE DELTA_X(imax, jmax, y, a, delta, delta_d, delta_u, A2, eta)
-
-  IMPLICIT NONE
-
-  TINTEGER,                    INTENT(IN)  :: imax, jmax
-  TREAL, DIMENSION(jmax),      INTENT(IN)  :: y
-  TREAL, DIMENSION(imax,jmax), INTENT(IN)  :: a
-  TREAL,                       INTENT(IN)  :: A2, eta
-  TREAL, DIMENSION(imax),      INTENT(OUT) :: delta_d, delta_u, delta
+    TINTEGER, intent(IN) :: jmax
+    TREAL, dimension(jmax), intent(IN) :: u, y
+    TREAL, intent(IN) :: uc
+    TREAL UPPER_THRESHOLD
 
 ! -------------------------------------------------------------------
-  TINTEGER i, j
-  TREAL DA, A_05, y_center
+    TINTEGER j
 
 ! ###################################################################
-  y_center = C_05_R*(y(jmax/2)+y(jmax/2+1))
+    UPPER_THRESHOLD = C_0_R
+    do j = jmax - 1, 1, -1
+        if ((u(j) - uc)*(u(j + 1) - uc) < C_0_R) then
+            UPPER_THRESHOLD = y(j) + (uc - u(j))*(y(j + 1) - y(j))/(u(j + 1) - u(j))
+            exit
+        end if
+    end do
 
-  DO i = 1,imax
-     DA = C_05_R*(a(i,jmax/2)+ a(i,jmax/2+1)) - A2
-     A_05 = A2 + eta*DA
+    return
+end function UPPER_THRESHOLD
 
-     DO j = 1,jmax/2
-        IF ( a(i,j  ) .LE. A_05 .AND. a(i,j+1) .GT. A_05 ) THEN
-           delta_d(i) = y(j) + (A_05-a(i,j))*(y(j+1)-y(j))/(a(i,j+1)-a(i,j))
-        ENDIF
-     ENDDO
-     delta_d(i) = y_center - delta_d(i)
+! ###################################################################
+! ###################################################################
 
-     DO j = jmax/2+1,jmax
-        IF ( a(i,j  ) .GT. A_05 .AND. a(i,j+1) .LE. A_05 ) THEN
-           delta_u(i) = y(j) + (A_05-a(i,j))*(y(j+1)-y(j))/(a(i,j+1)-a(i,j))
-        ENDIF
-     ENDDO
-     delta_u(i) = delta_u(i) - y_center
+function LOWER_THRESHOLD(jmax, uc, u, y)
 
-     delta(i) = C_05_R*(delta_d(i)+delta_u(i))
-  ENDDO
+    implicit none
 
-  RETURN
-END SUBROUTINE DELTA_X
+    TINTEGER, intent(IN) :: jmax
+    TREAL, dimension(jmax), intent(IN) :: u, y
+    TREAL, intent(IN) :: uc
+    TREAL LOWER_THRESHOLD
+
+! -------------------------------------------------------------------
+    TINTEGER j
+
+! ###################################################################
+    LOWER_THRESHOLD = C_0_R
+    do j = 1, jmax - 1
+        if ((u(j) - uc)*(u(j + 1) - uc) < C_0_R) then
+            LOWER_THRESHOLD = y(j) + (uc - u(j))*(y(j + 1) - y(j))/(u(j + 1) - u(j))
+            exit
+        end if
+    end do
+
+    return
+end function LOWER_THRESHOLD
+
+! ###################################################################
+! ###################################################################
+
+subroutine DELTA_X(imax, jmax, y, a, delta, delta_d, delta_u, A2, eta)
+
+    implicit none
+
+    TINTEGER, intent(IN) :: imax, jmax
+    TREAL, dimension(jmax), intent(IN) :: y
+    TREAL, dimension(imax, jmax), intent(IN) :: a
+    TREAL, intent(IN) :: A2, eta
+    TREAL, dimension(imax), intent(OUT) :: delta_d, delta_u, delta
+
+! -------------------------------------------------------------------
+    TINTEGER i, j
+    TREAL DA, A_05, y_center
+
+! ###################################################################
+    y_center = C_05_R*(y(jmax/2) + y(jmax/2 + 1))
+
+    do i = 1, imax
+        DA = C_05_R*(a(i, jmax/2) + a(i, jmax/2 + 1)) - A2
+        A_05 = A2 + eta*DA
+
+        do j = 1, jmax/2
+            if (a(i, j) <= A_05 .and. a(i, j + 1) > A_05) then
+                delta_d(i) = y(j) + (A_05 - a(i, j))*(y(j + 1) - y(j))/(a(i, j + 1) - a(i, j))
+            end if
+        end do
+        delta_d(i) = y_center - delta_d(i)
+
+        do j = jmax/2 + 1, jmax
+            if (a(i, j) > A_05 .and. a(i, j + 1) <= A_05) then
+                delta_u(i) = y(j) + (A_05 - a(i, j))*(y(j + 1) - y(j))/(a(i, j + 1) - a(i, j))
+            end if
+        end do
+        delta_u(i) = delta_u(i) - y_center
+
+        delta(i) = C_05_R*(delta_d(i) + delta_u(i))
+    end do
+
+    return
+end subroutine DELTA_X

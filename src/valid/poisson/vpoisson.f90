@@ -11,6 +11,8 @@ program VPOISSON
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
+    use OPR_PARTIAL
+    use OPR_ELLIPTIC
 
     implicit none
 
@@ -22,7 +24,7 @@ program VPOISSON
     TREAL, dimension(:, :), allocatable :: wrk1d, wrk2d, bcs_hb, bcs_ht
     TREAL, dimension(:), allocatable :: wrk3d!, cx, cy, cz
 
-    TINTEGER i, j, k, bcs !, ibc_x(4), ibc_y(4), ibc_z(4)
+    TINTEGER i, j, k, bcs(2, 2) !, ibc_x(4), ibc_y(4), ibc_z(4)
     TINTEGER itype
     TREAL dummy, error, lambda!, falpha
 
@@ -71,7 +73,7 @@ program VPOISSON
 
     bcs = 0
 
-    call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+    call OPR_FOURIER_INITIALIZE()
 
 ! ###################################################################
 ! Define forcing term
@@ -95,8 +97,7 @@ program VPOISSON
     itype = 1
 
     if (itype == 1) then
-        call OPR_POISSON_FXZ(.true., imax, jmax, kmax, g, i3, &
-                             a, c, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, wrk1d, wrk1d(1, 5), wrk3d)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, c)
         e = c ! save dp/dy
     else if (itype == 2) then
         write (*, *) 'Eigenvalue ?'
@@ -132,7 +133,7 @@ program VPOISSON
 ! solve poisson eqn
 ! ###################################################################
     ! CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
-    ! b,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
+    ! b,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
     call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, i1, b, wrk3d)
 
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c, wrk3d, wrk2d, wrk3d)

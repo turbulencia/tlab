@@ -57,6 +57,7 @@ contains
         use THERMO_VARS, only: imixture
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
+        use FI_SOURCES, only: FI_BUOYANCY
 
         ! -------------------------------------------------------------------
         real(wp) dummy, amin(16), amax(16)
@@ -85,7 +86,7 @@ contains
 
         ! Calculate pressure
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 1), txc(1, 2), txc(1, 4), wrk1d, wrk2d, wrk3d)
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 1), txc(1, 2), txc(1, 4))
         end if
 
         ! ###################################################################
@@ -160,7 +161,7 @@ contains
                             call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, hq(1, 1))
                         else
                             wrk1d(1:jmax, 1) = 0.0_wp
-                            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d) ! note that wrk3d is defined as integer.
+                            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d)
                         end if
                         dummy = 1.0_wp/froude
                         hq(1:isize_field, 1) = hq(1:isize_field, 1)*dummy
@@ -258,21 +259,13 @@ contains
 
                 buff_u_jmin = BuffFlowJmax%size
                 buff_u_jmax = jmax - BuffFlowJmax%size + 1
-                call AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin, buff_u_jmax, &
-                                            mean_flow, txc, wrk1d, wrk2d)
+                call AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin, buff_u_jmax, mean_flow, txc)
 
                 if (icalc_scal == 1) then
                     do is = 1, inb_scal
-                        call AVG_SCAL_SPATIAL_LAYER(is, isize_txc, buff_u_jmin, buff_u_jmax, &
-                                                    mean_flow, mean_scal(1, 1, 1, is), txc, wrk1d)
+                        call AVG_SCAL_SPATIAL_LAYER(is, isize_txc, buff_u_jmin, buff_u_jmax, mean_flow, mean_scal(1, 1, 1, is), txc)
                     end do
                 end if
-
-#ifdef LES
-                if (iles == 1) then
-                    call LES_AVG_SPATIAL_LAYER(isize_txc, x, y, vaux(vindex(VA_MEAN_WRK)), txc, wrk1d, wrk2d)
-                end if
-#endif
 
 #ifdef USE_MPI
             end if

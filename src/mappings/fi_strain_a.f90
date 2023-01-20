@@ -11,7 +11,7 @@
 SUBROUTINE FI_STRAIN_A(nx,ny,nz, a, u,v,w, strain1,strain2, normal1,normal2,normal3, tmp1, wrk2d,wrk3d)
 
   USE TLAB_VARS, ONLY : g
-  
+    use OPR_PARTIAL
   IMPLICIT NONE
 
   TINTEGER,                   INTENT(IN)    :: nx,ny,nz

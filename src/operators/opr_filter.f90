@@ -12,6 +12,7 @@ module OPR_FILTERS
     use FLT_COMPACT
     use FLT_EXPLICIT
     use OPR_FOURIER
+    use OPR_PARTIAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS
     use TLAB_MPI_PROCS
@@ -194,7 +195,7 @@ contains
         case (DNS_FILTER_COMPACT)
             call FLT_C4_RHS(f%size, nlines, f%periodic, f%bcsmin, f%bcsmax, f%coeffs, u, result)
             if (f%periodic) then
-        call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
+                call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
             else
                 call TRIDSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), result)
             end if

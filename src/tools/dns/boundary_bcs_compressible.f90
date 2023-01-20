@@ -13,6 +13,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use THERMO_VARS, only: imixture, gama0, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
+    use OPR_PARTIAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif
@@ -146,9 +147,9 @@ contains
             inf_rhs(:, :, isize) = C_0_R
 
             if (inflow_mode == 1 .or. inflow_mode == 4) then
-                call BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs, wrk2d, wrk3d)
+                call BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
             elseif (inflow_mode == 2 .or. inflow_mode == 3) then
-                call BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, txc, wrk1d, wrk2d, wrk3d)
+                call BOUNDARY_INFLOW_BROADBAND(etime, inf_rhs, txc)
             end if
         end if
 

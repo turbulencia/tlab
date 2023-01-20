@@ -1,164 +1,158 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
-!# DESCRIPTION
 !#
-!# Calculate the pressure field from a divergence free velocity field
-!# and a body force.
+!# Calculate the pressure field from a divergence free velocity field and a body force.
 !#
 !########################################################################
-SUBROUTINE FI_PRESSURE_BOUSSINESQ(q,s, p, tmp1,tmp2,tmp, wrk1d,wrk2d,wrk3d)
+subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
+    use TLAB_VARS, only: rbackground
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLAB_POINTERS_3D, only: p_wrk2d
+    use IBM_VARS, only: ibm_burgers
+    use OPR_PARTIAL
+    use OPR_BURGERS
+    use OPR_ELLIPTIC
+    use FI_SOURCES
+    implicit none
 
-  USE TLAB_VARS, ONLY : g
-  USE TLAB_VARS, ONLY : imax,jmax,kmax
-  USE TLAB_VARS, ONLY : isize_wrk1d, isize_field
-  USE TLAB_VARS, ONLY : imode_eqns, imode_ibm, istagger
-  USE TLAB_VARS, ONLY : rbackground
-  USE IBM_VARS,  ONLY : ibm_burgers
+    real(wp), intent(in) :: q(isize_field, 3)
+    real(wp), intent(in) :: s(isize_field, *)
+    real(wp), intent(out) :: p(isize_field)
+    real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
+    real(wp), intent(inout) :: tmp(isize_field, 3)
 
-  IMPLICIT NONE
-
-#include "integers.h"
-
-  TREAL, DIMENSION(isize_field,* ), INTENT(IN),    TARGET :: q,s
-  TREAL, DIMENSION(isize_field   ), INTENT(OUT)           :: p                
-  TREAL, DIMENSION(isize_field   ), INTENT(INOUT)         :: tmp1,tmp2, wrk3d 
-  TREAL, DIMENSION(isize_field,3 ), INTENT(INOUT), TARGET :: tmp              
-  TREAL, DIMENSION(isize_wrk1d,16), INTENT(INOUT)         :: wrk1d
-  TREAL, DIMENSION(imax,kmax,2   ), INTENT(INOUT)         :: wrk2d
+    target q, tmp
 ! -----------------------------------------------------------------------
-  TINTEGER k, bcs(2,2)
-  TINTEGER ip_b, ip_t, nxy
+    integer(wi) bcs(2, 2)
+    integer, parameter :: i3 = 3
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: u,v,w
-  TREAL, DIMENSION(:),   POINTER :: tmp3,tmp4,tmp5
-  TREAL, DIMENSION(:),   POINTER :: p_bcs
+    real(wp), dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: tmp3, tmp4, tmp5
+    real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
-  nxy  = imax*jmax
-  
-  bcs  = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+    bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-  p    = C_0_R
-  tmp  = C_0_R
+    p = 0.0_wp
+    tmp = 0.0_wp
 
 ! Define pointers
-  u    => q(:,1)
-  v    => q(:,2)
-  w    => q(:,3)
+    u => q(:, 1)
+    v => q(:, 2)
+    w => q(:, 3)
 
 ! #######################################################################
 ! Sources
-  CALL FI_SOURCES_FLOW(q,s, tmp, tmp1, wrk1d,wrk2d,wrk3d)
+    call FI_SOURCES_FLOW(q, s, tmp, tmp1)
 
-  tmp3 => tmp(:,1)
-  tmp4 => tmp(:,2)
-  tmp5 => tmp(:,3)
+    tmp3 => tmp(:, 1)
+    tmp4 => tmp(:, 2)
+    tmp5 => tmp(:, 3)
 
 ! If IBM, then use modified fields for derivatives
-  IF ( imode_ibm == 1 ) ibm_burgers = .true.
+    if (imode_ibm == 1) ibm_burgers = .true.
 
 ! Advection and diffusion terms
-  CALL OPR_BURGERS_X(i0,i0, imax,jmax,kmax, bcs, g(1), u,u,u,    p, tmp1, wrk2d,wrk3d) ! store u transposed in tmp1
-  tmp3 = tmp3 + p
-  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), v,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
-  tmp4 = tmp4 + p
-  CALL OPR_BURGERS_X(i1,i0, imax,jmax,kmax, bcs, g(1), w,u,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains u transposed
-  tmp5 = tmp5 + p
+    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, u, p, tmp1) ! store u transposed in tmp1
+    tmp3 = tmp3 + p
+    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, tmp1, p, tmp2) ! tmp1 contains u transposed
+    tmp4 = tmp4 + p
+    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, tmp1, p, tmp2) ! tmp1 contains u transposed
+    tmp5 = tmp5 + p
 
-  CALL OPR_BURGERS_Y(i0,i0, imax,jmax,kmax, bcs, g(2), v,v,v,    p, tmp1, wrk2d,wrk3d) ! store v transposed in tmp1
-  tmp4 = tmp4 + p
-  CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), u,v,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains v transposed
-  tmp3 = tmp3 + p
-  CALL OPR_BURGERS_Y(i1,i0, imax,jmax,kmax, bcs, g(2), w,v,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains v transposed
-  tmp5 = tmp5 + p
+    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, v, p, tmp1) ! store v transposed in tmp1
+    tmp4 = tmp4 + p
+    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, tmp1, p, tmp2) ! tmp1 contains v transposed
+    tmp3 = tmp3 + p
+    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, tmp1, p, tmp2) ! tmp1 contains v transposed
+    tmp5 = tmp5 + p
 
-  CALL OPR_BURGERS_Z(i0,i0, imax,jmax,kmax, bcs, g(3), w,w,w,    p, tmp1, wrk2d,wrk3d) ! store w transposed in tmp1
-  tmp5 = tmp5 + p
-  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), v,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
-  tmp4 = tmp4 + p
-  CALL OPR_BURGERS_Z(i1,i0, imax,jmax,kmax, bcs, g(3), u,w,tmp1, p, tmp2, wrk2d,wrk3d) ! tmp1 contains w transposed
-  tmp3 = tmp3 + p
+    call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, w, p, tmp1) ! store w transposed in tmp1
+    tmp5 = tmp5 + p
+    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, tmp1, p, tmp2) ! tmp1 contains w transposed
+    tmp4 = tmp4 + p
+    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, tmp1, p, tmp2) ! tmp1 contains w transposed
+    tmp3 = tmp3 + p
 
 ! If IBM, set flag back to false
-  IF ( imode_ibm == 1 ) ibm_burgers = .false.
+    if (imode_ibm == 1) ibm_burgers = .false.
 
 ! Set p-field back to zero
-  p = C_0_R
+    p = 0.0_wp
 
 ! Apply IBM BCs
-  IF ( imode_ibm == 1 ) THEN 
-    CALL IBM_BCS_FIELD(tmp3)
-    CALL IBM_BCS_FIELD(tmp4)
-    CALL IBM_BCS_FIELD(tmp5)
-  ENDIF
+    if (imode_ibm == 1) then
+        call IBM_BCS_FIELD(tmp3)
+        call IBM_BCS_FIELD(tmp4)
+        call IBM_BCS_FIELD(tmp5)
+    end if
 
 ! Calculate forcing term Ox
-  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp3)
-  ENDIF
-  IF (istagger .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_X(OPR_P1_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp3,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
-  ELSE
-    CALL OPR_PARTIAL_X(OPR_P1,         imax,jmax,kmax, bcs, g(1), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
-  ENDIF
-  p = p + tmp1
+    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
+    end if
+    if (istagger == 1) then
+        call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
+    else
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp1, wrk3d, wrk2d, wrk3d)
+    end if
+    p = p + tmp1
 
 ! Calculate forcing term Oy
-  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp4)
-  ENDIF
-  IF (istagger .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(1), tmp4,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp2,tmp3, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP,  imax,jmax,kmax, bcs, g(3), tmp3,tmp1, wrk3d, wrk2d,wrk3d)
-  ELSE
-    CALL OPR_PARTIAL_Y(OPR_P1,         imax,jmax,kmax, bcs, g(2), tmp4,tmp1, wrk3d, wrk2d,wrk3d)
-  ENDIF
-  p = p + tmp1
+    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
+    end if
+    if (istagger == 1) then
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp3, tmp1, wrk3d, wrk2d, wrk3d)
+    else
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp1, wrk3d, wrk2d, wrk3d)
+    end if
+    p = p + tmp1
 
 ! Calculate forcing term Oz
-  IF ( imode_eqns .EQ. DNS_EQNS_ANELASTIC ) THEN
-    CALL THERMO_ANELASTIC_WEIGHT_INPLACE(imax,jmax,kmax, rbackground, tmp5)
-  ENDIF
-  IF (istagger .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp5,tmp2, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), tmp2,tmp1, wrk3d, wrk2d,wrk3d)
-  ELSE  
-    CALL OPR_PARTIAL_Z(OPR_P1,        imax,jmax,kmax, bcs, g(3), tmp5,tmp1, wrk3d, wrk2d,wrk3d)
-  ENDIF
-  p = p + tmp1
+    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp5)
+    end if
+    if (istagger == 1) then
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
+    else
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp1, wrk3d, wrk2d, wrk3d)
+    end if
+    p = p + tmp1
 
 ! #######################################################################
 ! Solve Poisson equation
 ! #######################################################################
-! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration) 
-  ip_b =                 1
-  ip_t = imax*(jmax-1) + 1
-  IF ( istagger  .EQ. 1 ) THEN ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-    CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d,wrk3d)
-    IF ( imode_ibm == 1 ) CALL IBM_BCS_FIELD_STAGGER(tmp4)
-  ENDIF
-  DO k = 1,kmax
-    p_bcs => tmp4(ip_b:); wrk2d(1:imax,k,1) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-    p_bcs => tmp4(ip_t:); wrk2d(1:imax,k,2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-  ENDDO
+! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
+    if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
+    end if
+    p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
+    p_wrk2d(:, :, 1) = p_bcs(:, 1, :)
+    p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
-  CALL OPR_POISSON_FXZ(.FALSE., imax,jmax,kmax, g, i3, &
-       p,wrk3d, tmp1,tmp2, wrk2d(1,1,1),wrk2d(1,1,2), wrk1d,wrk1d(1,5),wrk3d)
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
 ! Stagger pressure field p back on velocity grid
-  IF (istagger .EQ. 1 ) THEN
-    CALL OPR_PARTIAL_Z(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(3), p,    tmp1, wrk3d, wrk2d,wrk3d)
-    CALL OPR_PARTIAL_X(OPR_P0_INT_PV, imax,jmax,kmax, bcs, g(1), tmp1, p,    wrk3d, wrk2d,wrk3d)
-  ENDIF
+    if (istagger == 1) then
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), p, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp1, p, wrk3d, wrk2d, wrk3d)
+    end if
 
-  NULLIFY(u,v,w, tmp3,tmp4,tmp5)
+    nullify (u, v, w, tmp3, tmp4, tmp5, p_bcs)
 
-  RETURN
-END SUBROUTINE FI_PRESSURE_BOUSSINESQ
+    return
+end subroutine FI_PRESSURE_BOUSSINESQ

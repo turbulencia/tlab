@@ -207,7 +207,7 @@ contains
 
             end select
 
-            call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+            call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
             call DNS_BOUNDS_LIMIT()
 !            if (int(logs_data(1)) /= 0) return ! Error detected
@@ -325,14 +325,12 @@ contains
 !# In incompressible mode the arrays rho, p and vis are not used
 !#
 !########################################################################
-    subroutine TIME_COURANT(q, wrk3d)
+    subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-
-        real(wp), intent(IN) :: q(imax, jmax, kmax, inb_flow_array)
-        real(wp), intent(INOUT) :: wrk3d(imax, jmax, kmax)
+        use TLAB_POINTERS_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
-        integer(wi) ipmax
+        integer(wi) ipmax, k_glo
         real(wp) dt_loc
         real(wp) pmax(3), dtc, dtd, dtr
 #ifdef USE_MPI
@@ -352,14 +350,11 @@ contains
         dtd = C_BIG_R
         dtr = C_BIG_R
 
-        ipmax = 0       ! Initialize counter of time restrictions
+        ipmax = 0       ! Initialize counter of time constraints
 
         ! ###################################################################
         ! CFL number condition
         ! ###################################################################
-#define rho(i,j,k) q(i,j,k,5)
-#define p(i,j,k)   q(i,j,k,6)
-
         ipmax = ipmax + 1
 
         ! -------------------------------------------------------------------
@@ -368,45 +363,61 @@ contains
         select case (imode_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             if (g(3)%size > 1) then
-                do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                        wrk3d(i, j, k) = abs(q(i, j, k, 1))*g(1)%jac(i + idsp, 3) &
-                                         + abs(q(i, j, k, 2))*g(2)%jac(j, 3) &
-                                         + abs(q(i, j, k, 3))*g(3)%jac(k + kdsp, 3)
-                    end do; end do; end do
-            else
-                do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                        wrk3d(i, j, k) = abs(q(i, j, k, 1))*g(1)%jac(i + idsp, 3) &
-                                         + abs(q(i, j, k, 2))*g(2)%jac(j, 3)
-                    end do; end do; end do
+                do k = 1, kmax
+                    k_glo = k + kdsp
+                    do j = 1, jmax
+                        do i = 1, imax
+                            p_wrk3d(i, j, k) = abs(u(i, j, k))*g(1)%jac(i + idsp, 3) &
+                                               + abs(v(i, j, k))*g(2)%jac(j, 3) &
+                                               + abs(w(i, j, k))*g(3)%jac(k_glo, 3)
+                        end do
+                    end do
+                end do
+            else    ! do I need this?
+                do k = 1, kmax
+                    do j = 1, jmax
+                        do i = 1, imax
+                            p_wrk3d(i, j, k) = abs(u(i, j, k))*g(1)%jac(i + idsp, 3) &
+                                               + abs(v(i, j, k))*g(2)%jac(j, 3)
+                        end do
+                    end do
+                end do
             end if
 
             ! -------------------------------------------------------------------
             ! Compressible: Calculate global maximum of (u+c)/dx + (v+c)/dy + (w+c)/dz
             ! -------------------------------------------------------------------
         case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-            wrk3d = sqrt(gama0*p(:, :, :)/rho(:, :, :)) ! sound speed; positiveness of p and rho checked in routine DNS_CONTROL
+            p_wrk3d = sqrt(gama0*p(:, :, :)/rho(:, :, :)) ! sound speed; positiveness of p and rho checked in routine DNS_CONTROL
             if (g(3)%size > 1) then
-                do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                        wrk3d(i, j, k) = (abs(q(i, j, k, 1)) + wrk3d(i, j, k))*g(1)%jac(i + idsp, 3) &
-                                         + (abs(q(i, j, k, 2)) + wrk3d(i, j, k))*g(2)%jac(j, 3) &
-                                         + (abs(q(i, j, k, 3)) + wrk3d(i, j, k))*g(3)%jac(k + kdsp, 3)
-                    end do; end do; end do
+                do k = 1, kmax
+                    k_glo = k + kdsp
+                    do j = 1, jmax
+                        do i = 1, imax
+                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*g(1)%jac(i + idsp, 3) &
+                                               + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*g(2)%jac(j, 3) &
+                                               + (abs(w(i, j, k)) + p_wrk3d(i, j, k))*g(3)%jac(k_glo, 3)
+                        end do
+                    end do
+                end do
             else
-                do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                        wrk3d(i, j, k) = (abs(q(i, j, k, 1)) + wrk3d(i, j, k))*g(1)%jac(i + idsp, 3) &
-                                         + (abs(q(i, j, k, 2)) + wrk3d(i, j, k))*g(2)%jac(j, 3)
-                    end do; end do; end do
+                do k = 1, kmax
+                    do j = 1, jmax
+                        do i = 1, imax
+                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*g(1)%jac(i + idsp, 3) &
+                                               + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*g(2)%jac(j, 3)
+                        end do
+                    end do
+                end do
             end if
 
         end select
 
-        pmax(1) = maxval(wrk3d)
+        pmax(1) = maxval(p_wrk3d)
 
         ! ###################################################################
         ! Diffusion number condition
         ! ###################################################################
-#define vis(i,j,k) q(i,j,k,8)
-
         ipmax = ipmax + 1
 
         ! -------------------------------------------------------------------
@@ -422,35 +433,49 @@ contains
         case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
             if (itransport == EQNS_TRANS_POWERLAW) then
                 if (g(3)%size > 1) then
-                    do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                         wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k + kdsp, 4))*vis(i, j, k)/rho(i, j, k)
-                        end do; end do; end do
+                    do k = 1, kmax
+                        k_glo = k + kdsp
+                        do j = 1, jmax
+                            do i = 1, imax
+                       p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
+                            end do
+                        end do
+                    end do
                 else
-                    do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                            wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4))*vis(i, j, k)/rho(i, j, k)
-                        end do; end do; end do
+                    do k = 1, kmax
+                        do j = 1, jmax
+                            do i = 1, imax
+                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4))*vis(i, j, k)/rho(i, j, k)
+                            end do
+                        end do
+                    end do
                 end if
 
             else ! constant dynamic viscosity
                 if (g(3)%size > 1) then
-                    do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                            wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k + kdsp, 4))/rho(i, j, k)
-                        end do; end do; end do
+                    do k = 1, kmax
+                        k_glo = k + kdsp
+                        do j = 1, jmax
+                            do i = 1, imax
+                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))/rho(i, j, k)
+                            end do
+                        end do
+                    end do
                 else
-                    do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                            wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4))/rho(i, j, k)
-                        end do; end do; end do
+                    do k = 1, kmax
+                        do j = 1, jmax
+                            do i = 1, imax
+                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4))/rho(i, j, k)
+                            end do
+                        end do
+                    end do
                 end if
 
             end if
 
-            pmax(2) = schmidtfactor*maxval(wrk3d)
+            pmax(2) = schmidtfactor*maxval(p_wrk3d)
 
         end select
-
-#undef rho
-#undef p
-#undef vis
 
         ! ###################################################################
         ! Final operations
@@ -499,7 +524,8 @@ contains
         use DNS_ARRAYS
         use DNS_LOCAL, only: imode_rhs
         use BOUNDARY_BUFFER
-
+        use FI_SOURCES
+        
         ! -----------------------------------------------------------------------
         integer(wi) ij_srt, ij_end, ij_siz    !  Variables for OpenMP Partitioning
 
@@ -514,44 +540,38 @@ contains
 
         select case (iadvection)
         case (EQNS_DIVERGENCE)
-            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                       q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
+            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
 
-            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
             do is = 1, inb_scal
-                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is, q(1, 1), q(1, 2), q(1, 3), s(1, is), hs(1, is), &
-                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
             end do
 
         case (EQNS_SKEWSYMMETRIC)
-            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                       q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
+            call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 
-            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
             do is = 1, inb_scal
-                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is, q(1, 1), q(1, 2), q(1, 3), s(1, is), hs(1, is), &
-                                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
             end do
 
         case (EQNS_CONVECTIVE)
             select case (imode_rhs)
             case (EQNS_RHS_SPLIT)
-                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-                call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), hq(1, 1), hq(1, 2), hq(1, 3), &
-                                       q, hq, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
+                call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 
-                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
+                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
                 do is = 1, inb_scal
-                    call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is, q(1, 1), q(1, 2), q(1, 3), s(1, is), hs(1, is), &
-                                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk1d, wrk2d, wrk3d)
+                    call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
                 end do
 
             case (EQNS_RHS_COMBINED)
-                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1), wrk1d, wrk2d, wrk3d)
-                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), wrk1d, wrk2d, wrk3d)
-       call RHS_GLOBAL_INCOMPRESSIBLE_1(q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
+                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
+                call RHS_GLOBAL_INCOMPRESSIBLE_1()
 
             case (EQNS_RHS_NONBLOCKING)
 #ifdef USE_PSFFT
@@ -569,7 +589,7 @@ contains
         end select
 
         if (BuffType == DNS_BUFFER_RELAX .or. BuffType == DNS_BUFFER_BOTH) then
-            call BOUNDARY_BUFFER_RELAX_SCAL(s, hs, q) ! Flow part needs to be taken into account in the pressure
+            call BOUNDARY_BUFFER_RELAX_SCAL() ! Flow part needs to be taken into account in the pressure
         end if
 
         ! #######################################################################
@@ -642,6 +662,7 @@ contains
 !########################################################################
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
         use TLAB_ARRAYS
+        use TLAB_POINTERS
         use DNS_ARRAYS
         use BOUNDARY_BUFFER
         use BOUNDARY_BCS, only: BcsDrift
@@ -652,22 +673,6 @@ contains
         real(wp) M2_max, dummy
         integer(wi) inb_scal_loc
 
-        ! Pointers to existing allocated space
-        real(wp), dimension(:), pointer :: u, v, w, e, rho, p, T, vis
-
-        ! ###################################################################
-        ! Define pointers
-        u => q(:, 1)
-        v => q(:, 2)
-        w => q(:, 3)
-
-        e => q(:, 4)
-        rho => q(:, 5)
-        p => q(:, 6)
-        T => q(:, 7)
-
-        vis => q(:, 8)
-
         ! ###################################################################
         ! Evaluate standard RHS of equations
         ! global formulation
@@ -676,11 +681,10 @@ contains
             iadvection == EQNS_SKEWSYMMETRIC .and. &
             iviscous == EQNS_EXPLICIT .and. &
             idiffusion == EQNS_EXPLICIT) then
-            call RHS_FLOW_GLOBAL_2(rho, u, v, w, p, e, T, s, hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+            call RHS_FLOW_GLOBAL_2()
+
             do is = 1, inb_scal
-                call RHS_SCAL_GLOBAL_2(is, rho, u, v, w, s, T, hs, hq(1, 4), &
-                                       txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                call RHS_SCAL_GLOBAL_2(is)
             end do
 
         else
@@ -786,8 +790,8 @@ contains
         ! Impose buffer zone as relaxation terms
         ! ###################################################################
         if (BuffType == DNS_BUFFER_RELAX .or. BuffType == DNS_BUFFER_BOTH) then
-            call BOUNDARY_BUFFER_RELAX_FLOW(q, hq)
-            call BOUNDARY_BUFFER_RELAX_SCAL(s, hs, q)
+            call BOUNDARY_BUFFER_RELAX_FLOW()
+            call BOUNDARY_BUFFER_RELAX_SCAL()
         end if
 
         ! ###################################################################
@@ -875,7 +879,7 @@ contains
         ! ###################################################################
         if (BuffType == DNS_BUFFER_FILTER .or. BuffType == DNS_BUFFER_BOTH) then
             call BOUNDARY_BUFFER_FILTER &
-                (rho, u, v, w, e, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                (rho, u, v, w, e, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         end if
 
         return
@@ -899,7 +903,7 @@ contains
 
         !#####################################################################
         call RHS_PART_1()
-        
+
         !#######################################################################
         ! Update particle properties
         !#######################################################################

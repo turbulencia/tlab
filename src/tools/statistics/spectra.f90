@@ -45,6 +45,7 @@ program SPECTRA
     use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLAB_MPI_PROCS
 #endif
+    use FI_SOURCES, only: FI_BUOYANCY
     use THERMO_VARS, only: imixture
     use IBM_VARS
     use IO_FIELDS
@@ -396,10 +397,10 @@ program SPECTRA
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
     if (ifourier == 1) then
-        call OPR_FOURIER_INITIALIZE(txc, wrk1d, wrk2d, wrk3d)
+        call OPR_FOURIER_INITIALIZE()
     end if
 
-    call OPR_CHECK(imax, jmax, kmax, q, txc, wrk2d, wrk3d)
+    call OPR_CHECK()
 
 ! -------------------------------------------------------------------
 ! Initialize IBM geometry
@@ -530,11 +531,11 @@ program SPECTRA
             if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
-        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s, wrk3d)
+        call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
 ! Calculate additional diagnostic quantities to be processed
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3), wrk1d, wrk2d, wrk3d)
+            call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3))
             if (flag_buoyancy == 1) then
                 if (buoyancy%type == EQNS_EXPLICIT) then
                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, s(1, inb_scal_array))

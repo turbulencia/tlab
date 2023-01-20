@@ -23,6 +23,7 @@ PROGRAM VINTEGRAL
 
   USE TLAB_TYPES, ONLY : grid_dt
   USE TLAB_VARS,  ONLY : C1N6M_ALPHA
+  use OPR_PARTIAL
 
   IMPLICIT NONE
 
@@ -36,7 +37,7 @@ PROGRAM VINTEGRAL
   TREAL,    DIMENSION(imax         ) :: u, w_n, f
   TREAL,    DIMENSION(imax         ) :: du1_a, dw1_n, du2_a
   TREAL,    DIMENSION(imax,8       ) :: wrk1d
-  TREAL,    DIMENSION(2   ,2       ) :: bcs
+  integer,    DIMENSION(2   ,2       ) :: bcs
   TREAL                              :: lambda, error, sol, dummy, wk, x_0
   TINTEGER                           :: test_type, ibc
   TINTEGER                           :: imin_loc, imax_loc
