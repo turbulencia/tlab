@@ -288,7 +288,7 @@ program AVERAGES
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
+    call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)

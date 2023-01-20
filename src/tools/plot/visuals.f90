@@ -315,7 +315,7 @@ program VISUALS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+    call FI_BACKGROUND_INITIALIZE() ! Initialize thermodynamic quantities
 
     if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()

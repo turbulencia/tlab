@@ -53,6 +53,7 @@ module TLAB_POINTERS_3D
 
     real(wp), pointer :: p_q(:,:,:,:) => null()
     real(wp), pointer :: p_s(:,:,:,:) => null()
+    real(wp), pointer :: p_wrk1d(:,:) => null()
     real(wp), pointer :: p_wrk2d(:,:,:) => null()
     real(wp), pointer :: p_wrk3d(:,:,:) => null()
 
