@@ -108,6 +108,25 @@ program TRANSFIELDS
         opt_main = int(opt_vec(1))
     end if
 
+    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+
+    if (sRes == '-1') then
+#ifdef USE_MPI
+#else
+        write (*, *) 'Subdomain limits ?'
+        read (*, '(A64)') sRes
+#endif
+    end if
+    idummy = 6
+    call LIST_INTEGER(sRes, idummy, subdomain)
+
+    if (idummy < 6) then ! default
+        subdomain(1) = 1; subdomain(2) = g(1)%size
+        subdomain(3) = 1; subdomain(4) = g(2)%size
+        subdomain(5) = 1; subdomain(6) = g(3)%size
+    end if
+    
+    ! -------------------------------------------------------------------
     select case (opt_main)
     case (:0)
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [ParamTransform] in dns.ini.')
@@ -198,25 +217,6 @@ program TRANSFIELDS
         end if
 
     end select
-
-    ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
-
-    if (sRes == '-1') then
-#ifdef USE_MPI
-#else
-        write (*, *) 'Subdomain limits ?'
-        read (*, '(A64)') sRes
-#endif
-    end if
-    idummy = 6
-    call LIST_INTEGER(sRes, idummy, subdomain)
-
-    if (idummy < 6) then ! default
-        subdomain(1) = 1; subdomain(2) = g(1)%size
-        subdomain(3) = 1; subdomain(4) = g(2)%size
-        subdomain(5) = 1; subdomain(6) = g(3)%size
-    end if
 
     ! -------------------------------------------------------------------
     select case (opt_main)
