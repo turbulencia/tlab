@@ -35,8 +35,6 @@ program VISUALS
     
     implicit none
 
-#include "integers.h"
-
     ! Parameter definitions
     TINTEGER, parameter :: itime_size_max = 3000
     TINTEGER, parameter :: iopt_size_max = 20
@@ -74,6 +72,8 @@ program VISUALS
 
     TINTEGER params_size
     TREAL params(params_size_max)
+
+    integer, parameter :: i0 = 0, i1 = 1, i3 = 3, i6 = 6
 
     !########################################################################
     !########################################################################
@@ -362,14 +362,14 @@ program VISUALS
 
         if (icalc_scal == 1 .and. iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
         elseif (icalc_scal == 0) then
             s = C_0_R
         end if
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
         end if
 
         if (imode_ibm == 1) then
@@ -391,7 +391,7 @@ program VISUALS
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! Read external file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname)); params_size = 2
-            call IO_READ_FIELD_INT1(fname, i1, imax, jmax, kmax, itime, params_size, params, gate)
+            call IO_READ_FIELD_INT1(fname, 1, imax, jmax, kmax, itime, params_size, params, gate)
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then

@@ -58,8 +58,6 @@ program SPECTRA
 
     implicit none
 
-#include "integers.h"
-
 ! Parameter definitions
     TINTEGER, parameter :: itime_size_max = 512
     TINTEGER, parameter :: iopt_size_max = 20
@@ -103,6 +101,8 @@ program SPECTRA
 
     TINTEGER iopt_size
     TREAL opt_vec(iopt_size_max)
+
+    integer, parameter :: i0 = 0, i1 = 1, i2 = 2, i3 = 3
 
 #ifdef USE_MPI
     TINTEGER id
@@ -518,12 +518,12 @@ program SPECTRA
 
         if (iread_flow == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
         end if
 
         if (iread_scal == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
         end if
 
         if (imode_ibm == 1) then
@@ -551,7 +551,7 @@ program SPECTRA
 ! remove mean -- fluctuation only for spectrum
         if (opt_main >= 5) then ! 3D spectra
             do iv = 1, nfield_ref
-                dummy = AVG1V2D(imax*jmax, i1, kmax, i1, i1, vars(iv)%field)  ! 3D average
+                dummy = AVG1V2D(imax*jmax, 1, kmax, 1, 1, vars(iv)%field)  ! 3D average
                 vars(iv)%field = vars(iv)%field - dummy
             end do
         else

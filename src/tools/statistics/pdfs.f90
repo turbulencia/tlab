@@ -25,8 +25,6 @@ program PDFS
 
     implicit none
 
-#include "integers.h"
-
     TINTEGER, parameter :: itime_size_max = 512
     TINTEGER, parameter :: iopt_size_max = 20
     TINTEGER, parameter :: igate_size_max = 8
@@ -37,7 +35,8 @@ program PDFS
     TREAL, allocatable :: pdf(:), y_aux(:)
     integer(1), allocatable :: gate(:)
     type(pointers_dt) :: vars(16)
-
+    integer, parameter :: i1 = 1
+    
     ! -------------------------------------------------------------------
     ! Local variables
     ! -------------------------------------------------------------------
@@ -273,12 +272,12 @@ program PDFS
 
         if (iread_scal == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
         end if
 
         if (iread_flow == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
@@ -288,7 +287,7 @@ program PDFS
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! External file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname)); params_size = 2
-            call IO_READ_FIELD_INT1(fname, i1, imax, jmax, kmax, itime, params_size, params, gate)
+            call IO_READ_FIELD_INT1(fname, 1, imax, jmax, kmax, itime, params_size, params, gate)
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then

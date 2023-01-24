@@ -6,626 +6,623 @@
 
 !########################################################################
 !########################################################################
-SUBROUTINE INTEGRATE_SPECTRUM(nx,ny,nz, kr_total, isize_aux, &
-     spec_2d, data_x,data_z,spec_r, tmp_x,tmp_z,wrk2d)
+subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
+                              spec_2d, data_x, data_z, spec_r, tmp_x, tmp_z, wrk2d)
 
-  USE TLAB_VARS, ONLY : g
+    use TLAB_VARS, only: g
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_err
-  USE TLAB_MPI_VARS, ONLY : ims_npro_i, ims_npro_k
-  USE TLAB_MPI_VARS, ONLY : ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  USE TLAB_MPI_VARS, ONLY : ims_comm_x, ims_comm_z
-  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
-  USE TLAB_MPI_PROCS
+    use MPI
+    use TLAB_MPI_VARS, only: ims_err
+    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLAB_MPI_VARS, only: ims_comm_x, ims_comm_z
+    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLAB_MPI_PROCS
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                   INTENT(IN)  :: nx,ny,nz, kr_total, isize_aux
-  TREAL, DIMENSION(nx,ny,nz), INTENT(IN)  :: spec_2d ! power spectral density
+    TINTEGER, intent(IN) :: nx, ny, nz, kr_total, isize_aux
+    TREAL, dimension(nx, ny, nz), intent(IN) :: spec_2d ! power spectral density
 
-  TREAL, DIMENSION(kr_total,ny), INTENT(OUT) :: spec_r
+    TREAL, dimension(kr_total, ny), intent(OUT) :: spec_r
 
-  TREAL, DIMENSION(nx,ny),          INTENT(OUT)   :: data_x
-  TREAL, DIMENSION(nx,ny,2),        INTENT(INOUT) :: tmp_x
-  TREAL, DIMENSION(nz/2,ny),        INTENT(OUT)   :: data_z
-  TREAL, DIMENSION(isize_aux,nz,2), INTENT(INOUT) :: tmp_z ! need space for transpostion
+    TREAL, dimension(nx, ny), intent(OUT) :: data_x
+    TREAL, dimension(nx, ny, 2), intent(INOUT) :: tmp_x
+    TREAL, dimension(nz/2, ny), intent(OUT) :: data_z
+    TREAL, dimension(isize_aux, nz, 2), intent(INOUT) :: tmp_z ! need space for transpostion
 
 #ifdef USE_MPI
-  TREAL, DIMENSION(isize_aux/ims_npro_k,g(3)%size,2), INTENT(INOUT) :: wrk2d
+    TREAL, dimension(isize_aux/ims_npro_k, g(3)%size, 2), intent(INOUT) :: wrk2d
 #else
-  TREAL, DIMENSION(ny,g(3)%size,2), INTENT(INOUT) :: wrk2d
+    TREAL, dimension(ny, g(3)%size, 2), intent(INOUT) :: wrk2d
 #endif
 
 ! -----------------------------------------------------------------------
-  TINTEGER :: i,k, kx_global,kz_global,kr_global, flag, ny_local
+    TINTEGER :: i, k, kx_global, kz_global, kr_global, flag, ny_local
 #ifdef USE_MPI
-  TINTEGER count, id
+    TINTEGER count, id
 #endif
 
 ! #######################################################################
-  tmp_x = 0; tmp_z = 0; wrk2d = 0
+    tmp_x = 0; tmp_z = 0; wrk2d = 0
 
-  DO k=1,nz
+    do k = 1, nz
 #ifdef USE_MPI
-     kz_global = k+ ims_offset_k
+        kz_global = k + ims_offset_k
 #else
-     kz_global = k
+        kz_global = k
 #endif
 
-     tmp_x(:,:,1) = tmp_x(:,:,1) + spec_2d(:,:,k)
+        tmp_x(:, :, 1) = tmp_x(:, :, 1) + spec_2d(:, :, k)
 
-     IF ( kz_global .LE. g(3)%size/2 ) THEN; kz_global = g(3)%size/2 - kz_global + 2; flag = 1
-     ELSE;                                    kz_global = kz_global - g(3)%size/2;     flag = 0
-     ENDIF
+        if (kz_global <= g(3)%size/2) then; kz_global = g(3)%size/2 - kz_global + 2; flag = 1
+        else; kz_global = kz_global - g(3)%size/2; flag = 0
+        end if
 ! drop the Nyquist frequency; we add it to the previous mode to keep structure below
-     IF ( kz_global .EQ. g(3)%size/2+1 ) kz_global = MAX(g(3)%size/2,1)
+        if (kz_global == g(3)%size/2 + 1) kz_global = max(g(3)%size/2, 1)
 
-     DO i=1,nx
+        do i = 1, nx
 #ifdef USE_MPI
-        kx_global = i+ ims_offset_i/2
+            kx_global = i + ims_offset_i/2
 #else
-        kx_global = i
+            kx_global = i
 #endif
 
-        tmp_z(1:ny,k,1) = tmp_z(1:ny,k,1) + spec_2d(i,1:ny,k)
+            tmp_z(1:ny, k, 1) = tmp_z(1:ny, k, 1) + spec_2d(i, 1:ny, k)
 
-        kr_global = INT( SQRT( M_REAL((kx_global-1)**2 + (kz_global-1)**2) ) ) + 1
-        IF ( kr_global .LE. kr_total ) &
-           spec_r(kr_global,:) = spec_r(kr_global,:) + spec_2d(i,:,k)
+            kr_global = int(sqrt(M_REAL((kx_global - 1)**2 + (kz_global - 1)**2))) + 1
+            if (kr_global <= kr_total) &
+                spec_r(kr_global, :) = spec_r(kr_global, :) + spec_2d(i, :, k)
 
 ! correction; half of the modes kx_global=1 have been counted twice
-        IF ( kx_global .EQ. 1 .AND. flag .EQ. 1 ) THEN
-           tmp_z(1:ny,k,1) = tmp_z(1:ny,k,1) - spec_2d(i,1:ny,k)
+            if (kx_global == 1 .and. flag == 1) then
+                tmp_z(1:ny, k, 1) = tmp_z(1:ny, k, 1) - spec_2d(i, 1:ny, k)
 
-           IF ( kr_global .LE. kr_total ) &
-                spec_r(kr_global,:) = spec_r(kr_global,:) - spec_2d(i,:,k)
-        ENDIF
+                if (kr_global <= kr_total) &
+                    spec_r(kr_global, :) = spec_r(kr_global, :) - spec_2d(i, :, k)
+            end if
 
 ! correction; half of the modes kz_global=1 need to be counted twice
-        IF ( kz_global .EQ. 1 .AND. kx_global .GT. 1 ) THEN
-           tmp_z(1:ny,k,1) = tmp_z(1:ny,k,1) + spec_2d(i,1:ny,k)
-        ENDIF
+            if (kz_global == 1 .and. kx_global > 1) then
+                tmp_z(1:ny, k, 1) = tmp_z(1:ny, k, 1) + spec_2d(i, 1:ny, k)
+            end if
 
-     ENDDO
-  ENDDO
+        end do
+    end do
 
 ! Finalize Ox spectrum
 #ifdef USE_MPI
-  count = nx*ny
-  CALL MPI_ALLREDUCE(tmp_x(:,:,1), tmp_x(:,:,2), count, MPI_REAL8, MPI_SUM, ims_comm_z, ims_err)
-  data_x(:,:) = data_x(:,:) + tmp_x(:,:,2)
+    count = nx*ny
+    call MPI_ALLREDUCE(tmp_x(:, :, 1), tmp_x(:, :, 2), count, MPI_REAL8, MPI_SUM, ims_comm_z, ims_err)
+    data_x(:, :) = data_x(:, :) + tmp_x(:, :, 2)
 
 #else
-  data_x(:,:) = data_x(:,:) + tmp_x(:,:,1)
+    data_x(:, :) = data_x(:, :) + tmp_x(:, :, 1)
 
 #endif
 
 ! Finalize Oz spectrum
 #ifdef USE_MPI
-  count = isize_aux*nz
-  CALL MPI_ALLREDUCE(tmp_z(:,:,1), tmp_z(:,:,2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
+    count = isize_aux*nz
+    call MPI_ALLREDUCE(tmp_z(:, :, 1), tmp_z(:, :, 2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
-  IF ( ims_npro_k .GT. 1 ) THEN
-     id = TLAB_MPI_K_AUX2
-     CALL TLAB_MPI_TRPF_K(tmp_z(:,:,2), wrk2d(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+    if (ims_npro_k > 1) then
+        id = TLAB_MPI_K_AUX2
+        call TLAB_MPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
-  ELSE
-     wrk2d(1:ny*nz,1,1) = tmp_z(1:ny*nz,1,2)
+    else
+        wrk2d(1:ny*nz, 1, 1) = tmp_z(1:ny*nz, 1, 2)
 
-  ENDIF
+    end if
 
-  ny_local = isize_aux/ims_npro_k
+    ny_local = isize_aux/ims_npro_k
 
 #else
-  wrk2d(1:ny*nz,1,1) = tmp_z(1:ny*nz,1,1)
+    wrk2d(1:ny*nz, 1, 1) = tmp_z(1:ny*nz, 1, 1)
 
-  ny_local = ny
+    ny_local = ny
 
 #endif
 
-
-  DO k = 1,g(3)%size
-     kz_global = k
-     IF ( kz_global .LE. g(3)%size/2 ) THEN; kz_global = g(3)%size/2 - kz_global + 2
-     ELSE;                                    kz_global = kz_global - g(3)%size/2
-     ENDIF
+    do k = 1, g(3)%size
+        kz_global = k
+        if (kz_global <= g(3)%size/2) then; kz_global = g(3)%size/2 - kz_global + 2
+        else; kz_global = kz_global - g(3)%size/2
+        end if
 ! drop the Nyquist frequency; we add it to the previous mode to keep structure below
-     IF ( kz_global .EQ. g(3)%size/2+1 ) kz_global = MAX(g(3)%size/2,1)
+        if (kz_global == g(3)%size/2 + 1) kz_global = max(g(3)%size/2, 1)
 
-     wrk2d(1:ny_local,kz_global,2) = wrk2d(1:ny_local,kz_global,2) + wrk2d(1:ny_local,k,1)
+        wrk2d(1:ny_local, kz_global, 2) = wrk2d(1:ny_local, kz_global, 2) + wrk2d(1:ny_local, k, 1)
 
-  ENDDO
-
-#ifdef USE_MPI
-  IF ( ims_npro_k .GT. 1 ) THEN
-     count = g(3)%size/2 /ims_npro_k ! add strides for the transposition
-     DO k = 1,g(3)%size/2,count
-        wrk2d(1:ny_local*count,(k-1)*2+1,1) =  wrk2d(1:ny_local*count,k,2)
-     ENDDO
-
-     CALL TLAB_MPI_TRPB_K(wrk2d(:,:,1), tmp_z(:,:,1), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-
-  ELSE
-#endif
-
-     tmp_z(1:isize_aux*nz,1,1) = wrk2d(1:ny_local*g(3)%size,1,2)
+    end do
 
 #ifdef USE_MPI
-  ENDIF
+    if (ims_npro_k > 1) then
+        count = g(3)%size/2/ims_npro_k ! add strides for the transposition
+        do k = 1, g(3)%size/2, count
+            wrk2d(1:ny_local*count, (k - 1)*2 + 1, 1) = wrk2d(1:ny_local*count, k, 2)
+        end do
+
+        call TLAB_MPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+
+    else
 #endif
 
-  DO k = 1,nz/2
-     data_z(k,1:ny) = data_z(k,1:ny) + tmp_z(1:ny,k,1)
-  ENDDO
+        tmp_z(1:isize_aux*nz, 1, 1) = wrk2d(1:ny_local*g(3)%size, 1, 2)
 
-  RETURN
-END SUBROUTINE INTEGRATE_SPECTRUM
+#ifdef USE_MPI
+    end if
+#endif
+
+    do k = 1, nz/2
+        data_z(k, 1:ny) = data_z(k, 1:ny) + tmp_z(1:ny, k, 1)
+    end do
+
+    return
+end subroutine INTEGRATE_SPECTRUM
 
 !########################################################################
 !########################################################################
-SUBROUTINE REDUCE_SPECTRUM(nx,ny,nz, nblock, in,out, tmp1,variance)
+subroutine REDUCE_SPECTRUM(nx, ny, nz, nblock, in, out, tmp1, variance)
 
-  USE TLAB_VARS, ONLY : isize_txc_dimz
+    use TLAB_VARS, only: isize_txc_dimz
 
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS,    ONLY : ims_offset_i, ims_pro_i, ims_npro_i, ims_err
+    use MPI
+    use TLAB_MPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-#include "integers.h"
-
-  TINTEGER,                                 INTENT(IN)  :: nx,ny,nz, nblock
-  TCOMPLEX, DIMENSION(isize_txc_dimz/2,nz), INTENT(IN)  :: in, tmp1
-  TREAL,    DIMENSION(nx/2,ny/nblock,2*nz), INTENT(OUT) :: out ! Amplitude (1:nz) and Phase (nz+1:2*nz)
-  TREAL,    DIMENSION(ny,2)                             :: variance
+    TINTEGER, intent(IN) :: nx, ny, nz, nblock
+    TCOMPLEX, dimension(isize_txc_dimz/2, nz), intent(IN) :: in, tmp1
+    TREAL, dimension(nx/2, ny/nblock, 2*nz), intent(OUT) :: out ! Amplitude (1:nz) and Phase (nz+1:2*nz)
+    TREAL, dimension(ny, 2) :: variance
 
 ! -----------------------------------------------------------------------
-  TINTEGER :: kx,y,kz, ipy, ip, kx_global, ny_loc
-  TCOMPLEX :: cdummy
-  TREAL    :: power
+    TINTEGER :: kx, y, kz, ipy, ip, kx_global, ny_loc
+    TCOMPLEX :: cdummy
+    TREAL :: power
 
 ! #######################################################################
 ! Calculate PSD and phase
 ! #######################################################################
-  variance = C_0_R ! use variance to control result
+    variance = C_0_R ! use variance to control result
 
 ! Drop the uppermost ny%nblock lines as there would not be
 ! nblock levels contributing to the output
-  ny_loc = ny - MOD(ny,nblock)
+    ny_loc = ny - mod(ny, nblock)
 
-  DO kz=1,nz
+    do kz = 1, nz
 
-     DO y=1,ny_loc
-        ipy = (y-1)/nblock + 1
+        do y = 1, ny_loc
+            ipy = (y - 1)/nblock + 1
 
 ! Drop the Nyquist frequency nx/2+1;
 ! keeping it would make writing inhomogeneous across processors
-        DO kx=1,nx/2
+            do kx = 1, nx/2
 #ifdef USE_MPI
-     kx_global = kx + ims_offset_i
+                kx_global = kx + ims_offset_i
 #else
-     kx_global = kx
+                kx_global = kx
 #endif
-           ip = (nx/2+1) * (y-1) + kx
+                ip = (nx/2 + 1)*(y - 1) + kx
 
-           power = REAL(in(ip,kz))
-           out(kx, ipy, kz) = out(kx, ipy, kz) + power
+                power = real(in(ip, kz))
+                out(kx, ipy, kz) = out(kx, ipy, kz) + power
 
 ! phase; calculate phase only if there is some power
-           IF ( power .GE. 1.e-16 ) THEN
-              cdummy = tmp1(ip,kz)
-              out(kx, ipy, kz+nz) = out(kx, ipy, kz+nz) + ATAN2(AIMAG(cdummy),REAL(cdummy))
-           ENDIF
+                if (power >= 1.e-16) then
+                    cdummy = tmp1(ip, kz)
+                    out(kx, ipy, kz + nz) = out(kx, ipy, kz + nz) + atan2(aimag(cdummy), real(cdummy))
+                end if
 
 ! use variance to control result
-           IF ( kx_global .EQ. i1 ) THEN; variance(y,1) = variance(y,1) + power
-           ELSE;                          variance(y,1) = variance(y,1) + power*C_2_R
-           ENDIF
+                if (kx_global == 1) then; variance(y, 1) = variance(y, 1) + power
+                else; variance(y, 1) = variance(y, 1) + power*C_2_R
+                end if
 
-        ENDDO
+            end do
 
 ! add variance from nyquist frequency for the Parseval identity to hold
 #ifdef USE_MPI
-        IF ( ims_pro_i .EQ. ims_npro_i - i1 ) THEN
+            if (ims_pro_i == ims_npro_i - 1) then
 #endif
-           ip = (nx/2+1) * (y-1) + nx/2+1
-           variance(y,1) = variance(y,1) + REAL(in(ip,kz))
+                ip = (nx/2 + 1)*(y - 1) + nx/2 + 1
+                variance(y, 1) = variance(y, 1) + real(in(ip, kz))
 #ifdef USE_MPI
-        ENDIF
+            end if
 #endif
 
-     ENDDO
-  ENDDO
+        end do
+    end do
 
 ! use variance to control result
 #ifdef USE_MPI
-  variance(:,2) = variance(:,1)
-  CALL MPI_AllReduce(variance(1,2),variance(1,1),ny_loc,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ims_err)
+    variance(:, 2) = variance(:, 1)
+    call MPI_AllReduce(variance(1, 2), variance(1, 1), ny_loc, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
 
-  RETURN
+    return
 
-END SUBROUTINE REDUCE_SPECTRUM
+end subroutine REDUCE_SPECTRUM
 
 !########################################################################
 !########################################################################
-SUBROUTINE REDUCE_CORRELATION(nx,ny,nz, nblock, nr_total, &
-     in, data_2d,data_x,data_z,data_r, variance1, variance2, icalc_radial)
+subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
+                              in, data_2d, data_x, data_z, data_r, variance1, variance2, icalc_radial)
 
-  USE TLAB_VARS, ONLY : isize_wrk1d
+    use TLAB_VARS, only: isize_wrk1d
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
+    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                             INTENT(IN)  :: nx,ny,nz, nblock, nr_total
-  TINTEGER,OPTIONAL,                    INTENT(IN)  :: icalc_radial ! whether to reduce radial correlations or not
-  TREAL, DIMENSION(nx,ny,nz),           INTENT(IN)  :: in
-  TREAL, DIMENSION(nx,ny/nblock,nz),    INTENT(OUT) :: data_2d
-  TREAL, DIMENSION(nx,ny/nblock),       INTENT(OUT) :: data_x
-  TREAL, DIMENSION(nz,ny/nblock),       INTENT(OUT) :: data_z
-  TREAL, DIMENSION(nr_total,ny/nblock), INTENT(OUT) :: data_r
-  TREAL, DIMENSION(isize_wrk1d,2),      INTENT(IN)  :: variance1 ! to normalize
-  TREAL, DIMENSION(isize_wrk1d),        INTENT(OUT) :: variance2 ! to validate
+    TINTEGER, intent(IN) :: nx, ny, nz, nblock, nr_total
+    TINTEGER, optional, intent(IN) :: icalc_radial ! whether to reduce radial correlations or not
+    TREAL, dimension(nx, ny, nz), intent(IN) :: in
+    TREAL, dimension(nx, ny/nblock, nz), intent(OUT) :: data_2d
+    TREAL, dimension(nx, ny/nblock), intent(OUT) :: data_x
+    TREAL, dimension(nz, ny/nblock), intent(OUT) :: data_z
+    TREAL, dimension(nr_total, ny/nblock), intent(OUT) :: data_r
+    TREAL, dimension(isize_wrk1d, 2), intent(IN) :: variance1 ! to normalize
+    TREAL, dimension(isize_wrk1d), intent(OUT) :: variance2 ! to validate
 
 ! -----------------------------------------------------------------------
-  TINTEGER i,j,k, ipy,ny_loc, i_global,k_global, r_global
-  TREAL norm
+    TINTEGER i, j, k, ipy, ny_loc, i_global, k_global, r_global
+    TREAL norm
 
 ! #######################################################################
-  variance2(:) = C_0_R ! use variance to control result
+    variance2(:) = C_0_R ! use variance to control result
 
 ! Drop the uppermost ny%nblock lines as there would not be
 ! nblock levels contributing to the output
-  ny_loc = ny - MOD(ny,nblock)
+    ny_loc = ny - mod(ny, nblock)
 
-  DO j=1,ny_loc
-     ipy = (j-1)/nblock + 1
-     norm = SQRT(variance1(j,1))*SQRT(variance1(j,2))
-     IF ( norm .GT. C_0_R ) THEN; norm = C_1_R/norm
-     ELSE;                        norm = C_1_R
-     ENDIF
+    do j = 1, ny_loc
+        ipy = (j - 1)/nblock + 1
+        norm = sqrt(variance1(j, 1))*sqrt(variance1(j, 2))
+        if (norm > C_0_R) then; norm = C_1_R/norm
+        else; norm = C_1_R
+        end if
 
-     DO k=1,nz
+        do k = 1, nz
 #ifdef USE_MPI
-        k_global = k+ ims_offset_k
+            k_global = k + ims_offset_k
+#else
+            k_global = k
+#endif
+
+            do i = 1, nx
+#ifdef USE_MPI
+                i_global = i + ims_offset_i
+#else
+                i_global = i
+#endif
+
+! Reduce 2D data
+                data_2d(i, ipy, k) = data_2d(i, ipy, k) + in(i, j, k)*norm
+
+! Reduce 1D data
+                if (k_global == 1) data_x(i, ipy) = data_x(i, ipy) + in(i, j, k)*norm
+
+                if (i_global == 1) data_z(k, ipy) = data_z(k, ipy) + in(i, j, k)*norm
+
+                if (icalc_radial == 1) then
+                    r_global = int(sqrt(M_REAL((k_global - 1)**2 + (i_global - 1)**2))) + 1
+                    if (r_global <= nr_total) data_r(r_global, ipy) = data_r(r_global, ipy) + in(i, j, k)*norm
+
+                end if
+! use variance to control result
+                if (i_global == 1 .and. k_global == 1) variance2(j) = in(i, j, k)
+
+            end do
+        end do
+    end do
+
+    return
+end subroutine REDUCE_CORRELATION
+
+!########################################################################
+!########################################################################
+subroutine RADIAL_SAMPLESIZE(nx, nz, nr_total, samplesize)
+
+#ifdef USE_MPI
+    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+#endif
+
+    implicit none
+
+    TINTEGER, intent(IN) :: nx, nz, nr_total
+    TREAL, dimension(nr_total), intent(OUT) :: samplesize
+
+! -----------------------------------------------------------------------
+    TINTEGER i, k, i_global, k_global, r_global
+
+! #######################################################################
+    do k = 1, nz
+#ifdef USE_MPI
+        k_global = k + ims_offset_k
 #else
         k_global = k
 #endif
 
-        DO i=1,nx
+        do i = 1, nx
 #ifdef USE_MPI
-           i_global = i+ ims_offset_i
+            i_global = i + ims_offset_i
 #else
-           i_global = i
+            i_global = i
 #endif
+            r_global = int(sqrt(M_REAL((k_global - 1)**2 + (i_global - 1)**2))) + 1
+            if (r_global <= nr_total) samplesize(r_global) = samplesize(r_global) + C_1_R
 
-! Reduce 2D data
-           data_2d(i, ipy, k) = data_2d(i, ipy, k) + in(i,j,k)*norm
+        end do
+    end do
 
-! Reduce 1D data
-           IF ( k_global .EQ. 1 ) data_x(i,ipy) = data_x(i,ipy) + in(i,j,k)*norm
-
-           IF ( i_global .EQ. 1 ) data_z(k,ipy) = data_z(k,ipy) + in(i,j,k)*norm
-
-           IF ( icalc_radial .EQ. 1 ) THEN
-              r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2)))  + 1
-              IF ( r_global .LE. nr_total ) data_r(r_global,ipy) = data_r(r_global,ipy) + in(i,j,k)*norm
-
-           ENDIF
-! use variance to control result
-           IF ( i_global .EQ. 1 .AND. k_global .EQ. 1 ) variance2(j) = in(i,j,k)
-
-        ENDDO
-     ENDDO
-  ENDDO
-
-  RETURN
-END SUBROUTINE REDUCE_CORRELATION
+    return
+end subroutine RADIAL_SAMPLESIZE
 
 !########################################################################
 !########################################################################
-SUBROUTINE RADIAL_SAMPLESIZE(nx,nz, nr_total, samplesize)
+subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
 
+    use TLAB_CONSTANTS, only: lfile
+    use TLAB_PROCS
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_k
+    use TLAB_MPI_VARS, only: ims_pro
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                   INTENT(IN)  :: nx,nz, nr_total
-  TREAL, DIMENSION(nr_total), INTENT(OUT) :: samplesize
+    character*(*), intent(IN) :: fname
+    character*32, dimension(nvar), intent(IN) :: varname(nvar)
+    TINTEGER, intent(IN) :: nxy, nvar
+    TREAL, dimension(nxy, nvar), intent(IN) :: pow
 
 ! -----------------------------------------------------------------------
-  TINTEGER i,k, i_global,k_global, r_global
+    TINTEGER iv
+    character*64 name
 
 ! #######################################################################
-  DO k=1,nz
-#ifdef USE_MPI
-     k_global = k+ ims_offset_k
-#else
-     k_global = k
-#endif
-
-     DO i=1,nx
-#ifdef USE_MPI
-        i_global = i+ ims_offset_i
-#else
-        i_global = i
-#endif
-        r_global = INT(SQRT( M_REAL( (k_global-1)**2 + (i_global-1)**2) )) + 1
-        IF ( r_global .LE. nr_total ) samplesize(r_global) = samplesize(r_global) + C_1_R
-
-     ENDDO
-  ENDDO
-
-  RETURN
-END SUBROUTINE RADIAL_SAMPLESIZE
-
-!########################################################################
-!########################################################################
-SUBROUTINE WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
-
-  USE TLAB_CONSTANTS, ONLY : lfile
-  USE TLAB_PROCS
-#ifdef USE_MPI
-  USE TLAB_MPI_VARS,    ONLY : ims_pro
-#endif
-
-  IMPLICIT NONE
-
-  CHARACTER*(*),                 INTENT(IN) :: fname
-  CHARACTER*32, DIMENSION(nvar), INTENT(IN) :: varname(nvar)
-  TINTEGER,                      INTENT(IN) :: nxy, nvar
-  TREAL, DIMENSION(nxy,nvar),    INTENT(IN) :: pow
-
-! -----------------------------------------------------------------------
-  TINTEGER iv
-  CHARACTER*64 name
-
-! #######################################################################
-  IF ( nxy .EQ. 1 ) RETURN
+    if (nxy == 1) return
 
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
+    if (ims_pro == 0) then
 #endif
 
 #define LOC_UNIT_ID 75
 #define LOC_STATUS 'unknown'
 
-     DO iv = 1,nvar
-        name = TRIM(ADJUSTL(fname))
-        IF ( varname(iv) .NE. '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(varname(iv)))
+        do iv = 1, nvar
+            name = trim(adjustl(fname))
+            if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
 
-        CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+            call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 
 #include "dns_open_file.h"
-        WRITE(LOC_UNIT_ID) SNGL(pow(1:nxy,iv))
-        CLOSE(LOC_UNIT_ID)
+            write (LOC_UNIT_ID) SNGL(pow(1:nxy, iv))
+            close (LOC_UNIT_ID)
 
-     ENDDO
+        end do
 
 #ifdef USE_MPI
-  ENDIF
+    end if
 #endif
 
-  RETURN
+    return
 
-END SUBROUTINE WRITE_SPECTRUM1D
+end subroutine WRITE_SPECTRUM1D
 
 !########################################################################
 !########################################################################
 #ifdef USE_MPI
 
-SUBROUTINE SPECTRA_MPIO_AUX(opt_main, nblock)
+subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
 
-  USE TLAB_TYPES,  ONLY : subarray_dt
-  USE TLAB_VARS, ONLY : imax,jmax,kmax
-  USE TLAB_VARS, ONLY : io_aux
-  USE MPI
-  USE TLAB_MPI_VARS
+    use TLAB_TYPES, only: subarray_dt
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLAB_VARS, only: io_aux
+    use MPI
+    use TLAB_MPI_VARS
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER, INTENT(IN) :: opt_main, nblock
+    TINTEGER, intent(IN) :: opt_main, nblock
 
 ! -----------------------------------------------------------------------
-  TINTEGER                :: ndims
-  TINTEGER, DIMENSION(3)  :: sizes, locsize, offset
+    TINTEGER :: ndims
+    TINTEGER, dimension(3) :: sizes, locsize, offset
 
-  INTEGER ims_color
-
-! #######################################################################
-  io_aux(:)%active = .FALSE.
-  io_aux(:)%offset = 0
+    integer ims_color
 
 ! #######################################################################
-  IF     ( opt_main .EQ. 1 .OR. opt_main .EQ. 2 ) THEN
+    io_aux(:)%active = .false.
+    io_aux(:)%offset = 0
+
+! #######################################################################
+    if (opt_main == 1 .or. opt_main == 2) then
 
 ! 1. Ox spectrum
-     IF ( ims_pro_k .EQ. 0 ) io_aux(1)%active = .TRUE.
-     io_aux(1)%communicator = ims_comm_x
+        if (ims_pro_k == 0) io_aux(1)%active = .true.
+        io_aux(1)%communicator = ims_comm_x
 
-     ndims = 2 ! Subarray for the output of the Ox spectrum
-     sizes(1)   = imax *ims_npro_i/2; sizes(2)   = jmax        /nblock
-     locsize(1) = imax/2;             locsize(2) = jmax        /nblock
-     offset(1)  = ims_offset_i/2;     offset(2)  = ims_offset_j/nblock
+        ndims = 2 ! Subarray for the output of the Ox spectrum
+        sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock
+        locsize(1) = imax/2; locsize(2) = jmax/nblock
+        offset(1) = ims_offset_i/2; offset(2) = ims_offset_j/nblock
 
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-     CALL MPI_Type_commit(io_aux(1)%subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
+        call MPI_Type_commit(io_aux(1)%subarray, ims_err)
 
 !     subarray(1) = io_aux(1)%subarray ! to be removed
 
 ! 2. Oz spectrum
-     IF ( ims_pro_i .EQ. 0 ) io_aux(2)%active = .TRUE.
-     io_aux(2)%communicator = ims_comm_z
+        if (ims_pro_i == 0) io_aux(2)%active = .true.
+        io_aux(2)%communicator = ims_comm_z
 
-     ndims = 2 ! Subarray for the output of the Oz spectrum
-     sizes(1)   = kmax *ims_npro_k/2; sizes(2)   = jmax        /nblock
-     locsize(1) = kmax/2;             locsize(2) = jmax        /nblock
-     offset(1)  = ims_offset_k/2;     offset(2)  = ims_offset_j/nblock
+        ndims = 2 ! Subarray for the output of the Oz spectrum
+        sizes(1) = kmax*ims_npro_k/2; sizes(2) = jmax/nblock
+        locsize(1) = kmax/2; locsize(2) = jmax/nblock
+        offset(1) = ims_offset_k/2; offset(2) = ims_offset_j/nblock
 
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-     CALL MPI_Type_commit(io_aux(2)%subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
+        call MPI_Type_commit(io_aux(2)%subarray, ims_err)
 
 !     subarray(2) = io_aux(2)%subarray ! to be removed
 
 ! 3. Full 2D spectrum
-     io_aux(3)%active = .TRUE.
-     io_aux(3)%communicator = MPI_COMM_WORLD
+        io_aux(3)%active = .true.
+        io_aux(3)%communicator = MPI_COMM_WORLD
 
-     ndims = 3 ! Subarray for the output of the 2D data
-     sizes(1)   = imax *ims_npro_i /2; sizes(2)   = jmax        /nblock; sizes(3)   = kmax *ims_npro_k
-     locsize(1) = imax/2;              locsize(2) = jmax        /nblock; locsize(3) = kmax
-     offset(1)  = ims_offset_i/2;      offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+        ndims = 3 ! Subarray for the output of the 2D data
+        sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock; sizes(3) = kmax*ims_npro_k
+        locsize(1) = imax/2; locsize(2) = jmax/nblock; locsize(3) = kmax
+        offset(1) = ims_offset_i/2; offset(2) = ims_offset_j/nblock; offset(3) = ims_offset_k
 
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-     CALL MPI_Type_commit(io_aux(3)%subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
+        call MPI_Type_commit(io_aux(3)%subarray, ims_err)
 
 !     subarray(3) = io_aux(3)%subarray ! to be removed
 
 ! #######################################################################
-  ELSE IF ( opt_main .EQ. 3 ) THEN
+    else if (opt_main == 3) then
 
 ! 1. Ox auto-correlation
 
 ! Create new communicator with 1/2 of the Ox domain
 ! Assuming even number of processes in each direction
-     ims_color = 1
-     IF ( ims_pro_i .LE. (ims_npro_i-1)/2 ) &
-          ims_color = 0
-     CALL MPI_COMM_SPLIT(ims_comm_x, ims_color, ims_pro, ims_comm_x_aux, ims_err)
+        ims_color = 1
+        if (ims_pro_i <= (ims_npro_i - 1)/2) &
+            ims_color = 0
+        call MPI_COMM_SPLIT(ims_comm_x, ims_color, ims_pro, ims_comm_x_aux, ims_err)
 
-     IF ( ims_color .EQ. 0 ) THEN
-        IF ( ims_pro_k .EQ. 0 ) io_aux(1)%active = .TRUE.
-        io_aux(1)%communicator = ims_comm_x_aux
+        if (ims_color == 0) then
+            if (ims_pro_k == 0) io_aux(1)%active = .true.
+            io_aux(1)%communicator = ims_comm_x_aux
 
-        ndims = 2 ! Subarray for the output of the Ox cross-correlation
-        sizes(1)   = imax *ims_npro_i /2; sizes(2)   = jmax        /nblock
-        locsize(1) = imax;                locsize(2) = jmax        /nblock
-        offset(1)  = ims_offset_i;        offset(2)  = ims_offset_j/nblock
+            ndims = 2 ! Subarray for the output of the Ox cross-correlation
+            sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock
+            locsize(1) = imax; locsize(2) = jmax/nblock
+            offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock
 
-        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-             MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-        CALL MPI_Type_commit(io_aux(1)%subarray, ims_err)
+            call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
+            call MPI_Type_commit(io_aux(1)%subarray, ims_err)
 
 !        subarray(1) = io_aux(1)%subarray ! to be removed
 
-     ENDIF
+        end if
 
 ! 2. Oz auto-correlation
 
 ! Create new communicator with 1/2 of the Oz domain
 ! Assuming even number of processes in each direction
-     ims_color = 1
-     IF ( ims_pro_k .LE. (ims_npro_k-1)/2 ) &
-          ims_color = 0
-     CALL MPI_COMM_SPLIT(ims_comm_z, ims_color, ims_pro, ims_comm_z_aux, ims_err)
+        ims_color = 1
+        if (ims_pro_k <= (ims_npro_k - 1)/2) &
+            ims_color = 0
+        call MPI_COMM_SPLIT(ims_comm_z, ims_color, ims_pro, ims_comm_z_aux, ims_err)
 
-     IF ( ims_color .EQ. 0 ) THEN
-        IF ( ims_pro_i .EQ. 0 ) io_aux(2)%active = .TRUE.
-        io_aux(2)%communicator = ims_comm_z_aux
+        if (ims_color == 0) then
+            if (ims_pro_i == 0) io_aux(2)%active = .true.
+            io_aux(2)%communicator = ims_comm_z_aux
 
-        ndims = 2 ! Subarray for the output of the Oz cross-correlation
-        sizes(1)   = kmax *ims_npro_k /2; sizes(2)   = jmax        /nblock
-        locsize(1) = kmax;                locsize(2) = jmax        /nblock
-        offset(1)  = ims_offset_k;        offset(2)  = ims_offset_j/nblock
+            ndims = 2 ! Subarray for the output of the Oz cross-correlation
+            sizes(1) = kmax*ims_npro_k/2; sizes(2) = jmax/nblock
+            locsize(1) = kmax; locsize(2) = jmax/nblock
+            offset(1) = ims_offset_k; offset(2) = ims_offset_j/nblock
 
-        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-             MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-        CALL MPI_Type_commit(io_aux(2)%subarray, ims_err)
+            call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
+            call MPI_Type_commit(io_aux(2)%subarray, ims_err)
 
 !        subarray(2) = io_aux(2)%subarray ! to be removed
 
-     ENDIF
+        end if
 
 ! 2. Full 2D auto-correlation
 
 ! Create new communicator with the first 1/4 of the xOz domain
 ! Assuming even number of processes in each direction
-     ims_color = 1
-     IF ( ims_pro_i .LE. (ims_npro_i-1)/2 .AND. ims_pro_k .LE. (ims_npro_k-1)/2 ) &
-          ims_color = 0
-     CALL MPI_COMM_SPLIT(MPI_COMM_WORLD, ims_color, ims_pro, ims_comm_xz_aux, ims_err)
+        ims_color = 1
+        if (ims_pro_i <= (ims_npro_i - 1)/2 .and. ims_pro_k <= (ims_npro_k - 1)/2) &
+            ims_color = 0
+        call MPI_COMM_SPLIT(MPI_COMM_WORLD, ims_color, ims_pro, ims_comm_xz_aux, ims_err)
 
-     IF ( ims_color .EQ. 0 ) THEN
-        io_aux(3)%active = .TRUE.
-        io_aux(3)%communicator = ims_comm_xz_aux
+        if (ims_color == 0) then
+            io_aux(3)%active = .true.
+            io_aux(3)%communicator = ims_comm_xz_aux
 
-        ndims = 3 ! Subarray for the output of the 2D data
-        sizes(1)   = imax *ims_npro_i /2; sizes(2)   = jmax        /nblock; sizes(3)   = kmax *ims_npro_k/2
-        locsize(1) = imax;                locsize(2) = jmax        /nblock; locsize(3) = kmax
-        offset(1)  = ims_offset_i;        offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+            ndims = 3 ! Subarray for the output of the 2D data
+            sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock; sizes(3) = kmax*ims_npro_k/2
+            locsize(1) = imax; locsize(2) = jmax/nblock; locsize(3) = kmax
+            offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock; offset(3) = ims_offset_k
 
-        CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-             MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-        CALL MPI_Type_commit(io_aux(3)%subarray, ims_err)
+            call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
+            call MPI_Type_commit(io_aux(3)%subarray, ims_err)
 
 !        subarray(3) = io_aux(3)%subarray ! to be removed
 
-     ENDIF
+        end if
 
 ! #######################################################################
-  ELSE IF ( opt_main .EQ. 4 ) THEN
+    else if (opt_main == 4) then
 
 ! 1. Ox cross-correlation
-     IF ( ims_pro_k .EQ. 0 ) io_aux(1)%active = .TRUE.
-     io_aux(1)%communicator = ims_comm_x
+        if (ims_pro_k == 0) io_aux(1)%active = .true.
+        io_aux(1)%communicator = ims_comm_x
 
-     ndims = 2 ! Subarray for the output of the Ox cross-correlation
-     sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax        /nblock
-     locsize(1) = imax;             locsize(2) = jmax        /nblock
-     offset(1)  = ims_offset_i;     offset(2)  = ims_offset_j/nblock
+        ndims = 2 ! Subarray for the output of the Ox cross-correlation
+        sizes(1) = imax*ims_npro_i; sizes(2) = jmax/nblock
+        locsize(1) = imax; locsize(2) = jmax/nblock
+        offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock
 
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-     CALL MPI_Type_commit(io_aux(1)%subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
+        call MPI_Type_commit(io_aux(1)%subarray, ims_err)
 
 !     subarray(1) = io_aux(1)%subarray ! to be removed
 
 ! 2. Oz cross-correlation
-     IF ( ims_pro_i .EQ. 0 ) io_aux(2)%active = .TRUE.
-     io_aux(2)%communicator = ims_comm_z
+        if (ims_pro_i == 0) io_aux(2)%active = .true.
+        io_aux(2)%communicator = ims_comm_z
 
-     ndims = 2 ! Subarray for the output of the Oz cross-correlation
-     sizes(1)   = kmax *ims_npro_k; sizes(2)   = jmax        /nblock
-     locsize(1) = kmax;             locsize(2) = jmax        /nblock
-     offset(1)  = ims_offset_k;     offset(2)  = ims_offset_j/nblock
+        ndims = 2 ! Subarray for the output of the Oz cross-correlation
+        sizes(1) = kmax*ims_npro_k; sizes(2) = jmax/nblock
+        locsize(1) = kmax; locsize(2) = jmax/nblock
+        offset(1) = ims_offset_k; offset(2) = ims_offset_j/nblock
 
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-     CALL MPI_Type_commit(io_aux(2)%subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
+        call MPI_Type_commit(io_aux(2)%subarray, ims_err)
 
 !     subarray(2) = io_aux(2)%subarray ! to be removed
 
 ! 3. Full 2D cross-correlation
-     io_aux(3)%active = .TRUE.
-     io_aux(3)%communicator = MPI_COMM_WORLD
+        io_aux(3)%active = .true.
+        io_aux(3)%communicator = MPI_COMM_WORLD
 
-     ndims = 3 ! Subarray for the output of the 2D data
-     sizes(1)   = imax *ims_npro_i; sizes(2)   = jmax        /nblock; sizes(3)   = kmax *ims_npro_k
-     locsize(1) = imax;             locsize(2) = jmax        /nblock; locsize(3) = kmax
-     offset(1)  = ims_offset_i;     offset(2)  = ims_offset_j/nblock; offset(3)  = ims_offset_k
+        ndims = 3 ! Subarray for the output of the 2D data
+        sizes(1) = imax*ims_npro_i; sizes(2) = jmax/nblock; sizes(3) = kmax*ims_npro_k
+        locsize(1) = imax; locsize(2) = jmax/nblock; locsize(3) = kmax
+        offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock; offset(3) = ims_offset_k
 
-     CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-     CALL MPI_Type_commit(io_aux(3)%subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
+                                      MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
+        call MPI_Type_commit(io_aux(3)%subarray, ims_err)
 
 !     subarray(3) = io_aux(3)%subarray ! to be removed
 
-  ENDIF
+    end if
 
-  RETURN
-END SUBROUTINE SPECTRA_MPIO_AUX
+    return
+end subroutine SPECTRA_MPIO_AUX
 
 #endif

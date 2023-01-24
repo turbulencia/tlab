@@ -27,8 +27,6 @@ subroutine IO_READ_GLOBAL(inifile)
 
     implicit none
 
-#include "integers.h"
-
     character*(*) inifile
 
 ! -------------------------------------------------------------------
