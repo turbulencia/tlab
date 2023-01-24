@@ -139,7 +139,7 @@ contains
             nbins = 32
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))
             call PDF1V_N(fname, rtime, imax, jmax, kmax, &
-                         nfield, nbins, ibc, amin, amax, vars, igate, wrk3d, g(2)%nodes, txc, wrk1d)
+                         nfield, nbins, ibc, amin, amax, vars, igate, wrk3d, g(2)%nodes, txc)
 
         end if
 

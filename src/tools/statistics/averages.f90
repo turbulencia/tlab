@@ -25,6 +25,7 @@ program AVERAGES
     use PARTICLE_PROCS
     use IO_FIELDS
     use FI_VECTORCALCULUS
+    use FI_STRAIN_EQN
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
@@ -614,22 +615,22 @@ program AVERAGES
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, txc(1, 1), &
-                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             else
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, q(1, 6), &
-                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             end if
             txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 2)
 
             call FI_STRAIN_PRODUCTION(imax, jmax, kmax, u, v, w, &
-                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
             txc(1:isize_field, 2) = 2.0_wp*txc(1:isize_field, 2)
 
             call FI_STRAIN_DIFFUSION(imax, jmax, kmax, u, v, w, &
-                                     txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), wrk2d, wrk3d)
+                                     txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8))
             txc(1:isize_field, 3) = 2.0_wp*visc*txc(1:isize_field, 3)
 
-            call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+            call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 4), txc(1, 5), txc(1, 6))
             txc(1:isize_field, 4) = 2.0_wp*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = log(txc(1:isize_field, 4))
 
@@ -711,7 +712,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 7); vars(ifield)%tag = 'Lambda1'
@@ -726,7 +727,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))  ! txc7-txc9
             call TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7))   ! txc1-txc6
 
@@ -846,7 +847,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-      call FI_DISSIPATION(i1, imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+            call FI_DISSIPATION(i1, imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'Eps'
 

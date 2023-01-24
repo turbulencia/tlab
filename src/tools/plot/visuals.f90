@@ -29,9 +29,10 @@ program VISUALS
     use IBM_VARS
     use IO_FIELDS
     use FI_VECTORCALCULUS
+    use FI_STRAIN_EQN
     use OPR_FOURIER
     use OPR_PARTIAL
-
+    
     implicit none
 
 #include "integers.h"
@@ -686,13 +687,13 @@ program VISUALS
             ! -------------------------------------------------------------------
             if (opt_vec(iv) == iscal_offset + 7) then ! Strain Tensor
                 plot_file = 'StrainTensor'//time_str(1:MaskSize)
-     CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+                call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i6, subdomain, txc(1, 1), wrk3d)
             end if
 
             if (opt_vec(iv) == iscal_offset + 8 .or. opt_vec(iv) == iscal_offset + 9) then ! Strain
                 plot_file = 'Strain'//time_str(1:MaskSize)
-                call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+                call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
                 txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 1)
                 if (opt_vec(iv) == iscal_offset + 8) then ! Natural log
                     plot_file = 'Ln'//trim(adjustl(plot_file))
@@ -711,21 +712,21 @@ program VISUALS
                     txc(:, 6) = q(:, 6)
                 end if
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 6), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 call TLAB_WRITE_ASCII(lfile, 'Computing strain production...')
                 plot_file = 'StrainProduction'//time_str(1:MaskSize)
                 call FI_STRAIN_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
-                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 call TLAB_WRITE_ASCII(lfile, 'Computing strain diffusion...')
                 plot_file = 'StrainDiffusion'//time_str(1:MaskSize)
                 call FI_STRAIN_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
-                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = C_2_R*visc*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
@@ -814,7 +815,7 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 15) then ! Turbulent quantities
                 plot_file = 'LnDissipation'//time_str(1:MaskSize)
                 call FI_DISSIPATION(i1, imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + C_SMALL_R)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 

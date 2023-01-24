@@ -7,6 +7,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     use TLAB_VARS
     use TLAB_AVGS
     use FI_VECTORCALCULUS
+    use FI_STRAIN_EQN
     
     implicit none
 
@@ -95,7 +96,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     end do
     varname(2) = 'log(G2)'
 
-    call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+    call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 4), txc(1, 5))
     do ij = 1, imax*jmax*kmax
         txc(ij, 3) = log(C_2_R*txc(ij, 3))
     end do
@@ -191,7 +192,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     !      imax, isize, kmax, nfield, np, txc, pdf, wrk1d)
     ! Need to adapt to the new formulation of PDF1V_N
     ! CALL PDF1V_N(fname, rtime, imax*isize, 1, kmax, &
-    !    nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf, wrk1d)
+    !    nfield, opt_bins(1), ibc, amin,amax,data, gate_level,gate, y_aux, pdf)
 
     return
 end subroutine SL_BOUNDARY_VORTICITY_PDF

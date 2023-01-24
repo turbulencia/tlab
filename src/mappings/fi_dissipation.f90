@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -7,120 +6,120 @@
 !# It assumes constant visocsity
 !#
 !########################################################################
-SUBROUTINE FI_DISSIPATION(flag, nx,ny,nz, u,v,w, eps, tmp1,tmp2,tmp3,tmp4, wrk1d,wrk2d,wrk3d)
-
-  USE TLAB_VARS, ONLY : g
-  USE TLAB_VARS, ONLY : area,visc
-  USE AVGS, ONLY: AVG_IK_V
+subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: area, visc
+    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+    use TLAB_POINTERS_3D, only: p_wrk3d
+    use AVGS, only: AVG_IK_V
     use OPR_PARTIAL
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                   INTENT(IN)    :: flag ! 0 for tau_ji  * u_i,j
-                                                    ! 1 for tau'_ij * u'_i,j
-  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: u,v,w
-  TREAL, DIMENSION(nx,ny,nz), INTENT(OUT)   :: eps
-  TREAL, DIMENSION(nx,ny,nz), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4, wrk3d
-  TREAL, DIMENSION(ny,5),     INTENT(INOUT) :: wrk1d
-  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d
+    integer(wi), intent(IN) :: flag ! 0 for tau_ji  * u_i,j
+    ! 1 for tau'_ij * u'_i,j
+    integer(wi), intent(IN) :: nx, ny, nz
+    real(wp), dimension(nx*ny*nz), intent(IN) :: u, v, w
+    real(wp), dimension(nx, ny, nz), intent(OUT) :: eps
+    real(wp), dimension(nx, ny, nz), intent(INOUT) :: tmp1, tmp2, tmp3, tmp4
 
 ! -------------------------------------------------------------------
-  TINTEGER bcs(2,2), j, i1
+    integer(wi) bcs(2, 2), j
+    integer, parameter :: i1 = 1
 
 ! ###################################################################
-  bcs = 0
-  i1 = 1
+    bcs = 0
 
 ! Diagonal terms
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
-  tmp4 = ( tmp1 +tmp2 +tmp3 ) *C_2_R /C_3_R
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+    tmp4 = (tmp1 + tmp2 + tmp3)*2.0_wp/3.0_wp
 
 ! 11
-  wrk3d = C_2_R *tmp1 -tmp4 ! )*vis
-  IF ( flag .EQ. 1 ) THEN
-     CALL AVG_IK_V(nx,ny,nz, ny, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,1), wrk1d(1,2), area)
-     DO j = 1,ny
-        wrk3d(:,j,:)= wrk3d(:,j,:) -wrk1d(j,1)
-     ENDDO
-  ENDIF
-  eps = wrk3d *tmp1
+    p_wrk3d = 2.0_wp*tmp1 - tmp4 ! )*vis
+    if (flag == 1) then
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        do j = 1, ny
+            p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
+        end do
+    end if
+    eps = p_wrk3d*tmp1
 
 ! 22
-  wrk3d = C_2_R *tmp2 -tmp4 ! )*vis
-  IF ( flag .EQ. 1 ) THEN
-     CALL AVG_IK_V(nx,ny,nz, ny, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,1), wrk1d(1,2), area)
-     CALL AVG_IK_V(nx,ny,nz, ny, v,     g(1)%jac,g(3)%jac, wrk1d(1,3), wrk1d(1,2), area)
-     CALL OPR_PARTIAL_Y(OPR_P1, i1,ny,i1, bcs, g(2), wrk1d(1,3),wrk1d(1,2), wrk3d, wrk2d,wrk3d)
-     DO j = 1,ny
-        wrk3d(:,j,:)= wrk3d(:,j,:) -wrk1d(j,1)
-        tmp2(:,j,:) = tmp2(:,j,:)  -wrk1d(j,2)
-     ENDDO
-  ENDIF
-  eps = eps +wrk3d *tmp2
+    p_wrk3d = 2.0_wp*tmp2 - tmp4 ! )*vis
+    if (flag == 1) then
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, v, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
+        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        do j = 1, ny
+            p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
+            tmp2(:, j, :) = tmp2(:, j, :) - wrk1d(j, 2)
+        end do
+    end if
+    eps = eps + p_wrk3d*tmp2
 
 ! 33
-  wrk3d = C_2_R *tmp3 -tmp4 ! )*vis
-  IF ( flag .EQ. 1 ) THEN
-     CALL AVG_IK_V(nx,ny,nz, ny, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,1), wrk1d(1,2), area)
-     DO j = 1,ny
-        wrk3d(:,j,:)= wrk3d(:,j,:) -wrk1d(j,1)
-     ENDDO
-  ENDIF
-  eps = eps +wrk3d *tmp3
+    p_wrk3d = 2.0_wp*tmp3 - tmp4 ! )*vis
+    if (flag == 1) then
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        do j = 1, ny
+            p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
+        end do
+    end if
+    eps = eps + p_wrk3d*tmp3
 
 ! Off-diagonal terms
 ! 12
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, tmp2, wrk3d, wrk2d,wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp1, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp2, wrk3d, wrk2d, wrk3d)
 
-  wrk3d = tmp1 +tmp2 ! )*vis
-  IF ( flag .EQ. 1 ) THEN
-     CALL AVG_IK_V(nx,ny,nz, ny, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,1), wrk1d(1,2), area)
-     CALL AVG_IK_V(nx,ny,nz, ny, u,     g(1)%jac,g(3)%jac, wrk1d(1,3), wrk1d(1,2), area)
-     CALL OPR_PARTIAL_Y(OPR_P1, i1,ny,i1, bcs, g(2), wrk1d(1,3),wrk1d(1,2), wrk3d, wrk2d,wrk3d)
-     DO j = 1,ny
-        wrk3d(:,j,:)= wrk3d(:,j,:) -wrk1d(j,1)
-        tmp1(:,j,:) = tmp1(:,j,:)  -wrk1d(j,2)
-     ENDDO
-  ENDIF
-  eps = eps +wrk3d *( tmp1 +tmp2 )
+    p_wrk3d = tmp1 + tmp2 ! )*vis
+    if (flag == 1) then
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, u, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
+        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        do j = 1, ny
+            p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
+            tmp1(:, j, :) = tmp1(:, j, :) - wrk1d(j, 2)
+        end do
+    end if
+    eps = eps + p_wrk3d*(tmp1 + tmp2)
 
 ! 13 term
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w, tmp2, wrk3d, wrk2d,wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), u, tmp1, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), w, tmp2, wrk3d, wrk2d, wrk3d)
 
-  wrk3d = tmp1 +tmp2 ! )*vis
-  IF ( flag .EQ. 1 ) THEN
-     CALL AVG_IK_V(nx,ny,nz, ny, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,1), wrk1d(1,2), area)
-     DO j = 1,ny
-        wrk3d(:,j,:)= wrk3d(:,j,:) -wrk1d(j,1)
-     ENDDO
-  ENDIF
-  eps = eps +wrk3d *( tmp1 +tmp2 )
+    p_wrk3d = tmp1 + tmp2 ! )*vis
+    if (flag == 1) then
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        do j = 1, ny
+            p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
+        end do
+    end if
+    eps = eps + p_wrk3d*(tmp1 + tmp2)
 
 ! 23 term
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, tmp1, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, tmp2, wrk3d, wrk2d,wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), w, tmp1, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), v, tmp2, wrk3d, wrk2d, wrk3d)
 
-  wrk3d = tmp1 +tmp2 ! )*vis
-  IF ( flag .EQ. 1 ) THEN
-     CALL AVG_IK_V(nx,ny,nz, ny, wrk3d, g(1)%jac,g(3)%jac, wrk1d(1,1), wrk1d(1,2), area)
-     CALL AVG_IK_V(nx,ny,nz, ny, w,     g(1)%jac,g(3)%jac, wrk1d(1,3), wrk1d(1,2), area)
-     CALL OPR_PARTIAL_Y(OPR_P1, i1,ny,i1, bcs, g(2), wrk1d(1,3),wrk1d(1,2), wrk3d, wrk2d,wrk3d)
-     DO j = 1,ny
-        wrk3d(:,j,:)= wrk3d(:,j,:) -wrk1d(j,1)
-        tmp1(:,j,:) = tmp1(:,j,:)  -wrk1d(j,2)
-     ENDDO
-  ENDIF
-  eps = eps +wrk3d *( tmp1 +tmp2 )
+    p_wrk3d = tmp1 + tmp2 ! )*vis
+    if (flag == 1) then
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, w, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
+        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        do j = 1, ny
+            p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
+            tmp1(:, j, :) = tmp1(:, j, :) - wrk1d(j, 2)
+        end do
+    end if
+    eps = eps + p_wrk3d*(tmp1 + tmp2)
 
 ! Final calculation
-  eps = eps *visc
+    eps = eps*visc
 
-  RETURN
-END SUBROUTINE FI_DISSIPATION
+    return
+end subroutine FI_DISSIPATION
 
 ! #######################################################################
 ! Calculate kinetic energy of fluctuating field per unit volume
@@ -131,72 +130,76 @@ END SUBROUTINE FI_DISSIPATION
 #define fW(j)     wrk1d(j,4)
 #define aux(j)    wrk1d(j,5)
 
-SUBROUTINE FI_RTKE(nx,ny,nz, q, wrk1d,wrk3d)
+subroutine FI_RTKE(nx, ny, nz, q, ke)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: imode_eqns, inb_flow
+    use TLAB_VARS, only: g, area, rbackground
+    use TLAB_ARRAYS, only: wrk1d
+    use AVGS, only: AVG_IK_V
 
-  USE TLAB_VARS, ONLY : imode_eqns
-  USE TLAB_VARS, ONLY : g, area, rbackground
-  USE AVGS, ONLY: AVG_IK_V
+    implicit none
 
-  IMPLICIT NONE
+    integer(wi) nx, ny, nz
+    real(wp), intent(in) :: q(nx, ny, nz, inb_flow)
+    real(wp), intent(out) :: ke(nx, ny, nz)
 
-  TINTEGER nx,ny,nz
-  TREAL, DIMENSION(nx,ny,nz,*), INTENT(IN   ) :: q
-  TREAL, DIMENSION(ny,5),       INTENT(INOUT) :: wrk1d
-  TREAL, DIMENSION(nx,ny,nz),   INTENT(INOUT) :: wrk3d
+    ! -----------------------------------------------------------------------
+    integer(wi) j
 
-  ! -----------------------------------------------------------------------
-  TINTEGER j
+    ! #######################################################################
+    select case (imode_eqns)
+    case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 5), g(1)%jac, g(3)%jac, rR(1), aux(1), area)
 
-  ! #######################################################################
-  SELECT CASE ( imode_eqns )
-  CASE( DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
-    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,5), g(1)%jac,g(3)%jac, rR(1), aux(1), area)
-    wrk3d = q(:,:,:,5) *q(:,:,:,1)
-    CALL AVG_IK_V(nx,ny,nz, ny, wrk3d,      g(1)%jac,g(3)%jac, fU(1), aux(1), area)
-    fU(:) = fU(:) /rR(:)
-    wrk3d = q(:,:,:,5) *q(:,:,:,2)
-    CALL AVG_IK_V(nx,ny,nz, ny, wrk3d,      g(1)%jac,g(3)%jac, fV(1), aux(1), area)
-    fV(:) = fV(:) /rR(:)
-    wrk3d = q(:,:,:,5) *q(:,:,:,3)
-    CALL AVG_IK_V(nx,ny,nz, ny, wrk3d,      g(1)%jac,g(3)%jac, fW(1), aux(1), area)
-    fW(:) = fW(:) /rR(:)
+        ke = q(:, :, :, 5)*q(:, :, :, 1)
+        call AVG_IK_V(nx, ny, nz, ny, ke, g(1)%jac, g(3)%jac, fU(1), aux(1), area)
+        fU(:) = fU(:)/rR(:)
 
-  CASE( DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-    rR(:) = rbackground(:)
-    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,1), g(1)%jac,g(3)%jac, fU(1), aux(1), area)
-    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,2), g(1)%jac,g(3)%jac, fV(1), aux(1), area)
-    CALL AVG_IK_V(nx,ny,nz, ny, q(1,1,1,3), g(1)%jac,g(3)%jac, fW(1), aux(1), area)
+        ke = q(:, :, :, 5)*q(:, :, :, 2)
+        call AVG_IK_V(nx, ny, nz, ny, ke, g(1)%jac, g(3)%jac, fV(1), aux(1), area)
+        fV(:) = fV(:)/rR(:)
 
-  END SELECT
+        ke = q(:, :, :, 5)*q(:, :, :, 3)
+        call AVG_IK_V(nx, ny, nz, ny, ke, g(1)%jac, g(3)%jac, fW(1), aux(1), area)
+        fW(:) = fW(:)/rR(:)
 
-  DO j = 1,ny
-    wrk3d(:,j,:) = C_05_R *rR(j) *( (q(:,j,:,1)-fU(j))**2 + (q(:,j,:,2)-fV(j))**2 + (q(:,j,:,3)-fW(j))**2 )
-  ENDDO
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        rR(:) = rbackground(:)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 1), g(1)%jac, g(3)%jac, fU(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 2), g(1)%jac, g(3)%jac, fV(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 3), g(1)%jac, g(3)%jac, fW(1), aux(1), area)
 
-  RETURN
-END SUBROUTINE FI_RTKE
+    end select
+
+    do j = 1, ny
+        ke(:, j, :) = 0.5_wp*rR(j)*((q(:, j, :, 1) - fU(j))**2 + (q(:, j, :, 2) - fV(j))**2 + (q(:, j, :, 3) - fW(j))**2)
+    end do
+
+    return
+end subroutine FI_RTKE
 
 !########################################################################
 ! Reynolds fluctuations of array a
 !########################################################################
-SUBROUTINE FI_FLUCTUATION_INPLACE(nx,ny,nz, a)
-  USE TLAB_VARS, ONLY : g, area
-  USE AVGS, ONLY: AVG_IK
+subroutine FI_FLUCTUATION_INPLACE(nx, ny, nz, a)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: g, area
+    use AVGS, only: AVG_IK
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER, INTENT(IN)    :: nx,ny,nz
-  TREAL,    INTENT(INOUT) :: a(nx,ny,nz)
+    integer(wi), intent(IN) :: nx, ny, nz
+    real(wp), intent(INOUT) :: a(nx, ny, nz)
 
-  ! -------------------------------------------------------------------
-  TREAL dummy
-  TINTEGER j
+    ! -------------------------------------------------------------------
+    real(wp) dummy
+    integer(wi) j
 
-  ! ###################################################################
-  DO j = 1,ny
-    dummy = AVG_IK(nx,ny,nz, j, a, g(1)%jac,g(3)%jac, area)
-    a(:,j,:) = a(:,j,:) - dummy
-  END DO
+    ! ###################################################################
+    do j = 1, ny
+        dummy = AVG_IK(nx, ny, nz, j, a, g(1)%jac, g(3)%jac, area)
+        a(:, j, :) = a(:, j, :) - dummy
+    end do
 
-  RETURN
-END SUBROUTINE FI_FLUCTUATION_INPLACE
+    return
+end subroutine FI_FLUCTUATION_INPLACE

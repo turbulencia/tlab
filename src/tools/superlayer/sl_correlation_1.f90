@@ -5,6 +5,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
 
   USE TLAB_VARS
   use OPR_PARTIAL
+  use FI_STRAIN_EQN
 
   IMPLICIT NONE
 
@@ -53,7 +54,7 @@ SUBROUTINE SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
 ! ###################################################################
 ! Define fields
 ! ###################################################################
-  CALL FI_STRAIN(imax,jmax,kmax, u,v,w, strain, tmp1,tmp2, wrk2d,wrk3d)
+  CALL FI_STRAIN(imax,jmax,kmax, u,v,w, strain, tmp1,tmp2)
   CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, vorticity, tmp1,tmp2, wrk2d,wrk3d)
   CALL FI_GRADIENT(imax,jmax,kmax, z1,gradient, tmp1, wrk2d,wrk3d)
 

@@ -1,5 +1,3 @@
-#include "types.h"
-
 !########################################################################
 !#
 !# Calcualte {pdf(u_i), i=1,...,nv] in ny planes. (Histograms, not normalized.)
@@ -13,179 +11,173 @@
 !#                      5 local interval, analysis and drop both points
 !#
 !########################################################################
-SUBROUTINE PDF1V_N( fname, time, nx,ny,nz, nv, nbins, ibc, umin,umax,u, igate,gate, y, pdf, wrk1d )
-
-  USE TLAB_TYPES,      ONLY : pointers_dt
-  USE TLAB_CONSTANTS,  ONLY : lfile
-  USE TLAB_PROCS
-  USE PDFS
+subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, y, pdf)
+    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLAB_TYPES, only: pointers_dt
+    use TLAB_ARRAYS, only: wrk1d
+    use TLAB_PROCS
+    use PDFS
 #ifdef USE_MPI
-  USE MPI
+    use MPI
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-#include "integers.h"
+    character*(*), intent(IN) :: fname
+    real(wp), intent(IN) :: time
+    integer(wi), intent(IN) :: nx, ny, nz, nv, nbins, ibc(nv)
+    real(wp), intent(IN) :: umin(nv), umax(nv)            ! Random variables
+    type(pointers_dt), intent(IN) :: u(nv)
+    integer(1), intent(IN) :: gate(*), igate               ! discrete conditioning criteria
+    real(wp), intent(IN) :: y(ny)                        ! heights of each plane
+    real(wp), intent(OUT) :: pdf(nbins + 2, ny + 1, nv)         ! last 2 bins contain the interval bounds
 
-  CHARACTER*(*),     INTENT(IN   ) :: fname
-  TREAL,             INTENT(IN   ) :: time
-  TINTEGER,          INTENT(IN   ) :: nx,ny,nz, nv, nbins, ibc(nv)
-  TREAL,             INTENT(IN   ) :: umin(nv),umax(nv)            ! Random variables
-  TYPE(pointers_dt), INTENT(IN   ) :: u(nv)
-  INTEGER(1),        INTENT(IN   ) :: gate(*), igate               ! discrete conditioning criteria
-  TREAL,             INTENT(IN   ) :: y(ny)                        ! heights of each plane
-  TREAL,             INTENT(  OUT) :: pdf(nbins+2,ny+1,nv)         ! last 2 bins contain the interval bounds
-  TREAL,             INTENT(INOUT) :: wrk1d(nbins)
+    ! -------------------------------------------------------------------
+    integer(wi) iv, j, nplim, ibc_loc
+    real(wp) plim, umin_loc, umax_loc
 
-  ! -------------------------------------------------------------------
-  TINTEGER iv, j, nplim, ibc_loc
-  TREAL plim, umin_loc, umax_loc
-
-  CHARACTER*64 name
+    character*64 name
 
 #ifdef USE_MPI
-  INTEGER ims_pro, ims_err
-  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
+    integer ims_pro, ims_err
+    call MPI_COMM_RANK(MPI_COMM_WORLD, ims_pro, ims_err)
 #endif
 
-  ! ###################################################################
-  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+    ! ###################################################################
+    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
-  plim = C_1EM4_R                 ! relative threshold in PDF analysis; adapt to sample sizeo
+    plim = 1.0e-4_wp                 ! relative threshold in PDF analysis; adapt to sample sizeo
 
-  DO iv = 1,nv
+    do iv = 1, nv
 
-    DO j = 1,ny                   ! calculation in planes
-      IF ( igate == 0 ) THEN
-        CALL PDF1V2D(  ibc(iv), nx,ny,nz, j,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-      ELSE
-        CALL PDF1V2D1G(ibc(iv), nx,ny,nz, j, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-      END IF
+        do j = 1, ny                   ! calculation in planes
+            if (igate == 0) then
+                call PDF1V2D(ibc(iv), nx, ny, nz, j, umin(iv), umax(iv), u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+            else
+                call PDF1V2D1G(ibc(iv), nx, ny, nz, j, igate, gate, umin(iv), umax(iv), u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+            end if
 
-      IF ( ibc(iv) > 1 ) THEN
-        ibc_loc = ibc(iv)-2; umin_loc = umin(iv); umax_loc = umax(iv)
-        CALL PDF_ANALIZE(ibc_loc, nbins,pdf(1,j,iv), umin_loc,umax_loc, plim,nplim)
-        IF ( igate == 0 ) THEN
-          CALL PDF1V2D(  i0, nx,ny,nz, j,             umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-        ELSE
-          CALL PDF1V2D1G(i0, nx,ny,nz, j, igate,gate, umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-        END IF
-      END IF
+            if (ibc(iv) > 1) then
+                ibc_loc = ibc(iv) - 2; umin_loc = umin(iv); umax_loc = umax(iv)
+                call PDF_ANALIZE(ibc_loc, nbins, pdf(1, j, iv), umin_loc, umax_loc, plim, nplim)
+                if (igate == 0) then
+                    call PDF1V2D(0, nx, ny, nz, j, umin_loc, umax_loc, u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+                else
+                    call PDF1V2D1G(0, nx, ny, nz, j, igate, gate, umin_loc, umax_loc, u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+                end if
+            end if
 
-    END DO
+        end do
 
-    IF ( ny > 1 ) THEN            ! calculation in whole volume, saved as plane j=ny+1
-      IF ( igate == 0 ) THEN
-        CALL PDF1V2D(  ibc(iv), nx*ny,1,nz, 1,             umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-      ELSE
-        CALL PDF1V2D1G(ibc(iv), nx*ny,1,nz, 1, igate,gate, umin(iv),umax(iv),u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-      END IF
+        if (ny > 1) then            ! calculation in whole volume, saved as plane j=ny+1
+            if (igate == 0) then
+                call PDF1V2D(ibc(iv), nx*ny, 1, nz, 1, umin(iv), umax(iv), u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+            else
+                call PDF1V2D1G(ibc(iv), nx*ny, 1, nz, 1, igate, gate, umin(iv), umax(iv), u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+            end if
 
-      IF ( ibc(iv) > 1 ) THEN
-        ibc_loc = ibc(iv)-2; umin_loc = umin(iv); umax_loc = umax(iv)
-        CALL PDF_ANALIZE(ibc_loc, nbins,pdf(1,j,iv), umin_loc,umax_loc, plim,nplim)
-        IF ( igate == 0 ) THEN
-          CALL PDF1V2D(  i0, nx*ny,1,nz, 1,             umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-        ELSE
-          CALL PDF1V2D1G(i0, nx*ny,1,nz, 1, igate,gate, umin_loc,umax_loc,u(iv)%field, nbins,pdf(1,j,iv), wrk1d)
-        END IF
-      END IF
+            if (ibc(iv) > 1) then
+                ibc_loc = ibc(iv) - 2; umin_loc = umin(iv); umax_loc = umax(iv)
+                call PDF_ANALIZE(ibc_loc, nbins, pdf(1, j, iv), umin_loc, umax_loc, plim, nplim)
+                if (igate == 0) then
+                    call PDF1V2D(0, nx*ny, 1, nz, 1, umin_loc, umax_loc, u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+                else
+                    call PDF1V2D1G(0, nx*ny, 1, nz, 1, igate, gate, umin_loc, umax_loc, u(iv)%field, nbins, pdf(1, j, iv), wrk1d)
+                end if
+            end if
 
-    END IF
+        end if
 
-  END DO
+    end do
 
-  ! ###################################################################
+    ! ###################################################################
 #ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
+    if (ims_pro == 0) then
 #endif
 
 #define LOC_UNIT_ID 21
 #define LOC_STATUS 'unknown'
-    DO iv = 1,nv
-      name = TRIM(ADJUSTL(fname))
-      IF ( u(iv)%tag /= '' ) name = TRIM(ADJUSTL(fname))//'.'//TRIM(ADJUSTL(u(iv)%tag))
-      CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+        do iv = 1, nv
+            name = trim(adjustl(fname))
+            if (u(iv)%tag /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(u(iv)%tag))
+            call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 #include "dns_open_file.h"
-      IF ( ny > 1 ) THEN
-        WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,:,iv))
-      ELSE
-        WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,1,iv))
-      END IF
-      CLOSE(LOC_UNIT_ID)
-    END DO
+            if (ny > 1) then
+                write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:, :, iv))
+            else
+                write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:, 1, iv))
+            end if
+            close (LOC_UNIT_ID)
+        end do
 
 #ifdef USE_MPI
-  END IF
+    end if
 #endif
 
-  RETURN
+    return
 
-END SUBROUTINE PDF1V_N
+end subroutine PDF1V_N
 
 !########################################################################
 !########################################################################
-SUBROUTINE PDF2V( fname, time, nx,ny,nz, nbins, u,v, y, pdf, wrk2d )
-
-  USE TLAB_CONSTANTS,  ONLY : lfile
-  USE TLAB_PROCS
-  USE PDFS
+subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
+    use TLAB_CONSTANTS, only: lfile,  wp, wi
+    use TLAB_ARRAYS, only: wrk2d
+    use TLAB_PROCS
+    use PDFS
 #ifdef USE_MPI
-  USE MPI
+    use MPI
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-#include "integers.h"
+    character*(*), intent(IN) :: fname
+    real(wp), intent(IN) :: time
+    integer(wi), intent(IN) :: nx, ny, nz, nbins(2)
+    real(wp), intent(IN) :: u(nx*ny*nz), v(nx*ny*nz)
+    real(wp), intent(IN) :: y(ny)
+    real(wp), intent(OUT) :: pdf(nbins(1)*nbins(2) + 2 + 2*nbins(1), ny + 1)
 
-  CHARACTER*(*), INTENT(IN   ) :: fname
-  TREAL,         INTENT(IN   ) :: time
-  TINTEGER,      INTENT(IN   ) :: nx,ny,nz, nbins(2)
-  TREAL,         INTENT(IN   ) :: u(nx*ny*nz), v(nx*ny*nz)
-  TREAL,         INTENT(IN   ) :: y(ny)
-  TREAL,         INTENT(  OUT) :: pdf(nbins(1)*nbins(2) +2 +2*nbins(1),ny+1)
-  TREAL,         INTENT(INOUT) :: wrk2d(nbins(1)*nbins(2))
-
-  ! -------------------------------------------------------------------
-  TINTEGER j
-  CHARACTER*64 name
+    ! -------------------------------------------------------------------
+    integer(wi) j
+    character*64 name
 
 #ifdef USE_MPI
-  INTEGER ims_pro, ims_err
-  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
+    integer ims_pro, ims_err
+    call MPI_COMM_RANK(MPI_COMM_WORLD, ims_pro, ims_err)
 #endif
 
-  ! ###################################################################
-  CALL TLAB_WRITE_ASCII(lfile,'Calculating '//TRIM(ADJUSTL(fname))//'...')
+    ! ###################################################################
+    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
-  DO j = 1,ny               ! calculation in planes
-    CALL PDF2V2D( nx,ny,nz, j, u,v, nbins,pdf(1,j), wrk2d )
-  END DO
+    do j = 1, ny               ! calculation in planes
+        call PDF2V2D(nx, ny, nz, j, u, v, nbins, pdf(1, j), wrk2d)
+    end do
 
-  IF ( ny > 1 ) THEN        ! calculation in whole volume, saved as plane ny+1
-    CALL PDF2V2D( nx*ny,1,nz, 1, u,v, nbins,pdf(1,j), wrk2d )
-  END IF
+    if (ny > 1) then        ! calculation in whole volume, saved as plane ny+1
+        call PDF2V2D(nx*ny, 1, nz, 1, u, v, nbins, pdf(1, j), wrk2d)
+    end if
 
-  ! ###################################################################
+    ! ###################################################################
 #ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
+    if (ims_pro == 0) then
 #endif
 
 #define LOC_UNIT_ID 21
 #define LOC_STATUS 'unknown'
-    name = TRIM(ADJUSTL(fname))
-    CALL TLAB_WRITE_ASCII(lfile, 'Writing field '//TRIM(ADJUSTL(name))//'...')
+        name = trim(adjustl(fname))
+        call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 #include "dns_open_file.h"
-    IF ( ny > 1 ) THEN
-      WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,:))
-    ELSE
-      WRITE(LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:,1))
-    END IF
-    CLOSE(LOC_UNIT_ID)
+        if (ny > 1) then
+            write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:, :))
+        else
+            write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:, 1))
+        end if
+        close (LOC_UNIT_ID)
 #ifdef USE_MPI
-  END IF
+    end if
 #endif
 
-  RETURN
+    return
 
-END SUBROUTINE PDF2V
+end subroutine PDF2V

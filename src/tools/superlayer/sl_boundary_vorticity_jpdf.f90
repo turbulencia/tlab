@@ -6,6 +6,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 
     use TLAB_VARS
     use FI_VECTORCALCULUS
+    use FI_STRAIN_EQN
 
     implicit none
 
@@ -66,7 +67,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
         call TLAB_WRITE_ASCII(lfile, 'Computing vorticity...')
         call FI_VORTICITY(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
         call TLAB_WRITE_ASCII(lfile, 'Computing strain...')
-        call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+        call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4))
         do ij = 1, imax*jmax*kmax
             txc(ij, 2) = C_2_R*txc(ij, 2)
         end do
@@ -135,7 +136,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
     !      txc(1,3), wrk2d(1,1+isize), wrk2d(1,1), np, np, wrk2d(1,5), wrk2d(1,6), wrk2d(1,7), wrk1d)
     ! Check, need to pass gate to th new formulation PDF2V of joint pdfs
     ! We pass ny=1 and it only calculates 3D pdfs (twice, but it allows us to reuse existing routines)
-    call PDF2V(fname, rtime, imax*isize, 1, kmax, opt_bins, y_aux, wrk2d(1, 1 + isize), wrk2d(1, 1), pdf, wrk2d)
+    call PDF2V(fname, rtime, imax*isize, 1, kmax, opt_bins, y_aux, wrk2d(1, 1 + isize), wrk2d(1, 1), pdf)
 
     return
 end subroutine SL_BOUNDARY_VORTICITY_JPDF
