@@ -640,9 +640,8 @@ contains
 
         ! ######################################################################
         if (rkm_mode == RKM_IMP3_DIFFUSION) then
-            call RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex(rkm_substep), kim(rkm_substep), kco(rkm_substep), &
-                                                      q, hq, q(:, 1), q(:, 2), q(:, 3), hq(1, 1), hq(1, 2), hq(1, 3), s, hs, &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk1d, wrk2d, wrk3d)
+            call RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex(rkm_substep), kim(rkm_substep), kco(rkm_substep))
+            
             ! pressure-correction algorithm; to be checked
             ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
             !      kex,kim,kco,  &

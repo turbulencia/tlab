@@ -83,6 +83,7 @@ contains
         if (idummy(2) >= 4) tmp4(1:isize_field) => txc(1:isize_field, 4)
         if (idummy(2) >= 5) tmp5(1:isize_field) => txc(1:isize_field, 5)
         if (idummy(2) >= 6) tmp6(1:isize_field) => txc(1:isize_field, 6)
+        if (idummy(2) >= 7) tmp7(1:isize_field) => txc(1:isize_field, 7)
 
     end subroutine TLAB_DEFINE_POINTERS
 
