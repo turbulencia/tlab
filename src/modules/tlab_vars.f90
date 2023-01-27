@@ -25,8 +25,8 @@ module TLAB_VARS
     integer :: iadvection, iviscous, idiffusion,  itransport ! formulation
     integer :: ifourier
     integer :: istagger, ivfilter       ! horizontal staggering of pressure
-                                        ! vertical   filtering  of pressure
-    real(wp) :: vfilter_param           ! vertical filter parameter
+
+    real(wp) :: vfilter_param           ! vertical filter parameter of pressure
 
     integer :: imode_fdm                ! finite-difference method for spatial operators
 
@@ -37,7 +37,7 @@ module TLAB_VARS
 ! ###################################################################
     integer(wi) :: itime                    ! iteration number
     real(wp) :: rtime                       ! physical time
-    real(sp) :: wall_time                   ! walltime
+    real(sp) :: wall_time                   ! walltime (elapsed real time)
 
 ! ###################################################################
 ! Arrays size
