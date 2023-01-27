@@ -249,7 +249,8 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files
-            itime == nitera_last .or. int(logs_data(1)) /= 0) then  ! Secure that one restart file is saved
+            itime == nitera_last .or. int(logs_data(1)) /= 0 .or. & ! Secure that one restart file is saved 
+            wall_time > nruntime_sec) then                          ! If max runtime of the code is reached 
 
             if (icalc_flow == 1) then
                 write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
@@ -285,6 +286,12 @@ program DNS
             call PLANES_SAVE()
         end if
 
+        if (wall_time > nruntime_sec) then 
+            write (str, *) wall_time
+            call TLAB_WRITE_ASCII(lfile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
+            exit
+        end if
+        
     end do
 
     ! ###################################################################

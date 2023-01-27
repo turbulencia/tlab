@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 module DNS_LOCAL
-    use TLAB_CONSTANTS, only: MAX_NSP, wp, wi
+    use TLAB_CONSTANTS, only: MAX_NSP, wp, wi, sp
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
 #endif
@@ -17,6 +17,7 @@ module DNS_LOCAL
     integer :: nitera_stats_spa ! Iteration step to accumulate statistics in spatial mode
     integer :: nitera_pln       ! Iteration step to save planes
     integer :: nitera_filter    ! Iteration step for domain filter, if any
+    real(wp):: nruntime_sec     ! Maximum runtime of the code in Seconds
 
     integer :: nitera_log           ! Iteration step for data logger with simulation information
     character(len=*), parameter :: ofile = 'dns.out'    ! data logger filename
@@ -86,9 +87,11 @@ contains
         use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rbackground
+        use TLAB_VARS, only: wall_time
         use TLAB_ARRAYS
         use TLAB_PROCS
 #ifdef USE_MPI
+        use MPI
         use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
         use FI_VECTORCALCULUS
@@ -96,6 +99,7 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) idummy(3)
         real(wp) dummy
+        real(sp),dimension(2):: tdummy
         character*128 line
         character*32 str
 
@@ -103,6 +107,12 @@ contains
         real(wp), dimension(:, :, :), pointer :: loc_max
 
         ! ###################################################################
+        ! Check wall time bounds - maximum runtime 
+#ifdef USE_MPI
+        wall_time = MPI_WTIME()
+#else
+        call ETIME(tdummy, wall_time)
+#endif       
         ! ###################################################################
         ! Compressible flow
         ! ###################################################################
