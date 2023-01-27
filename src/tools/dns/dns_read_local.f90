@@ -102,6 +102,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#IteraLog=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Saveplanes=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#RunAvera=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#Runtime=<seconds>')
 
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Start', '0', nitera_first)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'End', '0', nitera_last)
@@ -109,6 +110,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog', '10', nitera_log)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln)
+    call SCANINIREAL(bakfile,inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
 
 ! Accumulate statistics in spatial mode
     call SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)

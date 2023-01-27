@@ -2,7 +2,7 @@
 
 module TLAB_VARS
     use TLAB_TYPES, only: grid_dt, filter_dt, subarray_dt, term_dt, profiles_dt
-    use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP, wp, wi
+    use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP, wp, wi, sp
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
     save
@@ -25,8 +25,8 @@ module TLAB_VARS
     integer :: iadvection, iviscous, idiffusion,  itransport ! formulation
     integer :: ifourier
     integer :: istagger, ivfilter       ! horizontal staggering of pressure
-    ! vertical   filtering  of pressure
-    real(wp) :: vfilter_param            ! vertical filter parameter
+
+    real(wp) :: vfilter_param           ! vertical filter parameter of pressure
 
     integer :: imode_fdm                ! finite-difference method for spatial operators
 
@@ -37,6 +37,7 @@ module TLAB_VARS
 ! ###################################################################
     integer(wi) :: itime                    ! iteration number
     real(wp) :: rtime                       ! physical time
+    real(sp) :: wall_time                   ! walltime (elapsed real time)
 
 ! ###################################################################
 ! Arrays size
