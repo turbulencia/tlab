@@ -1,0 +1,29 @@
+\chapter{Memory management}
+
+See file \texttt{modules/tlab\_arrays} and \texttt{modules/tlab\_procs} for their allocation.
+
+Major arrays are allocated during initialization and not anymore later. These arrays are indicated in the following table. Intermediate variables are to be stored in \texttt{txt} and not in scratch arrays. Scratch arrays can always be used in low level procedures, and it is better not to use them in high level procedures (above \texttt{operators}).
+
+\begin{table}[!h]
+    \footnotesize
+    \renewcommand{\arraystretch}{1.2}
+    \centering
+    \rowcolors{1}{white}{gray!25}
+    \begin{tabular}{lll}
+        \hline
+        array & size & content \\
+        \hline
+        \texttt{x}      & number of points in $Ox$ $\times$ number of arrays for numerics           & $Ox$-coordinate information        \\
+        \multicolumn{3}{l}{\it Same for $Oy$ and $Oz$} \\  
+        \texttt{q}      & number of points $\times$ number of flow fields                           & flow variables        \\
+        \texttt{s}      & number of points $\times$ number of scalar fields                         & scalar variables      \\
+        \texttt{txc}    & extended number of points $\times$ number of temporary fields             & temporary variables   \\
+        \texttt{wrk3d}  & extended number of points                                                 & scratch               \\
+        \texttt{wrk2d}  & maximum number of points in 2D planes $\times$ number of scratch planes   & scratch               \\
+        \texttt{wrk1d}  & maximum number of points in 1D lines $\times$ number of scratch lines     & scratch               \\
+        \hline
+    \end{tabular}
+    \caption{Major arrays indicating their sizes in terms of the number of points.}
+\end{table}
+
+Pointers are also defined during initialization to access these memory spaces with arrays of different shape and even different type, more specifically, complex type needed in Fourier decomposition. See corresponding procedures in \texttt{modules/tlab\_procs}.

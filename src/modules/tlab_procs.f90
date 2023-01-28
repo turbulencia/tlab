@@ -54,6 +54,8 @@ contains
 
         call TLAB_DEFINE_POINTERS_3D()
 
+        call TLAB_DEFINE_POINTERS_C()
+
         return
     end subroutine TLAB_ALLOCATE
 
@@ -85,6 +87,7 @@ contains
         if (idummy(2) >= 6) tmp6(1:isize_field) => txc(1:isize_field, 6)
         if (idummy(2) >= 7) tmp7(1:isize_field) => txc(1:isize_field, 7)
 
+        return
     end subroutine TLAB_DEFINE_POINTERS
 
     ! ######################################################################
@@ -109,8 +112,8 @@ contains
         if (allocated(q)) p_q(1:imax, 1:jmax, 1:kmax, 1:inb_flow_array) => q(1:isize_field*inb_flow_array, 1)
         if (allocated(s)) p_s(1:imax, 1:jmax, 1:kmax, 1:inb_scal_array) => s(1:isize_field*inb_scal_array, 1)
         if (allocated(wrk3d)) p_wrk3d(1:imax, 1:jmax, 1:kmax) => wrk3d(1:isize_field)
-        if (allocated(wrk2d)) p_wrk2d(1:imax, 1:kmax, 1:inb_wrk2d) => wrk2d(1:imax*kmax*inb_wrk2d,1)    ! this is the most common wrk2d dimensions
-        if (allocated(wrk1d)) p_wrk1d(1:jmax, 1:inb_wrk1d) => wrk1d(1:jmax*inb_wrk1d,1)                 ! this is the most common wrk1d dimensions
+        if (allocated(wrk2d)) p_wrk2d(1:imax, 1:kmax, 1:inb_wrk2d) => wrk2d(1:imax*kmax*inb_wrk2d, 1)    ! this is the most common wrk2d dimensions
+        if (allocated(wrk1d)) p_wrk1d(1:jmax, 1:inb_wrk1d) => wrk1d(1:jmax*inb_wrk1d, 1)                 ! this is the most common wrk1d dimensions
 
         idummy = shape(txc)
         if (idummy(2) >= 1) tmp1(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 1)
@@ -120,7 +123,21 @@ contains
         if (idummy(2) >= 5) tmp5(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 5)
         if (idummy(2) >= 6) tmp6(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 6)
 
+        return
     end subroutine TLAB_DEFINE_POINTERS_3D
+
+    ! ######################################################################
+    ! ######################################################################
+    subroutine TLAB_DEFINE_POINTERS_C()
+        use TLAB_ARRAYS
+        use TLAB_POINTERS_C
+        use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
+
+        if (allocated(wrk1d)) call c_f_pointer(c_loc(wrk1d), c_wrk1d, shape=[jmax, inb_wrk1d/2])
+        if (allocated(wrk3d)) call c_f_pointer(c_loc(wrk3d), c_wrk3d, shape=[isize_txc_dimz/2, kmax])
+
+        return
+    end subroutine TLAB_DEFINE_POINTERS_C
 
     ! ######################################################################
     ! ######################################################################
