@@ -377,7 +377,7 @@ program SPECTRA
     call FI_BACKGROUND_INITIALIZE()
 
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
     end do
 
     icalc_radial = 0
@@ -750,7 +750,7 @@ program SPECTRA
 
             do iv = 1, nfield
                 txc(1:isize_field, 1) = vars(iv)%field(1:isize_field)
-                call OPR_FOURIER_F(i3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+                call OPR_FOURIER_F(i3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
 
                 call OPR_FOURIER_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv), wrk3d)
             end do

@@ -72,10 +72,10 @@ subroutine DNS_FILTER()
     end if
 
     do iq = 1, inb_flow
-        call OPR_FILTER(imax, jmax, kmax, FilterDomain, q(1, iq), wrk1d, wrk2d, txc)
+        call OPR_FILTER(imax, jmax, kmax, FilterDomain, q(1, iq), txc)
     end do
     do is = 1, inb_scal
-        call OPR_FILTER(imax, jmax, kmax, FilterDomain, s(1, is), wrk1d, wrk2d, txc)
+        call OPR_FILTER(imax, jmax, kmax, FilterDomain, s(1, is), txc)
     end do
 
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then ! re-contruct fields per unit mass

@@ -296,7 +296,7 @@ program TRANSFIELDS
 
     if (opt_main == 5) then
         do ig = 1, 3
-            call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig), wrk1d)
+            call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         end do
     end if
 
@@ -564,7 +564,7 @@ program TRANSFIELDS
                     q_dst(:, iq) = q(:, iq) ! in-place operation
                     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ) &  ! Bcs depending on field
                         FilterDomain(2)%BcsMin = FilterDomainBcsFlow(iq)
-                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, q_dst(1, iq), wrk1d, wrk2d, txc)
+                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, q_dst(1, iq), txc)
                 end do
             end if
 
@@ -574,7 +574,7 @@ program TRANSFIELDS
                     s_dst(:, is) = s(:, is) ! in-place operation
                     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ) & ! Bcs depending on field
                         FilterDomain(2)%BcsMin = FilterDomainBcsScal(is)
-                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, s_dst(1, is), wrk1d, wrk2d, txc)
+                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, s_dst(1, is), txc)
                 end do
             end if
 

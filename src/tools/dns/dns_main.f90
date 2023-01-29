@@ -88,8 +88,8 @@ program DNS
     ! Initialize operators and reference data
     ! ###################################################################
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig), wrk1d)
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
     end do
 
     if (ifourier == 1) then

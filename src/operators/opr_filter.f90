@@ -8,6 +8,7 @@ module OPR_FILTERS
     use TLAB_CONSTANTS, only: wp, wi, efile, MAX_PROF
     use TLAB_TYPES, only: grid_dt, filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
+    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLAB_PROCS
     use FLT_COMPACT
     use FLT_EXPLICIT
@@ -25,13 +26,11 @@ module OPR_FILTERS
     public :: OPR_FILTER_1D
 
 contains
-
     !###################################################################
     !###################################################################
-    subroutine OPR_FILTER_INITIALIZE(g, f, wrk1d)
-        type(grid_dt),   intent(in)    :: g
+    subroutine OPR_FILTER_INITIALIZE(g, f)
+        type(grid_dt),   intent(in) :: g
         type(filter_dt), intent(inout) :: f
-        real(wp),        intent(inout) :: wrk1d(*)
 
         !###################################################################
         if (f%inb_filter > 0) allocate (f%coeffs(f%size, f%inb_filter))
@@ -73,22 +72,22 @@ contains
     end subroutine OPR_FILTER_INITIALIZE
 
     !###################################################################
+    ! Filter of u (I-nplace operation)
     !###################################################################
-    subroutine OPR_FILTER(nx, ny, nz, f, u, wrk1d, wrk2d, txc)
+    subroutine OPR_FILTER(nx, ny, nz, f, u, txc)
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
-        integer(wi),     intent(in)    :: nx, ny, nz
-        type(filter_dt), intent(in)    :: f(3)
-        real(wp),        intent(inout) :: u(nx, ny, nz)    !Inplace operation
-        real(wp),        intent(inout) :: wrk1d(ny, *)
-        real(wp),        intent(inout) :: wrk2d(nx, nz, 2)
-        real(wp),        intent(inout) :: txc(isize_txc_field, *)  !size 2 if ADM
-        !size 4 if SPECTRAL, HELMHOLTZ
+        integer(wi),     intent(in) :: nx, ny, nz
+        type(filter_dt), intent(in) :: f(3)
+        real(wp),        intent(inout) :: u(nx, ny, nz)
+        real(wp),        intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
+        !                                                           size 3 if SPECTRAL, HELMHOLTZ
         !-------------------------------------------------------------------
         real(wp) dummy
         integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t, i2
 
-        complex(wp), pointer :: s_wrk(:, :) => null()
+        complex(wp), pointer :: c_tmp(:, :) => null()
+        real(wp), dimension(:, :, :), pointer :: p_bcs
         target txc
 
         !###################################################################
@@ -101,49 +100,49 @@ contains
         select case (f(1)%type)
 
         case (DNS_FILTER_HELMHOLTZ)
+            p_bcs(1:nx, 1:nz, 1:2) => wrk2d(1:nx*nz*2, 1)
+
             if (f(2)%BcsMin == DNS_FILTER_BCS_DIRICHLET) then
-                do k = 1, nz
-                    wrk2d(:, k, 1) = u(:, 1, k)
-                    wrk2d(:, k, 2) = u(:, ny, k)
-                end do
+                p_bcs(:, :, 1) = u(:, 1, :)
+                p_bcs(:, :, 2) = u(:, ny, :)
                 flag_bcs = 0
             else if (f(2)%BcsMin == DNS_FILTER_BCS_NEUMANN) then
-                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, txc(1, 1), txc(1, 2), wrk2d, txc(1, 2))
+                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, txc(1, 1), wrk3d, wrk2d, wrk3d)
                 ip_b = 1
                 ip_t = nx*(ny - 1) + 1
                 do k = 1, nz
-                    wrk2d(1:nx, k, 1) = txc(ip_b:ip_b + nx - 1, 1); ip_b = ip_b + nxy  !bottom
-                    wrk2d(1:nx, k, 2) = txc(ip_t:ip_t + nx - 1, 1); ip_t = ip_t + nxy  !top
+                    p_bcs(1:nx, k, 1) = txc(ip_b:ip_b + nx - 1, 1); ip_b = ip_b + nxy  !bottom
+                    p_bcs(1:nx, k, 2) = txc(ip_t:ip_t + nx - 1, 1); ip_t = ip_t + nxy  !top
                 end do
                 flag_bcs = 3
             else if (f(2)%BcsMin == DNS_FILTER_BCS_SOLID) then
-                wrk2d(:, :, 1) = 0.0_wp
-                wrk2d(:, :, 2) = 0.0_wp
+                p_bcs(:, :, 1) = 0.0_wp
+                p_bcs(:, :, 2) = 0.0_wp
                 flag_bcs = 3
             end if
 
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
             call OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
                                    txc(1, 1), txc(1, 2), txc(1, 3), &
-                                   wrk2d(1, 1, 1), wrk2d(1, 1, 2), wrk1d, wrk1d(1, 5), txc(1, 4))
+                                   p_bcs(:, :, 1), p_bcs(:, :, 2), wrk1d, wrk1d(1, 5), wrk3d)
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)
 
         case (DNS_FILTER_BAND)
             dummy = 1.0_wp/real(f(1)%size*f(3)%size, wp)
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)  !I need extended arrays
-            call OPR_FOURIER_F(i2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, txc(1, 4))
-            call c_f_pointer(c_loc(txc(1, 2)), s_wrk, shape=[isize_txc_dimz/2, nz])
-            call OPR_FILTER_BAND_2D(nx, ny, nz, f(1)%parameters, s_wrk)
-            call OPR_FOURIER_B(i2, nx, ny, nz, txc(1, 2), txc(1, 3), txc(1, 4))
+            call OPR_FOURIER_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
+            call c_f_pointer(c_loc(txc(1, 2)), c_tmp, shape=[isize_txc_dimz/2, nz])
+            call OPR_FILTER_BAND_2D(nx, ny, nz, f(1)%parameters, c_tmp)
+            call OPR_FOURIER_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 3)*dummy
 
         case (DNS_FILTER_ERF)
             dummy = 1.0_wp/real(f(1)%size*f(3)%size, wp)
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)  !I need extended arrays
-            call OPR_FOURIER_F(i2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, txc(1, 4))
-            call c_f_pointer(c_loc(txc(1, 2)), s_wrk, shape=[isize_txc_dimz/2, nz])
-            call OPR_FILTER_ERF_2D(nx, ny, nz, f(1)%parameters, s_wrk)
-            call OPR_FOURIER_B(i2, nx, ny, nz, txc(1, 2), txc(1, 3), txc(1, 4))
+            call OPR_FOURIER_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
+            call c_f_pointer(c_loc(txc(1, 2)), c_tmp, shape=[isize_txc_dimz/2, nz])
+            call OPR_FILTER_ERF_2D(nx, ny, nz, f(1)%parameters, c_tmp)
+            call OPR_FOURIER_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 3)*dummy
 
         case default
@@ -152,19 +151,19 @@ contains
             !Directional filters
             if (f(1)%type /= DNS_FILTER_NONE) then
                 do n = 1, f(1)%repeat
-                    call OPR_FILTER_X(nx, ny, nz, f(1), u, txc(1, 2), wrk2d, txc(1, 1))
+                    call OPR_FILTER_X(nx, ny, nz, f(1), u)
                 end do
             end if
 
             if (f(2)%type /= DNS_FILTER_NONE) then
                 do n = 1, f(2)%repeat
-                    call OPR_FILTER_Y(nx, ny, nz, f(2), u, txc(1, 2), wrk2d, txc(1, 1))
+                    call OPR_FILTER_Y(nx, ny, nz, f(2), u)
                 end do
             end if
 
             if (f(3)%type /= DNS_FILTER_NONE) then
                 do n = 1, f(3)%repeat
-                    call OPR_FILTER_Z(nx, ny, nz, f(3), u, txc(1, 2), wrk2d, txc(1, 1))
+                    call OPR_FILTER_Z(nx, ny, nz, f(3), u)
                 end do
             end if
 
@@ -176,13 +175,11 @@ contains
     !###################################################################
     !Filter kernel along one direction
     !###################################################################
-    subroutine OPR_FILTER_1D(nlines, f, u, result, wrk2d, wrk3d)
-
-        integer(wi),     intent(in)    :: nlines                  !# of lines to be solved
-        type(filter_dt), intent(in)    :: f
-        real(wp),        intent(in)    :: u(nlines, f%size)       !field to be filtered
-        real(wp),        intent(out)   :: result(nlines, f%size)  !filtered filed
-        real(wp),        intent(inout) :: wrk2d(*), wrk3d(*)
+    subroutine OPR_FILTER_1D(nlines, f, u, result)
+        integer(wi),     intent(in) :: nlines                  !# of lines to be solved
+        type(filter_dt), intent(in) :: f
+        real(wp),        intent(in) :: u(nlines, f%size)       !field to be filtered
+        real(wp),        intent(out) :: result(nlines, f%size)  !filtered filed
 
         !-------------------------------------------------------------------
         integer(wi) delta
@@ -195,7 +192,7 @@ contains
         case (DNS_FILTER_COMPACT)
             call FLT_C4_RHS(f%size, nlines, f%periodic, f%bcsmin, f%bcsmax, f%coeffs, u, result)
             if (f%periodic) then
-                call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
+        call TRIDPSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), f%coeffs(1, 9), f%coeffs(1, 10), result, wrk2d)
             else
                 call TRIDSS(f%size, nlines, f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8), result)
             end if
@@ -217,8 +214,8 @@ contains
         case (DNS_FILTER_4E)
             call FLT_E4(f%size, nlines, f%periodic, f%coeffs, u, result)
 
-        case (DNS_FILTER_ADM)
-            call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
+        ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
+        !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
 
         case (DNS_FILTER_TOPHAT)
             if (f%periodic) then
@@ -250,17 +247,15 @@ contains
     !###################################################################
     !Filter in Ox direction
     !###################################################################
-    subroutine OPR_FILTER_X(nx, ny, nz, f, u, tmp, wrk2d, wrk3d)
-        integer(wi),     intent(in)    :: nx, ny, nz
-        type(filter_dt), intent(in)    :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz), wrk3d(nx*ny*nz)     !in-place operation
-        real(wp),        intent(inout) :: wrk2d(ny*nz)        !Aux arrays
-        real(wp),        intent(inout) :: tmp(nx*ny*nz)          !Aux array needed in ADM type
+    subroutine OPR_FILTER_X(nx, ny, nz, f, u)
+        integer(wi),     intent(in) :: nx, ny, nz
+        type(filter_dt), intent(in) :: f
+        real(wp),        intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nyz
         real(wp), dimension(:), pointer :: p_a, p_b
-        target u, wrk3d
+        target u
 
 #ifdef USE_MPI
         integer(wi) id
@@ -299,7 +294,7 @@ contains
 #endif
 
         !###################################################################
-        call OPR_FILTER_1D(nyz, f, p_b, p_a, wrk2d, tmp)
+        call OPR_FILTER_1D(nyz, f, p_b, p_a)
 
         !###################################################################
         !-------------------------------------------------------------------
@@ -330,19 +325,16 @@ contains
     !###################################################################
     !Filter in Oy direction
     !###################################################################
-    subroutine OPR_FILTER_Y(nx, ny, nz, f, u, tmp, wrk2d, wrk3d)
-
-        integer(wi),     intent(in)    :: nx, ny, nz
-        type(filter_dt), intent(in)    :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz), wrk3d(nx*ny*nz)  !in-place operation
-        real(wp),        intent(inout) :: wrk2d(*)                      !Aux arrays
-        real(wp),        intent(inout) :: tmp(nx*ny*nz)                 !Aux array needed in ADM type
+    subroutine OPR_FILTER_Y(nx, ny, nz, f, u)
+        integer(wi),     intent(in) :: nx, ny, nz
+        type(filter_dt), intent(in) :: f
+        real(wp),        intent(inout) :: u(nx*ny*nz)
 
         !-----------------------------------------------------------------------
         integer(wi) nxy, nxz
         real(wp), pointer :: p_org(:), p_dst(:)
 
-        target u, wrk3d
+        target u
 
         !#######################################################################
         nxy = nx*ny
@@ -365,7 +357,7 @@ contains
         end if
 
         !###################################################################
-        call OPR_FILTER_1D(nxz, f, p_org, p_dst, wrk2d, tmp)
+        call OPR_FILTER_1D(nxz, f, p_org, p_dst)
 
         !-------------------------------------------------------------------
         !Put arrays back in the order in which they came in
@@ -388,17 +380,15 @@ contains
     !###################################################################
     !Filter in Oz direction
     !###################################################################
-    subroutine OPR_FILTER_Z(nx, ny, nz, f, u, tmp, wrk2d, wrk3d)
-        integer(wi),     intent(in)    :: nx, ny, nz
-        type(filter_dt), intent(in)    :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz), wrk3d(nx*ny*nz)  !in-place operation
-        real(wp),        intent(inout) :: wrk2d(nx*ny)                  !Aux arrays
-        real(wp),        intent(inout) :: tmp(nx*ny*nz)                 !Aux array needed in ADM type
+    subroutine OPR_FILTER_Z(nx, ny, nz, f, u)
+        integer(wi),     intent(in) :: nx, ny, nz
+        type(filter_dt), intent(in) :: f
+        real(wp),        intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nxy
         real(wp), pointer :: p_a(:), p_b(:)
-        target u, wrk3d
+        target u
 
 #ifdef USE_MPI
         integer(wi) id
@@ -428,7 +418,7 @@ contains
 #endif
 
         !###################################################################
-        call OPR_FILTER_1D(nxy, f, p_a, p_b, wrk2d, tmp)
+        call OPR_FILTER_1D(nxy, f, p_a, p_b)
 
         !###################################################################
         !-------------------------------------------------------------------
@@ -451,8 +441,8 @@ contains
     !Spectral band filter
     !########################################################################
     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
-        integer(wi), intent(in)    :: nx, ny, nz
-        real(wp),    intent(in)    :: spc_param(*)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp),    intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------
@@ -508,8 +498,8 @@ contains
     !#
     !########################################################################
     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
-        integer(wi), intent(in)    :: nx, ny, nz
-        real(wp),    intent(in)    :: spc_param(*)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp),    intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------
@@ -519,11 +509,11 @@ contains
 
         !#######################################################################
         if (spc_param(1) > 0) then; 
-            sign_pass = 1.    !HIGHPASS
-            off_pass = 0.
+            sign_pass = 1    !HIGHPASS
+            off_pass = 0
         else                 !spc_param(1) <= 0
-            sign_pass = -1.    !LOWPASS
-            off_pass = 1.
+            sign_pass = -1    !LOWPASS
+            off_pass = 1
         end if
 
         fcut_log = log(abs(spc_param(1)))
@@ -533,8 +523,11 @@ contains
 #else
             kglobal = k
 #endif
-            if (kglobal <= g(3)%size/2 + 1) then; fk = real(kglobal - 1, wp)/g(3)%scale/spc_param(3)
-            else; fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale/spc_param(3); end if
+            if (kglobal <= g(3)%size/2 + 1) then
+                fk = real(kglobal - 1, wp)/g(3)%scale/spc_param(3)
+            else
+                fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale/spc_param(3)
+            end if
 
             do i = 1, nx/2 + 1
 #ifdef USE_MPI
@@ -545,8 +538,10 @@ contains
                 fi = real(iglobal - 1, wp)/g(1)%scale
 
                 f = sqrt(fi**2 + fk**2)
-                if (f > 0) then; damp = (erf((log(f) - fcut_log)/spc_param(2)) + 1.)/2.
-                else; damp = 0.0_wp; 
+                if (f > 0.0_wp) then
+                    damp = (erf((log(f) - fcut_log)/spc_param(2)) + 1.0_wp)/2.0_wp
+                else
+                    damp = 0.0_wp; 
                 end if
 
                 !Set to high- or low-pass

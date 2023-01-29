@@ -13,7 +13,7 @@ program VEFILTER
     TINTEGER imax, i, ik, i1bc
     parameter(imax=257)
     TREAL x(imax, 50), u(imax), uf(imax)
-    TREAL wrk1d(imax, 10), wrk2d(imax), wrk3d(imax)
+    TREAL wrk1d(imax, 10)! , wrk2d(imax), wrk3d(imax) YOU NEED TO USE NEW MEM MANAGEMENT
     type(filter_dt) filter
     type(grid_dt) g
 
@@ -78,9 +78,9 @@ program VEFILTER
     filter%inb_filter = 10
     filter%parameters(1) = 0.49
 
-    call OPR_FILTER_INITIALIZE(g, filter, wrk1d)
+    call OPR_FILTER_INITIALIZE(g, filter)
 
-    call OPR_FILTER_1D(1, filter, u, uf, wrk2d, wrk3d)
+    call OPR_FILTER_1D(1, filter, u, uf)
     ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
 
     open (20, file='filter.dat')
@@ -93,7 +93,7 @@ program VEFILTER
     ! do ik = 1, imax/2
     do ik = 1, (imax-1)/2
             u = SIN(C_2_R*C_PI_R/g%scale*M_REAL(ik)*x(:,1))
-        call OPR_FILTER_1D(1, filter, u, uf, wrk2d, wrk3d)
+        call OPR_FILTER_1D(1, filter, u, uf)
         ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
         write (20, *) ik, maxval(uf)
     end do

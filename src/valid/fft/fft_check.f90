@@ -100,16 +100,13 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     end do
 #endif
 
-    wrk3d(:) = C_0_R
     tmp2(:) = C_0_R
     trans(:) = C_0_R
-    wrk2d(:) = C_0_R
-    call OPR_FOURIER_F(i2, imax, jmax, kmax, tmp1, tmp2, wrk3d, wrk2d, trans)
+    call OPR_FOURIER_F(i2, imax, jmax, kmax, tmp1, tmp2, trans)
 
     tmp4(:) = tmp2(:)
-    wrk3d(:) = C_0_R
     tmp3(:) = C_0_R
-    call OPR_FOURIER_B(i2, imax, jmax, kmax, tmp4, tmp3, wrk3d)
+    call OPR_FOURIER_B(i2, imax, jmax, kmax, tmp4, tmp3)
 
     ip = imax*jmax*kmax
     residual = maxval(abs(norm*tmp3(1:ip) - tmp1(1:ip)))

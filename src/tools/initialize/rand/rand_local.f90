@@ -25,11 +25,10 @@ module RAND_LOCAL
 contains
 
     ! ###################################################################
-    subroutine RAND_FIELD(variance, a, tmp1, tmp2, tmp3, wrk2d, wrk3d)
+    subroutine RAND_FIELD(variance, a, tmp1, tmp2, tmp3)
         real(wp), intent(IN) :: variance
         real(wp), dimension(isize_field), intent(OUT) :: a
         real(wp), dimension(isize_txc_field), intent(INOUT) :: tmp1, tmp2, tmp3
-        real(wp), dimension(*), intent(INOUT) :: wrk2d, wrk3d
 
         integer(wi) idim
         real(wp) RAN0, RANG
@@ -53,9 +52,9 @@ contains
             if (g(2)%size == 1) then; idim = 2; ! 2D Fourier transform
             else; idim = 3; end if     ! 3D Fourier transform
 
-            if (ipdf > 0) call OPR_FOURIER_F(idim, imax, jmax, kmax, tmp2, tmp1, tmp3, wrk2d, wrk3d)
+            if (ipdf > 0) call OPR_FOURIER_F(idim, imax, jmax, kmax, tmp2, tmp1, tmp3)
             call RAND_PSD(imax, jmax, kmax, tmp1)
-            call OPR_FOURIER_B(idim, imax, jmax, kmax, tmp1, tmp2, wrk3d)
+            call OPR_FOURIER_B(idim, imax, jmax, kmax, tmp1, tmp2)
 
         end if
 

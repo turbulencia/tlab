@@ -41,6 +41,7 @@ PROGRAM VEFILTER2
 !  CALL OPR_FILTER(i4, imax, jmax, kmax,  i1bc, j1bc, k1bc, i1, i1, i1, i1, a, &
 !       cx, cy, cz, wrk3d)
 
+  ! to be rewritten with new arrays
   CALL OPR_FILTER(i3, imax, jmax, kmax, i1bc, j1bc, k1bc, i1, i1, i1, i1, a, &
        cx, cy, cz, wrk3d(1,1))
   CALL OPR_FILTER(i3, imax, jmax, kmax,  i1bc, j1bc, k1bc, i1, i1, i1, i1, wrk3d(1,1), &

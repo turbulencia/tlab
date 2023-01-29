@@ -504,14 +504,14 @@ contains
             do k = 1, kmax
                 do j = j1, jmx
                     do i = 1, imx
-                        wrk3d(ip) = q(i, j, k, iq_loc(iq)) - bcs_vi(j, k, iq_loc(iq))
+                        txc(ip, 1) = q(i, j, k, iq_loc(iq)) - bcs_vi(j, k, iq_loc(iq))
                         ip = ip + 1
                     end do
                 end do
             end do
 
             ! -----------------------------------------------------------------------
-            call OPR_FILTER(ifltmx, jfltmx, kmax, FilterInflow, wrk3d, wrk1d, wrk2d, txc)
+            call OPR_FILTER(ifltmx, jfltmx, kmax, FilterInflow, txc(:, 1), txc(:, 2))
 
             ! -----------------------------------------------------------------------
             ! Add mean field
@@ -520,7 +520,7 @@ contains
             do k = 1, kmax
                 do j = j1, jmx
                     do i = 1, imx
-                        q(i, j, k, iq_loc(iq)) = wrk3d(ip) + bcs_vi(j, k, iq_loc(iq))
+                        q(i, j, k, iq_loc(iq)) = txc(ip, 1) + bcs_vi(j, k, iq_loc(iq))
                         ip = ip + 1
                     end do
                 end do
@@ -538,14 +538,14 @@ contains
             do k = 1, kmax
                 do j = j1, jmx
                     do i = 1, imx
-                        wrk3d(ip) = s(i, j, k, is) - bcs_vi_scal(j, k, is)
+                        txc(ip, 1) = s(i, j, k, is) - bcs_vi_scal(j, k, is)
                         ip = ip + 1
                     end do
                 end do
             end do
 
             ! -----------------------------------------------------------------------
-            call OPR_FILTER(ifltmx, jfltmx, kmax, FilterInflow, wrk3d, wrk1d, wrk2d, txc)
+            call OPR_FILTER(ifltmx, jfltmx, kmax, FilterInflow, txc(:, 1), txc(:, 2))
 
             ! -----------------------------------------------------------------------
             ! Add mean field
@@ -554,7 +554,7 @@ contains
             do k = 1, kmax
                 do j = j1, jmx
                     do i = 1, imx
-                        s(i, j, k, is) = wrk3d(ip) + bcs_vi_scal(j, k, is)
+                        s(i, j, k, is) = txc(ip, 1) + bcs_vi_scal(j, k, is)
                         ip = ip + 1
                     end do
                 end do

@@ -62,7 +62,7 @@ program INIRAND
     itime = 0; rtime = 0.0_wp
 
     do iq = 1, inb_flow
-        call RAND_FIELD(ucov(iq), q(1, iq), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+        call RAND_FIELD(ucov(iq), q(1, iq), txc(1, 1), txc(1, 2), txc(1, 3))
     end do
     if (ipdf == 2) then ! Gaussian PDF
         call RAND_COVARIANCE(ucov, q(:, 1), q(:, 2), q(:, 3))
@@ -70,7 +70,7 @@ program INIRAND
     call IO_WRITE_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, inb_flow, q, txc)
 
     do is = 1, inb_scal
-        call RAND_FIELD(ucov(is), s(1, is), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+        call RAND_FIELD(ucov(is), s(1, is), txc(1, 1), txc(1, 2), txc(1, 3))
     end do
     call IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, s, txc)
 

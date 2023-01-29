@@ -193,40 +193,40 @@ contains
 
 ! #######################################################################
 ! #######################################################################
-    subroutine OPR_FOURIER_F(flag_mode, nx, ny, nz, in, out, tmp1, wrk2d, wrk3d)
+    subroutine OPR_FOURIER_F(flag_mode, nx, ny, nz, in, out, tmp1)
+        use TLAB_ARRAYS, only: wrk2d
+        use TLAB_POINTERS_C, only: c_wrk3d
         integer(wi) :: flag_mode                                ! 1D, 2D or 3D
         integer(wi) :: nx, ny, nz
         real(wp), intent(INOUT) :: in(isize_txc_field)          ! extended w/ BCs below
         real(wp), intent(OUT) :: out(isize_txc_dimz, nz)
-        real(wp), intent(INOUT) :: wrk2d(isize_wrk2d, 2)        ! BCs padding
-        real(wp), intent(INOUT) :: tmp1(isize_txc_dimz, nz), wrk3d(isize_txc_dimz, nz)
+        real(wp), intent(INOUT) :: tmp1(isize_txc_dimz, nz)
 
-        target out, tmp1, wrk3d
+        target out, tmp1
 
         ! #######################################################################
         ! Pass memory address from real array to complex array
         call c_f_pointer(c_loc(out), c_out, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(wrk3d), c_wrk3d, shape=[isize_txc_dimz/2, nz])
 
-        wrk2d = 0.0_wp          ! BCs
+        wrk2d(:,1:2) = 0.0_wp          ! BCs
 
         if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
             if (g(3)%size > 1) then
                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out, c_tmp1, c_wrk3d)
-                call OPR_FOURIER_F_Z_EXEC(c_out, c_wrk3d)
+                call OPR_FOURIER_F_Z_EXEC(c_out, c_tmp1)
             else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_wrk3d, c_out, c_tmp1)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1, c_out, c_wrk3d)
             end if
 
             do k = 1, nz
-                call dfftw_execute_dft(fft_plan_fy, c_wrk3d(:, k), c_out(:, k))
+                call dfftw_execute_dft(fft_plan_fy, c_tmp1(:, k), c_out(:, k))
             end do
 
         else
             if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_wrk3d, c_out, c_tmp1)
-                call OPR_FOURIER_F_Z_EXEC(c_wrk3d, c_out)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1, c_out, c_wrk3d)
+                call OPR_FOURIER_F_Z_EXEC(c_tmp1, c_out)
             else
                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out, c_tmp1, c_wrk3d)
             end if
@@ -237,18 +237,18 @@ contains
 
 ! #######################################################################
 ! #######################################################################
-    subroutine OPR_FOURIER_B(flag_mode, nx, ny, nz, in, out, wrk3d)
+    subroutine OPR_FOURIER_B(flag_mode, nx, ny, nz, in, out)
+        use TLAB_POINTERS_C, only: c_wrk3d
         integer(wi) :: flag_mode  ! 1D, 2D or 3D
         integer(wi) :: nx, ny, nz
-        real(wp), intent(INOUT) :: in(isize_txc_dimz, nz), wrk3d(isize_txc_dimz, nz)
+        real(wp), intent(INOUT) :: in(isize_txc_dimz, nz)
         real(wp), intent(OUT) :: out(isize_txc_field)
 
-        target in, wrk3d
+        target in
 
         ! #######################################################################
         ! Pass memory address from real array to complex array
         call c_f_pointer(c_loc(in), c_in, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(wrk3d), c_wrk3d, shape=[isize_txc_dimz/2, nz])
 
         if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
             do k = 1, nz

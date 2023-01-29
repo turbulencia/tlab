@@ -244,7 +244,7 @@ program PDFS
     call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
     end do
 
     if (ifourier == 1) then         ! For Poisson solver
