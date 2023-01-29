@@ -151,8 +151,8 @@ contains
             rtimetmp = rtime
             itimetmp = itime
             visctmp = visc
-            call IO_READ_FIELDS(fname, IO_FLOW, g_inf(1)%size, g_inf(2)%size, kmax, inb_flow, 0, q_inf, wrk3d)
-            call IO_READ_FIELDS(sname, IO_SCAL, g_inf(1)%size, g_inf(2)%size, kmax, inb_scal, 0, s_inf, wrk3d)
+            call IO_READ_FIELDS(fname, IO_FLOW, g_inf(1)%size, g_inf(2)%size, kmax, inb_flow, 0, q_inf)
+            call IO_READ_FIELDS(sname, IO_SCAL, g_inf(1)%size, g_inf(2)%size, kmax, inb_scal, 0, s_inf)
             rtime = rtimetmp
             itime = itimetmp
             visc = visctmp

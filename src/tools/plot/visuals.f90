@@ -362,14 +362,14 @@ program VISUALS
 
         if (icalc_scal == 1 .and. iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         elseif (icalc_scal == 0) then
             s = C_0_R
         end if
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (imode_ibm == 1) then

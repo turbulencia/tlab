@@ -67,12 +67,12 @@ program INIRAND
     if (ipdf == 2) then ! Gaussian PDF
         call RAND_COVARIANCE(ucov, q(:, 1), q(:, 2), q(:, 3))
     end if
-    call IO_WRITE_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, inb_flow, q, txc)
+    call IO_WRITE_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
     do is = 1, inb_scal
         call RAND_FIELD(ucov(is), s(1, is), txc(1, 1), txc(1, 2), txc(1, 3))
     end do
-    call IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, s, txc)
+    call IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
     call TLAB_STOP(0)
 end program INIRAND

@@ -57,18 +57,18 @@ PROGRAM VDIFFUSION
      s(ij,1) = SIN(C_2_R*pi_loc/scalex*wavenumber*x(i))
   ENDDO; ENDDO
   fname = TRIM(ADJUSTL(tag_scal))//'0'
-  CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, s, wrk3d)
+  CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, 1, s)
 
   q(:,1) = mean_u; q(:,2) = C_0_R; q(:,3) = C_0_R
   fname = TRIM(ADJUSTL(tag_flow))//'0'
-  CALL IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3, q, wrk3d)
+  CALL IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, 3, q)
 
 ! ###################################################################
   ELSE IF ( iopt .EQ. 2 ) THEN
   WRITE(*,*) 'Iteration?'; READ(*,*) itime
 
   WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-  CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1,i0, s, wrk3d)
+  CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, 1,0, s)
 
 ! Theoretical
   factor = EXP(-visc*rtime*(C_2_R*pi_loc/scalex*wavenumber)**2)
@@ -92,7 +92,7 @@ PROGRAM VDIFFUSION
      WRITE(*,*) 'Absolute error .............: ', sqrt(error/M_REAL(imax*jmax))
      WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
      fname = 'error'
-     CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, wrk3d, wrk3d)
+     CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, 1, wrk3d)
   ENDIF
 
   ENDIF

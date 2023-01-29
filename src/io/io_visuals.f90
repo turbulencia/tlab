@@ -76,7 +76,7 @@ subroutine IO_WRITE_VISUALS(fname, iformat, nx, ny, nz, nfield, subdomain, field
 
     if (iformat == 0) then ! standard scalar format
 
-        call IO_WRITE_FIELDS(fname, IO_SCAL, nx, ny, nz, nfield, field, txc)
+        call IO_WRITE_FIELDS(fname, IO_SCAL, nx, ny, nz, nfield, field)
 
         ! -------------------------------------------------------------------
     else if (iformat == 1) then  ! ensight; to be removed

@@ -105,7 +105,7 @@ program INISCAL
     end if
 
 ! ###################################################################
-    call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s, wrk3d)
+    call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
     call TLAB_STOP(0)
 end program INISCAL

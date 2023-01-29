@@ -99,7 +99,7 @@ contains
         select case (flag_s)
         case (1)   ! Broadband case
             dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, is, tmp, wrk3d)
+            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, is, tmp)
             rtime = dummy
 
             amplify = C_0_R
@@ -162,7 +162,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         select case (flag_s)
         case (4, 6, 8)   ! Broadband case
             dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp, s) ! using array s as aux array
+            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp)
             rtime = dummy
             dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp)     ! remove mean
             disp = disp - dummy

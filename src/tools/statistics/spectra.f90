@@ -518,12 +518,12 @@ program SPECTRA
 
         if (iread_flow == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
+            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (iread_scal == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
+            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (imode_ibm == 1) then

@@ -130,7 +130,7 @@ program PARTICLE_INI_TRAJEC
     !#######################################################################
     !CREATE THE RANDOM PARTICLE FIELD
     !#######################################################################
-    call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
+    call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
 #ifdef USE_MPI
     !#######################################################################

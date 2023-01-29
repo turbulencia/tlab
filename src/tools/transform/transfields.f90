@@ -453,12 +453,12 @@ program TRANSFIELDS
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         ! ###################################################################
@@ -659,11 +659,11 @@ program TRANSFIELDS
         if (opt_main /= 4 .and. opt_main /= 7) then
             if (icalc_flow > 0) then
                 flow_file = trim(adjustl(flow_file))//'.trn'
-                call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst, wrk3d)
+                call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
             end if
             if (icalc_scal > 0) then
                 scal_file = trim(adjustl(scal_file))//'.trn'
-                call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst, wrk3d)
+                call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
             end if
         end if
 
@@ -675,11 +675,11 @@ program TRANSFIELDS
     if (opt_main == 4 .or. opt_main == 7) then
         if (icalc_flow > 0) then
             flow_file = trim(adjustl(flow_file))//'.trn'
-            call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst, wrk3d)
+            call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
         end if
         if (icalc_scal > 0) then
             scal_file = trim(adjustl(scal_file))//'.trn'
-            call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst, wrk3d)
+            call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
         end if
     end if
 

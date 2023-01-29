@@ -95,7 +95,7 @@ program PARTICLE_BUILD_PDF
 !READ ALL FILES
 !#######################################################################
         write (fname, *) i; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         call THERMO_AIRWATER_LINEAR(imax, jmax, kmax, s, s(1, inb_scal_array))
 
         write (fname, *) i; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))

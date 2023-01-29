@@ -1,9 +1,11 @@
-#include "types.h"
+! #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
+
+#define USE_ACCESS_STREAM
 
 #define SIZEOFBYTE 1
 
@@ -49,6 +51,9 @@ module IO_FIELDS
     integer(KIND=MPI_OFFSET_KIND) mpio_disp
     integer subarray
 #endif
+
+    integer, parameter :: sizeofreal=sizeof(1.0_wp)
+    integer, parameter :: sizeofint=sizeof(1_wi)
 
 contains
 
@@ -115,9 +120,10 @@ contains
 #define LOC_UNIT_ID 54
 #define LOC_STATUS 'old'
 
-    subroutine IO_READ_FIELDS(fname, iheader, nx, ny, nz, nfield, iread, a, txc)
+    subroutine IO_READ_FIELDS(fname, iheader, nx, ny, nz, nfield, iread, a)
         use TLAB_VARS, only: imode_files, imode_precision_files
         use TLAB_VARS, only: itime, rtime, visc
+        use TLAB_ARRAYS, only: wrk3d
         use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
         character(LEN=*) fname
@@ -125,9 +131,6 @@ contains
         integer, intent(in) :: nfield, iread   ! iread=0 reads all nfields, otherwise iread field
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(out) :: a(nx*ny*nz, *)
-        real(wp), intent(inout) :: txc(nx*ny*nz)
-
-        target txc
 
         ! -------------------------------------------------------------------
         integer(wi) header_offset
@@ -152,7 +155,7 @@ contains
         if (imode_precision_files == IO_TYPE_SINGLE) then
             line = 'Reading single precision field '//trim(adjustl(fname))//' of size'
         ! Pass memory address from double precision array to single precision array
-            call c_f_pointer(c_loc(txc), s_wrk, shape=[nx*ny*nz])
+            call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[nx*ny*nz])
         else
             line = 'Reading double precision field '//trim(adjustl(fname))//' of size'
         end if
@@ -203,7 +206,7 @@ contains
 
                     ! -------------------------------------------------------------------
                     ! field
-                    ! CALL IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,iz),txc)
+                    ! CALL IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,iz),wrk3d)
                     mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
                     mpio_locsize = nx*ny*nz
                     call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
@@ -260,7 +263,6 @@ contains
     !########################################################################
     !########################################################################
     subroutine IO_READ_FIELD_INT1(name, iheader, nx, ny, nz, nt, isize, params, a)
-
         character(len=*) name
         integer, intent(in) :: iheader
         integer(wi), intent(in) :: nx, ny, nz, nt
@@ -343,12 +345,12 @@ contains
 #define LOC_UNIT_ID 55
 #define LOC_STATUS 'unknown'
 
-    subroutine IO_WRITE_FIELDS(fname, iheader, nx, ny, nz, nfield, a, txc)
-
+    subroutine IO_WRITE_FIELDS(fname, iheader, nx, ny, nz, nfield, a)
         use TLAB_VARS, only: imode_files, imode_precision_files, imode_eqns
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach
         use TLAB_VARS, only: schmidt
+        use TLAB_ARRAYS, only: wrk3d
         use THERMO_VARS, only: gama0
         use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
@@ -357,9 +359,6 @@ contains
         integer, intent(in) :: nfield
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: a(nx*ny*nz, nfield)
-        real(wp), intent(inout) :: txc(nx*ny*nz)
-
-        target txc
 
         ! -------------------------------------------------------------------
         integer(wi) header_offset
@@ -384,7 +383,7 @@ contains
         if (imode_precision_files == IO_TYPE_SINGLE) then
             line = 'Writing single precision field '//trim(adjustl(fname))//' of size'
         ! Pass memory address from double precision array to single precision array
-            call c_f_pointer(c_loc(txc), s_wrk, shape=[nx*ny*nz])
+            call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[nx*ny*nz])
         else
             line = 'Writing double precision field '//trim(adjustl(fname))//' of size'
         end if
@@ -456,7 +455,7 @@ contains
 
                 ! -------------------------------------------------------------------
                 ! field
-                ! CALL IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,ifield),txc)
+                ! CALL IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,ifield),wrk3d)
 #ifdef USE_MPI
                 call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 

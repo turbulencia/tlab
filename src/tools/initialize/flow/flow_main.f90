@@ -135,7 +135,7 @@ program INIFLOW
         end if
 
         if (imixture > 0) then
-            call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
+            call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (flag_t /= 0) then
@@ -149,7 +149,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    call IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q, wrk3d)
+    call IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
     call TLAB_STOP(0)
 end program INIFLOW

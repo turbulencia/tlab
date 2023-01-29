@@ -165,10 +165,10 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! read data
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, 3,0, q)
 
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1)
 
 ! do correlations
      CALL SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, profiles, &

@@ -99,7 +99,7 @@ program VHELMHOLTZ_FXZ
     t_new = 0.0
     t_old = 0.0
     do opt = 1, 2
-        call IO_READ_FIELDS('field.inp', IO_FLOW, imax, jmax, kmax, nfield, i0, a, wrk3d)
+        call IO_READ_FIELDS('field.inp', IO_FLOW, imax, jmax, kmax, nfield, 0, a)
         f = a
         if (opt == 1) then
             do imeasure = 1, nmeasure

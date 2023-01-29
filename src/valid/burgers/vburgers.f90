@@ -65,7 +65,7 @@ program VBURGERS
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, i1, i0, a, wrk3d)
+    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
 
 ! ###################################################################
     call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c, wrk2d, wrk3d)
@@ -89,7 +89,7 @@ program VBURGERS
     if (ims_pro == 0) then
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
     end if
-! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
+! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
 
 ! ###################################################################
     call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c, wrk2d, wrk3d)
@@ -113,7 +113,7 @@ program VBURGERS
     if (ims_pro == 0) then
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
     end if
-! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
+! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
 
 ! ###################################################################
     if (g(3)%size > 1) then
@@ -139,7 +139,7 @@ program VBURGERS
         if (ims_pro == 0) then
             write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         end if
-!    CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c, wrk3d)
+!    CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
 
     end if
 
