@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -9,7 +8,6 @@
 !#              Created
 !#
 !########################################################################
-!# DESCRIPTION
 !#
 !# Derived from RHS_GLOBAL_INCOMPRESSIBLE_1
 !#
@@ -23,20 +21,20 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
-    (kex, kim, kco, q, hq, u, v, w, h1, h2, h3, s, hs, &
-     tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, wrk1d, wrk2d, wrk3d)
-
+subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_CONSTANTS, only: efile, wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_field, isize_txc_field, isize_wrk1d, inb_flow, inb_scal
+    use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: icalc_scal
     use TLAB_VARS, only: visc, schmidt
     use TLAB_PROCS
+    use TLAB_ARRAYS
+    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
+    use DNS_ARRAYS
     use TIME, only: dte
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
@@ -45,29 +43,20 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     use FI_SOURCES
     implicit none
 
-#include "integers.h"
+    real(wp), intent(in) :: kex, kim, kco
 
-    TREAL kex, kim, kco
-    TREAL, dimension(isize_field, *) :: q, hq
-    TREAL, dimension(isize_field), intent(INOUT) :: u, v, w, h1, h2, h3
-    TREAL, dimension(isize_field, inb_scal), intent(INOUT) :: s, hs
-    TREAL, dimension(isize_txc_field), intent(OUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
-    TREAL, dimension(isize_wrk1d, *), intent(OUT) :: wrk1d
-    TREAL, dimension(*), intent(OUT) :: wrk2d, wrk3d
+    ! -----------------------------------------------------------------------
+    integer(wi) iq, is, iq_max
+    integer(wi) ibc, bcs(2, 2)
+    real(wp) dummy, visc_exp, visc_imp, visc_tot, alpha, beta, kef, aug, vdummy!, u_geo, w_geo
 
-    target v
+    real(wp), dimension(imax, kmax, 4) :: bcs_locb, bcs_loct
 
-! -----------------------------------------------------------------------
-    TINTEGER iq, is, ij, k, nxy, ip_b, ip_t
-    TINTEGER ibc, bcs(2, 2)
-    TREAL dummy, visc_exp, visc_imp, visc_tot, alpha, beta, kef, aug, vdummy!, u_geo, w_geo
+    integer, parameter :: i0 = 0
 
-    TREAL, dimension(:), pointer :: p_bcs
-    TREAL, dimension(imax, kmax, 4) :: bcs_locb, bcs_loct
+    real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
-    nxy = imax*jmax
-
     do is = 1, inb_scal
         if (BcsScalJmin%SfcType(is) == DNS_SFC_STATIC .and. &
             BcsScalJmax%SfcType(is) == DNS_SFC_STATIC) then
@@ -84,119 +73,57 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     visc_tot = visc
 
     kef = kex/kim
-    aug = C_1_R + kef
+    aug = 1.0_wp + kef
     alpha = dte*visc_imp
 
 !  vdummy= -alpha*visc_tot*dte
 !  vdummy= -alpha*visc_exp*dte
-    vdummy = C_0_R
+    vdummy = 0.0_wp
 
 ! ################################################################################
 ! SAVE VALUES AT BOUNDARIES. Recovered at the end of the routine
 ! ################################################################################
-    ip_b = 1 ! bottom
-    do k = 1, kmax
-        ! bcs_hb(1:imax,k,1) = u(ip_b:ip_b+imax-1)
-        ! bcs_hb(1:imax,k,2) = w(ip_b:ip_b+imax-1)
-        BcsFlowJmin%ref(1:imax, k, 1) = u(ip_b:ip_b + imax - 1)
-        BcsFlowJmin%ref(1:imax, k, 3) = w(ip_b:ip_b + imax - 1)
-        if (icalc_scal /= 0) then
-            do is = 1, inb_scal
-!           bcs_hb(1:imax,k,inb_flow+is) = s(ip_b:ip_b+imax-1,is)
-                BcsScalJmin%ref(1:imax, k, is) = s(ip_b:ip_b + imax - 1, is)
-            end do
-        end if
-        ip_b = ip_b + nxy
-    end do
+    iq = 1
+    p_bcs(1:imax, 1:jmax, 1:kmax) => q(1:imax*jmax*kmax, iq)
+    BcsFlowJmin%ref(:, :, iq) = p_bcs(:, 1, :)
+    BcsFlowJmax%ref(:, :, iq) = p_bcs(:, jmax, :)
 
-    ip_t = imax*(jmax - 1) + 1 ! top
-    do k = 1, kmax
-        ! bcs_ht(1:imax,k,1) = u(ip_t:ip_t+imax-1)
-        ! bcs_ht(1:imax,k,2) = w(ip_t:ip_t+imax-1)
-        BcsFlowJmax%ref(1:imax, k, 1) = u(ip_t:ip_t + imax - 1)
-        BcsFlowJmax%ref(1:imax, k, 3) = w(ip_t:ip_t + imax - 1)
-        if (icalc_scal /= 0) then
-            do is = 1, inb_scal
-!           bcs_ht(1:imax,k,inb_flow+is) = s(ip_t:ip_t+imax-1,is)
-                BcsScalJmax%ref(1:imax, k, is) = s(ip_t:ip_t + imax - 1, is)
-            end do
-        end if
-        ip_t = ip_t + nxy
+    iq = 3
+    p_bcs(1:imax, 1:jmax, 1:kmax) => q(1:imax*jmax*kmax, iq)
+    BcsFlowJmin%ref(:, :, iq) = p_bcs(:, 1, :)
+    BcsFlowJmax%ref(:, :, iq) = p_bcs(:, jmax, :)
+
+    do is = 1, inb_scal
+        p_bcs(1:imax, 1:jmax, 1:kmax) => s(1:imax*jmax*kmax, is)
+        BcsScalJmin%ref(:, :, is) = p_bcs(:, 1, :)
+        BcsScalJmax%ref(:, :, is) = p_bcs(:, jmax, :)
     end do
 
 ! #######################################################################
-! Diffusion and convection terms in Oz momentum eqn
+! Diffusion and convection terms
 ! #######################################################################
-    tmp6(1:isize_field) = h3(1:isize_field) ! SAVE old tendencies until end of implicit substep
+    tmp6 = hq(:, 3) ! SAVE old tendencies until end of implicit substep
+    tmp5 = hq(:, 2) ! SAVE old tendencies until end of implicit substep
+    tmp4 = hq(:, 1) ! SAVE old tendencies until end of implicit substep
 
-! h3 contains explicit nonlinear w-tendency (nonlinear operator N(u_n))
     if (g(3)%size > 1) then
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, h3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp1, tmp2, wrk2d, wrk3d) ! tmp1 used for BCs below
-
-        do ij = 1, isize_field
-            h3(ij) = -u(ij)*h3(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
-        end do
-
-! -----------------------------------------------------------------------
-! Diffusion part of the BCs for intermediate velocity
-! -----------------------------------------------------------------------
-        ip_b = 1
-        ip_t = imax*(jmax - 1) + 1
-        do k = 1, kmax
-            bcs_locb(:, k, 3) = vdummy*tmp1(ip_b:); ip_b = ip_b + nxy ! bottom
-            bcs_loct(:, k, 3) = vdummy*tmp1(ip_t:); ip_t = ip_t + nxy ! top
-        end do
-
+        iq_max = 3
+    else
+        iq_max = 2
     end if
 
-! #######################################################################
+    do iq = 1, iq_max
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), hq(:, iq), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp1, tmp2, wrk2d, wrk3d) ! tmp1 used for BCs below
+        hq(:, iq) = -u*hq(:, iq) - v*tmp2 - w*tmp3      ! hq(:,iq) contains explicit nonlinear tendency
 
-! #######################################################################
-    tmp4(1:isize_field) = h1(1:isize_field) ! SAVE old tendencies until end of implicit substep
 
-! h1 contains explicit nonlinear u-tendency
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, h1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp1, tmp2, wrk2d, wrk3d) ! tmp1 used for BCs below
+        ! Diffusion part of the BCs for intermediate velocity
+        p_bcs(1:imax, 1:jmax, 1:kmax) => tmp1(1:imax*jmax*kmax)
+        bcs_locb(:, :, iq) = vdummy*p_bcs(:, 1, :)      ! bottom
+        bcs_loct(:, :, iq) = vdummy*p_bcs(:, jmax, :)   ! top
 
-    do ij = 1, isize_field
-        h1(ij) = -u(ij)*h1(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
-    end do
-
-! -----------------------------------------------------------------------
-! Diffusion part of the BCs for intermediate velocity
-! -----------------------------------------------------------------------
-    ip_b = 1
-    ip_t = imax*(jmax - 1) + 1
-    do k = 1, kmax
-        bcs_locb(:, k, 1) = vdummy*tmp1(ip_b:); ip_b = ip_b + nxy ! bottom
-        bcs_loct(:, k, 1) = vdummy*tmp1(ip_t:); ip_t = ip_t + nxy ! top
-    end do
-
-! #######################################################################
-! Diffusion and convection terms in Oy momentum eqn
-! #######################################################################
-    tmp5(1:isize_field) = h2(1:isize_field) ! SAVE old tendencies until end of implicit substep
-
-! h2 contains explicit nonlinear v-tendency
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, h2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), v, tmp1, tmp2, wrk2d, wrk3d)
-
-    do ij = 1, isize_field
-        h2(ij) = -u(ij)*h2(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
-    end do
-
-! -----------------------------------------------------------------------
-! Diffusion part of the BCs for intermediate velocity
-! -----------------------------------------------------------------------
-    ip_b = 1
-    ip_t = imax*(jmax - 1) + 1
-    do k = 1, kmax
-        bcs_locb(:, k, 2) = vdummy*tmp1(ip_b:); ip_b = ip_b + nxy ! bottom
-        bcs_loct(:, k, 2) = vdummy*tmp1(ip_t:); ip_t = ip_t + nxy ! top
     end do
 
 ! #######################################################################
@@ -213,11 +140,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 ! Explicit part of time integration for velocities
 ! #######################################################################
 ! tmp4-6 contain tendencies, h1-3 contain old tendencies
-    do ij = 1, isize_field
-        tmp1(ij) = u(ij)*aug + dte*(h1(ij) + kco*tmp4(ij)); 
-        tmp2(ij) = v(ij)*aug + dte*(h2(ij) + kco*tmp5(ij)); 
-        tmp3(ij) = w(ij)*aug + dte*(h3(ij) + kco*tmp6(ij)); 
-    end do
+    tmp1 = u*aug + dte*(hq(:, 1) + kco*tmp4)
+    tmp2 = v*aug + dte*(hq(:, 2) + kco*tmp5)
+    tmp3 = w*aug + dte*(hq(:, 3) + kco*tmp6)
+
 ! tmp1-tmp3:  u,v,w updated with explicit scheme
 ! h1-h3:      explicit tendencies from this substep
 ! u-w:        old velocities
@@ -251,8 +177,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     ! bcs_loct(:,:,1) = -alpha*aug*bcs_ht(:,:,1) ! top
     bcs_locb(:, :, 1) = -alpha*aug*BcsFlowJmin%ref(:, :, 1) ! bottom
     bcs_loct(:, :, 1) = -alpha*aug*BcsFlowJmax%ref(:, :, 1) ! top
-    bcs_locb(:, :, 2) = C_0_R                    ! bottom
-    bcs_loct(:, :, 2) = C_0_R                    ! top
+    bcs_locb(:, :, 2) = 0.0_wp                    ! bottom
+    bcs_loct(:, :, 2) = 0.0_wp                    ! top
     bcs_locb(:, :, 3) = -alpha*aug*BcsFlowJmin%ref(:, :, 3) ! bottom
     bcs_loct(:, :, 3) = -alpha*aug*BcsFlowJmax%ref(:, :, 3) ! top
 
@@ -264,26 +190,20 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     if (icalc_scal /= 0) then
 
         do is = 1, inb_scal
-
-            tmp7(1:isize_field) = hs(1:isize_field, is) ! save old values
+            tmp7 = hs(:, is) ! save old values
 
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is), wrk3d, wrk2d, wrk3d)
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6, wrk3d, wrk2d, wrk3d)
             call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp4, tmp5, wrk2d, wrk3d)
 
-            do ij = 1, isize_field; 
-                hs(ij, is) = -u(ij)*hs(ij, is) - v(ij)*tmp5(ij) - w(ij)*tmp6(ij)
-            end do
+            hs(:, is) = -u*hs(:, is) - v*tmp5 - w*tmp6
 
 ! -----------------------------------------------------------------------
 ! Diffusion part of the BCs for intermediate scalar
 ! -----------------------------------------------------------------------
-            ip_b = 1
-            ip_t = imax*(jmax - 1) + 1
-            do k = 1, kmax
-                bcs_locb(:, k, 4) = (vdummy/schmidt(is))*tmp4(ip_b:); ip_b = ip_b + nxy ! bottom
-                bcs_loct(:, k, 4) = (vdummy/schmidt(is))*tmp4(ip_t:); ip_t = ip_t + nxy ! top
-            end do
+            p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
+            bcs_locb(:, :, 4) = (vdummy/schmidt(is))*p_bcs(:, 1, :) ! bottom
+            bcs_loct(:, :, 4) = (vdummy/schmidt(is))*p_bcs(:, jmax, :) ! top
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms (Scalar #is)
@@ -295,10 +215,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 ! #######################################################################
 ! Explicit Time Stepping for scalar #is
 ! #######################################################################
-            do ij = 1, isize_field
-                tmp4(ij) = s(ij, is)*aug + dte*(hs(ij, is) + kco*tmp7(ij)); 
-            end do
-
+            tmp4 = s(:, is)*aug + dte*(hs(:, is) + kco*tmp7)
+            
 ! -----------------------------------------------------------------------
 ! Remaining part of the BCs for intermediate scalar
 ! -----------------------------------------------------------------------
@@ -318,14 +236,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 ! #######################################################################
 ! semi-Implicit Diffusion for Scalar #is
 ! #######################################################################
-            beta = -C_1_R/(alpha/schmidt(is))
+            beta = -1.0_wp/(alpha/schmidt(is))
 
             call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
                                      tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4), wrk1d, wrk1d(1, 5), wrk3d)
 
-            do ij = 1, isize_field
-                s(ij, is) = beta*tmp4(ij) - kef*s(ij, is)
-            end do
+            s(:, is) = beta*tmp4 - kef*s(:, is)
 
         end do
     end if
@@ -333,7 +249,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 ! ################################################################################
 ! Implicit part of time integration for velocities
 ! ################################################################################
-    beta = -C_1_R/alpha
+    beta = -1.0_wp/alpha
 
     call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
                              tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1), wrk1d, wrk1d(1, 5), wrk3d)
@@ -342,11 +258,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
                              tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3), wrk1d, wrk1d(1, 5), wrk3d)
 
-    do ij = 1, isize_field
-        u(ij) = beta*tmp1(ij) - kef*u(ij)
-        v(ij) = beta*tmp2(ij) - kef*v(ij)
-        w(ij) = beta*tmp3(ij) - kef*w(ij)
-    end do
+    u = beta*tmp1 - kef*u
+    v = beta*tmp2 - kef*v
+    w = beta*tmp3 - kef*w
 
 ! #######################################################################
 ! Pressure term (actually solving for dte*p)
@@ -356,18 +270,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
 
 ! -----------------------------------------------------------------------
-    do ij = 1, isize_field
-        tmp1(ij) = tmp1(ij) + tmp2(ij) + tmp3(ij) ! forcing term in tmp1
-    end do
+    tmp1 = tmp1 + tmp2 + tmp3 ! forcing term in tmp1
 
 ! -----------------------------------------------------------------------
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
-    ip_b = 1
-    ip_t = imax*(jmax - 1) + 1
-    do k = 1, kmax
-        p_bcs => v(ip_b:); BcsFlowJmin%ref(1:imax, k, 2) = p_bcs(1:imax); ip_b = ip_b + nxy ! bottom
-        p_bcs => v(ip_t:); BcsFlowJmax%ref(1:imax, k, 2) = p_bcs(1:imax); ip_t = ip_t + nxy ! top
-    end do
+    iq = 2
+    p_bcs(1:imax, 1:jmax, 1:kmax) => q(1:imax*jmax*kmax, iq)
+    BcsFlowJmin%ref(:, :, iq) = p_bcs(:, 1, :)
+    BcsFlowJmax%ref(:, :, iq) = p_bcs(:, jmax, :)
 
 ! pressure in tmp1, Oy derivative in tmp3
     ibc = 3
@@ -380,12 +290,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 ! -----------------------------------------------------------------------
 ! Add pressure gradient
 ! -----------------------------------------------------------------------
-    dummy = C_1_R/dte
-    do ij = 1, isize_field
-        u(ij) = u(ij) - tmp2(ij); h1(ij) = h1(ij) - dummy*tmp2(ij)
-        v(ij) = v(ij) - tmp3(ij); h2(ij) = h2(ij) - dummy*tmp3(ij)
-        w(ij) = w(ij) - tmp4(ij); h3(ij) = h3(ij) - dummy*tmp4(ij)
-    end do
+    dummy = 1.0_wp/dte
+    u = u - tmp2; hq(:, 1) = hq(:, 1) - dummy*tmp2
+    v = v - tmp3; hq(:, 2) = hq(:, 2) - dummy*tmp3
+    w = w - tmp4; hq(:, 3) = hq(:, 3) - dummy*tmp4
 
 ! #######################################################################
 ! Boundary conditions
@@ -395,8 +303,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 ! -----------------------------------------------------------------------
 ! Default is Dirichlet -> values at boundary are kept const;
 ! BcsFlowJmin/Jmax for u and w initialized to old BC values above
-    BcsFlowJmin%ref(:, :, 2) = C_0_R
-    BcsFlowJmax%ref(:, :, 2) = C_0_R
+    BcsFlowJmin%ref(:, :, 2) = 0.0_wp
+    BcsFlowJmax%ref(:, :, 2) = 0.0_wp
     do iq = 1, inb_flow
         ibc = 0
         if (BcsFlowJmin%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 1
@@ -406,6 +314,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), q(1, iq), &
                                         BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), wrk1d, tmp1, wrk3d)
         end if
+
+        p_bcs(1:imax, 1:jmax, 1:kmax) => q(1:imax*jmax*kmax, iq)
+        p_bcs(:, 1, :) = BcsFlowJmin%ref(:, :, iq)
+        p_bcs(:, jmax, :) = BcsFlowJmax%ref(:, :, iq)
+
     end do
 
     do is = 1, inb_scal
@@ -417,35 +330,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), s(1, is), &
                                         BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), wrk1d, tmp1, wrk3d)
         end if
+
+        p_bcs(1:imax, 1:jmax, 1:kmax) => s(1:imax*jmax*kmax, is)
+        p_bcs(:, 1, :) = BcsScalJmin%ref(:, :, is)
+        p_bcs(:, jmax, :) = BcsScalJmax%ref(:, :, is)
+
     end do
 
-! -----------------------------------------------------------------------
-! Impose bottom BCs at Jmin
-! -----------------------------------------------------------------------
-    ip_b = 1
-    do k = 1, kmax
-        u(ip_b:ip_b + imax - 1) = BcsFlowJmin%ref(1:imax, k, 1)
-        v(ip_b:ip_b + imax - 1) = BcsFlowJmin%ref(1:imax, k, 2)
-        w(ip_b:ip_b + imax - 1) = BcsFlowJmin%ref(1:imax, k, 3)
-        do is = 1, inb_scal
-            s(ip_b:ip_b + imax - 1, is) = BcsScalJmin%ref(1:imax, k, is)
-        end do
-        ip_b = ip_b + nxy
-    end do
-
-! -----------------------------------------------------------------------
-! Impose top BCs at Jmax
-! -----------------------------------------------------------------------
-    ip_t = imax*(jmax - 1) + 1
-    do k = 1, kmax
-        u(ip_t:ip_t + imax - 1) = BcsFlowJmax%ref(1:imax, k, 1)
-        v(ip_t:ip_t + imax - 1) = BcsFlowJmax%ref(1:imax, k, 2)
-        w(ip_t:ip_t + imax - 1) = BcsFlowJmax%ref(1:imax, k, 3)
-        do is = 1, inb_scal
-            s(ip_t:ip_t + imax - 1, is) = BcsScalJmax%ref(1:imax, k, is)
-        end do
-        ip_t = ip_t + nxy
-    end do
 ! ! -----------------------------------------------------------------------
 ! ! Preliminaries
 ! ! -----------------------------------------------------------------------
@@ -468,7 +359,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 !   ip_b =                 1
 !   DO k = 1,kmax
 !      u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
-!      v(ip_b:ip_b+imax-1) = C_0_R               ! no penetration
+!      v(ip_b:ip_b+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);
 !      IF ( icalc_scal .NE. 0 ) THEN
 !         DO is=1,inb_scal
@@ -484,7 +375,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2 &
 !   ip_t = imax*(jmax-1) + 1
 !   DO k = 1,kmax
 !      u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
-!      v(ip_t:ip_t+imax-1) = C_0_R               ! no penetration
+!      v(ip_t:ip_t+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);
 !      IF ( icalc_scal .NE. 0 ) THEN
 !         DO is=1,inb_scal

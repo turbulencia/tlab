@@ -47,14 +47,14 @@ program INIPART
         call FDM_INITIALIZE(y, g(2), wrk1d)
         call FDM_INITIALIZE(z, g(3), wrk1d)
 
-        call FI_BACKGROUND_INITIALIZE(wrk1d)
+        call FI_BACKGROUND_INITIALIZE()
 
         call PARTICLE_INITIALIZE()
 
         ! -------------------------------------------------------------------
         ! Initialize particle information
         ! -------------------------------------------------------------------
-        call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
+        call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
         call IO_WRITE_PARTICLE(TRIM(ADJUSTL(tag_part))//'ics', l_g, l_q)
 

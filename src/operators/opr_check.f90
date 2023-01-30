@@ -120,8 +120,8 @@ subroutine OPR_CHECK()
 
 !     fft_reordering = .true.
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call OPR_FOURIER_F(2, imax, jmax, kmax, txc(1, 3), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
-        call OPR_FOURIER_B(2, imax, jmax, kmax, txc(1, 1), txc(1, 2), wrk3d)
+        call OPR_FOURIER_F(2, imax, jmax, kmax, txc(1, 3), txc(1, 1), txc(1, 2))
+        call OPR_FOURIER_B(2, imax, jmax, kmax, txc(1, 1), txc(1, 2))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 !     fft_reordering = .false.
 

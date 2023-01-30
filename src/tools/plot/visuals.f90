@@ -29,12 +29,11 @@ program VISUALS
     use IBM_VARS
     use IO_FIELDS
     use FI_VECTORCALCULUS
+    use FI_STRAIN_EQN
     use OPR_FOURIER
     use OPR_PARTIAL
-
+    
     implicit none
-
-#include "integers.h"
 
     ! Parameter definitions
     TINTEGER, parameter :: itime_size_max = 3000
@@ -73,6 +72,8 @@ program VISUALS
 
     TINTEGER params_size
     TREAL params(params_size_max)
+
+    integer, parameter :: i0 = 0, i1 = 1, i3 = 3, i6 = 6
 
     !########################################################################
     !########################################################################
@@ -315,7 +316,7 @@ program VISUALS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d) ! Initialize thermodynamic quantities
+    call FI_BACKGROUND_INITIALIZE() ! Initialize thermodynamic quantities
 
     if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
@@ -361,14 +362,14 @@ program VISUALS
 
         if (icalc_scal == 1 .and. iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         elseif (icalc_scal == 0) then
             s = C_0_R
         end if
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (imode_ibm == 1) then
@@ -390,7 +391,7 @@ program VISUALS
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! Read external file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname)); params_size = 2
-            call IO_READ_FIELD_INT1(fname, i1, imax, jmax, kmax, itime, params_size, params, gate)
+            call IO_READ_FIELD_INT1(fname, 1, imax, jmax, kmax, itime, params_size, params, gate)
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then
@@ -686,13 +687,13 @@ program VISUALS
             ! -------------------------------------------------------------------
             if (opt_vec(iv) == iscal_offset + 7) then ! Strain Tensor
                 plot_file = 'StrainTensor'//time_str(1:MaskSize)
-     CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+                call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i6, subdomain, txc(1, 1), wrk3d)
             end if
 
             if (opt_vec(iv) == iscal_offset + 8 .or. opt_vec(iv) == iscal_offset + 9) then ! Strain
                 plot_file = 'Strain'//time_str(1:MaskSize)
-                call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+                call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
                 txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 1)
                 if (opt_vec(iv) == iscal_offset + 8) then ! Natural log
                     plot_file = 'Ln'//trim(adjustl(plot_file))
@@ -711,21 +712,21 @@ program VISUALS
                     txc(:, 6) = q(:, 6)
                 end if
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 6), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 call TLAB_WRITE_ASCII(lfile, 'Computing strain production...')
                 plot_file = 'StrainProduction'//time_str(1:MaskSize)
                 call FI_STRAIN_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
-                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 call TLAB_WRITE_ASCII(lfile, 'Computing strain diffusion...')
                 plot_file = 'StrainDiffusion'//time_str(1:MaskSize)
                 call FI_STRAIN_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
-                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = C_2_R*visc*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
@@ -814,7 +815,7 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 15) then ! Turbulent quantities
                 plot_file = 'LnDissipation'//time_str(1:MaskSize)
                 call FI_DISSIPATION(i1, imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk1d, wrk2d, wrk3d)
+                                    txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + C_SMALL_R)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 

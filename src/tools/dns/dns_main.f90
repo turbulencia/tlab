@@ -64,7 +64,7 @@ program DNS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE()
 
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
@@ -88,8 +88,8 @@ program DNS
     ! Initialize operators and reference data
     ! ###################################################################
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig), wrk1d)
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
     end do
 
     if (ifourier == 1) then
@@ -107,11 +107,11 @@ program DNS
 
     if (icalc_scal == 1) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
+        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
     end if
 
     write (fname, *) nitera_first; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-    call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q, wrk3d)
+    call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
 
     call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)  ! Initialize diagnostic thermodynamic quantities
 
@@ -249,16 +249,17 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files
-            itime == nitera_last .or. int(logs_data(1)) /= 0) then  ! Secure that one restart file is saved
+            itime == nitera_last .or. int(logs_data(1)) /= 0 .or. & ! Secure that one restart file is saved 
+            wall_time > nruntime_sec) then                          ! If max runtime of the code is reached 
 
             if (icalc_flow == 1) then
                 write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, q, wrk3d)
+                call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, q)
             end if
 
             if (icalc_scal == 1) then
                 write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, s, wrk3d)
+                call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, s)
             end if
 
             if (use_tower) then
@@ -285,6 +286,12 @@ program DNS
             call PLANES_SAVE()
         end if
 
+        if (wall_time > nruntime_sec) then 
+            write (str, *) wall_time
+            call TLAB_WRITE_ASCII(lfile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
+            exit
+        end if
+        
     end do
 
     ! ###################################################################

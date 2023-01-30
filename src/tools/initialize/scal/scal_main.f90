@@ -45,7 +45,7 @@ program INISCAL
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE()
     do is = 1,size(Sini)
         if (Sini(is)%relative) Sini(is)%ymean = g(2)%nodes(1) + g(2)%scale*Sini(is)%ymean_rel
     enddo
@@ -105,7 +105,7 @@ program INISCAL
     end if
 
 ! ###################################################################
-    call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s, wrk3d)
+    call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
     call TLAB_STOP(0)
 end program INISCAL

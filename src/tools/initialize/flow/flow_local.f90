@@ -222,9 +222,9 @@ contains
         call FLOW_SHAPE(wrk1d)
 
         dummy = visc
-        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 1, u, wrk3d)
-        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 2, v, wrk3d)
-        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 3, w, wrk3d)
+        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 1, u)
+        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 2, v)
+        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 3, w)
         visc = dummy
 
         do j = 1, jmax   ! Remove mean
@@ -446,7 +446,7 @@ contains
         select case (flag_t)
         case (PERT_BROADBAND)
             dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp, s) ! using array s as aux array
+            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp)
             rtime = dummy
             dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp)     ! remove mean
             disp = disp - dummy

@@ -187,7 +187,7 @@ program APRIORI
 ! Initialize filters
 ! -------------------------------------------------------------------
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
     end do
 
 ! -------------------------------------------------------------------
@@ -208,12 +208,12 @@ program APRIORI
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q)
         end if
 
         if (iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s)
         end if
 
 ! -------------------------------------------------------------------
@@ -233,7 +233,7 @@ program APRIORI
         case (1)
             do iq = 1, 3
                 qf(1:isize_field, iq) = q(1:isize_field, iq)
-                call OPR_FILTER(imax, jmax, kmax, FilterDomain, qf(1, iq), wrk1d, wrk2d, txc)
+                call OPR_FILTER(imax, jmax, kmax, FilterDomain, qf(1, iq), txc)
             end do
 
             nfield = 0
@@ -252,7 +252,7 @@ program APRIORI
             txc(1:isize_field, 6) = q(1:isize_field, 2)*q(1:isize_field, 3)
 
             do is = 1, nfield
-                call OPR_FILTER(imax, jmax, kmax, FilterDomain, txc(1, is), wrk1d, wrk2d, txc(1, 7))
+                call OPR_FILTER(imax, jmax, kmax, FilterDomain, txc(1, is), txc(1, 7))
             end do
 
             txc(1:isize_field, 1) = txc(1:isize_field, 1) - qf(1:isize_field, 1)*qf(1:isize_field, 1)
@@ -305,7 +305,7 @@ program APRIORI
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 3), txc(1, 9), wrk3d, wrk2d, wrk3d)
 
             do is = 1, nfield
-                call OPR_FILTER(imax, jmax, kmax, FilterDomain, txc(1, is), wrk1d, wrk2d, txc(1, 10))
+                call OPR_FILTER(imax, jmax, kmax, FilterDomain, txc(1, is), txc(1, 10))
             end do
 
             if (jmax_aux*opt_block /= g(2)%size) then

@@ -43,7 +43,7 @@ program INIRAND
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE()
 
     ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing random fiels.')
@@ -62,17 +62,17 @@ program INIRAND
     itime = 0; rtime = 0.0_wp
 
     do iq = 1, inb_flow
-        call RAND_FIELD(ucov(iq), q(1, iq), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+        call RAND_FIELD(ucov(iq), q(1, iq), txc(1, 1), txc(1, 2), txc(1, 3))
     end do
     if (ipdf == 2) then ! Gaussian PDF
         call RAND_COVARIANCE(ucov, q(:, 1), q(:, 2), q(:, 3))
     end if
-    call IO_WRITE_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, inb_flow, q, txc)
+    call IO_WRITE_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
     do is = 1, inb_scal
-        call RAND_FIELD(ucov(is), s(1, is), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+        call RAND_FIELD(ucov(is), s(1, is), txc(1, 1), txc(1, 2), txc(1, 3))
     end do
-    call IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, s, txc)
+    call IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
     call TLAB_STOP(0)
 end program INIRAND

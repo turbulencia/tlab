@@ -27,6 +27,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     use TLAB_MPI_VARS
 #endif
     use OPR_PARTIAL
+    use FI_STRAIN_EQN
 
     implicit none
 
@@ -101,7 +102,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     ipfield = 1
     nfield_loc = 3
 
-    call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+    call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 3), txc(1, 1), txc(1, 2))
     do ij = 1, imax*jmax*kmax
         txc(ij, 3) = C_2_R*txc(ij, 3)
     end do
@@ -206,17 +207,17 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     nfield_loc = 3
 
     call FI_STRAIN_PRODUCTION(imax, jmax, kmax, u, v, w, &
-                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
     do ij = 1, imax*jmax*kmax
         txc(ij, 1) = txc(ij, 1)*C_2_R
     end do
     call FI_STRAIN_DIFFUSION(imax, jmax, kmax, u, v, w, &
-                             txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                             txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
     do ij = 1, imax*jmax*kmax
         txc(ij, 2) = txc(ij, 2)*visc*C_2_R
     end do
     call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, p, &
-                            txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                            txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
     do ij = 1, imax*jmax*kmax
         txc(ij, 3) = txc(ij, 3)*C_2_R
     end do

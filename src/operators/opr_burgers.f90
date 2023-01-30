@@ -318,8 +318,8 @@ contains
 ! ###################################################################
         if (dealiasing%type /= DNS_FILTER_NONE) then
             allocate (uf(nlines, g%size), dsf(nlines, g%size))
-            call OPR_FILTER_1D(nlines, dealiasing, u, uf, wrk2d, dsdx) ! dsdx is not used in compact filter
-            call OPR_FILTER_1D(nlines, dealiasing, dsdx, dsf, wrk2d, dsdx)
+            call OPR_FILTER_1D(nlines, dealiasing, u, uf)
+            call OPR_FILTER_1D(nlines, dealiasing, dsdx, dsf)
 
 ! We duplicate a few lines of code instead of using pointers becasue
 ! creating pointers take some running time

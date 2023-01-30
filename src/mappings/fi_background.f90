@@ -2,11 +2,9 @@
 #include "dns_const_mpi.h"
 
 !########################################################################
-!#
 !# Initialize data of reference thermodynamic profiles
-!#
 !########################################################################
-subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
+subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_CONSTANTS, only: lfile, wp, wi
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
@@ -14,6 +12,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
     use TLAB_VARS, only: buoyancy
+    use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, GRATIO, scaleheight
     use PROFILES
@@ -23,8 +22,6 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 #endif
 
     implicit none
-
-    real(wp), dimension(g(2)%size, *), intent(INOUT) :: wrk1d
 
 ! -----------------------------------------------------------------------
     integer(wi) is, j, ip, nlines, offset
@@ -62,7 +59,7 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 ! Construct given thermodynamic profiles
     do is = 1, inb_scal
         do j = 1, g(2)%size
-            wrk1d(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+            p_wrk1d(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
         end do
 !     wrk1d(:,is) = sbg(is)%reference
     end do
@@ -72,29 +69,29 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
         epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
 
         if (buoyancy%active(2)) then
-!        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, wrk1d, epbackground, tbackground, pbackground, wrk1d(1,4))
-            call FI_HYDROSTATIC_H(g(2), wrk1d, epbackground, tbackground, pbackground, wrk1d(1, inb_scal_array + 1))
+!        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, p_wrk1d, epbackground, tbackground, pbackground, p_wrk1d(1,4))
+            call FI_HYDROSTATIC_H(g(2), p_wrk1d, epbackground, tbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
         end if
 
     end if
 
     if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-        call THERMO_AIRWATER_PH(i1, g(2)%size, i1, wrk1d(1, 2), wrk1d(1, 1), epbackground, pbackground)
+        call THERMO_AIRWATER_PH(i1, g(2)%size, i1, p_wrk1d(1, 2), p_wrk1d(1, 1), epbackground, pbackground)
     else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, wrk1d, wrk1d(1, inb_scal_array))
+        call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, p_wrk1d, p_wrk1d(1, inb_scal_array))
     end if
 
     if (scaleheight > 0.0_wp) then
-        call THERMO_ANELASTIC_DENSITY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground)
+        call THERMO_ANELASTIC_DENSITY(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, rbackground)
         ribackground = 1.0_wp/rbackground
     end if
 
 ! Calculate buoyancy profile
     if (buoyancy%type == EQNS_EXPLICIT) then
-        call THERMO_ANELASTIC_BUOYANCY(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, rbackground, bbackground)
+        call THERMO_ANELASTIC_BUOYANCY(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, rbackground, bbackground)
     else
-        wrk1d(:, inb_scal_array + 1) = 0.0_wp
-        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, wrk1d(1, 1), bbackground, wrk1d(1, inb_scal_array + 1))
+        p_wrk1d(:, inb_scal_array + 1) = 0.0_wp
+        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, p_wrk1d(:, 1), bbackground, p_wrk1d(:, inb_scal_array + 1))
     end if
 
 ! #######################################################################
@@ -112,10 +109,10 @@ subroutine FI_BACKGROUND_INITIALIZE(wrk1d)
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         is = is + 1
-        call THERMO_ANELASTIC_THETA_L(i1, g(2)%size, i1, wrk1d, epbackground, pbackground, wrk1d(1, inb_scal_array + 1))
+        call THERMO_ANELASTIC_THETA_L(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, p_wrk1d(1, inb_scal_array + 1))
         sbg(is) = sbg(1)
-        sbg(is)%mean = (wrk1d(1, inb_scal_array + 1) + wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
-        sbg(is)%delta = abs(wrk1d(1, inb_scal_array + 1) - wrk1d(g(2)%size, inb_scal_array + 1))
+        sbg(is)%mean = (p_wrk1d(1, inb_scal_array + 1) + p_wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
+        sbg(is)%delta = abs(p_wrk1d(1, inb_scal_array + 1) - p_wrk1d(g(2)%size, inb_scal_array + 1))
         schmidt(is) = schmidt(1)
     end if
 

@@ -78,7 +78,7 @@ program VPOISSON
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, i1, i0, a, wrk3d)
+    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
 
 ! remove 2\Delta x wave
 !  CALL OPR_FILTER(i1,imax,jmax,kmax, ibc_x,ibc_y,ibc_z, i1, a, cx,cy,cz,wrk1d,wrk2d,wrk3d)
@@ -134,7 +134,7 @@ program VPOISSON
 ! ###################################################################
     ! CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
     ! b,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
-    call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, i1, b, wrk3d)
+    call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c, wrk3d, wrk2d, wrk3d)
 ! -------------------------------------------------------------------
@@ -157,7 +157,7 @@ program VPOISSON
         end do
     end do
     write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-    call IO_WRITE_FIELDS('field.dif', IO_SCAL, imax, jmax, kmax, i1, e, wrk3d)
+    call IO_WRITE_FIELDS('field.dif', IO_SCAL, imax, jmax, kmax, 1, e)
 
 ! first derivative
     error = C_0_R
@@ -173,7 +173,7 @@ program VPOISSON
         end do
     end do
     write (*, *) 'Relative error in df/dy ....: ', sqrt(error)/sqrt(dummy)
-!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, e, wrk3d)
+!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, e)
 
     stop
 end program VPOISSON

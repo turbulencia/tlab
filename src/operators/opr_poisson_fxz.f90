@@ -1,6 +1,6 @@
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+#include "dns_error.h"
 #endif
 
 module OPR_ELLIPTIC
@@ -8,7 +8,8 @@ module OPR_ELLIPTIC
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz
     use TLAB_VARS, only: ivfilter, istagger, vfilter_param
-    use TLAB_ARRAYS, only: wrk1d, wrk3d
+    use TLAB_POINTERS_3D, only: p_wrk1d
+    use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
     use OPR_FOURIER
     use OPR_FDE
 #ifdef USE_MPI
@@ -18,12 +19,12 @@ module OPR_ELLIPTIC
     implicit none
     private
 
-    real(wp),    pointer :: r_bcs(:) => null()
-    complex(wp), pointer :: aux1(:) => null(), aux2(:) => null(), aux3(:) => null()
-    complex(wp), pointer :: c_wrk3d(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
+    complex(wp), target :: bcs(3)
+    real(wp), pointer :: r_bcs(:) => null()
+    complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
 
     public :: OPR_POISSON_FXZ
-
+    ! NEED TO ADD HELMHOLTZ HERE
 contains
 !########################################################################
 !#
@@ -56,15 +57,10 @@ contains
         integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
         integer(wi) i_sing(2), k_sing(2)    ! singular global modes
         real(wp) lambda, norm
-        complex(wp), target :: bcs(3)
 
         ! #######################################################################
-        call c_f_pointer(c_loc(wrk3d), c_wrk3d, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(wrk1d(:, 1)), aux1, shape=[ny])
-        call c_f_pointer(c_loc(wrk1d(:, 3)), aux2, shape=[ny])
-        call c_f_pointer(c_loc(wrk1d(:, 5)), aux3, shape=[ny])
         call c_f_pointer(c_loc(bcs), r_bcs, shape=[3*2])
 
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
@@ -115,10 +111,10 @@ contains
 
                 ! forcing term
                 do j = 1, ny
-                    ip = (j - 1)*isize_line + i; aux1(j) = c_tmp1(ip, k)
+                    ip = (j - 1)*isize_line + i; c_wrk1d(j, 1) = c_tmp1(ip, k)
                 end do
 
-                ! BCs       
+                ! BCs
                 j = ny + 1; ip = (j - 1)*isize_line + i; bcs(1) = c_tmp1(ip, k) ! Dirichlet or Neumann
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
@@ -127,32 +123,32 @@ contains
                 case (3) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny, 2, &
-                                                 g(2)%jac, wrk1d(:, 3), wrk1d(:, 1), r_bcs, wrk1d(:, 5), wrk1d(:, 7))
+                                                 g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     else
                         call FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny, 2, lambda, &
-                                                g(2)%jac, wrk1d(:, 3), wrk1d(:, 1), r_bcs, wrk1d(:, 5), wrk1d(:, 7))
+                                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
                 case (0) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny, 2, &
-                                                 g(2)%nodes, g(2)%jac, wrk1d(:, 3), wrk1d(:, 1), r_bcs, wrk1d(:, 5), wrk1d(:, 7))
+                                            g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     else
                         call FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny, 2, lambda, &
-                                                g(2)%jac, wrk1d(:, 3), wrk1d(:, 1), r_bcs, wrk1d(:, 5), wrk1d(:, 7))
+                                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
                 end select
 
                 if (ivfilter == 1) then     ! Vertical filtering of p and dpdy in case of staggering
-                    call FILTER_VERTICAL_PRESSURE(aux2, aux3, ny, vfilter_param, wrk1d(1, 7))
+                    call FILTER_VERTICAL_PRESSURE(c_wrk1d(:, 2), c_wrk1d(:, 3), ny, vfilter_param, p_wrk1d(1, 7))
                 end if
 
                 ! Rearrange in memory and normalize
                 do j = 1, ny
                     ip = (j - 1)*isize_line + i
-                    c_tmp1(ip, k) = aux2(j)*norm ! solution
-                    c_tmp2(ip, k) = aux3(j)*norm ! Oy derivative
+                    c_tmp1(ip, k) = c_wrk1d(j, 2)*norm ! solution
+                    c_tmp2(ip, k) = c_wrk1d(j, 3)*norm ! Oy derivative
                 end do
 
             end do
@@ -176,7 +172,7 @@ contains
             end if
         end if
 
-        nullify (aux1, aux2, aux3, c_wrk3d, c_tmp1, c_tmp2, r_bcs)
+        nullify (c_tmp1, c_tmp2, r_bcs)
 
         return
     end subroutine OPR_POISSON_FXZ

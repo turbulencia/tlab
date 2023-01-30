@@ -87,7 +87,7 @@ use OPR_PARTIAL
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, i1,i0, a, wrk3d)
+  CALL IO_READ_FIELDS('field.inp', IO_SCAL, imax,jmax,kmax, 1,0, a)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative
@@ -109,7 +109,7 @@ use OPR_PARTIAL
     WRITE(*,*) 'Interpolation, vel. <--> pre. grid '
     WRITE(*,*) 'Relative error ...............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
   CALL OPR_PARTIAL_X(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(1), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -126,7 +126,7 @@ use OPR_PARTIAL
     WRITE(*,*) 'Interpolation + interp. 1st derivative, vel. --> pre. grid'
     WRITE(*,*) 'Relative error ...............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
   CALL OPR_PARTIAL_X(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(1), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -143,7 +143,7 @@ use OPR_PARTIAL
     WRITE(*,*) 'Interpolation + interp. 1st derivative, pre. --> vel. grid'
     WRITE(*,*) 'Relative error ...............: ', sqrt(error)/sqrt(dummy)
   ENDIF
-  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+  ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
 ! ###################################################################
 ! z-direction: Interpolation + interpolatory 1st derivative
 ! ###################################################################
@@ -166,7 +166,7 @@ use OPR_PARTIAL
       WRITE(*,*) 'Interpolation, vel. <--> pre. grid '
       WRITE(*,*) 'Relative error ...............: ', sqrt(error)/sqrt(dummy)
     ENDIF
-    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
   ! -------------------------------------------------------------------
   ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
     CALL OPR_PARTIAL_Z(OPR_P1_INT_VP, imax,jmax,kmax, bcs, g(3), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -183,7 +183,7 @@ use OPR_PARTIAL
       WRITE(*,*) 'Interpolation + interp. 1st derivative, vel. --> pre. grid'
       WRITE(*,*) 'Relative error ...............: ', sqrt(error)/sqrt(dummy)
     ENDIF
-    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
   ! -------------------------------------------------------------------
   ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
     CALL OPR_PARTIAL_Z(OPR_P0_INT_VP, imax,jmax,kmax, bcs, g(3), a,     a_int, tmp1, wrk2d,wrk3d)
@@ -200,7 +200,7 @@ use OPR_PARTIAL
       WRITE(*,*) 'Interpolation + interp. 1st derivative, pre. --> vel. grid'
       WRITE(*,*) 'Relative error ...............: ', sqrt(error)/sqrt(dummy)
     ENDIF
-    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, a_dif, wrk3d)
+    ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
   ENDIF
 
 ! ###################################################################

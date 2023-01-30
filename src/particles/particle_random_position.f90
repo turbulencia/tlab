@@ -4,7 +4,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
+subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
     use TLAB_TYPES,     only: pointers_dt, pointers3d_dt, wp, wi, longi
     use TLAB_CONSTANTS
@@ -25,7 +25,6 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
     real(wp), target :: l_q(isize_part, inb_part_array)
     real(wp), target :: l_txc(isize_part, 2)
     real(wp), target :: txc(imax, jmax, kmax, inb_scal)
-    real(wp) :: wrk3d(isize_field)
 
 ! -------------------------------------------------------------------
     integer(wi) i, is
@@ -107,7 +106,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
         l_q(1:l_g%np, 2) = IniP%ymean + (l_q(1:l_g%np,2)-0.5_wp)*IniP%diam
 
     case (PART_INITYPE_SCALAR) ! Use the scalar field to create the particle distribution
-        call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc, wrk3d)
+        call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
         is = 1 ! Reference scalar
 
         y_limits(1) = IniP%ymean - 0.5_wp*IniP%diam
@@ -153,7 +152,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc, wrk3d)
 
     if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
 
-        call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc, wrk3d)
+        call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
 
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             nvar = 0

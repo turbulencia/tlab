@@ -292,11 +292,11 @@ program TRANSFIELDS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE()
 
     if (opt_main == 5) then
         do ig = 1, 3
-            call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig), wrk1d)
+            call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         end do
     end if
 
@@ -453,12 +453,12 @@ program TRANSFIELDS
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         ! ###################################################################
@@ -564,7 +564,7 @@ program TRANSFIELDS
                     q_dst(:, iq) = q(:, iq) ! in-place operation
                     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ) &  ! Bcs depending on field
                         FilterDomain(2)%BcsMin = FilterDomainBcsFlow(iq)
-                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, q_dst(1, iq), wrk1d, wrk2d, txc)
+                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, q_dst(1, iq), txc)
                 end do
             end if
 
@@ -574,7 +574,7 @@ program TRANSFIELDS
                     s_dst(:, is) = s(:, is) ! in-place operation
                     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ) & ! Bcs depending on field
                         FilterDomain(2)%BcsMin = FilterDomainBcsScal(is)
-                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, s_dst(1, is), wrk1d, wrk2d, txc)
+                    call OPR_FILTER(imax, jmax, kmax, FilterDomain, s_dst(1, is), txc)
                 end do
             end if
 
@@ -659,11 +659,11 @@ program TRANSFIELDS
         if (opt_main /= 4 .and. opt_main /= 7) then
             if (icalc_flow > 0) then
                 flow_file = trim(adjustl(flow_file))//'.trn'
-                call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst, wrk3d)
+                call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
             end if
             if (icalc_scal > 0) then
                 scal_file = trim(adjustl(scal_file))//'.trn'
-                call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst, wrk3d)
+                call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
             end if
         end if
 
@@ -675,11 +675,11 @@ program TRANSFIELDS
     if (opt_main == 4 .or. opt_main == 7) then
         if (icalc_flow > 0) then
             flow_file = trim(adjustl(flow_file))//'.trn'
-            call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst, wrk3d)
+            call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
         end if
         if (icalc_scal > 0) then
             scal_file = trim(adjustl(scal_file))//'.trn'
-            call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst, wrk3d)
+            call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
         end if
     end if
 

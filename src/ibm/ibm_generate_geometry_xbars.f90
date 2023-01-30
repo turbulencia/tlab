@@ -142,7 +142,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   ! io of eps
   select case( ibm_io )
   case ( IBM_IO_REAL )
-    call IO_WRITE_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, 1, eps, wrk3d)
+    call IO_WRITE_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, 1, eps)
   case ( IBM_IO_INT  )
     call IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
   case ( IBM_IO_BIT  )

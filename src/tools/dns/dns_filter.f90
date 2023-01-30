@@ -46,9 +46,9 @@ subroutine DNS_FILTER()
     end if
 
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
-        call FI_RTKE(imax, jmax, kmax, q, wrk1d, wrk3d)
+        call FI_RTKE(imax, jmax, kmax, q, wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tke0(1), wrk1d, area)
-        call FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        call FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5))
         call AVG_IK_V(imax, jmax, kmax, jmax, txc, g(1)%jac, g(3)%jac, Eps0(1), wrk1d, area)
     end if
 
@@ -72,10 +72,10 @@ subroutine DNS_FILTER()
     end if
 
     do iq = 1, inb_flow
-        call OPR_FILTER(imax, jmax, kmax, FilterDomain, q(1, iq), wrk1d, wrk2d, txc)
+        call OPR_FILTER(imax, jmax, kmax, FilterDomain, q(1, iq), txc)
     end do
     do is = 1, inb_scal
-        call OPR_FILTER(imax, jmax, kmax, FilterDomain, s(1, is), wrk1d, wrk2d, txc)
+        call OPR_FILTER(imax, jmax, kmax, FilterDomain, s(1, is), txc)
     end do
 
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then ! re-contruct fields per unit mass
@@ -93,9 +93,9 @@ subroutine DNS_FILTER()
     ! -------------------------------------------------------------------
     ! statistics
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
-        call FI_RTKE(imax, jmax, kmax, q, wrk1d, wrk3d)
+        call FI_RTKE(imax, jmax, kmax, q, wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tke1(1), wrk1d, area)
-        call FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5), wrk1d,wrk2d,wrk3d)
+        call FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5))
         call AVG_IK_V(imax, jmax, kmax, jmax, txc, g(1)%jac, g(3)%jac, Eps1(1), wrk1d, area)
 
         write (fname, *) itime; fname = 'kin'//trim(adjustl(fname))

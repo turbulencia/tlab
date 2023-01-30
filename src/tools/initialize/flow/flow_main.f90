@@ -53,7 +53,7 @@ program INIFLOW
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)
+    call FI_BACKGROUND_INITIALIZE()
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
 
     ! Staggering of the pressure grid not implemented here
@@ -135,7 +135,7 @@ program INIFLOW
         end if
 
         if (imixture > 0) then
-            call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s, wrk3d)
+            call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (flag_t /= 0) then
@@ -149,7 +149,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    call IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q, wrk3d)
+    call IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
     call TLAB_STOP(0)
 end program INIFLOW

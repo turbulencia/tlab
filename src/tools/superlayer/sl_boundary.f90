@@ -216,12 +216,12 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
      IF ( iread_flow .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-        CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
+        CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, 3,0, q)
      ENDIF
 
      IF ( iread_scal .EQ. 1 ) THEN
         WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-        CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, s, wrk3d)
+        CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, s)
      ENDIF
 
 ! -------------------------------------------------------------------
@@ -289,7 +289,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! save scalar dissipation as scalar field
         ! WRITE(fname,*) itime; fname = 'chi'//TRIM(ADJUSTL(fname))
-        ! CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, field, wrk3d)
+        ! CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, field)
 
 ! -------------------------------------------------------------------
 ! Surface PDFs

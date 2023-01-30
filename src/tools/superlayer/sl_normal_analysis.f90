@@ -212,10 +212,10 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! Binary data
 ! -------------------------------------------------------------------
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i4,i0, q, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, 4,0, q)
 
      WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1, wrk3d)
+     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1)
 
      CALL THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, z1, p, field, txc, wrk3d)
      CALL THERMO_THERMAL_PRESSURE(imax, jmax, kmax, z1, field, txc, p)

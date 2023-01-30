@@ -18,13 +18,12 @@ program PDFS
     use THERMO_VARS, only: imixture
     use IO_FIELDS
     use FI_VECTORCALCULUS
+    use FI_STRAIN_EQN
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
 
     implicit none
-
-#include "integers.h"
 
     TINTEGER, parameter :: itime_size_max = 512
     TINTEGER, parameter :: iopt_size_max = 20
@@ -36,7 +35,8 @@ program PDFS
     TREAL, allocatable :: pdf(:), y_aux(:)
     integer(1), allocatable :: gate(:)
     type(pointers_dt) :: vars(16)
-
+    integer, parameter :: i1 = 1
+    
     ! -------------------------------------------------------------------
     ! Local variables
     ! -------------------------------------------------------------------
@@ -241,10 +241,10 @@ program PDFS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE(wrk1d)  ! Initialize thermodynamic quantities
+    call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig), wrk1d)
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
     end do
 
     if (ifourier == 1) then         ! For Poisson solver
@@ -272,12 +272,12 @@ program PDFS
 
         if (iread_scal == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s, wrk3d)
+            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (iread_flow == 1) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q, wrk3d)
+            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
@@ -287,7 +287,7 @@ program PDFS
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! External file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname)); params_size = 2
-            call IO_READ_FIELD_INT1(fname, i1, imax, jmax, kmax, itime, params_size, params, gate)
+            call IO_READ_FIELD_INT1(fname, 1, imax, jmax, kmax, itime, params_size, params, gate)
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then
@@ -424,22 +424,22 @@ program PDFS
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             else
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), q(1, 6), &
-                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                        txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             end if
             txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 2)
 
             call FI_STRAIN_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
-                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
             txc(1:isize_field, 2) = C_2_R*txc(1:isize_field, 2)
 
             call FI_STRAIN_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
-                                     txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), wrk2d, wrk3d)
+                                     txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8))
             txc(1:isize_field, 3) = C_2_R*visc*txc(1:isize_field, 3)
 
-            call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+            call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             txc(1:isize_field, 4) = C_2_R*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = log(txc(1:isize_field, 4))
 
@@ -471,7 +471,7 @@ program PDFS
             end if
 
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))//'.RQ'
-            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1, 1), txc(1, 2), pdf, wrk2d)
+            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1, 1), txc(1, 2), pdf)
 
             ! ###################################################################
             ! Chi flamelet equation PDF
@@ -480,7 +480,7 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing flamelet equation...')
 
             call FI_STRAIN_A(imax, jmax, kmax, s, q(1, 1), q(1, 2), q(1, 3), &
-                             txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                             txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'StrainAGiGi'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'StrainA'; ibc(ifield) = 2
@@ -492,7 +492,7 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy-strain pdf...')
 
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
-            call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 2) = C_2_R*txc(1:isize_field, 2)
 
             if (jmax_aux*opt_block /= g(2)%size .and. reduce_data) then ! I already need it here
@@ -503,7 +503,7 @@ program PDFS
             end if
 
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))//'.WS'
-            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1, 1), txc(1, 2), pdf, wrk2d)
+            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, y_aux, txc(1, 1), txc(1, 2), pdf)
 
             ! ###################################################################
             ! Joint PDF Scalar and Scalar Gradient
@@ -526,15 +526,15 @@ program PDFS
             end if
 
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))//'.SLnG'
-            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, s(1, 1), txc(1, 2), y_aux, pdf, wrk2d)
+            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, s(1, 1), txc(1, 2), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgGiGi'//trim(adjustl(fname))
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          1, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 1), y_aux, pdf, wrk1d)
+                          1, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 1), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgLnGiGi'//trim(adjustl(fname))
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          1, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 2), y_aux, pdf, wrk1d)
+                          1, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 2), y_aux, pdf)
 
             ! ###################################################################
             ! Scalar gradient components
@@ -559,7 +559,7 @@ program PDFS
             ifield = ifield + 1; vars(ifield)%field => txc(:, 4); vars(ifield)%tag = 'Gphi'; ibc(ifield) = 2
 
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))//'.GphiS'
-            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, s(1, 1), txc(1, 4), y_aux, pdf, wrk2d)
+            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, s(1, 1), txc(1, 4), y_aux, pdf)
 
             ! ###################################################################
             ! eigenvalues of rate-of-strain tensor
@@ -567,7 +567,7 @@ program PDFS
         case (11)
             call TLAB_WRITE_ASCII(lfile, 'Computing eigenvalues of Sij...')
 
-     CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+     CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 7); vars(ifield)%tag = 'Lambda1'; ibc(ifield) = 2
@@ -580,7 +580,7 @@ program PDFS
         case (12)
             call TLAB_WRITE_ASCII(lfile, 'Computing eigenframe of Sij...')
 
-     CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6), wrk2d,wrk3d)
+     CALL FI_STRAIN_TENSOR(imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
             call TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc1-txc6
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10))
@@ -694,21 +694,21 @@ program PDFS
             end if
 
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))//'.bv'
-            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), y_aux, pdf, wrk2d)
+            call PDF2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), y_aux, pdf)
 
             ! -------------------------------------------------------------------
             write (fname, *) itime; fname = 'cavgB'//trim(adjustl(fname))
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 1), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 1), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgBii'//trim(adjustl(fname))
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)
             end if
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf)
             fname = trim(adjustl(fname))//'.bv'
-            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf, wrk2d)
+            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             ! -------------------------------------------------------------------
             write (fname, *) itime; fname = 'cavgU'//trim(adjustl(fname))
@@ -717,9 +717,9 @@ program PDFS
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)
             end if
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf)
             fname = trim(adjustl(fname))//'.bv'
-            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf, wrk2d)
+            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgW'//trim(adjustl(fname))
             txc(1:isize_field, 3) = q(1:isize_field, 3)
@@ -727,9 +727,9 @@ program PDFS
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)
             end if
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf)
             fname = trim(adjustl(fname))//'.bv'
-            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf, wrk2d)
+            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgVii'//trim(adjustl(fname))
             call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(1, 2), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
@@ -740,9 +740,9 @@ program PDFS
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)
             end if
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf)
             fname = trim(adjustl(fname))//'.bv'
-            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf, wrk2d)
+            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             ! -------------------------------------------------------------------
             bbackground = C_0_R
@@ -755,15 +755,15 @@ program PDFS
 
             write (fname, *) itime; fname = 'cavgP'//trim(adjustl(fname))
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 3), y_aux, pdf)
             fname = trim(adjustl(fname))//'.bv'
-            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf, wrk2d)
+            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgPy'//trim(adjustl(fname))
             call CAVG1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 4), y_aux, pdf, wrk1d)
+                          ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, txc(1, 4), y_aux, pdf)
             fname = trim(adjustl(fname))//'.bv'
-            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 4), y_aux, pdf, wrk2d)
+            call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 4), y_aux, pdf)
 
         end select
 
@@ -782,7 +782,7 @@ program PDFS
 
             write (fname, *) itime; fname = 'pdf'//trim(adjustl(fname))
             call PDF1V_N(fname, rtime, imax*opt_block, jmax_aux, kmax, &
-                         ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, y_aux, pdf, wrk1d)
+                         ifield, opt_bins(1), ibc, vmin, vmax, vars, gate_level, gate, y_aux, pdf)
 
         end if
 
