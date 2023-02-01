@@ -332,6 +332,7 @@ program VISUALS
     call VISUALS_MPIO_AUX(opt_format, subdomain)
 #else
     io_aux(:)%offset = 0
+    io_aux(:)%precision = IO_TYPE_SINGLE
 #endif
 
     MaskSize = 6

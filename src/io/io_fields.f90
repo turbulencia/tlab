@@ -21,12 +21,15 @@
 module IO_FIELDS
     use TLAB_CONSTANTS, only: lfile, wfile, efile, wp, wi, sp, dp
     use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
+    use TLAB_ARRAYS, only: wrk3d
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_err
     use TLAB_MPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_pro_i, ims_pro_k
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k
+    use TLAB_MPI_PROCS, only: TLAB_MPI_PANIC
 #endif
+    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
     implicit none
 
@@ -36,6 +39,7 @@ module IO_FIELDS
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
 #endif
+    public :: IO_WRITE_SUBARRAY
 
     private
 
@@ -43,17 +47,19 @@ module IO_FIELDS
     integer, parameter :: IO_FLOW = 2 ! Header of flow field
 
     integer(wi) nx_total, ny_total, nz_total
-    character(LEN=32) str, name
-    character(LEN=128) line
+    character(len=64) str, name
+    character(len=128) line
+
+    real(sp), pointer :: s_wrk(:) => null()
+
+    integer, parameter :: sizeofreal = sizeof(1.0_wp)
+    integer, parameter :: sizeofint = sizeof(1_wi)
 
 #ifdef USE_MPI
     integer mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE)
     integer(KIND=MPI_OFFSET_KIND) mpio_disp
     integer subarray
 #endif
-
-    integer, parameter :: sizeofreal=sizeof(1.0_wp)
-    integer, parameter :: sizeofint=sizeof(1_wi)
 
 contains
 
@@ -68,9 +74,9 @@ contains
         integer, parameter :: ndims = 2
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
-        sizes   = [nx*ims_npro_i,   ny]
-        locsize = [nx,              ny]
-        offset  = [nx*ims_pro_i,    0]
+        sizes = [nx*ims_npro_i, ny]
+        locsize = [nx, ny]
+        offset = [nx*ims_pro_i, 0]
 
         call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
                                       MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -86,9 +92,9 @@ contains
         integer, parameter :: ndims = 3
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
-        sizes   = [nx*ims_npro_i,   ny,     nz*ims_npro_k]
-        locsize = [nx,              ny,     nz]
-        offset  = [nx*ims_pro_i,    0,      nz*ims_pro_k]
+        sizes = [nx*ims_npro_i, ny, nz*ims_npro_k]
+        locsize = [nx, ny, nz]
+        offset = [nx*ims_pro_i, 0, nz*ims_pro_k]
 
         call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
                                       MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -104,9 +110,9 @@ contains
         integer, parameter :: ndims = 2
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
-        sizes   = [ny,  nz*ims_npro_k]
-        locsize = [ny,  nz]
-        offset  = [0,   nz*ims_pro_k]
+        sizes = [ny, nz*ims_npro_k]
+        locsize = [ny, nz]
+        offset = [0, nz*ims_pro_k]
 
         call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
                                       MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
@@ -123,8 +129,6 @@ contains
     subroutine IO_READ_FIELDS(fname, iheader, nx, ny, nz, nfield, iread, a)
         use TLAB_VARS, only: imode_files, imode_precision_files
         use TLAB_VARS, only: itime, rtime, visc
-        use TLAB_ARRAYS, only: wrk3d
-        use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
         character(LEN=*) fname
         integer, intent(in) :: iheader         ! 1 for scalar header, 2 flow header
@@ -135,7 +139,6 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) header_offset
         integer ifield, iz
-        real(sp), pointer :: s_wrk(:) => null()
 
         integer, parameter :: isize_max = 20
         real(wp) params(isize_max)
@@ -154,7 +157,7 @@ contains
 
         if (imode_precision_files == IO_TYPE_SINGLE) then
             line = 'Reading single precision field '//trim(adjustl(fname))//' of size'
-        ! Pass memory address from double precision array to single precision array
+            ! Pass memory address from double precision array to single precision array
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[nx*ny*nz])
         else
             line = 'Reading double precision field '//trim(adjustl(fname))//' of size'
@@ -350,9 +353,7 @@ contains
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach
         use TLAB_VARS, only: schmidt
-        use TLAB_ARRAYS, only: wrk3d
         use THERMO_VARS, only: gama0
-        use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
         character(len=*) fname
         integer, intent(in) :: iheader         ! Scalar or Flow headers
@@ -363,7 +364,6 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) header_offset
         integer ifield
-        real(sp), pointer :: s_wrk(:) => null()
 
         integer, parameter :: isize_max = 20
         real(wp) params(isize_max)
@@ -382,7 +382,7 @@ contains
 
         if (imode_precision_files == IO_TYPE_SINGLE) then
             line = 'Writing single precision field '//trim(adjustl(fname))//' of size'
-        ! Pass memory address from double precision array to single precision array
+            ! Pass memory address from double precision array to single precision array
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[nx*ny*nz])
         else
             line = 'Writing double precision field '//trim(adjustl(fname))//' of size'
@@ -493,7 +493,6 @@ contains
     !########################################################################
     !########################################################################
     subroutine IO_WRITE_FIELD_INT1(name, iheader, nx, ny, nz, nt, isize, params, a)
-
         character(len=*) name
         integer, intent(in) :: iheader, isize
         integer(wi), intent(in) :: nx, ny, nz, nt
@@ -630,6 +629,91 @@ contains
 
         return
     end subroutine IO_WRITE_HEADER
+
+!########################################################################
+!########################################################################
+    subroutine IO_WRITE_SUBARRAY(aux, fname, varname, data, sizes)
+        use TLAB_TYPES, only: subarray_dt
+
+        type(subarray_dt), intent(in) :: aux
+        character*(*), intent(in) :: fname
+        integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
+        character*32, intent(in) :: varname(sizes(5))
+        real(wp), intent(in) :: data(sizes(1), sizes(5))
+
+        ! -----------------------------------------------------------------------
+        integer(wi) iv, isize
+
+#ifdef USE_MPI
+#else
+        integer(wi) :: ioffset_local
+#endif
+
+        ! #######################################################################
+#define LOC_UNIT_ID 75
+#define LOC_STATUS 'unknown'
+
+        isize = (sizes(3) - sizes(2))/sizes(4) + 1
+
+        if (aux%precision == IO_TYPE_SINGLE) then
+            line = 'Writing single precision field '//trim(adjustl(fname))//' of size'
+            ! Pass memory address from double precision array to single precision array
+            call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[isize])
+        else
+            line = 'Writing double precision field '//trim(adjustl(fname))//' of size'
+        end if
+        write (name, *) isize; line = trim(adjustl(line))//' '//trim(adjustl(name))
+
+#ifdef USE_MPI
+        if (aux%active) then
+#endif
+
+            do iv = 1, sizes(5)
+                name = trim(adjustl(fname))
+                if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
+
+                call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+
+#ifdef USE_MPI
+                call MPI_File_open(aux%communicator, trim(adjustl(name)), &
+                                   ior(MPI_MODE_WRONLY, MPI_MODE_CREATE), MPI_INFO_NULL, mpio_fh, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (aux%precision == IO_TYPE_SINGLE) then
+                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    s_wrk(1:isize) = real(data(sizes(2):sizes(3):sizes(4), iv), wp)
+                    call MPI_File_write_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                else
+                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    wrk3d(1:isize) = data(sizes(2):sizes(3):sizes(4), iv)
+                    call MPI_File_write_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                end if
+                call MPI_File_close(mpio_fh, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+
+#else
+#include "dns_open_file.h"
+                ioffset_local = aux%offset + 1
+                if (aux%precision == IO_TYPE_SINGLE) then
+                    write (LOC_UNIT_ID, POS=ioffset_local) real(data(sizes(2):sizes(3):sizes(4), iv), wp)
+                else
+                    write (LOC_UNIT_ID, POS=ioffset_local) data(sizes(2):sizes(3):sizes(4), iv)
+                end if
+                close (LOC_UNIT_ID)
+
+#endif
+
+            end do
+
+#ifdef USE_MPI
+        end if
+#endif
+
+        return
+    end subroutine IO_WRITE_SUBARRAY
 
 !     !########################################################################
 !     !########################################################################

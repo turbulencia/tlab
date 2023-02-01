@@ -285,6 +285,7 @@ contains
         case (2)
             id = IO_SUBARRAY_BUFFER_XOZ
             io_aux(id)%offset = 0
+            io_aux(id)%precision = IO_TYPE_DOUBLE
 #ifdef USE_MPI
             io_aux(id)%active = .true.
             io_aux(id)%communicator = MPI_COMM_WORLD
@@ -332,7 +333,8 @@ contains
             end select
 
             write (str, *) itime; str = TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(str))
-            call IO_WRITE_SUBARRAY8(id, str, varname, item%ref, io_sizes, wrk3d)
+            ! call IO_WRITE_SUBARRAY8(id, str, varname, item%ref, io_sizes, wrk3d)
+            call IO_WRITE_SUBARRAY(io_aux(id), str, varname, item%ref, io_sizes)
 
         end if
 

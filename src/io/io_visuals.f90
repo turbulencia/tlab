@@ -7,7 +7,7 @@
 subroutine IO_WRITE_VISUALS(fname, iformat, nx, ny, nz, nfield, subdomain, field, txc)
 
     use TLAB_TYPES, only: subarray_dt
-    use TLAB_VARS, only: g, isize_txc_field
+    use TLAB_VARS, only: g, isize_txc_field, io_aux
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_pro
@@ -95,7 +95,8 @@ subroutine IO_WRITE_VISUALS(fname, iformat, nx, ny, nz, nfield, subdomain, field
             do ifield = 1, nfield; write (varname(ifield), *) ifield; varname(ifield) = trim(adjustl(varname(ifield)))
             end do
         end if
-        call IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
+!        call IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
+        call IO_WRITE_SUBARRAY(io_aux(iflag_mode), fname, varname, field, sizes)
 
         ! -------------------------------------------------------------------
     else                                                     ! single precision, through PE0
@@ -289,6 +290,7 @@ subroutine VISUALS_MPIO_AUX(opt_format, subdomain)
     ! #######################################################################
     io_aux(:)%active = .false.
     io_aux(:)%offset = 0
+    io_aux(:)%precision = IO_TYPE_SINGLE
     if (opt_format == 1) io_aux(:)%offset = 244 ! # bytes of ensight header
 
     ny_loc = subdomain(4) - subdomain(3) + 1

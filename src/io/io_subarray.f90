@@ -15,6 +15,7 @@ subroutine IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, data, sizes, work)
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
+    use TLAB_MPI_PROCS, only: TLAB_MPI_PANIC
 #endif
     implicit none
 
@@ -96,6 +97,7 @@ subroutine IO_READ_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_err
+    use TLAB_MPI_PROCS, only: TLAB_MPI_PANIC
 #endif
 
     implicit none
@@ -179,6 +181,7 @@ subroutine IO_WRITE_SUBARRAY8(iflag_mode, fname, varname, data, sizes, work)
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
+    use TLAB_MPI_PROCS, only: TLAB_MPI_PANIC
 #endif
 
     implicit none

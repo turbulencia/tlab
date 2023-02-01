@@ -1,5 +1,6 @@
 #include "types.h"
 #include "dns_error.h"
+#include "dns_const.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
 #endif
@@ -442,6 +443,7 @@ subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
 ! #######################################################################
     io_aux(:)%active = .false.
     io_aux(:)%offset = 0
+    io_aux(:)%precision = IO_TYPE_SINGLE
 
 ! #######################################################################
     if (opt_main == 1 .or. opt_main == 2) then
