@@ -295,7 +295,8 @@ contains
         end select
 
         if (BuffLoad) then
-            call IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
+            call IO_READ_SUBARRAY(io_aux(id), tag, varname, item%ref, io_sizes)
+!            call IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
         else
             select case (idir)
             case (1)

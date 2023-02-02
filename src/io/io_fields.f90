@@ -39,7 +39,7 @@ module IO_FIELDS
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
 #endif
-    public :: IO_WRITE_SUBARRAY
+    public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
 
     private
 
@@ -636,7 +636,7 @@ contains
         use TLAB_TYPES, only: subarray_dt
 
         type(subarray_dt), intent(in) :: aux
-        character*(*), intent(in) :: fname
+        character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
         character*32, intent(in) :: varname(sizes(5))
         real(wp), intent(in) :: data(sizes(1), sizes(5))
@@ -656,13 +656,11 @@ contains
         isize = (sizes(3) - sizes(2))/sizes(4) + 1
 
         if (aux%precision == IO_TYPE_SINGLE) then
-            line = 'Writing single precision field '//trim(adjustl(fname))//' of size'
-            ! Pass memory address from double precision array to single precision array
+            line = 'Writing single precision field'
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[isize])
         else
-            line = 'Writing double precision field '//trim(adjustl(fname))//' of size'
+            line = 'Writing double precision field'
         end if
-        write (name, *) isize; line = trim(adjustl(line))//' '//trim(adjustl(name))
 
 #ifdef USE_MPI
         if (aux%active) then
@@ -671,8 +669,7 @@ contains
             do iv = 1, sizes(5)
                 name = trim(adjustl(fname))
                 if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
-
-                call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+                call TLAB_WRITE_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
@@ -681,7 +678,7 @@ contains
                 if (aux%precision == IO_TYPE_SINGLE) then
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
-                    s_wrk(1:isize) = real(data(sizes(2):sizes(3):sizes(4), iv), wp)
+                    s_wrk(1:isize) = real(data(sizes(2):sizes(3):sizes(4), iv), sp)
                     call MPI_File_write_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
                 else
@@ -698,12 +695,11 @@ contains
 #include "dns_open_file.h"
                 ioffset_local = aux%offset + 1
                 if (aux%precision == IO_TYPE_SINGLE) then
-                    write (LOC_UNIT_ID, POS=ioffset_local) real(data(sizes(2):sizes(3):sizes(4), iv), wp)
+                    write (LOC_UNIT_ID, POS=ioffset_local) real(data(sizes(2):sizes(3):sizes(4), iv), sp)
                 else
                     write (LOC_UNIT_ID, POS=ioffset_local) data(sizes(2):sizes(3):sizes(4), iv)
                 end if
                 close (LOC_UNIT_ID)
-
 #endif
 
             end do
@@ -714,6 +710,89 @@ contains
 
         return
     end subroutine IO_WRITE_SUBARRAY
+
+!########################################################################
+!########################################################################
+    subroutine IO_READ_SUBARRAY(aux, fname, varname, data, sizes)
+        use TLAB_TYPES, only: subarray_dt
+
+        type(subarray_dt), intent(in) :: aux
+        character(len=*), intent(in) :: fname
+        integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
+        character*32, intent(in) :: varname(sizes(5))
+        real(wp), intent(out) :: data(sizes(1), sizes(5))
+
+        ! -----------------------------------------------------------------------
+        integer(wi) iv, isize
+
+#ifdef USE_MPI
+#else
+        integer(wi) :: ioffset_local
+#endif
+
+        ! #######################################################################
+#define LOC_UNIT_ID 75
+#define LOC_STATUS 'unknown'
+
+        isize = (sizes(3) - sizes(2))/sizes(4) + 1
+
+        if (aux%precision == IO_TYPE_SINGLE) then
+            line = 'Reading single precision field'
+            call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[isize])
+        else
+            line = 'Reading double precision field'
+        end if
+
+#ifdef USE_MPI
+        if (aux%active) then
+#endif
+
+            do iv = 1, sizes(5)
+                name = trim(adjustl(fname))
+                if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
+                call TLAB_WRITE_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
+
+#ifdef USE_MPI
+                call MPI_File_open(aux%communicator, trim(adjustl(name)), &
+                                   MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (aux%precision == IO_TYPE_SINGLE) then
+                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    call MPI_File_read_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                else
+                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    call MPI_File_read_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                end if
+                call MPI_File_close(mpio_fh, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+#else
+#include "dns_open_file.h"
+                ioffset_local = aux%offset + 1
+                if (aux%precision == IO_TYPE_SINGLE) then
+                    read(LOC_UNIT_ID, POS=ioffset_local) s_wrk(1:isize)
+                else
+                    read(LOC_UNIT_ID, POS=ioffset_local) wrk3d(1:isize)
+                end if
+                close (LOC_UNIT_ID)
+#endif
+                if (aux%precision == IO_TYPE_SINGLE) then
+                    data(sizes(2):sizes(3):sizes(4), iv) = real(s_wrk(1:isize), wp)
+                else
+                    data(sizes(2):sizes(3):sizes(4), iv) = wrk3d(1:isize)
+                end if
+
+            end do
+
+#ifdef USE_MPI
+        end if
+#endif
+
+        return
+    end subroutine IO_READ_SUBARRAY
 
 !     !########################################################################
 !     !########################################################################
