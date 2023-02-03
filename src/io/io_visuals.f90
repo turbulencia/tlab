@@ -1,11 +1,10 @@
-#include "types.h"
 #include "dns_const.h"
 
-#define LOC_UNIT_ID i55
+#define LOC_UNIT_ID 55
 #define LOC_STATUS 'unknown'
 
 subroutine IO_WRITE_VISUALS(fname, iformat, nx, ny, nz, nfield, subdomain, field, txc)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_TYPES, only: subarray_dt
     use TLAB_VARS, only: g, isize_txc_field, io_aux
 #ifdef USE_MPI
@@ -17,17 +16,16 @@ subroutine IO_WRITE_VISUALS(fname, iformat, nx, ny, nz, nfield, subdomain, field
 
     implicit none
 
-#include "integers.h"
-
-    TINTEGER iformat, nx, ny, nz, nfield, subdomain(6)
-    TREAL, dimension(isize_txc_field, nfield) :: field
-    TREAL, dimension(nx*ny*nz, 2) :: txc
+    integer(wi) iformat, nx, ny, nz, nfield, subdomain(6)
+    real(wp), dimension(isize_txc_field, nfield) :: field
+    real(wp), dimension(nx*ny*nz, 2) :: txc
     character*(*) fname
 
     ! -------------------------------------------------------------------
-    TINTEGER sizes(5), nx_aux, ny_aux, nz_aux, ifield, i
+    integer(wi) sizes(5), nx_aux, ny_aux, nz_aux, ifield, i
     character*32 varname(16), name
-    TINTEGER iflag_mode
+    integer(wi) iflag_mode
+    integer, parameter :: i1 = 1
 
     ! ###################################################################
     sizes(5) = nfield
@@ -95,7 +93,6 @@ subroutine IO_WRITE_VISUALS(fname, iformat, nx, ny, nz, nfield, subdomain, field
             do ifield = 1, nfield; write (varname(ifield), *) ifield; varname(ifield) = trim(adjustl(varname(ifield)))
             end do
         end if
-!        call IO_WRITE_SUBARRAY4(iflag_mode, fname, varname, field, sizes, txc)
         call IO_WRITE_SUBARRAY(io_aux(iflag_mode), fname, varname, field, sizes)
 
         ! -------------------------------------------------------------------
@@ -135,7 +132,7 @@ end subroutine IO_WRITE_VISUALS
 ! Writing data in Ensight Gold Variable File Format
 !########################################################################
 subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
-
+    use TLAB_CONSTANTS, only: wp, wi
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_pro
     use TLAB_MPI_PROCS
@@ -143,21 +140,19 @@ subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tm
 
     implicit none
 
-#include "integers.h"
-
     character*(*) name
-    TINTEGER, intent(IN) :: iheader ! 0 no header; 1 header
+    integer(wi), intent(IN) :: iheader ! 0 no header; 1 header
 
-    TINTEGER, intent(IN) :: nx, ny, nz, nfield, subdomain(6)
-    TREAL, dimension(nx, ny, nz, nfield) :: field
-    TREAL, dimension(nx*ny*nz, 2) :: tmp_mpi
+    integer(wi), intent(IN) :: nx, ny, nz, nfield, subdomain(6)
+    real(wp), dimension(nx, ny, nz, nfield) :: field
+    real(wp), dimension(nx*ny*nz, 2) :: tmp_mpi
 
     ! -------------------------------------------------------------------
     character*80 line
 #ifdef USE_MPI
-    TINTEGER ifield
+    integer(wi) ifield
 #else
-    TINTEGER i, j, k, ifield
+    integer(wi) i, j, k, ifield
 #endif
 
     ! ###################################################################
@@ -173,7 +168,7 @@ subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tm
             write (LOC_UNIT_ID) line
             line = 'part                          '
             write (LOC_UNIT_ID) line
-            write (LOC_UNIT_ID) i1
+            write (LOC_UNIT_ID) 1_wi
             line = 'block                         '
             write (LOC_UNIT_ID) line
         end if
@@ -225,18 +220,17 @@ end subroutine ENSIGHT_FIELD
 ! Note that record-length information has to be avoided
 !########################################################################
 subroutine ENSIGHT_GRID(name, nx, ny, nz, subdomain, x, y, z)
+    use TLAB_CONSTANTS, only: wp, wi
 
     implicit none
 
-#include "integers.h"
-
-    TINTEGER nx, ny, nz, subdomain(6)
-    TREAL x(nx), y(ny), z(nz)
+    integer(wi) nx, ny, nz, subdomain(6)
+    real(wp) x(nx), y(ny), z(nz)
     character*(*) name
 
     ! -------------------------------------------------------------------
     character*80 line
-    TINTEGER ij
+    integer(wi) ij
 
     ! ###################################################################
 #include "dns_open_file.h"
@@ -255,7 +249,7 @@ subroutine ENSIGHT_GRID(name, nx, ny, nz, subdomain, x, y, z)
 
     line = 'part                          '
     write (LOC_UNIT_ID) line
-    write (LOC_UNIT_ID) i1
+    write (LOC_UNIT_ID) 1_wi
     line = 'description line              '
     write (LOC_UNIT_ID) line
     line = 'block rectilinear             '
@@ -275,6 +269,7 @@ end subroutine ENSIGHT_GRID
 #ifdef USE_MPI
 
 subroutine VISUALS_MPIO_AUX(opt_format, subdomain)
+    use TLAB_CONSTANTS, only: wp, wi
 
     use TLAB_VARS, only: imax, kmax, io_aux
     use TLAB_MPI_VARS
@@ -282,10 +277,10 @@ subroutine VISUALS_MPIO_AUX(opt_format, subdomain)
     use IO_FIELDS
     implicit none
 
-    TINTEGER, intent(IN) :: opt_format, subdomain(6)
+    integer(wi), intent(IN) :: opt_format, subdomain(6)
 
     ! -----------------------------------------------------------------------
-    TINTEGER id, ny_loc
+    integer(wi) id, ny_loc
 
     ! #######################################################################
     io_aux(:)%active = .false.
@@ -302,44 +297,17 @@ subroutine VISUALS_MPIO_AUX(opt_format, subdomain)
     io_aux(id)%communicator = ims_comm_x
     io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, ny_loc, MPI_REAL4)
 
-    ! ndims = 2
-    ! sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1
-    ! locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1
-    ! offset(1)  = ims_offset_i;     offset(2)  = 0
-    !
-    ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-    !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-    ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-
     ! Saving full vertical zOy planes; using subiddomain(1) to define the plane
     id = IO_SUBARRAY_VISUALS_ZOY
     if (ims_pro_i == ((subdomain(1) - 1)/imax)) io_aux(id)%active = .true.
     io_aux(id)%communicator = ims_comm_z
     io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY(ny_loc, kmax, MPI_REAL4)
 
-    ! ndims = 2
-    ! sizes(1)   = subdomain(4)-subdomain(3)+1; sizes(2)   = kmax *ims_npro_k
-    ! locsize(1) = subdomain(4)-subdomain(3)+1; locsize(2) = kmax
-    ! offset(1)  = 0;                           offset(2)  = ims_offset_k
-    !
-    ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-    !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-    ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
-
     ! Saving full blocks xOz planes
     id = IO_SUBARRAY_VISUALS_XOZ
     io_aux(id)%active = .true.
     io_aux(id)%communicator = MPI_COMM_WORLD
     io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, ny_loc, kmax, MPI_REAL4)
-
-    ! ndims = 3
-    ! sizes(1)   = imax *ims_npro_i; sizes(2)   = subdomain(4)-subdomain(3)+1; sizes(3)   = kmax *ims_npro_k
-    ! locsize(1) = imax;             locsize(2) = subdomain(4)-subdomain(3)+1; locsize(3) = kmax
-    ! offset(1)  = ims_offset_i;     offset(2)  = 0;                           offset(3)  = ims_offset_k
-    !
-    ! CALL MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-    !     MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(id)%subarray, ims_err)
-    ! CALL MPI_Type_commit(io_aux(id)%subarray, ims_err)
 
     return
 end subroutine VISUALS_MPIO_AUX

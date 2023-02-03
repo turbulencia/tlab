@@ -35,6 +35,7 @@ module BOUNDARY_BUFFER
     use AVGS, only: COV2V1D, COV2V2D
 
 #ifdef USE_MPI
+    use MPI
     use TLAB_MPI_VARS, only: ims_err
     use TLAB_MPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_npro
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -88,21 +89,20 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine BOUNDARY_BUFFER_READBLOCK(bakfile, inifile, tag, variable, nfields)
-
-        character(LEN=*) bakfile, inifile, tag
+        character(len=*) bakfile, inifile, tag
         type(buffer_dt) variable
         integer(wi) nfields
 
         real(wp) dummies(nfields + 1)
-        character(LEN=512) sRes
-        character(LEN=4) str
+        character(len=512) sRes
+        character(len=4) str
 
         ! ###################################################################
         variable%active(:) = .false.; variable%hard = .false.
         if (variable%size > 0) then
-            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//TRIM(ADJUSTL(tag)), 'void', sRes)
-            if (TRIM(ADJUSTL(sRes)) == 'void') then
-                str = TRIM(ADJUSTL(tag))
+            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//trim(adjustl(tag)), 'void', sRes)
+            if (trim(adjustl(sRes)) == 'void') then
+                str = trim(adjustl(tag))
                 call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
             end if
             is = nfields + 1; call LIST_REAL(sRes, is, dummies)
@@ -123,13 +123,13 @@ contains
                 if (variable%strength(is) /= 0.0_wp) variable%active(is) = .true.
             end do
 
-            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValues'//TRIM(ADJUSTL(tag)), 'void', sRes)
-            if (TRIM(ADJUSTL(sRes)) /= 'void') then
+            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValues'//trim(adjustl(tag)), 'void', sRes)
+            if (trim(adjustl(sRes)) /= 'void') then
                 is = nfields; call LIST_REAL(sRes, is, variable%hardvalues)
                 if (is == nfields) then
                     variable%hard = .true.
                 else
-           call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//TRIM(ADJUSTL(tag))//'.')
+           call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//trim(adjustl(tag))//'.')
                     call TLAB_STOP(DNS_ERROR_OPTION)
                 end if
             end if
@@ -140,11 +140,10 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
+    subroutine BOUNDARY_BUFFER_INITIALIZE(q, s, txc)
         ! Careful, txc is here contiguous
         real(wp), dimension(isize_field, *), intent(IN) :: q, s
         real(wp), dimension(isize_field, 6), intent(INOUT) :: txc
-        real(wp), dimension(isize_field), intent(INOUT) :: wrk3d
 
         ! ###################################################################
         BuffFlowImin%offset = 0; BuffFlowImax%offset = g(1)%size - BuffFlowImax%size
@@ -157,10 +156,10 @@ contains
         BuffScalImin%total_size = BuffScalImin%size; BuffScalImax%total_size = BuffScalImax%size
         BuffScalJmin%total_size = BuffScalJmin%size; BuffScalJmax%total_size = BuffSCalJmax%size
 #ifdef USE_MPI
-        BuffFlowImin%size = MIN(imax, MAX(0, BuffFlowImin%total_size - ims_offset_i))
-        BuffFlowImax%size = MIN(imax, MAX(0, ims_offset_i + imax - BuffFlowImax%offset))
-        BuffScalImin%size = MIN(imax, MAX(0, BuffScalImin%total_size - ims_offset_i))
-        BuffScalImax%size = MIN(imax, MAX(0, ims_offset_i + imax - BuffScalImax%offset))
+        BuffFlowImin%size = min(imax, max(0, BuffFlowImin%total_size - ims_offset_i))
+        BuffFlowImax%size = min(imax, max(0, ims_offset_i + imax - BuffFlowImax%offset))
+        BuffScalImin%size = min(imax, max(0, BuffScalImin%total_size - ims_offset_i))
+        BuffScalImax%size = min(imax, max(0, ims_offset_i + imax - BuffScalImax%offset))
 #endif
         BuffFlowImin%nfields = inb_flow; BuffFlowImax%nfields = inb_flow
         BuffFlowJmin%nfields = inb_flow; BuffFlowJmax%nfields = inb_flow
@@ -186,31 +185,26 @@ contains
             txc(:, 1) = 1.0_wp ! Density
         end if
 
-  if (BuffFlowImin%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imin', BuffFlowImin, txc(1, 1), txc(1, 2), wrk3d)
-  if (BuffFlowImax%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_flow))//'bcs.imax', BuffFlowImax, txc(1, 1), txc(1, 2), wrk3d)
-  if (BuffFlowJmin%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmin', BuffFlowJmin, txc(1, 1), txc(1, 2), wrk3d)
-  if (BuffFlowJmax%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_flow))//'bcs.jmax', BuffFlowJmax, txc(1, 1), txc(1, 2), wrk3d)
+        if (BuffFlowImin%total_size > 0) call INI_BLOCK(1, trim(adjustl(tag_flow))//'bcs.imin', BuffFlowImin, txc(1, 1), txc(1, 2))
+        if (BuffFlowImax%total_size > 0) call INI_BLOCK(1, trim(adjustl(tag_flow))//'bcs.imax', BuffFlowImax, txc(1, 1), txc(1, 2))
+        if (BuffFlowJmin%total_size > 0) call INI_BLOCK(2, trim(adjustl(tag_flow))//'bcs.jmin', BuffFlowJmin, txc(1, 1), txc(1, 2))
+        if (BuffFlowJmax%total_size > 0) call INI_BLOCK(2, trim(adjustl(tag_flow))//'bcs.jmax', BuffFlowJmax, txc(1, 1), txc(1, 2))
 
-        if (BuffScalImin%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imin', BuffScalImin, txc(1, 1), s, wrk3d)
-        if (BuffScalImax%total_size > 0) call INI_BLOCK(1, TRIM(ADJUSTL(tag_scal))//'bcs.imax', BuffScalImax, txc(1, 1), s, wrk3d)
-        if (BuffScalJmin%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmin', BuffScalJmin, txc(1, 1), s, wrk3d)
-        if (BuffScalJmax%total_size > 0) call INI_BLOCK(2, TRIM(ADJUSTL(tag_scal))//'bcs.jmax', BuffScalJmax, txc(1, 1), s, wrk3d)
+        if (BuffScalImin%total_size > 0) call INI_BLOCK(1, trim(adjustl(tag_scal))//'bcs.imin', BuffScalImin, txc(1, 1), s)
+        if (BuffScalImax%total_size > 0) call INI_BLOCK(1, trim(adjustl(tag_scal))//'bcs.imax', BuffScalImax, txc(1, 1), s)
+        if (BuffScalJmin%total_size > 0) call INI_BLOCK(2, trim(adjustl(tag_scal))//'bcs.jmin', BuffScalJmin, txc(1, 1), s)
+        if (BuffScalJmax%total_size > 0) call INI_BLOCK(2, trim(adjustl(tag_scal))//'bcs.jmax', BuffScalJmax, txc(1, 1), s)
 
         return
     end subroutine BOUNDARY_BUFFER_INITIALIZE
 
     ! ###################################################################
     ! ###################################################################
-    subroutine INI_BLOCK(idir, tag, item, rho, a, wrk3d)
-#ifdef USE_MPI
-        use MPI
-#endif
-
-        integer(wi), intent(IN) :: idir         ! Wall-normal direction of buffer zone
-        character(LEN=*), intent(IN) :: tag          ! File name information
+    subroutine INI_BLOCK(idir, tag, item, rho, a)
+        integer(wi), intent(IN) :: idir             ! Wall-normal direction of buffer zone
+        character(len=*), intent(IN) :: tag         ! File name information
         type(buffer_dt), intent(INOUT) :: item
         real(wp), intent(IN) :: rho(isize_field), a(isize_field, item%nfields)
-        real(wp), intent(INOUT) :: wrk3d(isize_field)
 
         ! -------------------------------------------------------------------
         integer(wi) io_sizes(5), id
@@ -262,7 +256,7 @@ contains
                     if (item%offset == 0) then
                         sa_offset = [ims_offset_i, 0, kmax*ims_pro_k]
                     else
-                        sa_offset = [MAX(0, ims_offset_i - item%offset), 0, kmax*ims_pro_k]
+                        sa_offset = [max(0, ims_offset_i - item%offset), 0, kmax*ims_pro_k]
                     end if
 
  call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
@@ -296,7 +290,7 @@ contains
 
         if (BuffLoad) then
             call IO_READ_SUBARRAY(io_aux(id), tag, varname, item%ref, io_sizes)
-!            call IO_READ_SUBARRAY8(id, tag, varname, item%ref, io_sizes, wrk3d)
+
         else
             select case (idir)
             case (1)
@@ -333,8 +327,7 @@ contains
 
             end select
 
-            write (str, *) itime; str = TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(str))
-            ! call IO_WRITE_SUBARRAY8(id, str, varname, item%ref, io_sizes, wrk3d)
+            write (str, *) itime; str = trim(adjustl(tag))//'.'//trim(adjustl(str))
             call IO_WRITE_SUBARRAY(io_aux(id), str, varname, item%ref, io_sizes)
 
         end if
@@ -342,27 +335,27 @@ contains
         do iq = 1, item%nfields ! Control
 #ifdef USE_MPI
             if (io_aux(id)%active) then
-                var_minmax = [MINVAL(item%ref(:, :, :, iq)), -MAXVAL(item%ref(:, :, :, iq))]
+                var_minmax = [minval(item%ref(:, :, :, iq)), -maxval(item%ref(:, :, :, iq))]
             else
-                var_minmax = [HUGE(dummy), HUGE(dummy)]
+                var_minmax = [huge(dummy), huge(dummy)]
             end if
 
             call MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
             if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
             var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
 #else
-            var_minmax = [MINVAL(item%ref(:, :, :, iq)), MAXVAL(item%ref(:, :, :, iq))]
+            var_minmax = [minval(item%ref(:, :, :, iq)), maxval(item%ref(:, :, :, iq))]
 #endif
             write (line, 10) var_minmax(2)
             write (str, 10) var_minmax(1)
 
-            line = TRIM(ADJUSTL(str))//' and '//TRIM(ADJUSTL(line))
-            line = 'Checking bounds of field '//TRIM(ADJUSTL(tag))//'.'//TRIM(ADJUSTL(varname(iq)))//': '//TRIM(ADJUSTL(line))
+            line = trim(adjustl(str))//' and '//trim(adjustl(line))
+            line = 'Checking bounds of field '//trim(adjustl(tag))//'.'//trim(adjustl(varname(iq)))//': '//trim(adjustl(line))
             call TLAB_WRITE_ASCII(lfile, line)
         end do
 
         ! -----------------------------------------------------------------------
-        ! Strength of the telaxation terms
+        ! Strength of the relaxation terms
         allocate (item%tau(item%size, item%nfields))
         do iq = 1, item%nfields
             dummy = 1.0_wp/(g(idir)%nodes(item%offset + item%size) - g(idir)%nodes(item%offset + 1)) ! Inverse of segment length
@@ -708,7 +701,7 @@ contains
                 iloc = i - buff_imax + 1
 
                 eta = g(1)%nodes(i) - 0.5_wp*(g(1)%nodes(imax) + g(1)%nodes(buff_imax))
-                amp = 0.5_wp*(1.0_wp + TANH(0.5_wp*eta/delta))
+                amp = 0.5_wp*(1.0_wp + tanh(0.5_wp*eta/delta))
                 ampr = 1.0_wp - amp
 
                 do k = 1, kmax
@@ -760,7 +753,7 @@ contains
                     iloc = i - buff_imax + 1
 
                     eta = g(1)%nodes(i) - 0.5_wp*(g(1)%nodes(imax) + g(1)%nodes(buff_imax))
-                    amp = 0.5_wp*(1.0_wp + TANH(0.5_wp*eta/delta))
+                    amp = 0.5_wp*(1.0_wp + tanh(0.5_wp*eta/delta))
                     ampr = 1.0_wp - amp
 
                     do k = 1, kmax

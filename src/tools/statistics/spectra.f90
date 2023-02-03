@@ -709,13 +709,11 @@ program SPECTRA
                 end if
                 fname = 'x'//trim(adjustl(tag_file))//trim(adjustl(str))
                 sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-!                call IO_WRITE_SUBARRAY4(i1, fname, varname, outx, sizes, wrk3d)
                 call IO_WRITE_SUBARRAY(io_aux(1), fname, varname, outx, sizes)
 
                 if (g(3)%size > 1) then
                     fname = 'z'//trim(adjustl(tag_file))//trim(adjustl(str))
                     sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-!                    call IO_WRITE_SUBARRAY4(i2, fname, varname, outz, sizes, wrk3d)
                     call IO_WRITE_SUBARRAY(io_aux(2), fname, varname, outz, sizes)
                 end if
 
@@ -729,18 +727,15 @@ program SPECTRA
                     if (flag_mode == 2) then ! correlations
                         fname = 'cor'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-!                        call IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
                         call IO_WRITE_SUBARRAY(io_aux(3), fname, varname, out2d, sizes)
 
                     else                         ! spectra
                         fname = 'pow'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1)/2; sizes(4) = 1; sizes(5) = nfield
-!                        call IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
                         call IO_WRITE_SUBARRAY(io_aux(3), fname, varname, out2d, sizes)
 
                         fname = 'pha'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1 + sizes(1)/2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-!                        call IO_WRITE_SUBARRAY4(i3, fname, varname, out2d, sizes, wrk3d)
                         call IO_WRITE_SUBARRAY(io_aux(3), fname, varname, out2d, sizes)
 
                     end if

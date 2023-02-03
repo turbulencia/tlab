@@ -150,7 +150,7 @@ program DNS
     ! ###################################################################
     ! Initialize data for boundary conditions
     ! ###################################################################
-    call BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
+    call BOUNDARY_BUFFER_INITIALIZE(q, s, txc)
 
     call BOUNDARY_BCS_INITIALIZE()
 

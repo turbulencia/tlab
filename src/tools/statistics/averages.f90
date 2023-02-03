@@ -471,7 +471,6 @@ program AVERAGES
                 end do
                 varname = ''
                 write (fname, *) itime; fname = 'envelopesJ.'//trim(adjustl(fname))
-!                call IO_WRITE_SUBARRAY4(IO_SUBARRAY_ENVELOPES, fname, varname, surface, io_sizes, wrk3d)
                 call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_ENVELOPES), fname, varname, surface, io_sizes)
 
             end if

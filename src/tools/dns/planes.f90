@@ -149,7 +149,6 @@ contains
             data_k(:, :, 1 + offset:kplanes%n + offset) = tmp1(:, :, kplanes%nodes(1:kplanes%n))
             offset = offset + kplanes%n
             write (fname, *) itime; fname = 'planesK.'//trim(adjustl(fname))
-!            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOY, fname, varname, data_k, kplanes%io, wrk3d)
             call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOY), fname, varname, data_k, kplanes%io)
         end if
 
@@ -174,7 +173,6 @@ contains
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))
-!            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOZ, fname, varname, data_j, jplanes%io, wrk3d)
             call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOZ), fname, varname, data_j, jplanes%io)
         end if
 
@@ -203,7 +201,6 @@ contains
             end do
             offset = offset + iplanes%n
             write (fname, *) itime; fname = 'planesI.'//trim(adjustl(fname))
-!            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_ZOY, fname, varname, data_i, iplanes%io, wrk3d)
             call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_ZOY), fname, varname, data_i, iplanes%io)
         end if
 

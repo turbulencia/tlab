@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
@@ -7,144 +6,143 @@
 !# Write N profiles in netCDF or ASCII format
 !#
 !########################################################################
-SUBROUTINE IO_WRITE_AVERAGES( fname, itime,rtime, ny,nv,ng, y, varnames, groupnames, avg )
-
-  USE TLAB_CONSTANTS, ONLY : lfile,efile
-  USE TLAB_PROCS
+subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, groupnames, avg)
+    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
+    use TLAB_PROCS
 #ifdef USE_MPI
-  USE MPI
+    use MPI
 #endif
 #ifdef USE_NETCDF
-  USE NETCDF
+    use NETCDF
 #endif
-  IMPLICIT NONE
+    implicit none
 
-  CHARACTER(LEN=*), INTENT(IN   ) :: fname, varnames(ng), groupnames(ng)
-  TINTEGER,         INTENT(IN   ) :: itime
-  TREAL,            INTENT(IN   ) :: rtime
-  TINTEGER,         INTENT(IN   ) :: ny,nv,ng
-  TREAL,            INTENT(IN   ) :: y(ny)
-  TREAL,            INTENT(IN   ) :: avg(ny,nv)
+    character(LEN=*), intent(IN) :: fname, varnames(ng), groupnames(ng)
+    integer(wi), intent(IN) :: itime
+    real(wp), intent(IN) :: rtime
+    integer(wi), intent(IN) :: ny, nv, ng
+    real(wp), intent(IN) :: y(ny)
+    real(wp), intent(IN) :: avg(ny, nv)
 
-  ! -------------------------------------------------------------------
-  INTEGER iv,ig
+    ! -------------------------------------------------------------------
+    integer iv, ig
 #ifdef USE_NETCDF
-  INTEGER nvg
-  INTEGER fid, dtid,dyid, tid,yid,itid, vid(nv)
-  CHARACTER(LEN=32) vname(nv), gname(nv)
+    integer nvg
+    integer fid, dtid, dyid, tid, yid, itid, vid(nv)
+    character(LEN=32) vname(nv), gname(nv)
 #else
-  INTEGER j
-  CHARACTER*1300 line
+    integer j
+    character*1300 line
 #endif
 
 #ifdef USE_MPI
-  INTEGER ims_pro, ims_err
-  CALL MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro,ims_err)
+    integer ims_pro, ims_err
+    call MPI_COMM_RANK(MPI_COMM_WORLD, ims_pro, ims_err)
 #endif
 
-  ! ###################################################################
-  CALL TLAB_WRITE_ASCII(lfile,'Writing '//TRIM(ADJUSTL(fname))//'...')
+    ! ###################################################################
+    call TLAB_WRITE_ASCII(lfile, 'Writing '//trim(adjustl(fname))//'...')
 
 #ifdef USE_MPI
-  IF ( ims_pro == 0 ) THEN
+    if (ims_pro == 0) then
 #endif
 
-    ! -----------------------------------------------------------------------
-    ! Using NetCDF format
+        ! -----------------------------------------------------------------------
+        ! Using NetCDF format
 #ifdef USE_NETCDF
-    iv = 1
-    DO ig = 1,ng
-      nvg = nv -iv +1
-      CALL LIST_STRING( varnames(ig), nvg, vname(iv:nv))
-      gname(iv:iv+nvg-1) = groupnames(ig)
-      iv = iv +nvg
-      IF ( iv > nv ) EXIT
-    ENDDO
+        iv = 1
+        do ig = 1, ng
+            nvg = nv - iv + 1
+            call LIST_STRING(varnames(ig), nvg, vname(iv:nv))
+            gname(iv:iv + nvg - 1) = groupnames(ig)
+            iv = iv + nvg
+            if (iv > nv) exit
+        end do
 
-    CALL NC_CHECK( NF90_CREATE( TRIM(ADJUSTL(fname))//'.nc', NF90_NETCDF4, fid ) )
+        call NC_CHECK(NF90_CREATE(trim(adjustl(fname))//'.nc', NF90_NETCDF4, fid))
 
-    CALL NC_CHECK( NF90_DEF_DIM( fid, "t", NF90_UNLIMITED, dtid) )
-    CALL NC_CHECK( NF90_DEF_DIM( fid, "y", ny,             dyid) )
+        call NC_CHECK(NF90_DEF_DIM(fid, "t", NF90_UNLIMITED, dtid))
+        call NC_CHECK(NF90_DEF_DIM(fid, "y", ny, dyid))
 
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, "t",  NF90_FLOAT, (/ dtid /), tid) )
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, "y",  NF90_FLOAT, (/ dyid /), yid) )
-    CALL NC_CHECK( Nf90_DEF_VAR( fid, "it", NF90_INT,   (/ dtid /),itid) )
-    DO iv = 1,nv
-      CALL NC_CHECK( Nf90_DEF_VAR( fid, TRIM(ADJUSTL(vname(iv))), NF90_FLOAT, (/ dyid, dtid /), vid(iv)) )
-      CALL NC_CHECK( NF90_PUT_ATT( fid, vid(iv), 'group', gname(iv) ) )
-    END DO
+        call NC_CHECK(Nf90_DEF_VAR(fid, "t", NF90_FLOAT, (/dtid/), tid))
+        call NC_CHECK(Nf90_DEF_VAR(fid, "y", NF90_FLOAT, (/dyid/), yid))
+        call NC_CHECK(Nf90_DEF_VAR(fid, "it", NF90_INT, (/dtid/), itid))
+        do iv = 1, nv
+            call NC_CHECK(Nf90_DEF_VAR(fid, trim(adjustl(vname(iv))), NF90_FLOAT, (/dyid, dtid/), vid(iv)))
+            call NC_CHECK(NF90_PUT_ATT(fid, vid(iv), 'group', gname(iv)))
+        end do
 
-    CALL NC_CHECK( NF90_ENDDEF( fid ) )
+        call NC_CHECK(NF90_ENDDEF(fid))
 
-    CALL NC_CHECK( NF90_PUT_VAR( fid, tid, SNGL(rtime) ) )
-    CALL NC_CHECK( NF90_PUT_VAR( fid,itid, itime ) )
-    CALL NC_CHECK( NF90_PUT_VAR( fid, yid, SNGL(y)     ) )
-    DO iv = 1,nv
-      CALL NC_CHECK( NF90_PUT_VAR( fid, vid(iv), SNGL(avg(1:ny,iv)) ) )
-    END DO
+        call NC_CHECK(NF90_PUT_VAR(fid, tid, SNGL(rtime)))
+        call NC_CHECK(NF90_PUT_VAR(fid, itid, itime))
+        call NC_CHECK(NF90_PUT_VAR(fid, yid, SNGL(y)))
+        do iv = 1, nv
+            call NC_CHECK(NF90_PUT_VAR(fid, vid(iv), SNGL(avg(1:ny, iv))))
+        end do
 
-    CALL NC_CHECK( NF90_CLOSE( fid ) )
+        call NC_CHECK(NF90_CLOSE(fid))
 
-    ! -----------------------------------------------------------------------
-    ! Using ASCII format
+        ! -----------------------------------------------------------------------
+        ! Using ASCII format
 #else
 #define L_AVGMAX 250
 
-    IF ( L_AVGMAX < nv ) THEN
-      CALL TLAB_WRITE_ASCII(efile,'IO_WRITE_AVERAGES. Not enough space in format definition.')
-      CALL TLAB_STOP(DNS_ERROR_AVGTMP)
-    END IF
+        if (L_AVGMAX < nv) then
+            call TLAB_WRITE_ASCII(efile, 'IO_WRITE_AVERAGES. Not enough space in format definition.')
+            call TLAB_STOP(DNS_ERROR_AVGTMP)
+        end if
 
 #define LOC_UNIT_ID 23
 #define LOC_STATUS 'unknown'
 #ifdef USE_RECLEN
-    OPEN(UNIT=LOC_UNIT_ID, RECL=1050, FILE=fname, STATUS=LOC_STATUS) ! this is probably outdated
+        open (UNIT=LOC_UNIT_ID, RECL=1050, FILE=fname, STATUS=LOC_STATUS) ! this is probably outdated
 #else
-    OPEN(UNIT=LOC_UNIT_ID, FILE=fname, STATUS=LOC_STATUS)
+        open (UNIT=LOC_UNIT_ID, FILE=fname, STATUS=LOC_STATUS)
 #endif
 
-    WRITE(LOC_UNIT_ID, '(A8,E14.7E3)') 'RTIME = ', rtime
-    line = ''
-    DO ig = 1,ng
-      line = TRIM(ADJUSTL(line))//' '//TRIM(ADJUSTL(varnames(ig)))
-      WRITE(LOC_UNIT_ID,1010) 'GROUP = '//TRIM(ADJUSTL(groupnames(ig)))//' '//TRIM(ADJUSTL(varnames(ig)))
-    ENDDO
-    WRITE(LOC_UNIT_ID,1010) 'I J Y '//TRIM(ADJUSTL(line)) ! Independent, dependent variables
+        write (LOC_UNIT_ID, '(A8,E14.7E3)') 'RTIME = ', rtime
+        line = ''
+        do ig = 1, ng
+            line = trim(adjustl(line))//' '//trim(adjustl(varnames(ig)))
+            write (LOC_UNIT_ID, 1010) 'GROUP = '//trim(adjustl(groupnames(ig)))//' '//trim(adjustl(varnames(ig)))
+        end do
+        write (LOC_UNIT_ID, 1010) 'I J Y '//trim(adjustl(line)) ! Independent, dependent variables
 
-    DO j = 1,ny
-      WRITE(LOC_UNIT_ID,1020) 1, j, y(j), (avg(j,iv),iv=1,nv)
-    END DO
+        do j = 1, ny
+            write (LOC_UNIT_ID, 1020) 1, j, y(j), (avg(j, iv), iv=1, nv)
+        end do
 
-    CLOSE(LOC_UNIT_ID)
+        close (LOC_UNIT_ID)
 
-1010 FORMAT(A)
-1020 FORMAT(I5,(1X,I5),L_AVGMAX(1X,G_FORMAT_R))
+1010    format(A)
+1020    format(I5, (1x, I5), L_AVGMAX(1x, G_FORMAT_R))
 
 #endif
 
 #ifdef USE_MPI
-  END IF
+    end if
 #endif
 
-  RETURN
-END SUBROUTINE IO_WRITE_AVERAGES
+    return
+end subroutine IO_WRITE_AVERAGES
 
 ! ###################################################################
 #ifdef USE_NETCDF
-SUBROUTINE NC_CHECK( status )
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE TLAB_PROCS
-  USE NETCDF
+subroutine NC_CHECK(status)
+    use TLAB_CONSTANTS, only: efile
+    use TLAB_PROCS
+    use NETCDF
 
-  IMPLICIT NONE
+    implicit none
 
-  INTEGER, INTENT(IN) :: status
+    integer, intent(IN) :: status
 
-  IF ( status /= nf90_noerr ) THEN
-    CALL TLAB_WRITE_ASCII(efile,'NETCDF error signal '//TRIM(ADJUSTL(NF90_STRERROR(status))))
-    CALL TLAB_STOP(DNS_ERROR_UNDEVELOP)
-  END IF
+    if (status /= nf90_noerr) then
+        call TLAB_WRITE_ASCII(efile, 'NETCDF error signal '//trim(adjustl(NF90_STRERROR(status))))
+        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+    end if
 
-  RETURN
-END SUBROUTINE NC_CHECK
+    return
+end subroutine NC_CHECK
 #endif

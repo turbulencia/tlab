@@ -1,90 +1,89 @@
-#include "types.h"
 #include "dns_error.h"
 
 !########################################################################
 !########################################################################
-SUBROUTINE IO_READ_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z, area)
+subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z, area)
+    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_PROCS
 
-  USE TLAB_CONSTANTS, ONLY : efile
-  USE TLAB_PROCS
+    implicit none
 
-  IMPLICIT NONE
+    character*(*) name
+    integer(wi) imax, jmax, kmax
+    real(wp) scalex, scaley, scalez
+    real(wp) x(imax), y(jmax), z(kmax)
+    real(wp), optional :: area
 
-  CHARACTER*(*) name
-  TINTEGER imax, jmax, kmax
-  TREAL scalex, scaley, scalez
-  TREAL x(imax), y(jmax), z(kmax)
-  TREAL, OPTIONAL :: area
+    ! -----------------------------------------------------------------------
+    integer(wi) imaxdum, jmaxdum, kmaxdum
+    real(wp) scale(3)
+    character*(32) line
 
-  ! -----------------------------------------------------------------------
-  TINTEGER imaxdum, jmaxdum, kmaxdum
-  TREAL SCALE(3)
-  CHARACTER*(32) line
+    ! #######################################################################
+    open (50, file=name, status='old', form='unformatted')
+    rewind (50)
 
-  ! #######################################################################
-  OPEN(50,file=name, status='old',form='unformatted')
-  REWIND(50)
+    ! -----------------------------------------------------------------------
+    read (50) imaxdum, jmaxdum, kmaxdum
+    read (50) scale
+    scalex = scale(1)
+    scaley = scale(2)
+    scalez = scale(3)
 
-  ! -----------------------------------------------------------------------
-  READ(50) imaxdum, jmaxdum, kmaxdum
-  READ(50) scale
-  scalex = SCALE(1)
-  scaley = SCALE(2)
-  scalez = SCALE(3)
+    ! -----------------------------------------------------------------------
+    if (imaxdum /= imax .or. jmaxdum /= jmax .or. kmaxdum /= kmax) then
+        close (50)
+        write (line, 100) imaxdum, jmaxdum, kmaxdum
+        call TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
+        call TLAB_STOP(DNS_ERROR_DIMGRID)
+    end if
 
-  ! -----------------------------------------------------------------------
-  IF (imaxdum .NE. imax .OR. jmaxdum .NE. jmax .OR. kmaxdum .NE. kmax) THEN
-    CLOSE(50)
-    WRITE(line,100) imaxdum,jmaxdum,kmaxdum
-    CALL TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//TRIM(line)//') unmatched.')
-    CALL TLAB_STOP(DNS_ERROR_DIMGRID)
-  ENDIF
+    ! -----------------------------------------------------------------------
+    read (50) x
+    read (50) y
+    read (50) z
+    close (50)
 
-  ! -----------------------------------------------------------------------
-  READ(50) x
-  READ(50) y
-  READ(50) z
-  CLOSE(50)
+    if (present(area)) then
+        area = scalex
+        if (kmax > 1) area = area*scalez ! 3D case
+    end if
 
-  IF ( PRESENT(area) ) THEN
-    area = scalex
-    IF ( kmax > 1 ) area = area *scalez ! 3D case
-  ENDIF
+    return
 
-  RETURN
+100 format(I5, ',', I5, ',', I5)
 
-100 FORMAT(I5,',',I5,',',I5)
-
-END SUBROUTINE IO_READ_GRID
+end subroutine IO_READ_GRID
 
 !########################################################################
 !########################################################################
-SUBROUTINE IO_WRITE_GRID(name, imax,jmax,kmax, scalex,scaley,scalez, x,y,z)
-  IMPLICIT NONE
+subroutine IO_WRITE_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
+    use TLAB_CONSTANTS, only: wp, wi
+    implicit none
 
-  CHARACTER*(*) name
-  TINTEGER imax, jmax, kmax
-  TREAL scalex, scaley, scalez
-  TREAL x(imax), y(jmax), z(kmax)
+    character*(*) name
+    integer(wi) imax, jmax, kmax
+    real(wp) scalex, scaley, scalez
+    real(wp) x(imax), y(jmax), z(kmax)
 
-  ! -----------------------------------------------------------------------
-  TREAL SCALE(3)
+    ! -----------------------------------------------------------------------
+    real(wp) scale(3)
 
-  !########################################################################
-  OPEN(unit=51,file=name,form='unformatted', status='unknown')
+    !########################################################################
+    open (unit=51, file=name, form='unformatted', status='unknown')
 
-  ! -----------------------------------------------------------------------
-  SCALE(1) = scalex
-  SCALE(2) = scaley
-  SCALE(3) = scalez
-  WRITE(51) imax, jmax, kmax
-  WRITE(51) scale
+    ! -----------------------------------------------------------------------
+    scale(1) = scalex
+    scale(2) = scaley
+    scale(3) = scalez
+    write (51) imax, jmax, kmax
+    write (51) scale
 
-  ! -----------------------------------------------------------------------
-  WRITE(51) x
-  WRITE(51) y
-  WRITE(51) z
-  CLOSE(51)
+    ! -----------------------------------------------------------------------
+    write (51) x
+    write (51) y
+    write (51) z
+    close (51)
 
-  RETURN
-END SUBROUTINE IO_WRITE_GRID
+    return
+end subroutine IO_WRITE_GRID

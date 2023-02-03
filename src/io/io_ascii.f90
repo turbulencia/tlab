@@ -1,222 +1,214 @@
-#include "types.h"
-
 !########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2001/01/01 - C. Pantano
-!#              Created
-!# 2011/08/01 - J.P. Mellado
-!#              Case insensitive
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# Scan ASCII file for inputs
-!# Strings are always forced into lower-case
+!# Strings are always forced into lower-case to make the input case-insensitive
 !#
 !########################################################################
 
 ! #######################################################################
 ! Scan file for an integer value
 ! #######################################################################
-SUBROUTINE SCANINIINT(ofile, ifile, title, name, default, value)
-  USE TLAB_PROCS
-  IMPLICIT NONE
+subroutine SCANINIINT(ofile, ifile, title, name, default, value)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_PROCS
+    implicit none
 
-  CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
-  TINTEGER,      INTENT(OUT) :: value
+    character*(*), intent(IN) :: ofile, ifile, title, name, default
+    integer(wi), intent(OUT) :: value
 
-  CHARACTER*(128) StrValue
+    character*(128) StrValue
 
-  CALL IO_READ_ASCII(ifile, title, name, StrValue, default)
-  READ(StrValue, *) value
+    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    read (StrValue, *) value
 
-  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
+    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
-  RETURN
-END SUBROUTINE SCANINIINT
+    return
+end subroutine SCANINIINT
 
 ! #######################################################################
 ! Scan file for an integer value
 ! #######################################################################
-SUBROUTINE SCANINILONGINT(ofile, ifile, title, name, default, value)
-  USE TLAB_PROCS
-  IMPLICIT NONE
+subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
+    use TLAB_CONSTANTS, only: wp, wi, longi
+    use TLAB_PROCS
+    implicit none
 
-  CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
-  TLONGINTEGER,  INTENT(OUT) :: value
+    character*(*), intent(IN) :: ofile, ifile, title, name, default
+    integer(longi), intent(OUT) :: value
 
-  CHARACTER*(128) StrValue
+    character*(128) StrValue
 
-  CALL IO_READ_ASCII(ifile, title, name, StrValue, default)
-  READ(StrValue, *) value
+    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    read (StrValue, *) value
 
-  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
+    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
-  RETURN
-END SUBROUTINE SCANINILONGINT
+    return
+end subroutine SCANINILONGINT
 
 ! #######################################################################
 ! Scan file for an real value
 ! #######################################################################
-SUBROUTINE SCANINIREAL(ofile, ifile, title, name, default, value)
-  USE TLAB_PROCS
-  IMPLICIT NONE
+subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_PROCS
+    implicit none
 
-  CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
-  TREAL,         INTENT(OUT) :: value
+    character*(*), intent(IN) :: ofile, ifile, title, name, default
+    real(wp), intent(OUT) :: value
 
-  CHARACTER*(128) StrValue
+    character*(128) StrValue
 
-  CALL IO_READ_ASCII(ifile, title, name, StrValue, default)
-  READ(StrValue, *) value
+    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    read (StrValue, *) value
 
-  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(StrValue)) )
+    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
-  RETURN
-END SUBROUTINE SCANINIREAL
+    return
+end subroutine SCANINIREAL
 
 ! #######################################################################
 ! Scan file for an char value
 ! #######################################################################
-SUBROUTINE SCANINICHAR(ofile, ifile, title, name, default, value)
-  USE TLAB_PROCS
-  IMPLICIT NONE
+subroutine SCANINICHAR(ofile, ifile, title, name, default, value)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_PROCS
+    implicit none
 
-  CHARACTER*(*), INTENT(IN)  :: ofile, ifile, title, name, default
-  CHARACTER*(*), INTENT(OUT) :: value
+    character*(*), intent(IN) :: ofile, ifile, title, name, default
+    character*(*), intent(OUT) :: value
 
-  CALL IO_READ_ASCII(ifile, title, name, value, default)
+    call IO_READ_ASCII(ifile, title, name, value, default)
 
-  CALL TLAB_WRITE_ASCII(ofile, TRIM(ADJUSTL(name))//'='//TRIM(ADJUSTL(value)) )
+    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(value)))
 
-  RETURN
-END SUBROUTINE SCANINICHAR
+    return
+end subroutine SCANINICHAR
 
 ! #######################################################################
 ! Scan file for a string
 ! #######################################################################
-SUBROUTINE IO_READ_ASCII(fname, title, name, value, default)
+subroutine IO_READ_ASCII(fname, title, name, value, default)
+    use TLAB_CONSTANTS, only: wp, wi
 
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_err
+    use MPI
+    use TLAB_MPI_VARS, only: ims_pro, ims_err
 #endif
-  IMPLICIT NONE
+    implicit none
 
-  CHARACTER*(*), INTENT(IN)  :: fname, title, name, default
-  CHARACTER*(*), INTENT(OUT) :: value
+    character*(*), intent(IN) :: fname, title, name, default
+    character*(*), intent(OUT) :: value
 
 ! -----------------------------------------------------------------------
-  CHARACTER*512 line
-  CHARACTER*128 str, tag1, tag2, tag3
-  TINTEGER equal, code, n
+    character*512 line
+    character*128 str, tag1, tag2, tag3
+    integer(wi) equal, code, n
 
 ! #######################################################################
 ! make case-insensitive: title, name and default tags.
-  tag1=title; tag2=name; tag3=default
-  DO n = 1,LEN(tag1)
-     code = IACHAR(tag1(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) tag1(n:n) = ACHAR(code+32)
-  ENDDO
-  DO n = 1,LEN(tag2)
-     code = IACHAR(tag2(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) tag2(n:n) = ACHAR(code+32)
-  ENDDO
-  DO n = 1,LEN(tag3)
-     code = IACHAR(tag3(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) tag3(n:n) = ACHAR(code+32)
-  ENDDO
+    tag1 = title; tag2 = name; tag3 = default
+    do n = 1, len(tag1)
+        code = iachar(tag1(n:n)); if (code >= 65 .and. code <= 90) tag1(n:n) = achar(code + 32)
+    end do
+    do n = 1, len(tag2)
+        code = iachar(tag2(n:n)); if (code >= 65 .and. code <= 90) tag2(n:n) = achar(code + 32)
+    end do
+    do n = 1, len(tag3)
+        code = iachar(tag3(n:n)); if (code >= 65 .and. code <= 90) tag3(n:n) = achar(code + 32)
+    end do
 
-  value = tag3 !default
+    value = tag3 !default
 
 ! -----------------------------------------------------------------------
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
+    if (ims_pro == 0) then
 #endif
 
-  OPEN(unit=45,file=fname,status='OLD')
+        open (unit=45, file=fname, status='OLD')
 
-20 CONTINUE
-  READ(45,'(A512)',END=50) line; line=TRIM(ADJUSTL(line))
-  DO n = 1,LEN(line)
-     code = IACHAR(line(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) line(n:n) = ACHAR(code+32)
-  ENDDO
+20      continue
+        read (45, '(A512)', end=50) line; line = trim(adjustl(line))
+        do n = 1, len(line)
+            code = iachar(line(n:n)); if (code >= 65 .and. code <= 90) line(n:n) = achar(code + 32)
+        end do
 
-  IF ( TRIM(ADJUSTL(line)) .EQ. '['//TRIM(ADJUSTL(tag1))//']' ) THEN ! Scan within block
+        if (trim(adjustl(line)) == '['//trim(adjustl(tag1))//']') then ! Scan within block
 
-30   CONTINUE
-     READ(45,'(A512)',END=50) line; line=TRIM(ADJUSTL(line))
-     IF ( line(1:1) .EQ. '[' ) GOTO 20 ! Scape sequence
-     IF ( line(1:1) .EQ. '#' ) GOTO 30 ! Scape sequence
-     equal = INDEX(line,'='); str = TRIM(ADJUSTL(line(1:equal-1)))
-     DO n = 1,LEN(str)
-        code = IACHAR(str(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) str(n:n) = ACHAR(code+32)
-     ENDDO
+30          continue
+            read (45, '(A512)', end=50) line; line = trim(adjustl(line))
+            if (line(1:1) == '[') goto 20 ! Scape sequence
+            if (line(1:1) == '#') goto 30 ! Scape sequence
+            equal = index(line, '='); str = trim(adjustl(line(1:equal - 1)))
+            do n = 1, len(str)
+                code = iachar(str(n:n)); if (code >= 65 .and. code <= 90) str(n:n) = achar(code + 32)
+            end do
 
-     IF ( str .EQ. tag2 ) THEN
-        value = TRIM(ADJUSTL(line(equal+1:)))
-        DO n = 1,LEN(value)
-           code = IACHAR(value(n:n)); IF ( code .GE. 65 .AND. code .LE. 90 ) value(n:n) = ACHAR(code+32)
-        ENDDO
-        GOTO 50
-     ENDIF
-     GOTO 30
+            if (str == tag2) then
+                value = trim(adjustl(line(equal + 1:)))
+                do n = 1, len(value)
+                    code = iachar(value(n:n)); if (code >= 65 .and. code <= 90) value(n:n) = achar(code + 32)
+                end do
+                goto 50
+            end if
+            goto 30
 
-  ENDIF
-  GOTO 20
+        end if
+        goto 20
 
-50 CLOSE(unit=45)
+50      close (unit=45)
 
 #ifdef USE_MPI
-  ENDIF
-  n=LEN(value)
-  CALL MPI_BCast(n,    1,MPI_INTEGER4,0,MPI_COMM_WORLD,ims_err)
-  CALL MPI_BCast(value,n,MPI_CHAR,0,MPI_COMM_WORLD,ims_err)
+    end if
+    n = len(value)
+    call MPI_BCast(n, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BCast(value, n, MPI_CHAR, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
-  RETURN
-END SUBROUTINE IO_READ_ASCII
+    return
+end subroutine IO_READ_ASCII
 
 ! #######################################################################
 ! Write ASCII data; complete fields
 ! #######################################################################
-SUBROUTINE TLAB_WRITE_ASCII_FIELD(fname, imax,jmax,kmax, u)
+subroutine TLAB_WRITE_ASCII_FIELD(fname, imax, jmax, kmax, u)
+    use TLAB_CONSTANTS, only: wp, wi
 
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS, ONLY : ims_pro, ims_offset_i, ims_offset_k
+    use TLAB_MPI_VARS, only: ims_pro, ims_offset_i, ims_offset_k
 #endif
 
-  IMPLICIT NONE
+    implicit none
 
-  CHARACTER*(*),                    INTENT(IN) :: fname
-  TINTEGER,                         INTENT(IN) :: imax,jmax,kmax
-  TREAL, DIMENSION(imax,jmax,kmax), INTENT(IN) :: u
+    character*(*), intent(IN) :: fname
+    integer(wi), intent(IN) :: imax, jmax, kmax
+    real(wp), dimension(imax, jmax, kmax), intent(IN) :: u
 
 ! -----------------------------------------------------------------------
-  TINTEGER idsp,kdsp, i,j,k
-  CHARACTER*32 name_loc
+    integer(wi) idsp, kdsp, i, j, k
+    character*32 name_loc
 
 ! #######################################################################
 #ifdef USE_MPI
-  WRITE(name_loc,*) ims_pro; name_loc=TRIM(ADJUSTL(fname))//'-'//TRIM(ADJUSTL(name_loc))
-  idsp = ims_offset_i; kdsp = ims_offset_k
+    write (name_loc, *) ims_pro; name_loc = trim(adjustl(fname))//'-'//trim(adjustl(name_loc))
+    idsp = ims_offset_i; kdsp = ims_offset_k
 #else
-  name_loc = TRIM(ADJUSTL(fname))
-  idsp = 0; kdsp = 0
+    name_loc = trim(adjustl(fname))
+    idsp = 0; kdsp = 0
 #endif
 
-  OPEN(unit=31,file=name_loc,status='unknown')
+    open (unit=31, file=name_loc, status='unknown')
 
-  DO k = 1,kmax
-     DO j = 1,jmax
-        DO i = 1,imax
-           WRITE(31,*) i+idsp,j,k+kdsp, u(i,j,k)
-        ENDDO
-     ENDDO
-  ENDDO
+    do k = 1, kmax
+        do j = 1, jmax
+            do i = 1, imax
+                write (31, *) i + idsp, j, k + kdsp, u(i, j, k)
+            end do
+        end do
+    end do
 
-  CLOSE(31)
+    close (31)
 
-  RETURN
-END SUBROUTINE TLAB_WRITE_ASCII_FIELD
+    return
+end subroutine TLAB_WRITE_ASCII_FIELD
