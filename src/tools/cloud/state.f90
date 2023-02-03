@@ -9,13 +9,12 @@ PROGRAM STATE
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TREAL p, ps, t, qs, qv, qt, ql, r, e, h, z1(2), dummy, dqldqt, ep, theta, theta_e, Td
   TREAL heat1, heat2, cp1, cp2, alpha, as, bs
   TREAL r1, h1, s(3)
   TREAL Cd, Cdv, Cvl
   TINTEGER iopt
+  integer, parameter :: i1 = 1
 
 ! ###################################################################
   CALL TLAB_START()

@@ -9,11 +9,11 @@ PROGRAM SATURATION
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TREAL t_min, t_max, t_del, t, psat, qsat, dummy, t_loc, p, dpsat!, dpsat2
   TINTEGER iopt!, ipsat
 
+  integer, parameter :: i1 = 1
+  
 ! ###################################################################
   CALL TLAB_START
 

@@ -19,8 +19,6 @@ SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
   USE THERMO_VARS, ONLY : GRATIO, MRATIO, THERMO_AI
 
   IMPLICIT NONE
-
-#include "integers.h"
   
   TINTEGER nx, ny, nz
   TREAL z1(nx*ny*nz,*), T(*), h(*), p(*)
@@ -28,6 +26,8 @@ SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 ! -------------------------------------------------------------------
   TINTEGER ij, iter, niter
   TREAL r_loc, e_loc, t_loc, z1_loc(2), dummy, prefactor
+
+  integer, parameter :: i1 = 1
 
 ! ###################################################################
   niter = 5
@@ -72,8 +72,6 @@ SUBROUTINE THERMO_ANELASTIC_AIRWATER_PH_RE(nx,ny,nz, s, e,p, wrk3d)
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER,                     INTENT(IN)  :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(INOUT)  :: s
   TREAL, DIMENSION(*),          INTENT(IN)  :: e,p
@@ -83,6 +81,8 @@ SUBROUTINE THERMO_ANELASTIC_AIRWATER_PH_RE(nx,ny,nz, s, e,p, wrk3d)
   TINTEGER ij, jk, is, i, iter, niter
   TREAL r_loc, en_loc, t_loc, z1_loc(2), dummy, prefactor
   TREAL p_loc, e_loc
+
+  integer, parameter :: i1 = 1
 
 ! ###################################################################
   niter = 5
