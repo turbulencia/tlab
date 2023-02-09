@@ -361,8 +361,6 @@ SUBROUTINE THERMO_ANELASTIC_QVEQU(nx,ny,nz, s, e,p, T,qvequ)
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER,                     INTENT(IN)  :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s
   TREAL, DIMENSION(*),          INTENT(IN)  :: e,p 
@@ -415,8 +413,6 @@ SUBROUTINE THERMO_ANELASTIC_RELATIVEHUMIDITY(nx,ny,nz, s, e,p, T,rh)
   USE THERMO_VARS, ONLY : imixture, THERMO_AI, THERMO_PSAT, NPSAT, WGHT_INV, MRATIO
 
   IMPLICIT NONE
-
-#include "integers.h"
 
   TINTEGER,                     INTENT(IN)  :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)  :: s

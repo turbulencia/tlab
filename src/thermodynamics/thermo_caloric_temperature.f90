@@ -24,8 +24,6 @@ SUBROUTINE THERMO_CALORIC_TEMPERATURE(nx,ny,nz, s,e,rho, T, wrk3d)
 
   IMPlICIT NONE
 
-#include "integers.h"
-
   TINTEGER nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,*), INTENT(IN)    :: s
   TREAL, DIMENSION(nx*ny*nz),   INTENT(IN)    :: e, rho

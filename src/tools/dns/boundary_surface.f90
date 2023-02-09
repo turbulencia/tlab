@@ -21,8 +21,6 @@ subroutine BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp1, tmp2, aux)
 
     implicit none
 
-#include "integers.h"
-
     TINTEGER is
     TINTEGER, dimension(2, 2), intent(IN) :: bcs          ! Boundary conditions from derivative operator
     TREAL, dimension(isize_field, *) :: s, hs

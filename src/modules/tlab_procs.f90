@@ -26,9 +26,6 @@ module TLAB_PROCS
     public :: TLAB_ALLOCATE_ARRAY_DOUBLE
     public :: TLAB_ALLOCATE_ARRAY_INT
     public :: TLAB_ALLOCATE_ARRAY_LONG_INT
-#ifdef USE_MPI
-    public :: TLAB_MPI_PANIC
-#endif
 contains
 
     ! ###################################################################
@@ -406,30 +403,6 @@ contains
 #endif
         return
     end subroutine TLAB_STOP
-
-    ! ###################################################################
-    ! ###################################################################
-#ifdef USE_MPI
-    subroutine TLAB_MPI_PANIC(location, mpi_error_code)
-
-        implicit none
-
-        character(len=*), intent(in) :: location
-        integer, intent(in) :: mpi_error_code
-
-        !##############################
-        character error_string*1024, line*512
-        integer error_local, error_len
-
-        call MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
-        call TLAB_WRITE_ASCII(efile, 'MPI-ERROR: Source file'//trim(adjustl(LOCATION)), .true.)
-        call TLAB_WRITE_ASCII(efile, error_string, .true.)
-
-        call TLAB_STOP(mpi_error_code)
-        ! Not supposed to return from this subroutine
-
-    end subroutine TLAB_MPI_PANIC
-#endif
 
     ! ###################################################################
     ! ###################################################################

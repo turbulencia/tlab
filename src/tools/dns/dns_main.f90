@@ -150,7 +150,7 @@ program DNS
     ! ###################################################################
     ! Initialize data for boundary conditions
     ! ###################################################################
-    call BOUNDARY_BUFFER_INITIALIZE(q, s, txc, wrk3d)
+    call BOUNDARY_BUFFER_INITIALIZE(q, s, txc)
 
     call BOUNDARY_BCS_INITIALIZE()
 
@@ -288,7 +288,8 @@ program DNS
 
         if (wall_time > nruntime_sec) then 
             write (str, *) wall_time
-            call TLAB_WRITE_ASCII(lfile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
+            ! write to efile so that job is not resubmitted
+            call TLAB_WRITE_ASCII(efile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
             exit
         end if
         

@@ -22,9 +22,7 @@ SUBROUTINE THERMO_AIRWATER_LINEAR(nx,ny,nz, s, l)
   USE THERMO_VARS, ONLY : thermo_param
   
   IMPLICIT NONE
-  
-#include "integers.h"
-  
+    
   TINTEGER,                            INTENT(IN)    :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,inb_scal), INTENT(IN)    :: s     ! chi, psi
   TREAL, DIMENSION(nx*ny*nz),          INTENT(OUT)   :: l     ! normalized liquid
@@ -68,9 +66,7 @@ SUBROUTINE THERMO_AIRWATER_LINEAR_SOURCE(nx,ny,nz, s, xi,der1,der2)
   USE THERMO_VARS, ONLY : thermo_param
   
   IMPLICIT NONE
-  
-#include "integers.h"
-  
+    
   TINTEGER,                            INTENT(IN)  :: nx,ny,nz
   TREAL, DIMENSION(nx*ny*nz,inb_scal), INTENT(IN)  :: s          ! chi, psi
   TREAL, DIMENSION(nx*ny*nz),          INTENT(OUT) :: xi,der1,der2
