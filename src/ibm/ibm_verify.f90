@@ -145,8 +145,8 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
   ! ================================================================== !
   
   ! min vals solid/fluid
-  fp_min = nflu ! 3rd point can be next interface/boundary
-  sp_min = 3    ! 3 solid + 2 interface points - 1
+  fp_min = nflu - 1 ! most r/l fluid point can be on the next interface (=> fp_min=1)
+  sp_min = 3        ! 1 solid + 2 interface points
 
   ! index ii (dummy index; for x,y,z: ii == jk,ik,ij)
   do ii = 1, nlines          ! index of ii-plane, loop over plane and check for objects in each line
@@ -155,8 +155,8 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
       do iob = 1, nob(ii)    ! loop over immersed object(s)
         ! ================================================================== !
         ! check number of fluid points (to borders and between objects)
-        if ( iob == 1 ) then                    ! left
-          fp_l = nob_b(ip+ii) - 1
+        if ( iob == 1 ) then                   ! left [either start obj. at first grid node or supply enough fluid points (>=2),
+          fp_l = nob_b(ip+ii) - 1              !       interface from last object can't be taken]
           if ( fp_l < fp_min .and. fp_l /= 0 ) then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left border and first object. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
@@ -169,8 +169,8 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
-        else if ( iob == nob(ii) ) then         ! right
-          fp_r = g%size - nob_e(ip+ii)
+        else if ( iob == nob(ii) ) then         ! right (c.f. explanation first object)
+          fp_r = g%size - nob_e(ip+ii)          
           if ( fp_r < fp_min .and. fp_r /= 0 ) then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right border and first object. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
@@ -189,7 +189,7 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
       ! check for overlapping objects in periodic case
       if ( g%periodic ) then
         if ( nob(ii) > 1 ) then
-          fp_l = nob_b(ii)                           ! begin of first object
+          fp_l = nob_b(ii)                          ! begin of first object
           fp_r = nob_e((nob(ii) - 1) * nlines + ii) ! end of last object
           if ( (fp_r - fp_l + 1) == g%size ) then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Overlapping objects are not allowed. Check also MaxNumberObj in dns.ini.')
