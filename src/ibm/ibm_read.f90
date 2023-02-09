@@ -155,7 +155,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
     call TLAB_STOP(DNS_ERROR_OPTION)
   end if 
   if ( nflu < 2 ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Too less FluidPoints (nflu>2).')
+    call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Too less FluidPoints (nflu>=2).')
     call TLAB_STOP(DNS_ERROR_OPTION)
   end if 
   if ( xbars_geo%name == 'xbars' ) then
