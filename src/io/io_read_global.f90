@@ -308,7 +308,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    call SCANINIREAL(bakfile, inifile, 'Staggering', 'Filterparameter', '4.0', vfilter_param)
+    call SCANINIREAL(bakfile, inifile, 'Staggering', 'Filterparameter', '1.0', vfilter_param)
 
 ! Consistency check
     if (istagger == 1) then
@@ -330,6 +330,10 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering only in combination with horizontal pressure staggering.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
+        if ((vfilter_param < 0) .or. (vfilter_param > 2)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering parameter must be in the interval [0, 2].')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if 
     end if
 
 ! ###################################################################

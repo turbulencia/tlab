@@ -140,8 +140,9 @@ contains
 
                 end select
 
-                if (ivfilter == 1) then     ! Vertical filtering of p and dpdy in case of staggering
-                    call FILTER_VERTICAL_PRESSURE(c_wrk1d(:, 2), c_wrk1d(:, 3), ny, vfilter_param, p_wrk1d(1, 7))
+                ! Vertical filtering of p and dpdy in case of staggering
+                if (ivfilter == 1) then
+                    call FILTER_VERTICAL_PRESSURE(ny, vfilter_param, c_wrk1d(:, 2), c_wrk1d(:, 3))
                 end if
 
                 ! Rearrange in memory and normalize
