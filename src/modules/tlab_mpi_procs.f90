@@ -21,6 +21,7 @@ module TLAB_MPI_PROCS
     public :: TLAB_MPI_TRPB_I
     public :: TLAB_MPI_TYPE_K
     public :: TLAB_MPI_TYPE_I
+    public :: TLAB_MPI_PANIC
     public :: TLAB_MPI_WRITE_PE0_SINGLE
 
 contains
@@ -523,6 +524,25 @@ contains
 
         return
     end subroutine TLAB_MPI_TRPB_I
+
+    ! ###################################################################
+    ! ###################################################################
+    subroutine TLAB_MPI_PANIC(location, mpi_error_code)
+        character(len=*), intent(in) :: location
+        integer, intent(in) :: mpi_error_code
+
+        !##############################
+        character error_string*1024, line*512
+        integer error_local, error_len
+
+        call MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
+        call TLAB_WRITE_ASCII(efile, 'MPI-ERROR: Source file'//trim(adjustl(LOCATION)), .true.)
+        call TLAB_WRITE_ASCII(efile, error_string, .true.)
+
+        call TLAB_STOP(mpi_error_code)
+        ! Not supposed to return from this subroutine
+
+    end subroutine TLAB_MPI_PANIC
 
     !########################################################################
     !########################################################################

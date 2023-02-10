@@ -17,8 +17,6 @@ SUBROUTINE THERMO_AIRWATER_RH(nx, ny, nz, z1, h, rho, T, dqldqt)
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TINTEGER nx, ny, nz
   TREAL h(*), z1(nx*ny*nz,*), rho(*), dqldqt(*)
   TREAL T(*)

@@ -10,6 +10,7 @@ module PLANES
     use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
+    use IO_FIELDS
     implicit none
     save
     private
@@ -40,7 +41,6 @@ contains
 #ifdef USE_MPI
         use MPI
         use TLAB_MPI_VARS
-        use IO_FIELDS
 #endif
 
         ! -----------------------------------------------------------------------
@@ -83,6 +83,7 @@ contains
         if (kplanes%n > 0) then ! Saving full vertical xOy planes; writing only info of PE containing the first plane
             id = IO_SUBARRAY_PLANES_XOY
             io_aux(id)%offset = 0
+            io_aux(id)%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
             io_aux(id)%active = .false.  ! defaults
             if (ims_pro_k == (kplanes%nodes(1)/kmax)) io_aux(id)%active = .true.
@@ -94,6 +95,7 @@ contains
         if (iplanes%n > 0) then ! Saving full vertical zOy planes; writing only info of PE containing the first plane
             id = IO_SUBARRAY_PLANES_ZOY
             io_aux(id)%offset = 0
+            io_aux(id)%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
             io_aux(id)%active = .false.  ! defaults
             if (ims_pro_i == (iplanes%nodes(1)/imax)) io_aux(id)%active = .true.
@@ -105,6 +107,7 @@ contains
         if (jplanes%n > 0) then ! Saving full blocks xOz planes for prognostic variables
             id = IO_SUBARRAY_PLANES_XOZ
             io_aux(id)%offset = 0
+            io_aux(id)%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
             io_aux(id)%active = .true.
             io_aux(id)%communicator = MPI_COMM_WORLD
@@ -146,7 +149,7 @@ contains
             data_k(:, :, 1 + offset:kplanes%n + offset) = tmp1(:, :, kplanes%nodes(1:kplanes%n))
             offset = offset + kplanes%n
             write (fname, *) itime; fname = 'planesK.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOY, fname, varname, data_k, kplanes%io, wrk3d)
+            call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOY), fname, varname, data_k, kplanes%io)
         end if
 
         if (jplanes%n > 0) then
@@ -170,7 +173,7 @@ contains
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_XOZ, fname, varname, data_j, jplanes%io, wrk3d)
+            call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOZ), fname, varname, data_j, jplanes%io)
         end if
 
         if (iplanes%n > 0) then       ! We transpose to make j-lines together in memory
@@ -198,7 +201,7 @@ contains
             end do
             offset = offset + iplanes%n
             write (fname, *) itime; fname = 'planesI.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY4(IO_SUBARRAY_PLANES_ZOY, fname, varname, data_i, iplanes%io, wrk3d)
+            call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_ZOY), fname, varname, data_i, iplanes%io)
         end if
 
         return

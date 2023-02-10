@@ -274,7 +274,8 @@ program APRIORI
 
             do is = 1, nfield
                 plot_file = trim(adjustl(vars(is)%tag))//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, is), wrk3d)
+                ! to be written in terms of subarrays
+                ! call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, is), wrk3d)
             end do
 
 ! ###################################################################
@@ -320,7 +321,8 @@ program APRIORI
 
             do is = 1, nfield
                 plot_file = trim(adjustl(vars(is)%tag))//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, is), wrk3d)
+                ! to be written in terms of subarrays
+                ! call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, is), wrk3d)
             end do
 
         end select

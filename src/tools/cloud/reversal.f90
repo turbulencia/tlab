@@ -9,8 +9,6 @@ PROGRAM REVERSAL
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TREAL qt_1, qt_2, h_1, h_2, qt, h, x, qsat, dqldqt
   TREAL qvqd, ba_ratio, heat1, heat2, alpha, dummy
   TREAL z1(2), e, rho, p, T, ep, s(3)

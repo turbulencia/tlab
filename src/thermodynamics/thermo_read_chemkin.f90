@@ -22,8 +22,6 @@ SUBROUTINE THERMO_READ_CHEMKIN(name)
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   CHARACTER*(*) name
 
 ! -----------------------------------------------------------------------
@@ -35,6 +33,8 @@ SUBROUTINE THERMO_READ_CHEMKIN(name)
   CHARACTER*80 line, line1, line2, line3
   TINTEGER THERMO_FLAG(MAX_NSP)
 
+  integer, parameter :: i23 = 23
+  
 ! #######################################################################
 ! Initialize thermodynamic data structure
   DO is=1, NSP

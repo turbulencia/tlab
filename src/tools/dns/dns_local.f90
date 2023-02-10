@@ -17,7 +17,9 @@ module DNS_LOCAL
     integer :: nitera_stats_spa ! Iteration step to accumulate statistics in spatial mode
     integer :: nitera_pln       ! Iteration step to save planes
     integer :: nitera_filter    ! Iteration step for domain filter, if any
-    real(wp):: nruntime_sec     ! Maximum runtime of the code in Seconds
+
+    real(wp):: nruntime_sec     ! Maximum runtime of the simulation in seconds
+    real(wp):: wall_time        ! Actual elapsed time during the simulation in seconds
 
     integer :: nitera_log           ! Iteration step for data logger with simulation information
     character(len=*), parameter :: ofile = 'dns.out'    ! data logger filename
@@ -87,19 +89,19 @@ contains
         use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rbackground
-        use TLAB_VARS, only: wall_time
         use TLAB_ARRAYS
         use TLAB_PROCS
 #ifdef USE_MPI
         use MPI
         use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+        use TLAB_MPI_VARS, only: ims_time_min, ims_err
 #endif
         use FI_VECTORCALCULUS
 
         ! -------------------------------------------------------------------
         integer(wi) idummy(3)
         real(wp) dummy
-        real(sp),dimension(2):: tdummy
+        real(sp) tdummy(2), wall_time_loc
         character*128 line
         character*32 str
 
@@ -109,9 +111,11 @@ contains
         ! ###################################################################
         ! Check wall time bounds - maximum runtime 
 #ifdef USE_MPI
-        wall_time = MPI_WTIME()
+        wall_time = MPI_WTIME() - ims_time_min
+        CALL MPI_BCast(wall_time, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #else
-        call ETIME(tdummy, wall_time)
+        call ETIME(tdummy, wall_time_loc)
+        wall_time = real(wall_time_loc, wp)
 #endif       
         ! ###################################################################
         ! Compressible flow

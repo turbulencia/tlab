@@ -9,11 +9,10 @@ PROGRAM SMOOTH
 
   IMPLICIT NONE
 
-#include "integers.h"
-
   TREAL qt_min, qt_max, qt_del, qt, qs, dqldqt
   TREAL z1(2), e, rho, p, T, h, ep, s(3)
   TINTEGER opt
+  integer, parameter :: i1 = 1
 
 ! ###################################################################
   CALL TLAB_START

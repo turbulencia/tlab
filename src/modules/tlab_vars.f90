@@ -37,7 +37,6 @@ module TLAB_VARS
 ! ###################################################################
     integer(wi) :: itime                    ! iteration number
     real(wp) :: rtime                       ! physical time
-    real(sp) :: wall_time                   ! walltime (elapsed real time)
 
 ! ###################################################################
 ! Arrays size

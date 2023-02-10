@@ -253,6 +253,7 @@ program AVERAGES
         idummy = imax*2*igate_size*kmax; io_sizes = [idummy, 1, idummy, 1, 1]
         id = IO_SUBARRAY_ENVELOPES
         io_aux(id)%offset = 0
+        io_aux(id)%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
         io_aux(id)%active = .true.
         io_aux(id)%communicator = MPI_COMM_WORLD
@@ -470,7 +471,7 @@ program AVERAGES
                 end do
                 varname = ''
                 write (fname, *) itime; fname = 'envelopesJ.'//trim(adjustl(fname))
-                call IO_WRITE_SUBARRAY4(IO_SUBARRAY_ENVELOPES, fname, varname, surface, io_sizes, wrk3d)
+                call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_ENVELOPES), fname, varname, surface, io_sizes)
 
             end if
 

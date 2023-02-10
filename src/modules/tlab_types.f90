@@ -1,3 +1,5 @@
+#include "dns_const.h"
+
 module TLAB_TYPES
     use TLAB_CONSTANTS
 #ifdef USE_MPI
@@ -75,6 +77,7 @@ module TLAB_TYPES
 
     type subarray_dt
         sequence
+        integer :: precision = IO_TYPE_DOUBLE
 #ifdef USE_MPI
         logical active, lpadding(3)
         integer communicator
