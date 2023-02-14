@@ -381,7 +381,7 @@ program AVERAGES
                 do is = 1, inb_scal_array          ! All, prognostic and diagnostic fields in array s
                     txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                     call AVG_SCAL_XZ(is, q, s, s(1, is), &
-                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
+                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                 end do
 
                 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
@@ -398,7 +398,7 @@ program AVERAGES
 
                     txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                     call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
-                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
+                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
 
                 end if
 
@@ -409,7 +409,7 @@ program AVERAGES
                         !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
+                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                     end if
                 end if
 
@@ -432,14 +432,14 @@ program AVERAGES
                     txc(:, 8) = txc(:, 8)/txc(:, 7)
                     txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                     call AVG_SCAL_XZ(is, q, s, txc(1, 8), &
-                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
+                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                 end do
             end if
 
             if (icalc_flow == 1) then
                 txc(1:isize_field, 3) = txc(1:isize_field, 9) ! Pass the pressure in tmp3
                 call AVG_FLOW_XZ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), &
-                                 txc(1, 7), txc(1, 8), txc(1, 9), mean, wrk1d, wrk2d, wrk3d)
+                                 txc(1, 7), txc(1, 8), txc(1, 9), mean)
             end if
 
             ! ###################################################################

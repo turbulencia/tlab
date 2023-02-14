@@ -12,7 +12,6 @@
 program VISUALS
 
     use TLAB_CONSTANTS
-    use TLAB_TYPES, only: subarray_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS

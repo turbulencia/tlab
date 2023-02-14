@@ -75,17 +75,4 @@ module TLAB_TYPES
         real(wp), dimension(:, :, :), pointer :: field
     end type pointers3d_dt
 
-    type subarray_dt
-        sequence
-        integer :: precision = IO_TYPE_DOUBLE
-#ifdef USE_MPI
-        logical active, lpadding(3)
-        integer communicator
-        integer subarray
-        integer(KIND=MPI_OFFSET_KIND) offset
-#else
-        integer offset
-#endif
-    end type subarray_dt
-
 end module TLAB_TYPES
