@@ -310,9 +310,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! pressure in tmp1, Oy derivative in tmp3
     call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
-    call OPR_FILTER_Y(imax, jmax, kmax, vprefil(2), tmp1)
-    call OPR_FILTER_Y(imax, jmax, kmax, vprefil(2), tmp3)
-
+    if (vprefil(2)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_Y(imax, jmax, kmax, vprefil(2), tmp1)
+        call OPR_FILTER_Y(imax, jmax, kmax, vprefil(2), tmp3)
+    end if
 
 ! Saving pressure for towers to tmp array
     if (use_tower .and. rkm_substep == rkm_endstep) then

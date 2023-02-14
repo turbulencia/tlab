@@ -774,7 +774,7 @@ call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
 vprefil(:)%size = g(:)%size
 vprefil(:)%periodic = g(:)%periodic
 vprefil(:)%uniform = g(:)%uniform
-call SCANINICHAR(bakfile, inifile, 'vprefil', 'Type', 'none', sRes)
+call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'Type', 'none', sRes)
 if (trim(adjustl(sRes)) == 'none') then; vprefil(:)%type = DNS_FILTER_NONE
 else if (trim(adjustl(sRes)) == 'compact') then; vprefil(:)%type = DNS_FILTER_COMPACT
     vprefil(:)%parameters(1) = 0.49 ! default alpha value
@@ -798,7 +798,7 @@ do ig = 1, 3
     end if
 end do
 
-call SCANINICHAR(bakfile, inifile, 'vprefil', 'Parameters', 'void', sRes)
+call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'Parameters', 'void', sRes)
 if (trim(adjustl(sRes)) /= 'void') then
     idummy = MAX_PROF
     call LIST_REAL(sRes, idummy, vprefil(1)%parameters(:))
@@ -809,11 +809,11 @@ if (trim(adjustl(sRes)) /= 'void') then
     end do
 end if
 
-call SCANINICHAR(bakfile, inifile, 'vprefil', 'ActiveX', 'yes', sRes)
+call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'ActiveX', 'yes', sRes)
 if (trim(adjustl(sRes)) == 'no') vprefil(1)%type = DNS_FILTER_NONE
-call SCANINICHAR(bakfile, inifile, 'vprefil', 'ActiveY', 'yes', sRes)
+call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'ActiveY', 'yes', sRes)
 if (trim(adjustl(sRes)) == 'no') vprefil(2)%type = DNS_FILTER_NONE
-call SCANINICHAR(bakfile, inifile, 'vprefil', 'ActiveZ', 'yes', sRes)
+call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'ActiveZ', 'yes', sRes)
 if (trim(adjustl(sRes)) == 'no') vprefil(3)%type = DNS_FILTER_NONE
 
 ! Further control
