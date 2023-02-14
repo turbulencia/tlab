@@ -151,7 +151,7 @@ contains
                 do is = 1, inb_scal_array          ! All, prognostic and diagnostic fields in array s
                     hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
                     call AVG_SCAL_XZ(is, q, s, s(1, is), &
-                                     txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean, wrk1d, wrk2d, wrk3d)
+                                     txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean)
                 end do
 
                 if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
@@ -168,7 +168,7 @@ contains
 
                         hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
                         call AVG_SCAL_XZ(is, q, s, hq(1, 1), &
-                                         txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean, wrk1d, wrk2d, wrk3d)
+                                         txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean)
 
                     end if
 
@@ -178,14 +178,14 @@ contains
 
                         hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
                         call AVG_SCAL_XZ(is, q, s, hq(1, 1), &
-                                         txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean, wrk1d, wrk2d, wrk3d)
+                                         txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean)
                     end if
                 end if
 
             end if
 
             call AVG_FLOW_XZ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 1), hq(1, 2), hq(1, 3), &
-                             mean, wrk1d, wrk2d, wrk3d)
+                             mean)
 
             ! Lagrange Liquid and Liquid without diffusion
             if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
@@ -199,7 +199,7 @@ contains
                     call PARTICLE_TO_FIELD(l_q, l_q(1, 3 + is - inb_scal_array - 1), hq(1, 2), wrk3d)
                     hq(:, 2) = hq(:, 2)/hq(:, 1)
                     call AVG_SCAL_XZ(is, q, s, hq(1, 2), &
-                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean, wrk1d, wrk2d, wrk3d)
+                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                 end do
             end if
 
