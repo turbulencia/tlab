@@ -107,6 +107,7 @@ module TLAB_VARS
     integer :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
 
     type(filter_dt) :: Dealiasing(3)
+    type(filter_dt) :: vprefil(3)
 
 ! ###################################################################
 ! Jet Statistics

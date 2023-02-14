@@ -761,6 +761,74 @@ subroutine IO_READ_GLOBAL(inifile)
 #endif
 
 ! ###################################################################
+! Vertical Pressure Filter (a filter type)
+! ###################################################################
+call TLAB_WRITE_ASCII(bakfile, '#')
+call TLAB_WRITE_ASCII(bakfile, '#[VPressureFilter]')
+call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
+call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+
+vprefil(:)%size = g(:)%size
+vprefil(:)%periodic = g(:)%periodic
+vprefil(:)%uniform = g(:)%uniform
+call SCANINICHAR(bakfile, inifile, 'vprefil', 'Type', 'none', sRes)
+if (trim(adjustl(sRes)) == 'none') then; vprefil(:)%type = DNS_FILTER_NONE
+else if (trim(adjustl(sRes)) == 'compact') then; vprefil(:)%type = DNS_FILTER_COMPACT
+    vprefil(:)%parameters(1) = 0.49 ! default alpha value
+    vprefil(:)%inb_filter = 10
+    vprefil(:)%BcsMin = DNS_FILTER_BCS_BIASED
+    vprefil(:)%BcsMax = DNS_FILTER_BCS_BIASED
+else if (trim(adjustl(sRes)) == 'compactcutoff') then; vprefil(:)%type = DNS_FILTER_COMPACT_CUTOFF
+    vprefil(:)%inb_filter = 7
+    vprefil(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
+    vprefil(2)%parameters(1) = 0.49
+    vprefil(2)%inb_filter = 10
+    vprefil(2)%BcsMin = DNS_FILTER_BCS_BIASED
+    vprefil(2)%BcsMax = DNS_FILTER_BCS_BIASED
+end if
+
+! Boundary conditions correction
+do ig = 1, 3
+    if (FilterDomain(ig)%periodic) then
+        vprefil(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+        vprefil(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+    end if
+end do
+
+call SCANINICHAR(bakfile, inifile, 'vprefil', 'Parameters', 'void', sRes)
+if (trim(adjustl(sRes)) /= 'void') then
+    idummy = MAX_PROF
+    call LIST_REAL(sRes, idummy, vprefil(1)%parameters(:))
+    if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
+        vprefil(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
+    do ig = 2, 3
+        vprefil(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
+    end do
+end if
+
+call SCANINICHAR(bakfile, inifile, 'vprefil', 'ActiveX', 'yes', sRes)
+if (trim(adjustl(sRes)) == 'no') vprefil(1)%type = DNS_FILTER_NONE
+call SCANINICHAR(bakfile, inifile, 'vprefil', 'ActiveY', 'yes', sRes)
+if (trim(adjustl(sRes)) == 'no') vprefil(2)%type = DNS_FILTER_NONE
+call SCANINICHAR(bakfile, inifile, 'vprefil', 'ActiveZ', 'yes', sRes)
+if (trim(adjustl(sRes)) == 'no') vprefil(3)%type = DNS_FILTER_NONE
+
+! Further control
+do ig = 1, 3
+    if (vprefil(ig)%size == 1) vprefil(ig)%type = DNS_FILTER_NONE
+end do
+
+#ifdef USE_MPI
+vprefil(1)%mpitype = TLAB_MPI_I_PARTIAL
+vprefil(3)%mpitype = TLAB_MPI_K_PARTIAL
+#endif
+
+
+
+! ###################################################################
 ! Filter
 ! Should be read somewhere else as a block to be used also in
 ! dealiasing, but it does not fit in module opr_filters because of the
