@@ -379,6 +379,7 @@ program SPECTRA
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
+        call OPR_FILTER_INITIALIZE(g(ig), vprefil(ig))
     end do
 
     icalc_radial = 0
