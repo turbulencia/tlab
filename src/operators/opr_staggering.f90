@@ -30,12 +30,12 @@ subroutine FILTER_VERTICAL_PRESSURE(ny, vfilter_param, a, b)
     complex(wp), dimension(2,2)               :: buf
     ! -------------------------------------------------------------------
 
-    ! filter parameters  
-    if      (vfilter_param == 0) then 
+    ! filter parameters (weights)
+    if      (vfilter_param == 0) then ! max filter strength (potentially unstable)
         w2 = 0.0_wp; w1 = 0.5_wp
-    else if (vfilter_param == 2) then 
+    else if (vfilter_param == 2) then ! filter is off
         w2 = 1.0_wp; w1 = 0.0_wp
-    else
+    else                              ! vfilter_param = [0,2]
         w2 =  vfilter_param / 2.0_wp
         w1 = (1.0_wp - w2)  / 2.0_wp
     end if
