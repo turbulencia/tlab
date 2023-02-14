@@ -27,7 +27,6 @@ module BOUNDARY_BUFFER
     use TLAB_VARS, only: g
     use TLAB_VARS, only: itime
     use TLAB_VARS, only: mach
-    use TLAB_VARS, only: io_aux
     use TLAB_PROCS
     use THERMO_VARS, only: gama0
     use IO_FIELDS

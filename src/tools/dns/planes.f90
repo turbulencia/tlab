@@ -6,7 +6,6 @@ module PLANES
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array
     use TLAB_VARS, only: rbackground, g
     use TLAB_VARS, only: itime, rtime
-    use TLAB_VARS, only: io_aux
     use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use TLAB_PROCS
     use THERMO_VARS, only: imixture

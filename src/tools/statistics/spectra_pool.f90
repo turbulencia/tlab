@@ -423,10 +423,8 @@ end subroutine WRITE_SPECTRUM1D
 #ifdef USE_MPI
 
 subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
-
-    use TLAB_TYPES, only: subarray_dt
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: io_aux
+    use IO_FIELDS, only: io_aux
     use MPI
     use TLAB_MPI_VARS
 
