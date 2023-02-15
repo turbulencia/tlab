@@ -14,11 +14,12 @@
 !#
 !########################################################################
 
-subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, mean2d, wrk1d, wrk2d, wrk3d)
-
+subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, mean2d)
     use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
     use TLAB_CONSTANTS, only: efile, lfile, wp, wi
     use TLAB_VARS
+    use TLAB_ARRAYS, only: wrk1d, wrk2d
+    use TLAB_POINTERS_3D, only: p_wrk3d
     use THERMO_VARS, only: imixture, thermo_param
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s, scal_bcs
     use AVGS, only: AVG_IK_V
@@ -35,16 +36,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     real(wp), intent(IN) :: q(imax, jmax, kmax, inb_flow_array)
     real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
     real(wp), intent(IN) :: s_local(imax, jmax, kmax)
-    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, wrk3d
+    real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: dsdx, dsdy, dsdz, tmp1, tmp2, tmp3
     real(wp), intent(INOUT) :: mean2d(jmax,MAX_AVG_TEMPORAL)
-    real(wp), intent(INOUT) :: wrk1d(jmax,3)
-    real(wp), intent(INOUT) :: wrk2d(isize_wrk2d)
 
     target q, tmp3
 
     ! -----------------------------------------------------------------------
     integer, parameter :: MAX_VARS_GROUPS = 10
-    integer(wi), parameter :: i1 = 1
     integer j, k, bcs(2, 2), is_loc
     real(wp) diff, dummy, coefT, coefR, coefQ, c23
 
@@ -333,13 +331,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), rU(1), rU_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), rV(1), rV_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), rW(1), rW_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rU(1), rU_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rV(1), rV_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rW(1), rW_y(1))
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), fU(1), fU_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), fV(1), fV_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), fW(1), fW_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fU(1), fU_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fV(1), fV_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
 
     dsdx = v*u
     if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) dsdx = dsdx*rho
@@ -362,24 +360,24 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
         fS(:) = rS(:)
     else
-        wrk3d = rho*s_local
-        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, fS(1), wrk1d, area)
+        p_wrk3d = rho*s_local
+        call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, fS(1), wrk1d, area)
         fS(:) = fS(:)/rR(:)
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), rS(1), rS_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), fS(1), fS_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rS(1), rS_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fS(1), fS_y(1))
 
     ! -----------------------------------------------------------------------
     ! Moments
     do j = 1, jmax
-        wrk3d(:, j, :) = s_local(:, j, :) - rS(j)
+        p_wrk3d(:, j, :) = s_local(:, j, :) - rS(j)
     end do
-    tmp1 = wrk3d*wrk3d
+    tmp1 = p_wrk3d*p_wrk3d
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS2(1), wrk1d, area)
-    tmp1 = wrk3d*tmp1
+    tmp1 = p_wrk3d*tmp1
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS3(1), wrk1d, area)
-    tmp1 = wrk3d*tmp1
+    tmp1 = p_wrk3d*tmp1
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS4(1), wrk1d, area)
 
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
@@ -389,13 +387,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     else
         do j = 1, jmax
-            wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
+            p_wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
         end do
-        tmp1 = wrk3d*wrk3d*rho
+        tmp1 = p_wrk3d*p_wrk3d*rho
         call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, fS2(1), wrk1d, area)
-        tmp1 = wrk3d*tmp1
+        tmp1 = p_wrk3d*tmp1
         call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, fS3(1), wrk1d, area)
-        tmp1 = wrk3d*tmp1
+        tmp1 = p_wrk3d*tmp1
         call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, fS4(1), wrk1d, area)
         fS2(:) = fS2(:)/rR(:)
         fS3(:) = fS3(:)/rR(:)
@@ -403,19 +401,19 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), fS2(1), Rss_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fS2(1), Rss_y(1))
 
     ! -----------------------------------------------------------------------
     ! Cross terms
     do j = 1, jmax
-        wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
+        p_wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
     end do
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) wrk3d = wrk3d*rho
+    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) p_wrk3d = p_wrk3d*rho
 
     do j = 1, jmax
-        dsdx(:, j, :) = wrk3d(:, j, :)*(u(:, j, :) - fU(j))
-        dsdy(:, j, :) = wrk3d(:, j, :)*(v(:, j, :) - fV(j))
-        dsdz(:, j, :) = wrk3d(:, j, :)*(w(:, j, :) - fW(j))
+        dsdx(:, j, :) = p_wrk3d(:, j, :)*(u(:, j, :) - fU(j))
+        dsdy(:, j, :) = p_wrk3d(:, j, :)*(v(:, j, :) - fV(j))
+        dsdz(:, j, :) = p_wrk3d(:, j, :)*(w(:, j, :) - fW(j))
     end do
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, Rsu(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, Rsv(1), wrk1d, area)
@@ -424,9 +422,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Rsv(:) = Rsv(:)/rR(:)
     Rsw(:) = Rsw(:)/rR(:)
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Rsu(1), Rsu_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Rsv(1), Rsv_y(1), wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Rsw(1), Rsw_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsu(1), Rsu_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsv(1), Rsv_y(1))
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsw(1), Rsw_y(1))
 
     ! -----------------------------------------------------------------------
     ! turbulent transport terms
@@ -445,9 +443,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Pressure terms in transport equations
     call AVG_IK_V(imax, jmax, kmax, jmax, p, g(1)%jac, g(3)%jac, rP(1), wrk1d, area)
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
     do j = 1, jmax
         tmp1(:, j, :) = (p(:, j, :) - rP(j))*(s_local(:, j, :) - fS(j))
         dsdx(:, j, :) = (p(:, j, :) - rP(j))*dsdx(:, j, :)
@@ -459,7 +457,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, PIsv(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, PIsw(1), wrk1d, area)
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), rP(1), aux(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rP(1), aux(1))
     Gsv(:) = (rS(:) - fS(:))*aux(:)
 
     ! #######################################################################
@@ -485,19 +483,19 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (radiation%active(is)) then ! Radiation in tmp1 and dsdx
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, radiation%scalar(is)), tmp2)
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1, wrk1d, wrk3d)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx, wrk1d, wrk3d)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1, wrk1d, p_wrk3d)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx, wrk1d, p_wrk3d)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
             tmp2 = 0.0_wp
 
         else
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, wrk3d)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx, wrk1d, wrk3d)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, p_wrk3d)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx, wrk1d, p_wrk3d)
         end if
     end if
 
     if (transport%active(is)) then ! Transport in tmp3 and dsdz
-        call FI_TRANSPORT(transport, i1, imax, jmax, kmax, is, s, tmp3, dsdy)
+        call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, tmp3, dsdy)
         call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, dsdz)
     end if
 
@@ -515,22 +513,22 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, dsdx, dsdy, dsdz) ! calculate xi in dsdx
-            call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1, wrk2d, wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1, wrk2d, p_wrk3d)
 
             dummy = -diff*coefQ
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
 
             if (transport%active(is) .or. radiation%active(is)) then ! preparing correction terms into dsdz
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1, wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1)
                 dsdz = dsdz*tmp1
             end if
 
             if (radiation%active(is)) then ! radiation source; needs dsdy
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, wrk3d)
+                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, p_wrk3d)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 ! Correction term needs dsdz
-                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx, wrk1d, wrk3d)
+                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx, wrk1d, p_wrk3d)
                 dsdx = dsdx*dsdz*dummy
             else
                 tmp1 = 0.0_wp; dsdx = 0.0_wp
@@ -548,7 +546,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
         else
             if (buoyancy%type /= EQNS_EXPLICIT) then
-                call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy, wrk2d, wrk3d)
+                call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy, wrk2d, p_wrk3d)
                 call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, dsdx, tmp1) ! dsdx contains gradient
                 tmp1 = tmp1*diff/froude
             end if
@@ -572,17 +570,17 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
     end if
 
-    wrk3d = tmp1 + tmp2 + tmp3 ! total
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, rQ(1), wrk1d, area)
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) wrk3d = wrk3d*rho
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, fQ(1), wrk1d, area)
+    p_wrk3d = tmp1 + tmp2 + tmp3 ! total
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, rQ(1), wrk1d, area)
+    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) p_wrk3d = p_wrk3d*rho
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, fQ(1), wrk1d, area)
     fQ(:) = fQ(:)/rR(:)
 
     do j = 1, jmax
-        tmp1(:, j, :) = (s_local(:, j, :) - fS(j))*wrk3d(:, j, :)
-        dsdx(:, j, :) = (u(:, j, :) - fU(j))*wrk3d(:, j, :)
-        dsdy(:, j, :) = (v(:, j, :) - fV(j))*wrk3d(:, j, :)
-        dsdz(:, j, :) = (w(:, j, :) - fW(j))*wrk3d(:, j, :)
+        tmp1(:, j, :) = (s_local(:, j, :) - fS(j))*p_wrk3d(:, j, :)
+        dsdx(:, j, :) = (u(:, j, :) - fU(j))*p_wrk3d(:, j, :)
+        dsdy(:, j, :) = (v(:, j, :) - fV(j))*p_wrk3d(:, j, :)
+        dsdz(:, j, :) = (w(:, j, :) - fW(j))*p_wrk3d(:, j, :)
     end do
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, Qss(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, Qsu(1), wrk1d, area)
@@ -596,134 +594,134 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Derivatives
     ! #######################################################################
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
 
     ! Dissipation terms; mean terms substracted below
-    wrk3d = dsdx*dsdx + dsdy*dsdy + dsdz*dsdz
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Ess(1), wrk1d, area)
+    p_wrk3d = dsdx*dsdx + dsdy*dsdy + dsdz*dsdz
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Ess(1), wrk1d, area)
     Ess(:) = Ess(:)*diff*2.0_wp
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
     ! Transport term
-    wrk3d = (tmp2*2.0_wp - tmp1 - tmp3)*c23*visc
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tau_yy(1), wrk1d, area)
+    p_wrk3d = (tmp2*2.0_wp - tmp1 - tmp3)*c23*visc
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tau_yy(1), wrk1d, area)
     do j = 1, jmax
-        wrk3d(:, j, :) = -(wrk3d(:, j, :) - Tau_yy(j))*(s_local(:, j, :) - fS(j))
+        p_wrk3d(:, j, :) = -(p_wrk3d(:, j, :) - Tau_yy(j))*(s_local(:, j, :) - fS(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tsvy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tsvy2(1), wrk1d, area)
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Tau_yy(1), Tau_yy_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yy(1), Tau_yy_y(1))
 
     ! Dissipation terms; mean terms substracted below
-    wrk3d = dsdx*((tmp1*2.0_wp - tmp2 - tmp3)*c23*visc + tmp1*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Esu(1), wrk1d, area)
+    p_wrk3d = dsdx*((tmp1*2.0_wp - tmp2 - tmp3)*c23*visc + tmp1*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Esu(1), wrk1d, area)
 
-    wrk3d = dsdy*((tmp2*2.0_wp - tmp1 - tmp3)*c23*visc + tmp2*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Esv(1), wrk1d, area)
+    p_wrk3d = dsdy*((tmp2*2.0_wp - tmp1 - tmp3)*c23*visc + tmp2*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Esv(1), wrk1d, area)
 
-    wrk3d = dsdz*((tmp3*2.0_wp - tmp1 - tmp2)*c23*visc + tmp3*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Esw(1), wrk1d, area)
+    p_wrk3d = dsdz*((tmp3*2.0_wp - tmp1 - tmp2)*c23*visc + tmp3*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Esw(1), wrk1d, area)
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp1, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp1)
 
     ! Transport term
-    wrk3d = (tmp1 + tmp2)*visc
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tau_yx(1), wrk1d, area)
+    p_wrk3d = (tmp1 + tmp2)*visc
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tau_yx(1), wrk1d, area)
     do j = 1, jmax
-        wrk3d(:, j, :) = -(wrk3d(:, j, :) - Tau_yx(j))*(s_local(:, j, :) - fS(j))
+        p_wrk3d(:, j, :) = -(p_wrk3d(:, j, :) - Tau_yx(j))*(s_local(:, j, :) - fS(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tsuy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tsuy2(1), wrk1d, area)
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Tau_yx(1), Tau_yx_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yx(1), Tau_yx_y(1))
 
     ! Dissipation terms; mean terms substracted below
-    wrk3d = dsdy*((tmp1 + tmp2)*visc + tmp1*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    p_wrk3d = dsdy*((tmp1 + tmp2)*visc + tmp1*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Esu(:) = Esu(:) + aux(:)
 
-    wrk3d = dsdx*((tmp1 + tmp2)*visc + tmp2*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    p_wrk3d = dsdx*((tmp1 + tmp2)*visc + tmp2*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Esv(:) = Esv(:) + aux(:)
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
 
     ! Transport term
-    wrk3d = (tmp3 + tmp2)*visc
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tau_yz(1), wrk1d, area)
+    p_wrk3d = (tmp3 + tmp2)*visc
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tau_yz(1), wrk1d, area)
     do j = 1, jmax
-        wrk3d(:, j, :) = -(wrk3d(:, j, :) - Tau_yz(j))*(s_local(:, j, :) - fS(j))
+        p_wrk3d(:, j, :) = -(p_wrk3d(:, j, :) - Tau_yz(j))*(s_local(:, j, :) - fS(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tswy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tswy2(1), wrk1d, area)
 
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Tau_yz(1), Tau_yz_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yz(1), Tau_yz_y(1))
 
     ! Dissipation terms; mean terms substracted below
-    wrk3d = dsdz*((tmp3 + tmp2)*visc + tmp2*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    p_wrk3d = dsdz*((tmp3 + tmp2)*visc + tmp2*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Esv(:) = Esv(:) + aux(:)
 
-    wrk3d = dsdy*((tmp3 + tmp2)*visc + tmp3*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    p_wrk3d = dsdy*((tmp3 + tmp2)*visc + tmp3*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Esw(:) = Esw(:) + aux(:)
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp1, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp3)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp1)
 
     ! Dissipation terms; mean terms substracted below
-    wrk3d = dsdz*((tmp3 + tmp1)*visc + tmp1*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    p_wrk3d = dsdz*((tmp3 + tmp1)*visc + tmp1*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Esu(:) = Esu(:) + aux(:)
 
-    wrk3d = dsdx*((tmp3 + tmp1)*visc + tmp3*diff)
-    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) wrk3d = wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    p_wrk3d = dsdx*((tmp3 + tmp1)*visc + tmp3*diff)
+    if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Esw(:) = Esw(:) + aux(:)
 
     ! -----------------------------------------------------------------------
     ! Moments
     do j = 1, jmax
-        wrk3d(:, j, :) = dsdy(:, j, :) - rS_y(j)
+        p_wrk3d(:, j, :) = dsdy(:, j, :) - rS_y(j)
     end do
 
     tmp1 = dsdx*dsdx
-    tmp2 = wrk3d*wrk3d
+    tmp2 = p_wrk3d*p_wrk3d
     tmp3 = dsdz*dsdz
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, S_x2(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, S_y2(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, S_z2(1), wrk1d, area)
 
     tmp1 = tmp1*dsdx
-    tmp2 = tmp2*wrk3d
+    tmp2 = tmp2*p_wrk3d
     tmp3 = tmp3*dsdz
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, S_x3(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, S_y3(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, S_z3(1), wrk1d, area)
 
     tmp1 = tmp1*dsdx
-    tmp2 = tmp2*wrk3d
+    tmp2 = tmp2*p_wrk3d
     tmp3 = tmp3*dsdz
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, S_x4(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, S_y4(1), wrk1d, area)
@@ -736,12 +734,12 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     ! Contribution to turbulent transport
     do j = 1, jmax
-        wrk3d(:, j, :) = (dsdy(:, j, :) - Fy(j))*(s_local(:, j, :) - fS(j))
+        p_wrk3d(:, j, :) = (dsdy(:, j, :) - Fy(j))*(s_local(:, j, :) - fS(j))
         tmp1(:, j, :) = (dsdy(:, j, :) - Fy(j))*(u(:, j, :) - fU(j))
         tmp2(:, j, :) = (dsdy(:, j, :) - Fy(j))*(v(:, j, :) - fV(j))
         tmp3(:, j, :) = (dsdy(:, j, :) - Fy(j))*(w(:, j, :) - fW(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tssy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tssy2(1), wrk1d, area)
     Tssy2(:) = -Tssy2(:)*diff*2.0_wp
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
     Tsuy2(:) = Tsuy2(:) - aux(:)*diff
@@ -751,7 +749,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Tswy2(:) = Tswy2(:) - aux(:)*diff
 
     Fy(:) = Fy(:)*diff
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), Fy(1), Fy_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Fy(1), Fy_y(1))
 
     ! Contribution to dissipation
     Ess(:) = (Ess(:) - Fy(:)*rS_y(:) - Fy(:)*rS_y(:))/rR(:)
@@ -764,20 +762,20 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
         if (buoyancy%type == EQNS_EXPLICIT) then
-            call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, wrk3d)
+            call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, p_wrk3d)
         else
             wrk1d(1:jmax, 1) = 0.0_wp
-            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
+            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, p_wrk3d, wrk1d)
         end if
         dummy = 1.0_wp/froude
-        wrk3d = wrk3d*dummy
+        p_wrk3d = p_wrk3d*dummy
     else
-        wrk3d = rho*buoyancy%vector(2)
+        p_wrk3d = rho*buoyancy%vector(2)
     end if
     do j = 1, jmax
-        wrk3d(:, j, :) = (s_local(:, j, :) - fS(j))*wrk3d(:, j, :)
+        p_wrk3d(:, j, :) = (s_local(:, j, :) - fS(j))*p_wrk3d(:, j, :)
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Bsv(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Bsv(1), wrk1d, area)
     Bsv(:) = Bsv(:)/rR(:)
 
     ! #######################################################################
@@ -785,13 +783,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Transport terms
     aux(:) = Tssy1(:) + Tssy2(:)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), aux(1), Tssy_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tssy_y(1))
     aux(:) = Tsuy1(:) + Tsuy2(:)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), aux(1), Tsuy_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tsuy_y(1))
     aux(:) = Tsvy1(:) + Tsvy2(:) + Tsvy3(:)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), aux(1), Tsvy_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tsvy_y(1))
     aux(:) = Tswy1(:) + Tswy2(:)
-    call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), aux(1), Tswy_y(1), wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tswy_y(1))
 
     ! Convective terms
     Css(:) = -fV(:)*Rss_y(:)

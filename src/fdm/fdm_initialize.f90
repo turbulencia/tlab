@@ -1,334 +1,335 @@
-#include "types.h"
 #include "dns_const.h"
 
 !# Compute dx/di and create LU factorization for first- and second-order derivatives
 
-SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
+subroutine FDM_INITIALIZE(x, g, wrk1d)
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp
 #ifdef TRACE_ON
-  USE TLAB_CONSTANTS, ONLY : tfile
+    use TLAB_CONSTANTS, only: tfile
 #endif
-  USE TLAB_TYPES,  ONLY : grid_dt
-  USE TLAB_VARS, ONLY : inb_scal, istagger
-  USE TLAB_VARS, ONLY : reynolds, schmidt
-  USE TLAB_VARS, ONLY : C1N6M_ALPHA2, C1N6M_BETA2
-  USE TLAB_VARS, ONLY : C1N6M_A, C1N6M_BD2, C1N6M_CD3
+    use TLAB_TYPES, only: grid_dt
+    use TLAB_VARS, only: inb_scal, istagger
+    use TLAB_VARS, only: reynolds, schmidt
+    use TLAB_VARS, only: C1N6M_ALPHA2, C1N6M_BETA2
+    use TLAB_VARS, only: C1N6M_A, C1N6M_BD2, C1N6M_CD3
+    use TLAB_PROCS
 
-  USE TLAB_PROCS
+    implicit none
 
-  IMPLICIT NONE
+    type(grid_dt), intent(inout) :: g
+    real(wp), intent(inout) :: x(g%size, g%inb_grid)
+    real(wp), intent(inout) :: wrk1d(g%size, 5)
 
-#include "integers.h"
-
-  TYPE(grid_dt),                               INTENT(INOUT) :: g
-  TREAL, DIMENSION(g%size,g%inb_grid), TARGET, INTENT(INOUT) :: x
-  TREAL, DIMENSION(g%size,5),                  INTENT(INOUT) :: wrk1d
-
+    target x
+    
 ! -------------------------------------------------------------------
-  TINTEGER i, ip, is, ig, ibc_min, ibc_max, nx
-  TREAL r04, r28, r24, r48, r25, r60, dummy
-  TREAL ra1, rb2, rc3, r2a, r2b 
-  TREAL sa,  sb,  sal
+    integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
+    real(wp) r04, r28, r24, r48, r25, r60, dummy
+    real(wp) ra1, rb2, rc3, r2a, r2b
+    real(wp) sa, sb, sal
+
+    integer, parameter :: i0 = 0, i1 = 1
 
 #ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile,'Entering SUBROUTINE FDM_INITIALIZE')
+    call TLAB_WRITE_ASCII(tfile, 'Entering SUBROUTINE FDM_INITIALIZE')
 #endif
 
 ! ###################################################################
-  nx = g%size
+    nx = g%size
 
-  ig = 1 ! Accumulating counter to define pointers inside array x
+    ig = 1 ! Accumulating counter to define pointers inside array x
 
 ! ###################################################################
-  g%nodes => x(:,ig)
+    g%nodes => x(:, ig)
 
-  ig = ig + 1
+    ig = ig + 1
 
 ! ###################################################################
 ! Coefficients of pentadiagonal 6th-order scheme for 1st derivative
-  IF (g%mode_fdm .EQ. FDM_COM6_JACPENTA) CALL FDM_C1N6M_COEFF()
-  
+    if (g%mode_fdm == FDM_COM6_JACPENTA) call FDM_C1N6M_COEFF()
+
 ! ###################################################################
 ! Jacobians
 ! ###################################################################
-  g%jac => x(:,ig:)
+    g%jac => x(:, ig:)
 
-  IF ( nx .EQ. 1 ) THEN
-     g%jac(1,1) = C_1_R
-     g%jac(1,2) = C_1_R
-     g%jac(1,3) = C_0_R
-     g%jac(1,4) = C_0_R
-     RETURN
-  ENDIF
+    if (nx == 1) then
+        g%jac(1, 1) = 1.0_wp
+        g%jac(1, 2) = 1.0_wp
+        g%jac(1, 3) = 0.0_wp
+        g%jac(1, 4) = 0.0_wp
+        return
+    end if
 
 ! ###################################################################
-  IF ( g%uniform ) THEN
+    if (g%uniform) then
 ! -------------------------------------------------------------------
 ! first derivative
 ! -------------------------------------------------------------------
-     DO i = 2,nx-1
-        g%jac(i,1) = (x(i+1,1)-x(i-1,1))*C_05_R
-     ENDDO
+        do i = 2, nx - 1
+            g%jac(i, 1) = (x(i + 1, 1) - x(i - 1, 1))*0.5_wp
+        end do
 
 ! Boundary points
-     IF ( g%periodic ) THEN
-        g%jac(nx,1) = ( x(1,1) + g%scale - x(nx-1,1)           )*C_05_R
-        g%jac(1, 1) = ( x(2,1)-x(1,1) + x(1,1)+g%scale-x(nx,1) )*C_05_R
+        if (g%periodic) then
+            g%jac(nx, 1) = (x(1, 1) + g%scale - x(nx - 1, 1))*0.5_wp
+            g%jac(1, 1) = (x(2, 1) - x(1, 1) + x(1, 1) + g%scale - x(nx, 1))*0.5_wp
 
-     ELSE
-        g%jac(1, 1) = g%jac(2,1)
-        g%jac(nx,1) = g%jac(nx-1,1)
+        else
+            g%jac(1, 1) = g%jac(2, 1)
+            g%jac(nx, 1) = g%jac(nx - 1, 1)
 
-     ENDIF
+        end if
 
 ! -------------------------------------------------------------------
 ! second derivative is zero
 ! -------------------------------------------------------------------
-     g%jac(:,2) = C_0_R
+        g%jac(:, 2) = 0.0_wp
 
 ! ###################################################################
-  ELSE ! derivative wrt computational grid, uniform
+    else ! derivative wrt computational grid, uniform
 ! -------------------------------------------------------------------
 ! first derivative
 ! -------------------------------------------------------------------
-     g%jac(:,1) = C_1_R
+        g%jac(:, 1) = 1.0_wp
 
-     SELECT CASE( g%mode_fdm )
+        select case (g%mode_fdm)
 
-     CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C1N4_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C1N4_RHS(nx,i1, i0,i0, x, g%jac(1,1))
+        case (FDM_COM4_JACOBIAN)
+            call FDM_C1N4_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call FDM_C1N4_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-        CALL FDM_C1N6_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C1N6_RHS(nx,i1, i0,i0, x, g%jac(1,1))
-      
-     CASE( FDM_COM6_JACPENTA )
-        CALL FDM_C1N6M_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-        CALL FDM_C1N6M_RHS(nx,i1, i0,i0, x, g%jac(1,1))
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
+            call FDM_C1N6_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call FDM_C1N6_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
-     CASE( FDM_COM8_JACOBIAN )
-        CALL FDM_C1N8_LHS(nx,    i0,i0, g%jac, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C1N8_RHS(nx,i1, i0,i0, x, g%jac(1,1))
+        case (FDM_COM6_JACPENTA)
+            call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+            call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
-     END SELECT
+        case (FDM_COM8_JACOBIAN)
+            call FDM_C1N8_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call FDM_C1N8_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
-     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
-        CALL TRIDFS(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL TRIDSS(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), g%jac(1,1))
-     ELSE
-        CALL PENTADFS2(nx,     wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5))
-        CALL PENTADSS2(nx, i1, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5), g%jac(1,1))
-     ENDIF
+        end select
+
+        if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+            call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
+        else
+            call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+            call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
+        end if
 
 ! -------------------------------------------------------------------
 ! second derivative
 ! -------------------------------------------------------------------
-     wrk1d(:,4) = C_1_R; wrk1d(:,5) = C_0_R
+        wrk1d(:, 4) = 1.0_wp; wrk1d(:, 5) = 0.0_wp
 
-     SELECT CASE( g%mode_fdm )
+        select case (g%mode_fdm)
 
-     CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4_LHS(nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N4_RHS(nx,i1, i0,i0,             x, g%jac(1,2))
+        case (FDM_COM4_JACOBIAN)
+            call FDM_C2N4_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call FDM_C2N4_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )
-       ! CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-       ! CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
-       CALL FDM_C2N6H_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-       CALL FDM_C2N6H_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+            ! CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
+            ! CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
+            call FDM_C2N6H_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call FDM_C2N6H_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
-     CASE( FDM_COM8_JACOBIAN ) ! Not yet developed; default to 6. order
-        CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-        CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
+        case (FDM_COM8_JACOBIAN) ! Not yet developed; default to 6. order
+            call FDM_C2N6_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            call FDM_C2N6_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
-     END SELECT
+        end select
 
-     CALL TRIDFS(nx,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-     CALL TRIDSS(nx, i1, wrk1d(1,1), wrk1d(1,2), wrk1d(1,3), g%jac(1,2))
+        call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+        call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
 
-  ENDIF
+    end if
 
 ! ###################################################################
 ! Saving operations for the time-stability constraint
-  g%jac(:,3) = C_1_R /g%jac(:,1)
-  g%jac(:,4) = g%jac(:,3) *g%jac(:,3)
+    g%jac(:, 3) = 1.0_wp/g%jac(:, 1)
+    g%jac(:, 4) = g%jac(:, 3)*g%jac(:, 3)
 
-  ig = ig + 4
+    ig = ig + 4
 
 ! ###################################################################
 ! LU factorization first-order derivative, done in routine TRID*FS
 ! ###################################################################
-  g%lu1 => x(:,ig:)
+    g%lu1 => x(:, ig:)
 
 ! -------------------------------------------------------------------
 ! Periodic case
 ! -------------------------------------------------------------------
-  IF ( g%periodic ) THEN
-     SELECT CASE( g%mode_fdm )
+    if (g%periodic) then
+        select case (g%mode_fdm)
 
-     CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C1N4P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
+        case (FDM_COM4_JACOBIAN)
+            call FDM_C1N4P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT ) ! Direct = Jacobian because uniform grid
-        CALL FDM_C1N6P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT) ! Direct = Jacobian because uniform grid
+            call FDM_C1N6P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
 
-     CASE( FDM_COM6_JACPENTA )
-        CALL FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))     
+        case (FDM_COM6_JACPENTA)
+            call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
 
-     CASE( FDM_COM8_JACOBIAN )
-        CALL FDM_C1N8P_LHS(nx, g%jac, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3))
+        case (FDM_COM8_JACOBIAN)
+            call FDM_C1N8P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
 
-     END SELECT
+        end select
 
-     IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
-        CALL TRIDPFS(  nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5))
-     ELSE
-        CALL PENTADPFS(nx, g%lu1(1,1),g%lu1(1,2),g%lu1(1,3),g%lu1(1,4),g%lu1(1,5),g%lu1(1,6),g%lu1(1,7))
-     ENDIF
-     ig = ig + 7
+        if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+            call TRIDPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
+        else
+            call PENTADPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
+        end if
+        ig = ig + 7
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case (4 different BCs)
 ! -------------------------------------------------------------------
-  ELSE
-     DO i = 0,3
-        ibc_min = MOD(i,2)
-        ibc_max = i /2
-        ip = i*5
-        SELECT CASE( g%mode_fdm )
+    else
+        do i = 0, 3
+            ibc_min = MOD(i, 2)
+            ibc_max = i/2
+            ip = i*5
+            select case (g%mode_fdm)
 
-        CASE( FDM_COM4_JACOBIAN )
-           CALL FDM_C1N4_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+            case (FDM_COM4_JACOBIAN)
+                call FDM_C1N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
-        CASE( FDM_COM6_JACOBIAN )
-           CALL FDM_C1N6_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+            case (FDM_COM6_JACOBIAN)
+                call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
-        CASE( FDM_COM6_JACPENTA )
-           CALL FDM_C1N6M_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
+            case (FDM_COM6_JACPENTA)
+               CALL FDM_C1N6M_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
 
-        CASE( FDM_COM8_JACOBIAN )
-           CALL FDM_C1N8_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+            case (FDM_COM8_JACOBIAN)
+                call FDM_C1N8_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
-        CASE( FDM_COM6_DIRECT   ) ! Not yet implemented; using Jacobian version
-           CALL FDM_C1N6_LHS(nx,  ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
+            case (FDM_COM6_DIRECT) ! Not yet implemented; using Jacobian version
+                call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
-        END SELECT
+            end select
 
-        IF (.NOT. (g%mode_fdm .EQ. FDM_COM6_JACPENTA)) THEN
-           CALL TRIDFS(   nx, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3))
-        ELSE
-           CALL PENTADFS2(nx, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
-        ENDIF
-        ig = ig + 5
-     ENDDO
+            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+                call TRIDFS(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+            else
+                call PENTADFS2(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5))
+            end if
+            ig = ig + 5
+        end do
 
-  ENDIF
+    end if
 
 ! ###################################################################
 ! LU factorization second-order derivative, done in routine TRID*FS
 ! ###################################################################
-  g%lu2 => x(:,ig:)
+    g%lu2 => x(:, ig:)
 
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-  IF ( g%periodic ) THEN
-     SELECT CASE( g%mode_fdm )
+    if (g%periodic) then
+        select case (g%mode_fdm)
 
-     CASE( FDM_COM4_JACOBIAN )
-        CALL FDM_C2N4P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+        case (FDM_COM4_JACOBIAN)
+            call FDM_C2N4P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )  ! Direct = Jacobian because uniform grid
-       ! CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
-       CALL FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)  ! Direct = Jacobian because uniform grid
+            ! CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+            call FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
-     CASE( FDM_COM8_JACOBIAN )                   ! Not yet developed
-        CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+        case (FDM_COM8_JACOBIAN)                   ! Not yet developed
+            call FDM_C2N6P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
-     END SELECT
+        end select
 
-     CALL TRIDPFS(nx, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3),g%lu2(1,4),g%lu2(1,5))
-     ig = ig + 5
+        call TRIDPFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3), g%lu2(1, 4), g%lu2(1, 5))
+        ig = ig + 5
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal for 4 different BCs
 ! -------------------------------------------------------------------
-  ELSE
-     DO i = 0,3
-        ibc_min = MOD(i,2)
-        ibc_max = i /2
-        ip = i*3
-        SELECT CASE( g%mode_fdm )
+    else
+        do i = 0, 3
+            ibc_min = MOD(i, 2)
+            ibc_max = i/2
+            ip = i*3
+            select case (g%mode_fdm)
 
-        CASE( FDM_COM4_JACOBIAN )
-           CALL FDM_C2N4_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+            case (FDM_COM4_JACOBIAN)
+                call FDM_C2N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
 
-        CASE( FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA )
-          ! CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
-          CALL FDM_C2N6H_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+            case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
+                ! CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+                call FDM_C2N6H_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
 
-        CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented
-           CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3)) ! 8th not yet developed
+            case (FDM_COM8_JACOBIAN) ! Not yet implemented
+                call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3)) ! 8th not yet developed
 
-        CASE( FDM_COM6_DIRECT   )
-           IF ( i .EQ. 0 ) CALL FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(1,ip+1), g%lu2(1,ip+4))
+            case (FDM_COM6_DIRECT)
+                if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(1, ip + 1), g%lu2(1, ip + 4))
 
-        END SELECT
+            end select
 
 ! The direct mode is only implemented for bcs=(0,0); we use the remaining array
 ! to save other data
-        IF  ( g%mode_fdm .EQ. FDM_COM6_DIRECT ) THEN
-           IF ( i .EQ. 0 ) THEN
-              g%lu2(:,ip+8:ip+10) = g%lu2(:,ip+1:ip+3) ! saving the array A w/o LU decomposition
-              CALL TRIDFS(nx, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
-              ig = ig + 10
-           ENDIF
-        ELSE
-           CALL TRIDFS(nx, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
-           ig = ig + 3
-        ENDIF
+            if (g%mode_fdm == FDM_COM6_DIRECT) then
+                if (i == 0) then
+                    g%lu2(:, ip + 8:ip + 10) = g%lu2(:, ip + 1:ip + 3) ! saving the array A w/o LU decomposition
+                    call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
+                    ig = ig + 10
+                end if
+            else
+                call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
+                ig = ig + 3
+            end if
 
-     ENDDO
+        end do
 
-  ENDIF
+    end if
 
 ! ###################################################################
 ! LU factorization second-order derivative times the diffusivities
 ! ###################################################################
-  g%lu2d => x(:,ig:)
+    g%lu2d => x(:, ig:)
 
-  ip = 0
-  DO is = 0,inb_scal ! case 0 for the reynolds number
-     IF ( is .EQ. 0 ) THEN; dummy = reynolds
-     ELSE;                  dummy = reynolds*schmidt(is); ENDIF
+    ip = 0
+    do is = 0, inb_scal ! case 0 for the reynolds number
+        if (is == 0) then; dummy = reynolds
+        else; dummy = reynolds*schmidt(is); end if
 
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-     IF ( g%periodic ) THEN ! Check routines TRIDPFS and TRIDPSS
-        g%lu2d(:,ip+1) = g%lu2(:,1)          ! matrix L; 1. subdiagonal
-        g%lu2d(:,ip+2) = g%lu2(:,2) /dummy   ! matrix L; 1/diagonal
-        g%lu2d(:,ip+3) = g%lu2(:,3)          ! matrix U is the same
-        g%lu2d(:,ip+4) = g%lu2(:,4) *dummy   ! matrix L; Additional row/column
-        g%lu2d(:,ip+5) = g%lu2(:,5)          ! matrix U is the same
+        if (g%periodic) then ! Check routines TRIDPFS and TRIDPSS
+            g%lu2d(:, ip + 1) = g%lu2(:, 1)          ! matrix L; 1. subdiagonal
+            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy   ! matrix L; 1/diagonal
+            g%lu2d(:, ip + 3) = g%lu2(:, 3)          ! matrix U is the same
+            g%lu2d(:, ip + 4) = g%lu2(:, 4)*dummy   ! matrix L; Additional row/column
+            g%lu2d(:, ip + 5) = g%lu2(:, 5)          ! matrix U is the same
 
-        ig = ig + 5
-        ip = ip + 5
+            ig = ig + 5
+            ip = ip + 5
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal, 1 single BCs
 ! -------------------------------------------------------------------
-     ELSE                   ! Check routines TRIDFS and TRIDSS
-        g%lu2d(:,ip+1) = g%lu2(:,1)          ! matrix L is the same
-        g%lu2d(:,ip+2) = g%lu2(:,2) /dummy   ! matrix U; 1/diagonal
-        g%lu2d(:,ip+3) = g%lu2(:,3) *dummy   ! matrix U; 1. superdiagonal
+        else                   ! Check routines TRIDFS and TRIDSS
+            g%lu2d(:, ip + 1) = g%lu2(:, 1)          ! matrix L is the same
+            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy   ! matrix U; 1/diagonal
+            g%lu2d(:, ip + 3) = g%lu2(:, 3)*dummy   ! matrix U; 1. superdiagonal
 
-        ig = ig + 3
-        ip = ip + 3
+            ig = ig + 3
+            ip = ip + 3
 
-     ENDIF
+        end if
 
-  ENDDO
+    end do
 
 ! ###################################################################
 ! LU factorization interpolation, done in routine TRID*FS
@@ -336,16 +337,16 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-  IF ( (istagger .EQ. 1) .AND. g%periodic ) THEN
-     g%lu0i => x(:,ig:)
+    if ((istagger == 1) .and. g%periodic) then
+        g%lu0i => x(:, ig:)
 
-     SELECT CASE( g%mode_fdm )
-     CASE DEFAULT
-        CALL FDM_C0INT6P_LHS(nx, g%lu0i(1,1),g%lu0i(1,2),g%lu0i(1,3))
-     END SELECT
-     CALL TRIDPFS(nx, g%lu0i(1,1),g%lu0i(1,2),g%lu0i(1,3),g%lu0i(1,4),g%lu0i(1,5))
-     ig = ig + 5
-  ENDIF
+        select case (g%mode_fdm)
+        case DEFAULT
+            call FDM_C0INT6P_LHS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3))
+        end select
+        call TRIDPFS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5))
+        ig = ig + 5
+    end if
 
 ! ###################################################################
 ! LU factorization first interp. derivative, done in routine TRID*FS
@@ -353,122 +354,125 @@ SUBROUTINE FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-  IF ( (istagger .EQ. 1) .AND. g%periodic ) THEN
-     g%lu1i => x(:,ig:)
- 
-     SELECT CASE( g%mode_fdm )
-     CASE DEFAULT
-        CALL FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1,1),g%lu1i(1,2),g%lu1i(1,3))
-     END SELECT
-     CALL TRIDPFS(nx, g%lu1i(1,1),g%lu1i(1,2),g%lu1i(1,3),g%lu1i(1,4),g%lu1i(1,5))
-     ig = ig + 5
-  ENDIF
+    if ((istagger == 1) .and. g%periodic) then
+        g%lu1i => x(:, ig:)
+
+        select case (g%mode_fdm)
+        case DEFAULT
+            call FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3))
+        end select
+        call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
+        ig = ig + 5
+    end if
 
 ! ###################################################################
 ! Modified wavenumbers in periodic case
 ! ###################################################################
-  g%mwn => x(:,ig:)
+    g%mwn => x(:, ig:)
 
-  IF ( g%periodic ) THEN
-     DO i = 1,nx ! Define wavenumbers
-        IF ( i .LE. nx/2+1 ) THEN; wrk1d(i,1) = C_2_R*C_PI_R*M_REAL(i-1   )/M_REAL(nx)
-        ELSE;                      wrk1d(i,1) = C_2_R*C_PI_R*M_REAL(i-1-nx)/M_REAL(nx); ENDIF
-     ENDDO
+    if (g%periodic) then
+        do i = 1, nx ! Define wavenumbers
+            if (i <= nx/2 + 1) then
+                wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
+            else 
+                wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
+            end if
+        end do
 
 ! -------------------------------------------------------------------
 ! First-order derivative
 ! -------------------------------------------------------------------
-     ! tridiagonal scheme
-     r04 = C_2_R /C_5_R
-     r28 = C_14_R*C_2_R
-     r48 = C_6_R *C_8_R
-     r25 = C_5_R *C_5_R /C_4_R
-     r60 = C_1_R /( C_6_R *C_10_R )
-     ! pentadiagonal scheme
-     ra1 = C1N6M_A
-     rb2 = C1N6M_BD2
-     rc3 = C1N6M_CD3
-     r2a = C1N6M_ALPHA2
-     r2b = C1N6M_BETA2
-     ! staggered tridiagonal 6th-order scheme
-     sal = C_9_R  / C_62_R 
-     sa  = C_63_R / C_62_R
-     sb  = C_17_R / C_62_R 
+        ! tridiagonal scheme
+        r04 = 2.0_wp/5.0_wp
+        r28 = 14.0_wp*2.0_wp
+        r48 = 6.0_wp*8.0_wp
+        r25 = 5.0_wp*5.0_wp/4.0_wp
+        r60 = 1.0_wp/(6.0_wp*10.0_wp)
+        ! pentadiagonal scheme
+        ra1 = C1N6M_A
+        rb2 = C1N6M_BD2
+        rc3 = C1N6M_CD3
+        r2a = C1N6M_ALPHA2
+        r2b = C1N6M_BETA2
+        ! staggered tridiagonal 6th-order scheme
+        sal = 9.0_wp/62.0_wp
+        sa = 63.0_wp/62.0_wp
+        sb = 17.0_wp/62.0_wp
 
-     IF ( istagger  .EQ. 0 ) THEN
+        if (istagger == 0) then
 
-        SELECT CASE( g%mode_fdm )
-         
-        CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT )
-           g%mwn(:,1)=( r28*sin(wrk1d(:,1))+    sin(C_2_R*wrk1d(:,1))                          )&
-                     /( C_18_R +C_12_R*cos(wrk1d(:,1)))
-   
-        CASE( FDM_COM6_JACPENTA )
-           g%mwn(:,1)=( ra1*sin(wrk1d(:,1))+rb2*sin(C_2_R*wrk1d(:,1))+rc3*sin(C_3_R*wrk1d(:,1)))&
-                     /( C_1_R  +r2a   *cos(wrk1d(:,1))+r2b*cos(2*wrk1d(:,1)))
-         
-        CASE( FDM_COM8_JACOBIAN )
-           g%mwn(:,1)=( r25*sin(wrk1d(:,1))+r04*sin(C_2_R*wrk1d(:,1))-r60*sin(C_3_R*wrk1d(:,1)))&
-                     /( C_4_R  +C_3_R *cos(wrk1d(:,1)))
-   
-        END SELECT
+            select case (g%mode_fdm)
 
-     ELSE ! staggered case has different modified wavenumbers!
+            case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
+                g%mwn(:, 1) = (r28*sin(wrk1d(:, 1)) + sin(2.0_wp*wrk1d(:, 1))) &
+                              /(18.0_wp + 12.0_wp*cos(wrk1d(:, 1)))
 
-        SELECT CASE( g%mode_fdm )
-         
-        CASE DEFAULT
-           g%mwn(:,1)=( C_2_R * sa * sin(C_1_R/C_2_R * wrk1d(:,1)) + C_2_R/C_3_R * sb * sin(C_3_R/C_2_R * wrk1d(:,1)))&
-                     /( C_1_R + C_2_R * sal * cos(wrk1d(:,1)))
- 
-        END SELECT
+            case (FDM_COM6_JACPENTA)
+                g%mwn(:, 1) = (ra1*sin(wrk1d(:, 1)) + rb2*sin(2.0_wp*wrk1d(:, 1)) + rc3*sin(3.0_wp*wrk1d(:, 1))) &
+                              /(1.0_wp + r2a*cos(wrk1d(:, 1)) + r2b*cos(2*wrk1d(:, 1)))
 
-     ENDIF
+            case (FDM_COM8_JACOBIAN)
+                g%mwn(:, 1) = (r25*sin(wrk1d(:, 1)) + r04*sin(2.0_wp*wrk1d(:, 1)) - r60*sin(3.0_wp*wrk1d(:, 1))) &
+                              /(4.0_wp + 3.0_wp*cos(wrk1d(:, 1)))
+
+            end select
+
+        else ! staggered case has different modified wavenumbers!
+
+            select case (g%mode_fdm)
+
+            case DEFAULT
+                g%mwn(:, 1) = (2.0_wp*sa*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + 2.0_wp/3.0_wp*sb*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
+                              /(1.0_wp + 2.0_wp*sal*cos(wrk1d(:, 1)))
+
+            end select
+
+        end if
 
 ! Final calculations because it is mainly used in the Poisson solver like this
-     g%mwn(:,1) = ( g%mwn(:,1) /g%jac(1,1) )**2
+        g%mwn(:, 1) = (g%mwn(:, 1)/g%jac(1, 1))**2
 
 ! -------------------------------------------------------------------
 ! Second-order derivative
 ! -------------------------------------------------------------------
-     r24 = C_6_R*C_4_R
+        r24 = 6.0_wp*4.0_wp
 
-     SELECT CASE( g%mode_fdm )
+        select case (g%mode_fdm)
 
-     CASE( FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA )
-        g%mwn(:,2)=( r24*(1-cos(wrk1d(:,1))) + C_1_5_R*(C_1_R-cos(C_2_R*wrk1d(:,1))) )&
-                  /( C_11_R + C_4_R*cos(wrk1d(:,1)) )
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+            g%mwn(:, 2) = (r24*(1 - cos(wrk1d(:, 1))) + 1.5_wp*(1.0_wp - cos(2.0_wp*wrk1d(:, 1)))) &
+                          /(11.0_wp + 4.0_wp*cos(wrk1d(:, 1)))
 
-     CASE( FDM_COM8_JACOBIAN ) ! Not yet implemented
+        case (FDM_COM8_JACOBIAN) ! Not yet implemented
 
-     END SELECT
+        end select
 
 ! Final calculations because it is mainly used in the Helmholtz solver like this
-     g%mwn(:,2) = g%mwn(:,2) /( g%jac(1,1)**2 )
+        g%mwn(:, 2) = g%mwn(:, 2)/(g%jac(1, 1)**2)
 
-     ig = ig + 2
+        ig = ig + 2
 
-  ENDIF
+    end if
 
 ! ###################################################################
 ! Density correction in anelastic mode
 ! ###################################################################
-  g%rhoinv => x(:,ig)
+    g%rhoinv => x(:, ig)
 
-  g%anelastic = .FALSE. ! Default; activated in FI_BACKGROUND_INITIALIZE
+    g%anelastic = .false. ! Default; activated in FI_BACKGROUND_INITIALIZE
 
-  ig = ig +1
+    ig = ig + 1
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################
-  ! IF ( ig .NE. g%inb_grid ) THEN
-  !    CALL TLAB_WRITE_ASCII(efile, 'FDM_INITIALIZE. Grid size incorrect.')
-  !    CALL TLAB_STOP(DNS_ERROR_DIMGRID)
-  ! ENDIF
+    ! IF ( ig .NE. g%inb_grid ) THEN
+    !    CALL TLAB_WRITE_ASCII(efile, 'FDM_INITIALIZE. Grid size incorrect.')
+    !    CALL TLAB_STOP(DNS_ERROR_DIMGRID)
+    ! ENDIF
 
 #ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile,'Leaving SUBOURINTE FDM_INITIALIZE')
+    call TLAB_WRITE_ASCII(tfile, 'Leaving SUBOURINTE FDM_INITIALIZE')
 #endif
 
-  RETURN
-END SUBROUTINE FDM_INITIALIZE
+    return
+end subroutine FDM_INITIALIZE

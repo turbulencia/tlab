@@ -26,11 +26,12 @@
 !# 
 !########################################################################
 
-subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, wrk3d)
+subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
   use IBM_VARS,       only : xa, xb, ya, yb, nflu, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLAB_CONSTANTS, only : efile, wp, wi
+  use TLAB_ARRAYS,    only: wrk1d
   use TLAB_TYPES,     only : grid_dt
   use TLAB_PROCS
 
@@ -43,7 +44,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   integer(wi),                          intent(in   ) :: nlines, isize_nob, isize_nob_be
   integer(wi), dimension(isize_nob),    intent(in   ) :: nob
   integer(wi), dimension(isize_nob_be), intent(in   ) :: nob_b, nob_e
-  real(wp),    dimension(isize_field),  intent(inout) :: wrk3d  ! for cubic splines subroutine
 
   integer(wi)                                         :: l, ii, ip, ia, ib, iob, iu_il
   logical                                             :: splines
@@ -112,7 +112,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
           bc(:) = 2 ! fixed first derivative at endpoints
           m1 = (ya(2)  - ya(1)   ) / (xa(2)  - xa(1)   ); bcval(1) = m1 
           m2 = (ya(ia) - ya(ia-1)) / (xa(ia) - xa(ia-1)); bcval(2) = m2
-          call CUBIC_SPLINE(bc, bcval, ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk3d)
+          call CUBIC_SPLINE(bc, bcval, ia, ib, xa(1:ia), ya(1:ia), xb(1:ib), yb(1:ib), wrk1d)
           ! force yb at interface to physical BCs again, to get exact boundary values here
           if ( is /= 0 ) then
             yb(1)  = ibmscaljmin(is)

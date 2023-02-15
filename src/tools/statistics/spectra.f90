@@ -33,7 +33,7 @@
 !########################################################################
 program SPECTRA
 
-    use TLAB_TYPES, only: pointers_dt, subarray_dt
+    use TLAB_TYPES, only: pointers_dt
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS

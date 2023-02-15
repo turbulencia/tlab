@@ -30,21 +30,49 @@ module IO_FIELDS
     use TLAB_MPI_PROCS, only: TLAB_MPI_PANIC
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
-
     implicit none
+    private
 
     public :: IO_READ_FIELDS, IO_WRITE_FIELDS
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
-    public :: IO_FLOW, IO_SCAL
+    integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
+    integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
+
+    type subarray_dt
+        sequence
+        integer :: precision = IO_TYPE_DOUBLE
+#ifdef USE_MPI
+        logical active, lpadding(3)
+        integer communicator
+        integer subarray
+        integer(KIND=MPI_OFFSET_KIND) offset
+#else
+        integer offset
+#endif
+    end type subarray_dt
+
+    public :: subarray_dt
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
 #endif
     public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
 
-    private
-
-    integer, parameter :: IO_SCAL = 1 ! Header of scalar field
-    integer, parameter :: IO_FLOW = 2 ! Header of flow field
+    ! Global IO subarrays; to be transformed into local variables in corrresponding apps
+    integer, parameter, public :: IO_SUBARRAY_VISUALS_XOY = 1
+    integer, parameter, public :: IO_SUBARRAY_VISUALS_ZOY = 2
+    integer, parameter, public :: IO_SUBARRAY_VISUALS_XOZ = 3
+    integer, parameter, public :: IO_SUBARRAY_PLANES_XOY  = 4
+    integer, parameter, public :: IO_SUBARRAY_PLANES_ZOY  = 5
+    integer, parameter, public :: IO_SUBARRAY_PLANES_XOZ  = 6
+    integer, parameter, public :: IO_SUBARRAY_BUFFER_ZOY  = 7
+    integer, parameter, public :: IO_SUBARRAY_BUFFER_XOZ  = 8
+    integer, parameter, public :: IO_SUBARRAY_SPECTRA_X   = 9
+    integer, parameter, public :: IO_SUBARRAY_SPECTRA_Z   = 10
+    integer, parameter, public :: IO_SUBARRAY_SPECTRA_XZ  = 11
+    integer, parameter, public :: IO_SUBARRAY_ENVELOPES   = 12
+    integer, parameter, public :: IO_SUBARRAY_AUX         = 13
+    integer, parameter, public :: IO_SUBARRAY_SIZE        = 13
+    type(subarray_dt), public :: io_aux(IO_SUBARRAY_SIZE)
 
     integer(wi) nx_total, ny_total, nz_total
     character(len=64) str, name
@@ -633,8 +661,6 @@ contains
 !########################################################################
 !########################################################################
     subroutine IO_WRITE_SUBARRAY(aux, fname, varname, data, sizes)
-        use TLAB_TYPES, only: subarray_dt
-
         type(subarray_dt), intent(in) :: aux
         character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
@@ -714,8 +740,6 @@ contains
 !########################################################################
 !########################################################################
     subroutine IO_READ_SUBARRAY(aux, fname, varname, data, sizes)
-        use TLAB_TYPES, only: subarray_dt
-
         type(subarray_dt), intent(in) :: aux
         character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables

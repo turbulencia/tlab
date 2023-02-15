@@ -1,7 +1,7 @@
 #include "dns_const.h"
 
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, subarray_dt, term_dt, profiles_dt
+    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt
     use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP, wp, wi, sp
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
@@ -52,9 +52,6 @@ module TLAB_VARS
     integer(wi) :: isize_wrk3d                      ! 2D arrays
     integer(wi) :: isize_txc_field, inb_txc         ! 3D arrays for intermediate calculations
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
-
-! subarray information (offset)
-    type(subarray_dt), dimension(IO_SUBARRAY_SIZE) :: io_aux
 
 ! ###################################################################
     type(grid_dt), dimension(3) :: g            ! Grid information along 3 directions

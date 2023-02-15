@@ -320,7 +320,7 @@ contains
     ! Interpolation in 1D
     ! #######################################################################
     subroutine INTERPOLATE_1D(periodic, imax, kmax, imax_dst, scalex, x_org, x_dst, u_org, u_dst)
-        use TLAB_ARRAYS, only: wrk3d
+        use TLAB_ARRAYS, only: wrk1d
         logical periodic
         integer(wi) imax, kmax, imax_dst
         real(wp) scalex
@@ -336,7 +336,7 @@ contains
 
         ! #######################################################################
 
-        if (size(wrk3d) < 12*imax + 1) then
+        if (size(wrk1d) < 12*imax + 1) then
             call TLAB_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
             call TLAB_STOP(DNS_ERROR_CURFIT)
         end if
@@ -351,14 +351,14 @@ contains
                 u_org(imax + 1, k) = u_org(1, k)      ! avoid the copy of the whole line
                 call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
                                   imax + 1, imax_dst, x_org, u_org(1, k), x_dst, u_dst(1, k), &
-                                  wrk3d(imax + 2))                 !
+                                  wrk1d(imax + 2,1))                 !
                 u_org(imax + 1, k) = rdum            ! set u_org back to stored value rdum
             end do                                !
-            wrk3d(1:imax) = u_org(1:imax, kmax)     ! cannot avoid the copy for the last line
-            wrk3d(imax + 1) = u_org(1, kmax)          ! as u_org(imax+1,kmax) is out of bounds
+            wrk1d(1:imax,1) = u_org(1:imax, kmax)     ! cannot avoid the copy for the last line
+            wrk1d(imax + 1,1) = u_org(1, kmax)          ! as u_org(imax+1,kmax) is out of bounds
             call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
-                              imax + 1, imax_dst, x_org, wrk3d, x_dst, u_dst(1, kmax), &
-                              wrk3d(imax + 2))
+                              imax + 1, imax_dst, x_org, wrk1d, x_dst, u_dst(1, kmax), &
+                              wrk1d(imax + 2,1))
             !---------------------------------------! the aperiodic case
         else
             CSpline_BCType(1) = CS_BCS_NATURAL; CSpline_BCVal(1) = 0.0_wp
@@ -366,7 +366,7 @@ contains
             do k = 1, kmax
                 call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
                                   imax, imax_dst, x_org, u_org(1, k), x_dst, u_dst(1, k), &
-                                  wrk3d)
+                                  wrk1d)
             end do
         end if
 
