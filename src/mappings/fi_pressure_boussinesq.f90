@@ -9,8 +9,9 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
-    use TLAB_VARS, only: rbackground, PressureFilter
+    use TLAB_VARS, only: imode_eqns, imode_ibm
+    use TLAB_VARS, only: rbackground
+    use TLAB_VARS, only: PressureFilter, istagger
     use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use IBM_VARS, only: ibm_burgers
