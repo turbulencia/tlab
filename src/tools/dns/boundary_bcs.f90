@@ -24,7 +24,17 @@ module BOUNDARY_BCS
 
     logical, public :: BcsDrift
 
-! Compressible viscous
+    ! BCs in incompressible mode at jmin/jmax:
+    integer, parameter :: bcsDD = 0     ! not used in this module
+    integer, parameter :: bcsND = 1     ! Neumann/-
+    integer, parameter :: bcsDN = 2     ! -      /Neumann
+    integer, parameter :: bcsNN = 3     ! Neumann/Neumann
+    real(wp), allocatable :: luND(:, :), luDN(:, :), luNN(:, :)
+    public :: BOUNDARY_BCS_NEUMANN_Y
+
+    public :: BOUNDARY_BCS_SURFACE_Y
+
+    ! Compressible viscous
     integer, public :: bcs_inf(2, 2, 3), bcs_out(2, 2, 3) ! 1. index: lower and upper values
     !                                                       2. index: derivative order
     !                                                       3. index: direction
@@ -35,7 +45,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, tag, var)
-        use TLAB_VARS, only : inb_scal
+        use TLAB_VARS, only: inb_scal
         character(len=*), intent(in) :: bakfile, inifile, tag
         type(bcs_dt), intent(out) :: var
 
@@ -45,7 +55,7 @@ contains
 
         do is = 1, inb_scal
             write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))
-            
+
             call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'none') then; var%type(is) = DNS_BCS_NONE
             else if (trim(adjustl(sRes)) == 'dirichlet') then; var%type(is) = DNS_BCS_DIRICHLET
@@ -55,7 +65,7 @@ contains
                 call TLAB_STOP(DNS_ERROR_JBC)
             end if
 
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
+        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
             if (sRes == 'static') then
                 var%SfcType(is) = DNS_SFC_STATIC
             elseif (sRes == 'linear') then
@@ -65,13 +75,15 @@ contains
                 call TLAB_STOP(DNS_ERROR_JBC)
             end if
 
-            call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
+   call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
 
         end do
 
         return
     end subroutine BOUNDARY_BCS_SCAL_READBLOCK
 
+! ###################################################################
+! ###################################################################
     subroutine BOUNDARY_BCS_FLOW_READBLOCK(bakfile, inifile, tag, var)
         character(len=*), intent(in) :: bakfile, inifile, tag
         type(bcs_dt), intent(out) :: var
@@ -80,17 +92,17 @@ contains
         integer inormal, itangential(2)
 
         select case (trim(adjustl(tag)))
-        case('Imin','Imax')
+        case ('Imin', 'Imax')
             inormal = 1
-            itangential = [2,3]
-        case('Jmin','Jmax')
+            itangential = [2, 3]
+        case ('Jmin', 'Jmax')
             inormal = 2
-            itangential = [1,3]
-        case('Kmin','Kmax')
+            itangential = [1, 3]
+        case ('Kmin', 'Kmax')
             inormal = 3
-            itangential = [1,2]
+            itangential = [1, 2]
         end select
-        
+
         call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'Velocity'//trim(adjustl(tag)), 'freeslip', sRes)
         if (trim(adjustl(sRes)) == 'none') then; var%type(1:3) = DNS_BCS_NONE
         else if (trim(adjustl(sRes)) == 'noslip') then; var%type(1:3) = DNS_BCS_DIRICHLET
@@ -128,7 +140,7 @@ contains
 #endif
 
 ! -------------------------------------------------------------------
-        integer j, is
+        integer j, is, ny
         real(wp) prefactor
         type(profiles_dt) prof_loc
         integer, parameter :: i1 = 1
@@ -167,7 +179,36 @@ contains
 ! Incompressible mode
 ! #######################################################################
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-! So far, nothing to initialize
+
+            ! LU decomposition for the 3 possible neumann boudary conditions
+            ny = g(2)%size
+
+            allocate (luND(ny, 5))
+            allocate (luDN(ny, 5))
+            allocate (luNN(ny, 5))
+
+            select case (g(2)%mode_fdm)
+            case (FDM_COM6_JACPENTA)
+                call FDM_C1N6M_BCS_LHS(ny, bcsND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3), luND(:, 4), luND(:, 5))
+                call PENTADFS2(ny - 1, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5))
+
+                call FDM_C1N6M_BCS_LHS(ny, bcsDN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3), luDN(:, 4), luDN(:, 5))
+                call PENTADFS2(ny - 1, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5))
+
+                call FDM_C1N6M_BCS_LHS(ny, bcsNN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3), luNN(:, 4), luNN(:, 5))
+               call PENTADFS2(ny - 2, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3), luNN(2:ny - 1, 4), luNN(2:ny - 1, 5))
+
+            case default ! some cases still need to be developed
+                call FDM_C1N6_BCS_LHS(ny, bcsND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3))
+                call TRIDFS(ny - 1, luND(2:, 1), luND(2:, 2), luND(2:, 3))
+
+                call FDM_C1N6_BCS_LHS(ny, bcsDN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3))
+                call TRIDFS(ny - 1, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3))
+
+                call FDM_C1N6_BCS_LHS(ny, bcsNN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3))
+                call TRIDFS(ny - 2, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3))
+
+            end select
 
         else
 ! #######################################################################
@@ -355,5 +396,189 @@ contains
         return
 
     end subroutine BOUNDARY_BCS_INITIALIZE
+
+!########################################################################
+!# Calculate the boundary values of a field s.t. the normal derivative is zero
+!# Routine format extracted from OPR_PARTIAL_Y
+!########################################################################
+    subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, tmp1)
+        use TLAB_TYPES, only: grid_dt
+
+        integer(wi), intent(in) :: ibc     ! BCs at jmin/jmax: 1, for Neumann/-
+        !                                                   2, for -      /Neumann
+        !                                                   3, for Neumann/Neumann
+        integer(wi) nx, ny, nz
+        type(grid_dt), intent(IN) :: g
+        real(wp), dimension(nx*nz, ny), target, intent(IN) :: u         ! they are transposed below
+        real(wp), dimension(nx*nz, ny), target :: tmp1 ! they are transposed below
+        real(wp), dimension(nx*nz), target, intent(OUT) :: bcs_hb, bcs_ht
+
+        ! -------------------------------------------------------------------
+        integer(wi) nxz, nxy
+
+        real(wp), dimension(:, :), pointer :: p_org, p_dst
+        real(wp), dimension(:), pointer :: p_bcs_hb, p_bcs_ht
+
+        ! ###################################################################
+        if (g%size == 1) then ! Set to zero in 2D case
+            bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+
+        else
+            ! ###################################################################
+            nxy = nx*ny
+            nxz = nx*nz
+
+            ! -------------------------------------------------------------------
+            ! Make y  direction the last one
+            ! -------------------------------------------------------------------
+            if (nz > 1) then
+#ifdef USE_ESSL
+                call DGETMO(u, nxy, nxy, nz, tmp1, nz)
+#else
+                call DNS_TRANSPOSE(u, nxy, nz, nxy, tmp1, nz)
+#endif
+                p_org => tmp1
+                p_dst(1:nx*nz,1:ny) => wrk3d(1:nx*ny*nz)
+                p_bcs_hb => tmp1(:, 1)
+                p_bcs_ht => tmp1(:, 2)
+            else
+                p_org => u
+                p_dst => tmp1
+                p_bcs_hb => bcs_hb
+                p_bcs_ht => bcs_ht
+            end if
+
+            ! ###################################################################
+            select case (g%mode_fdm)
+            case (FDM_COM6_JACPENTA)
+                call FDM_C1N6M_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
+
+                select case (ibc)
+                case (bcsND)
+                    call PENTADSS2(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5), p_dst(:, 2))
+                    p_bcs_hb(:) = p_dst(:, 1) + luND(4, 1)*p_dst(:, 2)
+
+                case (bcsDN)
+        call PENTADSS2(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5), p_dst)
+                    p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 2)*p_dst(:, ny - 1)
+
+                case (bcsNN)
+           call PENTADSS2(ny - 2, nxz,  luNN(2:ny-1,1), luNN(2:ny-1,2), luNN(2:ny-1,3), luNN(2:ny-1,4), luNN(2:ny-1,5), p_dst(:, 2))
+                    p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 4)*p_dst(:, 2)
+                    p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 2)*p_dst(:, ny - 1)
+
+                end select
+
+            case default
+                call FDM_C1N6_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
+
+                select case (ibc)
+                case (bcsND)
+                    call TRIDSS(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), p_dst(:, 2))
+                    p_bcs_hb(:) = p_dst(:, 1) + luND(1, 3)*p_dst(:, 2)
+
+                case (bcsDN)
+                    call TRIDSS(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), p_dst)
+                    p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 1)*p_dst(:, ny - 1)
+
+                case (bcsNN)
+                    call TRIDSS(ny - 2, nxz, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3), p_dst(:, 2))
+                    p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 3)*p_dst(:, 2)
+                    p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 1)*p_dst(:, ny - 1)
+
+                end select
+
+            end select
+
+            ! ###################################################################
+            ! -------------------------------------------------------------------
+            ! Put bcs arrays in correct order
+            ! -------------------------------------------------------------------
+            if (nz > 1) then
+#ifdef USE_ESSL
+                if (ibc == 1 .or. ibc == 3) call DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
+                if (ibc == 2 .or. ibc == 3) call DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
+#else
+                if (ibc == 1 .or. ibc == 3) call DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
+                if (ibc == 2 .or. ibc == 3) call DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
+#endif
+            end if
+
+        end if
+
+        return
+    end subroutine BOUNDARY_BCS_NEUMANN_Y
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Calculates and updates interactive surface boundary condition
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    subroutine BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp1, aux)
+#ifdef TRACE_ON
+        use TLAB_CONSTANTS, only: tfile
+        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+#endif
+        use TLAB_CONSTANTS, only: lfile
+        use TLAB_VARS, only: imax, jmax, kmax, g
+        use TLAB_VARS, only: isize_field
+        use TLAB_VARS, only: visc, schmidt
+        use AVGS, only: AVG1V2D
+        use OPR_PARTIAL
+
+        integer(wi) is
+        integer(wi), dimension(2, 2), intent(IN) :: bcs          ! Boundary conditions from derivative operator
+        real(wp), dimension(isize_field, *) :: s, hs
+        real(wp), dimension(isize_field) :: tmp1
+        real(wp), dimension(imax, kmax, 6), target :: aux
+
+        integer(wi) nxy, ip, k
+        real(wp), dimension(:, :), pointer :: hfx, hfx_anom
+        real(wp) :: diff, hfx_avg
+
+#ifdef TRACE_ON
+        call TLAB_WRITE_ASCII(tfile, 'ENTERING SUBROUTINE BOUNDARY_BCS_SURFACE_Y')
+#endif
+        diff = visc/schmidt(is)
+        nxy = imax*jmax
+
+        ! vertical derivative of scalar for flux at the boundaries
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp1)
+
+        ! ------------------------------------------------------------
+        ! Bottom Boundary
+        ! ------------------------------------------------------------
+        if (BcsScalJmin%SfcType(is) == DNS_SFC_LINEAR) then
+            hfx => aux(:, :, 1)
+            hfx_anom => aux(:, :, 2)
+            ip = 1
+            do k = 1, kmax    ! Calculate the surface flux
+                hfx(:, k) = diff*tmp1(ip:ip + imax - 1); ip = ip + nxy
+            end do
+            hfx_avg = diff*AVG1V2D(imax, jmax, kmax, 1, 1, tmp1)
+            hfx_anom = hfx - hfx_avg
+            BcsScalJmin%ref(:, :, is) = BcsScalJmin%ref(:, :, is) + BcsScalJmin%cpl(is)*hfx_anom
+        end if
+
+        ! ------------------------------------------------------------
+        ! Top Boundary
+        ! ------------------------------------------------------------
+        if (BcsScalJmax%SfcType(is) == DNS_SFC_LINEAR) then
+            hfx => aux(:, :, 3)
+            hfx_anom => aux(:, :, 4)
+            ip = imax*(jmax - 1) + 1
+            do k = 1, kmax; ! Calculate the surface flux
+                hfx(:, k) = -diff*tmp1(ip:ip + imax - 1); ip = ip + nxy; 
+            end do
+            hfx_avg = diff*AVG1V2D(imax, jmax, kmax, 1, 1, tmp1)
+            hfx_anom = hfx - hfx_avg
+            BcsScalJmax%ref(:, :, is) = BcsScalJmax%ref(:, :, is) + BcsScalJmax%cpl(is)*hfx_anom
+        end if
+
+#ifdef TRACE_ON
+        call TLAB_WRITE_ASCII(TFILE, 'LEAVING SUBROUTINE BOUNDAR_SURFACE_J')
+#endif
+
+        return
+
+    end subroutine BOUNDARY_BCS_SURFACE_Y
 
 end module BOUNDARY_BCS

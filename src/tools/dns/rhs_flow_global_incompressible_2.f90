@@ -14,7 +14,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
     use TLAB_VARS, only: imode_ibm, istagger
-    use TLAB_ARRAYS, only: q, wrk1d, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: q, wrk2d, wrk3d
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
@@ -23,6 +23,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use IBM_VARS, only: ibm_partial
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use BOUNDARY_BCS
 
     implicit none
 
@@ -195,7 +196,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
         if (BcsFlowJmax%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 2
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hq(1, iq), &
-                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), wrk1d, tmp1, wrk3d)
+                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), tmp1)
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hq(1, iq)) ! set tendency in solid to zero
 
