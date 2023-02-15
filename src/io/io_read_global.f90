@@ -289,8 +289,6 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Staggering]')
     call TLAB_WRITE_ASCII(bakfile, '#StaggerHorizontalPressure=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#FilterVerticalPressure=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#FilterParameter=<value>')
 
     call SCANINICHAR(bakfile, inifile, 'Staggering', 'StaggerHorizontalPressure', 'no', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; istagger = 1; call TLAB_WRITE_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
@@ -299,16 +297,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main. StaggerHorizontalPressure must be yes or no')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-    call SCANINICHAR(bakfile, inifile, 'Staggering', 'FilterVerticalPressure', 'no', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; ivfilter = 1; call TLAB_WRITE_ASCII(lfile, 'Vertical filtering of the pressure and dpdy along Oy.')
-    elseif (trim(adjustl(sRes)) == 'no') then; ivfilter = 0
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main. FilterVerticalPressure must be yes or no')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    call SCANINIREAL(bakfile, inifile, 'Staggering', 'Filterparameter', '1.0', vfilter_param)
 
 ! Consistency check
     if (istagger == 1) then
@@ -324,16 +312,6 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if    
-    end if
-    if (ivfilter == 1) then
-        if (.not. (istagger == 1)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering only in combination with horizontal pressure staggering.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-        if ((vfilter_param < 0) .or. (vfilter_param > 2)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering parameter must be in the interval [0, 2].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if 
     end if
 
 ! ###################################################################
@@ -761,72 +739,77 @@ subroutine IO_READ_GLOBAL(inifile)
 #endif
 
 ! ###################################################################
-! Vertical Pressure Filter (a filter type)
+! Pressure Filter (a filter type)
 ! ###################################################################
-call TLAB_WRITE_ASCII(bakfile, '#')
-call TLAB_WRITE_ASCII(bakfile, '#[VPressureFilter]')
-call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
-call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
-call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
-call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[PressureFilter]')
+    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
+    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
 
-vprefil(:)%size = g(:)%size
-vprefil(:)%periodic = g(:)%periodic
-vprefil(:)%uniform = g(:)%uniform
-call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'Type', 'none', sRes)
-if (trim(adjustl(sRes)) == 'none') then; vprefil(:)%type = DNS_FILTER_NONE
-else if (trim(adjustl(sRes)) == 'compact') then; vprefil(:)%type = DNS_FILTER_COMPACT
-    vprefil(:)%parameters(1) = 0.49 ! default alpha value
-    vprefil(:)%inb_filter = 10
-    vprefil(:)%BcsMin = DNS_FILTER_BCS_BIASED
-    vprefil(:)%BcsMax = DNS_FILTER_BCS_BIASED
-else if (trim(adjustl(sRes)) == 'compactcutoff') then; vprefil(:)%type = DNS_FILTER_COMPACT_CUTOFF
-    vprefil(:)%inb_filter = 7
-    vprefil(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
-    vprefil(2)%parameters(1) = 0.49
-    vprefil(2)%inb_filter = 10
-    vprefil(2)%BcsMin = DNS_FILTER_BCS_BIASED
-    vprefil(2)%BcsMax = DNS_FILTER_BCS_BIASED
-end if
-
-! Boundary conditions correction
-do ig = 1, 3
-    if (FilterDomain(ig)%periodic) then
-        vprefil(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
-        vprefil(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+    PressureFilter(:)%size = g(:)%size
+    PressureFilter(:)%periodic = g(:)%periodic
+    PressureFilter(:)%uniform = g(:)%uniform
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'Type', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; PressureFilter(:)%type = DNS_FILTER_NONE
+    else if (trim(adjustl(sRes)) == 'compact') then; PressureFilter(:)%type = DNS_FILTER_COMPACT
+        PressureFilter(:)%parameters(1) = 0.49 ! default alpha value
+        PressureFilter(:)%inb_filter = 10
+        PressureFilter(:)%BcsMin = DNS_FILTER_BCS_BIASED
+        PressureFilter(:)%BcsMax = DNS_FILTER_BCS_BIASED
+    else if (trim(adjustl(sRes)) == 'compactcutoff') then; PressureFilter(:)%type = DNS_FILTER_COMPACT_CUTOFF
+        PressureFilter(:)%inb_filter = 7
+        PressureFilter(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
+        PressureFilter(2)%parameters(1) = 0.49
+        PressureFilter(2)%inb_filter = 10
+        PressureFilter(2)%BcsMin = DNS_FILTER_BCS_BIASED
+        PressureFilter(2)%BcsMax = DNS_FILTER_BCS_BIASED
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Pressure Filter.Type.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-end do
 
-call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'Parameters', 'void', sRes)
-if (trim(adjustl(sRes)) /= 'void') then
-    idummy = MAX_PROF
-    call LIST_REAL(sRes, idummy, vprefil(1)%parameters(:))
-    if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
-        vprefil(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
-    do ig = 2, 3
-        vprefil(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
+    ! Boundary conditions correction
+    do ig = 1, 3
+        if (FilterDomain(ig)%periodic) then
+            PressureFilter(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+            PressureFilter(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+        end if
     end do
-end if
 
-call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'ActiveX', 'yes', sRes)
-if (trim(adjustl(sRes)) == 'no') vprefil(1)%type = DNS_FILTER_NONE
-call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'ActiveY', 'yes', sRes)
-if (trim(adjustl(sRes)) == 'no') vprefil(2)%type = DNS_FILTER_NONE
-call SCANINICHAR(bakfile, inifile, 'VPressureFilter', 'ActiveZ', 'yes', sRes)
-if (trim(adjustl(sRes)) == 'no') vprefil(3)%type = DNS_FILTER_NONE
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'Parameters', 'void', sRes)
+    if (trim(adjustl(sRes)) /= 'void') then
+        idummy = MAX_PROF
+        call LIST_REAL(sRes, idummy, PressureFilter(1)%parameters(:))
+        if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
+            PressureFilter(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
+        do ig = 2, 3
+            PressureFilter(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
+        end do
+    end if
 
-! Further control
-do ig = 1, 3
-    if (vprefil(ig)%size == 1) vprefil(ig)%type = DNS_FILTER_NONE
-end do
+    ! Default only in Oy-direction active, in Ox and Oy with staggering
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveX', 'no', sRes)
+    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(1)%type = DNS_FILTER_NONE 
+    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.'); end if
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveY', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(2)%type = DNS_FILTER_NONE
+    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.'); end if
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveZ', 'no', sRes)
+    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(3)%type = DNS_FILTER_NONE
+    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oz.'); end if
+
+    ! Further control
+    do ig = 1, 3
+        if (PressureFilter(ig)%size == 1) PressureFilter(ig)%type = DNS_FILTER_NONE
+    end do
 
 #ifdef USE_MPI
-vprefil(1)%mpitype = TLAB_MPI_I_PARTIAL
-vprefil(3)%mpitype = TLAB_MPI_K_PARTIAL
+    PressureFilter(1)%mpitype = TLAB_MPI_I_PARTIAL
+    PressureFilter(3)%mpitype = TLAB_MPI_K_PARTIAL
 #endif
-
-
 
 ! ###################################################################
 ! Filter

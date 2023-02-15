@@ -8,7 +8,6 @@ module OPR_FOURIER
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: ivfilter
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
@@ -173,14 +172,6 @@ contains
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
-
-        ! -----------------------------------------------------------------------
-        ! Oy direction - spectral pressure filter (with pre. grid staggering)
-        ! (only with quasi-periodic Bcs in the vertical, e.g. closed channel flow)
-        ! -----------------------------------------------------------------------
-        ! if (ivfilter == 1) then
-        !     call OPR_STAGGERING_INITIALIZE(wrk3d)
-        ! end if
 
 #else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')

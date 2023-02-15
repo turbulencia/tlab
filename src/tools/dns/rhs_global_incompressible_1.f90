@@ -24,7 +24,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: imode_eqns, istagger
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: rbackground, ribackground, vprefil
+    use TLAB_VARS, only: rbackground, ribackground, PressureFilter
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS
@@ -309,9 +309,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! pressure in tmp1, Oy derivative in tmp3
     call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
-    if (vprefil(2)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Y(imax, jmax, kmax, vprefil(2), tmp1)
-        call OPR_FILTER_Y(imax, jmax, kmax, vprefil(2), tmp3)
+! filter pressure and dpdy
+    if      (PressureFilter(1)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp1); call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp3)
+    else if (PressureFilter(2)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp1); call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp3)
+    else if (PressureFilter(3)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp1); call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp3)
     end if
 
 ! Saving pressure for towers to tmp array
