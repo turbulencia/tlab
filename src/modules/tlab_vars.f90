@@ -24,9 +24,7 @@ module TLAB_VARS
     integer :: imode_eqns               ! set of equations to be solved
     integer :: iadvection, iviscous, idiffusion,  itransport ! formulation
     integer :: ifourier
-    integer :: istagger, ivfilter       ! horizontal staggering of pressure
-
-    real(wp) :: vfilter_param           ! vertical filter parameter of pressure
+    integer :: istagger                 ! horizontal staggering of pressure
 
     integer :: imode_fdm                ! finite-difference method for spatial operators
 
@@ -104,9 +102,10 @@ module TLAB_VARS
     integer :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
 
     type(filter_dt) :: Dealiasing(3)
+    type(filter_dt) :: PressureFilter(3)
 
 ! ###################################################################
-! Jet Statistics
+! Jet Statistic
 ! ###################################################################
     integer :: nstatavg, statavg(MAX_STATS_SPATIAL) ! Ox planes at which to accumulate statistics
     integer :: nstatavg_points                      ! number of accumulated points

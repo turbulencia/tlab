@@ -90,6 +90,7 @@ program DNS
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
+        call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
     if (ifourier == 1) then

@@ -23,6 +23,7 @@ module OPR_FILTERS
 
     public :: OPR_FILTER_INITIALIZE
     public :: OPR_FILTER
+    public :: OPR_FILTER_X,  OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
 
 contains
