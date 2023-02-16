@@ -790,11 +790,10 @@ subroutine IO_READ_GLOBAL(inifile)
         end do
     end if
 
-    ! Default only in Oy-direction active, in Ox and Oy with staggering
     call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveX', 'no', sRes)
     if (trim(adjustl(sRes)) == 'no') then; PressureFilter(1)%type = DNS_FILTER_NONE 
     else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.'); end if
-    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveY', 'yes', sRes)
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveY', 'no', sRes)
     if (trim(adjustl(sRes)) == 'no') then; PressureFilter(2)%type = DNS_FILTER_NONE
     else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.'); end if
     call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveZ', 'no', sRes)
