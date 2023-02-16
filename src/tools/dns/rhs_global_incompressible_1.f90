@@ -386,7 +386,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         if (BcsFlowJmax%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 2
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hq(1, iq), &
-                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), wrk1d, tmp1, wrk3d)
+                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), tmp1)
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hq(1, iq)) ! set tendency in solid to zero
 
@@ -402,12 +402,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         if (BcsScalJmax%type(is) == DNS_BCS_NEUMANN) ibc = ibc + 2
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hs(1, is), &
-                                        BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), wrk1d, tmp1, wrk3d)
+                                        BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), tmp1)
         end if
 
         if (BcsScalJmin%type(is) /= DNS_SFC_STATIC .or. &
             BcsScalJmax%type(is) /= DNS_SFC_STATIC) then
-            call BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp1, tmp2, tmp3)
+            call BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp1, tmp2)
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hs(1, is)) ! set tendency in solid to zero
 

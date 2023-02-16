@@ -16,10 +16,11 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt
     use BOUNDARY_BCS, only: BcsScalJmin, BcsScalJmax
-    use TLAB_ARRAYS, only: s, wrk1d, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: s, wrk2d, wrk3d
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs
     use OPR_PARTIAL
+    use BOUNDARY_BCS
 
     implicit none
 
@@ -83,12 +84,12 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
     if (BcsScalJmax%type(is) == DNS_BCS_NEUMANN) ibc = ibc + 2
     if (ibc > 0) then
         call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hs(:,is), &
-                                    BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), wrk1d, tmp1, wrk3d)
+                                    BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), tmp1)
     end if
 
     if (BcsScalJmin%type(is) /= DNS_SFC_STATIC .or. &
         BcsScalJmax%type(is) /= DNS_SFC_STATIC) then
-        call BOUNDARY_SURFACE_J(is, bcs, s(:,is), hs(:,is), tmp1, tmp2, tmp3)
+        call BOUNDARY_BCS_SURFACE_Y(is, bcs, s(:,is), hs(:,is), tmp1, tmp2)
     end if
 
 ! -----------------------------------------------------------------------

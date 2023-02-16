@@ -15,6 +15,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs
     use OPR_PARTIAL
+    use BOUNDARY_BCS
 
     implicit none
 
