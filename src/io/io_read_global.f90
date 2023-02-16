@@ -5,7 +5,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-#define C_FILE_LOC "IO_READ_LOCAL"
+#define C_FILE_LOC "IO_READ_GLOBAL"
 
 !########################################################################
 !# DESCRIPTION
@@ -810,6 +810,18 @@ subroutine IO_READ_GLOBAL(inifile)
     PressureFilter(1)%mpitype = TLAB_MPI_I_PARTIAL
     PressureFilter(3)%mpitype = TLAB_MPI_K_PARTIAL
 #endif
+
+    ! Consistency check
+    if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
+        if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (.not. (iadvection == EQNS_CONVECTIVE)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter not implemented for current advection scheme.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+    end if  
 
 ! ###################################################################
 ! Filter
