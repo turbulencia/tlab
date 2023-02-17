@@ -1,6 +1,5 @@
-#include "types.h"
-
 subroutine RAND_PSD(nx, ny, nz, u)
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp
     use TLAB_VARS, only: isize_txc_dimz
     use TLAB_VARS, only: g
     use RAND_LOCAL
@@ -28,13 +27,19 @@ subroutine RAND_PSD(nx, ny, nz, u)
 #else
         kglobal = k
 #endif
-        if (kglobal <= g(3)%size/2 + 1) then; fk = M_REAL(kglobal - 1)/g(3)%scale
-        else; fk = -M_REAL(g(3)%size + 1 - kglobal)/g(3)%scale; end if
+        if (kglobal <= g(3)%size/2 + 1) then
+            fk = real(kglobal - 1, wp)/g(3)%scale
+        else
+            fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale
+        end if
 
         do j = 1, ny
             jglobal = j ! No MPI decomposition along Oy
-            if (jglobal <= g(2)%size/2 + 1) then; fj = M_REAL(jglobal - 1)/g(2)%scale
-            else; fj = -M_REAL(g(2)%size + 1 - jglobal)/g(2)%scale; end if
+            if (jglobal <= g(2)%size/2 + 1) then
+                fj = real(jglobal - 1, wp)/g(2)%scale
+            else
+                fj = -real(g(2)%size + 1 - jglobal, wp)/g(2)%scale
+            end if
 
             do i = 1, nx/2 + 1
 #ifdef USE_MPI
@@ -42,31 +47,49 @@ subroutine RAND_PSD(nx, ny, nz, u)
 #else
                 iglobal = i
 #endif
-                if (iglobal <= g(1)%size/2 + 1) then; fi = M_REAL(iglobal - 1)/g(1)%scale
-                else; fi = -M_REAL(g(1)%size + 1 - iglobal)/g(1)%scale; end if
+                if (iglobal <= g(1)%size/2 + 1) then
+                    fi = real(iglobal - 1, wp)/g(1)%scale
+                else
+                    fi = -real(g(1)%size + 1 - iglobal, wp)/g(1)%scale
+                end if
 
                 f = SQRT(fi**2 + fj**2 + fk**2)
 
                 ! -----------------------------------------------------------------------
                 ! target psd
                 ! -----------------------------------------------------------------------
-                if (ispectrum == 1) then; pow_dst = C_1_R
-                elseif (ispectrum == 2) then; pow_dst = (f/f0)**4/(1.+12./5.*(f/f0)**2)**(17./6.)
-                elseif (ispectrum == 3) then; pow_dst = f**4*EXP(-C_2_R*(f/f0)**2)
-                elseif (ispectrum == 4) then; pow_dst = f**2*EXP(-C_2_R*f/f0)
-                elseif (ispectrum == 5) then; pow_dst = f**4/16.*EXP(-C_2_R*(f/f0)**2)
-                elseif (ispectrum == 6) then; pow_dst = EXP(-C_05_R*((f - f0)/f1)**2)/(f1*SQRT(C_2_R*C_PI_R))
-                end if
+                select case (ispectrum)
+                case(1)
+                    pow_dst = 1.0_wp
 
+                case(2)
+                    pow_dst = (f/f0)**4/(1.0_wp+12.0_wp/5.0_wp*(f/f0)**2)**(17.0_wp/6.0_wp)
+
+                case(3)
+                    pow_dst = f**4*EXP(-2.0_wp*(f/f0)**2)
+
+                case(4)
+                    pow_dst = f**2*EXP(-2.0_wp*f/f0)
+
+                case(5)
+                    pow_dst = f**4/16.0_wp*EXP(-2.0_wp*(f/f0)**2)
+
+                case(6)
+                    pow_dst = EXP(-0.5_wp*((f - f0)/f1)**2)/(f1*SQRT(2.0_wp*pi_wp))
+
+                case default
+                
+                end select
+                
                 if ((f - spc_param(2))*(spc_param(3) - f) > 0.0_wp) pow_dst = 0.0_wp ! Clip
 
                 if (f == 0.0_wp) then
                     pow_dst = 0.0_wp
                 else
                     if (g(2)%size == 1 .or. g(3)%size == 1) then ! 2D spectrum
-                        pow_dst = pow_dst/(C_PI_R*f)
+                        pow_dst = pow_dst/(pi_wp*f)
                     else
-                        pow_dst = pow_dst/(2*C_PI_R*f**2)
+                        pow_dst = pow_dst/(2*pi_wp*f**2)
                     end if
                 end if
 
@@ -77,7 +100,7 @@ subroutine RAND_PSD(nx, ny, nz, u)
 
                 if (ipdf == 0) then
                     if (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) then; phase = 0.0_wp
-                    else; phase = (RAN0(seed) - C_05_R)*C_2_R*C_PI_R; end if
+                    else; phase = (RAN0(seed) - 0.5_wp)*2.0_wp*pi_wp; end if
                     u(ip - 1, k) = SQRT(pow_dst)*COS(phase)
                     u(ip, k) = SQRT(pow_dst)*SIN(phase)
 

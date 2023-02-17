@@ -33,6 +33,9 @@ program INISCAL
 #endif
 
     isize_wrk3d = isize_field
+    if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then
+        inb_wrk2d = max(inb_wrk2d, 6)
+    end if
 
     if (flag_s == 1 .or. flag_s == 3 .or. radiation%type /= EQNS_NONE) then; inb_txc = 1
     else; inb_txc = 0
@@ -46,9 +49,9 @@ program INISCAL
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
     call FI_BACKGROUND_INITIALIZE()
-    do is = 1,size(Sini)
+    do is = 1, size(Sini)
         if (Sini(is)%relative) Sini(is)%ymean = g(2)%nodes(1) + g(2)%scale*Sini(is)%ymean_rel
-    enddo
+    end do
 
 ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing scalar fiels.')
@@ -64,14 +67,14 @@ program INISCAL
     end if
 
     do is = 1, inb_scal_loc
-        call SCAL_MEAN(is, s(1, is), wrk1d, wrk2d, wrk3d)
+        call SCAL_MEAN(is, s(:, is))
 
         select case (flag_s)
         case (1, 2, 3)
-            call SCAL_FLUCTUATION_VOLUME(is, s(1, is), txc, wrk1d, wrk2d, wrk3d)
+            call SCAL_FLUCTUATION_VOLUME(is, s(1, is), txc)
 
         case (4, 5, 6, 7, 8, 9)
-            call SCAL_FLUCTUATION_PLANE(is, s(1, is), wrk2d)
+            call SCAL_FLUCTUATION_PLANE(is, s(1, is))
 
         end select
 

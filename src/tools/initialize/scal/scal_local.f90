@@ -1,13 +1,13 @@
-#include "types.h"
 #include "dns_const.h"
 
 module SCAL_LOCAL
-
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, big_wp
     use TLAB_TYPES, only: profiles_dt, discrete_dt
-    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
+    use TLAB_ARRAYS, only: wrk1d
+    use TLAB_POINTERS_3D, only: p_wrk2d, p_wrk3d
     use IO_FIELDS
     use PROFILES
     use AVGS, only: AVG1V2D
@@ -17,6 +17,7 @@ module SCAL_LOCAL
     implicit none
     save
     private
+
     public :: Sini, flag_s, flag_mixture, norm_ini_s, norm_ini_radiation, fp
     public :: SCAL_FLUCTUATION_PLANE, SCAL_FLUCTUATION_VOLUME
 
@@ -39,9 +40,9 @@ module SCAL_LOCAL
 contains
 
 ! ###################################################################
-    subroutine SCAL_SHAPE(is, wrk1d)
+    subroutine SCAL_SHAPE(is, prof)
         integer(wi) is
-        real(wp), dimension(jmax, 1), intent(inout) :: wrk1d
+        real(wp), dimension(jmax, 1), intent(out) :: prof
 
         ! -------------------------------------------------------------------
         real(wp) yr
@@ -52,19 +53,19 @@ contains
         yn => g(2)%nodes
 
         prof_loc = Sini(is)
-        prof_loc%delta = C_1_R
-        prof_loc%mean = C_0_R
+        prof_loc%delta = 1.0_wp
+        prof_loc%mean = 0.0_wp
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
+            prof(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
         end do
 
         select case (Sini(is)%type)
         case (PROFILE_GAUSSIAN_SURFACE) ! set perturbation and its normal derivative to zero at the boundaries
             do j = 1, jmax
-                yr = C_05_R*(yn(j) - yn(1))/Sini(is)%thick
-                wrk1d(j, 1) = wrk1d(j, 1)*TANH(yr)**2
-                yr = -C_05_R*(yn(j) - yn(jmax))/Sini(is)%thick
-                wrk1d(j, 1) = wrk1d(j, 1)*TANH(yr)**2
+                yr = 0.5_wp*(yn(j) - yn(1))/Sini(is)%thick
+                prof(j, 1) = prof(j, 1)*TANH(yr)**2
+                yr = -0.5_wp*(yn(j) - yn(jmax))/Sini(is)%thick
+                prof(j, 1) = prof(j, 1)*TANH(yr)**2
             end do
 
         end select
@@ -73,13 +74,10 @@ contains
     end subroutine SCAL_SHAPE
 
 ! ###################################################################
-    subroutine SCAL_FLUCTUATION_VOLUME(is, s, tmp, wrk1d, wrk2d, wrk3d)
-
+    subroutine SCAL_FLUCTUATION_VOLUME(is, s, tmp)
         integer(wi) is
         real(wp), dimension(imax, jmax, kmax), intent(out) :: s
-        real(wp), dimension(jmax, 1), intent(inout) :: wrk1d
-        real(wp), dimension(imax, kmax, 1), intent(inout) :: wrk2d
-        real(wp), dimension(imax, jmax, kmax), intent(inout) :: tmp, wrk3d
+        real(wp), dimension(imax, jmax, kmax), intent(inout) :: tmp
 
         ! -------------------------------------------------------------------
         real(wp) dummy, amplify
@@ -102,46 +100,45 @@ contains
             call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, is, tmp)
             rtime = dummy
 
-            amplify = C_0_R
+            amplify = 0.0_wp
             do j = 1, jmax
                 dummy = AVG1V2D(imax, jmax, kmax, j, 1, tmp)       ! Calculate mean
-                wrk3d(:, j, :) = (tmp(:, j, :) - dummy)*wrk1d(j, 1)  ! Remove mean and apply shape function
+                p_wrk3d(:, j, :) = (tmp(:, j, :) - dummy)*wrk1d(j, 1)  ! Remove mean and apply shape function
             end do
 
         case (2)   ! Discrete case
-            wx_1 = C_2_R*C_PI_R/g(1)%scale ! Fundamental wavelengths
-            wz_1 = C_2_R*C_PI_R/g(3)%scale
+            wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
+            wz_1 = 2.0_wp*pi_wp/g(3)%scale
 
-            wrk2d = C_0_R
+            p_wrk2d = 0.0_wp
             do im = 1, fp%size
-                wx = M_REAL(fp%modex(im))*wx_1
-                wz = M_REAL(fp%modez(im))*wz_1
+                wx = real(fp%modex(im), wp)*wx_1
+                wz = real(fp%modez(im), wp)*wz_1
                 do k = 1, kmax
-wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +fp%phasex(im) ) *COS( wz *zn(kdsp+k) +fp%phasez(im) )
+                    p_wrk2d(:, k, 1) = p_wrk2d(:, k, 1) &
+                            + fp%amplitude(im)*COS(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im))*COS(wz*zn(kdsp + k) + fp%phasez(im))
                 end do
             end do
 
             do k = 1, kmax
                 do j = 1, jmax
-                    wrk3d(:, j, k) = wrk2d(:, k, 1)*wrk1d(j, 1)
+                    p_wrk3d(:, j, k) = p_wrk2d(:, k, 1)*wrk1d(j, 1)
                 end do
             end do
 
         end select
 
-        if (norm_ini_s(is) > C_0_R) call SCAL_NORMALIZE(is, wrk3d)
+        if (norm_ini_s(is) > 0.0_wp) call SCAL_NORMALIZE(is, p_wrk3d)
 
-        s = s + wrk3d
+        s = s + p_wrk3d
 
         return
     end subroutine SCAL_FLUCTUATION_VOLUME
 
 ! ###################################################################
-    subroutine SCAL_FLUCTUATION_PLANE(is, s, disp)
-
+    subroutine SCAL_FLUCTUATION_PLANE(is, s)
         integer(wi) is
         real(wp), dimension(imax, jmax, kmax) :: s
-        real(wp), dimension(imax, kmax) :: disp
 
         ! -------------------------------------------------------------------
         real(wp) dummy
@@ -158,33 +155,37 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         zn => g(3)%nodes
 
         ! ###################################################################
-        disp = C_0_R
+#define disp(i,k) p_wrk2d(i,k,1)
+
+        disp(:, :) = 0.0_wp
         select case (flag_s)
         case (4, 6, 8)   ! Broadband case
             dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp)
+            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp(:, :))
             rtime = dummy
-            dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp)     ! remove mean
-            disp = disp - dummy
+            dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp(:, :))     ! remove mean
+            disp(:, :) = disp(:, :) - dummy
 
         case (5, 7, 9)   ! Discrete case
-            wx_1 = C_2_R*C_PI_R/g(1)%scale ! Fundamental wavelengths
-            wz_1 = C_2_R*C_PI_R/g(3)%scale
+            wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
+            wz_1 = 2.0_wp*pi_wp/g(3)%scale
 
             do im = 1, fp%size
-                wx = M_REAL(fp%modex(im))*wx_1
-                wz = M_REAL(fp%modez(im))*wz_1
+                wx = real(fp%modex(im), wp)*wx_1
+                wz = real(fp%modez(im), wp)*wz_1
 
                 if (fp%type == PROFILE_TANH_COS) then ! Smoothed step funtion Tanh(a*Cos(\xi/b))
-                    if (fp%parameters(2) <= C_0_R) then; dummy = C_BIG_R; 
-                    else; dummy = C_05_R/(wx*fp%parameters(2)); end if
+                    if (fp%parameters(2) <= 0.0_wp) then; dummy = big_wp; 
+                    else; dummy = 0.5_wp/(wx*fp%parameters(2)); end if
                     do k = 1, kmax
-            disp(:,k) = disp(:,k) + fp%amplitude(im) *TANH( dummy *COS( wx *xn(idsp+1:idsp+imax) +fp%phasex(im) ) *COS( wz *zn(kdsp+k) +fp%phasez(im) ) )
+                        disp(:, k) = disp(:, k) &
+                + fp%amplitude(im)*TANH(dummy*COS(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im))*COS(wz*zn(kdsp + k) + fp%phasez(im)))
                     end do
 
                 else
                     do k = 1, kmax
-    disp(:, k) = disp(:, k) + fp%amplitude(im)*COS(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im))*COS(wz*zn(kdsp + k) + fp%phasez(im))
+                        disp(:, k) = disp(:, k) &
+                            + fp%amplitude(im)*COS(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im))*COS(wz*zn(kdsp + k) + fp%phasez(im))
                     end do
 
                 end if
@@ -194,14 +195,14 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         end select
 
         ! Modulation
-        if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > C_0_R) then
+        if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > 0.0_wp) then
             do k = 1, kmax
                 do i = 1, imax
                     xcenter = g(1)%nodes(i + idsp) - g(1)%scale*fp%phasex(1) - g(1)%nodes(1)
                     if (g(3)%size > 1) then; zcenter = g(3)%nodes(k + kdsp) - g(3)%scale*fp%phasez(1) - g(3)%nodes(1)
-                    else; zcenter = C_0_R; end if
+                    else; zcenter = 0.0_wp; end if
                     rcenter = SQRT(xcenter**2 + zcenter**2)
-                    amplify = EXP(-C_05_R*(rcenter/fp%parameters(1))**2)
+                    amplify = EXP(-0.5_wp*(rcenter/fp%parameters(1))**2)
                     disp(i, k) = disp(i, k)*amplify
                 end do
             end do
@@ -213,7 +214,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
             do k = 1, kmax
                 do i = 1, imax
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j)-disp(i, k))
+                        s(i, j, k) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j) - disp(i, k))
                     end do
                 end do
             end do
@@ -228,7 +229,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
                     do j = 1, jmax
                         s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
                     end do
-                    
+
                 end do
             end do
 
@@ -238,7 +239,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
             do k = 1, kmax
                 do i = 1, imax
                     prof_loc%delta = sbg(is)%delta + disp(i, k)
-                    prof_loc%mean = (prof_loc%delta)*C_05_R
+                    prof_loc%mean = (prof_loc%delta)*0.5_wp
                     if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
 
                     do j = 1, jmax
@@ -250,12 +251,13 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
 
         end select
 
+#undef disp
+
         return
     end subroutine SCAL_FLUCTUATION_PLANE
 
 ! ###################################################################
     subroutine SCAL_NORMALIZE(is, s)
-
         integer(wi) is
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: s
 
@@ -263,7 +265,7 @@ wrk2d(:,k,1) = wrk2d(:,k,1) + fp%amplitude(im) *COS( wx *xn(idsp+1:idsp+imax) +f
         real(wp) dummy, amplify
 
         ! ###################################################################
-        amplify = C_0_R                                      ! Maximum across the layer
+        amplify = 0.0_wp                                      ! Maximum across the layer
         do j = 1, jmax
             dummy = AVG1V2D(imax, jmax, kmax, j, 2, s)
             amplify = MAX(dummy, amplify)
