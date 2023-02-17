@@ -8,7 +8,6 @@
 #define C_FILE_LOC "IO_READ_GLOBAL"
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Reading general data from file dns.ini, setting up general parameters
 !# and doing cross-check of these general data.
@@ -31,9 +30,9 @@ subroutine IO_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
     character*512 sRes
-    character*64 lstr, default, block
+    character*64 lstr
     character*32 bakfile
-    TINTEGER is, ig, inb_scal_local1, inb_scal_local2, idummy
+    TINTEGER is, inb_scal_local1, inb_scal_local2, idummy
     TREAL dummy
 
 ! ###################################################################
@@ -80,7 +79,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
     call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
     call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactJacobian8/CompactDirect6>')
+    call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactDirect6>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -301,17 +300,17 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Consistency check
     if (istagger == 1) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
+ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
+          call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
-        if (.not. (imode_fdm == FDM_COM6_JACOBIAN) ) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
+        if (.not. (imode_fdm == FDM_COM6_JACOBIAN)) then
+call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if    
+        end if
     end if
 
 ! ###################################################################
@@ -675,142 +674,18 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Dealising (a filter type)
 ! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Dealising]')
-    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
-
-    Dealiasing(:)%size = g(:)%size
-    Dealiasing(:)%periodic = g(:)%periodic
-    Dealiasing(:)%uniform = g(:)%uniform
-    call SCANINICHAR(bakfile, inifile, 'Dealiasing', 'Type', 'none', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; Dealiasing(:)%type = DNS_FILTER_NONE
-    else if (trim(adjustl(sRes)) == 'compact') then; Dealiasing(:)%type = DNS_FILTER_COMPACT
-        Dealiasing(:)%parameters(1) = 0.49 ! default alpha value
-        Dealiasing(:)%inb_filter = 10
-        Dealiasing(:)%BcsMin = DNS_FILTER_BCS_BIASED
-        Dealiasing(:)%BcsMax = DNS_FILTER_BCS_BIASED
-    else if (trim(adjustl(sRes)) == 'compactcutoff') then; Dealiasing(:)%type = DNS_FILTER_COMPACT_CUTOFF
-        Dealiasing(:)%inb_filter = 7
-        Dealiasing(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
-        Dealiasing(2)%parameters(1) = 0.49
-        Dealiasing(2)%inb_filter = 10
-        Dealiasing(2)%BcsMin = DNS_FILTER_BCS_BIASED
-        Dealiasing(2)%BcsMax = DNS_FILTER_BCS_BIASED
-    end if
-
-    ! Boundary conditions correction
-    do ig = 1, 3
-        if (FilterDomain(ig)%periodic) then
-            Dealiasing(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
-            Dealiasing(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
-        end if
-    end do
-
-    call SCANINICHAR(bakfile, inifile, 'Dealiasing', 'Parameters', 'void', sRes)
-    if (trim(adjustl(sRes)) /= 'void') then
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, Dealiasing(1)%parameters(:))
-        if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
-            Dealiasing(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
-        do ig = 2, 3
-            Dealiasing(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
-        end do
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'Dealiasing', 'ActiveX', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'no') Dealiasing(1)%type = DNS_FILTER_NONE
-    call SCANINICHAR(bakfile, inifile, 'Dealiasing', 'ActiveY', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'no') Dealiasing(2)%type = DNS_FILTER_NONE
-    call SCANINICHAR(bakfile, inifile, 'Dealiasing', 'ActiveZ', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'no') Dealiasing(3)%type = DNS_FILTER_NONE
-
-    ! Further control
-    do ig = 1, 3
-        if (Dealiasing(ig)%size == 1) Dealiasing(ig)%type = DNS_FILTER_NONE
-    end do
-
-#ifdef USE_MPI
-    Dealiasing(1)%mpitype = TLAB_MPI_I_PARTIAL
-    Dealiasing(3)%mpitype = TLAB_MPI_K_PARTIAL
-#endif
+    call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
 
 ! ###################################################################
 ! Pressure Filter (a filter type)
 ! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[PressureFilter]')
-    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
-
-    PressureFilter(:)%size = g(:)%size
-    PressureFilter(:)%periodic = g(:)%periodic
-    PressureFilter(:)%uniform = g(:)%uniform
-    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'Type', 'none', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; PressureFilter(:)%type = DNS_FILTER_NONE
-    else if (trim(adjustl(sRes)) == 'compact') then; PressureFilter(:)%type = DNS_FILTER_COMPACT
-        PressureFilter(:)%parameters(1) = 0.49 ! default alpha value
-        PressureFilter(:)%inb_filter = 10
-        PressureFilter(:)%BcsMin = DNS_FILTER_BCS_BIASED
-        PressureFilter(:)%BcsMax = DNS_FILTER_BCS_BIASED
-    else if (trim(adjustl(sRes)) == 'compactcutoff') then; PressureFilter(:)%type = DNS_FILTER_COMPACT_CUTOFF
-        PressureFilter(:)%inb_filter = 7
-        PressureFilter(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
-        PressureFilter(2)%parameters(1) = 0.49
-        PressureFilter(2)%inb_filter = 10
-        PressureFilter(2)%BcsMin = DNS_FILTER_BCS_BIASED
-        PressureFilter(2)%BcsMax = DNS_FILTER_BCS_BIASED
-    else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Pressure Filter.Type.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    ! Boundary conditions correction
-    do ig = 1, 3
-        if (FilterDomain(ig)%periodic) then
-            PressureFilter(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
-            PressureFilter(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
-        end if
-    end do
-
-    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'Parameters', 'void', sRes)
-    if (trim(adjustl(sRes)) /= 'void') then
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, PressureFilter(1)%parameters(:))
-        if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
-            PressureFilter(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
-        do ig = 2, 3
-            PressureFilter(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
-        end do
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveX', 'no', sRes)
-    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(1)%type = DNS_FILTER_NONE 
-    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.'); end if
-    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveY', 'no', sRes)
-    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(2)%type = DNS_FILTER_NONE
-    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.'); end if
-    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveZ', 'no', sRes)
-    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(3)%type = DNS_FILTER_NONE
-    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oz.'); end if
-
-    ! Further control
-    do ig = 1, 3
-        if (PressureFilter(ig)%size == 1) PressureFilter(ig)%type = DNS_FILTER_NONE
-    end do
-
-#ifdef USE_MPI
-    PressureFilter(1)%mpitype = TLAB_MPI_I_PARTIAL
-    PressureFilter(3)%mpitype = TLAB_MPI_K_PARTIAL
-#endif
+    call FILTER_READBLOCK(bakfile, inifile, 'PressureFilter', PressureFilter)
 
     ! Consistency check
+    if (PressureFilter(1)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.')
+    if (PressureFilter(2)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.')
+    if (PressureFilter(3)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oz.')
+
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
@@ -820,139 +695,12 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter not implemented for current advection scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
-    end if  
+    end if
 
 ! ###################################################################
-! Filter
-! Should be read somewhere else as a block to be used also in
-! dealiasing, but it does not fit in module opr_filters because of the
-! dependencies...
+! Domain Filter (a filter type)
 ! ###################################################################
-    block = 'Filter'
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact/explicit6/explicit4/adm/helmholtz/SpectralBand/SpectralErf/tophat>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
-    call TLAB_WRITE_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
-
-    FilterDomain(:)%size = g(:)%size
-    FilterDomain(:)%periodic = g(:)%periodic
-    FilterDomain(:)%uniform = g(:)%uniform
-    FilterDomain(:)%inb_filter = 0        ! default array size
-    default = 'biased' ! default boundary condition
-
-    call SCANINICHAR(bakfile, inifile, block, 'Type', 'none', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; FilterDomain(:)%type = DNS_FILTER_NONE
-    else if (trim(adjustl(sRes)) == 'compact') then; FilterDomain(:)%type = DNS_FILTER_COMPACT
-        FilterDomain(:)%parameters(1) = 0.49 ! default alpha value
-        FilterDomain(:)%inb_filter = 10
-    else if (trim(adjustl(sRes)) == 'explicit6') then; FilterDomain(:)%type = DNS_FILTER_6E
-    else if (trim(adjustl(sRes)) == 'explicit4') then; FilterDomain(:)%type = DNS_FILTER_4E
-        FilterDomain(:)%inb_filter = 5
-    else if (trim(adjustl(sRes)) == 'adm') then; FilterDomain(:)%type = DNS_FILTER_ADM
-        FilterDomain(:)%inb_filter = 5
-    else if (trim(adjustl(sRes)) == 'tophat') then; FilterDomain(:)%type = DNS_FILTER_TOPHAT
-        FilterDomain(:)%parameters(1) = 2    ! default filter size (in grid-step units)
-        default = 'free'
-    else if (trim(adjustl(sRes)) == 'spectralcutoff') then; FilterDomain(:)%type = DNS_FILTER_BAND
-        ! The frequency interval is (Parameter1, Parameter2)
-    else if (trim(adjustl(sRes)) == 'spectralerf') then; FilterDomain(:)%type = DNS_FILTER_ERF
-        ! Parameter1 is the transition wavenumber in physical units:
-        ! >0: high-pass filter
-        ! <0; low-pass filter
-        ! Parameter2 is the characteristic width--in log units (relative to domain size)'
-        FilterDomain(:)%parameters(3) = 1.0_wp    ! used to normalise wavenumbers in z-direction
-    else if (trim(adjustl(sRes)) == 'helmholtz') then; FilterDomain(:)%type = DNS_FILTER_HELMHOLTZ
-        FilterDomain(:)%parameters(1) = 1.0_wp    ! default filter size
-    else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.Type.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-! Boundary conditions
-    do ig = 1, 3
-        if (FilterDomain(ig)%periodic) then
-            FilterDomain(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
-            FilterDomain(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
-        end if
-    end do
-
-    call SCANINICHAR(bakfile, inifile, block, 'BcsJmin', trim(adjustl(default)), sRes)
-    if (trim(adjustl(sRes)) == 'periodic') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
-    else if (trim(adjustl(sRes)) == 'biased') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_BIASED
-    else if (trim(adjustl(sRes)) == 'free') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_FREE
-    else if (trim(adjustl(sRes)) == 'solid') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_SOLID
-    else if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_NEUMANN
-    else if (trim(adjustl(sRes)) == 'zero') then; FilterDomain(2)%BcsMin = DNS_FILTER_BCS_ZERO
-    else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmin.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, block, 'BcsJmax', trim(adjustl(default)), sRes)
-    if (trim(adjustl(sRes)) == 'periodic') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
-    else if (trim(adjustl(sRes)) == 'biased') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_BIASED
-    else if (trim(adjustl(sRes)) == 'free') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_FREE
-    else if (trim(adjustl(sRes)) == 'solid') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_SOLID
-    else if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_DIRICHLET
-    else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_NEUMANN
-    else if (trim(adjustl(sRes)) == 'zero') then; FilterDomain(2)%BcsMax = DNS_FILTER_BCS_ZERO
-    else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmax.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, block, 'Parameters', 'void', sRes)
-    if (trim(adjustl(sRes)) /= 'void') then
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, FilterDomain(1)%parameters(:))
-        if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
-            FilterDomain(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
-        do ig = 2, 3
-            FilterDomain(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
-        end do
-    end if
-
-    call SCANINIINT(bakfile, inifile, block, 'Repeat', '1', idummy)
-    if (idummy > 0) then
-        FilterDomain(:)%repeat = idummy
-    else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Entry Filter.Repeat must be positive.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, block, 'ActiveX', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'no') FilterDomain(1)%type = DNS_FILTER_NONE
-    call SCANINICHAR(bakfile, inifile, block, 'ActiveY', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'no') FilterDomain(2)%type = DNS_FILTER_NONE
-    call SCANINICHAR(bakfile, inifile, block, 'ActiveZ', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'no') FilterDomain(3)%type = DNS_FILTER_NONE
-
-! Further control
-    do ig = 1, 3
-        if (FilterDomain(ig)%size == 1) FilterDomain(ig)%type = DNS_FILTER_NONE
-        if (FilterDomain(ig)%type == DNS_FILTER_TOPHAT .and. &
-            FilterDomain(ig)%parameters(1) == 0) FilterDomain(ig)%type = DNS_FILTER_NONE
-
-        if (FilterDomain(ig)%type == DNS_FILTER_TOPHAT) then
-            if (mod(int(FilterDomain(ig)%parameters(1)), 2) /= 0) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Tophat filter size must be even.')
-                call TLAB_STOP(DNS_ERROR_PARAMETER)
-            end if
-            FilterDomain(ig)%inb_filter = int(FilterDomain(ig)%parameters(1)) + 1
-        end if
-
-    end do
-
-#ifdef USE_MPI
-    FilterDomain(1)%mpitype = TLAB_MPI_I_PARTIAL
-    FilterDomain(3)%mpitype = TLAB_MPI_K_PARTIAL
-#endif
+    call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
 
 ! To eventually allow for control field by field
     FilterDomainActive(:) = .true.
@@ -1342,3 +1090,156 @@ subroutine IO_READ_GLOBAL(inifile)
 
     return
 end subroutine IO_READ_GLOBAL
+
+!########################################################################
+! Should be in module opr_filters but cannot because of the dependencies...
+!########################################################################
+subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
+    use TLAB_CONSTANTS, only: efile, wp, MAX_PARS
+    use TLAB_TYPES, only: filter_dt
+    use TLAB_VARS, only: g
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    implicit none
+
+    character(len=*) bakfile, inifile, tag
+    type(filter_dt) variable(3)
+
+! -------------------------------------------------------------------
+    character(len=512) sRes
+    character(len=10) default
+    integer idummy, ig
+
+!########################################################################
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(tag))//']')
+    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact/helmholtz/SpectralBand/SpectralErf/tophat>')
+    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
+    call TLAB_WRITE_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
+
+    variable(:)%size = g(:)%size
+    variable(:)%periodic = g(:)%periodic
+    variable(:)%uniform = g(:)%uniform
+    variable(:)%inb_filter = 0          ! default array size
+    default = 'biased'                  ! default boundary condition
+
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'Type', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; variable(:)%type = DNS_FILTER_NONE
+    else if (trim(adjustl(sRes)) == 'compact') then; variable(:)%type = DNS_FILTER_COMPACT
+        variable(:)%parameters(1) = 0.49 ! default alpha value
+        variable(:)%inb_filter = 10
+    else if (trim(adjustl(sRes)) == 'explicit6') then; variable(:)%type = DNS_FILTER_6E
+    else if (trim(adjustl(sRes)) == 'explicit4') then; variable(:)%type = DNS_FILTER_4E
+        variable(:)%inb_filter = 5
+    else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
+        variable(:)%inb_filter = 5
+    else if (trim(adjustl(sRes)) == 'tophat') then; variable(:)%type = DNS_FILTER_TOPHAT
+        variable(:)%parameters(1) = 2    ! default filter size (in grid-step units)
+        default = 'free'
+    else if (trim(adjustl(sRes)) == 'compactcutoff') then; variable(:)%type = DNS_FILTER_COMPACT_CUTOFF
+        variable(:)%inb_filter = 7
+        variable(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
+        variable(2)%parameters(1) = 0.49
+        variable(2)%inb_filter = 10
+    else if (trim(adjustl(sRes)) == 'spectralcutoff') then; variable(:)%type = DNS_FILTER_BAND
+        ! The frequency interval is (Parameter1, Parameter2)
+    else if (trim(adjustl(sRes)) == 'spectralerf') then; variable(:)%type = DNS_FILTER_ERF
+        ! Parameter1 is the transition wavenumber in physical units:
+        ! >0: high-pass filter
+        ! <0; low-pass filter
+        ! Parameter2 is the characteristic width--in log units (relative to domain size)'
+        variable(:)%parameters(3) = 1.0_wp    ! used to normalise wavenumbers in z-direction
+    else if (trim(adjustl(sRes)) == 'helmholtz') then; variable(:)%type = DNS_FILTER_HELMHOLTZ
+        variable(:)%parameters(1) = 1.0_wp    ! default filter size
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//'Type.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    ! Boundary conditions correction
+    do ig = 1, 3
+        if (variable(ig)%periodic) then
+            variable(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+            variable(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+        end if
+    end do
+
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'BcsJmin', trim(adjustl(default)), sRes)
+    if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
+    else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMin = DNS_FILTER_BCS_BIASED
+    else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMin = DNS_FILTER_BCS_FREE
+    else if (trim(adjustl(sRes)) == 'solid') then; variable(2)%BcsMin = DNS_FILTER_BCS_SOLID
+    else if (trim(adjustl(sRes)) == 'dirichlet') then; variable(2)%BcsMin = DNS_FILTER_BCS_DIRICHLET
+    else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMin = DNS_FILTER_BCS_NEUMANN
+    else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMin = DNS_FILTER_BCS_ZERO
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmin.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'BcsJmax', trim(adjustl(default)), sRes)
+    if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
+    else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMax = DNS_FILTER_BCS_BIASED
+    else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMax = DNS_FILTER_BCS_FREE
+    else if (trim(adjustl(sRes)) == 'solid') then; variable(2)%BcsMax = DNS_FILTER_BCS_SOLID
+    else if (trim(adjustl(sRes)) == 'dirichlet') then; variable(2)%BcsMax = DNS_FILTER_BCS_DIRICHLET
+    else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMax = DNS_FILTER_BCS_NEUMANN
+    else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMax = DNS_FILTER_BCS_ZERO
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmax.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'Parameters', 'void', sRes)
+    if (trim(adjustl(sRes)) /= 'void') then
+        idummy = MAX_PARS
+        call LIST_REAL(sRes, idummy, variable(1)%parameters(:))
+        if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
+            variable(1)%parameters(idummy + 1:3) = variable(1)%parameters(idummy)
+        do ig = 2, 3
+            variable(ig)%parameters(1) = variable(1)%parameters(ig)
+        end do
+    end if
+
+    call SCANINIINT(bakfile, inifile, trim(adjustl(tag)), 'Repeat', '1', idummy)
+    if (idummy > 0) then
+        variable(:)%repeat = idummy
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Entry Filter.Repeat must be positive.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveX', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'no') variable(1)%type = DNS_FILTER_NONE
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveY', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'no') variable(2)%type = DNS_FILTER_NONE
+    call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveZ', 'yes', sRes)
+    if (trim(adjustl(sRes)) == 'no') variable(3)%type = DNS_FILTER_NONE
+
+    ! Further control
+    do ig = 1, 3
+        if (variable(ig)%size == 1) variable(ig)%type = DNS_FILTER_NONE
+
+        if (variable(ig)%type == DNS_FILTER_TOPHAT .and. &
+            variable(ig)%parameters(1) == 0) variable(ig)%type = DNS_FILTER_NONE
+
+        if (variable(ig)%type == DNS_FILTER_TOPHAT) then
+            if (mod(int(variable(ig)%parameters(1)), 2) /= 0) then
+                call TLAB_WRITE_ASCII(efile, __FILE__//'. Tophat filter size must be even.')
+                call TLAB_STOP(DNS_ERROR_PARAMETER)
+            end if
+            variable(ig)%inb_filter = int(variable(ig)%parameters(1)) + 1
+        end if
+
+    end do
+
+#ifdef USE_MPI
+    variable(1)%mpitype = TLAB_MPI_I_PARTIAL
+    variable(3)%mpitype = TLAB_MPI_K_PARTIAL
+#endif
+
+    return
+end subroutine FILTER_READBLOCK
