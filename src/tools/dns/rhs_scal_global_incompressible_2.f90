@@ -11,7 +11,6 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt
-    use BOUNDARY_BCS, only: BcsScalJmin, BcsScalJmax
     use TLAB_VARS, only: imode_ibm
     use IBM_VARS, only: imode_ibm_scal, ibm_partial
     use TLAB_ARRAYS, only: s, wrk2d, wrk3d

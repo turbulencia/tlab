@@ -17,11 +17,10 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
-    use BOUNDARY_BUFFER
-    use BOUNDARY_BCS, only: BcsFlowJmin, BcsFlowJmax
     use OPR_PARTIAL
     use OPR_ELLIPTIC
     use BOUNDARY_BCS
+    use BOUNDARY_BUFFER
 
     implicit none
 

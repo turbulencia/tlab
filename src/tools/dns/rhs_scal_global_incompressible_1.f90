@@ -15,7 +15,6 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt
-    use BOUNDARY_BCS, only: BcsScalJmin, BcsScalJmax
     use TLAB_ARRAYS, only: s, wrk2d, wrk3d
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs
