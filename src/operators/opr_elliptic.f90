@@ -7,7 +7,7 @@ module OPR_ELLIPTIC
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz
-    use TLAB_VARS, only: ivfilter, istagger, vfilter_param
+    use TLAB_VARS, only: istagger
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
     use OPR_FOURIER
@@ -139,10 +139,6 @@ contains
                     end if
 
                 end select
-
-                if (ivfilter == 1) then     ! Vertical filtering of p and dpdy in case of staggering
-                    call FILTER_VERTICAL_PRESSURE(c_wrk1d(:, 2), c_wrk1d(:, 3), ny, vfilter_param, p_wrk1d(1, 7))
-                end if
 
                 ! Rearrange in memory and normalize
                 do j = 1, ny

@@ -684,17 +684,17 @@ subroutine DNS_READ_LOCAL(inifile)
     if (use_tower) then
         idummy = tower_stride(1)*tower_stride(2)*tower_stride(3)
         if (idummy < 5) then
-      call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not enough space in wrk3d array to handle tower information. Increase strides.')
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not enough space in wrk3d array to handle tower information. Increase strides.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
     end if
 
 ! -------------------------------------------------------------------
-! Pressure staggering
+! Pressure staggering and filtering
 ! -------------------------------------------------------------------
-    if (istagger == 1) then
+    if (istagger == 1 .or. any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         if (.not. (imode_rhs == EQNS_RHS_COMBINED)) then
- call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Horizontal pressure staggering only implemented for imode_rhs == EQNS_RHS_COMBINED.')
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Horizontal pressure staggering or Pressure filter not implemented for this RHS type.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
     end if

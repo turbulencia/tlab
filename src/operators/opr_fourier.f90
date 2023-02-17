@@ -8,7 +8,6 @@ module OPR_FOURIER
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: ivfilter
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
@@ -24,7 +23,7 @@ module OPR_FOURIER
     private
 
     integer(8) :: fft_plan_fx, fft_plan_bx, fft_plan_fx_bcs
-    integer(8) :: fft_plan_fy, fft_plan_by, fft_plan_fy1d, fft_plan_by1d
+    integer(8) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
     integer(8) :: fft_plan_fz, fft_plan_bz
 
     logical :: fft_reordering
@@ -32,7 +31,7 @@ module OPR_FOURIER
     integer(wi) k
     complex(wp), pointer :: c_in(:,:) => null(), c_out(:,:) => null(), c_tmp1(:,:) => null(), c_tmp2(:,:) => null(), c_wrk3d(:,:) => null(), c_in1(:,:) => null()
 
-    public :: fft_plan_fy1d, fft_plan_by1d
+    ! public :: fft_plan_fy1d, fft_plan_by1d ! vertical spectral pressure filter
     public :: OPR_FOURIER_INITIALIZE
     public :: OPR_FOURIER_F_X_EXEC, OPR_FOURIER_B_X_EXEC    ! Main routines, used in Poisson solver, frequently used and hence optimized
     public :: OPR_FOURIER_F_Z_EXEC, OPR_FOURIER_B_Z_EXEC
@@ -172,14 +171,6 @@ contains
                                      txc(:,1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
-        end if
-
-        ! -----------------------------------------------------------------------
-        ! Oy direction - spectral pressure filter
-        ! (used in combination with horizontal pressure grid staggering)
-        ! -----------------------------------------------------------------------
-        if (ivfilter == 1) then
-            call OPR_STAGGERING_INITIALIZE(wrk3d)
         end if
 
 #else

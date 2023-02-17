@@ -5,7 +5,7 @@
 #include "dns_const_mpi.h"
 #endif
 
-#define C_FILE_LOC "IO_READ_LOCAL"
+#define C_FILE_LOC "IO_READ_GLOBAL"
 
 !########################################################################
 !# DESCRIPTION
@@ -289,8 +289,6 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Staggering]')
     call TLAB_WRITE_ASCII(bakfile, '#StaggerHorizontalPressure=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#FilterVerticalPressure=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#FilterParameter=<value>')
 
     call SCANINICHAR(bakfile, inifile, 'Staggering', 'StaggerHorizontalPressure', 'no', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; istagger = 1; call TLAB_WRITE_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
@@ -299,16 +297,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main. StaggerHorizontalPressure must be yes or no')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-    call SCANINICHAR(bakfile, inifile, 'Staggering', 'FilterVerticalPressure', 'no', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; ivfilter = 1; call TLAB_WRITE_ASCII(lfile, 'Vertical filtering of the pressure and dpdy along Oy.')
-    elseif (trim(adjustl(sRes)) == 'no') then; ivfilter = 0
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main. FilterVerticalPressure must be yes or no')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    call SCANINIREAL(bakfile, inifile, 'Staggering', 'Filterparameter', '4.0', vfilter_param)
 
 ! Consistency check
     if (istagger == 1) then
@@ -324,12 +312,6 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if    
-    end if
-    if (ivfilter == 1) then
-        if (.not. (istagger == 1)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Vertical pressure filtering only in combination with horizontal pressure staggering.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
     end if
 
 ! ###################################################################
@@ -755,6 +737,90 @@ subroutine IO_READ_GLOBAL(inifile)
     Dealiasing(1)%mpitype = TLAB_MPI_I_PARTIAL
     Dealiasing(3)%mpitype = TLAB_MPI_K_PARTIAL
 #endif
+
+! ###################################################################
+! Pressure Filter (a filter type)
+! ###################################################################
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[PressureFilter]')
+    call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact>')
+    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
+
+    PressureFilter(:)%size = g(:)%size
+    PressureFilter(:)%periodic = g(:)%periodic
+    PressureFilter(:)%uniform = g(:)%uniform
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'Type', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; PressureFilter(:)%type = DNS_FILTER_NONE
+    else if (trim(adjustl(sRes)) == 'compact') then; PressureFilter(:)%type = DNS_FILTER_COMPACT
+        PressureFilter(:)%parameters(1) = 0.49 ! default alpha value
+        PressureFilter(:)%inb_filter = 10
+        PressureFilter(:)%BcsMin = DNS_FILTER_BCS_BIASED
+        PressureFilter(:)%BcsMax = DNS_FILTER_BCS_BIASED
+    else if (trim(adjustl(sRes)) == 'compactcutoff') then; PressureFilter(:)%type = DNS_FILTER_COMPACT_CUTOFF
+        PressureFilter(:)%inb_filter = 7
+        PressureFilter(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
+        PressureFilter(2)%parameters(1) = 0.49
+        PressureFilter(2)%inb_filter = 10
+        PressureFilter(2)%BcsMin = DNS_FILTER_BCS_BIASED
+        PressureFilter(2)%BcsMax = DNS_FILTER_BCS_BIASED
+    else
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Pressure Filter.Type.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    ! Boundary conditions correction
+    do ig = 1, 3
+        if (FilterDomain(ig)%periodic) then
+            PressureFilter(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+            PressureFilter(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+        end if
+    end do
+
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'Parameters', 'void', sRes)
+    if (trim(adjustl(sRes)) /= 'void') then
+        idummy = MAX_PROF
+        call LIST_REAL(sRes, idummy, PressureFilter(1)%parameters(:))
+        if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
+            PressureFilter(1)%parameters(idummy + 1:3) = FilterDomain(1)%parameters(idummy)
+        do ig = 2, 3
+            PressureFilter(ig)%parameters(1) = FilterDomain(1)%parameters(ig)
+        end do
+    end if
+
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveX', 'no', sRes)
+    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(1)%type = DNS_FILTER_NONE 
+    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.'); end if
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveY', 'no', sRes)
+    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(2)%type = DNS_FILTER_NONE
+    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.'); end if
+    call SCANINICHAR(bakfile, inifile, 'PressureFilter', 'ActiveZ', 'no', sRes)
+    if (trim(adjustl(sRes)) == 'no') then; PressureFilter(3)%type = DNS_FILTER_NONE
+    else; call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oz.'); end if
+
+    ! Further control
+    do ig = 1, 3
+        if (PressureFilter(ig)%size == 1) PressureFilter(ig)%type = DNS_FILTER_NONE
+    end do
+
+#ifdef USE_MPI
+    PressureFilter(1)%mpitype = TLAB_MPI_I_PARTIAL
+    PressureFilter(3)%mpitype = TLAB_MPI_K_PARTIAL
+#endif
+
+    ! Consistency check
+    if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
+        if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (.not. (iadvection == EQNS_CONVECTIVE)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter not implemented for current advection scheme.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+    end if  
 
 ! ###################################################################
 ! Filter
