@@ -183,9 +183,9 @@ contains
             ! LU decomposition for the 3 possible neumann boudary conditions
             ny = g(2)%size
 
-            allocate (luND(ny, 5))
-            allocate (luDN(ny, 5))
-            allocate (luNN(ny, 5))
+            allocate(luND(ny, 5))
+            allocate(luDN(ny, 5))
+            allocate(luNN(ny, 5))
 
             select case (g(2)%mode_fdm)
             case (FDM_COM6_JACPENTA)
@@ -408,16 +408,18 @@ contains
         !                                                   2, for -      /Neumann
         !                                                   3, for Neumann/Neumann
         integer(wi) nx, ny, nz
-        type(grid_dt), intent(IN) :: g
-        real(wp), dimension(nx*nz, ny), target, intent(IN) :: u         ! they are transposed below
-        real(wp), dimension(nx*nz, ny), target :: tmp1 ! they are transposed below
-        real(wp), dimension(nx*nz), target, intent(OUT) :: bcs_hb, bcs_ht
+        type(grid_dt), intent(in)    :: g
+        real(wp),      intent(in)    :: u(nx*nz, ny)         ! they are transposed below
+        real(wp),      intent(inout) :: tmp1(nx*nz, ny)      ! they are transposed below
+        real(wp),      intent(out)   :: bcs_hb(nx*nz), bcs_ht(nx*nz)
+
+        target u, bcs_hb, bcs_ht, tmp1
 
         ! -------------------------------------------------------------------
         integer(wi) nxz, nxy
 
-        real(wp), dimension(:, :), pointer :: p_org, p_dst
-        real(wp), dimension(:), pointer :: p_bcs_hb, p_bcs_ht
+        real(wp), pointer :: p_org(:,:), p_dst(:,:)
+        real(wp), pointer :: p_bcs_hb(:), p_bcs_ht(:)
 
         ! ###################################################################
         if (g%size == 1) then ! Set to zero in 2D case
@@ -456,14 +458,14 @@ contains
                 select case (ibc)
                 case (bcsND)
                     call PENTADSS2(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5), p_dst(:, 2))
-                    p_bcs_hb(:) = p_dst(:, 1) + luND(4, 1)*p_dst(:, 2)
+                    p_bcs_hb(:) = p_dst(:, 1) + luND(1,4)*p_dst(:, 2)
 
                 case (bcsDN)
-        call PENTADSS2(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5), p_dst)
+                    call PENTADSS2(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5), p_dst)
                     p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 2)*p_dst(:, ny - 1)
 
                 case (bcsNN)
-           call PENTADSS2(ny - 2, nxz,  luNN(2:ny-1,1), luNN(2:ny-1,2), luNN(2:ny-1,3), luNN(2:ny-1,4), luNN(2:ny-1,5), p_dst(:, 2))
+                    call PENTADSS2(ny - 2, nxz,  luNN(2:ny-1,1), luNN(2:ny-1,2), luNN(2:ny-1,3), luNN(2:ny-1,4), luNN(2:ny-1,5), p_dst(:, 2))
                     p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 4)*p_dst(:, 2)
                     p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 2)*p_dst(:, ny - 1)
 
