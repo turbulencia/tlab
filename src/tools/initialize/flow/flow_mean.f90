@@ -7,6 +7,8 @@ module FLOW_MEAN
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: coriolis, buoyancy
+    use TLAB_ARRAYS, only: wrk1d
+    use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk3d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use PROFILES
@@ -17,14 +19,12 @@ module FLOW_MEAN
     public :: VELOCITY_MEAN
     public :: PRESSURE_MEAN
     public :: DENSITY_MEAN
-    
+
 contains
 
     ! ###################################################################
-    subroutine VELOCITY_MEAN(u, v, w, wrk1d)
-
+    subroutine VELOCITY_MEAN(u, v, w)
         real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
-        real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
         ! -------------------------------------------------------------------
         integer(wi) iq, j
@@ -94,12 +94,10 @@ contains
     end subroutine VELOCITY_MEAN
 
     ! ###################################################################
-    subroutine PRESSURE_MEAN(p, T, s, wrk1d)
-
+    subroutine PRESSURE_MEAN(p, T, s)
         real(wp), dimension(imax, jmax, kmax), intent(OUT) :: p
         real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: T
         real(wp), dimension(imax, jmax, kmax, *), intent(INOUT) :: s
-        real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d
 
         ! -------------------------------------------------------------------
         integer(wi) j
@@ -110,15 +108,15 @@ contains
 
         else            ! hydrostatic equilibrium
 
-#define p_loc(i)       wrk1d(i,1)
-#define r_loc(i)       wrk1d(i,2)
-#define t_loc(i)       wrk1d(i,3)
-#define ep_loc(i)      wrk1d(i,4)
-#define h_loc(i)       wrk1d(i,5)
-#define z1_loc(i)      wrk1d(i,6)
-#define z2_loc(i)      wrk1d(i,7)
-#define z3_loc(i)      wrk1d(i,8)
-#define wrk1d_loc(i)   wrk1d(i,9)
+#define p_loc(i)       p_wrk1d(i,1)
+#define r_loc(i)       p_wrk1d(i,2)
+#define t_loc(i)       p_wrk1d(i,3)
+#define ep_loc(i)      p_wrk1d(i,4)
+#define h_loc(i)       p_wrk1d(i,5)
+#define z1_loc(i)      p_wrk1d(i,6)
+#define z2_loc(i)      p_wrk1d(i,7)
+#define z3_loc(i)      p_wrk1d(i,8)
+#define wrk1d_loc(i)   p_wrk1d(i,9)
 
             if (hbg%type /= PROFILE_NONE) then
                 select case (imixture)
@@ -180,12 +178,11 @@ contains
     !# If volumetric forces are present, then rho is computed from
     !# dp/dy = rho g, to ensure hydrostatic equilibrium including numerical errors.
     ! ###################################################################
-    subroutine DENSITY_MEAN(rho, p, T, s, txc, wrk1d, wrk2d, wrk3d)
+    subroutine DENSITY_MEAN(rho, p, T, s, txc)
         real(wp), dimension(imax, jmax, kmax), intent(IN) :: p, T
         real(wp), dimension(imax, jmax, kmax), intent(OUT) :: rho
         real(wp), dimension(imax, jmax, kmax, *), intent(OUT) :: s
-        real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: txc, wrk3d
-        real(wp), dimension(jmax, *), intent(INOUT) :: wrk1d, wrk2d
+        real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: txc
 
         ! -------------------------------------------------------------------
         real(wp) dummy
@@ -200,7 +197,7 @@ contains
         if (imode_sim == DNS_MODE_TEMPORAL) then
             if (buoyancy%type == EQNS_NONE) then
 
-#define TEM_MEAN_LOC(i,j,k) wrk3d(i,j,k)
+#define TEM_MEAN_LOC(i,j,k) p_wrk3d(i,j,k)
 #define RHO_MEAN_LOC(i,j,k) txc(i,j,k)
 
                 ! temperature/mixture profile are given
@@ -219,10 +216,10 @@ contains
 
                     ! define liquid content in AirWater case: (p,T) given
                     if (imixture == MIXT_TYPE_AIRWATER) then
-                        call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, TEM_MEAN_LOC(1, 1, 1))
+                        call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, TEM_MEAN_LOC(:, :, :))
                     end if
 
-                    call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, TEM_MEAN_LOC(1, 1, 1), RHO_MEAN_LOC(1, 1, 1))
+                    call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, TEM_MEAN_LOC(:, :, :), RHO_MEAN_LOC(:, :, :))
                     rho(:, :, :) = rho(:, :, :) + RHO_MEAN_LOC(:, :, :)
 
                     ! density profile itself is given
@@ -249,7 +246,7 @@ contains
 
                     ! General case
                 else
-                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc, wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc)
                     dummy = 1.0_wp/buoyancy%vector(2)
                     rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
                 end if
@@ -263,12 +260,12 @@ contains
             ! -------------------------------------------------------------------
         else if (imode_sim == DNS_MODE_SPATIAL) then
             if (rbg%type == PROFILE_NONE) then ! temperature/mixture profile are given
-#define rho_vi(j) wrk1d(j,1)
-#define u_vi(j)   wrk1d(j,2)
-#define aux1(j)   wrk1d(j,3)
-#define aux2(j)   wrk1d(j,4)
-#define aux3(j)   wrk1d(j,5)
-#define aux4(j)   wrk1d(j,6)
+#define rho_vi(j) p_wrk1d(j,1)
+#define u_vi(j)   p_wrk1d(j,2)
+#define aux1(j)   p_wrk1d(j,3)
+#define aux2(j)   p_wrk1d(j,4)
+#define aux3(j)   p_wrk1d(j,5)
+#define aux4(j)   p_wrk1d(j,6)
                 ! Inflow profile of density
                 ! rho_vi(:) = rho(1,:,1) ! I need to update this because rho(1,:,1) is now undefined
 

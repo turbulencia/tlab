@@ -354,10 +354,6 @@ contains
 !                 call dfftw_destroy_plan(fft_plan_bz)
 !             end if
 !         end if
-!         if (ivfilter == 1) then
-!             call dfftw_destroy_plan(fft_plan_fy1d)
-!             call dfftw_destroy_plan(fft_plan_by1d)
-!         end if
 ! #endif
 
         ! ###################################################################

@@ -21,10 +21,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #endif
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imode_ibm
-    use TLAB_VARS, only: imode_eqns, istagger
+    use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: rbackground, ribackground
+    use TLAB_VARS, only: PressureFilter, istagger
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS
@@ -38,6 +39,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use OPR_PARTIAL
     use OPR_BURGERS
     use OPR_ELLIPTIC
+    use OPR_FILTERS
 
     implicit none
 
@@ -45,7 +47,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     integer(wi) iq, is, ij
     integer ibc, bcs(2, 2)
     real(wp) dummy
-    integer, parameter :: i3 = 3
 
     integer(wi) siz, srt, end    !  Variables for OpenMP Partitioning
 
@@ -241,19 +242,19 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         end if
         if (istagger == 1) then ! staggering on horizontal pressure nodes
             !  Oy derivative
-            call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp2, tmp5)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
+            call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1)
             !  Ox derivative
-            call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp5, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp5)
+            call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp2)
             !  Oz derivative
-            call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp3, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
+            call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp3)
         else
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp1)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp2)
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
         end if
 
     else
@@ -266,13 +267,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 2), tmp2)
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 1), tmp3)
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 3), tmp4)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp1)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp2)
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
         else
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), hq(:, 2), tmp1, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), hq(:, 1), tmp2, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), hq(:, 3), tmp3, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), hq(:, 2), tmp1)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), hq(:, 1), tmp2)
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), hq(:, 3), tmp3)
         end if
 
     end if
@@ -290,8 +291,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 ! Stagger also Bcs
     if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:, 2))
     if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
         p_bcs(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 4)
     else
@@ -307,7 +308,16 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
 ! pressure in tmp1, Oy derivative in tmp3
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+
+! filter pressure and dpdy
+    if      (PressureFilter(1)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp1); call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp3)
+    else if (PressureFilter(2)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp1); call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp3)
+    else if (PressureFilter(3)%type /= DNS_FILTER_NONE) then
+        call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp1); call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp3)
+    end if
 
 ! Saving pressure for towers to tmp array
     if (use_tower .and. rkm_substep == rkm_endstep) then
@@ -316,18 +326,18 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     if (istagger == 1) then
         !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3)
         !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
-        call OPR_PARTIAL_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4)
         !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
+        call OPR_PARTIAL_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp2)
     else
         !  horizontal pressure derivatives
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
     end if
 
 ! -----------------------------------------------------------------------
@@ -376,7 +386,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         if (BcsFlowJmax%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 2
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hq(1, iq), &
-                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), wrk1d, tmp1, wrk3d)
+                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), tmp1)
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hq(1, iq)) ! set tendency in solid to zero
 
@@ -392,12 +402,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         if (BcsScalJmax%type(is) == DNS_BCS_NEUMANN) ibc = ibc + 2
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hs(1, is), &
-                                        BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), wrk1d, tmp1, wrk3d)
+                                        BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), tmp1)
         end if
 
         if (BcsScalJmin%type(is) /= DNS_SFC_STATIC .or. &
             BcsScalJmax%type(is) /= DNS_SFC_STATIC) then
-            call BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp1, tmp2, tmp3)
+            call BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp1, tmp2)
         end if
         if (imode_ibm == 1) call IBM_BCS_FIELD(hs(1, is)) ! set tendency in solid to zero
 

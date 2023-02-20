@@ -36,7 +36,8 @@ module OPR_PARTIAL
 contains
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL1(nlines, bcs, g, u, result, wrk2d)
+    subroutine OPR_PARTIAL1(nlines, bcs, g, u, result)
+        use TLAB_ARRAYS, only: wrk2d
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
@@ -44,7 +45,6 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines*g%size)
         real(wp),      intent(out)   :: result(nlines*g%size)
-        real(wp),      intent(inout) :: wrk2d(nlines)
 
 ! ###################################################################
         if (g%periodic) then
@@ -107,7 +107,7 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL1_IBM(nlines, bcs, g, u, result, wrk2d, wrk3d)
+    subroutine OPR_PARTIAL1_IBM(nlines, bcs, g, u, result)
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1,*) and xmax (2,*):
         !                                   0 biased, non-zero
@@ -115,8 +115,6 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines*g%size)
         real(wp),      intent(out)   :: result(nlines*g%size)
-        real(wp),      intent(inout) :: wrk2d(nlines)
-        real(wp),      intent(inout) :: wrk3d(nlines*g%size)
 
         integer(wi), parameter :: is = 0    ! scalar index; if 0, then velocity
 
@@ -127,26 +125,26 @@ contains
 
         case ('x')
             if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
-                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
+                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL1(nlines, bcs, g, u, result, wrk2d)  ! no splines needed
+                call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
             end if
 
         case ('y')
             if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
-                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
+                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL1(nlines, bcs, g, u, result, wrk2d)  ! no splines needed
+                call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
             end if
 
         case ('z')
             if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
-                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result, wrk2d)  ! now with modified u fields
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
+                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL1(nlines, bcs, g, u, result, wrk2d)  ! no splines needed
+                call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
             end if
 
         end select
@@ -156,12 +154,11 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_IBM(nlines, g, u, result, wrk3d)
+    subroutine OPR_IBM(nlines, g, u, result)
         integer(wi),   intent(in)    :: nlines
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines*g%size)
         real(wp),      intent(out)   :: result(nlines*g%size)
-        real(wp),      intent(inout) :: wrk3d(nlines*g%size)
 
         integer(wi), parameter :: is = 0 ! scalar index; if 0, then velocity
 
@@ -170,11 +167,11 @@ contains
 
         select case (g%name)
         case ('x')
-            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
+            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
         case ('y')
-            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
+            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
         case ('z')
-            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
+            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
         end select
 
         return
@@ -182,7 +179,8 @@ contains
 
 ! ###################################################################################
 ! ###################################################################################
-    subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
+    subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
+        use TLAB_ARRAYS, only: wrk2d
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
         !                                       0            viscosity (velocity)
@@ -194,8 +192,7 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines, g%size)
         real(wp),      intent(out)   :: result(nlines, g%size)
-        real(wp),      intent(inout) :: wrk2d(nlines)
-        real(wp),      intent(inout) :: wrk3d(nlines, g%size)  ! First derivative
+        real(wp),      intent(inout) :: du(nlines, g%size)  ! First derivative
 
         real(wp), dimension(:, :), pointer :: lu2_p
 
@@ -203,13 +200,13 @@ contains
         ! Check whether to calculate 1. order derivative
         ! ###################################################################
         if (is >= 0) then   ! called from opr_burgers
-            call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, wrk3d, wrk2d)
+            call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
         else                ! needed anyhow to calculate 1. derivative
             if (.not. g%uniform) then
                 if (g%mode_fdm == FDM_COM4_JACOBIAN .or. &
                     g%mode_fdm == FDM_COM6_JACOBIAN .or. &
                     g%mode_fdm == FDM_COM8_JACOBIAN) then
-                    call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, wrk3d, wrk2d)
+                    call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
                 end if
             end if
         end if
@@ -260,14 +257,14 @@ contains
                 if (g%uniform) then
                     call FDM_C2N6H_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
                 else        ! need first derivative from above
-                    call FDM_C2N6HNJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, wrk3d, result)
+                    call FDM_C2N6HNJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                 end if
 
             case (FDM_COM8_JACOBIAN) ! Not yet implemented; defaulting to 6. order
                 if (g%uniform) then
                     call FDM_C2N6_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
                 else        ! Need first derivative from above
-                    call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, wrk3d, result)
+                    call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                 end if
 
             case (FDM_COM6_DIRECT)
@@ -284,7 +281,7 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, u, result, wrk2d, wrk3d)
+    subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, u, result, du)
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2,2)     ! BCs at xmin (1,*) and xmax (2,*):
@@ -293,8 +290,7 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines, g%size)
         real(wp),      intent(out)   :: result(nlines, g%size)
-        real(wp),      intent(inout) :: wrk2d(nlines)
-        real(wp),      intent(inout) :: wrk3d(nlines, g%size)  ! First derivative
+        real(wp),      intent(inout) :: du(nlines, g%size)  ! First derivative
 
         real(wp), dimension(:, :), pointer :: p_fld
         real(wp), dimension(:), pointer :: p_fld_ibm
@@ -313,29 +309,29 @@ contains
 
         case ('x')
             if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, wrk3d)
+                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e)
                 p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
-                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
+                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, du)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld, result, wrk2d, wrk3d)  ! no splines needed
+                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld, result, du)  ! no splines needed
             end if
 
         case ('y')
             if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, wrk3d)
+                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e)
                 p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
-                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
+                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, du)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld, result, wrk2d, wrk3d)  ! no splines needed
+                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld, result, du)  ! no splines needed
             end if
 
         case ('z')
             if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, wrk3d)
+                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e)
                 p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
-                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, wrk2d, wrk3d)  ! now with modified u fields
+                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, du)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld, result, wrk2d, wrk3d)  ! no splines needed
+                call OPR_PARTIAL2(is, nlines, bcs, g, p_fld, result, du)  ! no splines needed
             end if
 
         end select
@@ -349,7 +345,8 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL0_INT(dir, nlines, g, u, result, wrk2d)
+    subroutine OPR_PARTIAL0_INT(dir, nlines, g, u, result)
+        use TLAB_ARRAYS, only: wrk2d
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
@@ -357,7 +354,6 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines, g%size)
         real(wp),      intent(out)   :: result(nlines, g%size)
-        real(wp),      intent(inout) :: wrk2d(nlines)
 
 ! ###################################################################
 ! Interpolation, direction 'vp': vel. --> pre. grid
@@ -391,7 +387,8 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL1_INT(dir, nlines, g, u, result, wrk2d)
+    subroutine OPR_PARTIAL1_INT(dir, nlines, g, u, result)
+        use TLAB_ARRAYS, only: wrk2d
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
@@ -399,7 +396,6 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nlines, g%size)
         real(wp),      intent(out)   :: result(nlines, g%size)
-        real(wp),      intent(inout) :: wrk2d(nlines)
 
 ! ###################################################################
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
@@ -433,7 +429,8 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1, wrk2d, wrk3d)
+    subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1, tobedeleted2d, tobedeleted3d)
+        use TLAB_ARRAYS, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1         1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
@@ -444,10 +441,10 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
-        real(wp),      intent(inout) :: wrk2d(ny,nz)
+        real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
+        real(wp),      intent(inout), optional :: tobedeleted2d(*), tobedeleted3d(*)
 
-        target u, tmp1, result, wrk3d
+        target u, tmp1, result
 
 ! -------------------------------------------------------------------
         integer(wi) nyz
@@ -469,18 +466,19 @@ contains
             p_a => result
             p_b => wrk3d
             p_c => result
-            p_d => tmp1
+            if (any([OPR_P2, OPR_P2_P1] == type)) then
+                p_d => tmp1
+            end if
             nyz = ims_size_i(id)
         else
 #endif
             p_a => u
             p_b => result
-            if (type == OPR_P2_P1) then
+            if (any([OPR_P2, OPR_P2_P1] == type)) then
                 p_c => tmp1
                 p_d => wrk3d
             else
                 p_c => wrk3d
-                p_d => tmp1
             end if
             nyz = ny*nz
 #ifdef USE_MPI
@@ -500,37 +498,37 @@ contains
         select case (type)
 
         case (OPR_P2)
-            call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, wrk2d, p_d)
-
-        case (OPR_P1)
-            if (ibm_partial) then
-                call OPR_PARTIAL1_IBM(nyz, bcs(:, 1), g, p_b, p_c, wrk2d, p_d)
-            else
-                call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_c, wrk2d)
-            end if
+            call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, p_d)
 
         case (OPR_P2_P1)
-            call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, wrk2d, p_d)
+            call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, p_d)
 
 ! Check whether we need to calculate the 1. order derivative
             if (g%uniform .or. g%mode_fdm == FDM_COM6_DIRECT) then
-                call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d, wrk2d)
+                call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
+            end if
+
+        case (OPR_P1)
+            if (ibm_partial) then
+                call OPR_PARTIAL1_IBM(nyz, bcs(:, 1), g, p_b, p_c)
+            else
+                call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_c)
             end if
 
         case (OPR_P0_INT_VP)
-            call OPR_PARTIAL0_INT(0, nyz, g, p_b, p_c, wrk2d)
+            call OPR_PARTIAL0_INT(0, nyz, g, p_b, p_c)
 
         case (OPR_P0_INT_PV)
-            call OPR_PARTIAL0_INT(1, nyz, g, p_b, p_c, wrk2d)
+            call OPR_PARTIAL0_INT(1, nyz, g, p_b, p_c)
 
         case (OPR_P1_INT_VP)
-            call OPR_PARTIAL1_INT(0, nyz, g, p_b, p_c, wrk2d)
+            call OPR_PARTIAL1_INT(0, nyz, g, p_b, p_c)
 
         case (OPR_P1_INT_PV)
-            call OPR_PARTIAL1_INT(1, nyz, g, p_b, p_c, wrk2d)
+            call OPR_PARTIAL1_INT(1, nyz, g, p_b, p_c)
 
         case (OPR_P0_IBM)
-            call OPR_IBM(nyz, g, p_b, p_c, p_d)
+            call OPR_IBM(nyz, g, p_b, p_c)
 
         end select
 
@@ -559,14 +557,18 @@ contains
         end if
 #endif
 
-        nullify (p_a, p_b, p_c, p_d)
+        nullify (p_a, p_b, p_c)
+        if (associated(p_c)) nullify(p_d)
 
         return
     end subroutine OPR_PARTIAL_X
 
 !########################################################################
 !########################################################################
-    subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1, wrk2d, wrk3d)
+    subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1, tobedeleted2d, tobedeleted3d)
+#ifdef USE_MPI
+        use TLAB_ARRAYS, only: wrk3d
+#endif
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
@@ -577,10 +579,10 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
-        real(wp),      intent(inout) :: wrk2d(nx*ny)
+        real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
+        real(wp),      intent(inout), optional :: tobedeleted2d(*), tobedeleted3d(*)
 
-        target u, tmp1, result, wrk3d
+        target u, tmp1, result
 
 ! -------------------------------------------------------------------
         integer(wi) nxy
@@ -606,19 +608,20 @@ contains
             if (ims_npro_k > 1) then
                 call TLAB_MPI_TRPF_K(u, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
                 p_a => result
-                if (type == OPR_P2_P1) then
+                if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
                     p_c => wrk3d
                 else
                     p_b => wrk3d
-                    p_c => tmp1
                 end if
                 nxy = ims_size_k(id)
             else
 #endif
                 p_a => u
                 p_b => result
-                p_c => tmp1
+                if (any([OPR_P2, OPR_P2_P1] == type)) then
+                    p_c => tmp1
+                endif
                 nxy = nx*ny
 #ifdef USE_MPI
             end if
@@ -628,36 +631,37 @@ contains
             select case (type)
 
             case (OPR_P2)
-                call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, wrk2d, p_c)
+                call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, p_c)
 
-            case (OPR_P1)
-                if (ibm_partial) then
-                    call OPR_PARTIAL1_IBM(nxy, bcs(:, 1), g, p_a, p_b, wrk2d, p_c)
-                else
-                    call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_b, wrk2d)
-                end if
             case (OPR_P2_P1)
-                call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, wrk2d, p_c)
+                call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, p_c)
 
 ! Check whether we need to calculate the 1. order derivative
                 if (g%uniform .or. g%mode_fdm == FDM_COM6_DIRECT) then
-                    call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c, wrk2d)
+                    call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
+                end if
+
+            case (OPR_P1)
+                if (ibm_partial) then
+                    call OPR_PARTIAL1_IBM(nxy, bcs(:, 1), g, p_a, p_b)
+                else
+                    call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_b)
                 end if
 
             case (OPR_P0_INT_VP)
-                call OPR_PARTIAL0_INT(0, nxy, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL0_INT(0, nxy, g, p_a, p_b)
 
             case (OPR_P0_INT_PV)
-                call OPR_PARTIAL0_INT(1, nxy, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL0_INT(1, nxy, g, p_a, p_b)
 
             case (OPR_P1_INT_VP)
-                call OPR_PARTIAL1_INT(0, nxy, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL1_INT(0, nxy, g, p_a, p_b)
 
             case (OPR_P1_INT_PV)
-                call OPR_PARTIAL1_INT(1, nxy, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL1_INT(1, nxy, g, p_a, p_b)
 
             case (OPR_P0_IBM)
-                call OPR_IBM(nxy, g, p_a, p_b, p_c)
+                call OPR_IBM(nxy, g, p_a, p_b)
 
             end select
 
@@ -672,7 +676,8 @@ contains
             end if
 #endif
 
-            nullify (p_a, p_b, p_c)
+            nullify (p_a, p_b)
+            if (associated(p_c)) nullify(p_c)
 
         end if
 
@@ -681,7 +686,8 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1, wrk2d, wrk3d)
+    subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1, tobedeleted2d, tobedeleted3d)
+        use TLAB_ARRAYS, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
@@ -692,10 +698,10 @@ contains
         type(grid_dt), intent(in)    :: g
         real(wp),      intent(in)    :: u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz), wrk3d(nx*ny*nz)
-        real(wp),      intent(inout) :: wrk2d(nx*nz)
+        real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
+        real(wp),      intent(inout), optional :: tobedeleted2d(*), tobedeleted3d(*)
 
-        target u, tmp1, result, wrk3d
+        target u, tmp1, result
 
 ! -------------------------------------------------------------------
         integer(wi) nxy, nxz
@@ -715,61 +721,64 @@ contains
 ! -------------------------------------------------------------------
 ! Local transposition: Make y direction the last one
 ! -------------------------------------------------------------------
-            if (nz == 1) then
-                p_a => u
-                p_b => result
-                p_c => tmp1
-            else
+            if (nz > 1) then
 #ifdef USE_ESSL
                 call DGETMO(u, nxy, nxy, nz, result, nz)
 #else
                 call DNS_TRANSPOSE(u, nxy, nz, nxy, result, nz)
 #endif
                 p_a => result
-                if (type == OPR_P2_P1) then
+                if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
                     p_c => wrk3d
                 else
                     p_b => wrk3d
-                    p_c => tmp1
                 end if
+
+            else
+                p_a => u
+                p_b => result
+                if (any([OPR_P2, OPR_P2_P1] == type)) then
+                    p_c => tmp1
+                endif
+
             end if
 
 ! ###################################################################
             select case (type)
 
             case (OPR_P2)
-                call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, wrk2d, p_c)
-
-            case (OPR_P1)
-                if (ibm_partial) then
-                    call OPR_PARTIAL1_IBM(nxz, bcs(:, 1), g, p_a, p_b, wrk2d, p_c)
-                else
-                    call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_b, wrk2d)
-                end if
+                call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, p_c)
 
             case (OPR_P2_P1)
-                call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, wrk2d, p_c)
+                call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, p_c)
 
 ! Check whether we need to calculate the 1. order derivative
                 if (g%uniform .or. g%mode_fdm == FDM_COM6_DIRECT) then
-                    call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c, wrk2d)
+                    call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
+                end if
+
+            case (OPR_P1)
+                if (ibm_partial) then
+                    call OPR_PARTIAL1_IBM(nxz, bcs(:, 1), g, p_a, p_b)
+                else
+                    call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_b)
                 end if
 
             case (OPR_P0_INT_VP)
-                call OPR_PARTIAL0_INT(0, nxz, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL0_INT(0, nxz, g, p_a, p_b)
 
             case (OPR_P0_INT_PV)
-                call OPR_PARTIAL0_INT(1, nxz, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL0_INT(1, nxz, g, p_a, p_b)
 
             case (OPR_P1_INT_VP)
-                call OPR_PARTIAL1_INT(0, nxz, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL1_INT(0, nxz, g, p_a, p_b)
 
             case (OPR_P1_INT_PV)
-                call OPR_PARTIAL1_INT(1, nxz, g, p_a, p_b, wrk2d)
+                call OPR_PARTIAL1_INT(1, nxz, g, p_a, p_b)
 
             case (OPR_P0_IBM)
-                call OPR_IBM(nxz, g, p_a, p_b, p_c)
+                call OPR_IBM(nxz, g, p_a, p_b)
 
             end select
 
@@ -790,7 +799,8 @@ contains
                 end if
             end if
 
-            nullify (p_a, p_b, p_c)
+            nullify (p_a, p_b)
+            if (associated(p_c)) nullify(p_c)
 
         end if
 

@@ -33,7 +33,7 @@
 !########################################################################
 program SPECTRA
 
-    use TLAB_TYPES, only: pointers_dt, subarray_dt
+    use TLAB_TYPES, only: pointers_dt
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
@@ -379,6 +379,7 @@ program SPECTRA
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
+        call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
     icalc_radial = 0

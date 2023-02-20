@@ -642,7 +642,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         if (iq == 3) p_h => h3(1:)
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), p_h, &
-                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), wrk1d, tmp11, wrk3d)
+                                        BcsFlowJmin%ref(1, 1, iq), BcsFlowJmax%ref(1, 1, iq), tmp11)
         end if
     end do
 
@@ -652,12 +652,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         if (BcsScalJmax%type(is) == DNS_BCS_NEUMANN) ibc = ibc + 2
         if (ibc > 0) then
             call BOUNDARY_BCS_NEUMANN_Y(ibc, imax, jmax, kmax, g(2), hs(1, is), &
-                                        BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), wrk1d, tmp11, wrk3d)
+                                        BcsScalJmin%ref(1, 1, is), BcsScalJmax%ref(1, 1, is), tmp11)
         end if
 
         if (BcsScalJmin%type(is) /= DNS_SFC_STATIC .or. &
             BcsScalJmax%type(is) /= DNS_SFC_STATIC) then
-            call BOUNDARY_SURFACE_J(is, bcs, s, hs, tmp11, tmp12, tmp21)
+            call BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp11, tmp12)
         end if
     end do
 

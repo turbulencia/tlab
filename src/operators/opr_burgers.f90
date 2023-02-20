@@ -308,9 +308,9 @@ contains
 
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity
         if (ibm_burgers) then
-            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, s, result, wrk2d, dsdx)
+            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, s, result, dsdx)
         else
-            call OPR_PARTIAL2(is, nlines, bcs, g, s, result, wrk2d, dsdx)
+            call OPR_PARTIAL2(is, nlines, bcs, g, s, result, dsdx)
         end if
 
 ! ###################################################################

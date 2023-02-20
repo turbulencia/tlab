@@ -57,9 +57,12 @@ program INIFLOW
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
 
     ! Staggering of the pressure grid not implemented here
-    if (istagger == 1 .or. ivfilter == 1) then
+    if (istagger == 1) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
-        istagger = 0; ivfilter = 0 ! turn staggering off for OPR_POISSON_FXZ(...)
+        istagger = 0 ! turn staggering off for OPR_POISSON_FXZ(...)
+    end if
+    if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
     end if
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
@@ -102,16 +105,15 @@ program INIFLOW
     ! ###################################################################
     call TLAB_WRITE_ASCII(lfile, 'Initializing velocity.')
 
-    call VELOCITY_MEAN(q(1, 1), q(1, 2), q(1, 3), wrk1d)
+    call VELOCITY_MEAN(q(1, 1), q(1, 2), q(1, 3))
 
     select case (flag_u)
     case (PERT_DISCRETE)
-        call VELOCITY_DISCRETE(txc(1, 1), txc(1, 2), txc(1, 3), wrk1d, wrk2d)
+        call VELOCITY_DISCRETE(txc(1, 1), txc(1, 2), txc(1, 3))
         q(1:isize_field, 1:3) = q(1:isize_field, 1:3) + txc(1:isize_field, 1:3)
 
     case (PERT_BROADBAND, PERT_BROADBAND_POTENTIAL, PERT_BROADBAND_VORTICITY)
-        call VELOCITY_BROADBAND(txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), &
-                                wrk1d, wrk2d, wrk3d)
+        call VELOCITY_BROADBAND(txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8))
         q(1:isize_field, 1:3) = q(1:isize_field, 1:3) + txc(1:isize_field, 1:3)
 
     end select
@@ -126,12 +128,12 @@ program INIFLOW
 #define r_loc      q(:, 5)
 #define p_loc      q(:, 6)
 #define T_loc      q(:, 7)
-        call PRESSURE_MEAN(p_loc, T_loc, s, wrk1d)
-        call DENSITY_MEAN(r_loc, p_loc, T_loc, s, txc, wrk1d, wrk2d, wrk3d)
+        call PRESSURE_MEAN(p_loc, T_loc, s)
+        call DENSITY_MEAN(r_loc, p_loc, T_loc, s, txc)
 
         if (flag_u /= 0) then
             call PRESSURE_FLUCTUATION(q(1, 1), q(1, 2), q(1, 3), r_loc, p_loc, txc(1, 1), &
-                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         end if
 
         if (imixture > 0) then
@@ -139,7 +141,7 @@ program INIFLOW
         end if
 
         if (flag_t /= 0) then
-            call DENSITY_FLUCTUATION(s, p_loc, r_loc, txc(1, 1), txc(1, 2), wrk2d)
+            call DENSITY_FLUCTUATION(s, p_loc, r_loc, txc(1, 1), txc(1, 2))
         end if
 
         ! Calculate specfic energy. Array s should contain the species fields at this point.

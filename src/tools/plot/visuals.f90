@@ -12,7 +12,6 @@
 program VISUALS
 
     use TLAB_CONSTANTS
-    use TLAB_TYPES, only: subarray_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS
@@ -33,6 +32,7 @@ program VISUALS
     use FI_STRAIN_EQN
     use OPR_FOURIER
     use OPR_PARTIAL
+    use OPR_FILTERS
 
     implicit none
 
@@ -55,7 +55,7 @@ program VISUALS
 
     integer(wi) opt_format
     integer(wi) opt_cond, opt_cond_scal, opt_cond_relative
-    integer(wi) ij, is, bcs(2, 2)
+    integer(wi) ij, is, bcs(2, 2), ig
     integer(wi) iscal_offset, iread_flow, iread_scal, iread_part, idummy, MaskSize
     real(wp) diff, dummy
     integer(wi) subdomain(6)
@@ -322,6 +322,10 @@ program VISUALS
     if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
     end if
+
+    do ig = 1, 3
+        call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
+    end do
 
     call OPR_CHECK()
 
