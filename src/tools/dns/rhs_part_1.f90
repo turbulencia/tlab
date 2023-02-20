@@ -71,7 +71,7 @@ subroutine RHS_PART_1()
         txc(:, 1) = txc(:, 1) + (visc*dummy2*(txc(:, 4) + txc(:, 5) + txc(:, 6))) !first eq. without ds/dxi
         txc(:, 2) = 1.0_wp - dummy*s(:, 1) - dummy2*s(:, 2) !xi field in txc(1,2)
 
-        call FI_GRADIENT(imax, jmax, kmax, txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d) ! square of chi gradient in txc(1,3)
+        call FI_GRADIENT(imax, jmax, kmax, txc(1, 2), txc(1, 3), txc(1, 4)) ! square of chi gradient in txc(1,3)
         txc(:, 3) = visc*txc(:, 3)
 
         call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(1)), txc(1, 4), wrk1d, wrk3d)

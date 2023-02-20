@@ -51,7 +51,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     end if
 
 ! Calculate vorticiy field w_iw_i
-    call FI_VORTICITY(imax, jmax, kmax, u, v, w, a, txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+    call FI_VORTICITY(imax, jmax, kmax, u, v, w, a, txc(1, 1), txc(1, 2))
 
 ! -------------------------------------------------------------------
 ! Calculate boundaries
@@ -90,7 +90,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     end do
     varname(1) = 'log(W2)'
 
-    call FI_GRADIENT(imax, jmax, kmax, z1, txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+    call FI_GRADIENT(imax, jmax, kmax, z1, txc(1, 2), txc(1, 3))
     do ij = 1, imax*jmax*kmax
         txc(ij, 2) = log(txc(ij, 2))
     end do
@@ -124,7 +124,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     ipfield = ipfield + nfield_loc
     nfield_loc = 1
 
-    call FI_GRADIENT(imax, jmax, kmax, z1, txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+    call FI_GRADIENT(imax, jmax, kmax, z1, txc(1, 2), txc(1, 3))
 
     call FI_ISOSURFACE_ANGLE(imax, jmax, kmax, a, txc(1, 2), txc(1, 1), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
 

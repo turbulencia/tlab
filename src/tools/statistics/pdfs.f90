@@ -347,11 +347,11 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient equation...')
 
             call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s, q(1, 1), q(1, 2), q(1, 3), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call FI_GRADIENT_DIFFUSION(imax, jmax, kmax, s, & ! array q used as auxiliar
-                                       txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), q(1, 1), wrk2d, wrk3d)
+                                       txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), q(1, 1))
             txc(1:isize_field, 2) = txc(1:isize_field, 2)*visc/schmidt(inb_scal)
-            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 3), txc(1, 4))
             txc(1:isize_field, 5) = txc(1:isize_field, 1)/txc(1:isize_field, 3)
             txc(1:isize_field, 4) = log(txc(1:isize_field, 3))
 
@@ -386,7 +386,7 @@ program PDFS
                 end if
 
             else
-                call FI_VORTICITY_BAROCLINIC(imax, jmax, kmax, q(1, 5), q(1, 6), txc(1, 4), txc(1, 3), txc(1, 7), wrk2d, wrk3d)
+                call FI_VORTICITY_BAROCLINIC(imax, jmax, kmax, q(1, 5), q(1, 6), txc(1, 4), txc(1, 3), txc(1, 7))
             end if
             ! result vector in txc1, txc2, txc3
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 7))
@@ -394,13 +394,13 @@ program PDFS
       txc(1:isize_field,8) = txc(1:isize_field,1)*txc(1:isize_field,4) + txc(1:isize_field,2)*txc(1:isize_field,5) + txc(1:isize_field,3)*txc(1:isize_field,6)
 
             call FI_VORTICITY_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
 
             call FI_VORTICITY_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), &
-                                        txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                                        txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
             txc(1:isize_field, 2) = visc*txc(1:isize_field, 2)
 
-            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4), txc(1, 5))
 
             call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5))
 
@@ -492,7 +492,7 @@ program PDFS
         case (7)
             call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy-strain pdf...')
 
-            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
             call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 2) = C_2_R*txc(1:isize_field, 2)
 
@@ -512,7 +512,7 @@ program PDFS
         case (9)
             call TLAB_WRITE_ASCII(lfile, 'Computing scalar-scalar--gradient pdf...')
 
-            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
             txc(1:isize_field, 2) = log(txc(1:isize_field, 1))
 
             ifield = ifield + 1; vars(1)%field => s(:, 1); vars(ifield)%tag = 's'; ibc(ifield) = 1

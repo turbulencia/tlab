@@ -4,7 +4,7 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Calculate the magnitude of the scalar gradient as given 
+!# Calculate the magnitude of the scalar gradient as given
 !# by G_i G_i, where G_i is ds/dx_i
 !# and terms in its evolution equation.
 !#
@@ -13,139 +13,136 @@
 !########################################################################
 ! Calculate the magnitude of the scalar gradient
 !########################################################################
-SUBROUTINE FI_GRADIENT(nx,ny,nz, s, result, tmp1, wrk2d,wrk3d)
+subroutine FI_GRADIENT(nx, ny, nz, s, result, tmp1)
 
-  USE TLAB_VARS, ONLY : g
-  use OPR_PARTIAL
-  IMPLICIT NONE
+    use TLAB_VARS, only: g
+    use OPR_PARTIAL
+    implicit none
 
-  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1
-  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
+    TINTEGER, intent(IN) :: nx, ny, nz
+    TREAL, dimension(nx*ny*nz), intent(IN) :: s
+    TREAL, dimension(nx*ny*nz), intent(OUT) :: result
+    TREAL, dimension(nx*ny*nz), intent(INOUT) :: tmp1
 
 ! -------------------------------------------------------------------
-  TINTEGER bcs(2,2)
-  
+    TINTEGER bcs(2, 2)
+
 ! ###################################################################
-  bcs = 0
+    bcs = 0
 
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), s,result, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), s,tmp1,   wrk3d ,wrk2d,wrk3d)
-  result = result*result + tmp1*tmp1
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), s,tmp1,   wrk3d ,wrk2d,wrk3d)
-  result = result        + tmp1*tmp1
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, result)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, tmp1)
+    result = result*result + tmp1*tmp1
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, tmp1)
+    result = result + tmp1*tmp1
 
-  RETURN
-END SUBROUTINE FI_GRADIENT
+    return
+end subroutine FI_GRADIENT
 
 !########################################################################
 ! Calculate the scalar gradient production term as given by -(G_i G_j s_ij)
 !########################################################################
-SUBROUTINE FI_GRADIENT_PRODUCTION(nx,ny,nz, s, u,v,w, result, grad_x,grad_y,grad_z, tmp1,tmp2, wrk2d,wrk3d)
+subroutine FI_GRADIENT_PRODUCTION(nx, ny, nz, s, u, v, w, result, grad_x, grad_y, grad_z, tmp1, tmp2)
 
-  USE TLAB_VARS, ONLY : g
-  use OPR_PARTIAL
+    use TLAB_VARS, only: g
+    use OPR_PARTIAL
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s, u,v,w
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: grad_x,grad_y,grad_z
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1,tmp2
-  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
+    TINTEGER, intent(IN) :: nx, ny, nz
+    TREAL, dimension(nx*ny*nz), intent(IN) :: s, u, v, w
+    TREAL, dimension(nx*ny*nz), intent(OUT) :: result
+    TREAL, dimension(nx*ny*nz), intent(INOUT) :: grad_x, grad_y, grad_z
+    TREAL, dimension(nx*ny*nz), intent(INOUT) :: tmp1, tmp2
 
 ! -------------------------------------------------------------------
-  TINTEGER bcs(2,2)
-  
+    TINTEGER bcs(2, 2)
+
 ! ###################################################################
-  bcs = 0
+    bcs = 0
 
 ! ###################################################################
 ! Vorticity vector
 ! ###################################################################
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), s, grad_x, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), s, grad_y, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), s, grad_z, wrk3d ,wrk2d,wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, grad_x)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, grad_y)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, grad_z)
 
 ! ###################################################################
 ! Production term
 ! ###################################################################
 ! Ux, Vy, Wz
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), u, tmp1, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), v, tmp2, wrk3d ,wrk2d,wrk3d)
-  result = tmp1 *grad_x*grad_x + tmp2 *grad_y*grad_y
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2)
+    result = tmp1*grad_x*grad_x + tmp2*grad_y*grad_y
 
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), w, tmp2, wrk3d ,wrk2d,wrk3d)
-  result = result + tmp2 *grad_z*grad_z
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp2)
+    result = result + tmp2*grad_z*grad_z
 
 ! Uy, Vx
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), v, tmp1, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), u, tmp2, wrk3d ,wrk2d,wrk3d)
-  result = result +( tmp1 +tmp2 ) *grad_x*grad_y
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp2)
+    result = result + (tmp1 + tmp2)*grad_x*grad_y
 
 ! Uz, Wx
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), w, tmp1, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), u, tmp2, wrk3d ,wrk2d,wrk3d)
-  result = result +( tmp1 +tmp2 ) *grad_x*grad_z
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), w, tmp1)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), u, tmp2)
+    result = result + (tmp1 + tmp2)*grad_x*grad_z
 
 ! Vz, Wy
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), w, tmp1, wrk3d ,wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), v, tmp2, wrk3d ,wrk2d,wrk3d)
-  result =-(result + ( tmp1 +tmp2 ) *grad_y*grad_z)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), w, tmp1)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), v, tmp2)
+    result = -(result + (tmp1 + tmp2)*grad_y*grad_z)
 
-  RETURN
-END SUBROUTINE FI_GRADIENT_PRODUCTION
+    return
+end subroutine FI_GRADIENT_PRODUCTION
 
 !########################################################################
 ! Calculate the gradient diffusion term as given by G_i lap G_i
 ! The diffusivity D is not multiplied here.
 !########################################################################
-SUBROUTINE FI_GRADIENT_DIFFUSION(nx,ny,nz, s, result, grad, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
+subroutine FI_GRADIENT_DIFFUSION(nx, ny, nz, s, result, grad, tmp1, tmp2, tmp3, tmp4)
 
-  USE TLAB_VARS, ONLY : g
-  use OPR_PARTIAL
+    use TLAB_VARS, only: g
+    use OPR_PARTIAL
 
-  IMPLICIT NONE
+    implicit none
 
-  TINTEGER,                   INTENT(IN)    :: nx,ny,nz
-  TREAL, DIMENSION(nx*ny*nz), INTENT(IN)    :: s
-  TREAL, DIMENSION(nx*ny*nz), INTENT(OUT)   :: result
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: grad
-  TREAL, DIMENSION(nx*ny*nz), INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4
-  TREAL, DIMENSION(*),        INTENT(INOUT) :: wrk2d,wrk3d
+    TINTEGER, intent(IN) :: nx, ny, nz
+    TREAL, dimension(nx*ny*nz), intent(IN) :: s
+    TREAL, dimension(nx*ny*nz), intent(OUT) :: result
+    TREAL, dimension(nx*ny*nz), intent(INOUT) :: grad
+    TREAL, dimension(nx*ny*nz), intent(INOUT) :: tmp1, tmp2, tmp3, tmp4
 
 ! -------------------------------------------------------------------
-  TINTEGER bcs(2,2)
-  
+    TINTEGER bcs(2, 2)
+
 ! ###################################################################
-  bcs = 0
+    bcs = 0
 
 ! G_x
-  CALL OPR_PARTIAL_X(OPR_P1, nx,ny,nz, bcs, g(1), s,grad, wrk3d ,wrk2d,wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, grad)
 
-  CALL OPR_PARTIAL_Z(OPR_P2, nx,ny,nz, bcs, g(3), grad,tmp3, tmp4, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, nx,ny,nz, bcs, g(2), grad,tmp2, tmp4, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2, nx,ny,nz, bcs, g(1), grad,tmp1, tmp4, wrk2d,wrk3d)
-  result = grad*( tmp1 +tmp2 +tmp3 )
+    call OPR_PARTIAL_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
+    call OPR_PARTIAL_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
+    result = grad*(tmp1 + tmp2 + tmp3)
 
 ! G_y
-  CALL OPR_PARTIAL_Y(OPR_P1, nx,ny,nz, bcs, g(2), s,grad, wrk3d ,wrk2d,wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, grad)
 
-  CALL OPR_PARTIAL_Z(OPR_P2, nx,ny,nz, bcs, g(3), grad,tmp3, tmp4, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, nx,ny,nz, bcs, g(2), grad,tmp2, tmp4, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2, nx,ny,nz, bcs, g(1), grad,tmp1, tmp4, wrk2d,wrk3d)
-  result = result + grad*( tmp1+tmp2+tmp3 )
+    call OPR_PARTIAL_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
+    call OPR_PARTIAL_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
+    result = result + grad*(tmp1 + tmp2 + tmp3)
 
 ! G_z
-  CALL OPR_PARTIAL_Z(OPR_P1, nx,ny,nz, bcs, g(3), s,grad, wrk3d ,wrk2d,wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, grad)
 
-  CALL OPR_PARTIAL_Z(OPR_P2, nx,ny,nz, bcs, g(3), grad,tmp3, tmp4, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P2, nx,ny,nz, bcs, g(2), grad,tmp2, tmp4, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P2, nx,ny,nz, bcs, g(1), grad,tmp1, tmp4, wrk2d,wrk3d)
-  result = result + grad*( tmp1 +tmp2 +tmp3 )
+    call OPR_PARTIAL_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
+    call OPR_PARTIAL_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
+    result = result + grad*(tmp1 + tmp2 + tmp3)
 
-  RETURN
-END SUBROUTINE FI_GRADIENT_DIFFUSION
+    return
+end subroutine FI_GRADIENT_DIFFUSION

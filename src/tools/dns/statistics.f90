@@ -94,7 +94,7 @@ contains
         ! ###################################################################
         if (stats_intermittency) then
             allocate (gate(isize_field))
-            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 4), wrk2d, wrk3d)
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 4))
 
             ! calculate vorticity gate based on 1% threshold
             call MINMAX(imax, jmax, kmax, txc(1, 1), amin(1), amax(1))

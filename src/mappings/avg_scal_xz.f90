@@ -18,7 +18,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
     use TLAB_CONSTANTS, only: efile, lfile, wp, wi
     use TLAB_VARS
-    use TLAB_ARRAYS, only: wrk1d, wrk2d
+    use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use THERMO_VARS, only: imixture, thermo_param
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s, scal_bcs
@@ -513,7 +513,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, dsdx, dsdy, dsdz) ! calculate xi in dsdx
-            call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1, wrk2d, p_wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1)
 
             dummy = -diff*coefQ
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
@@ -546,7 +546,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
         else
             if (buoyancy%type /= EQNS_EXPLICIT) then
-                call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy, wrk2d, p_wrk3d)
+                call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy)
                 call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, dsdx, tmp1) ! dsdx contains gradient
                 tmp1 = tmp1*diff/froude
             end if

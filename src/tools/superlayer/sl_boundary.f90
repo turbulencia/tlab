@@ -245,7 +245,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! Based on vorticity
         ELSE IF ( iint .EQ. 2 ) THEN
            CALL TLAB_WRITE_ASCII(lfile,'Calculating vorticity...')
-           CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, field, txc(1),txc(1+isize_field), wrk2d,wrk3d)
+           CALL FI_VORTICITY(imax,jmax,kmax, u,v,w, field, txc(1),txc(1+isize_field))
            IF      ( ith .EQ. 1 ) THEN ! relative to max
               CALL MINMAX(imax,jmax,kmax, field, vmin,vmax)
               vmin = threshold*threshold*vmax
@@ -259,7 +259,7 @@ CALL FDM_INITIALIZE(z, g(3), wrk1d)
 ! Based on scalar gradient
         ELSE IF ( iint .EQ. 3 ) THEN
            CALL TLAB_WRITE_ASCII(lfile,'Calculating scalar gradient...')
-           CALL FI_GRADIENT(imax,jmax,kmax, s,field, txc, wrk2d,wrk3d)
+           CALL FI_GRADIENT(imax,jmax,kmax, s,field, txc)
            CALL MINMAX(imax,jmax,kmax, field, vmin,vmax)
            WRITE(str,'(E22.15E3,E22.15E3)') vmin,vmax; str='Bounds '//TRIM(ADJUSTL(str))
            CALL TLAB_WRITE_ASCII(lfile,str)

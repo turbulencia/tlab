@@ -4,7 +4,6 @@ subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                    nx, ny, nz, igate_size, gate_threshold, q, s, txc, gate)
     use TLAB_CONSTANTS, only: wp, wi, small_wp
     use TLAB_VARS, only: g
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use FI_VECTORCALCULUS, only: FI_CURL
     use OPR_PARTIAL
     implicit none
@@ -30,10 +29,10 @@ subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
         txc(:, 1) = s(:, opt_cond_scal)
 
     else if (opt_cond == 3) then ! Based on vorticity
-        call FI_VORTICITY(nx, ny, nz, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+        call FI_VORTICITY(nx, ny, nz, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
 
     else if (opt_cond == 4) then ! Based on scalar gradient
-        call FI_GRADIENT(nx, ny, nz, s, txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+        call FI_GRADIENT(nx, ny, nz, s, txc(1, 1), txc(1, 2), txc(1, 3))
 
     else if (opt_cond == 5) then ! Based on vertical velocity
         txc(:, 1) = q(:, 2)
@@ -46,11 +45,11 @@ subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
         call FI_CURL(nx, ny, nz, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
 
         txc(:, 4) = s(:, opt_cond_scal)
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), txc(1, 4), txc(1, 5), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), txc(1, 4), txc(1, 5))
         txc(:, 1) = txc(:, 1)*txc(:, 5)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), txc(1, 4), txc(1, 5), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), txc(1, 4), txc(1, 5))
         txc(:, 1) = txc(:, 1) + txc(:, 2)*txc(:, 5)
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), txc(1, 4), txc(1, 5), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), txc(1, 4), txc(1, 5))
         txc(:, 1) = txc(:, 1) + txc(:, 3)*txc(:, 5)
 
         txc(:, 1) = txc(:, 1)*txc(:, 1)
