@@ -774,12 +774,12 @@ contains
         if (.not. g(2)%periodic) then
             call BOUNDARY_BCS_Y(isize_field, M2_max, rho, u, v, w, p, GAMMA_LOC(1), s, &
                                 hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, &
-                                txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), AUX_LOC(:), wrk2d, wrk3d)
+                                txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), AUX_LOC(:))
         end if
 
         if (.not. g(1)%periodic) then
             call BOUNDARY_BCS_X(isize_field, M2_max, etime, rho, u, v, w, p, GAMMA_LOC(1), s, &
-                                hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, txc, AUX_LOC(:), wrk1d, wrk2d, wrk3d)
+                                hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, txc, AUX_LOC(:))
         end if
 
 #undef GAMMA_LOC
