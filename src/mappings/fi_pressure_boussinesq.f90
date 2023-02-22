@@ -12,7 +12,6 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_VARS, only: imode_eqns, imode_ibm
     use TLAB_VARS, only: rbackground
     use TLAB_VARS, only: PressureFilter, istagger
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use IBM_VARS, only: ibm_burgers
     use OPR_PARTIAL
@@ -32,7 +31,6 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     target q, tmp
 ! -----------------------------------------------------------------------
     integer(wi) bcs(2, 2)
-    integer, parameter :: i3 = 3
 
 ! Pointers to existing allocated space
     real(wp), dimension(:), pointer :: u, v, w
@@ -101,10 +99,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
     end if
     if (istagger == 1) then
-        call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp2)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1)
     else
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp1)
     end if
     p = p + tmp1
 
@@ -113,11 +111,11 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
     end if
     if (istagger == 1) then
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp3, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp2)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp3, tmp1)
     else
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp1)
     end if
     p = p + tmp1
 
@@ -126,10 +124,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp5)
     end if
     if (istagger == 1) then
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp5, tmp2)
+        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp1)
     else
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp1)
     end if
     p = p + tmp1
 
@@ -138,8 +136,8 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! #######################################################################
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
     if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
     end if
     p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
@@ -147,7 +145,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
 ! filter pressure and dpdy
     if      (PressureFilter(1)%type /= DNS_FILTER_NONE) then
@@ -160,8 +158,8 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
 ! Stagger pressure field p back on velocity grid
     if (istagger == 1) then
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), p, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp1, p, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), p, tmp1)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp1, p)
     end if
 
     nullify (u, v, w, tmp3, tmp4, tmp5, p_bcs)

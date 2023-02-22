@@ -1,16 +1,14 @@
 #include "dns_const.h"
 
 !########################################################################
-!#
 !# Calculates turbulent dissipation per unit volume \rho \epsilon = \tau'_{ij}u'_{ij}
 !# It assumes constant visocsity
-!#
 !########################################################################
 subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: area, visc
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use AVGS, only: AVG_IK_V
     use OPR_PARTIAL
@@ -31,9 +29,9 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
     bcs = 0
 
 ! Diagonal terms
-    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp3)
     tmp4 = (tmp1 + tmp2 + tmp3)*2.0_wp/3.0_wp
 
 ! 11
@@ -51,7 +49,7 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
     if (flag == 1) then
         call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
         call AVG_IK_V(nx, ny, nz, ny, v, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
-        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
             tmp2(:, j, :) = tmp2(:, j, :) - wrk1d(j, 2)
@@ -71,14 +69,14 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 
 ! Off-diagonal terms
 ! 12
-    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp1)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp2)
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     if (flag == 1) then
         call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
         call AVG_IK_V(nx, ny, nz, ny, u, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
-        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
             tmp1(:, j, :) = tmp1(:, j, :) - wrk1d(j, 2)
@@ -87,8 +85,8 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
     eps = eps + p_wrk3d*(tmp1 + tmp2)
 
 ! 13 term
-    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), u, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), w, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), u, tmp1)
+    call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), w, tmp2)
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     if (flag == 1) then
@@ -100,14 +98,14 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
     eps = eps + p_wrk3d*(tmp1 + tmp2)
 
 ! 23 term
-    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), w, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), v, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), w, tmp1)
+    call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), v, tmp2)
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     if (flag == 1) then
         call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
         call AVG_IK_V(nx, ny, nz, ny, w, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
-        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
             tmp1(:, j, :) = tmp1(:, j, :) - wrk1d(j, 2)

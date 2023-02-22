@@ -373,7 +373,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FI_SUBSIDENCE(subsidence, nx, ny, nz, a, source)
-        use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+        use TLAB_ARRAYS, only: wrk1d
         use OPR_PARTIAL, only: OPR_PARTIAL_Y
         use AVGS, only: AVG1V2D_V
         type(term_dt), intent(in) :: subsidence
@@ -383,7 +383,6 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) bcs(2, 2), j
-        integer, parameter :: i1 = 1
 
         !########################################################################
         bcs = 0
@@ -393,7 +392,7 @@ contains
         case (EQNS_SUB_CONSTANT_LOCAL)
             wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! sedimentation velocity
 
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), a, source, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), a, source)
 
             do j = 1, ny
                 source(:, j, :) = source(:, j, :)*wrk1d(j, 1)
@@ -403,7 +402,7 @@ contains
             wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! sedimentation velocity
 
             call AVG1V2D_V(nx, ny, nz, 1, a, wrk1d(:, 2), wrk1d(1, 3))     ! Calculate averaged scalar into wrk1d(:,2)
-            call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 2), wrk1d(1, 3), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 2), wrk1d(1, 3))
 
             do j = 1, ny
                 source(:, j, :) = wrk1d(j, 3)*wrk1d(j, 1)
@@ -418,7 +417,6 @@ contains
     !# Calculate the transport terms due to settling in an airwater mixture.
     !########################################################################
     subroutine FI_TRANSPORT(transport, flag_grad, nx, ny, nz, is, s, trans, tmp)
-        use TLAB_ARRAYS, only: wrk2d, wrk3d
         use OPR_PARTIAL, only: OPR_PARTIAL_Y
         type(term_dt), intent(IN) :: transport
         integer(wi), intent(IN) :: nx, ny, nz, flag_grad
@@ -439,7 +437,7 @@ contains
 
         if (transport%type == EQNS_TRANS_AIRWATERSIMPLIFIED) then
             if (flag_grad == 1) then
-                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s(1, is_ref), tmp, wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s(1, is_ref), tmp)
                 if (exponent > 0.0_wp) tmp(:, 1) = tmp(:, 1)*(s(:, is_ref)**exponent)
             end if
 
@@ -467,7 +465,7 @@ contains
 
             end select
 
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp(1, 1), trans(1, 1), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp(1, 1), trans(1, 1))
 
         end if
 
@@ -649,7 +647,6 @@ contains
     ! Velocity field with no-slip
     !########################################################################
     subroutine FI_FORCING_1(imax, jmax, kmax, time, visc, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use TLAB_ARRAYS, only: wrk2d, wrk3d
         use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
         integer(wi) imax, jmax, kmax
         real(wp) time, visc
@@ -686,23 +683,23 @@ contains
             end do; end do
 
         ! Diffusion and convection terms in Ox momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp4, tmp3, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp4, tmp3)
         do ij = 1, imax*jmax*kmax
             h1(ij) = h1(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp2(ij))
         end do
 
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, tmp3, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, tmp3)
         do ij = 1, imax*jmax*kmax
             h1(ij) = h1(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp1(ij))
         end do
 
         ! Diffusion and convection terms in Oy momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp4, tmp3, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp4, tmp3)
         do ij = 1, imax*jmax*kmax
             h2(ij) = h2(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp2(ij))
         end do
 
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp2, tmp4, tmp3, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp2, tmp4, tmp3)
         do ij = 1, imax*jmax*kmax
             h2(ij) = h2(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp1(ij))
         end do
@@ -716,8 +713,8 @@ contains
             end do; end do
 
         ! Pressure gradient
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp3)
 
         do ij = 1, imax*jmax*kmax
             h1(ij) = h1(ij) + tmp2(ij)
