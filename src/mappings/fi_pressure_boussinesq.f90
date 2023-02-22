@@ -149,11 +149,11 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
 ! filter pressure and dpdy
     if      (PressureFilter(1)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp1); call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp3)
+        call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), p)
     else if (PressureFilter(2)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp1); call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp3)
+        call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), p)
     else if (PressureFilter(3)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp1); call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp3)
+        call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), p)
     end if
 
 ! Stagger pressure field p back on velocity grid
