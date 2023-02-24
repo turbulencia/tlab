@@ -146,7 +146,6 @@ contains
     ! #######################################################################
     ! #######################################################################
     subroutine FI_SOURCES_SCAL(s, hs, tmp1, tmp2)
-        use TLAB_ARRAYS, only: wrk1d, wrk3d
         real(wp), intent(in) :: s(isize_field, *)
         real(wp), intent(out) :: hs(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
@@ -167,11 +166,11 @@ contains
             if (radiation%active(is)) then
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, radiation%scalar(is)), tmp2)
-                    call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1, wrk1d, wrk3d)
+                    call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1)
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(1, is))
 
                 else
-                    call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), tmp1, wrk1d, wrk3d)
+                    call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

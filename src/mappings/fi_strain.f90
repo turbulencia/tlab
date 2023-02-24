@@ -8,7 +8,6 @@
 module FI_STRAIN_EQN
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use OPR_PARTIAL
 
     implicit none

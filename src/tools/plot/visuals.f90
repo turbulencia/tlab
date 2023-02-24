@@ -851,10 +851,10 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
                         if (imode_eqns == DNS_EQNS_ANELASTIC) then
                          call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, radiation%scalar(is)), txc(1, 2))
-                            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1), wrk1d, wrk3d)
+                            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1))
                             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, txc(1, 1))
                         else
-                           call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(1)), txc(1, 1), wrk1d, wrk3d)
+                           call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(1)), txc(1, 1))
                         end if
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if

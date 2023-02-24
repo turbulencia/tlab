@@ -483,14 +483,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (radiation%active(is)) then ! Radiation in tmp1 and dsdx
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, radiation%scalar(is)), tmp2)
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1, wrk1d, p_wrk3d)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx, wrk1d, p_wrk3d)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
             tmp2 = 0.0_wp
 
         else
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, p_wrk3d)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx, wrk1d, p_wrk3d)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx)
         end if
     end if
 
@@ -524,11 +524,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             if (radiation%active(is)) then ! radiation source; needs dsdy
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, p_wrk3d)
+                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 ! Correction term needs dsdz
-                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx, wrk1d, p_wrk3d)
+                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx)
                 dsdx = dsdx*dsdz*dummy
             else
                 tmp1 = 0.0_wp; dsdx = 0.0_wp

@@ -7,9 +7,9 @@
 !# using compact schemes to calculate the integral term.
 !#
 !########################################################################
-subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
-
+subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
     use TLAB_TYPES, only: term_dt, grid_dt
+    use TLAB_ARRAYS, only: wrk1d, wrk3d
     use AVGS, only: AVG1V2D_V
 
     implicit none
@@ -19,10 +19,8 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
     type(grid_dt), intent(IN) :: g
     TREAL, dimension(nx*ny*nz), intent(IN) :: s        ! Radiatively active scalar
     TREAL, dimension(nx*ny*nz), intent(OUT) :: r        ! Radiative heating rate
-    TREAL, dimension(ny, *), intent(INOUT) :: wrk1d
-    TREAL, dimension(nx*ny*nz), intent(INOUT) :: wrk3d
 
-    target s, r, wrk3d
+    target s, r
 
 ! -----------------------------------------------------------------------
     TINTEGER j, ip, ip2, nxy, nxz, ibc
@@ -119,9 +117,9 @@ end subroutine OPR_RADIATION
 
 !########################################################################
 !########################################################################
-subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
-
+subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     use TLAB_TYPES, only: term_dt, grid_dt
+    use TLAB_ARRAYS, only: wrk1d, wrk3d
     use AVGS, only: AVG1V2D_V
 
     implicit none
@@ -131,10 +129,8 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
     type(grid_dt), intent(IN) :: g
     TREAL, dimension(nx*ny*nz), intent(IN) :: s        ! Radiatively active scalar
     TREAL, dimension(nx*ny*nz), intent(OUT) :: r        ! Radiative flux
-    TREAL, dimension(ny, *), intent(INOUT) :: wrk1d
-    TREAL, dimension(nx*ny*nz), intent(INOUT) :: wrk3d
 
-    target s, r, wrk3d
+    target s, r
 
 ! -----------------------------------------------------------------------
     TINTEGER j, ip, ip2, nxy, nxz, ibc
