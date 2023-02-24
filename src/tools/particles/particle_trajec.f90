@@ -41,7 +41,6 @@ program PARTICLE_TRAJEC
     use PARTICLE_PROCS
 
     implicit none
-#include "integers.h"
 
 ! -------------------------------------------------------------------
 

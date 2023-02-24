@@ -11,8 +11,6 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     
     implicit none
 
-#include "integers.h"
-
 #define L_NFIELDS_MAX 5
 
     TREAL threshold

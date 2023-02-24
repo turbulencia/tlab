@@ -25,8 +25,6 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
 
     implicit none
 
-#include "integers.h"
-
     TINTEGER, intent(IN) :: check_mode
     TINTEGER, intent(INOUT) :: err_count, case_count
     TREAL, dimension((imax + 2)*(jmax + 2)*kmax) :: tmp1, tmp2, tmp3, tmp4, wrk2d, wrk3d

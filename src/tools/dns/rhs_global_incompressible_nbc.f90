@@ -55,7 +55,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     implicit none
 
-#include "integers.h"
     !
     ! PARAMETERS
     !

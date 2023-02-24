@@ -31,8 +31,6 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
     implicit none
 
-#include "integers.h"
-
 #define L_NFIELDS_MAX 13
 
     TINTEGER isl, ith, nmax, istep, kstep, nfield, itxc_size, iavg, ibuffer_npy

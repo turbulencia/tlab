@@ -10,8 +10,6 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 
     implicit none
 
-#include "integers.h"
-
 #define L_NFIELDS_MAX 4
 
     TREAL threshold

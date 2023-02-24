@@ -9,8 +9,6 @@ subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
 
     implicit none
 
-#include "integers.h"
-
     TINTEGER ilog
     TREAL u(imax, jmax, kmax)
     TREAL v(imax, jmax, kmax)

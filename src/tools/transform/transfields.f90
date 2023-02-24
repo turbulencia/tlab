@@ -25,8 +25,6 @@ program TRANSFIELDS
 
     implicit none
 
-#include "integers.h"
-
     ! Parameter definitions
     TINTEGER, parameter :: itime_size_max = 3000
     TINTEGER, parameter :: iopt_size_max = 512
@@ -409,7 +407,7 @@ program TRANSFIELDS
             call TLAB_WRITE_ASCII(lfile, 'Croping above '//trim(adjustl(str))//' for remeshing...')
             write (str, '(I3)') subdomain(3)
             call TLAB_WRITE_ASCII(lfile, 'Croping below '//trim(adjustl(str))//' for remeshing...')
-            call TRANS_CROP(i1, jmax, 1, subdomain, g(2)%nodes, y_aux)
+            call TRANS_CROP(1, jmax, 1, subdomain, g(2)%nodes, y_aux)
 
             y_aux(1) = y_dst(1)             ! Using min and max of new grid
             y_aux(jmax_aux) = y_dst(g_dst(2)%size)
@@ -622,14 +620,14 @@ program TRANSFIELDS
             if (icalc_flow > 0) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Adding mean flow profiles...')
-                    call TRANS_ADD_MEAN(i0, iq, imax, jmax, kmax, y, q(1, iq), q_dst(1, iq))
+                    call TRANS_ADD_MEAN(0, iq, imax, jmax, kmax, y, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
             if (icalc_scal > 0) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Adding mean scal profiles...')
-                    call TRANS_ADD_MEAN(i1, is, imax, jmax, kmax, y, s(1, is), s_dst(1, is))
+                    call TRANS_ADD_MEAN(1, is, imax, jmax, kmax, y, s(1, is), s_dst(1, is))
                 end do
             end if
 

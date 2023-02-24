@@ -14,8 +14,6 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
 
     implicit none
 
-#include "integers.h"
-
     type(term_dt), intent(IN) :: radiation
     TINTEGER, intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
@@ -53,7 +51,7 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
             p_dst => wrk3d
         end if
 
-        call AVG1V2D_V(nx, ny, nz, i1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
+        call AVG1V2D_V(nx, ny, nz, 1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
 
 ! ###################################################################
     else if (radiation%type == EQNS_RAD_BULK1D_LOCAL) then
@@ -128,8 +126,6 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
 
     implicit none
 
-#include "integers.h"
-
     type(term_dt), intent(IN) :: radiation
     TINTEGER, intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
@@ -167,7 +163,7 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r, wrk1d, wrk3d)
             p_dst => wrk3d
         end if
 
-        call AVG1V2D_V(nx, ny, nz, i1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
+        call AVG1V2D_V(nx, ny, nz, 1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
 
 ! ###################################################################
     else if (radiation%type == EQNS_RAD_BULK1D_LOCAL) then

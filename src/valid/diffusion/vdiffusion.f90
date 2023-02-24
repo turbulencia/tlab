@@ -1,101 +1,99 @@
 #include "types.h"
 #include "dns_const.h"
 
-PROGRAM VDIFFUSION
+program VDIFFUSION
 
-  USE TLAB_VARS
-  USE IO_FIELDS
+    use TLAB_VARS
+    use IO_FIELDS
 
-  IMPLICIT NONE
+    implicit none
 
-#include "integers.h"
+    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
+    TREAL, dimension(:, :), allocatable :: q, s, s_r
+    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: q, s, s_r
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d, wrk2d, wrk3d
-
-  TINTEGER i, j, ij, iopt
-  TINTEGER isize_wrk3d
-  TREAL dummy, error, pi_loc, factor, wavenumber, x_loc
-  CHARACTER*(32) fname
+    TINTEGER i, j, ij, iopt
+    TINTEGER isize_wrk3d
+    TREAL dummy, error, pi_loc, factor, wavenumber, x_loc
+    character*(32) fname
 
 ! ###################################################################
-  CALL DNS_START
+    call DNS_START
 
-  CALL IO_READ_GLOBAL(ifile)
+    call IO_READ_GLOBAL(ifile)
 
-  isize_wrk3d = isize_field
+    isize_wrk3d = isize_field
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
-  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
-  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
+    allocate (x(g(1)%size, g(1)%inb_grid))
+    allocate (y(g(2)%size, g(2)%inb_grid))
+    allocate (z(g(3)%size, g(3)%inb_grid))
 
-  ALLOCATE(wrk1d(isize_wrk1d*inb_wrk1d))
-  ALLOCATE(wrk2d(isize_wrk2d*inb_wrk2d))
-  ALLOCATE(wrk3d(isize_wrk3d))
-  ALLOCATE(  q(isize_field,3))
-  ALLOCATE(  s(isize_field,1))
-  ALLOCATE(s_r(isize_field,1))
+    allocate (wrk1d(isize_wrk1d*inb_wrk1d))
+    allocate (wrk2d(isize_wrk2d*inb_wrk2d))
+    allocate (wrk3d(isize_wrk3d))
+    allocate (q(isize_field, 3))
+    allocate (s(isize_field, 1))
+    allocate (s_r(isize_field, 1))
 
-  CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
-  CALL FDM_INITIALIZE(x, g(1), wrk1d)
-  CALL FDM_INITIALIZE(y, g(2), wrk1d)
-  CALL FDM_INITIALIZE(z, g(3), wrk1d)
-
-! ###################################################################
-  wavenumber = C_1_R
-  pi_loc     = ACOS(-C_1_R)
-
-  WRITE(*,*) '1-ICs / 2-Error ?'; READ(*,*) iopt
-
-  IF      ( iopt .EQ. 1 ) THEN
-  DO j = 1,jmax; DO i = 1,imax
-     ij = i + imax*(j-1)
-     s(ij,1) = SIN(C_2_R*pi_loc/scalex*wavenumber*x(i))
-  ENDDO; ENDDO
-  fname = TRIM(ADJUSTL(tag_scal))//'0'
-  CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, 1, s)
-
-  q(:,1) = mean_u; q(:,2) = C_0_R; q(:,3) = C_0_R
-  fname = TRIM(ADJUSTL(tag_flow))//'0'
-  CALL IO_WRITE_FIELDS(fname, IO_FLOW, imax,jmax,kmax, 3, q)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call FDM_INITIALIZE(x, g(1), wrk1d)
+    call FDM_INITIALIZE(y, g(2), wrk1d)
+    call FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
-  ELSE IF ( iopt .EQ. 2 ) THEN
-  WRITE(*,*) 'Iteration?'; READ(*,*) itime
+    wavenumber = C_1_R
+    pi_loc = acos(-C_1_R)
 
-  WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-  CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, 1,0, s)
+    write (*, *) '1-ICs / 2-Error ?'; read (*, *) iopt
+
+    if (iopt == 1) then
+    do j = 1, jmax; do i = 1, imax
+            ij = i + imax*(j - 1)
+            s(ij, 1) = sin(C_2_R*pi_loc/scalex*wavenumber*x(i))
+        end do; end do
+    fname = trim(adjustl(tag_scal))//'0'
+    call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, s)
+
+    q(:, 1) = mean_u; q(:, 2) = C_0_R; q(:, 3) = C_0_R
+    fname = trim(adjustl(tag_flow))//'0'
+    call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, q)
+
+! ###################################################################
+    else if (iopt == 2) then
+    write (*, *) 'Iteration?'; read (*, *) itime
+
+    write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
+    call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, 0, s)
 
 ! Theoretical
-  factor = EXP(-visc*rtime*(C_2_R*pi_loc/scalex*wavenumber)**2)
-  DO j = 1,jmax; DO i = 1,imax
-     ij = i + imax*(j-1)
-     x_loc = x(i) - mean_u*rtime;
-     s_r(ij,1) = factor*SIN(C_2_R*pi_loc/scalex*wavenumber*x_loc)
-  ENDDO; ENDDO
+    factor = exp(-visc*rtime*(C_2_R*pi_loc/scalex*wavenumber)**2)
+    do j = 1, jmax; do i = 1, imax
+            ij = i + imax*(j - 1)
+            x_loc = x(i) - mean_u*rtime; 
+            s_r(ij, 1) = factor*sin(C_2_R*pi_loc/scalex*wavenumber*x_loc)
+        end do; end do
 
 ! Error
-  error = C_0_R
-  dummy = C_0_R
-  DO ij = 1,isize_field
-     wrk3d(ij) = s(ij,1)-s_r(ij,1)
-     error = error + wrk3d(ij)*wrk3d(ij)
-     dummy = dummy + s_r(ij,1)*s_r(ij,1)
-  ENDDO
+    error = C_0_R
+    dummy = C_0_R
+    do ij = 1, isize_field
+        wrk3d(ij) = s(ij, 1) - s_r(ij, 1)
+        error = error + wrk3d(ij)*wrk3d(ij)
+        dummy = dummy + s_r(ij, 1)*s_r(ij, 1)
+    end do
 
-  IF ( dummy .GT. C_0_R ) THEN
-     WRITE(*,*) 'L-infinity .................: ', MAXVAL(ABS(wrk3d))
-     WRITE(*,*) 'Absolute error .............: ', sqrt(error/M_REAL(imax*jmax))
-     WRITE(*,*) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-     fname = 'error'
-     CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, 1, wrk3d)
-  ENDIF
+    if (dummy > C_0_R) then
+        write (*, *) 'L-infinity .................: ', maxval(abs(wrk3d))
+        write (*, *) 'Absolute error .............: ', sqrt(error/M_REAL(imax*jmax))
+        write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+        fname = 'error'
+        call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, wrk3d)
+    end if
 
-  ENDIF
+    end if
 
-  STOP
-END PROGRAM VDIFFUSION
+    stop
+end program VDIFFUSION

@@ -25,8 +25,6 @@ program APRIORI
 
     implicit none
 
-#include "integers.h"
-
 ! Parameter definitions
     TINTEGER, parameter :: itime_size_max = 512
     TINTEGER, parameter :: iopt_size_max = 512
@@ -37,6 +35,8 @@ program APRIORI
     TREAL, dimension(:), allocatable, save :: mean, y_aux
     type(pointers_dt), dimension(16) :: vars
 
+    integer, parameter :: i1 = 1
+    
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
@@ -208,12 +208,12 @@ program APRIORI
 
         if (iread_flow == 1) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (iread_scal == 1) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
 ! -------------------------------------------------------------------

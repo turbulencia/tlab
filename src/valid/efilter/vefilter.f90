@@ -8,8 +8,6 @@ program VEFILTER
 
     implicit none
 
-#include "integers.h"
-
     TINTEGER imax, i, ik, i1bc
     parameter(imax=257)
     TREAL x(imax, 50), u(imax), uf(imax)

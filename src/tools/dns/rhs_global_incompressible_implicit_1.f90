@@ -45,8 +45,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1 &
 
     implicit none
 
-#include "integers.h"
-
     TREAL kex, kim, kco
     TREAL, dimension(isize_field, *) :: q, hq
     TREAL, dimension(isize_field), intent(INOUT) :: u, v, w, h1, h2, h3
@@ -64,6 +62,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1 &
 
     TREAL, dimension(:), pointer :: p_bcs
 
+    integer, parameter :: i0 = 0
+    
 #ifdef USE_BLAS
     integer ilen
 #endif
@@ -299,7 +299,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1 &
 ! ################################################################################
 ! hs  -> explicit tendency without diffusion
 ! tmp7-> diffusion contribution to explicit tendency
-    if (icalc_scal /= i0) then
+    if (icalc_scal /= 0) then
         do is = 1, inb_scal
             diff = visc_exp/schmidt(is)
             tmp6 = hs(:, is)

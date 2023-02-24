@@ -9,127 +9,125 @@
 !#              Created
 !#
 !########################################################################
-PROGRAM SL_CORRELATION
+program SL_CORRELATION
 
-  USE TLAB_VARS
+    use TLAB_VARS
 #ifdef USE_MPI
-  USE MPI
-  USE TLAB_MPI_PROCS
+    use MPI
+    use TLAB_MPI_PROCS
 #endif
-  USE IO_FIELDS
+    use IO_FIELDS
 
-  IMPLICIT NONE
-
-#include "integers.h"
+    implicit none
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-  TREAL, DIMENSION(:,:), ALLOCATABLE, SAVE, TARGET :: x,y,z
+    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
 
 ! Flow variables
-  TREAL, DIMENSION(:,:), ALLOCATABLE :: q
+    TREAL, dimension(:, :), allocatable :: q
 
-  TREAL, DIMENSION(:),   ALLOCATABLE :: z1
-  TREAL, DIMENSION(:),   ALLOCATABLE :: tmp1, tmp2, tmp3, tmp4, tmp5
-  TREAL, DIMENSION(:),   ALLOCATABLE :: wrk1d, wrk2d, wrk3d
-  TREAL, DIMENSION(:),   ALLOCATABLE :: profiles
+    TREAL, dimension(:), allocatable :: z1
+    TREAL, dimension(:), allocatable :: tmp1, tmp2, tmp3, tmp4, tmp5
+    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    TREAL, dimension(:), allocatable :: profiles
 
-  TARGET q
+    target q
 
-  TINTEGER  ilog
-  CHARACTER*32 fname
+    TINTEGER ilog
+    character*32 fname
 
-  TINTEGER itime_size_max, itime_size, i
-  PARAMETER(itime_size_max=128)
-  TINTEGER itime_vec(itime_size_max)
-  TINTEGER iopt_size_max, iopt_size
-  PARAMETER(iopt_size_max=10)
-  TREAL opt_vec(iopt_size_max)
-  CHARACTER*512 sRes
-  CHARACTER*32 line
+    TINTEGER itime_size_max, itime_size, i
+    parameter(itime_size_max=128)
+    TINTEGER itime_vec(itime_size_max)
+    TINTEGER iopt_size_max, iopt_size
+    parameter(iopt_size_max=10)
+    TREAL opt_vec(iopt_size_max)
+    character*512 sRes
+    character*32 line
 #ifdef USE_MPI
-  INTEGER icount
+    integer icount
 #endif
 
 ! Pointers to existing allocated space
-  TREAL, DIMENSION(:),   POINTER :: u, v, w
+    TREAL, dimension(:), pointer :: u, v, w
 
-  TREAL, DIMENSION(:,:), POINTER :: dx, dy, dz
+    TREAL, dimension(:, :), pointer :: dx, dy, dz
 
 ! ###################################################################
-  CALL DNS_START
+    call DNS_START
 
-  CALL IO_READ_GLOBAL('dns.ini')
+    call IO_READ_GLOBAL('dns.ini')
 
 #ifdef USE_MPI
-  CALL TLAB_MPI_INITIALIZE
+    call TLAB_MPI_INITIALIZE
 #endif
 
-  isize_wrk3d = imax*jmax*kmax
+    isize_wrk3d = imax*jmax*kmax
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-  ALLOCATE(x(g(1)%size,g(1)%inb_grid))
-  ALLOCATE(y(g(2)%size,g(2)%inb_grid))
-  ALLOCATE(z(g(3)%size,g(3)%inb_grid))
+    allocate (x(g(1)%size, g(1)%inb_grid))
+    allocate (y(g(2)%size, g(2)%inb_grid))
+    allocate (z(g(3)%size, g(3)%inb_grid))
 
-  ALLOCATE(q(imax*jmax*kmax,3))
-  ALLOCATE(z1(imax*jmax*kmax))
-  ALLOCATE(tmp1(imax*jmax*kmax))
-  ALLOCATE(tmp2(imax*jmax*kmax))
-  ALLOCATE(tmp3(imax*jmax*kmax))
-  ALLOCATE(tmp4(imax*jmax*kmax))
-  ALLOCATE(tmp5(imax*jmax*kmax))
-  ALLOCATE(profiles(jmax*10))
-  ALLOCATE(wrk1d(isize_wrk1d*5))
-  ALLOCATE(wrk2d(isize_wrk2d  ))
-  ALLOCATE(wrk3d(isize_wrk3d  ))
+    allocate (q(imax*jmax*kmax, 3))
+    allocate (z1(imax*jmax*kmax))
+    allocate (tmp1(imax*jmax*kmax))
+    allocate (tmp2(imax*jmax*kmax))
+    allocate (tmp3(imax*jmax*kmax))
+    allocate (tmp4(imax*jmax*kmax))
+    allocate (tmp5(imax*jmax*kmax))
+    allocate (profiles(jmax*10))
+    allocate (wrk1d(isize_wrk1d*5))
+    allocate (wrk2d(isize_wrk2d))
+    allocate (wrk3d(isize_wrk3d))
 
 ! -------------------------------------------------------------------
 ! File names
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
+    if (ims_pro == 0) then
 #endif
-     CALL SCANINICHAR&
-          (lfile, 'dns.ini', 'PostProcessing', 'Files', '-1', sRes)
-     IF ( sRes .EQ. '-1' ) THEN
-        WRITE(*,*) 'Integral Iterations ?'
-        READ(*,'(A512)') sRes
-     ENDIF
-     itime_size = itime_size_max
-     CALL LIST_INTEGER(sRes, itime_size, itime_vec)
+        call SCANINICHAR &
+            (lfile, 'dns.ini', 'PostProcessing', 'Files', '-1', sRes)
+        if (sRes == '-1') then
+            write (*, *) 'Integral Iterations ?'
+            read (*, '(A512)') sRes
+        end if
+        itime_size = itime_size_max
+        call LIST_INTEGER(sRes, itime_size, itime_vec)
 #ifdef USE_MPI
-  ENDIF
-  CALL MPI_BCAST(itime_size, 1,     MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-  icount = itime_size
-  CALL MPI_BCAST(itime_vec, icount, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    end if
+    call MPI_BCAST(itime_size, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    icount = itime_size
+    call MPI_BCAST(itime_vec, icount, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
 ! -------------------------------------------------------------------
 ! Read local options
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-  IF ( ims_pro .EQ. 0 ) THEN
+    if (ims_pro == 0) then
 #endif
-     CALL SCANINICHAR(lfile, 'dns.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
-     iopt_size = iopt_size_max
-     CALL LIST_REAL(sRes, iopt_size, opt_vec)
+        call SCANINICHAR(lfile, 'dns.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
+        iopt_size = iopt_size_max
+        call LIST_REAL(sRes, iopt_size, opt_vec)
 
-     IF ( sRes .EQ. '-1' ) THEN
-        WRITE(*,*) 'Use Log Normal Variable (y/n)?'
-        READ(*,'(A1)') line
-        IF ( line(1:1) .EQ. 'y' ) THEN; ilog = 1
-        ELSE;                           ilog = 0; ENDIF
-     ELSE
-        ilog = INT(opt_vec(1))
-     ENDIF
+        if (sRes == '-1') then
+            write (*, *) 'Use Log Normal Variable (y/n)?'
+            read (*, '(A1)') line
+            if (line(1:1) == 'y') then; ilog = 1
+            else; ilog = 0; end if
+        else
+            ilog = int(opt_vec(1))
+        end if
 
 #ifdef USE_MPI
-  ENDIF
+    end if
 
-  CALL MPI_BCAST(ilog, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_BCAST(ilog, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
 ! -------------------------------------------------------------------
@@ -140,41 +138,41 @@ PROGRAM SL_CORRELATION
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-CALL IO_READ_GRID(gfile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, x,y,z, area)
-CALL FDM_INITIALIZE(x, g(1), wrk1d)
-CALL FDM_INITIALIZE(y, g(2), wrk1d)
-CALL FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call FDM_INITIALIZE(x, g(1), wrk1d)
+    call FDM_INITIALIZE(y, g(2), wrk1d)
+    call FDM_INITIALIZE(z, g(3), wrk1d)
 
 ! ###################################################################
 ! Define pointers
 ! ###################################################################
-  dx => x(:,2:) ! to be removed
-  dy => y(:,2:)
-  dz => z(:,2:)
+    dx => x(:, 2:) ! to be removed
+    dy => y(:, 2:)
+    dz => z(:, 2:)
 
-  u   => q(:,1)
-  v   => q(:,2)
-  w   => q(:,3)
+    u => q(:, 1)
+    v => q(:, 2)
+    w => q(:, 3)
 
 ! ###################################################################
 ! Postprocess given list of files
 ! ###################################################################
-  DO i=1, itime_size
+    do i = 1, itime_size
 
-     itime = itime_vec(i)
+        itime = itime_vec(i)
 
 ! read data
-     WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_flow))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, 3,0, q)
+        write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
+        call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, 0, q)
 
-     WRITE(fname,*) itime; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
-     CALL IO_READ_FIELDS(fname, IO_SCAL, imax,jmax,kmax, inb_scal,inb_scal, z1)
+        write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
+        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, inb_scal, z1)
 
 ! do correlations
-     CALL SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, profiles, &
-          tmp1, tmp2, tmp3, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
+        call SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, profiles, &
+                              tmp1, tmp2, tmp3, tmp4, tmp5, wrk1d, wrk2d, wrk3d)
 
-  ENDDO
+    end do
 
-  CALL TLAB_STOP(0)
-END PROGRAM SL_CORRELATION
+    call TLAB_STOP(0)
+end program SL_CORRELATION

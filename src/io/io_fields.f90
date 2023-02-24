@@ -827,7 +827,6 @@ contains
 !         use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
 !         use TLAB_MPI_PROCS
 ! #endif
-! #include "integers.h"
 
 !         character(LEN=*) name
 !         integer(wi), intent(in) :: header_offset, nx, ny, nz
@@ -899,7 +898,6 @@ contains
 !         use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
 !         use TLAB_MPI_PROCS
 ! #endif
-! #include "integers.h"
 
 !         character(LEN=*) name
 !         integer(wi), intent(in) :: header_offset, nx, ny, nz

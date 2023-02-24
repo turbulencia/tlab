@@ -19,8 +19,6 @@ program VHELMHOLTZ_FXZ
 
     implicit none
 
-#include "integers.h"
-
     TREAL, dimension(:, :), allocatable, save, target :: x, y, z
     TREAL, dimension(:, :, :), allocatable :: b, c, d, h
     TREAL, dimension(:, :, :, :), allocatable :: a, f, e
@@ -155,9 +153,9 @@ program VHELMHOLTZ_FXZ
         ! Error
         ! ###################################################################
         do ifield = 1, nfield
-            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), a(1, 1, 1, ifield), b, h, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), a(1, 1, 1, ifield), c, h, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), a(1, 1, 1, ifield), d, h, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), a(1, 1, 1, ifield), b, h)
+            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), a(1, 1, 1, ifield), c, h)
+            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), a(1, 1, 1, ifield), d, h)
 
             error = C_0_R
             max_error = C_0_R

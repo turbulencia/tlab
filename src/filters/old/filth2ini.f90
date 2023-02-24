@@ -25,8 +25,6 @@ SUBROUTINE FILTH2INI(iunif, ibc, imax, nx0, nx1, scalex, x, cf, wrk2d, wrk1d)
 ! -----------------------------------------------------------------------
   TINTEGER i, j, ii, ip, jm, jj
 
-#include "integers.h"
-
 ! #######################################################################
   wrk2d = C_0_R
 

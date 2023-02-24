@@ -108,7 +108,7 @@ contains
                 p_bcs(:, :, 2) = u(:, ny, :)
                 flag_bcs = 0
             else if (f(2)%BcsMin == DNS_FILTER_BCS_NEUMANN) then
-                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, txc(1, 1), wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, txc(1, 1))
                 ip_b = 1
                 ip_t = nx*(ny - 1) + 1
                 do k = 1, nz

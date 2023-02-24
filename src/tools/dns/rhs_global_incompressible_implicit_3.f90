@@ -49,8 +49,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 
     implicit none
 
-#include "integers.h"
-
     TREAL kex, kim, kco
     TREAL, dimension(isize_field, *) :: q, hq
     TREAL, dimension(isize_field), intent(INOUT) :: u, v, w, h1, h2, h3
@@ -69,6 +67,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
     TREAL, dimension(:), pointer :: p_bcs
     TREAL, dimension(imax, kmax, 4:6) :: bcs_hb, bcs_ht
 
+    integer, parameter :: i0 = 0
+    
     kef = kex/kim
     aug = C_1_R + kef
 
@@ -264,7 +264,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 ! ADVECTION-DIFFUSION FOR SCALAR
 ! ################################################################################
 ! hs  -> explicit tendency without diffusion
-    if (icalc_scal /= i0) then
+    if (icalc_scal /= 0) then
         do is = 1, inb_scal
             diff = visc_exp/schmidt(is)
             tmp4 = hs(:, is)

@@ -30,8 +30,6 @@ contains
     subroutine BOUNDARY_BCS_X(iaux, M2_max, etime, rho, u, v, w, p, gama, z1, &
                               h0, h1, h2, h3, h4, zh1, txc, aux2d)
 
-#include "integers.h"
-
         TINTEGER iaux
 
         TREAL M2_max, etime
@@ -186,7 +184,7 @@ contains
             end do
         end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out_min, BcsFlowImin%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(0, nt, pl_out_min, BcsFlowImin%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(1), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -245,7 +243,7 @@ contains
             end do
         end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out_max, BcsFlowImax%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(1, nt, pl_out_max, BcsFlowImax%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(1), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -453,8 +451,6 @@ contains
     subroutine BOUNDARY_BCS_Y(iaux, M2_max, rho, u, v, w, p, gama, z1, &
                               h0, h1, h2, h3, h4, zh1, tmp1, tmp2, tmp3, tmp4, tmp5, aux2d)
 
-#include "integers.h"
-
         TINTEGER iaux
         TREAL M2_max
 
@@ -596,7 +592,7 @@ contains
                 dpdn_loc(i, k) = tmp5(i, 1, k)
             end do; end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out_min, BcsFlowJmin%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(0, nt, pl_out_min, BcsFlowJmin%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(2), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -644,7 +640,7 @@ contains
                 dpdn_loc(i, k) = tmp5(i, jmax, k)
             end do; end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out_max, BcsFlowJmax%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(1, nt, pl_out_max, BcsFlowJmax%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(2), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -827,8 +823,7 @@ contains
 !# gn        In   Constant body force normal to the boundary
 !#
 !########################################################################
-    subroutine BOUNDARY_BCS_FLOW_NR_2 &
-        (iflag, nt, pl_const, pl_pref, &
+    subroutine BOUNDARY_BCS_FLOW_NR_2(iflag, nt, pl_const, pl_pref, &
          r, un, v1, v2, p, gama, drdn, dundn, dv1dn, dv2dn, dpdn, gn, &
          hr, hun, hv1, hv2, he)
 
@@ -2010,8 +2005,6 @@ contains
     subroutine BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
                                          tmin, mmin, tmax, mmax, tmp1, ddy, ddz)
 
-#include "integers.h"
-
         TREAL, dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
 #ifdef USE_MPI
         TREAL, dimension(ims_bcs_imax, jmax, kmax) :: tmp1, ddy, ddz
@@ -2167,8 +2160,6 @@ contains
 !########################################################################
     subroutine BOUNDARY_BCS_TRANSVERSE_Y(u, v, w, p, r, gamma, z1, &
                                          tmin, lmin, tmax, lmax, tmp1, ddx, ddz)
-
-#include "integers.h"
 
         TREAL, dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
 #ifdef USE_MPI

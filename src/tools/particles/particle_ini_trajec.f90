@@ -51,7 +51,6 @@ program PARTICLE_INI_TRAJEC
     use PARTICLE_PROCS
 
     implicit none
-#include "integers.h"
 
 ! -------------------------------------------------------------------
 ! Additional local arrays

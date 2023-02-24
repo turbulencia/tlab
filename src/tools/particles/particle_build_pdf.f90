@@ -24,7 +24,6 @@ program PARTICLE_BUILD_PDF
     use PARTICLE_PROCS
 
     implicit none
-#include "integers.h"
 
 ! -------------------------------------------------------------------
 
