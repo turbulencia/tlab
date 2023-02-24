@@ -7,78 +7,76 @@
 !# Compute heat flux term in the energy equation
 !# div ( \mu/Pr grad h + \sum \mu(1/Sc_i-1/Pr)(h_i-h_N) grad Y_i )
 !#
-!# The contribution from enthalpy transport by diffusion velocities 
-!# enters through arrays diff_i. 
-!# Obviously, RHS_SCAL_DIFFUSION must precede this routine, so that 
+!# The contribution from enthalpy transport by diffusion velocities
+!# enters through arrays diff_i.
+!# Obviously, RHS_SCAL_DIFFUSION must precede this routine, so that
 !# diff arrays are filled.
 !#
 !########################################################################
-SUBROUTINE RHS_FLOW_CONDUCTION_DIVERGENCE&
-     (vis, z1, T, h4, diff_x,diff_y,diff_z, tmp1,tmp2,tmp3,tmp4, wrk2d,wrk3d)
-#ifdef TRACE_ON 
-  USE TLAB_CONSTANTS, ONLY : tfile
-  USE TLAB_PROCS,     ONLY : TLAB_WRITE_ASCII
-#endif 
-  USE TLAB_VARS,    ONLY : imax,jmax,kmax, isize_field
-  USE TLAB_VARS,    ONLY : g
-  USE TLAB_VARS,    ONLY : idiffusion, visc, prandtl
-  USE THERMO_VARS, ONLY : imixture
-  USE BOUNDARY_BCS
-  use OPR_PARTIAL
+subroutine RHS_FLOW_CONDUCTION_DIVERGENCE(vis, z1, T, h4, diff_x, diff_y, diff_z, tmp1, tmp2, tmp3, tmp4)
+#ifdef TRACE_ON
+    use TLAB_CONSTANTS, only: tfile
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+#endif
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: idiffusion, visc, prandtl
+    use THERMO_VARS, only: imixture
+    use BOUNDARY_BCS
+    use OPR_PARTIAL
 
-  IMPLICIT NONE
+    implicit none
 
-  TREAL, DIMENSION(isize_field),   INTENT(IN)    :: vis, T
-  TREAL, DIMENSION(isize_field,*), INTENT(IN)    :: z1
-  TREAL, DIMENSION(isize_field),   INTENT(OUT)   :: h4
-  TREAL, DIMENSION(isize_field),   INTENT(IN)    :: diff_x, diff_y, diff_z
-  TREAL, DIMENSION(isize_field),   INTENT(INOUT) :: tmp1,tmp2,tmp3,tmp4
-  TREAL, DIMENSION(*),             INTENT(INOUT) :: wrk2d,wrk3d
+    TREAL, dimension(isize_field), intent(IN) :: vis, T
+    TREAL, dimension(isize_field, *), intent(IN) :: z1
+    TREAL, dimension(isize_field), intent(OUT) :: h4
+    TREAL, dimension(isize_field), intent(IN) :: diff_x, diff_y, diff_z
+    TREAL, dimension(isize_field), intent(INOUT) :: tmp1, tmp2, tmp3, tmp4
 
 ! -------------------------------------------------------------------
-  TINTEGER bcs(2,1)
-  TREAL cond
+    TINTEGER bcs(2, 1)
+    TREAL cond
 
 ! ###################################################################
 #ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_DIVERGENCE')
+    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_DIVERGENCE')
 #endif
 
-  bcs = 0
-  
-  IF ( idiffusion .EQ. EQNS_NONE ) THEN; cond = C_0_R
-  ELSE;                                  cond = visc/prandtl; ENDIF
+    bcs = 0
+
+    if (idiffusion == EQNS_NONE) then; cond = C_0_R
+    else; cond = visc/prandtl; end if
 
 ! calculate the enthalpy
-  CALL THERMO_CALORIC_ENTHALPY(imax,jmax,kmax, z1, T, tmp4)
+    call THERMO_CALORIC_ENTHALPY(imax, jmax, kmax, z1, T, tmp4)
 
 ! enthalpy gradient
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), tmp4, tmp2, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d,wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
 
 ! Add diffusion velocity terms as required
-  IF ( imixture .GT. 0 ) THEN
-     tmp1 = vis *( cond *tmp1 +diff_x )
-     tmp2 = vis *( cond *tmp2 +diff_y )
-     tmp3 = vis *( cond *tmp3 +diff_z )
-     
-  ELSE
-     tmp1 = cond *vis *tmp1
-     tmp2 = cond *vis *tmp2
-     tmp3 = cond *vis *tmp3
-     
-  ENDIF
+    if (imixture > 0) then
+        tmp1 = vis*(cond*tmp1 + diff_x)
+        tmp2 = vis*(cond*tmp2 + diff_y)
+        tmp3 = vis*(cond*tmp3 + diff_z)
+
+    else
+        tmp1 = cond*vis*tmp1
+        tmp2 = cond*vis*tmp2
+        tmp3 = cond*vis*tmp3
+
+    end if
 
 ! total flux
-  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs_out(:,:,3), g(3), tmp3, tmp4, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_out(:,:,2), g(2), tmp2, tmp3, wrk3d, wrk2d,wrk3d)
-  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs_out(:,:,1), g(1), tmp1, tmp2, wrk3d, wrk2d,wrk3d)
-  h4 = h4 +tmp2 +tmp3 +tmp4
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp2, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp1, tmp2)
+    h4 = h4 + tmp2 + tmp3 + tmp4
 
 #ifdef TRACE_ON
-  CALL TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_DIVERGENCE')
+    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_DIVERGENCE')
 #endif
 
-  RETURN
-END SUBROUTINE RHS_FLOW_CONDUCTION_DIVERGENCE
+    return
+end subroutine RHS_FLOW_CONDUCTION_DIVERGENCE

@@ -437,7 +437,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                       p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
+                          p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -519,13 +519,13 @@ contains
 !#
 !########################################################################
     subroutine TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
-        use TLAB_ARRAYS
+        use TLAB_ARRAYS, only: q, s, txc
         use PARTICLE_ARRAYS
-        use DNS_ARRAYS
+        use DNS_ARRAYS, only: hq, hs
         use DNS_LOCAL, only: imode_rhs
         use BOUNDARY_BUFFER
         use FI_SOURCES
-        
+
         ! -----------------------------------------------------------------------
         integer(wi) ij_srt, ij_end, ij_siz    !  Variables for OpenMP Partitioning
 
@@ -634,13 +634,11 @@ contains
 !########################################################################
 !########################################################################
     subroutine TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT()
-        use TLAB_ARRAYS
-        use DNS_ARRAYS
 
         ! ######################################################################
         if (rkm_mode == RKM_IMP3_DIFFUSION) then
             call RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex(rkm_substep), kim(rkm_substep), kco(rkm_substep))
-            
+
             ! pressure-correction algorithm; to be checked
             ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
             !      kex,kim,kco,  &
@@ -694,17 +692,17 @@ contains
             ! -------------------------------------------------------------------
             if (iadvection == EQNS_DIVERGENCE) then
                 call RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), &
-                                               txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                                               txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 do is = 1, inb_scal
                     call RHS_SCAL_EULER_DIVERGENCE(rho, u, v, w, s(1, is), hs(1, is), &
-                                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 end do
             else if (iadvection == EQNS_SKEWSYMMETRIC) then
                 call RHS_FLOW_EULER_SKEWSYMMETRIC(rho, u, v, w, p, e, s, hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, &
-                                                  txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                                                  txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 do is = 1, inb_scal
                     call RHS_SCAL_EULER_SKEWSYMMETRIC(rho, u, v, w, s(1, is), hs(1, is), &
-                                                      txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                                                      txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 end do
             end if
 
@@ -718,10 +716,10 @@ contains
 
             if (iviscous == EQNS_DIVERGENCE) then
                 call RHS_FLOW_VISCOUS_DIVERGENCE(vis, u, v, w, p, hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), &
-                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), wrk2d, wrk3d)
+                                  txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9))
             else if (iviscous == EQNS_EXPLICIT) then
                 call RHS_FLOW_VISCOUS_EXPLICIT(vis, u, v, w, p, hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), &
-                                               txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                                               txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
             end if
 
             ! -------------------------------------------------------------------
@@ -732,16 +730,16 @@ contains
                 txc(:, 1) = C_0_R; txc(:, 2) = C_0_R; txc(:, 3) = C_0_R
                 do is = 1, inb_scal
                     call RHS_SCAL_DIFFUSION_DIVERGENCE(is, vis, s, T, hs, &
-                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                                                       txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
                 end do
                 call RHS_FLOW_CONDUCTION_DIVERGENCE(vis, s, T, hq(1, 4), &
-                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
             else if (idiffusion == EQNS_EXPLICIT) then
                 do is = 1, inb_scal
                     call RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, s, T, hs, hq(1, 4), &
-                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 end do
-         call RHS_FLOW_CONDUCTION_EXPLICIT(vis, s, T, hq(1, 4), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+                call RHS_FLOW_CONDUCTION_EXPLICIT(vis, s, T, hq(1, 4), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
             end if
 
         end if
@@ -875,8 +873,7 @@ contains
         ! Impose buffer zone as filter
         ! ###################################################################
         if (BuffType == DNS_BUFFER_FILTER .or. BuffType == DNS_BUFFER_BOTH) then
-            call BOUNDARY_BUFFER_FILTER &
-                (rho, u, v, w, e, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+            call BOUNDARY_BUFFER_FILTER(rho, u, v, w, e, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         end if
 
         return
@@ -885,7 +882,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine TIME_SUBSTEP_PARTICLE()
-        use DNS_ARRAYS
+        use DNS_ARRAYS, only: l_hq
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
 
@@ -932,8 +929,7 @@ contains
             end if
         end if
 
-        call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, &
-                                      l_q, l_hq, l_g%tags, l_g%np)
+        call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_g%tags, l_g%np)
 
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv Z-Direction
@@ -954,8 +950,7 @@ contains
             end if
         end if
 
-        call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, &
-                                      l_q, l_hq, l_g%tags, l_g%np)
+        call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_g%tags, l_g%np)
 
 #else
         !#######################################################################

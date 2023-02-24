@@ -21,7 +21,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
-    use TLAB_ARRAYS, only: s, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: s
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, T, rho
     use DNS_ARRAYS, only: hs, hq
     use THERMO_VARS, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
@@ -54,20 +54,20 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 !$omp parallel default( shared ) private( i, dummy )
 !$omp do
     do i = 1, imax*jmax*kmax
-        dummy = 0.5_wp*rho(i)*s(i,is)
+        dummy = 0.5_wp*rho(i)*s(i, is)
         tmp3(i) = dummy*w(i)
         tmp2(i) = dummy*v(i)
         tmp1(i) = dummy*u(i)
     end do
 !$omp end do
 !$omp end parallel
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
-        hs(i,is) = hs(i,is) - (tmp2(i) + tmp3(i) + tmp4(i))
+        hs(i, is) = hs(i, is) - (tmp2(i) + tmp3(i) + tmp4(i))
     end do
 !$omp end do
 !$omp end parallel
@@ -75,15 +75,15 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 ! ###################################################################
 ! convective part + diffusion
 ! ###################################################################
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), s(:,is), tmp6, tmp3, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), s(:,is), tmp5, tmp2, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), s(:,is), tmp4, tmp1, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), s(:, is), tmp6, tmp3)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), s(:, is), tmp5, tmp2)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), s(:, is), tmp4, tmp1)
 
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
-        hs(i,is) = hs(i,is) - 0.5_wp*rho(i)*(u(i)*tmp1(i) + v(i)*tmp2(i) + w(i)*tmp3(i)) &
-                 + diff*(tmp4(i) + tmp5(i) + tmp6(i))
+        hs(i, is) = hs(i, is) - 0.5_wp*rho(i)*(u(i)*tmp1(i) + v(i)*tmp2(i) + w(i)*tmp3(i)) &
+                    + diff*(tmp4(i) + tmp5(i) + tmp6(i))
     end do
 !$omp end do
 !$omp end parallel
@@ -99,7 +99,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
             else; im = 1; end if
             do icp = NCP, 1, -1
                 tmp4(i) = tmp4(i)*T(i) &
-                          + (THERMO_AI(icp, im, is) - THERMO_AI(icp, im, NSP))/real(icp,wp)
+                          + (THERMO_AI(icp, im, is) - THERMO_AI(icp, im, NSP))/real(icp, wp)
             end do
 ! factor (diff-cond) added now
             tmp4(i) = (diff - cond)*(tmp4(i)*T(i) + THERMO_AI(6, im, is) - THERMO_AI(6, im, NSP))
@@ -107,22 +107,22 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 !$omp parallel default( shared ) private( i )
 !$omp do
         do i = 1, imax*jmax*kmax
-            hq(i,4) = hq(i,4) + tmp4(i)*(tmp1(i) + tmp2(i) + tmp3(i))
+            hq(i, 4) = hq(i, 4) + tmp4(i)*(tmp1(i) + tmp2(i) + tmp3(i))
         end do
 !$omp end do
 !$omp end parallel
 
 ! cross-gradients
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:,is), tmp4, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:,is), tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:,is), tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6)
 !$omp parallel default( shared ) private( i )
 !$omp do
         do i = 1, imax*jmax*kmax
-            hq(i,4) = hq(i,4) + (tmp1(i)*tmp4(i) + tmp2(i)*tmp5(i) + tmp3(i)*tmp6(i))
+            hq(i, 4) = hq(i, 4) + (tmp1(i)*tmp4(i) + tmp2(i)*tmp5(i) + tmp3(i)*tmp6(i))
         end do
 !$omp end do
 !$omp end parallel
