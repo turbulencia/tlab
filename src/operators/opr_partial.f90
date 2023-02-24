@@ -429,7 +429,7 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1, tobedeleted2d, tobedeleted3d)
+    subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1)
         use TLAB_ARRAYS, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1         1.order derivative
         !                                   OPR_P2           2.order derivative
@@ -442,7 +442,6 @@ contains
         real(wp),      intent(in)    :: u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
         real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
-        real(wp),      intent(inout), optional :: tobedeleted2d(*), tobedeleted3d(*)
 
         target u, tmp1, result
 
@@ -565,7 +564,7 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1, tobedeleted2d, tobedeleted3d)
+    subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1)
 #ifdef USE_MPI
         use TLAB_ARRAYS, only: wrk3d
 #endif
@@ -580,7 +579,6 @@ contains
         real(wp),      intent(in)    :: u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
         real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
-        real(wp),      intent(inout), optional :: tobedeleted2d(*), tobedeleted3d(*)
 
         target u, tmp1, result
 
@@ -686,7 +684,7 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1, tobedeleted2d, tobedeleted3d)
+    subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1)
         use TLAB_ARRAYS, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
@@ -699,7 +697,6 @@ contains
         real(wp),      intent(in)    :: u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
         real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
-        real(wp),      intent(inout), optional :: tobedeleted2d(*), tobedeleted3d(*)
 
         target u, tmp1, result
 
