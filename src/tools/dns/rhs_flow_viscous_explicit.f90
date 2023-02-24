@@ -1,5 +1,4 @@
 #include "dns_const.h"
-#include "dns_error.h"
 
 !########################################################################
 !# Calculate div(tau) in terms of second order finite differences,

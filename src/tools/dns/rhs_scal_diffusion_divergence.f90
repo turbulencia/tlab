@@ -1,5 +1,4 @@
 #include "dns_const.h"
-#include "dns_error.h"
 
 !########################################################################
 !# Computing terms depending on diffusion velocities, i.e. diffusion
