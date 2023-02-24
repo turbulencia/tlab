@@ -113,9 +113,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     end if
 
     do iq = 1, iq_max
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), hq(:, iq), wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp1, tmp2, wrk2d, wrk3d) ! tmp1 used for BCs below
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), hq(:, iq))
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp3)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp1, tmp2) ! tmp1 used for BCs below
         hq(:, iq) = -u*hq(:, iq) - v*tmp2 - w*tmp3      ! hq(:,iq) contains explicit nonlinear tendency
 
 
@@ -192,9 +192,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
         do is = 1, inb_scal
             tmp7 = hs(:, is) ! save old values
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp4, tmp5, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6)
+            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp4, tmp5)
 
             hs(:, is) = -u*hs(:, is) - v*tmp5 - w*tmp6
 
@@ -265,9 +265,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! #######################################################################
 ! Pressure term (actually solving for dte*p)
 ! #######################################################################
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
 ! -----------------------------------------------------------------------
     tmp1 = tmp1 + tmp2 + tmp3 ! forcing term in tmp1
@@ -284,8 +284,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient

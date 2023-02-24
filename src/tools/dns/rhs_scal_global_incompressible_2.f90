@@ -13,7 +13,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     use TLAB_VARS, only: idiffusion, visc, schmidt
     use TLAB_VARS, only: imode_ibm
     use IBM_VARS, only: imode_ibm_scal, ibm_partial
-    use TLAB_ARRAYS, only: s, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: s
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs
     use OPR_PARTIAL
@@ -71,9 +71,9 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
 ! #######################################################################
 ! Diffusion and convection terms in scalar equations
 ! #######################################################################
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6, tmp3, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5, tmp2, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4, tmp1, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6, tmp3)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5, tmp2)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4, tmp1)
     hs(:, is) = hs(:, is) + diff*(tmp6 + tmp5 + tmp4) - 0.5_wp*(w*tmp3 + v*tmp2 + u*tmp1)
 
 ! #######################################################################
@@ -82,9 +82,9 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     tmp1 = u*s(:, is)
     tmp2 = v*s(:, is)
     tmp3 = w*s(:, is)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6)
     hs(:, is) = hs(:, is) - 0.5_wp*(tmp6 + tmp5 + tmp4)
 
 ! #######################################################################

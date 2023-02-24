@@ -579,8 +579,7 @@ contains
                                                    txc(1, 1), txc(1, 2), &
                                           txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), &
                                                    txc(1, 11), txc(1, 12), txc(1, 13), txc(1, 14), &
-                                                   hq(1, 1), hq(1, 2), hq(1, 3), hs(1, 1), &
-                                                   wrk1d, wrk2d, wrk3d)
+                                                   hq(1, 1), hq(1, 2), hq(1, 3), hs(1, 1))
 #else
                 call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
                 call TLAB_STOP(DNS_ERROR_PSFFT)
@@ -646,8 +645,7 @@ contains
             ! CALL RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(&
             !      kex,kim,kco,  &
             !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
-            !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8), &
-            !      wrk1d,wrk2d,wrk3d)
+            !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8))
         else
             call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)

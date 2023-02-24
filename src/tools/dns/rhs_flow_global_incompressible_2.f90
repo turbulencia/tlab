@@ -14,7 +14,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
     use TLAB_VARS, only: imode_ibm, istagger
-    use TLAB_ARRAYS, only: q, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: q
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
@@ -52,18 +52,18 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     end if
 
     do iq = 1, iq_max
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2)
+        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1)
         hq(:, iq) = hq(:, iq) + visc*(tmp6 + tmp5 + tmp4) - 0.5_wp*(w*tmp3 + v*tmp2 + u*tmp1)
 
         ! Adding the conservative-form terms to complete skew-symmetric formulation
         tmp1 = u*q(:, iq)
         tmp2 = v*q(:, iq)
         tmp3 = w*q(:, iq)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6)
         hq(:, iq) = hq(:, iq) - 0.5_wp*(tmp6 + tmp5 + tmp4)
 
     end do
@@ -71,9 +71,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 ! -----------------------------------------------------------------------
 ! In case there is dilatation
 ! -----------------------------------------------------------------------
-!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1)
+!  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2)
+!  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3)
 !  DO k = 1,kmax
 !     DO i = 1,imax
 !        ij = i                 + imax*jmax*(k-1) ! bottom
@@ -122,19 +122,19 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     end if
     if (istagger == 1) then ! staggering on horizontal pressure nodes
         !  Ox derivative
-        call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp1, tmp5)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         !  Oy derivative
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp2, tmp6, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp6, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp2, tmp6)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp6, tmp2)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp2, tmp5)
         !  Oz derivative
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp1, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp1)
+        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), tmp1, tmp6)
     else
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6)
     end if
 
 ! forcing term
@@ -145,8 +145,8 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 ! Stagger also Bcs
     if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:, 2))
     if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
-        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5)
+        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
         p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
     else
@@ -162,18 +162,18 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 
     if (istagger == 1) then
         !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3)
         !  horizontal pressure derivative dpdz - back on horizontal velocity nodes
-        call OPR_PARTIAL_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
+        call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4)
         !  horizontal pressure derivative dpdx - back on horizontal velocity nodes
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
+        call OPR_PARTIAL_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp2)
     else
         !  horizontal pressure derivatives
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
     end if
 
 ! -----------------------------------------------------------------------
