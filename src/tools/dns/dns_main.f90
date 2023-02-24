@@ -240,8 +240,8 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
-            if (icalc_flow == 1) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow, wrk2d, wrk3d)
-            if (icalc_scal == 1) call AVG_SCAL_ZT_REDUCE(q, s, hq, txc, mean_scal, wrk2d, wrk3d)
+            if (icalc_flow == 1) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow)
+            if (icalc_scal == 1) call AVG_SCAL_ZT_REDUCE(q, s, hq, txc, mean_scal)
         end if
 
         if (mod(itime - nitera_first, nitera_stats) == 0) then      ! Calculate statistics

@@ -173,14 +173,14 @@ contains
 
             if (icalc_flow == 1) then
                 do is = 1, inb_flow
-         call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), q_inf(1, 1, 1, is), txc, wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), q_inf(1, 1, 1, is), txc)
                     q_inf(:, :, :, is) = -txc(:, :, :)*qbg(1)%mean
                 end do
             end if
 
             if (icalc_scal == 1) then
                 do is = 1, inb_scal
-         call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), s_inf(1, 1, 1, is), txc, wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), s_inf(1, 1, 1, is), txc)
                     s_inf(:, :, :, is) = -txc(:, :, :)*qbg(1)%mean
                 end do
             end if

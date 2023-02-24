@@ -36,6 +36,7 @@ module AVG_SCAL_ZT
     use TLAB_VARS, only: g
     use TLAB_VARS, only: nstatavg, statavg
     use TLAB_VARS, only: itransport, visc
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use AVGS, only: SUM1V1D_V
     use OPR_PARTIAL
 
@@ -50,14 +51,12 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine AVG_SCAL_ZT_REDUCE(q, z1, hq, txc, mean1d_sc, wrk2d, wrk3d)
+    subroutine AVG_SCAL_ZT_REDUCE(q, z1, hq, txc, mean1d_sc)
         implicit none
 
         TREAL, dimension(isize_field, *), intent(IN), target :: q, z1
         TREAL, dimension(isize_field, *), intent(INOUT), target :: txc, hq
         TREAL mean1d_sc(nstatavg, jmax, MS_SCALAR_SIZE, *)
-        TREAL wrk2d(isize_wrk2d, *)
-        TREAL wrk3d(*)
 
         TINTEGER NNstat
         ! -------------------------------------------------------------------
@@ -115,7 +114,7 @@ contains
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_M1(NNstat, m_rho, m_u, m_v, m_w, &
                                        m_z1, z1(1, is), tmp7, tmp8, tmp9, tmp10, tmp11, &
-                                       mean1d_sc(1, 1, 1, is), wrk2d)
+                                       mean1d_sc(1, 1, 1, is))
         end do
 
         ! ##################################################################
@@ -125,8 +124,8 @@ contains
 #define m_rho_x       tmp9
 #define m_rho_y       tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, tmp7, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp8, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, tmp7)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_rho_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_rho_y)
@@ -134,7 +133,7 @@ contains
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_R1(NNstat, m_rho_x, m_rho_y, m_u, &
                                        m_v, m_w, m_z1, z1(1, is), tmp5, tmp7, tmp8, &
-                                       tmp11, tmp12, wrk3d, mean1d_sc(1, 1, 1, is), wrk2d)
+                                       tmp11, tmp12, wrk3d, mean1d_sc(1, 1, 1, is))
         end do
 
 #undef m_rho_x
@@ -147,8 +146,8 @@ contains
 #define m_u_x        tmp9
 #define m_v_y        tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp7, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp8, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp7)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_u_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_v_y)
@@ -156,7 +155,7 @@ contains
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_UV1(NNstat, m_u_x, m_v_y, m_rho, &
                                         m_u, m_v, m_w, m_z1, z1(1, is), tmp5, tmp7, &
-                                        tmp8, tmp11, tmp12, wrk3d, mean1d_sc(1, 1, 1, is), wrk2d)
+                                        tmp8, tmp11, tmp12, wrk3d, mean1d_sc(1, 1, 1, is))
         end do
 
 #undef m_u_x
@@ -169,8 +168,8 @@ contains
 #define m_w_x        tmp9
 #define m_w_y        tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp7, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp8, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp7)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_w_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_w_y)
@@ -178,7 +177,7 @@ contains
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_W1(NNstat, m_w_x, m_w_y, m_rho, &
                                        m_u, m_v, m_z1, z1(1, is), tmp7, &
-                                       tmp8, tmp11, tmp12, mean1d_sc(1, 1, 1, is), wrk2d)
+                                       tmp8, tmp11, tmp12, mean1d_sc(1, 1, 1, is))
         end do
 
 #undef m_w_x
@@ -191,8 +190,8 @@ contains
 #define m_v_x        tmp9
 #define m_u_y        tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp7, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp8, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp7)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_v_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_u_y)
@@ -200,7 +199,7 @@ contains
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_UV2(NNstat, m_v_x, m_u_y, m_rho, &
                                         m_u, m_v, m_z1, z1(1, is), tmp7, &
-                                        tmp8, tmp11, tmp12, mean1d_sc(1, 1, 1, is), wrk2d)
+                                        tmp8, tmp11, tmp12, mean1d_sc(1, 1, 1, is))
         end do
 
 #undef m_v_x
@@ -212,7 +211,7 @@ contains
 
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_S2(NNstat, m_rho, m_u, m_v, m_w, m_z1, p, vis, z1(1, is), &
-                                       tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1, 1, 1, is), wrk2d, wrk3d)
+                                       tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1, 1, 1, is))
         end do
 
         ! ####################################################################
@@ -226,16 +225,16 @@ contains
 
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_TS1(NNstat, m_z1, u, v, w, vis, z1(1, is), tmp1, tmp2, tmp3, &
-                                        tmp4, tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1, 1, 1, is), wrk2d, wrk3d)
+                                        tmp4, tmp5, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, mean1d_sc(1, 1, 1, is))
         end do
 
         ! ##################################################################
         ! #  Pressure gradient terms
         ! ##################################################################
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, tmp7, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp8, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p, tmp9, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, tmp7)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp8)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p, tmp9)
 
 #define m_p_x tmp10
 #define m_p_y tmp11
@@ -248,7 +247,7 @@ contains
         do is = 1, inb_scal
             call AVG_SCAL_ZT_REDUCE_P1(NNstat, m_p_x, m_p_y, m_p_z, &
                                        m_z1, z1(1, is), tmp7, tmp8, tmp9, &
-                                       mean1d_sc(1, 1, 1, is), wrk2d)
+                                       mean1d_sc(1, 1, 1, is))
         end do
 
 #undef m_p_x
@@ -265,7 +264,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_M1(NNstat, m_rho, m_u, m_v, m_w, &
-                                     m_z1, z1, tmp1, tmp2, tmp3, tmp4, tmp5, mean1d_sc, wrk2d)
+                                     m_z1, z1, tmp1, tmp2, tmp3, tmp4, tmp5, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -281,7 +280,6 @@ contains
         TREAL tmp5(*)
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
         TINTEGER j
 
         TREAL inter1, inter2
@@ -481,7 +479,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_P1(NNstat, m_p_x, m_p_y, m_p_z, &
-                                     m_z1, z1, m_p_x_z1, m_p_y_z1, m_p_z_z1, mean1d_sc, wrk2d)
+                                     m_z1, z1, m_p_x_z1, m_p_y_z1, m_p_z_z1, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -494,7 +492,6 @@ contains
         TREAL m_p_z_z1(*)
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
 
         TINTEGER j
 
@@ -522,7 +519,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_R1(NNstat, m_rho_x, m_rho_y, &
-                                     m_u, m_v, m_w, m_z1, z1, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, mean1d_sc, wrk2d)
+                                     m_u, m_v, m_w, m_z1, z1, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -542,7 +539,6 @@ contains
 
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
         TINTEGER j
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
@@ -679,7 +675,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_S2(NNstat, m_rho, m_u, m_v, m_w, m_z1, p, vis, z1, &
-                                     tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, mean1d_sc, wrk2d, wrk3d)
+                                     tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -700,16 +696,14 @@ contains
         TREAL vis(*)
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
-        TREAL wrk3d(*)
 
         bcs = 0
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp4, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp2)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp3)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp4)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -721,7 +715,7 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp5, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp5, tmp6)
 
 #define m_fxx tmp7
 
@@ -772,7 +766,7 @@ contains
                 tmp5(j) = tmp3(j)
             end do
         end if
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp6)
 
 #define m_fyy tmp7
 
@@ -824,7 +818,7 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp6, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp6)
 
 #define m_fzz tmp7
 
@@ -1092,7 +1086,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_TS1(NNstat, m_z1, u, v, w, vis, z1, tmp1, tmp2, tmp3, tmp4, tmp5, &
-                                      tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, mean1d_sc, wrk2d, wrk3d)
+                                      tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -1115,8 +1109,7 @@ contains
         TREAL vis(*)
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
-        TREAL wrk3d(*)
+
         TREAL c23, c43, aux1, aux2
 
         c23 = C_2_R/C_3_R
@@ -1135,9 +1128,9 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp6, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp7, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp8, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp6)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp7)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp8)
 
 #define m_z1_x tmp9
 #define m_z1_y tmp10
@@ -1148,8 +1141,8 @@ contains
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_z1_z)
 
         ! Cross terms xy
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp6, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp7, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp6)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp7)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -1161,8 +1154,8 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp1)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2)
 
 #define m_v_x tmp8
 #define m_u_y tmp6
@@ -1229,8 +1222,8 @@ contains
 
         ! Cross terms xz
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp6, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp7, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp6)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp7)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -1242,8 +1235,8 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2)
 
 #define m_w_x tmp8
 #define m_u_z tmp6
@@ -1308,8 +1301,8 @@ contains
 
         ! Cross terms yz
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp6, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp7, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp6)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp7)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -1321,8 +1314,8 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2)
 
 #define m_w_y tmp8
 #define m_v_z tmp6
@@ -1387,7 +1380,7 @@ contains
 
         ! Cross terms xx
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
 
 #define m_u_x tmp8
 
@@ -1421,7 +1414,7 @@ contains
 
         ! Cross terms yy
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
 
 #define m_v_y tmp8
         call REDUCE(imax, jmax, kmax, tmp2, nstatavg, statavg, m_v_y)
@@ -1454,7 +1447,7 @@ contains
 
         ! Cross terms zz
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
 #define m_w_z tmp8
         call REDUCE(imax, jmax, kmax, tmp3, nstatavg, statavg, m_w_z)
@@ -1503,9 +1496,9 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3)
 
 #define m_tau_xx_x tmp4
 #define m_tau_yy_y tmp5
@@ -1557,7 +1550,7 @@ contains
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_UV1(NNstat, m_u_x, m_v_y, &
                                       m_rho, m_u, m_v, m_w, m_z1, z1, tmp1, tmp2, tmp3, tmp4, &
-                                      tmp5, tmp6, mean1d_sc, wrk2d)
+                                      tmp5, tmp6, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -1577,7 +1570,6 @@ contains
 
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -1656,7 +1648,7 @@ contains
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_UV2(NNstat, m_v_x, m_u_y, &
                                       m_rho, m_u, m_v, m_z1, z1, tmp1, tmp2, tmp3, tmp4, &
-                                      mean1d_sc, wrk2d)
+                                      mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -1672,7 +1664,6 @@ contains
         TREAL tmp4(*)
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -1712,7 +1703,7 @@ contains
     ! ###################################################################
     subroutine AVG_SCAL_ZT_REDUCE_W1(NNstat, m_w_x, m_w_y, &
                                      m_rho, m_u, m_v, m_z1, z1, tmp1, tmp2, tmp3, &
-                                     tmp4, mean1d_sc, wrk2d)
+                                     tmp4, mean1d_sc)
         implicit none
 
         TINTEGER NNstat
@@ -1729,7 +1720,6 @@ contains
 
         TREAL z1(imax, jmax, kmax)
         TREAL mean1d_sc(nstatavg, jmax, *)
-        TREAL wrk2d(isize_wrk2d, *)
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
