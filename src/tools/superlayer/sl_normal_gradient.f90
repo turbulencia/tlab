@@ -46,9 +46,9 @@ subroutine SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
 ! Normal analysis
 ! -------------------------------------------------------------------
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, u, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, v, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, w, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, u)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, v)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, w)
 
 ! -------------------------------------------------------------------
 ! TkStat file

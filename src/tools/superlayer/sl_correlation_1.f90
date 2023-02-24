@@ -45,7 +45,7 @@ subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
         do j = 1, jmax
             wrk1d(j, 1) = AVG1V2D(imax, jmax, kmax, j, i1, u)
         end do
-        call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2))
         delta_w = delta_u/maxval(abs(wrk1d(1:jmax, 2)))
     end if
 
