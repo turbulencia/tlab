@@ -1,28 +1,22 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
-!# DESCRIPTION
-!#
 !# 15 first derivative operations.
-!#
 !########################################################################
-subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp1, tmp2, tmp3, tmp4, tmp5)
-
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, imode_eqns
+subroutine RHS_FLOW_EULER_DIVERGENCE()
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g, buoyancy
     use TLAB_VARS, only: mach
+    use TLAB_POINTERS
+    use DNS_ARRAYS, only: hq
     use THERMO_VARS, only: gama0
     use OPR_PARTIAL
     implicit none
 
-    TREAL, dimension(isize_field), intent(IN) :: rho, u, v, w, p, e
-    TREAL, dimension(isize_field), intent(OUT) :: h0, h1, h2, h3, h4
-    TREAL, dimension(isize_field), intent(INOUT) :: tmp1, tmp2, tmp3, tmp4, tmp5
-
 ! -------------------------------------------------------------------
-    TINTEGER bcs(2, 1), i
-    TREAL g1, g2, g3, prefactor, dummy
+    integer(wi) bcs(2, 1), i
+    real(wp) g1, g2, g3, prefactor, dummy
 
 ! ###################################################################
     bcs = 0
@@ -33,6 +27,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
 
 ! ###################################################################
 ! Terms \rho u in mass and u-momentum equations
+! Explicit loops save memory calls
 ! ###################################################################
     do i = 1, imax*jmax*kmax
         tmp4(i) = rho(i)*u(i)
@@ -45,7 +40,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
 ! mass
 ! -------------------------------------------------------------------
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
-    h0 = h0 - tmp5
+    hq(:,5) = hq(:,5) - tmp5
 
 ! -------------------------------------------------------------------
 ! u-momentum
@@ -53,7 +48,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-    h1 = h1 - (tmp2 + tmp3 + tmp4) + g1*rho
+    hq(:,1) = hq(:,1) - (tmp2 + tmp3 + tmp4) + g1*rho
 
 ! ###################################################################
 ! Terms \rho v in mass and v-momentum equations
@@ -69,7 +64,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
 ! mass
 ! -------------------------------------------------------------------
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5)
-    h0 = h0 - tmp5
+    hq(:,5) = hq(:,5) - tmp5
 
 ! -------------------------------------------------------------------
 ! v-momentum
@@ -77,7 +72,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-    h2 = h2 - (tmp2 + tmp3 + tmp4) + g2*rho
+    hq(:,2) = hq(:,2) - (tmp2 + tmp3 + tmp4) + g2*rho
 
 ! ###################################################################
 ! Terms \rho w in mass and w-momentum equations
@@ -93,7 +88,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
 ! mass
 ! -------------------------------------------------------------------
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5)
-    h0 = h0 - tmp5
+    hq(:,5) = hq(:,5) - tmp5
 
 ! -------------------------------------------------------------------
 ! w-momentum
@@ -101,7 +96,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-    h3 = h3 - (tmp2 + tmp3 + tmp4) + g3*rho
+    hq(:,3) = hq(:,3) - (tmp2 + tmp3 + tmp4) + g3*rho
 
 ! ###################################################################
 ! Total enery equation
@@ -110,9 +105,9 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
 ! Total energy formulation
 ! -------------------------------------------------------------------
     if (imode_eqns == DNS_EQNS_TOTAL) then
-        prefactor = (gama0 - C_1_R)*mach*mach
+        prefactor = (gama0 - 1.0_wp)*mach*mach
         do i = 1, imax*jmax*kmax
-            dummy = rho(i)*(e(i) + prefactor*C_05_R*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) + prefactor*p(i)
+            dummy = rho(i)*(e(i) + prefactor*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) + prefactor*p(i)
             tmp3(i) = dummy*w(i)
             tmp2(i) = dummy*v(i)
             tmp1(i) = dummy*u(i)
@@ -120,7 +115,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
         call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-        h4 = h4 - (tmp2 + tmp3 + tmp4) + prefactor*rho*(g1*u + g2*v + g3*w)
+        hq(:,4) = hq(:,4) - (tmp2 + tmp3 + tmp4) + prefactor*rho*(g1*u + g2*v + g3*w)
 
 ! -------------------------------------------------------------------
 ! Internal energy formulation
@@ -136,7 +131,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, h0, h1, h2, h3, h4, tmp
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
         call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-        h4 = h4 - (tmp2 + tmp3 + tmp4)
+        hq(:,4) = hq(:,4) - (tmp2 + tmp3 + tmp4)
 
     end if
 

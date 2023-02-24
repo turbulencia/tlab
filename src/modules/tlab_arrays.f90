@@ -36,6 +36,8 @@ module TLAB_POINTERS
     real(wp), pointer :: tmp5(:) => null()
     real(wp), pointer :: tmp6(:) => null()
     real(wp), pointer :: tmp7(:) => null()
+    real(wp), pointer :: tmp8(:) => null()
+    real(wp), pointer :: tmp9(:) => null()
 
 end module TLAB_POINTERS
 

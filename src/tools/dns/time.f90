@@ -664,8 +664,7 @@ contains
         use BOUNDARY_BCS_COMPRESSIBLE
 
         ! -------------------------------------------------------------------
-        real(wp) rho_ratio, dt_rho_ratio, prefactor
-        real(wp) M2_max, dummy
+        real(wp) rho_ratio, dt_rho_ratio, prefactor, M2_max
         integer(wi) inb_scal_loc
 
         ! ###################################################################
@@ -691,18 +690,15 @@ contains
             ! convective terms
             ! -------------------------------------------------------------------
             if (iadvection == EQNS_DIVERGENCE) then
-                call RHS_FLOW_EULER_DIVERGENCE(rho, u, v, w, p, e, hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), &
-                                               txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+                call RHS_FLOW_EULER_DIVERGENCE()
                 do is = 1, inb_scal
-                    call RHS_SCAL_EULER_DIVERGENCE(rho, u, v, w, s(1, is), hs(1, is), &
-                                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                    call RHS_SCAL_EULER_DIVERGENCE()
                 end do
+
             else if (iadvection == EQNS_SKEWSYMMETRIC) then
-                call RHS_FLOW_EULER_SKEWSYMMETRIC(rho, u, v, w, p, e, s, hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, &
-                                                  txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+                call RHS_FLOW_EULER_SKEWSYMMETRIC()
                 do is = 1, inb_scal
-                    call RHS_SCAL_EULER_SKEWSYMMETRIC(rho, u, v, w, s(1, is), hs(1, is), &
-                                                      txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                    call RHS_SCAL_EULER_SKEWSYMMETRIC(is)
                 end do
             end if
 
@@ -715,31 +711,31 @@ contains
             end if
 
             if (iviscous == EQNS_DIVERGENCE) then
-                call RHS_FLOW_VISCOUS_DIVERGENCE(vis, u, v, w, p, hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), &
-                                  txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9))
+                call RHS_FLOW_VISCOUS_DIVERGENCE()
+
             else if (iviscous == EQNS_EXPLICIT) then
-                call RHS_FLOW_VISCOUS_EXPLICIT(vis, u, v, w, p, hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), &
-                                               txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+                call RHS_FLOW_VISCOUS_EXPLICIT()
+
             end if
 
             ! -------------------------------------------------------------------
             ! diffusion/conduction terms
             ! -------------------------------------------------------------------
             if (idiffusion == EQNS_DIVERGENCE) then
-                ! diffusion transport of enthalpy is accumulated in txc and used then in RHS_FLOW_CONDUCTION
-                txc(:, 1) = C_0_R; txc(:, 2) = C_0_R; txc(:, 3) = C_0_R
+                ! diffusion transport of enthalpy is accumulated in txc5:7 and used in RHS_FLOW_CONDUCTION
+                txc(:, 5:7) = 0.0_wp
                 do is = 1, inb_scal
-                    call RHS_SCAL_DIFFUSION_DIVERGENCE(is, vis, s, T, hs, &
-                                                       txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
+                    ! Check this routine for the airwater case
+                    call RHS_SCAL_DIFFUSION_DIVERGENCE(is)
                 end do
-                call RHS_FLOW_CONDUCTION_DIVERGENCE(vis, s, T, hq(1, 4), &
-                                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
+                call RHS_FLOW_CONDUCTION_DIVERGENCE()
+
             else if (idiffusion == EQNS_EXPLICIT) then
                 do is = 1, inb_scal
-                    call RHS_SCAL_DIFFUSION_EXPLICIT(is, vis, s, T, hs, hq(1, 4), &
-                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                    call RHS_SCAL_DIFFUSION_EXPLICIT(is)
                 end do
-                call RHS_FLOW_CONDUCTION_EXPLICIT(vis, s, T, hq(1, 4), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+                call RHS_FLOW_CONDUCTION_EXPLICIT()
+
             end if
 
         end if
