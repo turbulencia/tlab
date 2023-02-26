@@ -607,11 +607,11 @@ program SPECTRA
                 txc(1:isize_field, 1) = vars(iv1)%field(1:isize_field)
                 if (iv2 == iv1) then
                     call OPR_FOURIER_CONVOLUTION_FXZ('auto', flag_mode, imax, jmax, kmax, &
-                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 else
                     txc(1:isize_field, 2) = vars(iv2)%field(1:isize_field)
                     call OPR_FOURIER_CONVOLUTION_FXZ('cross', flag_mode, imax, jmax, kmax, &
-                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 end if
 
                 if (flag_mode == 1) then ! Spectra
@@ -754,7 +754,7 @@ program SPECTRA
                 txc(1:isize_field, 1) = vars(iv)%field(1:isize_field)
                 call OPR_FOURIER_F(i3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
 
-                call OPR_FOURIER_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv), wrk3d)
+                call OPR_FOURIER_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv))
             end do
 
             outr = outr*norm*norm

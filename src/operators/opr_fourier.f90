@@ -1,5 +1,5 @@
-#include "dns_error.h"
 #ifdef USE_MPI
+#include "dns_error.h"
 #include "dns_const_mpi.h"
 #endif
 
@@ -8,7 +8,9 @@ module OPR_FOURIER
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
     use TLAB_VARS, only: g
-    use TLAB_PROCS
+    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+    use TLAB_POINTERS_C, only: c_wrk3d
+use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
@@ -29,7 +31,7 @@ module OPR_FOURIER
     logical :: fft_reordering
 
     integer(wi) k
-    complex(wp), pointer :: c_in(:,:) => null(), c_out(:,:) => null(), c_tmp1(:,:) => null(), c_tmp2(:,:) => null(), c_wrk3d(:,:) => null(), c_in1(:,:) => null()
+    complex(wp), pointer :: c_in(:,:) => null(), c_out(:,:) => null(), c_tmp1(:,:) => null(), c_tmp2(:,:) => null(), c_in1(:,:) => null()
 
     ! public :: fft_plan_fy1d, fft_plan_by1d ! vertical spectral pressure filter
     public :: OPR_FOURIER_INITIALIZE
@@ -44,7 +46,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine OPR_FOURIER_INITIALIZE()
-        use TLAB_ARRAYS, only: wrk1d, wrk3d, txc
+        use TLAB_ARRAYS, only: txc
 #ifdef USE_FFTW
 #include "fftw3.f"
 #endif
@@ -185,8 +187,6 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine OPR_FOURIER_F(flag_mode, nx, ny, nz, in, out, tmp1)
-        use TLAB_ARRAYS, only: wrk2d
-        use TLAB_POINTERS_C, only: c_wrk3d
         integer(wi) :: flag_mode                                ! 1D, 2D or 3D
         integer(wi) :: nx, ny, nz
         real(wp), intent(INOUT) :: in(isize_txc_field)          ! extended w/ BCs below
@@ -229,7 +229,6 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine OPR_FOURIER_B(flag_mode, nx, ny, nz, in, out)
-        use TLAB_POINTERS_C, only: c_wrk3d
         integer(wi) :: flag_mode  ! 1D, 2D or 3D
         integer(wi) :: nx, ny, nz
         real(wp), intent(INOUT) :: in(isize_txc_dimz, nz)
@@ -270,28 +269,25 @@ contains
 ! #######################################################################
 ! Calculate spectrum in array in1
 ! Calculate correlation in array in2
-    subroutine OPR_FOURIER_CONVOLUTION_FXZ(flag1, flag2, nx, ny, nz, in1, in2, tmp1, tmp2, wrk2d, wrk3d)
-
+    subroutine OPR_FOURIER_CONVOLUTION_FXZ(flag1, flag2, nx, ny, nz, in1, in2, tmp1, tmp2)
         character(len=*), intent(in) :: flag1
         integer(wi), intent(in) :: flag2, nx, ny, nz
-        real(wp), dimension(isize_txc_field), intent(INOUT) :: in1, in2, tmp1, tmp2, wrk3d
-        real(wp), dimension(isize_wrk2d, 2), intent(INOUT) :: wrk2d ! BCs padding
+        real(wp), dimension(isize_txc_field), intent(INOUT) :: in1, in2, tmp1, tmp2
 
-        target in1, tmp1, tmp2, wrk3d
+        target in1, tmp1, tmp2
 
 ! #######################################################################
         ! Pass memory address from real array to complex array
         call c_f_pointer(c_loc(in1), c_in1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(wrk3d), c_wrk3d, shape=[isize_txc_dimz/2, nz])
 
-        wrk2d = 0.0_wp
+        wrk2d(:,1:2) = 0.0_wp          ! BCs
         fft_reordering = .true.
 
         if (g(3)%size > 1) then
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_wrk3d, c_tmp1, c_tmp2)
-            call OPR_FOURIER_F_Z_EXEC(c_wrk3d, c_tmp1)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp2, c_tmp1, c_wrk3d)
+            call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1)
         else
             call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp1, c_tmp2, c_wrk3d)
         end if
@@ -303,8 +299,8 @@ contains
 
         case ('cross')       ! Cross-spectra
             if (g(3)%size > 1) then
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_wrk3d, c_in1, c_tmp2)
-                call OPR_FOURIER_F_Z_EXEC(c_wrk3d, c_in1)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_tmp2, c_in1, c_wrk3d)
+                call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_in1)
             else
                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_in1, c_tmp2, c_wrk3d)
             end if
@@ -314,12 +310,11 @@ contains
 
 ! -----------------------------------------------------------------------
         if (flag2 == 2) then         ! Calculate correlation in array in2
-            tmp2 = in1                    ! the routines below can overwrite the entry array
             if (g(3)%size > 1) then
-                call OPR_FOURIER_B_Z_EXEC(c_tmp2, c_wrk3d)
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, in2, c_tmp1)
+                call OPR_FOURIER_B_Z_EXEC(c_in1, c_tmp1)
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, in2, c_wrk3d)
             else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp2, in2, c_wrk3d)
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_in1, in2, c_wrk3d)
             end if
         end if
 
@@ -345,7 +340,6 @@ contains
 !#
 !########################################################################
     subroutine OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, in_bcs_hb, in_bcs_ht, out, wrk1, wrk2)
-
         integer(wi) nx, ny, nz
         real(wp), dimension(nx*ny, *) :: in
         real(wp), dimension(nx, nz) :: in_bcs_hb, in_bcs_ht
@@ -656,12 +650,10 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine OPR_FOURIER_SPECTRA_3D(nx, ny, nz, isize_psd, u, psd, wrk1d)
-
+    subroutine OPR_FOURIER_SPECTRA_3D(nx, ny, nz, isize_psd, u, psd)
         integer(wi), intent(IN) :: nx, ny, nz, isize_psd
-        real(wp), dimension(isize_txc_dimz, nz), intent(IN) :: u
-        real(wp), dimension(isize_psd), intent(OUT) :: psd
-        real(wp), dimension(isize_psd), intent(INOUT) :: wrk1d
+        real(wp), intent(IN) :: u(isize_txc_dimz, nz)
+        real(wp), intent(OUT) :: psd(isize_psd)
 
         ! -----------------------------------------------------------------------
         integer(wi) i, j, r, iglobal, kglobal, ip
@@ -714,10 +706,9 @@ contains
         end do
 
 #ifdef USE_MPI
-        wrk1d = psd
-        call MPI_Reduce(wrk1d, psd, isize_psd, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+        call MPI_Reduce(psd, wrk3d, isize_psd, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
         if (ims_pro == 0) then
-            psd = wrk1d
+            psd(1:isize_psd) = wrk3d(1:isize_psd)
         end if
 #endif
 
