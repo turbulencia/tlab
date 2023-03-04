@@ -704,12 +704,10 @@ subroutine DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
     if (imode_rhs == EQNS_RHS_NONBLOCKING) then
         if (inb_scal > 2) then
-            call TLAB_WRITE_ASCII(efile, &
-                                  'DNS_READ_LOCAL. Nonblocking Communication not implemented >2 scalars')
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Nonblocking Communication not implemented >2 scalars')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         else if (inb_scal < 1) then
-            call TLAB_WRITE_ASCII(efile, &
-                                  'DNS_READ_LOCAL. Nonblocking Communication require at least 1 scalar')
+            call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Nonblocking Communication require at least 1 scalar')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
     end if
@@ -717,25 +715,8 @@ subroutine DNS_READ_LOCAL(inifile)
     ! -------------------------------------------------------------------
     ! Array sizes
     ! -------------------------------------------------------------------
-    select case (imode_eqns)
-    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-        inb_txc = 6
-        if (rkm_mode == RKM_IMP3_DIFFUSION) inb_txc = inb_txc + 1
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-        if (itransport == EQNS_TRANS_POWERLAW) then
-            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
+    inb_txc = 9
 
-        if (imode_eqns == DNS_EQNS_TOTAL) then
-            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-
-        inb_txc = 9
-        if (imode_eqns == DNS_EQNS_INTERNAL .and. iadvection == EQNS_SKEWSYMMETRIC .and. &
-            iviscous == EQNS_EXPLICIT) inb_txc = 6
-    end select
     if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) > 0.0_wp) inb_txc = inb_txc + 1
 
     if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics

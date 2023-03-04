@@ -66,6 +66,9 @@ module TLAB_POINTERS_3D
     real(wp), pointer :: tmp4(:, :, :) => null()
     real(wp), pointer :: tmp5(:, :, :) => null()
     real(wp), pointer :: tmp6(:, :, :) => null()
+    real(wp), pointer :: tmp7(:, :, :) => null()
+    real(wp), pointer :: tmp8(:, :, :) => null()
+    real(wp), pointer :: tmp9(:, :, :) => null()
 
 end module TLAB_POINTERS_3D
 

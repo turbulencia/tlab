@@ -282,6 +282,21 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 #endif
 
+! -------------------------------------------------------------------
+    select case (imode_eqns)
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+        if (itransport == EQNS_TRANS_POWERLAW) then
+            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        if (imode_eqns == DNS_EQNS_TOTAL) then
+            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+    end select
+
 ! ###################################################################
 ! Pressure staggering
 ! ###################################################################
@@ -688,7 +703,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
+       call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. (iadvection == EQNS_CONVECTIVE)) then
