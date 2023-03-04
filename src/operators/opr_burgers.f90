@@ -26,7 +26,7 @@ module OPR_BURGERS
     ! Apply the non-linear operator N(u)(s) = visc* d^2/dx^2 s - u d/dx s
     ! the argument ivel indicates 2 options:
     integer, parameter :: OPR_B_SELF = 0 ! velocity component is the scalar itself, the transposed velocity is returned
-    integer, parameter :: OPR_B_U_IN = 1 ! velocity component is passed through u1, or u2 if transposed required
+    integer, parameter :: OPR_B_U_IN = 1 ! velocity component is passed through u, or u_t if transposed required
 
     public :: OPR_B_SELF, OPR_B_U_IN
     public :: OPR_BURGERS_X
@@ -36,17 +36,18 @@ module OPR_BURGERS
 contains
 !########################################################################
 !########################################################################
-    subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1)
+    subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
         integer,     intent(in) :: ivel
-        integer,     intent(in) :: is           ! scalar index; if 0, then velocity
+        integer,     intent(in) :: is                       ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
-        integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*)
+        integer(wi), intent(in) :: bcs(2, 2)                ! BCs at xmin (1,*) and xmax (2,*)
         type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: s(nx*ny*nz), u1(nx*ny*nz), u2(nx*ny*nz)
+        real(wp),      intent(in)    :: s(nx*ny*nz), u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz)   ! transposes velocity
+        real(wp),      intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
+        real(wp),      intent(in), optional :: u_t(nx*ny*nz)
 
-        target s, u1, u2, result, tmp1
+        target s, u, result, tmp1, u_t
 
 ! -------------------------------------------------------------------
         integer(wi) nyz
@@ -82,7 +83,7 @@ contains
         if (ivel == OPR_B_SELF) then    ! velocity is the scalar itself 
             p_vel => p_b
         else                            ! transposed velocity is passed through argument
-            p_vel => u2 
+            p_vel => u_t 
         end if 
 
 ! -------------------------------------------------------------------
@@ -118,21 +119,23 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine OPR_BURGERS_Y(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1)
+    subroutine OPR_BURGERS_Y(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
         integer,     intent(in) :: ivel
         integer,     intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2) ! BCs at xmin (1,*) and xmax (2,*)
         type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: s(nx*nz, ny), u1(nx*nz, ny), u2(nx*nz, ny)
-        real(wp),      intent(out)   :: result(nx*nz, ny)
-        real(wp),      intent(inout) :: tmp1(nx*nz, ny)
+        real(wp),      intent(in)    :: s(nx*ny*nz), u(nx*ny*nz)
+        real(wp),      intent(out)   :: result(nx*ny*nz)
+        real(wp),      intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
+        real(wp),      intent(in), optional :: u_t(nx*ny*nz)
 
-        target s, u1, u2, result, tmp1
+        target s, u, result, tmp1, u_t
 
 ! -------------------------------------------------------------------
         integer(wi) nxy, nxz, j
-        real(wp), dimension(:, :), pointer :: p_org, p_dst1, p_dst2, p_vel
+        real(wp), dimension(:), pointer :: p_org, p_vel
+        real(wp), dimension(:, :), pointer :: p_dst1, p_dst2    ! need (nx*nz,ny) shape
 
 ! ###################################################################
         if (g%size == 1) then ! Set to zero in 2D case
@@ -148,8 +151,8 @@ contains
 ! -------------------------------------------------------------------
             if (nz == 1) then
                 p_org => s
-                p_dst1 => tmp1
-                p_dst2 => result
+                p_dst1(1:nx*nz, 1:ny) => wrk3d(1:nx*nz*ny)
+                p_dst2(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
             else
 #ifdef USE_ESSL
                 call DGETMO(s, nxy, nxy, nz, tmp1, nz)
@@ -157,7 +160,7 @@ contains
                 call DNS_TRANSPOSE(s, nxy, nz, nxy, tmp1, nz)
 #endif
                 p_org => tmp1
-                p_dst1 => result
+                p_dst1(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
                 p_dst2(1:nx*nz, 1:ny) => wrk3d(1:nx*nz*ny)
             end if
 
@@ -166,9 +169,9 @@ contains
                 p_vel => p_org
             else
                 if (nz == 1) then  ! I do not need the transposed
-                    p_vel => u1
+                    p_vel => u
                 else               ! I do need the transposed
-                    p_vel => u2 
+                    p_vel => u_t 
                 end if
             end if
 
@@ -200,17 +203,18 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine OPR_BURGERS_Z(ivel, is, nx, ny, nz, bcs, g, s, u1, u2, result, tmp1)
+    subroutine OPR_BURGERS_Z(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
         integer,     intent(in) :: ivel
         integer,     intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2) ! BCs at xmin (1,*) and xmax (2,*)
         type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: s(nx*ny*nz), u1(nx*ny*nz), u2(nx*ny*nz)
+        real(wp),      intent(in)    :: s(nx*ny*nz), u(nx*ny*nz)
         real(wp),      intent(out)   :: result(nx*ny*nz)
         real(wp),      intent(inout) :: tmp1(nx*ny*nz)
+        real(wp),      intent(in), optional :: u_t(nx*ny*nz)
 
-        target s, u1, u2, result, tmp1
+        target s, u, result, tmp1, u_t
 
 ! -------------------------------------------------------------------
         integer(wi) nxy
@@ -238,7 +242,7 @@ contains
             else
 #endif
                 p_a => s
-                p_b => tmp1
+                p_b => wrk3d
                 p_c => result
                 nxy = nx*ny
 #ifdef USE_MPI
@@ -251,10 +255,10 @@ contains
             else
 #ifdef USE_MPI
                 if (ims_npro_k > 1) then        ! I do need the transposed
-                    p_vel => u2
+                    p_vel => u_t
                 else
 #endif
-                    p_vel => u1                 ! I do not need the transposed
+                    p_vel => u                 ! I do not need the transposed
 #ifdef USE_MPI
                 end if
 #endif

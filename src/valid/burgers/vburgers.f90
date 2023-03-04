@@ -77,7 +77,7 @@ program VBURGERS
         end do
     end do
 
-    call OPR_BURGERS_X(0, 0, imax, jmax, kmax, bcs, g(1), a, a, a, c, tmp1)
+    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), a, a, c, tmp1)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -101,7 +101,7 @@ program VBURGERS
         end do
     end do
 
-    call OPR_BURGERS_Y(0, 0, imax, jmax, kmax, bcs, g(2), a, a, a, c, tmp1)
+    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), a, a, c, tmp1)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -127,7 +127,7 @@ program VBURGERS
             end do
         end do
 
-        call OPR_BURGERS_Z(0, 0, imax, jmax, kmax, bcs, g(3), a, a, a, c, tmp1)
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), a, a, c, tmp1)
 
         c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI

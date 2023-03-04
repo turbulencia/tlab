@@ -60,25 +60,25 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     if (imode_ibm == 1) ibm_burgers = .true.
 
 ! Advection and diffusion terms
-    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, u, p, tmp1) ! store u transposed in tmp1
+    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
     tmp3 = tmp3 + p
-    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, tmp1, p, tmp2) ! tmp1 contains u transposed
+    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
     tmp4 = tmp4 + p
-    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, tmp1, p, tmp2) ! tmp1 contains u transposed
+    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, p, tmp2, tmp1) ! tmp1 contains u transposed
     tmp5 = tmp5 + p
 
-    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, v, p, tmp1) ! store v transposed in tmp1
+    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, p, tmp1) ! store v transposed in tmp1
     tmp4 = tmp4 + p
-    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, tmp1, p, tmp2) ! tmp1 contains v transposed
+    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, p, tmp2, tmp1) ! tmp1 contains v transposed
     tmp3 = tmp3 + p
-    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, tmp1, p, tmp2) ! tmp1 contains v transposed
+    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
     tmp5 = tmp5 + p
 
-    call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, w, p, tmp1) ! store w transposed in tmp1
+    call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
     tmp5 = tmp5 + p
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, tmp1, p, tmp2) ! tmp1 contains w transposed
+    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
     tmp4 = tmp4 + p
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, tmp1, p, tmp2) ! tmp1 contains w transposed
+    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
     tmp3 = tmp3 + p
 
 ! If IBM, set flag back to false

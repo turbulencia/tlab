@@ -187,11 +187,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         ! Vertical derivatives, and Vertical advection
         !
         t_tmp = -MPI_WTime()
-        call OPR_BURGERS_Y(i0, i0, imax, jmax, kmax, bcs, g(2), v, v, v, tmp21, tmp22) ! store v transposed in tmp22
+        call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, tmp21, tmp22) ! store v transposed in tmp22
         h2 = h2 + tmp21
-        call OPR_BURGERS_Y(i1, i0, imax, jmax, kmax, bcs, g(2), u, v, tmp22, tmp21, tmpu) ! using tmp22
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, tmp21, tmpu, tmp22) ! using tmp22
         h1 = h1 + tmp21
-        call OPR_BURGERS_Y(i1, i0, imax, jmax, kmax, bcs, g(2), w, v, tmp22, tmp21, tmpu) ! using tmp22
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, tmp21, tmpu, tmp22) ! using tmp22
         h3 = h3 + tmp21
         t_ser = t_ser + (t_tmp + MPI_WTime())
 
@@ -199,7 +199,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
         t_tmp = -MPI_WTime()
         do is = 1, inb_scal
-            call OPR_BURGERS_Y(i1, is, imax, jmax, kmax, bcs, g(2), s(1, is), v, tmp22, tmp21, tmpu) ! using tmp22
+            call OPR_BURGERS_Y(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(2), s(1, is), v, tmp21, tmpu, tmp22) ! using tmp22
             hs(:, is) = hs(:, is) + tmp21
         end do
         t_ser = t_ser + (t_tmp + MPI_WTime())
