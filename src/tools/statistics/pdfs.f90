@@ -19,6 +19,8 @@ program PDFS
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL

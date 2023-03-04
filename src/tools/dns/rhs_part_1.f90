@@ -15,6 +15,7 @@ subroutine RHS_PART_1()
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
     use OPR_PARTIAL
+    use FI_GRADIENT_EQN
 
     implicit none
 

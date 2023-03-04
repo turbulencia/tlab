@@ -7,6 +7,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
     use TLAB_VARS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
+    use FI_VORTICITY_EQN
 
     implicit none
 

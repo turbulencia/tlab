@@ -28,6 +28,8 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 #endif
     use OPR_PARTIAL
     use FI_STRAIN_EQN
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
 
     implicit none
 

@@ -28,6 +28,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #endif
     use TLAB_PROCS
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
+    use FI_GRADIENT_EQN
     use OPR_PARTIAL
     
     implicit none

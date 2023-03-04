@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -8,6 +7,7 @@
 !#
 !########################################################################
 subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_ARRAYS, only: wrk1d, wrk3d
     use AVGS, only: AVG1V2D_V
@@ -15,17 +15,17 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
     implicit none
 
     type(term_dt), intent(IN) :: radiation
-    TINTEGER, intent(IN) :: nx, ny, nz
+    integer(wi), intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
-    TREAL, dimension(nx*ny*nz), intent(IN) :: s        ! Radiatively active scalar
-    TREAL, dimension(nx*ny*nz), intent(OUT) :: r        ! Radiative heating rate
+    real(wp), intent(IN) :: s(nx*ny*nz)       ! Radiatively active scalar
+    real(wp), intent(OUT) :: r(nx*ny*nz)        ! Radiative heating rate
 
     target s, r
 
 ! -----------------------------------------------------------------------
-    TINTEGER j, ip, ip2, nxy, nxz, ibc
-    TREAL delta_inv, f0, f1
-    TREAL, dimension(:), pointer :: p_org, p_dst
+    integer(wi) j, ip, ip2, nxy, nxz, ibc
+    real(wp) delta_inv, f0, f1
+    real(wp), pointer :: p_org(:), p_dst(:)
 
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
@@ -35,7 +35,7 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
     call INT_C1N6_LHS(ny, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
     call PENTADFS(ny - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
 
-    delta_inv = C_1_R/radiation%parameters(2)
+    delta_inv = 1.0_wp/radiation%parameters(2)
 
 ! ###################################################################
     if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
@@ -75,11 +75,11 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
 ! Calculate (negative) integral path.
     call INT_C1N6_RHS(ny, nxz, ibc, g%jac, p_org, p_dst)
     call PENTADSS(ny - 1, nxz, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), p_dst)
-    ip = nxz*(ny - 1) + 1; p_dst(ip:ip + nxz - 1) = C_0_R ! boundary condition
+    ip = nxz*(ny - 1) + 1; p_dst(ip:ip + nxz - 1) = 0.0_wp ! boundary condition
 
 ! Calculate radiative heating rate
     f0 = radiation%parameters(1)
-    if (ABS(radiation%parameters(3)) > C_0_R) then
+    if (ABS(radiation%parameters(3)) > 0.0_wp) then
         f1 = radiation%parameters(3)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
@@ -118,6 +118,7 @@ end subroutine OPR_RADIATION
 !########################################################################
 !########################################################################
 subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_ARRAYS, only: wrk1d, wrk3d
     use AVGS, only: AVG1V2D_V
@@ -125,17 +126,17 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     implicit none
 
     type(term_dt), intent(IN) :: radiation
-    TINTEGER, intent(IN) :: nx, ny, nz
+    integer(wi), intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
-    TREAL, dimension(nx*ny*nz), intent(IN) :: s        ! Radiatively active scalar
-    TREAL, dimension(nx*ny*nz), intent(OUT) :: r        ! Radiative flux
+    real(wp), dimension(nx*ny*nz), intent(IN) :: s        ! Radiatively active scalar
+    real(wp), dimension(nx*ny*nz), intent(OUT) :: r        ! Radiative flux
 
     target s, r
 
 ! -----------------------------------------------------------------------
-    TINTEGER j, ip, ip2, nxy, nxz, ibc
-    TREAL delta_inv, f0, f1
-    TREAL, dimension(:), pointer :: p_org, p_dst
+    integer(wi) j, ip, ip2, nxy, nxz, ibc
+    real(wp) delta_inv, f0, f1
+    real(wp), dimension(:), pointer :: p_org, p_dst
 
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
@@ -145,7 +146,7 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     call INT_C1N6_LHS(ny, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
     call PENTADFS(ny - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
 
-    delta_inv = C_1_R/radiation%parameters(2)
+    delta_inv = 1.0_wp/radiation%parameters(2)
 
 ! ###################################################################
     if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
@@ -185,11 +186,11 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
 ! Calculate (negative) integral path.
     call INT_C1N6_RHS(ny, nxz, ibc, g%jac, p_org, p_dst)
     call PENTADSS(ny - 1, nxz, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), p_dst)
-    ip = nxz*(ny - 1) + 1; p_dst(ip:ip + nxz - 1) = C_0_R ! boundary condition
+    ip = nxz*(ny - 1) + 1; p_dst(ip:ip + nxz - 1) = 0.0_wp ! boundary condition
 
 ! Calculate radiative flux
     f0 = -radiation%parameters(1)*radiation%parameters(2)
-    if (ABS(radiation%parameters(3)) > C_0_R) then
+    if (ABS(radiation%parameters(3)) > 0.0_wp) then
         f1 = -radiation%parameters(3)*radiation%parameters(2)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1

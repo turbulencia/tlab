@@ -19,6 +19,8 @@ program SL_BOUNDARY
     use MPI
     use TLAB_MPI_PROCS
 #endif
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
 
     implicit none
 

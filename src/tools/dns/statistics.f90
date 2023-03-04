@@ -58,7 +58,8 @@ contains
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
         use FI_SOURCES, only: FI_BUOYANCY
-
+        use FI_VORTICITY_EQN
+        
         ! -------------------------------------------------------------------
         real(wp) dummy, amin(16), amax(16)
         integer is, idummy, nbins, ibc(16), nfield

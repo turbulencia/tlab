@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -8,14 +7,12 @@
 #define C_FILE_LOC "IO_READ_GLOBAL"
 
 !########################################################################
-!#
 !# Reading general data from file dns.ini, setting up general parameters
 !# and doing cross-check of these general data.
-!#
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)
 
-    use TLAB_CONSTANTS, only: wp, lfile, efile, wfile, MajorVersion, MinorVersion
+    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, wfile, MajorVersion, MinorVersion
     use TLAB_VARS
     use TLAB_PROCS
     use THERMO_VARS
@@ -26,14 +23,14 @@ subroutine IO_READ_GLOBAL(inifile)
 
     implicit none
 
-    character*(*) inifile
+    character(len=*), intent(in) :: inifile
 
 ! -------------------------------------------------------------------
     character*512 sRes
     character*64 lstr
     character*32 bakfile
-    TINTEGER is, inb_scal_local1, inb_scal_local2, idummy
-    TREAL dummy
+    integer(wi) is, inb_scal_local1, inb_scal_local2, idummy
+    real(wp) dummy
 
 ! ###################################################################
     bakfile = trim(adjustl(inifile))//'.bak'
@@ -354,12 +351,12 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
 
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
-    schmidt(:) = C_0_R; inb_scal_local1 = MAX_NSP
+    schmidt(:) = 0.0_wp; inb_scal_local1 = MAX_NSP
     call LIST_REAL(sRes, inb_scal_local1, schmidt)
 
     lstr = '0.0'; do is = 2, inb_scal_local1; lstr = trim(adjustl(lstr))//',0.0'; end do
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
-    damkohler(:) = C_0_R; inb_scal_local2 = MAX_NSP
+    damkohler(:) = 0.0_wp; inb_scal_local2 = MAX_NSP
     call LIST_REAL(sRes, inb_scal_local2, damkohler)
     if (inb_scal_local1 /= inb_scal_local2) then ! Consistency check
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Schmidt and Damkholer sizes do not match.')
@@ -374,24 +371,24 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     call TLAB_WRITE_ASCII(bakfile, '#Vector=<Gx,Gy,Gz>')
     call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-    buoyancy%vector = C_0_R; buoyancy%active = .false.
+    buoyancy%vector = 0.0_wp; buoyancy%active = .false.
     if (buoyancy%type /= EQNS_NONE) then
         call SCANINICHAR(bakfile, inifile, 'BodyForce', 'Vector', '0.0,-1.0,0.0', sRes)
         idummy = 3
         call LIST_REAL(sRes, idummy, buoyancy%vector)
 
-        if (abs(buoyancy%vector(1)) > C_0_R) then; buoyancy%active(1) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Ox.'); end if
-        if (abs(buoyancy%vector(2)) > C_0_R) then; buoyancy%active(2) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Oy.'); end if
-        if (abs(buoyancy%vector(3)) > C_0_R) then; buoyancy%active(3) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Oz.'); end if
+        if (abs(buoyancy%vector(1)) > 0.0_wp) then; buoyancy%active(1) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Ox.'); end if
+        if (abs(buoyancy%vector(2)) > 0.0_wp) then; buoyancy%active(2) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Oy.'); end if
+        if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Oz.'); end if
 
-        if (froude > C_0_R) then
+        if (froude > 0.0_wp) then
             buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into de vector g
         else
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Froude number must be nonzero if buoyancy is retained.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        buoyancy%parameters(:) = C_0_R
+        buoyancy%parameters(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, buoyancy%parameters)
@@ -406,31 +403,31 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     call TLAB_WRITE_ASCII(bakfile, '#Vector=<Fx,Fy,Fz>')
     call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-    coriolis%vector(:) = C_0_R; coriolis%active = .false.
+    coriolis%vector(:) = 0.0_wp; coriolis%active = .false.
     if (coriolis%type /= EQNS_NONE) then
         call SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
         idummy = 3
         call LIST_REAL(sRes, idummy, coriolis%vector)
 
-        if (abs(coriolis%vector(1)) > C_0_R) then; coriolis%active(2) = .true.; coriolis%active(3) = .true.; call TLAB_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); end if
-        if (abs(coriolis%vector(2)) > C_0_R) then; coriolis%active(3) = .true.; coriolis%active(1) = .true.; call TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); end if
-        if (abs(coriolis%vector(3)) > C_0_R) then; coriolis%active(1) = .true.; coriolis%active(2) = .true.; call TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); end if
+        if (abs(coriolis%vector(1)) > 0.0_wp) then; coriolis%active(2) = .true.; coriolis%active(3) = .true.; call TLAB_WRITE_ASCII(lfile, 'Angular velocity along Ox.'); end if
+        if (abs(coriolis%vector(2)) > 0.0_wp) then; coriolis%active(3) = .true.; coriolis%active(1) = .true.; call TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oy.'); end if
+        if (abs(coriolis%vector(3)) > 0.0_wp) then; coriolis%active(1) = .true.; coriolis%active(2) = .true.; call TLAB_WRITE_ASCII(lfile, 'Angular velocity along Oz.'); end if
 
-        if (rossby > C_0_R) then
+        if (rossby > 0.0_wp) then
             coriolis%vector(:) = coriolis%vector(:)/rossby ! adding the rossby number into the vector
         else
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Rossby number must be nonzero if coriolis is retained.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        coriolis%parameters(:) = C_0_R
+        coriolis%parameters(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, coriolis%parameters)
 
-        if (coriolis%parameters(2) == C_0_R) then
+        if (coriolis%parameters(2) == 0.0_wp) then
             call TLAB_WRITE_ASCII(lfile, C_FILE_LOC//'. Default normalized geostrophic velocity set to one.')
-            coriolis%parameters(2) = C_1_R
+            coriolis%parameters(2) = 1.0_wp
         end if
 
     end if
@@ -456,7 +453,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
         call SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
         radiation%active(idummy) = .true.
 
-        radiation%parameters(:) = C_0_R
+        radiation%parameters(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, radiation%parameters)
@@ -474,7 +471,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     if (subsidence%type /= EQNS_NONE) then
         subsidence%active = .true.
 
-        subsidence%parameters(:) = C_0_R
+        subsidence%parameters(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'Subsidence', 'Parameters', '0.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, subsidence%parameters)
@@ -495,14 +492,14 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
     transport%active = .false.
     if (transport%type /= EQNS_NONE) then
-        transport%parameters(:) = C_1_R ! default values
+        transport%parameters(:) = 1.0_wp ! default values
         call SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             idummy = MAX_PROF
             call LIST_REAL(sRes, idummy, transport%parameters)
         end if
 
-        if (settling > C_0_R) then
+        if (settling > 0.0_wp) then
             transport%parameters = transport%parameters*settling ! adding the settling number in the parameter definitions
         else
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Settling number must be nonzero if transport is retained.')
@@ -525,7 +522,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
     if (chemistry%type /= EQNS_NONE) then
-        chemistry%parameters(:) = C_0_R
+        chemistry%parameters(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, chemistry%parameters)
@@ -535,7 +532,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 ! Activating terms
     chemistry%active = .false.
     do is = 1, inb_scal_local1
-        if (abs(damkohler(is)) > C_0_R) chemistry%active(is) = .true.
+        if (abs(damkohler(is)) > 0.0_wp) chemistry%active(is) = .true.
     end do
 
 ! ###################################################################
@@ -555,7 +552,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     end if
 
     if (imixture /= EQNS_NONE) then
-        thermo_param(:) = C_0_R
+        thermo_param(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, thermo_param)
@@ -834,8 +831,8 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
 
-    if (iviscous == EQNS_NONE) then; visc = C_0_R
-    else; visc = C_1_R/reynolds; end if
+    if (iviscous == EQNS_NONE) then; visc = 0.0_wp
+    else; visc = 1.0_wp/reynolds; end if
 
 ! -------------------------------------------------------------------
 ! Initializing thermodynamic data of the mixture
@@ -852,19 +849,19 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
         end if
     end if
 ! Value of R_0/(C_{p,0}W_0) is called GRATIO
-    if (gama0 > C_0_R) GRATIO = (gama0 - C_1_R)/gama0
+    if (gama0 > 0.0_wp) GRATIO = (gama0 - 1.0_wp)/gama0
 
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-        mach = C_0_R
-        MRATIO = C_1_R
+        mach = 0.0_wp
+        MRATIO = 1.0_wp
         prandtl = schmidt(1)
     else
         MRATIO = gama0*mach*mach
     end if
 
     if (.not. nondimensional) then
-        MRATIO = C_1_R
-        GRATIO = C_1_R
+        MRATIO = 1.0_wp
+        GRATIO = 1.0_wp
     end if
 
     if (imode_eqns == DNS_EQNS_ANELASTIC .and. &
@@ -888,13 +885,13 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
         if (rbg%type == PROFILE_NONE) then
             dummy = tbg%delta/tbg%mean
-            rbg%mean = MRATIO*pbg%mean/tbg%mean/(C_1_R - C_025_R*dummy*dummy)
+            rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             rbg%delta = -rbg%mean*dummy
             rbg%thick = tbg%thick
             rbg%diam = tbg%diam
         else
             dummy = rbg%delta/rbg%mean
-            tbg%mean = MRATIO*pbg%mean/rbg%mean/(C_1_R - C_025_R*dummy*dummy)
+            tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             tbg%delta = -tbg%mean*dummy
             tbg%thick = rbg%thick
             tbg%diam = rbg%diam
@@ -917,7 +914,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
                 schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
             end if
 
-            if (damkohler(1) == C_0_R .and. damkohler(2) == C_0_R) then
+            if (damkohler(1) == 0.0_wp .and. damkohler(2) == 0.0_wp) then
                 damkohler(1:2) = damkohler(3)
             else
                 call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. AirWater requires at least first 2 Damkholer numbers zero.')

@@ -8,6 +8,8 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     use TLAB_AVGS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
     
     implicit none
 

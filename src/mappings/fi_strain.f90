@@ -105,6 +105,7 @@ contains
 !# s_33 ( s_33^2 + 3 ( s_13^2 + s_23^2 ) )
 !########################################################################
     subroutine FI_STRAIN_PRODUCTION(nx, ny, nz, u, v, w, result, s_12, s_13, s_23, tmp1, tmp2)
+        use FI_VORTICITY_EQN, only: FI_VORTICITY_PRODUCTION
         integer(wi), intent(IN) :: nx, ny, nz
         real(wp), dimension(nx*ny*nz), intent(IN) :: u, v, w
         real(wp), dimension(nx*ny*nz), intent(OUT) :: result

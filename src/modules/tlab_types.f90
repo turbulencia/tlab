@@ -27,8 +27,8 @@ module TLAB_TYPES
     type term_dt
         sequence
         integer type
-        integer, dimension(MAX_PARS) :: scalar     ! fields defining this term
-        logical, dimension(MAX_PARS) :: active, lpadding(3)     ! fields affected by this term
+        integer, dimension(MAX_VARS) :: scalar     ! fields defining this term
+        logical, dimension(MAX_VARS) :: active, lpadding(3)     ! fields affected by this term
         real(wp), dimension(MAX_PARS) :: parameters
         real(wp), dimension(MAX_PARS) :: auxiliar
         real(wp), dimension(3) :: vector

@@ -6,6 +6,8 @@ subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
     use TLAB_VARS
     use OPR_PARTIAL
     use FI_STRAIN_EQN
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
 
     implicit none
 

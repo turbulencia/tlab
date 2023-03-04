@@ -6,6 +6,7 @@ subroutine SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
 
     use TLAB_VARS
     use OPR_PARTIAL
+    use FI_GRADIENT_EQN
 
     implicit none
 
