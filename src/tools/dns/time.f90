@@ -1,6 +1,5 @@
 #include "dns_const.h"
 #include "dns_error.h"
-#include "types.h"
 
 !########################################################################
 !#
@@ -14,7 +13,7 @@ module TIME
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
     use TLAB_VARS
     use THERMO_VARS, only: gama0
     use TLAB_PROCS
@@ -59,59 +58,59 @@ contains
         case (RKM_EXP3)             ! Runge-Kutta explicit 3th order from Williamson 1980
             rkm_endstep = 3
 
-            kdt(1:3) = [C_1_R/C_3_R, C_15_R/C_16_R, C_8_R/C_15_R]
-            ktime(1:3) = [C_0_R, C_1_R/C_3_R, C_3_R/C_4_R]
-            kco(1:2) = [-C_5_R/C_9_R, -C_153_R/C_128_R]
+            kdt(1:3)   = [ 1.0_wp/3.0_wp,  15.0_wp/16.0_wp, 8.0_wp/15.0_wp ]
+            ktime(1:3) = [ 0.0_wp,         1.0_wp/3.0_wp,   3.0_wp/4.0_wp ]
+            kco(1:2)   = [-5.0_wp/9.0_wp, -153.0_wp/128.0_wp ]
 
         case (RKM_EXP4)             ! Runge-Kutta explicit 4th order 5 stages from Carpenter & Kennedy 1994
             rkm_endstep = 5
 
-            kdt(1) = C_1432997174477_R/C_9575080441755_R
-            kdt(2) = C_5161836677717_R/C_13612068292357_R
-            kdt(3) = C_1720146321549_R/C_2090206949498_R
-            kdt(4) = C_3134564353537_R/C_4481467310338_R
-            kdt(5) = C_2277821191437_R/C_14882151754819_R
+            kdt(1) = 1432997174477.0_wp/9575080441755.0_wp  !C_1432997174477_R/C_9575080441755_R
+            kdt(2) = 5161836677717.0_wp/13612068292357.0_wp !C_5161836677717_R/C_13612068292357_R
+            kdt(3) = 1720146321549.0_wp/2090206949498.0_wp  !C_1720146321549_R/C_2090206949498_R
+            kdt(4) = 3134564353537.0_wp/4481467310338.0_wp  !C_3134564353537_R/C_4481467310338_R
+            kdt(5) = 2277821191437.0_wp/14882151754819.0_wp !C_2277821191437_R/C_14882151754819_R
 
-            ktime(1) = C_0_R
-            ktime(2) = C_1432997174477_R/C_9575080441755_R
-            ktime(3) = C_2526269341429_R/C_6820363962896_R
-            ktime(4) = C_2006345519317_R/C_3224310063776_R
-            ktime(5) = C_2802321613138_R/C_2924317926251_R
+            ktime(1) = 0.0_wp
+            ktime(2) = kdt(1) !C_1432997174477_R/C_9575080441755_R
+            ktime(3) = 2526269341429.0_wp/6820363962896.0_wp !C_2526269341429_R/C_6820363962896_R
+            ktime(4) = 2006345519317.0_wp/3224310063776.0_wp !C_2006345519317_R/C_3224310063776_R
+            ktime(5) = 2802321613138.0_wp/2924317926251.0_wp !C_2802321613138_R/C_2924317926251_R
 
-            kco(1) = -C_567301805773_R/C_1357537059087_R
-            kco(2) = -C_2404267990393_R/C_2016746695238_R
-            kco(3) = -C_3550918686646_R/C_2091501179385_R
-            kco(4) = -C_1275806237668_R/C_842570457699_R
+            kco(1) = - 567301805773.0_wp/1357537059087.0_wp     !C_567301805773_R/C_1357537059087_R
+            kco(2) = - 2404267990393.0_wp/2016746695238.0_wp    !C_2404267990393_R/C_2016746695238_R
+            kco(3) = - 3550918686646.0_wp/2091501179385.0_wp    !C_3550918686646_R/C_2091501179385_R
+            kco(4) = - 1275806237668.0_wp/842570457699.0_wp     !C_1275806237668_R/C_842570457699_R
 
         case (RKM_IMP3_DIFFUSION)   ! Runge-Kutta semi-implicit 3th order from Spalart, Moser & Rogers (1991)
             rkm_endstep = 3
 
-            kdt(1:3) = (/C_8_R/C_15_R, C_5_R/C_12_R, C_3_R/C_4_R/)
+            kdt(1:3) = [8.0_wp/15.0_wp,     5.0_wp/12.0_wp,   3.0_wp/4.0_wp]
 
-            kim(1:3) = (/C_111_R/C_256_R, C_1_R/C_2_R, C_2_R/C_9_R/)
-            kex(1:3) = (/C_145_R/C_256_R, -C_9_R/C_50_R, C_2_R/C_9_R/)
-            kco(1:3) = (/C_0_R, -C_17_R/C_25_R, -C_5_R/C_9_R/)
+            kim(1:3) = [111.0_wp/256.0_wp,  1.0_wp/2.0_wp,    2.0_wp/9.0_wp]
+            kex(1:3) = [145.0_wp/256.0_wp, -9.0_wp/50.0_wp,   2.0_wp/9.0_wp]
+            kco(1:3) = [0.0_wp,            -17.0_wp/25.0_wp, -5.0_wp/9.0_wp]
             ! TO DO - calculate ktime from coefficients  ktime
-            ktime(1:3) = (/C_0_R, C_0_R, C_0_R/)
+            ktime(1:3) = [0.0_wp, 0.0_wp, 0.0_wp]
 
             ! Coefficients from Spalart, Moser, Rogers (1991)
             ! kim = beta/gamma
             ! kex = alpha/gamma
             ! kco = zeta/gamma
             !
-            ! alpha = (/ 29./96.,   -3./40,    1./6. /)
-            ! beta  = (/ 37./160.,   5./24.,   1./6. /)
-            ! gamma = (/  8./15.,    5./12.,   3./4. /)
-            ! zeta  = (/  0.,      -17./60.,  -5./12./)
+            ! alpha = [ 29./96.,   -3./40,    1./6. ]
+            ! beta  = [ 37./160.,   5./24.,   1./6. ]
+            ! gamma = [  8./15.,    5./12.,   3./4. ]
+            ! zeta  = [  0.,      -17./60.,  -5./12.]
 
         end select
 
         ! ###################################################################
         ! maximum diffusivities for TIME_COURANT
-        schmidtfactor = C_1_R
-        dummy = C_1_R/prandtl
+        schmidtfactor = 1.0_wp
+        dummy = 1.0_wp/prandtl
         schmidtfactor = max(schmidtfactor, dummy)
-        dummy = C_1_R/minval(schmidt(1:inb_scal))
+        dummy = 1.0_wp/minval(schmidt(1:inb_scal))
         schmidtfactor = max(schmidtfactor, dummy)
         schmidtfactor = schmidtfactor*visc
 
@@ -125,7 +124,7 @@ contains
         kdsp = 0
 #endif
 
-        dx2i = C_0_R
+        dx2i = 0.0_wp
         if (g(3)%size > 1) then
             do k = 1, kmax; do j = 1, jmax; do i = 1, imax
                     dummy = g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k + kdsp, 4)
@@ -171,9 +170,9 @@ contains
         ! Initialize arrays to zero for the explcit low-storage algorithm
         ! -------------------------------------------------------------------
         if (rkm_mode == RKM_EXP3 .or. rkm_mode == RKM_EXP4) then
-            if (icalc_flow == 1) hq = C_0_R
-            if (icalc_scal == 1) hs = C_0_R
-            if (part%type /= PART_TYPE_NONE) l_hq = C_0_R
+            if (icalc_flow == 1) hq = 0.0_wp
+            if (icalc_scal == 1) hs = 0.0_wp
+            if (part%type /= PART_TYPE_NONE) l_hq = 0.0_wp
         end if
 
         !########################################################################
@@ -277,13 +276,13 @@ contains
 #ifdef USE_MPI
             call MPI_REDUCE(idummy, t_dif, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD)
             if (ims_pro == 0) then
-                write (time_string, 999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro
+                write (time_string, 999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0_wp/PROC_CYCLES/ims_npro
 999             format(I5.5, ' (ims_npro_i X ims_npro_k:', I4.4, 'x', I4.4, 1x, ') RK-Substep', I1, ':', E13.5, 's')
                 call TLAB_WRITE_ASCII(lfile, time_string)
             end if
 #else
             t_dif = idummy
-            write (time_string, 999) rkm_substep, t_dif/1.0d0/PROC_CYCLES/ims_npro
+            write (time_string, 999) rkm_substep, t_dif/1.0_wp/PROC_CYCLES/ims_npro
 999         format('RK-Substep', I1, ':', E13.5, 's')
             call TLAB_WRITE_ASCII(lfile, time_string)
 #endif
@@ -346,9 +345,9 @@ contains
         kdsp = 0
 #endif
 
-        dtc = C_BIG_R   ! So that the minimum non-zero determines dt at the end
-        dtd = C_BIG_R
-        dtr = C_BIG_R
+        dtc = big_wp   ! So that the minimum non-zero determines dt at the end
+        dtd = big_wp
+        dtr = big_wp
 
         ipmax = 0       ! Initialize counter of time constraints
 
@@ -485,11 +484,11 @@ contains
         pmax(1:ipmax) = pmax_aux(1:ipmax)
 #endif
 
-        if (pmax(1) > C_0_R) dtc = cfla/pmax(1) ! Set time step for the given CFL number
-        if (pmax(2) > C_0_R) dtd = cfld/pmax(2) ! Set time step for the given diffusion number
+        if (pmax(1) > 0.0_wp) dtc = cfla/pmax(1) ! Set time step for the given CFL number
+        if (pmax(2) > 0.0_wp) dtd = cfld/pmax(2) ! Set time step for the given diffusion number
 
         ! -------------------------------------------------------------------
-        if (cfla > C_0_R) then
+        if (cfla > 0.0_wp) then
             if (rkm_mode == RKM_EXP3 .or. rkm_mode == RKM_EXP4) then
                 dt_loc = min(dtc, dtd)
             else
@@ -752,7 +751,7 @@ contains
 
         ! Maximum Mach for Poinsot & Lele reference pressure BC
         if (BcsDrift) then
-            M2_max = C_0_R
+            M2_max = 0.0_wp
             do i = 1, isize_field
                 dummy = (u(i)*u(i) + v(i)*v(i) + w(i)*w(i))*rho(i)/(GAMMA_LOC(i)*p(i))
                 M2_max = max(M2_max, dummy)
@@ -788,8 +787,8 @@ contains
         ! ###################################################################
         ! Perform the time stepping
         ! ###################################################################
-        rho_ratio = C_1_R
-        prefactor = (gama0 - C_1_R)*mach*mach
+        rho_ratio = 1.0_wp
+        prefactor = (gama0 - 1.0_wp)*mach*mach
 
         if (icalc_flow == 1) then
             if (icalc_scal == 1) then; inb_scal_loc = inb_scal
@@ -808,14 +807,14 @@ contains
                     rho_ratio = rho_ratio/rho(i)
                     dt_rho_ratio = dte/rho(i)
 
-                    e(i) = rho_ratio*(e(i) + prefactor*C_05_R*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) &
+                    e(i) = rho_ratio*(e(i) + prefactor*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) &
                            + dt_rho_ratio*hq(i, 4)
 
                     u(i) = rho_ratio*u(i) + dt_rho_ratio*hq(i, 1)
                     v(i) = rho_ratio*v(i) + dt_rho_ratio*hq(i, 2)
                     w(i) = rho_ratio*w(i) + dt_rho_ratio*hq(i, 3)
 
-                    e(i) = e(i) - prefactor*C_05_R*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))
+                    e(i) = e(i) - prefactor*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))
 
                     do is = 1, inb_scal_loc
                         s(i, is) = rho_ratio*s(i, is) + dt_rho_ratio*hs(i, is)
