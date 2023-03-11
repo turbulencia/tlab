@@ -345,8 +345,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
                 ip = ip + (jmax - 1)*imax; wrk2d(ip_t:ip_t + imax - 1, 1) = -alpha*BcsScalJmax%ref(1:imax, k, is); ip_t = ip_t + imax
             end do
             ip_b = 1; ip_t = 1 + imax*kmax
-            call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                                   s(1, is), tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1), wrk1d, wrk1d(1, 5), wrk3d)
+            call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                                   s(1, is), tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
 
             do ij = 1, isize_field
                 s(ij, is) = s(ij, is)*beta
@@ -372,24 +372,24 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     end do
 
     ip_b = 1; ip_t = 1 + imax*kmax
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                           tmp1, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1), wrk1d, wrk1d(:, 5), wrk3d)
+    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                           tmp1, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; wrk2d(ip_b:ip_b + imax - 1, 1) = -alpha*v(ip:ip + imax - 1); ip_b = ip_b + imax
         ip = ip + (jmax - 1)*imax; wrk2d(ip_t:ip_t + imax - 1, 1) = -alpha*v(ip:ip + imax - 1); ip_t = ip_t + imax
     end do
     ip_b = 1; ip_t = 1 + imax*kmax
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                           tmp2, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1), wrk1d, wrk1d(:, 5), wrk3d)
+    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                           tmp2, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; wrk2d(ip_b:ip_b + imax - 1, 1) = -alpha*w(ip:ip + imax - 1); ip_b = ip_b + imax
         ip = ip + (jmax - 1)*imax; wrk2d(ip_t:ip_t + imax - 1, 1) = -alpha*w(ip:ip + imax - 1); ip_t = ip_t + imax
     end do
     ip_b = 1; ip_t = 1 + imax*kmax
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                           tmp3, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1), wrk1d, wrk1d(:, 5), wrk3d)
+    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                           tmp3, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
     do ij = 1, isize_field
         u(ij) = tmp1(ij)*beta
         v(ij) = tmp2(ij)*beta

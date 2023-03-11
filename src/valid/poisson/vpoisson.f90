@@ -105,10 +105,10 @@ program VPOISSON
     else if (itype == 2) then
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
-        ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, lambda,&
-        !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
-        call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, lambda, &
-                                 a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, wrk1d, wrk1d(1, 5), wrk3d)
+        ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, 0, lambda,&
+        !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
+        call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, &
+                                 a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
     end if
 
 ! -------------------------------------------------------------------
