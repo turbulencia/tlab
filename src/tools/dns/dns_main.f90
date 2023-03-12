@@ -93,7 +93,7 @@ program DNS
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
-    if (ifourier == 1) then
+    if (fourier_on) then
         call OPR_FOURIER_INITIALIZE()
     end if
 
@@ -106,7 +106,7 @@ program DNS
 
     visc_stop = visc ! Value read in ifile
 
-    if (icalc_scal == 1) then
+    if (scal_on) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
         call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
     end if
@@ -165,7 +165,7 @@ program DNS
     if (imode_ibm == 1) then
         call IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
         call IBM_BCS_FIELD_COMBINED(i0, q)
-        if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i1, s)
+        if (scal_on) call IBM_INITIALIZE_SCAL(i1, s)
     end if
 
     ! ###################################################################
@@ -208,7 +208,7 @@ program DNS
             call DNS_FILTER()
             if (imode_ibm == 1) then
                 call IBM_BCS_FIELD_COMBINED(i0, q) ! apply IBM BCs
-                if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
+                if (scal_on) call IBM_INITIALIZE_SCAL(i0, s)
             end if
         end if
 
@@ -240,8 +240,8 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
-            if (icalc_flow == 1) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow)
-            if (icalc_scal == 1) call AVG_SCAL_ZT_REDUCE(q, s, hq, txc, mean_scal)
+            if (flow_on) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow)
+            if (scal_on) call AVG_SCAL_ZT_REDUCE(q, s, hq, txc, mean_scal)
         end if
 
         if (mod(itime - nitera_first, nitera_stats) == 0) then      ! Calculate statistics
@@ -253,12 +253,12 @@ program DNS
             itime == nitera_last .or. int(logs_data(1)) /= 0 .or. & ! Secure that one restart file is saved 
             wall_time > nruntime_sec) then                          ! If max runtime of the code is reached 
 
-            if (icalc_flow == 1) then
+            if (flow_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
                 call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, q)
             end if
 
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
                 call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, s)
             end if

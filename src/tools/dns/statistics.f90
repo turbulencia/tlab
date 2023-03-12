@@ -47,7 +47,7 @@ contains
         use TLAB_TYPES, only: pointers_dt
         use TLAB_VARS, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
-        use TLAB_VARS, only: buoyancy, imode_eqns, icalc_scal
+        use TLAB_VARS, only: buoyancy, imode_eqns, scal_on
         use TLAB_VARS, only: froude
         use TLAB_VARS, only: epbackground, pbackground, rbackground
         use TLAB_VARS, only: itime, rtime
@@ -148,7 +148,7 @@ contains
         ! Plane averages
         ! ###################################################################
         if (stats_averages) then
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 do is = 1, inb_scal_array          ! All, prognostic and diagnostic fields in array s
                     hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
                     call AVG_SCAL_XZ(is, q, s, s(1, is), &
@@ -262,7 +262,7 @@ contains
                 buff_u_jmax = jmax - BuffFlowJmax%size + 1
                 call AVG_FLOW_SPATIAL_LAYER(isize_txc, buff_u_jmin, buff_u_jmax, mean_flow, txc)
 
-                if (icalc_scal == 1) then
+                if (scal_on) then
                     do is = 1, inb_scal
                         call AVG_SCAL_SPATIAL_LAYER(is, isize_txc, buff_u_jmin, buff_u_jmax, mean_flow, mean_scal(1, 1, 1, is), txc)
                     end do

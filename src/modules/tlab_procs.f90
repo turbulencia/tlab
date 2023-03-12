@@ -351,7 +351,7 @@ contains
 
         ! ###################################################################
 ! #ifdef USE_FFTW
-!         if (ifourier == 1) then
+!         if (fourier_on) then
 !             call dfftw_destroy_plan(fft_plan_fx)
 !             call dfftw_destroy_plan(fft_plan_bx)
 !             if (g(3)%size > 1) then

@@ -5,7 +5,7 @@ module OPR_ELLIPTIC
     use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz
-    use TLAB_VARS, only: istagger
+    use TLAB_VARS, only: stagger_on
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
     use TLAB_PROCS
@@ -72,7 +72,7 @@ contains
 
         isize_line = nx/2 + 1
 
-        if (istagger == 0) then
+        if (.not. stagger_on) then
             i_sing = [1, g(1)%size/2 + 1]
             k_sing = [1, g(3)%size/2 + 1]
         else                    ! In case of staggering only one singular mode + different modified wavenumbers

@@ -130,7 +130,7 @@ contains
         end if
 
         ! -----------------------------------------------------------------------
-        if (ims_npro_i > 1 .and. ifourier == 1) then
+        if (ims_npro_i > 1 .and. fourier_on) then
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
             id = TLAB_MPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
@@ -145,7 +145,7 @@ contains
 
         end if
 
-        if (ims_npro_k > 1 .and. ifourier == 1) then
+        if (ims_npro_k > 1 .and. fourier_on) then
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Oz FFTW in Poisson solver.')
             id = TLAB_MPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax

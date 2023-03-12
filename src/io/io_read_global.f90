@@ -108,16 +108,16 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'Main', 'CalculateFlow', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; icalc_flow = 1
-    elseif (trim(adjustl(sRes)) == 'no') then; icalc_flow = 0
+    if (trim(adjustl(sRes)) == 'yes') then; flow_on = .true.
+    elseif (trim(adjustl(sRes)) == 'no') then; flow_on = .false.
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main.CalculateFlow must be yes or no')
         call TLAB_STOP(DNS_ERROR_CALCFLOW)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'Main', 'CalculateScalar', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; icalc_scal = 1
-    elseif (trim(adjustl(sRes)) == 'no') then; icalc_scal = 0
+    if (trim(adjustl(sRes)) == 'yes') then; scal_on = .true.
+    elseif (trim(adjustl(sRes)) == 'no') then; scal_on = .false.
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main.CalculateScalar must be yes or no')
         call TLAB_STOP(DNS_ERROR_CALCSCALAR)
@@ -133,8 +133,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    if (imode_sim == DNS_MODE_TEMPORAL) then; ifourier = 1
-    else; ifourier = 0; end if
+    if (imode_sim == DNS_MODE_TEMPORAL) fourier_on = .true.
 
     call SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)
     if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
@@ -302,15 +301,15 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#StaggerHorizontalPressure=<yes/no>')
 
     call SCANINICHAR(bakfile, inifile, 'Staggering', 'StaggerHorizontalPressure', 'no', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; istagger = 1; call TLAB_WRITE_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
-    elseif (trim(adjustl(sRes)) == 'no') then; istagger = 0
+    if (trim(adjustl(sRes)) == 'yes') then; stagger_on = .true.; call TLAB_WRITE_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
+    elseif (trim(adjustl(sRes)) == 'no') then; stagger_on = .false.
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Entry Main. StaggerHorizontalPressure must be yes or no')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
 ! Consistency check
-    if (istagger == 1) then
+    if (stagger_on) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
  call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
@@ -968,7 +967,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
         end if
         g(is)%inb_grid = g(is)%inb_grid &
                          + 1                    ! Density correction in anelastic mode
-        if ((istagger == 1) .and. g(is)%periodic) then
+        if ((stagger_on) .and. g(is)%periodic) then
             g(is)%inb_grid = g(is)%inb_grid &
                              + 5 & ! LU decomposition interpolation
                              + 5                 ! LU decomposition 1. order interpolatory
@@ -977,7 +976,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
 ! auxiliar array txc
     isize_txc_field = imax*jmax*kmax
-    if (ifourier == 1) then
+    if (fourier_on) then
         isize_txc_dimz = (imax + 2)*(jmax + 2)
         isize_txc_dimx = kmax*(jmax + 2)
         isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib

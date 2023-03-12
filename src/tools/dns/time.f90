@@ -170,8 +170,8 @@ contains
         ! Initialize arrays to zero for the explcit low-storage algorithm
         ! -------------------------------------------------------------------
         if (rkm_mode == RKM_EXP3 .or. rkm_mode == RKM_EXP4) then
-            if (icalc_flow == 1) hq = 0.0_wp
-            if (icalc_scal == 1) hs = 0.0_wp
+            if (flow_on) hq = 0.0_wp
+            if (scal_on) hs = 0.0_wp
             if (part%type /= PART_TYPE_NONE) l_hq = 0.0_wp
         end if
 
@@ -237,7 +237,7 @@ contains
 
                 alpha = kco(rkm_substep)
 
-                if (icalc_flow == 1) then
+                if (flow_on) then
                     do is = 1, inb_flow
 #ifdef USE_BLAS
                         call DSCAL(ij_len, alpha, hq(ij_srt, is), 1)
@@ -247,7 +247,7 @@ contains
                     end do
                 end if
 
-                if (icalc_scal == 1) then
+                if (scal_on) then
                     do is = 1, inb_scal
 #ifdef USE_BLAS
                         call DSCAL(ij_len, alpha, hs(ij_srt, is), 1)
@@ -790,8 +790,8 @@ contains
         rho_ratio = 1.0_wp
         prefactor = (gama0 - 1.0_wp)*mach*mach
 
-        if (icalc_flow == 1) then
-            if (icalc_scal == 1) then; inb_scal_loc = inb_scal
+        if (flow_on) then
+            if (scal_on) then; inb_scal_loc = inb_scal
             else; inb_scal_loc = 0
             end if
 
@@ -850,7 +850,7 @@ contains
             end if
 
         else
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     !$omp parallel default( shared ) private( i, dt_rho_ratio )
                     !$omp do

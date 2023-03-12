@@ -692,7 +692,7 @@ subroutine DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Pressure staggering and filtering
 ! -------------------------------------------------------------------
-    if (istagger == 1 .or. any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
+    if (stagger_on .or. any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         if (.not. (imode_rhs == EQNS_RHS_COMBINED)) then
             call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Horizontal pressure staggering or Pressure filter not implemented for this RHS type.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)

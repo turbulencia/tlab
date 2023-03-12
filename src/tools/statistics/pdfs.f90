@@ -50,7 +50,8 @@ program PDFS
     TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
     TINTEGER nfield, ifield, ij, is, bcs(2, 2), isize_pdf, ig
     TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
-    TINTEGER jmax_aux, iread_flow, iread_scal, idummy
+    TINTEGER jmax_aux, idummy
+    logical iread_flow, iread_scal
     TINTEGER ibc(16)
     TREAL vmin(16), vmax(16)
     logical reduce_data
@@ -152,57 +153,57 @@ program PDFS
     end if
 
     ! -------------------------------------------------------------------
-    iread_flow = 0
-    iread_scal = 0
+    iread_flow = .false.
+    iread_scal = .false.
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then; inb_txc = 6; 
     else; inb_txc = 1
     end if
-    if (ifourier == 1) inb_txc = max(inb_txc, 1)
+    if (fourier_on) inb_txc = max(inb_txc, 1)
     nfield = 2
 
     select case (opt_main)
     case (1)
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 4 + inb_scal_array; isize_pdf = opt_bins(1) + 2
         if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) nfield = nfield + 2
     case (2) ! Scalar gradient equation
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 5; isize_pdf = opt_bins(1) + 2
     case (3) ! Enstrophy equation
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 8)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 8)
         nfield = 7; isize_pdf = opt_bins(1) + 2
     case (4) ! Strain equation
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 8)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 8)
         nfield = 5; isize_pdf = opt_bins(1) + 2
     case (5) ! Invariants
-        iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 3; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (6) ! Chi-flamelet
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 2; isize_pdf = opt_bins(1) + 2
     case (7)
-        iread_flow = 1; inb_txc = max(inb_txc, 4)
+        iread_flow = .true.; inb_txc = max(inb_txc, 4)
         nfield = 2; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (9)
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 3)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 3)
         nfield = 2; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (10)
-        iread_scal = 1; inb_txc = max(inb_txc, 4)
+        iread_scal = .true.; inb_txc = max(inb_txc, 4)
         nfield = 5; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (11) ! eigenvalues
-        iread_flow = 1; inb_txc = max(inb_txc, 9)
+        iread_flow = .true.; inb_txc = max(inb_txc, 9)
         nfield = 3; isize_pdf = opt_bins(1) + 2
     case (12) ! eigenframe
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 9)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 9)
         nfield = 6; isize_pdf = opt_bins(1) + 2
     case (13) ! longitudinal velocity derivatives
-        iread_flow = 1; inb_txc = max(inb_txc, 3)
+        iread_flow = .true.; inb_txc = max(inb_txc, 3)
         nfield = 3; isize_pdf = opt_bins(1) + 2
     case (14) ! potential vorticity
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 2; isize_pdf = opt_bins(1) + 2
     case (15) ! joint s and v
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 8)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 8)
         nfield = 2; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     end select
 
@@ -250,7 +251,7 @@ program PDFS
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
-    if (ifourier == 1) then         ! For Poisson solver
+    if (fourier_on) then         ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
     end if
 
@@ -273,12 +274,12 @@ program PDFS
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (iread_scal == 1) then
+        if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
-        if (iread_flow == 1) then
+        if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if

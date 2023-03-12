@@ -25,7 +25,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: rbackground, ribackground
-    use TLAB_VARS, only: PressureFilter, istagger
+    use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use DNS_ARRAYS
@@ -210,7 +210,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
         end if
-        if (istagger == 1) then ! staggering on horizontal pressure nodes
+        if (stagger_on) then ! staggering on horizontal pressure nodes
             !  Oy derivative
             call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp2, tmp5)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
@@ -260,7 +260,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
     ! Stagger also Bcs
     if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:, 2))
-    if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
+    if (stagger_on) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
@@ -294,7 +294,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
     end if
 
-    if (istagger == 1) then
+    if (stagger_on) then
         !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
         call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5)
         call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3)

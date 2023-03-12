@@ -58,7 +58,8 @@ program VISUALS
     integer(wi) opt_format
     integer(wi) opt_cond, opt_cond_scal, opt_cond_relative
     integer(wi) ij, is, bcs(2, 2), ig
-    integer(wi) iscal_offset, iread_flow, iread_scal, iread_part, idummy, MaskSize
+    integer(wi) iscal_offset, idummy, MaskSize
+    logical iread_flow, iread_scal, iread_part
     real(wp) diff, dummy
     integer(wi) subdomain(6)
 
@@ -176,41 +177,41 @@ program VISUALS
     end if
 
     ! -------------------------------------------------------------------
-    iread_flow = 0
-    iread_scal = 0
-    iread_part = 0
+    iread_flow = .false.
+    iread_scal = .false.
+    iread_part = .false.
     inb_txc = 0
 
     do iv = 1, iopt_size
-        if (opt_vec(iv) == 1) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 2) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 3) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 4) then; iread_flow = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == 5) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 6) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == 7) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == 8) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7); end if
-        if (opt_vec(iv) == 9) then; iread_scal = 1; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 1) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 2) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 3) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 4) then; iread_flow = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == 5) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 6) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == 7) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == 8) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if (opt_vec(iv) == 9) then; iread_scal = .true.; inb_txc = max(inb_txc, 1); end if
         if (opt_vec(iv) > 9 .and. opt_vec(iv) <= iscal_offset) then
-            iread_scal = 1; inb_txc = max(inb_txc, 4); end if
-        if (opt_vec(iv) == iscal_offset + 1) then; iread_scal = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == iscal_offset + 2) then; iread_scal = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == iscal_offset + 3) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 4) then; iread_flow = 1; inb_txc = max(inb_txc, 4); end if
-        if (opt_vec(iv) == iscal_offset + 5) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7); end if
-        if (opt_vec(iv) == iscal_offset + 6) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 7) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 8) then; iread_flow = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == iscal_offset + 9) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 10) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 12) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 4); end if
-        if (opt_vec(iv) == iscal_offset + 14) then; iread_flow = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 15) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 18) then; iread_part = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7); end if
+            iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
+        if (opt_vec(iv) == iscal_offset + 1) then; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == iscal_offset + 2) then; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == iscal_offset + 3) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 4) then; iread_flow = .true.; inb_txc = max(inb_txc, 4); end if
+        if (opt_vec(iv) == iscal_offset + 5) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if (opt_vec(iv) == iscal_offset + 6) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 7) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 8) then; iread_flow = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == iscal_offset + 9) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 10) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 12) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
+        if (opt_vec(iv) == iscal_offset + 14) then; iread_flow = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 15) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
     end do
 
     ! check if enough memory is provided for the IBM
@@ -302,7 +303,7 @@ program VISUALS
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 
-    if (iread_part == 1) then ! Particle variables
+    if (iread_part) then ! Particle variables
         inb_part_txc = max(inb_part_txc, 1)
         call PARTICLE_ALLOCATE(C_FILE_LOC)
     end if
@@ -321,7 +322,7 @@ program VISUALS
 
     call FI_BACKGROUND_INITIALIZE() ! Initialize thermodynamic quantities
 
-    if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
+    if (fourier_on .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
     end if
 
@@ -368,26 +369,26 @@ program VISUALS
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))//'.'
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (icalc_scal == 1 .and. iread_scal == 1) then ! Scalar variables
+        if (scal_on .and. iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
             call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
-        elseif (icalc_scal == 0) then
+        elseif (.not. scal_on) then
             s = 0.0_wp
         end if
 
-        if (iread_flow == 1) then ! Flow variables
+        if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
             call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (imode_ibm == 1) then
             call IBM_BCS_FIELD_COMBINED(i0, q)
-            if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
+            if (scal_on) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
-        if (iread_part == 1) then ! Particle variables
+        if (iread_part) then ! Particle variables
             write (part_file, *) itime; part_file = trim(adjustl(tag_part))//trim(adjustl(part_file))
         end if
 

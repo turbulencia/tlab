@@ -29,7 +29,7 @@ subroutine IBM_VERIFY_GEOMETRY()
 
   use IBM_VARS 
   use TLAB_PROCS
-  use TLAB_VARS,      only : g, icalc_scal
+  use TLAB_VARS,      only : g, scal_on
   use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_CONSTANTS, only : efile, wp, wi
 #ifdef USE_MPI
@@ -110,7 +110,7 @@ subroutine IBM_VERIFY_GEOMETRY()
   call IBM_VERIFY_UP(eps)
 
   ! if so, check with scalar options
-  if ( icalc_scal == 1 .and. ibm_objup ) then
+  if ( scal_on .and. ibm_objup ) then
     call IBM_VERIFY_SCAL()
   end if 
   

@@ -81,7 +81,8 @@ program SPECTRA
     TINTEGER p_pairs(16, 2)
 
     TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
-    TINTEGER flag_mode, iread_flow, iread_scal, ierr
+    TINTEGER flag_mode, ierr
+    logical iread_flow, iread_scal
     TINTEGER isize_out2d, isize_aux, sizes(5)
     TINTEGER nfield, nfield_ref
     TINTEGER is, iv, iv_offset, iv1, iv2, ip, j, ig
@@ -269,8 +270,8 @@ program SPECTRA
 ! -------------------------------------------------------------------
 ! Further allocation of memory space
 ! -------------------------------------------------------------------
-    iread_flow = icalc_flow
-    iread_scal = icalc_scal
+    iread_flow = flow_on
+    iread_scal = scal_on
 
     inb_scal_min = 1              ! Change this values if you want to reduce the number of scalars to process
     inb_scal_max = inb_scal_array ! and thereby reduced memory requirements
@@ -278,17 +279,17 @@ program SPECTRA
     ! inb_scal_max = 4
 
     nfield_ref = 0     ! defining the number of accesible fields
-    if (icalc_flow == 1) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
-    if (icalc_scal == 1) nfield_ref = nfield_ref + inb_scal_array
+    if (flow_on) nfield_ref = nfield_ref + inb_flow + 1 ! pressure
+    if (scal_on) nfield_ref = nfield_ref + inb_scal_array
 
     nfield = 0          ! defining the number of accessed fields
     if (opt_main == 1 .or. opt_main == 3) then ! Auto-spectra & correlations
-        if (icalc_flow == 1) nfield = nfield + inb_flow + 1 ! pressure
-        if (icalc_scal == 1) nfield = nfield + (inb_scal_max - inb_scal_min + 1)
+        if (flow_on) nfield = nfield + inb_flow + 1 ! pressure
+        if (scal_on) nfield = nfield + (inb_scal_max - inb_scal_min + 1)
 
     else if (opt_main == 2 .or. opt_main == 4) then ! cross-spectra and cross-correlations
-        if (icalc_flow == 1) nfield = nfield + 3
-        if (icalc_scal == 1) nfield = nfield + 3*(inb_scal_max - inb_scal_min + 1)
+        if (flow_on) nfield = nfield + 3
+        if (scal_on) nfield = nfield + 3*(inb_scal_max - inb_scal_min + 1)
 
     else
         nfield = nfield_ref
@@ -398,7 +399,7 @@ program SPECTRA
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
-    if (ifourier == 1) then
+    if (fourier_on) then
         call OPR_FOURIER_INITIALIZE()
     end if
 
@@ -431,7 +432,7 @@ program SPECTRA
 
 ! Define reference pointers and tags
     iv = 0
-    if (icalc_flow == 1) then
+    if (flow_on) then
         iv = iv + 1; vars(iv)%field => q(:, 1); tag_var(iv) = 'u'
         iv = iv + 1; vars(iv)%field => q(:, 2); tag_var(iv) = 'v'
         iv = iv + 1; vars(iv)%field => q(:, 3); tag_var(iv) = 'w'
@@ -445,7 +446,7 @@ program SPECTRA
     end if
     iv_offset = iv
 
-    if (icalc_scal == 1) then
+    if (scal_on) then
         do is = 1, inb_scal_array
             write (sRes, *) is
             iv = iv + 1; vars(iv)%field => s(:, is); tag_var(iv) = trim(adjustl(sRes))
@@ -463,7 +464,7 @@ program SPECTRA
         do ip = 1, iv_offset
             iv = iv + 1; p_pairs(iv, 1) = iv; p_pairs(iv, 2) = iv
         end do
-        if (icalc_scal == 1) then
+        if (scal_on) then
             do is = inb_scal_min, inb_scal_max
                 ip = is + iv_offset
                 iv = iv + 1; p_pairs(iv, 1) = ip; p_pairs(iv, 2) = ip
@@ -471,11 +472,11 @@ program SPECTRA
         end if
 
     else if (opt_main == 2 .or. opt_main == 4) then ! Cross-spectra & correlations
-        if (icalc_flow == 1) then
+        if (flow_on) then
             iv = iv + 1; p_pairs(iv, 1) = 1; p_pairs(iv, 2) = 2
             iv = iv + 1; p_pairs(iv, 1) = 1; p_pairs(iv, 2) = 3
             iv = iv + 1; p_pairs(iv, 1) = 2; p_pairs(iv, 2) = 3
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 do is = inb_scal_min, inb_scal_max
                     ip = is + iv_offset
                     iv = iv + 1; p_pairs(iv, 1) = 1; p_pairs(iv, 2) = ip
@@ -487,7 +488,7 @@ program SPECTRA
             ! iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 4
             ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4
             ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4
-            ! IF ( icalc_scal .EQ. 1 ) THEN ! aux array for u_iu_i/2
+            ! IF ( scal_on ) THEN ! aux array for u_iu_i/2
             !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
             !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5
             !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5
@@ -518,19 +519,19 @@ program SPECTRA
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (iread_flow == 1) then
+        if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
-        if (iread_scal == 1) then
+        if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (imode_ibm == 1) then
             call IBM_BCS_FIELD_COMBINED(i0, q)
-            if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
+            if (scal_on) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
@@ -564,7 +565,7 @@ program SPECTRA
 
 ! If IBM is active: remove mean values in solid regions from fluctuations (except pressure)
         if (imode_ibm == 1) then
-            if (icalc_flow == 1) then
+            if (flow_on) then
                 do iv = 1, 3 ! u,v,w fields - skip pressure
                     call IBM_BCS_FIELD(vars(iv)%field)
                 end do
@@ -573,7 +574,7 @@ program SPECTRA
                         call IBM_BCS_FIELD(vars(iv)%field)
                     end do
                 end if
-            else if ((icalc_flow /= 1) .and. (icalc_scal == 1)) then
+            else if ((.not. flow_on) .and. (scal_on)) then
                 do iv = 1, nfield_ref    ! s fields (no pressure)
                     call IBM_BCS_FIELD(vars(iv)%field)
                 end do

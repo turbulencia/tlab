@@ -53,7 +53,7 @@ program INIRAND
 #endif
     seed = -ABS(seed)
 
-    if (ifourier == 1) then
+    if (fourier_on) then
         call OPR_FOURIER_INITIALIZE()
     end if
 

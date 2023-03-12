@@ -86,7 +86,7 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
         use TLAB_CONSTANTS, only: efile, lfile
-        use TLAB_VARS, only: imode_eqns, imode_ibm, istagger
+        use TLAB_VARS, only: imode_eqns, imode_ibm, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rbackground
         use TLAB_ARRAYS
@@ -147,13 +147,13 @@ contains
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 1), txc(1, 3))
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 2), txc(1, 4))
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 3), txc(1, 5))
-                if (istagger == 1) then
+                if (stagger_on) then
                     call FI_INVARIANT_P_STAG(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2), txc(1, 6))
                 else
                     call FI_INVARIANT_P(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2))
                 end if
             else
-                if (istagger == 1) then
+                if (stagger_on) then
                     call FI_INVARIANT_P_STAG(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 6))
                 else
                     call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2))
@@ -161,7 +161,7 @@ contains
             end if
 
             if (imode_ibm == 1) then
-                if (istagger == 1) then
+                if (stagger_on) then
                     call IBM_BCS_FIELD_STAGGER(txc(1, 1)) ! IBM - zeros in solid on pressure mesh
                 else
                     call IBM_BCS_FIELD(txc(1, 1))         ! IBM - zeros in solid on velocity mesh

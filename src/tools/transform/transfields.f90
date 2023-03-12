@@ -42,7 +42,8 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     TINTEGER opt_main, opt_function
     TINTEGER iq, is, ig, ip, j, k
-    TINTEGER idummy, iread_flow, iread_scal
+    TINTEGER idummy
+    logical iread_flow, iread_scal
     character*32 bakfile, flow_file, scal_file
     character*64 str
     character*512 sRes
@@ -174,7 +175,7 @@ program TRANSFIELDS
         end if
 
     case (6)
-        icalc_flow = 0 ! Force not to process the flow fields
+        flow_on = .false. ! Force not to process the flow fields
 
         if (sRes == '-1') then
 #ifdef USE_MPI
@@ -252,8 +253,8 @@ program TRANSFIELDS
 
     inb_scal_dst = inb_scal
 
-    iread_flow = icalc_flow
-    iread_scal = icalc_scal
+    iread_flow = flow_on
+    iread_scal = scal_on
 
     if (opt_main == 3) then ! Remesh
         isize_txc_field = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
@@ -265,14 +266,14 @@ program TRANSFIELDS
         inb_scal_dst = 1
     end if
 
-    if (ifourier == 1) inb_txc = max(inb_txc, 1)
+    if (fourier_on) inb_txc = max(inb_txc, 1)
 
     ! -------------------------------------------------------------------
     isize_wrk3d = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
 
     ! -------------------------------------------------------------------
-    if (icalc_flow == 1) allocate (q_dst(imax_dst*jmax_dst*kmax_dst, inb_flow))
-    if (icalc_scal == 1) allocate (s_dst(imax_dst*jmax_dst*kmax_dst, inb_scal_dst))
+    if (flow_on) allocate (q_dst(imax_dst*jmax_dst*kmax_dst, inb_flow))
+    if (scal_on) allocate (s_dst(imax_dst*jmax_dst*kmax_dst, inb_scal_dst))
 
     if (opt_main == 3) then
         allocate (x_dst(g_dst(1)%size))
@@ -301,7 +302,7 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     ! Initialize Poisson solver
     ! -------------------------------------------------------------------
-    if (ifourier == 1) call OPR_FOURIER_INITIALIZE()
+    if (fourier_on) call OPR_FOURIER_INITIALIZE()
     
     call OPR_CHECK()
 
@@ -309,8 +310,8 @@ program TRANSFIELDS
     ! Initialize cumulative field
     ! -------------------------------------------------------------------
     if (opt_main == 4 .or. opt_main == 7) then
-        if (icalc_flow == 1) q_dst = C_0_R
-        if (icalc_scal == 1) s_dst = C_0_R
+        if (flow_on) q_dst = C_0_R
+        if (scal_on) s_dst = C_0_R
     end if
 
     ! -------------------------------------------------------------------
@@ -449,12 +450,12 @@ program TRANSFIELDS
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (iread_flow == 1) then ! Flow variables
+        if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
             call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
-        if (iread_scal == 1) then ! Scalar variables
+        if (iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
             call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
@@ -463,14 +464,14 @@ program TRANSFIELDS
         ! Cropping
         ! ###################################################################
         if (opt_main == 1) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_CROP(imax, jmax, kmax, subdomain, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_CROP(imax, jmax, kmax, subdomain, s(1, is), s_dst(1, is))
@@ -481,14 +482,14 @@ program TRANSFIELDS
             ! Extension
             ! ###################################################################
         else if (opt_main == 2) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(1, is), s_dst(1, is))
@@ -500,7 +501,7 @@ program TRANSFIELDS
             ! ###################################################################
         else if (opt_main == 3) then
 
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
                     if (flag_crop) then
@@ -520,7 +521,7 @@ program TRANSFIELDS
                 end do
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
                     if (flag_crop) then
@@ -544,11 +545,11 @@ program TRANSFIELDS
             ! Linear combination of fields
             ! ###################################################################
         else if (opt_main == 4) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 q_dst = q_dst + q*opt_vec(it + 1)
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 s_dst = s_dst + s*opt_vec(it + 1)
             end if
 
@@ -556,7 +557,7 @@ program TRANSFIELDS
             ! Filter
             ! ###################################################################
         else if (opt_main == 5) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Filtering...')
                     q_dst(:, iq) = q(:, iq) ! in-place operation
@@ -566,7 +567,7 @@ program TRANSFIELDS
                 end do
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Filtering...')
                     s_dst(:, is) = s(:, is) ! in-place operation
@@ -599,13 +600,13 @@ program TRANSFIELDS
             write (sRes, *) opt_vec(2), opt_vec(3); sRes = 'Blending with '//trim(adjustl(sRes))
             call TLAB_WRITE_ASCII(lfile, sRes)
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TRANS_BLEND(imax, jmax, kmax, opt_vec(2), y, s(1, is), s_dst(1, is))
                 end do
             end if
 
-            if (icalc_flow > 0) then ! Blended fields have rtime from last velocity field
+            if (flow_on) then ! Blended fields have rtime from last velocity field
                 do iq = 1, inb_flow
                     call TRANS_BLEND(imax, jmax, kmax, opt_vec(2), y, q(1, iq), q_dst(1, iq))
                 end do
@@ -617,14 +618,14 @@ program TRANSFIELDS
             ! Adding mean profiles
             ! ###################################################################
         else if (opt_main == 8) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Adding mean flow profiles...')
                     call TRANS_ADD_MEAN(0, iq, imax, jmax, kmax, y, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Adding mean scal profiles...')
                     call TRANS_ADD_MEAN(1, is, imax, jmax, kmax, y, s(1, is), s_dst(1, is))
@@ -635,14 +636,14 @@ program TRANSFIELDS
             ! Extrude
             ! ###################################################################
         else if (opt_main == 9) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Extruding along Oz...')
                     call TRANS_EXTRUDE(imax, jmax, kmax, subdomain, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call TLAB_WRITE_ASCII(lfile, 'Extruding along Oz...')
                     call TRANS_EXTRUDE(imax, jmax, kmax, subdomain, s(1, is), s_dst(1, is))
@@ -655,11 +656,11 @@ program TRANSFIELDS
         ! Writing transform fields
         ! ###################################################################
         if (opt_main /= 4 .and. opt_main /= 7) then
-            if (icalc_flow > 0) then
+            if (flow_on) then
                 flow_file = trim(adjustl(flow_file))//'.trn'
                 call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
             end if
-            if (icalc_scal > 0) then
+            if (scal_on) then
                 scal_file = trim(adjustl(scal_file))//'.trn'
                 call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
             end if
@@ -671,11 +672,11 @@ program TRANSFIELDS
     ! Final operations
     ! ###################################################################
     if (opt_main == 4 .or. opt_main == 7) then
-        if (icalc_flow > 0) then
+        if (flow_on) then
             flow_file = trim(adjustl(flow_file))//'.trn'
             call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
         end if
-        if (icalc_scal > 0) then
+        if (scal_on) then
             scal_file = trim(adjustl(scal_file))//'.trn'
             call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
         end if

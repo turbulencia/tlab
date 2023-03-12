@@ -60,7 +60,8 @@ program AVERAGES
     integer opt_cond, opt_cond_scal, opt_cond_relative
     integer nfield, ifield, is, k, bcs(2, 2), ig
     real(wp) eloc1, eloc2, eloc3, cos1, cos2, cos3, dummy
-    integer jmax_aux, iread_flow, iread_scal
+    integer jmax_aux
+    logical iread_flow, iread_scal
     integer(wi) ij, idummy
 
     ! Gates for the definition of the intermittency function (partition of the fields)
@@ -168,64 +169,64 @@ program AVERAGES
     end if
 
     ! -------------------------------------------------------------------
-    iread_flow = 0
-    iread_scal = 0
+    iread_flow = .false.
+    iread_scal = .false.
     inb_txc = 0
     nfield = 2
 
     select case (opt_main)
     case (1)
         inb_txc = max(inb_txc, 9)
-        iread_flow = icalc_flow; iread_scal = icalc_scal
+        iread_flow = flow_on; iread_scal = scal_on
     case (2)
-        ifourier = 0
+        fourier_on = .false.
     case (3)
         nfield = 14
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 12)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 12)
     case (4)
         nfield = 6 + inb_scal
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 3)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3)
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) inb_txc = max(inb_txc, 6)
     case (5) ! enstrophy
         nfield = 7
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 8)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 8)
     case (6)
         nfield = 5
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 8)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 8)
     case (7) ! scalar gradient
         nfield = 5
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 6)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     case (8)
         nfield = 3
 
-        iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_flow = .true.; inb_txc = max(inb_txc, 6)
     case (9)
         nfield = 5
-        iread_scal = 1; inb_txc = max(inb_txc, 4)
+        iread_scal = .true.; inb_txc = max(inb_txc, 4)
     case (10) ! eigenvalues
         nfield = 3
-        iread_flow = 1; inb_txc = max(inb_txc, 9)
+        iread_flow = .true.; inb_txc = max(inb_txc, 9)
     case (11) ! eigenframe
         nfield = 6
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 10)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10)
     case (12) ! longitudinal velocity derivatives
         nfield = 3
-        iread_flow = 1; iread_scal = 0; inb_txc = max(inb_txc, 3)
+        iread_flow = .true.; iread_scal = .false.; inb_txc = max(inb_txc, 3)
     case (13) ! Vertical flux
         nfield = 2*(3 + inb_scal_array)
-        iread_flow = 1; iread_scal = 1; inb_txc = max(max(inb_txc, 3 + inb_scal_array), 4)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(max(inb_txc, 3 + inb_scal_array), 4)
     case (14) ! pressure partition
         nfield = 3
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7)
     case (15) ! dissipation partition
         nfield = 1
-        iread_flow = 1; iread_scal = 0; inb_txc = max(inb_txc, 6)
+        iread_flow = .true.; iread_scal = .false.; inb_txc = max(inb_txc, 6)
     case (16) ! third-order scalar covariances
         nfield = 3
-        iread_flow = 0; iread_scal = 1; inb_txc = max(inb_txc, 3)
+        iread_flow = .false.; iread_scal = .true.; inb_txc = max(inb_txc, 3)
     case (17) ! potential vorticity
         nfield = 2
-        iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 6)
+        iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     end select
 
     ! -------------------------------------------------------------------
@@ -299,11 +300,11 @@ program AVERAGES
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
-    if (ifourier == 1) then         ! For Poisson solver
+    if (fourier_on) then         ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
     end if
 
-    if (iread_flow == 1) then       ! We need array space
+    if (iread_flow) then       ! We need array space
         call OPR_CHECK()
     end if
 
@@ -313,7 +314,7 @@ program AVERAGES
         y_aux(is) = y_aux(is) + y(ij, 1)/real(opt_block, wp)
     end do
 
-    if (iread_flow == 1) then
+    if (iread_flow) then
         u => q(:, 1)
         v => q(:, 2)
         w => q(:, 3)
@@ -328,12 +329,12 @@ program AVERAGES
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (iread_scal == 1) then
+        if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
-        if (iread_flow == 1) then
+        if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
@@ -379,7 +380,7 @@ program AVERAGES
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
             end if
 
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 do is = 1, inb_scal_array          ! All, prognostic and diagnostic fields in array s
                     txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                     call AVG_SCAL_XZ(is, q, s, s(1, is), &
@@ -438,7 +439,7 @@ program AVERAGES
                 end do
             end if
 
-            if (icalc_flow == 1) then
+            if (flow_on) then
                 txc(1:isize_field, 3) = txc(1:isize_field, 9) ! Pass the pressure in tmp3
                 call AVG_FLOW_XZ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), &
                                  txc(1, 7), txc(1, 8), txc(1, 9), mean)
@@ -543,7 +544,7 @@ program AVERAGES
                 ifield = ifield + 1; vars(ifield)%field => q(:, 7); vars(ifield)%tag = 'T'
             end if
 
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 do is = 1, inb_scal_array          ! All, prognostic and diagnostic fields in array s
                     ifield = ifield + 1; vars(ifield)%field => s(:, is); write (vars(ifield)%tag, *) is; vars(ifield)%tag = 'Scalar'//trim(adjustl(vars(ifield)%tag))
                 end do

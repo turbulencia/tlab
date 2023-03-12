@@ -286,7 +286,7 @@ contains
 ! ###################################################################
 ! Scalar
 ! ###################################################################
-        if (icalc_scal == 1) then
+        if (scal_on) then
             if (imixture == MIXT_TYPE_AIRWATER) then; inb_scal_loc = inb_scal + 1
             else; inb_scal_loc = inb_scal; end if
             do is = 1, inb_scal_loc
@@ -674,7 +674,7 @@ contains
 ! ###################################################################
 ! Scalar
 ! ###################################################################
-        if (icalc_scal == 1) then
+        if (scal_on) then
             if (imixture == MIXT_TYPE_AIRWATER) then; inb_scal_loc = inb_scal + 1
             else; inb_scal_loc = inb_scal; end if
 

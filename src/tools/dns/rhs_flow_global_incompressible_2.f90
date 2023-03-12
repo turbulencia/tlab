@@ -13,7 +13,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
-    use TLAB_VARS, only: imode_ibm, istagger
+    use TLAB_VARS, only: imode_ibm, stagger_on
     use TLAB_ARRAYS, only: q
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
@@ -120,7 +120,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
         call IBM_BCS_FIELD(tmp2)
         call IBM_BCS_FIELD(tmp3)
     end if
-    if (istagger == 1) then ! staggering on horizontal pressure nodes
+    if (stagger_on) then ! staggering on horizontal pressure nodes
         !  Ox derivative
         call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp1, tmp5)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
@@ -144,7 +144,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
 ! Stagger also Bcs
     if (imode_ibm == 1) call IBM_BCS_FIELD(hq(:, 2))
-    if (istagger == 1) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
+    if (stagger_on) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), hq(:, 2), tmp5)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
@@ -160,7 +160,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     ibc = 3
     call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
-    if (istagger == 1) then
+    if (stagger_on) then
         !  vertical pressure derivative   dpdy - back on horizontal velocity nodes
         call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp3, tmp5)
         call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp3)

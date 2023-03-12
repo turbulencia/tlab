@@ -29,7 +29,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLAB_VARS, only: icalc_scal
+    use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt
     use TLAB_PROCS
     use TLAB_ARRAYS
@@ -187,7 +187,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! We need this code segment here because we need the old velocities
 ! ################################################################################
 ! hs  -> explicit tendency without diffusion
-    if (icalc_scal /= 0) then
+    if (scal_on) then
 
         do is = 1, inb_scal
             tmp7 = hs(:, is) ! save old values
@@ -361,7 +361,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 !      u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
 !      v(ip_b:ip_b+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);
-!      IF ( icalc_scal .NE. 0 ) THEN
+!      IF (  .NE. 0scal_on ) THEN
 !         DO is=1,inb_scal
 !            s(ip_b:ip_b+imax-1,is) = bcs_hb(1:imax,k,inb_flow+is)
 !         ENDDO
@@ -377,7 +377,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 !      u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
 !      v(ip_t:ip_t+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);
-!      IF ( icalc_scal .NE. 0 ) THEN
+!      IF ( scal_on ) THEN
 !         DO is=1,inb_scal
 !            s(ip_t:ip_t+imax-1,is) = bcs_ht(1:imax,k,inb_flow+is)
 !         ENDDO

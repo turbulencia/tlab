@@ -13,7 +13,7 @@ module BOUNDARY_INFLOW
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, icalc_flow, icalc_scal
+    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
     use TLAB_VARS, only: imode_eqns, itransport
     use TLAB_VARS, only: g, qbg, epbackground, pbackground
     use TLAB_VARS, only: rtime, itime
@@ -171,14 +171,14 @@ contains
             ! ###################################################################
             bcs = 0
 
-            if (icalc_flow == 1) then
+            if (flow_on) then
                 do is = 1, inb_flow
                     call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), q_inf(1, 1, 1, is), txc)
                     q_inf(:, :, :, is) = -txc(:, :, :)*qbg(1)%mean
                 end do
             end if
 
-            if (icalc_scal == 1) then
+            if (scal_on) then
                 do is = 1, inb_scal
                     call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), s_inf(1, 1, 1, is), txc)
                     s_inf(:, :, :, is) = -txc(:, :, :)*qbg(1)%mean
@@ -264,7 +264,7 @@ contains
                 inf_rhs(jglobal, k, is) = inf_rhs(jglobal, k, is) + vmult*BSPLINES3P(q_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
                     end do
 
-                    if (icalc_scal == 1) then
+                    if (scal_on) then
                         do is = 1, inb_scal
                             ip = inb_flow + is
                 inf_rhs(jglobal, k, ip) = inf_rhs(jglobal, k, ip) + vmult*BSPLINES3P(s_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
@@ -285,7 +285,7 @@ contains
                  inf_rhs(jglobal, k, is) = inf_rhs(jglobal, k, is) + vmult*BSPLINES3(q_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
                     end do
 
-                    if (icalc_scal == 1) then
+                    if (scal_on) then
                         do is = 1, inb_scal
                             ip = inb_flow + is
                  inf_rhs(jglobal, k, ip) = inf_rhs(jglobal, k, ip) + vmult*BSPLINES3(s_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)

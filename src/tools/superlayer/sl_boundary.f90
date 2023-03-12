@@ -48,7 +48,8 @@ program SL_BOUNDARY
     TREAL, dimension(:), pointer :: u, v, w
 
     TINTEGER iopt, iint, isl, ith, itxc_size, nfield, np
-    TINTEGER iread_flow, iread_scal, jmin_loc, jmax_loc, idummy
+    TINTEGER jmin_loc, jmax_loc, idummy
+    logical iread_flow, iread_scal
     TREAL threshold, vmin, vmax
     TINTEGER buff_nps_u_jmin, buff_nps_u_jmax
     character*64 str
@@ -170,17 +171,17 @@ program SL_BOUNDARY
 ! Further allocation of memory space
 ! -------------------------------------------------------------------
     if (iopt == 1) then; itxc_size = isize_field*2; nfield = 1; 
-    else if (iopt == 2) then; itxc_size = isize_field*6; nfield = 5; iread_flow = 1; iread_scal = 1
-    else if (iopt >= 3) then; itxc_size = isize_field*6; nfield = 4; iread_flow = 1; iread_scal = 0
+    else if (iopt == 2) then; itxc_size = isize_field*6; nfield = 5; iread_flow = .true.; iread_scal = .true.
+    else if (iopt >= 3) then; itxc_size = isize_field*6; nfield = 4; iread_flow = .true.; iread_scal = .false.
     end if
 
-    if (iint == 1) then; iread_scal = 1
-    else if (iint == 2) then; iread_flow = 1
-    else if (iint == 3) then; iread_scal = 1
+    if (iint == 1) then; iread_scal = .true.
+    else if (iint == 2) then; iread_flow = .true.
+    else if (iint == 3) then; iread_scal = .true.
     end if
 
-    if (iread_flow == 1) allocate (q(isize_field, 3))
-    if (iread_scal == 1) allocate (s(isize_field))
+    if (iread_flow) allocate (q(isize_field, 3))
+    if (iread_scal) allocate (s(isize_field))
 
     allocate (pdf(nfield*np))
     allocate (samples(imax*kmax, nfield*2))
@@ -214,12 +215,12 @@ program SL_BOUNDARY
 
         itime = itime_vec(i)
 
-        if (iread_flow == 1) then
+        if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, 0, q)
         end if
 
-        if (iread_scal == 1) then
+        if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, inb_scal, s)
         end if

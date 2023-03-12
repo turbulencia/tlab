@@ -60,7 +60,7 @@ program VINTERPARTIAL
 ! -------------------------------------------------------------------
 ! Check input
 ! -------------------------------------------------------------------
-    if (istagger == 0) then
+    if (.not. stagger_on) then
         call TLAB_WRITE_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in dns.ini!')
         call TLAB_STOP(0)
     end if

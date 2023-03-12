@@ -8,7 +8,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_CONSTANTS, only: tfile
 #endif
     use TLAB_TYPES, only: grid_dt
-    use TLAB_VARS, only: inb_scal, istagger
+    use TLAB_VARS, only: inb_scal, stagger_on
     use TLAB_VARS, only: reynolds, schmidt
     use TLAB_VARS, only: C1N6M_ALPHA2, C1N6M_BETA2
     use TLAB_VARS, only: C1N6M_A, C1N6M_BD2, C1N6M_CD3
@@ -337,7 +337,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-    if ((istagger == 1) .and. g%periodic) then
+    if ((stagger_on) .and. g%periodic) then
         g%lu0i => x(:, ig:)
 
         select case (g%mode_fdm)
@@ -354,7 +354,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
-    if ((istagger == 1) .and. g%periodic) then
+    if ((stagger_on) .and. g%periodic) then
         g%lu1i => x(:, ig:)
 
         select case (g%mode_fdm)
@@ -399,7 +399,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         sa = 63.0_wp/62.0_wp
         sb = 17.0_wp/62.0_wp
 
-        if (istagger == 0) then
+        if (.not. stagger_on) then
 
             select case (g%mode_fdm)
 
