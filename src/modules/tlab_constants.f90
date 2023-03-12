@@ -51,4 +51,9 @@ module TLAB_CONSTANTS
     real(wp), parameter :: small_wp = 1.0e-20_wp
     real(wp), parameter :: big_wp = 1.0e20_wp
 
+    integer, parameter :: BCS_DD = 0     ! Dirichlet/Dirichlet
+    integer, parameter :: BCS_ND = 1     ! Neumann/Dirichlet
+    integer, parameter :: BCS_DN = 2     ! Dirichlet/Neumann
+    integer, parameter :: BCS_NN = 3     ! Neumann/Neumann
+
 end module TLAB_CONSTANTS

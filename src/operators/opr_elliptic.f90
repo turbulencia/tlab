@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module OPR_ELLIPTIC
-    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz
     use TLAB_VARS, only: istagger
@@ -125,7 +125,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 select case (ibc)
-                case (3) ! Neumann   & Neumann   BCs
+                case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny, 2, &
                                                  g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
@@ -134,7 +134,7 @@ contains
                                                 g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
-                case (0) ! Dirichlet & Dirichlet BCs
+                case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny, 2, &
                                             g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
@@ -322,7 +322,7 @@ contains
         integer, parameter :: i1 = 1, i2 = 2
 
         ! #######################################################################
-        if (ibc /= 0) then ! So far only implemented for Dirichlet BCs
+        if (ibc /= BCS_DD) then ! So far only implemented for Dirichlet BCs
             call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
