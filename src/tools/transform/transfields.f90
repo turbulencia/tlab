@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
@@ -9,8 +8,8 @@
 
 program TRANSFIELDS
 
-    use TLAB_TYPES, only: filter_dt, grid_dt
     use TLAB_CONSTANTS
+    use TLAB_TYPES, only: filter_dt, grid_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS
@@ -26,41 +25,41 @@ program TRANSFIELDS
     implicit none
 
     ! Parameter definitions
-    TINTEGER, parameter :: itime_size_max = 3000
-    TINTEGER, parameter :: iopt_size_max = 512
+    integer(wi), parameter :: itime_size_max = 3000
+    integer(wi), parameter :: iopt_size_max = 512
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    TREAL, dimension(:), allocatable, save :: x_dst, y_dst, z_dst
-    TREAL, dimension(:, :), allocatable, save :: q_dst, s_dst
+    real(wp), dimension(:), allocatable, save :: x_dst, y_dst, z_dst
+    real(wp), dimension(:, :), allocatable, save :: q_dst, s_dst
 
-    TREAL, dimension(:), allocatable, save :: y_aux
-    TREAL, dimension(:, :, :), allocatable, save :: txc_aux
+    real(wp), dimension(:), allocatable, save :: y_aux
+    real(wp), dimension(:, :, :), allocatable, save :: txc_aux
 
     ! -------------------------------------------------------------------
     ! Local variables
     ! -------------------------------------------------------------------
-    TINTEGER opt_main, opt_function
-    TINTEGER iq, is, ig, ip, j, k
-    TINTEGER idummy
+    integer(wi) opt_main, opt_function
+    integer(wi) iq, is, ig, ip, j, k
+    integer(wi) idummy
     logical iread_flow, iread_scal
     character*32 bakfile, flow_file, scal_file
     character*64 str
     character*512 sRes
-    TINTEGER subdomain(6)
+    integer(wi) subdomain(6)
 
     type(grid_dt), dimension(3) :: g_dst
-    TINTEGER imax_dst, jmax_dst, kmax_dst
+    integer(wi) imax_dst, jmax_dst, kmax_dst
 
     logical flag_crop, flag_extend
-    TINTEGER jmax_aux, inb_scal_dst
-    TREAL dummy
+    integer(wi) jmax_aux, inb_scal_dst
+    real(wp) dummy, tolerance
 
-    TINTEGER itime_size, it
-    TINTEGER itime_vec(itime_size_max)
+    integer(wi) itime_size, it
+    integer(wi) itime_vec(itime_size_max)
 
-    TINTEGER iopt_size
-    TREAL opt_vec(iopt_size_max)
+    integer(wi) iopt_size
+    real(wp) opt_vec(iopt_size_max)
 
     ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
@@ -124,7 +123,7 @@ program TRANSFIELDS
         subdomain(3) = 1; subdomain(4) = g(2)%size
         subdomain(5) = 1; subdomain(6) = g(3)%size
     end if
-    
+
     ! -------------------------------------------------------------------
     select case (opt_main)
     case (:0)
@@ -157,7 +156,7 @@ program TRANSFIELDS
         if (iopt_size == 0) then
             call TLAB_WRITE_ASCII(lfile, C_FILE_LOC//'. Performing arithmetic mean of fields.')
             iopt_size = itime_size
-            opt_vec(2:) = C_1_R/M_REAL(itime_size)
+            opt_vec(2:) = 1.0_wp/real(itime_size, wp)
         end if
         if (iopt_size /= itime_size) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Number of coefficient incorrect.')
@@ -303,15 +302,15 @@ program TRANSFIELDS
     ! Initialize Poisson solver
     ! -------------------------------------------------------------------
     if (fourier_on) call OPR_FOURIER_INITIALIZE()
-    
+
     call OPR_CHECK()
 
     ! -------------------------------------------------------------------
     ! Initialize cumulative field
     ! -------------------------------------------------------------------
     if (opt_main == 4 .or. opt_main == 7) then
-        if (flow_on) q_dst = C_0_R
-        if (scal_on) s_dst = C_0_R
+        if (flow_on) q_dst = 0.0_wp
+        if (scal_on) s_dst = 0.0_wp
     end if
 
     ! -------------------------------------------------------------------
@@ -321,16 +320,18 @@ program TRANSFIELDS
         call IO_READ_GRID('grid.trn', g_dst(1)%size, g_dst(2)%size, g_dst(3)%size, &
                           g_dst(1)%scale, g_dst(2)%scale, g_dst(3)%scale, x_dst, y_dst, z_dst, dummy)
 
+        tolerance = 0.001_wp
+
         ! Check grids; Ox and Oz directions are assumed to be periodic
         dummy = (g_dst(1)%scale - g(1)%scale)/(x(g(1)%size, 1) - x(g(1)%size - 1, 1))
-        if (abs(dummy) > C_1EM3_R) then
+        if (abs(dummy) > tolerance) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
             call TLAB_STOP(DNS_ERROR_GRID_SCALE)
         end if
         wrk1d(1:g(1)%size, 1) = x(1:g(1)%size, 1) ! we need extra space
 
         dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size, 1) - z(g(3)%size - 1, 1))
-        if (abs(dummy) > C_1EM3_R) then
+        if (abs(dummy) > tolerance) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
             call TLAB_STOP(DNS_ERROR_GRID_SCALE)
         end if
@@ -340,14 +341,14 @@ program TRANSFIELDS
         jmax_aux = g(2)%size; subdomain = 0
 
         dummy = (y_dst(g_dst(2)%size) - y(g(2)%size, 1))/(y(g(2)%size, 1) - y(g(2)%size - 1, 1))
-        if (dummy > C_1EM3_R) then ! Extend
+        if (dummy > tolerance) then ! Extend
             flag_extend = .true.
             subdomain(4) = int(dummy) + 1       ! # planes to add at the top
             jmax_aux = jmax_aux + subdomain(4)
-        else if (dummy < -C_1EM3_R) then ! Crop
+        else if (dummy < -tolerance) then ! Crop
             flag_crop = .true.
             do j = jmax - 1, 1, -1
-                if ((g(2)%nodes(j) - y_dst(g_dst(2)%size))*(g(2)%nodes(j + 1) - y_dst(g_dst(2)%size)) < C_0_R) exit
+                if ((g(2)%nodes(j) - y_dst(g_dst(2)%size))*(g(2)%nodes(j + 1) - y_dst(g_dst(2)%size)) < 0.0_wp) exit
             end do
             subdomain(4) = j + 1                ! top plane of cropped region
             jmax_aux = subdomain(4)
@@ -355,14 +356,14 @@ program TRANSFIELDS
         end if
 
         dummy = (y_dst(1) - y(1, 1))/(y(2, 1) - y(1, 1))
-        if (dummy < -C_1EM3_R) then ! Extend
+        if (dummy < -tolerance) then ! Extend
             flag_extend = .true.
             subdomain(3) = int(abs(dummy)) + 1       ! # planes to add at the bottom
             jmax_aux = jmax_aux + subdomain(3)
-        else if (dummy > C_1EM3_R) then ! Crop
+        else if (dummy > tolerance) then ! Crop
             flag_crop = .true.
             do j = 1, jmax - 1, 1
-                if ((g(2)%nodes(j) - y_dst(1))*(g(2)%nodes(j + 1) - y_dst(1)) < C_0_R) exit
+                if ((g(2)%nodes(j) - y_dst(1))*(g(2)%nodes(j + 1) - y_dst(1)) < 0.0_wp) exit
             end do
             subdomain(3) = j                   ! bottom plane of cropped region
             jmax_aux = jmax_aux - subdomain(3) + 1
@@ -585,7 +586,7 @@ program TRANSFIELDS
                 call TRANS_FUNCTION(imax, jmax, kmax, s, s_dst, txc)
 
             else if (opt_function == 2) then
-                s_dst(:, 1) = C_0_R
+                s_dst(:, 1) = 0.0_wp
                 do is = 1, min(inb_scal, iopt_size)
                     s_dst(:, 1) = s_dst(:, 1) + opt_vec(2 + is)*s(:, is)
                 end do
@@ -691,9 +692,9 @@ contains
     subroutine TRANS_CROP(nx, ny, nz, subdomain, a, b)
         implicit none
 
-        TINTEGER nx, ny, nz, subdomain(6)
-        TREAL, dimension(nx, ny, nz) :: a
-        TREAL, dimension(nx, subdomain(4) - subdomain(3) + 1, nz) :: b
+        integer(wi) nx, ny, nz, subdomain(6)
+        real(wp), dimension(nx, ny, nz) :: a
+        real(wp), dimension(nx, subdomain(4) - subdomain(3) + 1, nz) :: b
 
         ! #######################################################################
         do k = 1, nz
@@ -711,9 +712,9 @@ contains
     subroutine TRANS_EXTRUDE(nx, ny, nz, subdomain, a, b)
         implicit none
 
-        TINTEGER nx, ny, nz, subdomain(6)
-        TREAL, intent(IN) :: a(nx, ny, nz)
-        TREAL, intent(OUT) :: b(subdomain(2) - subdomain(1) + 1, subdomain(4) - subdomain(3) + 1, subdomain(6) - subdomain(5) + 1)
+        integer(wi) nx, ny, nz, subdomain(6)
+        real(wp), intent(IN) :: a(nx, ny, nz)
+       real(wp), intent(OUT) :: b(subdomain(2) - subdomain(1) + 1, subdomain(4) - subdomain(3) + 1, subdomain(6) - subdomain(5) + 1)
 
         ! #######################################################################
         do k = 1, subdomain(6) - subdomain(5) + 1
@@ -730,12 +731,12 @@ contains
 
         implicit none
 
-        TINTEGER nx, ny, nz, planes(6)
-        TREAL, dimension(nx, ny, nz) :: a
-        TREAL, dimension(planes(1) + nx + planes(2), planes(3) + ny + planes(4), nz) :: b
+        integer(wi) nx, ny, nz, planes(6)
+        real(wp), dimension(nx, ny, nz) :: a
+        real(wp), dimension(planes(1) + nx + planes(2), planes(3) + ny + planes(4), nz) :: b
 
         ! -----------------------------------------------------------------------
-        TINTEGER j, k
+        integer(wi) j, k
 
         ! #######################################################################
         do k = 1, nz
@@ -772,14 +773,14 @@ contains
         use PROFILES
         implicit none
 
-        TINTEGER flag_mode, is, nx, ny, nz
-        TREAL, dimension(*), intent(IN) :: y
-        TREAL, dimension(nx, ny, nz), intent(IN) :: a
-        TREAL, dimension(nx, ny, nz), intent(OUT) :: b
+        integer(wi) flag_mode, is, nx, ny, nz
+        real(wp), dimension(*), intent(IN) :: y
+        real(wp), dimension(nx, ny, nz), intent(IN) :: a
+        real(wp), dimension(nx, ny, nz), intent(OUT) :: b
 
         ! -----------------------------------------------------------------------
-        TINTEGER j
-        TREAL dummy
+        integer(wi) j
+        real(wp) dummy
 
         ! #######################################################################
         if (flag_mode == 0) then ! Velocity
@@ -817,19 +818,19 @@ contains
 
         implicit none
 
-        TINTEGER nx, ny, nz
-        TREAL, dimension(nx*ny*nz) :: a, b
-        TREAL, dimension(nx*ny*nz, *) :: txc
+        integer(wi) nx, ny, nz
+        real(wp), dimension(nx*ny*nz) :: a, b
+        real(wp), dimension(nx*ny*nz, *) :: txc
 
         ! -----------------------------------------------------------------------
-        TREAL qt_0, qt_1, h_0, h_1, p
-        TREAL LATENT_HEAT
+        real(wp) qt_0, qt_1, h_0, h_1, p
+        real(wp) LATENT_HEAT
 
         ! #######################################################################
         imixture = MIXT_TYPE_AIRWATER
         call THERMO_INITIALIZE
-        MRATIO = C_1_R
-        dsmooth = C_0_R
+        MRATIO = 1.0_wp
+        dsmooth = 0.0_wp
         inb_scal = 1
 
         LATENT_HEAT = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3)
@@ -840,7 +841,7 @@ contains
 
         txc(:, 1) = h_0 + a(:)*(h_1 - h_0) ! total enthalpy
         txc(:, 2) = qt_0 + a(:)*(qt_1 - qt_0) ! total water, space for q_l
-        txc(:, 3) = C_0_R
+        txc(:, 3) = 0.0_wp
         txc(:, 4) = p                       ! pressure
 
         call THERMO_AIRWATER_PH(nx, ny, nz, txc(1, 2), txc(1, 1), epbackground, p)        ! Calculate q_l
@@ -848,14 +849,14 @@ contains
 
         ! Calculate saturation specific humidity
         call THERMO_POLYNOMIAL_PSAT(nx, ny, nz, txc(1, 5), txc(1, 1))
-        txc(:, 1) = C_1_R/(MRATIO*txc(:, 4)/txc(:, 1) - C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        txc(:, 1) = txc(:, 1)/(C_1_R + txc(:, 1))
+        txc(:, 1) = 1.0_wp/(MRATIO*txc(:, 4)/txc(:, 1) - 1.0_wp)*WGHT_INV(2)/WGHT_INV(1)
+        txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 
         ! Calculate parameter \beta (assuming c_p = c_p,d)
         txc(:, 3) = WGHT_INV(2)/WGHT_INV(1)/GRATIO*LATENT_HEAT*LATENT_HEAT/(txc(:, 5)*txc(:, 5))
 
         ! Calculate s
-        b(:) = txc(:, 2) - txc(:, 1)*(C_1_R + txc(:, 3)*txc(:, 2))/(C_1_R + txc(:, 3)*txc(:, 1))
+        b(:) = txc(:, 2) - txc(:, 1)*(1.0_wp + txc(:, 3)*txc(:, 2))/(1.0_wp + txc(:, 3)*txc(:, 1))
 
         return
     end subroutine TRANS_FUNCTION
@@ -870,19 +871,19 @@ contains
 
         implicit none
 
-        TINTEGER nx, ny, nz
-        TREAL, dimension(*) :: params
-        TREAL, dimension(ny) :: y
-        TREAL, dimension(nx, ny, nz) :: a, b
+        integer(wi) nx, ny, nz
+        real(wp), dimension(*) :: params
+        real(wp), dimension(ny) :: y
+        real(wp), dimension(nx, ny, nz) :: a, b
 
         ! -----------------------------------------------------------------------
-        TINTEGER j
-        TREAL shape, xi
+        integer(wi) j
+        real(wp) shape, xi
 
         ! #######################################################################
         do j = 1, ny
             xi = (y(j) - params(1))/params(2)
-            shape = C_05_R*(C_1_R + tanh(-C_05_R*xi))
+            shape = 0.5_wp*(1.0_wp + tanh(-0.5_wp*xi))
             b(:, j, :) = b(:, j, :) + shape*a(:, j, :)
         end do
 
