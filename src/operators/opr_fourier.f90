@@ -10,7 +10,7 @@ module OPR_FOURIER
     use TLAB_VARS, only: g
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLAB_POINTERS_C, only: c_wrk3d
-use TLAB_PROCS
+    use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
@@ -86,19 +86,19 @@ contains
         if (g(3)%size > 1) then
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:,1), g(3)%size, isize_stride, 1, &
+                                     txc(:, 1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_FORWARD, FFTW_ESTIMATE)
 
             call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:,1), g(3)%size, isize_stride, 1, &
+                                     txc(:, 1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:,1), g(3)%size, isize_stride, 1, &
+                                     txc(:, 1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_FORWARD, FFTW_MEASURE)
 
             call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:,1), g(3)%size, isize_stride, 1, &
+                                     txc(:, 1), g(3)%size, isize_stride, 1, &
                                      wrk3d, g(3)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
@@ -124,9 +124,9 @@ contains
             isize_disp = g(1)%size/2 + 1
 #ifdef _DEBUG
             ! wrk1d(:,2) should be complex with size n/2+1, i.e., n+2 real, but there is space at the end of wrk1d(:,2)
-            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:,1), wrk1d(:,2), FFTW_ESTIMATE)
+            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:, 1), wrk1d(:, 2), FFTW_ESTIMATE)
 #else
-            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:,1), wrk1d(:,2), FFTW_MEASURE)
+            call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:, 1), wrk1d(:, 2), FFTW_MEASURE)
 #endif
 #ifdef USE_MPI
         end if
@@ -134,17 +134,17 @@ contains
 
 #ifdef _DEBUG
         call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:,1), g(1)%size, 1, g(1)%size, &
+                                     txc(:, 1), g(1)%size, 1, g(1)%size, &
                                      wrk3d, g(1)%size/2 + 1, 1, isize_disp, FFTW_ESTIMATE)
         call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:,1), g(1)%size/2 + 1, 1, isize_disp, &
+                                     txc(:, 1), g(1)%size/2 + 1, 1, isize_disp, &
                                      wrk3d, g(1)%size, 1, g(1)%size, FFTW_ESTIMATE)
 #else
         call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:,1), g(1)%size, 1, g(1)%size, &
+                                     txc(:, 1), g(1)%size, 1, g(1)%size, &
                                      wrk3d, g(1)%size/2 + 1, 1, isize_disp, FFTW_MEASURE)
         call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:,1), g(1)%size/2 + 1, 1, isize_disp, &
+                                     txc(:, 1), g(1)%size/2 + 1, 1, isize_disp, &
                                      wrk3d, g(1)%size, 1, g(1)%size, FFTW_MEASURE)
 #endif
 
@@ -158,19 +158,19 @@ contains
         if (g(2)%size > 1) then
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
-                                     txc(:,1), g(2)%size, isize_stride, 1, &
+                                     txc(:, 1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_FORWARD, FFTW_ESTIMATE)
 
             call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
-                                     txc(:,1), g(2)%size, isize_stride, 1, &
+                                     txc(:, 1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
-                                     txc(:,1), g(2)%size, isize_stride, 1, &
+                                     txc(:, 1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_FORWARD, FFTW_MEASURE)
 
             call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
-                                     txc(:,1), g(2)%size, isize_stride, 1, &
+                                     txc(:, 1), g(2)%size, isize_stride, 1, &
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
@@ -200,14 +200,14 @@ contains
         call c_f_pointer(c_loc(out), c_out, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
 
-        wrk2d(:,1:2) = 0.0_wp          ! BCs
+        wrk2d(:, 1:2) = 0.0_wp          ! BCs
 
         if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
             if (g(3)%size > 1) then
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out, c_tmp1, c_wrk3d)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out) !, c_tmp1, c_wrk3d)
                 call OPR_FOURIER_F_Z_EXEC(c_out, c_tmp1)
             else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1, c_out, c_wrk3d)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1) !, c_out, c_wrk3d)
             end if
 
             do k = 1, nz
@@ -216,10 +216,10 @@ contains
 
         else
             if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1, c_out, c_wrk3d)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1) !, c_out, c_wrk3d)
                 call OPR_FOURIER_F_Z_EXEC(c_tmp1, c_out)
             else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out, c_tmp1, c_wrk3d)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out) !, c_tmp1, c_wrk3d)
             end if
         end if
 
@@ -282,14 +282,14 @@ contains
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
 
-        wrk2d(:,1:2) = 0.0_wp          ! BCs
+        wrk2d(:, 1:2) = 0.0_wp          ! BCs
         fft_reordering = .true.
 
         if (g(3)%size > 1) then
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp2, c_tmp1, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp2) !, c_tmp1, c_wrk3d)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1)
         else
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp1, c_tmp2, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp1) !, c_tmp2, c_wrk3d)
         end if
 
         select case (trim(adjustl(flag1)))
@@ -299,10 +299,10 @@ contains
 
         case ('cross')       ! Cross-spectra
             if (g(3)%size > 1) then
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_tmp2, c_in1, c_wrk3d)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_tmp2) !, c_in1, c_wrk3d)
                 call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_in1)
             else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_in1, c_tmp2, c_wrk3d)
+                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_in1) !, c_tmp2, c_wrk3d)
             end if
             c_in1 = c_in1*conjg(c_tmp1)
 
@@ -339,50 +339,43 @@ contains
 !# Nyquist frequency of the corresponding line.
 !#
 !########################################################################
-    subroutine OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, in_bcs_hb, in_bcs_ht, out, wrk1, wrk2)
-        integer(wi) nx, ny, nz
-        real(wp), dimension(nx*ny, *) :: in
-        real(wp), dimension(nx, nz) :: in_bcs_hb, in_bcs_ht
-        complex(wp), dimension(isize_txc_dimz/2, nz) :: out
-        complex(wp), dimension(nx/2 + 1, *) :: wrk2
-#ifdef USE_MPI
-        complex(wp), dimension((nx/2 + 1)*ims_npro_i, *) :: wrk1
-#else
-        complex(wp), dimension(g(1)%size/2 + 1, *) :: wrk1
-#endif
+    subroutine OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, in_bcs_hb, in_bcs_ht, out)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(inout) :: in(nx, (ny + 2)*nz)                  ! We add the boundary conditions at the end of this array
+        real(wp), intent(in) :: in_bcs_hb(nx, nz), in_bcs_ht(nx, nz)    ! boundary conditions
+        complex(wp), intent(out) :: out(nx/2 + 1, (ny + 2)*nz)
 
-        target wrk1, wrk2
+        target out
 
         ! -----------------------------------------------------------------------
-        integer(wi) j, ip, isize_page, isize_line
+        integer(wi) ip
 
 #ifdef USE_MPI
-        integer(wi) i, id, iold, inew
-        real(wp), pointer :: r_wrk1(:) => null(), r_wrk2(:) => null()
+        integer(wi) i, j, id, iold, inew
+        complex(wp), pointer :: wrk1(:, :) => null(), wrk2(:, :) => null()
+        real(wp), pointer :: r_out(:) => null()
 #endif
-
-        ! #######################################################################
-        isize_line = nx/2 + 1; isize_page = isize_line*ny
 
         ! #######################################################################
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
 
             ! Pass memory address from complex array to real array
-            call c_f_pointer(c_loc(wrk1), r_wrk1, shape=[isize_txc_field])
-            call c_f_pointer(c_loc(wrk2), r_wrk2, shape=[isize_txc_field])
+            id = TLAB_MPI_I_POISSON1
+            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
+            call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
+            call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            ! Add bcs into array a; there must be space !
-            ip = 1
-            ip = ip + nx*ny*nz; in(ip:ip + nx*nz - 1, 1) = in_bcs_hb(1:nx*nz, 1)
-            ip = ip + nx*nz; in(ip:ip + nx*nz - 1, 1) = in_bcs_ht(1:nx*nz, 1)
+            ! Add bcs at the end of array a; there must be space !
+            in(:, ny*nz + 1:(ny + 1)*nz) = in_bcs_hb(:, 1:nz)
+            in(:, (ny + 1)*nz + 1:(ny + 2)*nz) = in_bcs_ht(:, 1:nz)
 
             ! Transpose array a into b
             id = TLAB_MPI_I_POISSON1
-            call TLAB_MPI_TRPF_I(in, r_wrk2, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLAB_MPI_TRPF_I(in, r_out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
-            ! ims_size_k(id) FFTWs
-            call dfftw_execute_dft_r2c(fft_plan_fx, r_wrk2, wrk1)
+            ! ims_size_i(id) FFTWs
+            call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
             id = TLAB_MPI_I_POISSON1
@@ -401,27 +394,42 @@ contains
 
             ! Transpose array back
             id = TLAB_MPI_I_POISSON2
-            call TLAB_MPI_TRPB_I(r_wrk1, r_wrk2, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLAB_MPI_TRPB_I(wrk3d, r_out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
-            ! reorganize wrk2 into b
-            do k = 1, nz
-                ip = 1 + ny*(k - 1); out(1:isize_page, k) = wrk2(1:isize_page, ip)
-                ip = k + ny*nz; out(isize_page + 1:, k) = wrk2(1:isize_line, ip)
-                ip = ip + nz; out(isize_page + isize_line + 1:, k) = wrk2(1:isize_line, ip)
+            ! reorganize out with help of aux array
+            wrk2(:, 1:2*nz) = out(:, ny*nz + 1:ny*nz + 2*nz)
+
+            do k = nz, 2, -1                    ! Backwards loop to overwrite freed space
+                j = ny + 2
+                ip = j + (ny + 2)*(k - 1)       ! top BC
+                out(:, ip) = wrk2(:, k + nz)
+                ip = ip - 1                     ! bottom BC
+                out(:, ip) = wrk2(:, k)
+                do j = ny, 1, -1
+                    ip = ip - 1                 ! ny lines of field
+                    out(:, ip) = out(:, j + ny*(k - 1))
+                end do
             end do
+            k = 1                               ! first plane; only move BCs
+            j = ny + 2                          ! top BC
+            ip = j + (ny + 2)*(k - 1)
+            out(:, ip) = wrk2(:, k + nz)
+            ip = ip - 1                         ! bottom BC
+            out(:, ip) = wrk2(:, k)
 
-            nullify (r_wrk1, r_wrk2)
+            nullify (wrk1, wrk2, r_out)
 
         else
 #endif
 
             ! #######################################################################
             do k = 1, nz
-                call dfftw_execute_dft_r2c(fft_plan_fx, in(:, k), out(:, k))
-                j = 1 + ny; ip = (j - 1)*isize_line + 1
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(ip:, k))
-                j = 2 + ny; ip = (j - 1)*isize_line + 1
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(ip:, k))
+                ip = 1 + (ny + 2)*(k - 1)
+                call dfftw_execute_dft_r2c(fft_plan_fx, in(:, 1 + ny*(k - 1)), out(:, ip))
+                ip = ip + ny
+                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(:, ip))
+                ip = ip + 1
+                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(:, ip))
             end do
 
 #ifdef USE_MPI
@@ -500,7 +508,7 @@ contains
             ! No Ox Parallel Decomposition
             !########################################################################
             do k = 1, nz
-                call dfftw_execute_dft_c2r(fft_plan_bx, in(:,k), out(:, k))
+                call dfftw_execute_dft_c2r(fft_plan_bx, in(:, k), out(:, k))
             end do
 
 #ifdef USE_MPI
