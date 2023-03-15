@@ -343,20 +343,22 @@ contains
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(inout) :: in(nx, (ny + 2)*nz)                  ! We add the boundary conditions at the end of this array
         real(wp), intent(in) :: in_bcs_hb(nx, nz), in_bcs_ht(nx, nz)    ! boundary conditions
-        complex(wp), intent(out) :: out(nx/2 + 1, (ny + 2)*nz)
+        complex(wp), intent(out) :: out(isize_txc_dimz/2, nz)
 
         target out
 
         ! -----------------------------------------------------------------------
-        integer(wi) ip
+        integer(wi) ip, j, isize_line
 
 #ifdef USE_MPI
-        integer(wi) i, j, id, iold, inew
-        complex(wp), pointer :: wrk1(:, :) => null(), wrk2(:, :) => null()
+        integer(wi) i, id, iold, inew
+        complex(wp), pointer :: wrk1(:, :) => null(), wrk2(:, :) => null(), out_aux(:, :) => null()
         real(wp), pointer :: r_out(:) => null()
 #endif
 
         ! #######################################################################
+        isize_line = nx/2 + 1
+
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
 
@@ -365,6 +367,7 @@ contains
             call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
             call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
+            out_aux(1:nx/2 + 1, 1:(ny + 2)*nz) => out(1:isize_txc_dimz/2*nz, 1)
 
             ! Add bcs at the end of array a; there must be space !
             in(:, ny*nz + 1:(ny + 1)*nz) = in_bcs_hb(:, 1:nz)
@@ -397,39 +400,38 @@ contains
             call TLAB_MPI_TRPB_I(wrk3d, r_out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
             ! reorganize out with help of aux array
-            wrk2(:, 1:2*nz) = out(:, ny*nz + 1:ny*nz + 2*nz)
+            wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)
 
             do k = nz, 2, -1                    ! Backwards loop to overwrite freed space
-                j = ny + 2
-                ip = j + (ny + 2)*(k - 1)       ! top BC
-                out(:, ip) = wrk2(:, k + nz)
-                ip = ip - 1                     ! bottom BC
-                out(:, ip) = wrk2(:, k)
-                do j = ny, 1, -1
-                    ip = ip - 1                 ! ny lines of field
-                    out(:, ip) = out(:, j + ny*(k - 1))
+                j = ny + 2                      ! top BC
+                ip = isize_line*(j - 1) + 1
+                out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
+                ip = ip - isize_line            ! bottom BC
+                out(ip:ip + isize_line - 1, k) = wrk2(:, k)
+                do j = ny, 1, -1                ! ny lines of field
+                    ip = ip - isize_line
+                    out(ip:ip + isize_line - 1, k) = out_aux(:, j + ny*(k - 1))
                 end do
             end do
             k = 1                               ! first plane; only move BCs
             j = ny + 2                          ! top BC
-            ip = j + (ny + 2)*(k - 1)
-            out(:, ip) = wrk2(:, k + nz)
-            ip = ip - 1                         ! bottom BC
-            out(:, ip) = wrk2(:, k)
+            ip = isize_line*(j - 1) + 1         ! top BC
+            out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
+            ip = ip - isize_line                ! bottom BC
+            out(ip:ip + isize_line - 1, k) = wrk2(:, k)
 
-            nullify (wrk1, wrk2, r_out)
+            nullify (wrk1, wrk2, r_out, out_aux)
 
         else
 #endif
 
             ! #######################################################################
             do k = 1, nz
-                ip = 1 + (ny + 2)*(k - 1)
-                call dfftw_execute_dft_r2c(fft_plan_fx, in(:, 1 + ny*(k - 1)), out(:, ip))
-                ip = ip + ny
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(:, ip))
-                ip = ip + 1
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(:, ip))
+                call dfftw_execute_dft_r2c(fft_plan_fx, in(:, 1 + ny*(k - 1)), out(:, k))
+                j = 1 + ny; ip = (j - 1)*isize_line + 1
+                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(ip:, k))
+                j = 2 + ny; ip = (j - 1)*isize_line + 1
+                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(ip:, k))
             end do
 
 #ifdef USE_MPI
