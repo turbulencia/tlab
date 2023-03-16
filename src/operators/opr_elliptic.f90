@@ -84,10 +84,10 @@ contains
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
         if (g(3)%size > 1) then
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2) !, c_tmp1, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
         else
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp1) !, c_tmp2, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp1)
         end if
 
         ! ###################################################################
@@ -159,19 +159,19 @@ contains
         ! Fourier field p (based on array tmp1)
         ! ###################################################################
         if (g(3)%size > 1) then
-            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)
-            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, p, c_tmp1)
+            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
         else
-            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, p, c_wrk3d)
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, p)    ! tmp2 might be overwritten
         end if
 
         ! Fourier derivatives (based on array tmp2)
         if (present(dpdy)) then
             if (g(3)%size > 1) then
-                call OPR_FOURIER_B_Z_EXEC(c_tmp2, c_wrk3d)
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, dpdy, c_tmp2)
+                call OPR_FOURIER_B_Z_EXEC(c_tmp2, c_wrk3d)              ! tmp2 might be overwritten
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, dpdy)    ! wrk3d might be overwritten
             else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp2, dpdy, c_wrk3d)
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp2, dpdy)     ! tmp2 might be overwritten
             end if
         end if
 
@@ -220,10 +220,10 @@ contains
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
         if (g(3)%size > 1) then
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp2) !, c_tmp1, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
         else
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp1) !, c_tmp2, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp1)
         end if
 
         ! ###################################################################
@@ -286,10 +286,10 @@ contains
         ! Fourier field a (based on array tmp1)
         ! ###################################################################
         if (g(3)%size > 1) then
-            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)
-            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a, c_tmp1)
+            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d) ! tmp1 might be overwritten
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a)
         else
-            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, a, c_wrk3d)
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, a)
         end if
 
         nullify (c_tmp1, c_tmp2)
@@ -338,10 +338,10 @@ contains
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
         if (g(3)%size > 1) then
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp2) !, c_tmp1, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
         else
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp1) !, c_tmp2, c_wrk3d)
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp1)
         end if
 
         ! ###################################################################
@@ -419,10 +419,10 @@ contains
         ! Fourier field a (based on array tmp1)
         ! ###################################################################
         if (g(3)%size > 1) then
-            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)
-            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a, c_tmp1)
+            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d) ! tmp1 might be overwritten
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a)
         else
-            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, a, c_wrk3d)
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, a)
         end if
 
         nullify (c_tmp1, c_tmp2)
@@ -479,11 +479,11 @@ contains
         do ifield = 1, nfield
             if (g(3)%size > 1) then
                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a(ifield)%field, &
-                                          bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp2) !, c_tmp1_n(:, :, ifield), c_wrk3d)
+                                          bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp2)
                 call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1_n(:, :, ifield)) ! tmp2 might be overwritten
             else
                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a(ifield)%field, &
-                                          bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp1_n(:, :, ifield)) !, c_tmp2, c_wrk3d)
+                                          bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp1_n(:, :, ifield))
             end if
         end do
 
@@ -570,10 +570,10 @@ contains
         ! ###################################################################
         do ifield = 1, nfield
             if (g(3)%size > 1) then
-                call OPR_FOURIER_B_Z_EXEC(c_tmp1_n(:, :, ifield), c_wrk3d)
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a(ifield)%field, c_tmp1_n(:, :, ifield))
+                call OPR_FOURIER_B_Z_EXEC(c_tmp1_n(:, :, ifield), c_wrk3d) ! tmp1 might be overwritten
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a(ifield)%field) ! wrk3d might be overwritten
             else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1_n(:, :, ifield), a(ifield)%field, c_wrk3d)
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1_n(:, :, ifield), a(ifield)%field)
             end if
         end do
 
