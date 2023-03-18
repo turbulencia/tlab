@@ -47,6 +47,10 @@ contains
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
 
+        if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then
+            call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrkdea, [isize_field, 2], 'wrk-dealiasing')
+        end if
+
         call TLAB_DEFINE_POINTERS()
 
         call TLAB_DEFINE_POINTERS_3D()

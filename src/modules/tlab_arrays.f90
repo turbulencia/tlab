@@ -10,9 +10,10 @@ module TLAB_ARRAYS
     real(wp), allocatable :: wrk1d(:, :)                   ! Work arrays (scratch space)
     real(wp), allocatable :: wrk2d(:, :)                   ! Work arrays (scratch space)
     real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
+    real(wp), allocatable :: wrkdea(:,:)                   ! Work arrays for dealiasing (scratch space)
 
     target x, y, z
-    target q, s, txc, wrk1d, wrk2d, wrk3d
+    target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
 
 end module TLAB_ARRAYS
 

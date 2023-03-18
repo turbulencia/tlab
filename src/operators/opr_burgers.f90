@@ -289,6 +289,7 @@ contains
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !########################################################################
     subroutine OPR_BURGERS_1D(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
+        use TLAB_ARRAYS, only : wrkdea
         integer,     intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -302,7 +303,7 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) ij
-        real(wp), dimension(:, :), allocatable :: uf, dsf
+        real(wp), pointer :: uf(:, :), dsf(:, :)
 
 ! ###################################################################
         if (bcs(1, 2) + bcs(2, 2) > 0) then
@@ -321,7 +322,8 @@ contains
 ! Operation; diffusivity included in 2.-order derivative
 ! ###################################################################
         if (dealiasing%type /= DNS_FILTER_NONE) then
-            allocate (uf(nlines, g%size), dsf(nlines, g%size))
+            uf(1:nlines,1:g%size) => wrkdea(1:nlines*g%size,1)
+            dsf(1:nlines,1:g%size) => wrkdea(1:nlines*g%size,2)
             call OPR_FILTER_1D(nlines, dealiasing, u, uf)
             call OPR_FILTER_1D(nlines, dealiasing, dsdx, dsf)
 
@@ -342,7 +344,7 @@ contains
 !$omp end parallel
             end if
 
-            deallocate (uf, dsf)
+            nullify(uf, dsf)
 
         else
             if (g%anelastic) then
