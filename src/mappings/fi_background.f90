@@ -14,7 +14,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, GRATIO, scaleheight
+    use THERMO_VARS, only: imixture, GRATIO, scaleheight, MRATIO
     use PROFILES
     use FI_SOURCES, only: FI_BUOYANCY
 #ifdef USE_MPI
@@ -24,10 +24,29 @@ subroutine FI_BACKGROUND_INITIALIZE()
     implicit none
 
 ! -----------------------------------------------------------------------
+    real(wp) dummy
     integer(wi) is, j, ip, nlines, offset
     integer, parameter :: i1 = 1
 
 ! #######################################################################
+! mean_rho and delta_rho need to be defined, because of old version.
+! Note that rho1 and rho2 are the values defined by equation of state,
+! being then mean_rho=(rho1+rho2)/2
+! should we not use the thermal equation of state in thermo routines?
+    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+        if (rbg%type == PROFILE_NONE) then
+            rbg = tbg
+            dummy = tbg%delta/tbg%mean
+            rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
+            rbg%delta = -rbg%mean*dummy
+        else
+            tbg = rbg
+            dummy = rbg%delta/rbg%mean
+            tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
+            tbg%delta = -tbg%mean*dummy
+        end if
+    end if
+
     do is = 1, size(qbg)
         if (qbg(is)%relative) qbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*qbg(is)%ymean_rel
     end do

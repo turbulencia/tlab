@@ -171,6 +171,11 @@ program DNS
     ! ###################################################################
     ! Check
     ! ###################################################################
+    if (bound_p%min < 0.0_wp) bound_p%min = pbg%mean*1.0e-6_wp
+    if (bound_p%max < 0.0_wp) bound_p%max = pbg%mean*1.0e6_wp
+    if (bound_r%min < 0.0_wp) bound_r%min = rbg%mean*1.0e-6_wp
+    if (bound_r%max < 0.0_wp) bound_r%max = rbg%mean*1.0e6_wp
+
     logs_data(1) = 0 ! Status
     call DNS_BOUNDS_CONTROL()
     call DNS_BOUNDS_LIMIT()

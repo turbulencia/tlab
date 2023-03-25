@@ -567,15 +567,6 @@ subroutine DNS_READ_LOCAL(inifile)
     if (nitera_stats_spa <= 0) nitera_stats_spa = nitera_last - nitera_first + 1
 
 ! -------------------------------------------------------------------
-! Control limits
-! I need rbg%mean
-! -------------------------------------------------------------------
-    if (bound_p%min < 0.0_wp) bound_p%min = pbg%mean*1.0e-6_wp
-    if (bound_p%max < 0.0_wp) bound_p%max = pbg%mean*1.0e6_wp
-    if (bound_r%min < 0.0_wp) bound_r%min = rbg%mean*1.0e-6_wp
-    if (bound_r%max < 0.0_wp) bound_r%max = rbg%mean*1.0e6_wp
-
-! -------------------------------------------------------------------
 ! Boundary conditions
 ! -------------------------------------------------------------------
 ! Make sure periodic BCs are not modified

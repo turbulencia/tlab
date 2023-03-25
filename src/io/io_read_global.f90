@@ -1048,23 +1048,6 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 ! -------------------------------------------------------------------
     call THERMO_INITIALIZE()
 
-! mean_rho and delta_rho need to be defined, because of old version.
-! Note that rho1 and rho2 are the values defined by equation of state,
-! being then mean_rho=(rho1+rho2)/2.
-    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        if (rbg%type == PROFILE_NONE) then
-            rbg = tbg
-            dummy = tbg%delta/tbg%mean
-            rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
-            rbg%delta = -rbg%mean*dummy
-        else
-            tbg = rbg
-            dummy = rbg%delta/rbg%mean
-            tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
-            tbg%delta = -tbg%mean*dummy
-        end if
-    end if
-
 ! -------------------------------------------------------------------
 ! Other processes that need correct inb_scal_array
 ! should go in initialization of each process
