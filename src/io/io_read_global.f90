@@ -631,59 +631,30 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
 #endif
 
-! -------------------------------------------------------------------
-! Uniform
-! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Grid', 'XUniform', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; g(1)%uniform = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; g(1)%uniform = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform X grid')
-        call TLAB_STOP(DNS_ERROR_UNIFORMX)
-    end if
+    do ig = 1, 3
+        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%uniform = .true.
+        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%uniform = .false.
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform '//g(ig)%name(1:1)//' grid')
+            call TLAB_STOP(DNS_ERROR_UNIFORMX)
+        end if
+        
+        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
+        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic '//g(ig)%name(1:1)//' grid')
+            call TLAB_STOP(DNS_ERROR_IBC)
+        end if
+    
+        ! Consistency check
+        if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
 
-    call SCANINICHAR(bakfile, inifile, 'Grid', 'YUniform', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; g(2)%uniform = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; g(2)%uniform = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform Y grid')
-        call TLAB_STOP(DNS_ERROR_UNIFORMY)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'Grid', 'ZUniform', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; g(3)%uniform = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; g(3)%uniform = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform Z grid')
-        call TLAB_STOP(DNS_ERROR_UNIFORMZ)
-    end if
-
-! -------------------------------------------------------------------
-! Periodic
-! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Grid', 'XPeriodic', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; g(1)%periodic = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; g(1)%periodic = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic X grid')
-        call TLAB_STOP(DNS_ERROR_IBC)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'Grid', 'YPeriodic', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; g(2)%periodic = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; g(2)%periodic = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic Y grid')
-        call TLAB_STOP(DNS_ERROR_JBC)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'Grid', 'ZPeriodic', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; g(3)%periodic = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; g(3)%periodic = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic Z grid')
-        call TLAB_STOP(DNS_ERROR_KBC)
-    end if
+    end do
 
 ! ###################################################################
 ! Dealising (a filter type)
@@ -834,13 +805,6 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 ! some need to be after everything has been read, to not assume an order in reading the input data
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
-
-    do ig = 1, 3
-        if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-    end do
 
     select case (imode_sim)
     case (DNS_MODE_TEMPORAL)
@@ -1041,28 +1005,6 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
                 call TLAB_STOP(DNS_ERROR_IBC)
             end if
         end do
-    end if
-
-! -------------------------------------------------------------------
-! Thermodynamics; I think it should be moved out from here, but we define inb_scal_array in thermo_initialize....
-! -------------------------------------------------------------------
-    call THERMO_INITIALIZE()
-
-! -------------------------------------------------------------------
-! Other processes that need correct inb_scal_array
-! should go in initialization of each process
-! -------------------------------------------------------------------
-! By default, transport and radiation are caused by last scalar
-! The variable inb_scal_array is only available at the end of this routine
-    transport%scalar = inb_scal_array
-    radiation%scalar = inb_scal_array
-
-    if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        if (radiation%type /= EQNS_NONE) then
-            radiation%active(inb_scal_array) = .true. ! liquid
-            radiation%active(inb_scal_array + 1) = .true. ! buoyancy
-        end if
-
     end if
 
     return

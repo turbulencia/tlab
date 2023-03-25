@@ -39,6 +39,7 @@ program DNS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
     call DNS_READ_LOCAL(ifile)
     if (imode_ibm == 1) then

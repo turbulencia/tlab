@@ -38,6 +38,7 @@ program PARTICLE_BUILD_PDF
     call TLAB_START
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL('dns.ini')
 
 #ifdef USE_MPI

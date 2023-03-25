@@ -5,10 +5,9 @@
 subroutine DNS_READ_LOCAL(inifile)
 
     use TLAB_TYPES, only: MAX_MODES
-    use TLAB_CONSTANTS
+    use TLAB_CONSTANTS, only: wp, wi, big_wp, efile, lfile, wfile
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture
     use PARTICLE_VARS
     use DNS_LOCAL
     use TIME, only: rkm_mode, dtime, cfla, cfld, cflr
@@ -707,8 +706,6 @@ subroutine DNS_READ_LOCAL(inifile)
     ! Array sizes
     ! -------------------------------------------------------------------
     inb_txc = 9
-
-    if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) > 0.0_wp) inb_txc = inb_txc + 1
 
     if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics
         inb_txc = max(inb_txc, 7)

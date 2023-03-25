@@ -25,6 +25,7 @@ program INIFLOW
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call FLOW_READ_LOCAL(ifile)
 
 #ifdef USE_MPI

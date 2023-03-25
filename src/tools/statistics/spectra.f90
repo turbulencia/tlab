@@ -116,6 +116,7 @@ program SPECTRA
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)

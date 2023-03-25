@@ -27,6 +27,7 @@ program INIRAND
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

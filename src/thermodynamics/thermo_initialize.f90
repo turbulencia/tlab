@@ -24,13 +24,12 @@
 !# If needed, the new reference value of gamma0 is calculated here based on the reference species
 !#
 !########################################################################
-subroutine THERMO_INITIALIZE
-    use TLAB_TYPES
-    use THERMO_VARS
+subroutine THERMO_INITIALIZE()
     use TLAB_CONSTANTS, only: efile, lfile, wi, wp
     use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns, mach
-    use TLAB_VARS, only: damkohler
+    use TLAB_VARS, only: damkohler, transport, radiation
     use TLAB_PROCS
+    use THERMO_VARS
     implicit none
 
 ! -------------------------------------------------------------------
@@ -197,7 +196,24 @@ subroutine THERMO_INITIALIZE
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-! ###################################################################
+! -------------------------------------------------------------------
+! Other processes that need correct inb_scal_array
+! should go in initialization of each process
+! -------------------------------------------------------------------
+! By default, transport and radiation are caused by last scalar
+! The variable inb_scal_array is only available at the end of this routine
+    transport%scalar = inb_scal_array
+    radiation%scalar = inb_scal_array
+
+    if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+        if (radiation%type /= EQNS_NONE) then
+            radiation%active(inb_scal_array) = .true. ! liquid
+            radiation%active(inb_scal_array + 1) = .true. ! buoyancy
+        end if
+
+    end if
+
+    ! ###################################################################
 ! Caloric equations
 !
 ! General formulation is CHEMKIN format: 7-coefficient NASA
@@ -455,7 +471,7 @@ subroutine THERMO_INITIALIZE
 ! ###################################################################
 ! Final calculations
 ! ###################################################################
-    WGHT_INV = RGAS/WGHT                    ! Specific gas constants, J /kg /K
+    WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
 
     ! Nondimensionalization
     ISPREF = 2                              ! Species 2 is taken as reference
@@ -478,7 +494,7 @@ subroutine THERMO_INITIALIZE
 
     if (nondimensional) then
         ! Thermal equation of state
-        WGHT_INV = WGHT_INV/WGHT_INV(ISPREF)    ! normalized gas constants (Inverse of molar masses)
+        WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)    ! normalized gas constants (Inverse of molar masses)
 
         ! Caloric equations of state
         do is = 1, NSP

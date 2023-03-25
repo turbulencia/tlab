@@ -93,6 +93,7 @@ program AVERAGES
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
 
 #ifdef USE_MPI

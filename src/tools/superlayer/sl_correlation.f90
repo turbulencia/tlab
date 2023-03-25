@@ -58,6 +58,7 @@ program SL_CORRELATION
     call DNS_START
 
     call IO_READ_GLOBAL('dns.ini')
+    call THERMO_INITIALIZE()
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

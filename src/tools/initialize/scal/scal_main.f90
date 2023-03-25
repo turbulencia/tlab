@@ -26,6 +26,7 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call SCAL_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
