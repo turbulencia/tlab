@@ -29,7 +29,7 @@ subroutine IO_READ_GLOBAL(inifile)
     character*512 sRes
     character*64 lstr
     character*32 bakfile
-    integer(wi) is, inb_scal_local1, inb_scal_local2, idummy
+    integer(wi) is, ig, idummy
     real(wp) dummy
 
 ! ###################################################################
@@ -350,14 +350,17 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
 
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
-    schmidt(:) = 0.0_wp; inb_scal_local1 = MAX_NSP
-    call LIST_REAL(sRes, inb_scal_local1, schmidt)
+    schmidt(:) = 0.0_wp; inb_scal = MAX_NSP
+    call LIST_REAL(sRes, inb_scal, schmidt)
 
-    lstr = '0.0'; do is = 2, inb_scal_local1; lstr = trim(adjustl(lstr))//',0.0'; end do
+    lstr = '0.0'
+    do is = 2, inb_scal
+        lstr = trim(adjustl(lstr))//',0.0'
+    end do
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
-    damkohler(:) = 0.0_wp; inb_scal_local2 = MAX_NSP
-    call LIST_REAL(sRes, inb_scal_local2, damkohler)
-    if (inb_scal_local1 /= inb_scal_local2) then ! Consistency check
+    damkohler(:) = 0.0_wp; idummy = MAX_NSP
+    call LIST_REAL(sRes, idummy, damkohler)
+    if (inb_scal /= idummy) then ! Consistency check
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Schmidt and Damkholer sizes do not match.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
@@ -530,7 +533,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
 ! Activating terms
     chemistry%active = .false.
-    do is = 1, inb_scal_local1
+    do is = 1, inb_scal
         if (abs(damkohler(is)) > 0.0_wp) chemistry%active(is) = .true.
     end do
 
@@ -826,151 +829,154 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     end if
 
 ! ###################################################################
-! Final consistency check and initialization
+! Final consistency check
+! some could be in the corresponding blocks before
+! some need to be after everything has been read, to not assume an order in reading the input data
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
 
-    if (iviscous == EQNS_NONE) then; visc = 0.0_wp
-    else; visc = 1.0_wp/reynolds; end if
-
-! -------------------------------------------------------------------
-! Initializing thermodynamic data of the mixture
-! -------------------------------------------------------------------
-    inb_scal = inb_scal_local1 ! Default is general N scalars; gama0 has been already read above.
-    inb_scal_array = inb_scal
-    NSP = inb_scal
-
-    if (imixture /= MIXT_TYPE_NONE) then ! particular mixture (requires implementation)
-        call THERMO_INITIALIZE                ! gama0 is defined here
-        if (inb_scal_local1 /= inb_scal) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Incorrect number of Schmidt numbers.')
+    do ig = 1, 3
+        if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
-    end if
-! Value of R_0/(C_{p,0}W_0) is called GRATIO
-    if (gama0 > 0.0_wp) GRATIO = (gama0 - 1.0_wp)/gama0
+    end do
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-        mach = 0.0_wp
-        MRATIO = 1.0_wp
-        prandtl = schmidt(1)
-    else
-        MRATIO = gama0*mach*mach
+    select case (imode_sim)
+    case (DNS_MODE_TEMPORAL)
+        if (.not. g(1)%periodic) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform and periodic in direction X for temporal simulation')
+            call TLAB_STOP(DNS_ERROR_CHECKUNIFX)
+        end if
+    case (DNS_MODE_SPATIAL)
+    end select
+
+    select case (imode_eqns)
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        if (iviscous /= EQNS_EXPLICIT) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermViscous undeveloped.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+        if (idiffusion /= EQNS_EXPLICIT) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermDiffusion undeveloped.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+    end select
+
+    if (imode_fdm == FDM_COM6_JACPENTA) then ! CFL_max depends on max[g%mwn(:,1)]
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
     end if
 
-    if (.not. nondimensional) then
-        MRATIO = 1.0_wp
-        GRATIO = 1.0_wp
-    end if
-
-    if (imode_eqns == DNS_EQNS_ANELASTIC .and. &
-        imixture /= MIXT_TYPE_AIR .and. imixture /= MIXT_TYPE_AIRVAPOR .and. imixture /= MIXT_TYPE_AIRWATER) then
+    if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Incorrect mixture type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    if (buoyancy%type == EQNS_BOD_LINEAR .or. &
-        buoyancy%type == EQNS_BOD_BILINEAR .or. &
-        buoyancy%type == EQNS_BOD_QUADRATIC) then
-        if (inb_scal == 0) then
-            call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
-            buoyancy%type = EQNS_NONE
-        end if
+    if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
+        buoyancy%type = EQNS_NONE
     end if
 
-! mean_rho and delta_rho need to be defined, because of old version.
-! Note that rho1 and rho2 are the values defined by equation of state,
-! being then mean_rho=(rho1+rho2)/2.
-    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        if (rbg%type == PROFILE_NONE) then
-            dummy = tbg%delta/tbg%mean
-            rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
-            rbg%delta = -rbg%mean*dummy
-            rbg%thick = tbg%thick
-            rbg%diam = tbg%diam
+! ###################################################################
+! Initialization
+! ###################################################################
+
+! -------------------------------------------------------------------
+!   Molecular transport
+! -------------------------------------------------------------------
+    if (iviscous == EQNS_NONE) then
+        visc = 0.0_wp
+    else
+        visc = 1.0_wp/reynolds
+    end if
+
+    select case (imode_eqns)
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        prandtl = schmidt(1)
+
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+        if (imixture == MIXT_TYPE_AIRWATER) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
+
+    end select
+
+    select case (imixture)
+    case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
+        schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
+
+    case (MIXT_TYPE_AIRWATER)
+        if (all([damkohler(1:2)] == 0.0_wp)) then
+            damkohler(1:2) = damkohler(3)
         else
-            dummy = rbg%delta/rbg%mean
-            tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
-            tbg%delta = -tbg%mean*dummy
-            tbg%thick = rbg%thick
-            tbg%diam = rbg%diam
-        end if
-    end if
-
-! Consistency check
-    if (imixture > 0) then
-
-        if (imixture == MIXT_TYPE_BS &
-            .or. imixture == MIXT_TYPE_BSZELDOVICH) then
-! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
-            schmidt(inb_scal) = prandtl
-
-        else if (imixture == MIXT_TYPE_QUASIBS) then
-! These cases force Sc_i=Sc_Z, already read
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-                schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
-            end if
-
-            if (damkohler(1) == 0.0_wp .and. damkohler(2) == 0.0_wp) then
-                damkohler(1:2) = damkohler(3)
-            else
-                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. AirWater requires at least first 2 Damkholer numbers zero.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
-            end if
-
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. AirWater requires at least first 2 Damkholer numbers zero.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-    end if
+    end select
 
 ! -------------------------------------------------------------------
 ! Arrays size
 ! -------------------------------------------------------------------
+! prognostic and diagnostic variables
     isize_field = imax*jmax*kmax
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-        inb_flow = 3
+    select case (imode_eqns)
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        inb_flow = 3                            ! space for u, v, w
         inb_flow_array = inb_flow
-    else
-        inb_flow = 5
-        inb_flow_array = inb_flow + 2                                ! space for p, T
-        if (transport%type == EQNS_TRANS_SUTHERLAND .or. transport%type == EQNS_TRANS_POWERLAW) inb_flow_array = inb_flow_array + 1 ! space for vis
+
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+        inb_flow = 5                            ! space for u, v, w, e, rho
+        inb_flow_array = inb_flow + 2           ! space for p, T
+        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == transport%type)) inb_flow_array = inb_flow_array + 1    ! space for vis
+
+    end select
+
+    if (inb_flow + inb_scal > MAX_VARS) then
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS should be less than or equal to inb_flow + inb_scal')
+        call TLAB_STOP(DNS_ERROR_TOTALVARS)
     end if
 
-    inb_wrk1d = 18
-    if (imode_sim == DNS_MODE_SPATIAL) then; inb_wrk2d = 11
-    else; inb_wrk2d = 2; end if
+    inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
+    !                           can be changed in THERMO_INITIALIZE()
 
+! scratch arrays
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
+    inb_wrk1d = 18
+
     isize_wrk2d = max(imax*jmax, max(imax*kmax, jmax*kmax))
+    if (imode_sim == DNS_MODE_SPATIAL) then
+        inb_wrk2d = 11
+    else
+        inb_wrk2d = 2
+    end if
 
 ! grid array
     do is = 1, 3
-        g(is)%inb_grid = 1                  ! Nodes
+        g(is)%inb_grid = 1                          ! Nodes
         g(is)%inb_grid = g(is)%inb_grid &
-                         + 2 &   ! Jacobians of first- and second-order derivatives
-                         + 2                  ! 1/dx and 1/dx**2 used in time-step stability constraint
+                         + 2 &                      ! Jacobians of first- and second-order derivatives
+                         + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
 
         if (g(is)%periodic) then
             g(is)%inb_grid = g(is)%inb_grid &
-                             + 7 & ! LU decomposition 1. order
-                             + 5 & ! LU decomposition 2. order
-                             + 5*(1 + inb_scal) & ! LU decomposition 2. order with diffusivities
-                             + 2                 ! modified wavenumbers
+                             + 7 &                  ! LU decomposition 1. order
+                             + 5 &                  ! LU decomposition 2. order
+                             + 5*(1 + inb_scal) &   ! LU decomposition 2. order with diffusivities
+                             + 2                    ! modified wavenumbers
         else
             g(is)%inb_grid = g(is)%inb_grid &
-                             + 5*4 & ! LU decomposition 1. order, 4 bcs
-                             + 3*4 & ! LU decomposition 2. order, 4 bcs
-                             + 3*(1 + inb_scal)   ! LU decomposition 2. order w/ diffusivities, 1 bcs
+                             + 5*4 &                ! LU decomposition 1. order, 4 bcs
+                             + 3*4 &                ! LU decomposition 2. order, 4 bcs
+                             + 3*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
 ! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered
         end if
         g(is)%inb_grid = g(is)%inb_grid &
-                         + 1                    ! Density correction in anelastic mode
+                         + 1                        ! Density correction in anelastic mode
         if ((stagger_on) .and. g(is)%periodic) then
             g(is)%inb_grid = g(is)%inb_grid &
-                             + 5 & ! LU decomposition interpolation
-                             + 5                 ! LU decomposition 1. order interpolatory
+                             + 5 &                  ! LU decomposition interpolation
+                             + 5                    ! LU decomposition 1. order interpolatory
         end if
     end do
 
@@ -1003,39 +1009,20 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     end if
 
 ! loop counters over the whole domain are integer*4
-    if (isize_field > huge(imax)) then
+    if (isize_txc_field > huge(imax)) then
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes not big enough.')
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
     end if
 
 ! -------------------------------------------------------------------
-! Test periodicity constrains
-! -------------------------------------------------------------------
-    if (g(1)%periodic .and. (.not. g(1)%uniform)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction X')
-        call TLAB_STOP(DNS_ERROR_CHECKUNIFX)
-    end if
-
-    if (g(2)%periodic .and. (.not. g(2)%uniform)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction Y')
-        call TLAB_STOP(DNS_ERROR_CHECKUNIFY)
-    end if
-
-    if (g(3)%periodic .and. (.not. g(3)%uniform)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction Z')
-        call TLAB_STOP(DNS_ERROR_CHECKUNIFZ)
-    end if
-
-! -------------------------------------------------------------------
-! Helmholtz filter that maintains prognostic bcs; I need inb_{flow,scal}
+! Helmholtz filter that maintains prognostic bcs
+! Here becasue I need the values of inb_{flow,scal}
 ! -------------------------------------------------------------------
     FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
     FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
 
     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
-        FilterDomain(2)%BcsMin /= DNS_FILTER_BCS_DIRICHLET .and. &
-        FilterDomain(2)%BcsMin /= DNS_FILTER_BCS_SOLID .and. &
-        FilterDomain(2)%BcsMin /= DNS_FILTER_BCS_NEUMANN) then
+        all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
         call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
         if (trim(adjustl(sRes)) == 'noslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
         else if (trim(adjustl(sRes)) == 'freeslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
@@ -1057,7 +1044,30 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     end if
 
 ! -------------------------------------------------------------------
-! Other parameters
+! Thermodynamics; I think it should be moved out from here, but we define inb_scal_array in thermo_initialize....
+! -------------------------------------------------------------------
+    call THERMO_INITIALIZE()
+
+! mean_rho and delta_rho need to be defined, because of old version.
+! Note that rho1 and rho2 are the values defined by equation of state,
+! being then mean_rho=(rho1+rho2)/2.
+    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+        if (rbg%type == PROFILE_NONE) then
+            rbg = tbg
+            dummy = tbg%delta/tbg%mean
+            rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
+            rbg%delta = -rbg%mean*dummy
+        else
+            tbg = rbg
+            dummy = rbg%delta/rbg%mean
+            tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
+            tbg%delta = -tbg%mean*dummy
+        end if
+    end if
+
+! -------------------------------------------------------------------
+! Other processes that need correct inb_scal_array
+! should go in initialization of each process
 ! -------------------------------------------------------------------
 ! By default, transport and radiation are caused by last scalar
 ! The variable inb_scal_array is only available at the end of this routine
@@ -1070,33 +1080,6 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
             radiation%active(inb_scal_array + 1) = .true. ! buoyancy
         end if
 
-    end if
-
-    if (imode_sim == DNS_MODE_TEMPORAL .and. (.not. g(1)%periodic)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform and periodic in direction X for temporal simulation')
-        call TLAB_STOP(DNS_ERROR_CHECKUNIFX)
-    end if
-
-    if (inb_flow + inb_scal > MAX_VARS) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS < inb_flow + inb_scal')
-        call TLAB_STOP(DNS_ERROR_TOTALVARS)
-    end if
-
-    select case (imode_eqns)
-    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-        if (iviscous /= EQNS_EXPLICIT) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermViscous undeveloped.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-        if (idiffusion /= EQNS_EXPLICIT) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermDiffusion undeveloped.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-    end select
-
-    if (imode_fdm == FDM_COM6_JACPENTA) then ! CFL_max depends on max[g%mwn(:,1)]
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
     end if
 
     return
