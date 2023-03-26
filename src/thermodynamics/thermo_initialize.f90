@@ -412,6 +412,7 @@ subroutine THERMO_INITIALIZE()
     else
         MRATIO = gama0*mach*mach
     end if
+    MRATIO_INV = 1/MRATIO
 
     if (nondimensional) then
         ! Thermal equation of state
@@ -441,6 +442,9 @@ subroutine THERMO_INITIALIZE()
         GRATIO = 1.0_wp
 
     end if
+
+!   Definitions to save operations
+    THERMO_R(:) = WGHT_INV(:)/MRATIO    ! gas constants
 
 ! -------------------------------------------------------------------
 ! Output

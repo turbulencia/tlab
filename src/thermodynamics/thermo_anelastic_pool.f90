@@ -914,7 +914,7 @@ END SUBROUTINE THERMO_ANELASTIC_LAPSE_FR
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU(nx,ny,nz, s, dTdy,dqldy, e,p,r, lapse, frequency)
 
-  USE THERMO_VARS
+  USE THERMO_VARS, only: imixture, THERMO_AI, WGHT_INV, MRATIO, GRATIO, scaleheight, THERMO_PSAT, NPSAT
   
   IMPLICIT NONE
 
@@ -1038,7 +1038,7 @@ END SUBROUTINE THERMO_ANELASTIC_LAPSE_EQU
 !########################################################################
 SUBROUTINE THERMO_ANELASTIC_DEWPOINT(nx,ny,nz, s, e,p,r, Td,Lapse)
 
-  USE THERMO_VARS
+  USE THERMO_VARS, only : imixture, THERMO_AI, WGHT_INV, MRATIO, scaleheight, THERMO_PSAT, NPSAT
   
   IMPLICIT NONE
 

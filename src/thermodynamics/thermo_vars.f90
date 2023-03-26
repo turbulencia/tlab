@@ -7,6 +7,7 @@ module THERMO_VARS
     real(wp) :: gama0                           ! Compressibility. Specific heat ratio
     real(wp) :: GRATIO                          ! (gama0-1)/gama0 to save calculations
     real(wp) :: MRATIO                          ! gama0 mach^2 to save calculations
+    real(wp) :: MRATIO_INV                      ! 1/MRATIO
     real(wp) :: scaleheight                     ! for anelastic formulation; Fr/MRATIO in compressible formulation
 
     integer(wi) :: imixture
@@ -16,6 +17,7 @@ module THERMO_VARS
     integer(wi) :: NSP                          ! Number of components (species) in a mixture
     character(len=32) :: THERMO_SPNAME(MAX_NSP)
     real(wp) :: WGHT_INV(MAX_NSP)               ! Inverse of molar masses, i.e., gas constants
+    real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants
 
     integer(wi), parameter :: MAX_NCP = 7       ! Caloric data; cp(T), formation enthalpy, formation entropy
     integer(wi) :: NCP                          ! Number of terms in polynomial fit to cp

@@ -123,6 +123,7 @@ contains
         use TLAB_VARS, only: g
         use TLAB_VARS, only: mach, pbg, qbg
         use THERMO_VARS, only: gama0
+        use THERMO_THERMAL
         use BOUNDARY_BUFFER
         use PROFILES
 #ifdef USE_MPI
@@ -274,7 +275,7 @@ contains
                 end do
                 call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalJmin%Ref, &
                                                 BcsFlowJmin%ref(1, 1, 6), BcsFlowJmin%Ref(1, 1, 1), BcsFlowJmin%Ref(1, 1, 7), wrk3d)
-                call THERMO_THERMAL_PRESSURE(imax, i1, kmax, BcsScalJmin%Ref, &
+                call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalJmin%Ref, &
                                              BcsFlowJmin%Ref(1, 1, 1), BcsFlowJmin%Ref(1, 1, 7), BcsFlowJmin%Ref(1, 1, 5))
 
 ! shape factor
@@ -304,7 +305,7 @@ contains
                 end do
                 call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalJmax%Ref, &
                                                 BcsFlowJmax%ref(1, 1, 6), BcsFlowJmax%Ref(1, 1, 1), BcsFlowJmax%Ref(1, 1, 7), wrk3d)
-                call THERMO_THERMAL_PRESSURE(imax, i1, kmax, BcsScalJmax%Ref, &
+                call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalJmax%Ref, &
                                              BcsFlowJmax%Ref(1, 1, 1), BcsFlowJmax%Ref(1, 1, 7), BcsFlowJmax%Ref(1, 1, 5))
 
 ! shape factor
@@ -332,7 +333,7 @@ contains
                 end do
                 call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalImin%Ref, &
                                                 BcsFlowImin%ref(1, 1, 6), BcsFlowImin%Ref(1, 1, 1), BcsFlowImin%Ref(1, 1, 7), wrk3d)
-                call THERMO_THERMAL_PRESSURE(imax, i1, kmax, BcsScalImin%Ref, &
+                call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalImin%Ref, &
                                              BcsFlowImin%Ref(1, 1, 1), BcsFlowImin%Ref(1, 1, 7), BcsFlowImin%Ref(1, 1, 5))
 
 ! shape factor
@@ -370,7 +371,7 @@ contains
                 end do
                 call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalImax%Ref, &
                                                 BcsFlowImax%ref(1, 1, 6), BcsFlowImax%Ref(1, 1, 1), BcsFlowImax%Ref(1, 1, 7), wrk3d)
-                call THERMO_THERMAL_PRESSURE(imax, i1, kmax, BcsScalImax%Ref, &
+                call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalImax%Ref, &
                                              BcsFlowImax%Ref(1, 1, 1), BcsFlowImax%Ref(1, 1, 7), BcsFlowImax%Ref(1, 1, 5))
 
 ! try to use only the coflow values

@@ -21,6 +21,7 @@ module BOUNDARY_INFLOW
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
+    use THERMO_THERMAL
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
@@ -158,10 +159,8 @@ contains
             visc = visctmp
 
             ! array p contains the internal energy. Now we put in the pressure
-            call THERMO_CALORIC_TEMPERATURE &
-                (g_inf(1)%size, g_inf(2)%size, kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)
-            call THERMO_THERMAL_PRESSURE &
-                (g_inf(1)%size, g_inf(2)%size, kmax, s_inf, q_inf(1, 1, 1, 5), txc, q_inf(1, 1, 1, 4))
+            call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size, g_inf(2)%size, kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)
+            call THERMO_THERMAL_PRESSURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 5), txc, q_inf(1, 1, 1, 4))
 
             ! ###################################################################
             ! Performing the derivatives
@@ -577,7 +576,7 @@ contains
             if (imixture == MIXT_TYPE_AIRWATER) then
                 call THERMO_AIRWATER_RP(imax, jmax, kmax, s, p, rho, T, wrk3d)
             else
-                call THERMO_THERMAL_TEMPERATURE(imax, jmax, kmax, s, p, rho, T)
+                call THERMO_THERMAL_TEMPERATURE(imax*jmax*kmax, s, p, rho, T)
             end if
             call THERMO_CALORIC_ENERGY(imax, jmax, kmax, s, T, e)
 
@@ -586,7 +585,7 @@ contains
             ! can then be compared with diff command.
             if (imixture == MIXT_TYPE_AIRWATER) then
                 call THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, s, e, rho, T, wrk3d)
-                call THERMO_THERMAL_PRESSURE(imax, jmax, kmax, s, rho, T, p)
+                call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, s, rho, T, p)
             end if
 
      if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax, jmax, kmax, T, vis)
