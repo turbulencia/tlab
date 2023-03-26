@@ -18,11 +18,11 @@ subroutine RHS_FLOW_GLOBAL_2()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: g, buoyancy
-    use TLAB_VARS, only: idiffusion, visc, prandtl, mach
+    use TLAB_VARS, only: idiffusion, visc, prandtl
     use TLAB_ARRAYS, only: s
     use TLAB_POINTERS
     use DNS_ARRAYS
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: MRATIO, GRATIO
     use BOUNDARY_BCS
     use OPR_PARTIAL
 
@@ -46,7 +46,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     g1 = buoyancy%vector(1)
     g2 = buoyancy%vector(2)
     g3 = buoyancy%vector(3)
-    prefactor = (gama0 - 1.0_wp)*mach*mach
+    prefactor = MRATIO*GRATIO 
     c13 = 1.0_wp/3.0_wp
 
 ! ###################################################################

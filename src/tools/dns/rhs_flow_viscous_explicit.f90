@@ -18,10 +18,10 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: visc, mach
+    use TLAB_VARS, only: visc
     use TLAB_POINTERS
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: MRATIO, GRATIO
     use BOUNDARY_BCS
     use OPR_PARTIAL
 
@@ -38,7 +38,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 
     bcs = 0
 
-    prefactor = (gama0 - 1.0_wp)*mach*mach
+    prefactor = MRATIO*GRATIO
     c13 = 1.0_wp/3.0_wp
     c23 = 2.0_wp/3.0_wp
 

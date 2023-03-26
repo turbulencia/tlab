@@ -121,8 +121,8 @@ contains
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use TLAB_VARS, only: g
-        use TLAB_VARS, only: mach, pbg, qbg
-        use THERMO_VARS, only: gama0
+        use TLAB_VARS, only: pbg, qbg
+        use THERMO_VARS, only: MRATIO, GRATIO
         use THERMO_THERMAL
         use BOUNDARY_BUFFER
         use PROFILES
@@ -253,7 +253,7 @@ contains
             BcsFlowJmin%ref(:, :, 5) = pbg%mean; BcsFlowJmax%ref(:, :, 5) = pbg%mean
             BcsFlowKmin%ref(:, :, 5) = pbg%mean; BcsFlowKmax%ref(:, :, 5) = pbg%mean
 
-            prefactor = 0.5_wp*(gama0 - 1.0_wp)*mach*mach
+            prefactor = 0.5_wp*MRATIO*GRATIO
 
 ! -------------------------------------------------------------------
 ! Using buffer fields; bottom

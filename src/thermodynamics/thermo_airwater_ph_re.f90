@@ -32,7 +32,7 @@ SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 
 ! ###################################################################
   niter = 5
-  prefactor = GRATIO*MRATIO ! = (gama0-C_1_R)*mach*mach
+  prefactor = GRATIO*MRATIO
 
   DO ij = 1,nx*ny*nz
 ! -------------------------------------------------------------------
@@ -87,7 +87,7 @@ SUBROUTINE THERMO_ANELASTIC_AIRWATER_PH_RE(nx,ny,nz, s, e,p, wrk3d)
 
 ! ###################################################################
   niter = 5
-  prefactor = GRATIO *MRATIO ! = (gama0-C_1_R)*mach*mach
+  prefactor = GRATIO *MRATIO
   
   s(:,3) = C_0_R ! initialize, q_l=0
 

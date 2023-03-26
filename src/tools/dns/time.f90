@@ -15,7 +15,7 @@ module TIME
 #endif
     use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
     use TLAB_VARS
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: gama0, MRATIO, GRATIO
     use TLAB_PROCS
     use PARTICLE_VARS
 #ifdef USE_MPI
@@ -788,7 +788,7 @@ contains
         ! Perform the time stepping
         ! ###################################################################
         rho_ratio = 1.0_wp
-        prefactor = (gama0 - 1.0_wp)*mach*mach
+        prefactor = MRATIO*GRATIO
 
         if (flow_on) then
             if (scal_on) then; inb_scal_loc = inb_scal

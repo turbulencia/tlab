@@ -7,10 +7,9 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g, buoyancy
-    use TLAB_VARS, only: mach
     use TLAB_POINTERS
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: MRATIO, GRATIO
     use OPR_PARTIAL
     implicit none
 
@@ -105,7 +104,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
 ! Total energy formulation
 ! -------------------------------------------------------------------
     if (imode_eqns == DNS_EQNS_TOTAL) then
-        prefactor = (gama0 - 1.0_wp)*mach*mach
+        prefactor = MRATIO*GRATIO
         do i = 1, imax*jmax*kmax
             dummy = rho(i)*(e(i) + prefactor*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) + prefactor*p(i)
             tmp3(i) = dummy*w(i)

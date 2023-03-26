@@ -14,11 +14,10 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal, imode_eqns
     use TLAB_VARS, only: g, buoyancy
-    use TLAB_VARS, only: mach
     use TLAB_POINTERS
     use TLAB_ARRAYS, only: s
     use DNS_ARRAYS, only: hq, hs
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: MRATIO, GRATIO
     use OPR_PARTIAL
 
     implicit none
@@ -37,7 +36,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     g1 = buoyancy%vector(1)
     g2 = buoyancy%vector(2)
     g3 = buoyancy%vector(3)
-    prefactor = (gama0 - 1.0_wp)*mach*mach
+    prefactor = MRATIO*GRATIO
 
 ! ###################################################################
 ! Terms \rho u in mass, u-momentum and energy equations
