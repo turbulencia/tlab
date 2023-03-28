@@ -67,25 +67,25 @@
 
   IF      ( opt_cond .EQ. 2 ) THEN
      inb_txc    = MAX(inb_txc,1)
-     iread_scal = 1
+     iread_scal = .true.
   ELSE IF ( opt_cond .EQ. 3 ) THEN
      inb_txc    = MAX(inb_txc,3)
-     iread_flow = 1
+     iread_flow = .true.
   ELSE IF ( opt_cond .EQ. 4 ) THEN
      inb_txc    = MAX(inb_txc,3)
-     iread_scal = 1
+     iread_scal = .true.
   ELSE IF ( opt_cond .EQ. 5 ) THEN
      inb_txc    = MAX(inb_txc,1)
-     iread_flow = 1
+     iread_flow = .true.
   ELSE IF ( opt_cond .EQ. 6 ) THEN
      inb_txc    = MAX(inb_txc,1)
-     iread_scal = 1
+     iread_scal = .true.
   ELSE IF ( opt_cond .EQ. 7 ) THEN
      inb_txc    = MAX(inb_txc,1)
-     iread_scal = 1
-     iread_flow = 1
+     iread_scal = .true.
+     iread_flow = .true.
   ELSE IF ( opt_cond .EQ. 8 ) THEN
      inb_txc    = MAX(inb_txc,5)
-     iread_scal = 1
-     iread_flow = 1
+     iread_scal = .true.
+     iread_flow = .true.
   ENDIF

@@ -16,7 +16,6 @@ program VBURGERS
     use OPR_BURGERS
     implicit none
 
-#include "integers.h"
 #ifdef USE_MPI
     TREAL error2, dummy2
 #else
@@ -68,7 +67,7 @@ program VBURGERS
     call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
 
 ! ###################################################################
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
     do k = 1, kmax
         do j = 1, jmax
             do i = 1, imax
@@ -78,7 +77,7 @@ program VBURGERS
         end do
     end do
 
-    call OPR_BURGERS_X(i0, i0, imax, jmax, kmax, bcs, g(1), a, a, a, c, tmp1)
+    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), a, a, c, tmp1)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -92,7 +91,7 @@ program VBURGERS
 ! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
 
 ! ###################################################################
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c)
     do k = 1, kmax
         do j = 1, jmax
             do i = 1, imax
@@ -102,7 +101,7 @@ program VBURGERS
         end do
     end do
 
-    call OPR_BURGERS_Y(i0, i0, imax, jmax, kmax, bcs, g(2), a, a, a, c, tmp1)
+    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), a, a, c, tmp1)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -118,7 +117,7 @@ program VBURGERS
 ! ###################################################################
     if (g(3)%size > 1) then
 
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, b, c, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, b, c)
         do k = 1, kmax
             do j = 1, jmax
                 do i = 1, imax
@@ -128,7 +127,7 @@ program VBURGERS
             end do
         end do
 
-        call OPR_BURGERS_Z(i0, i0, imax, jmax, kmax, bcs, g(3), a, a, a, c, tmp1)
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), a, a, c, tmp1)
 
         c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI

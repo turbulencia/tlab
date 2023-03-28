@@ -281,10 +281,8 @@ contains
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
                 call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-            else                                          ! General treatment, need global variable ipos,jpos,kpos,ci,cj,ck
-#ifdef USE_CGLOC
-                call CGPOISSON(1, imax, jmax, kmax, g(3)%size, u, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, p_wrk2d)
-#endif
+            else                                          ! General treatment
+                ! Undevelop
             end if
 
             ! Solve lap(v) = - (rot(vort))_y
@@ -293,9 +291,7 @@ contains
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
                 call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
-#ifdef USE_CGLOC
-                call CGPOISSON(1, imax, jmax, kmax, g(3)%size, v, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, p_wrk2d)
-#endif
+                ! Undevelop
             end if
 
             ! Solve lap(w) = - (rot(vort))_z
@@ -307,9 +303,7 @@ contains
                     p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
                     call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
                 else                                          ! General treatment
-#ifdef USE_CGLOC
-                    call CGPOISSON(1, imax, jmax, kmax, g(3)%size, w, ax, ay, az, ipos, jpos, kpos, ci, cj, ck, p_wrk2d)
-#endif
+                ! Undevelop
                 end if
             end if
 
@@ -575,10 +569,7 @@ contains
             pprime = -txc4          ! change of forcing term sign
             call OPR_POISSON_FXZ(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
         else                                      ! General treatment
-#ifdef USE_CGLOC
-            ! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-            call CGPOISSON(i1, imax, jmax, kmax, g(3)%size, pprime, txc4, txc3, txc2, ipos, jpos, kpos, cj, ck, p_wrk2d)
-#endif
+            ! Undevelop
         end if
 
         ! An amplification factor norm_ini_p is allowed as in previous versions

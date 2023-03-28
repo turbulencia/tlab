@@ -28,9 +28,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
 
 contains
     subroutine BOUNDARY_BCS_X(iaux, M2_max, etime, rho, u, v, w, p, gama, z1, &
-                              h0, h1, h2, h3, h4, zh1, txc, aux2d, wrk1d, wrk2d, wrk3d)
-
-#include "integers.h"
+                              h0, h1, h2, h3, h4, zh1, txc, aux2d)
 
         TINTEGER iaux
 
@@ -39,7 +37,6 @@ contains
         TREAL, dimension(imax, jmax, kmax) :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
         TREAL, dimension(imax, jmax, kmax, *) :: z1, zh1, txc
         TREAL, dimension(jmax, kmax, *) :: aux2d
-        TREAL, dimension(*) :: wrk1d, wrk2d, wrk3d
 
         target aux2d
 
@@ -157,16 +154,16 @@ contains
 ! Transverse terms
 ! ###################################################################
         call BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, rho, gama, z1, &
-                                       tmin, mmin, tmax, mmax, txc(1, 1, 1, 1), txc(1, 1, 1, 2), txc(1, 1, 1, 3), wrk2d, wrk3d)
+                                       tmin, mmin, tmax, mmax, txc(1, 1, 1, 1), txc(1, 1, 1, 2), txc(1, 1, 1, 3))
 
 ! ###################################################################
 ! Flow
 ! ###################################################################
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, txc(1, 1, 1, 2), wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, txc(1, 1, 1, 5), wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, txc(1, 1, 1, 1), wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, txc(1, 1, 1, 3), wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, txc(1, 1, 1, 4), wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, txc(1, 1, 1, 2))
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, txc(1, 1, 1, 5))
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, txc(1, 1, 1, 1))
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, txc(1, 1, 1, 3))
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, txc(1, 1, 1, 4))
 
 ! -------------------------------------------------------------------
 ! Nonreflective BCs at xmin
@@ -187,7 +184,7 @@ contains
             end do
         end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out_min, BcsFlowImin%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(0, nt, pl_out_min, BcsFlowImin%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(1), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -246,7 +243,7 @@ contains
             end do
         end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out_max, BcsFlowImax%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(1, nt, pl_out_max, BcsFlowImax%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(1), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -289,11 +286,11 @@ contains
 ! ###################################################################
 ! Scalar
 ! ###################################################################
-        if (icalc_scal == 1) then
+        if (scal_on) then
             if (imixture == MIXT_TYPE_AIRWATER) then; inb_scal_loc = inb_scal + 1
             else; inb_scal_loc = inb_scal; end if
             do is = 1, inb_scal_loc
-                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1(1, 1, 1, is), txc(1, 1, 1, 3), wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1(1, 1, 1, is), txc(1, 1, 1, 3))
 
 ! -------------------------------------------------------------------
 ! Nonreflective BCs at xmin
@@ -452,9 +449,7 @@ contains
 !#
 !########################################################################
     subroutine BOUNDARY_BCS_Y(iaux, M2_max, rho, u, v, w, p, gama, z1, &
-                              h0, h1, h2, h3, h4, zh1, tmp1, tmp2, tmp3, tmp4, tmp5, aux2d, wrk2d, wrk3d)
-
-#include "integers.h"
+                              h0, h1, h2, h3, h4, zh1, tmp1, tmp2, tmp3, tmp4, tmp5, aux2d)
 
         TINTEGER iaux
         TREAL M2_max
@@ -463,7 +458,6 @@ contains
         TREAL, dimension(imax, jmax, kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5
         TREAL, dimension(imax, jmax, kmax, *) :: z1, zh1
         TREAL, dimension(imax, kmax, *) :: aux2d
-        TREAL, dimension(*) :: wrk2d, wrk3d
 
         target aux2d
 
@@ -570,16 +564,16 @@ contains
 ! Transverse terms
 ! ###################################################################
         call BOUNDARY_BCS_TRANSVERSE_Y(u, v, w, p, rho, gama, z1, &
-                                       tmin, lmin, tmax, lmax, tmp1, tmp2, tmp3, wrk2d, wrk3d)
+                                       tmin, lmin, tmax, lmax, tmp1, tmp2, tmp3)
 
 ! ###################################################################
 ! Flow
 ! ###################################################################
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp4, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp5, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp1)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp3)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp4)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp5)
 
 ! -------------------------------------------------------------------
 ! BCs at ymin
@@ -598,7 +592,7 @@ contains
                 dpdn_loc(i, k) = tmp5(i, 1, k)
             end do; end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i0, nt, pl_out_min, BcsFlowJmin%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(0, nt, pl_out_min, BcsFlowJmin%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(2), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -646,7 +640,7 @@ contains
                 dpdn_loc(i, k) = tmp5(i, jmax, k)
             end do; end do
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            call BOUNDARY_BCS_FLOW_NR_2(i1, nt, pl_out_max, BcsFlowJmax%ref(1, 1, 5), &
+            call BOUNDARY_BCS_FLOW_NR_2(1, nt, pl_out_max, BcsFlowJmax%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(2), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
@@ -680,12 +674,12 @@ contains
 ! ###################################################################
 ! Scalar
 ! ###################################################################
-        if (icalc_scal == 1) then
+        if (scal_on) then
             if (imixture == MIXT_TYPE_AIRWATER) then; inb_scal_loc = inb_scal + 1
             else; inb_scal_loc = inb_scal; end if
 
             do is = 1, inb_scal_loc
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1(1, 1, 1, is), tmp2, wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1(1, 1, 1, is), tmp2)
 
 ! -------------------------------------------------------------------
 ! BCs at ymin
@@ -829,8 +823,7 @@ contains
 !# gn        In   Constant body force normal to the boundary
 !#
 !########################################################################
-    subroutine BOUNDARY_BCS_FLOW_NR_2 &
-        (iflag, nt, pl_const, pl_pref, &
+    subroutine BOUNDARY_BCS_FLOW_NR_2(iflag, nt, pl_const, pl_pref, &
          r, un, v1, v2, p, gama, drdn, dundn, dv1dn, dv2dn, dpdn, gn, &
          hr, hun, hv1, hv2, he)
 
@@ -2010,9 +2003,7 @@ contains
 !#
 !########################################################################
     subroutine BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
-                                         tmin, mmin, tmax, mmax, tmp1, ddy, ddz, wrk2d, wrk3d)
-
-#include "integers.h"
+                                         tmin, mmin, tmax, mmax, tmp1, ddy, ddz)
 
         TREAL, dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
 #ifdef USE_MPI
@@ -2022,8 +2013,6 @@ contains
 #endif
         TREAL, dimension(imax, jmax, kmax, *) :: z1
         TREAL, dimension(jmax, kmax, *) :: tmin, tmax, mmin, mmax
-
-        TREAL, dimension(*) :: wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
         TINTEGER ip, j, k, is, bcs(2, 2)
@@ -2071,15 +2060,15 @@ contains
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-        call OPR_PARTIAL_Y(OPR_P1, ims_bcs_imax, jmax, kmax, bcs, g(2), tmp1, ddy, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, ims_bcs_imax, jmax, kmax, bcs, g(2), tmp1, ddy)
 ! Needs to be checked
         call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (TLAB_MPI_K_NRBCX-1)*100
-        call OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax, jmax, kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax, jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
-        call OPR_PARTIAL_Y(OPR_P1, ip, jmax, kmax, bcs, g(2), tmp1, ddy, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, ip, jmax, kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, ip, jmax, kmax, bcs, g(2), tmp1, ddy)
+        call OPR_PARTIAL_Z(OPR_P1, ip, jmax, kmax, bcs, g(3), tmp1, ddz)
 #endif
         ip = 0
 
@@ -2170,9 +2159,7 @@ contains
 !#
 !########################################################################
     subroutine BOUNDARY_BCS_TRANSVERSE_Y(u, v, w, p, r, gamma, z1, &
-                                         tmin, lmin, tmax, lmax, tmp1, ddx, ddz, wrk2d, wrk3d)
-
-#include "integers.h"
+                                         tmin, lmin, tmax, lmax, tmp1, ddx, ddz)
 
         TREAL, dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
 #ifdef USE_MPI
@@ -2182,8 +2169,6 @@ contains
 #endif
         TREAL, dimension(imax, jmax, kmax, *) :: z1
         TREAL, dimension(imax, kmax, *) :: tmin, lmin, tmax, lmax
-
-        TREAL, dimension(*) :: wrk2d, wrk3d
 
 ! -----------------------------------------------------------------------
         TINTEGER ip, i, k, is, bcs(2, 2)
@@ -2227,15 +2212,15 @@ contains
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-        call OPR_PARTIAL_X(OPR_P1, imax, ims_bcs_jmax, kmax, bcs, g(1), tmp1, ddx, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, ims_bcs_jmax, kmax, bcs, g(1), tmp1, ddx)
 ! Needs to be checked
         call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_Y. To be checked')
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (TLAB_MPI_K_NRBCY-1)*100
-        call OPR_PARTIAL_Z(OPR_P1_BCS, imax, ims_bcs_jmax, kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1_BCS, imax, ims_bcs_jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
-        call OPR_PARTIAL_X(OPR_P1, imax, ip, kmax, bcs, g(1), tmp1, ddx, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, ip, kmax, bcs, g(3), tmp1, ddz, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, ip, kmax, bcs, g(1), tmp1, ddx)
+        call OPR_PARTIAL_Z(OPR_P1, imax, ip, kmax, bcs, g(3), tmp1, ddz)
 #endif
         ip = 0
 

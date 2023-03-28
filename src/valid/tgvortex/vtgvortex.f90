@@ -7,10 +7,8 @@ program VTGVORTEX
     use IO_FIELDS
     use OPR_FOURIER
     use FI_SOURCES
-    
-    implicit none
 
-#include "integers.h"
+    implicit none
 
     TREAL, dimension(:, :), allocatable, save, target :: x, y, z
     TREAL, dimension(:, :), allocatable :: txc, q
@@ -47,7 +45,7 @@ program VTGVORTEX
 
 ! ###################################################################
     call OPR_FOURIER_INITIALIZE()
-    
+
     write (*, *) '1-ICs / 2-Error ?'; read (*, *) iopt
 
     if (iopt == 1) then

@@ -15,7 +15,6 @@
       IMPLICIT NONE
 
 #include "types.h"
-#include "integers.h"
 
       TINTEGER kmax, ijmax
       TINTEGER nx

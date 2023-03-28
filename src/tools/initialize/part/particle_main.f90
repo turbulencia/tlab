@@ -19,7 +19,7 @@ program INIPART
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-
+    call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
 
     if (part%type /= PART_TYPE_NONE) then

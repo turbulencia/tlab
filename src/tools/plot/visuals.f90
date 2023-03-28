@@ -30,6 +30,8 @@ program VISUALS
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_FILTERS
@@ -56,7 +58,8 @@ program VISUALS
     integer(wi) opt_format
     integer(wi) opt_cond, opt_cond_scal, opt_cond_relative
     integer(wi) ij, is, bcs(2, 2), ig
-    integer(wi) iscal_offset, iread_flow, iread_scal, iread_part, idummy, MaskSize
+    integer(wi) iscal_offset, idummy, MaskSize
+    logical iread_flow, iread_scal, iread_part
     real(wp) diff, dummy
     integer(wi) subdomain(6)
 
@@ -85,6 +88,7 @@ program VISUALS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------
@@ -174,41 +178,41 @@ program VISUALS
     end if
 
     ! -------------------------------------------------------------------
-    iread_flow = 0
-    iread_scal = 0
-    iread_part = 0
+    iread_flow = .false.
+    iread_scal = .false.
+    iread_part = .false.
     inb_txc = 0
 
     do iv = 1, iopt_size
-        if (opt_vec(iv) == 1) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 2) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 3) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 4) then; iread_flow = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == 5) then; iread_flow = 1; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 6) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == 7) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == 8) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7); end if
-        if (opt_vec(iv) == 9) then; iread_scal = 1; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 1) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 2) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 3) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 4) then; iread_flow = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == 5) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
+        if (opt_vec(iv) == 6) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == 7) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == 8) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if (opt_vec(iv) == 9) then; iread_scal = .true.; inb_txc = max(inb_txc, 1); end if
         if (opt_vec(iv) > 9 .and. opt_vec(iv) <= iscal_offset) then
-            iread_scal = 1; inb_txc = max(inb_txc, 4); end if
-        if (opt_vec(iv) == iscal_offset + 1) then; iread_scal = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == iscal_offset + 2) then; iread_scal = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == iscal_offset + 3) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 4) then; iread_flow = 1; inb_txc = max(inb_txc, 4); end if
-        if (opt_vec(iv) == iscal_offset + 5) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7); end if
-        if (opt_vec(iv) == iscal_offset + 6) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 7) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 8) then; iread_flow = 1; inb_txc = max(inb_txc, 3); end if
-        if (opt_vec(iv) == iscal_offset + 9) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 10) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 12) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 4); end if
-        if (opt_vec(iv) == iscal_offset + 14) then; iread_flow = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 15) then; iread_flow = 1; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 18) then; iread_part = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = 1; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = 1; iread_scal = 1; inb_txc = max(inb_txc, 7); end if
+            iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
+        if (opt_vec(iv) == iscal_offset + 1) then; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == iscal_offset + 2) then; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == iscal_offset + 3) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 4) then; iread_flow = .true.; inb_txc = max(inb_txc, 4); end if
+        if (opt_vec(iv) == iscal_offset + 5) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if (opt_vec(iv) == iscal_offset + 6) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 7) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 8) then; iread_flow = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == iscal_offset + 9) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 10) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 12) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
+        if (opt_vec(iv) == iscal_offset + 14) then; iread_flow = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 15) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
+        if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
     end do
 
     ! check if enough memory is provided for the IBM
@@ -300,7 +304,7 @@ program VISUALS
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 
-    if (iread_part == 1) then ! Particle variables
+    if (iread_part) then ! Particle variables
         inb_part_txc = max(inb_part_txc, 1)
         call PARTICLE_ALLOCATE(C_FILE_LOC)
     end if
@@ -319,7 +323,7 @@ program VISUALS
 
     call FI_BACKGROUND_INITIALIZE() ! Initialize thermodynamic quantities
 
-    if (ifourier == 1 .and. inb_txc >= 1) then ! For Poisson solver
+    if (fourier_on .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
     end if
 
@@ -366,26 +370,26 @@ program VISUALS
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))//'.'
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (icalc_scal == 1 .and. iread_scal == 1) then ! Scalar variables
+        if (scal_on .and. iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
             call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
-        elseif (icalc_scal == 0) then
+        elseif (.not. scal_on) then
             s = 0.0_wp
         end if
 
-        if (iread_flow == 1) then ! Flow variables
+        if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
             call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
         if (imode_ibm == 1) then
             call IBM_BCS_FIELD_COMBINED(i0, q)
-            if (icalc_scal == 1) call IBM_INITIALIZE_SCAL(i0, s)
+            if (scal_on) call IBM_INITIALIZE_SCAL(i0, s)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
-        if (iread_part == 1) then ! Particle variables
+        if (iread_part) then ! Particle variables
             write (part_file, *) itime; part_file = trim(adjustl(tag_part))//trim(adjustl(part_file))
         end if
 
@@ -490,9 +494,9 @@ program VISUALS
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
-                    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 2), wrk3d, wrk2d, wrk3d)
-                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 3), wrk3d, wrk2d, wrk3d)
-                    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 4), wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 2))
+                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 3))
+                    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 4))
                     txc(1:isize_field, 2) = -(txc(1:isize_field, 2)*q(1:isize_field, 1) &
                                               + txc(1:isize_field, 3)*q(1:isize_field, 2) &
                                               + txc(1:isize_field, 4)*q(1:isize_field, 3))
@@ -503,19 +507,19 @@ program VISUALS
 
                     plot_file = 'PressureStrainX'//time_str(1:MaskSize)
                     txc(1:isize_field, 3) = q(1:isize_field, 1); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
-                    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 3), txc(1, 4), wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 3), txc(1, 4))
                     txc(1:isize_field, 3) = txc(1:isize_field, 2)*txc(1:isize_field, 4)
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
 
                     plot_file = 'PressureStrainY'//time_str(1:MaskSize)
                     txc(1:isize_field, 3) = q(1:isize_field, 2); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
-                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4), wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4))
                     txc(1:isize_field, 3) = txc(1:isize_field, 2)*txc(1:isize_field, 4)
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
 
                     plot_file = 'PressureStrainZ'//time_str(1:MaskSize)
                     txc(1:isize_field, 3) = q(1:isize_field, 3); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
-                    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 3), txc(1, 4), wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 3), txc(1, 4))
                     txc(1:isize_field, 3) = txc(1:isize_field, 2)*txc(1:isize_field, 4)
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
 
@@ -596,15 +600,15 @@ program VISUALS
 
                     if (opt_vec(iv) == iscal_offset + 1) then
                         plot_file = trim(adjustl(str))//'GradientVector'//time_str(1:MaskSize)
-                        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), txc(1, 1), wrk3d, wrk2d, wrk3d)
-                        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, is), txc(1, 2), wrk3d, wrk2d, wrk3d)
-                        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), txc(1, 3), wrk3d, wrk2d, wrk3d)
+                        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), txc(1, 1))
+                        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, is), txc(1, 2))
+                        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), txc(1, 3))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 3, subdomain, txc(1, 1), wrk3d)
                     end if
 
                     if (opt_vec(iv) == iscal_offset + 2 .or. opt_vec(iv) == iscal_offset + 3) then ! Gradient magnitude
                         plot_file = trim(adjustl(str))//'Gradient'//time_str(1:MaskSize)
-                        call FI_GRADIENT(imax, jmax, kmax, s(1, is), txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+                        call FI_GRADIENT(imax, jmax, kmax, s(1, is), txc(1, 1), txc(1, 2))
                         if (opt_vec(iv) == iscal_offset + 2) then
                             plot_file = 'Ln'//trim(adjustl(plot_file))
                             txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
@@ -620,13 +624,13 @@ program VISUALS
                         call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient production...')
                         plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
                         call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s(1, is), q(1, 1), q(1, 2), q(1, 3), &
-                                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                         call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient diffusion...')
                         plot_file = trim(adjustl(str))//'GradientDiffusion'//time_str(1:MaskSize)
                         call FI_GRADIENT_DIFFUSION(imax, jmax, kmax, s(1, is), &
-                                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                                   txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                         txc(1:isize_field, 1) = diff*txc(1:isize_field, 1)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
@@ -647,7 +651,7 @@ program VISUALS
 
             if (opt_vec(iv) == iscal_offset + 5 .or. opt_vec(iv) == iscal_offset + 6) then ! Enstrophy
                 plot_file = 'Enstrophy'//time_str(1:MaskSize)
-                call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+                call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
                 if (opt_vec(iv) == iscal_offset + 5) then ! Natural log
                     plot_file = 'Ln'//trim(adjustl(plot_file))
                     txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
@@ -663,9 +667,9 @@ program VISUALS
                 end if
                 dummy = 1.0_wp/froude
                 txc(1:isize_field, 4) = txc(1:isize_field, 4)*dummy
-                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 4), txc(1, 1), wrk3d, wrk2d, wrk3d)
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 4), txc(1, 2), wrk3d, wrk2d, wrk3d)
-                call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 4), txc(1, 3), wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 4), txc(1, 1))
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 4), txc(1, 2))
+                call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 4), txc(1, 3))
                 call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 4) &
                                         + txc(1:isize_field, 2)*txc(1:isize_field, 5) &
@@ -678,13 +682,13 @@ program VISUALS
                 call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy production...')
                 plot_file = 'EnstrophyProduction'//time_str(1:MaskSize)
                 call FI_VORTICITY_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                             txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                             txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy diffusion...')
                 plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)
                 call FI_VORTICITY_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                            txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                            txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = visc*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
@@ -794,11 +798,11 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
                 plot_file = 'LnBuoyancySource'//time_str(1:MaskSize)
                 if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                     call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), txc(1, 3))
-                    call FI_GRADIENT(imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 4), wrk2d, wrk3d)
+                    call FI_GRADIENT(imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 4))
                     dummy = buoyancy%parameters(inb_scal_array)
                     txc(1:isize_field, 2) = txc(1:isize_field, 2)*txc(1:isize_field, 3)*dummy
                 else
-                    call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+                    call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
                     call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
                 end if
                 dummy = visc/schmidt(1)/froude
@@ -811,8 +815,8 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 14) then
                 plot_file = 'HorizontalDivergence'//time_str(1:MaskSize)
-                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(1, 1), txc(1, 2), wrk3d, wrk2d, wrk3d)
-                call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(1, 3), txc(1, 1), wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(1, 1), txc(1, 2))
+                call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(1, 3), txc(1, 1))
                 txc(1:isize_field, 1) = txc(1:isize_field, 1) + txc(1:isize_field, 2)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
             end if
@@ -851,10 +855,10 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
                         if (imode_eqns == DNS_EQNS_ANELASTIC) then
                          call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, radiation%scalar(is)), txc(1, 2))
-                            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1), wrk1d, wrk3d)
+                            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1))
                             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, txc(1, 1))
                         else
-                           call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(1)), txc(1, 1), wrk1d, wrk3d)
+                           call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(1)), txc(1, 1))
                         end if
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if
@@ -916,9 +920,9 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 20) then
                 plot_file = 'LaplacianV'//time_str(1:MaskSize)
-                call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(1, 2), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
-                call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 3), txc(1, 5), wrk2d, wrk3d)
-                call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(1, 2), txc(1, 2), txc(1, 5), wrk2d, wrk3d)
+                call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(1, 2), txc(1, 4), txc(1, 5))
+                call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 3), txc(1, 5))
+                call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(1, 2), txc(1, 2), txc(1, 5))
                 txc(1:isize_field, 2) = txc(1:isize_field, 2) + txc(1:isize_field, 3) + txc(1:isize_field, 4)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
 
@@ -934,9 +938,9 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'LaplacianB'//time_str(1:MaskSize)
-                call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
-                call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 3), txc(1, 5), wrk2d, wrk3d)
-                call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 2), txc(1, 5), wrk2d, wrk3d)
+                call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 4), txc(1, 5))
+                call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 3), txc(1, 5))
+                call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 2), txc(1, 5))
                 txc(1:isize_field, 2) = txc(1:isize_field, 2) + txc(1:isize_field, 3) + txc(1:isize_field, 4)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
 
@@ -946,7 +950,7 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'PressureGradientY'//time_str(1:MaskSize)
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 2), wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 2))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
             end if
 

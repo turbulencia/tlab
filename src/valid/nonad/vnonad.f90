@@ -1,17 +1,16 @@
-PROGRAM VNONAD
+program VNONAD
 
-  IMPLICIT NONE
-  
+    implicit none
+
 #include "types.h"
-#include "integers.h"
 
-  TINTEGER,               parameter :: nmax = 32, len = 5
-  TREAL, dimension(nmax,5)          :: A, B 
-  TREAL, dimension(nmax,9)          :: C
-  TREAL, dimension(len,nmax)        :: x, frc9, frc5
+    TINTEGER, parameter :: nmax = 32, len = 5
+    TREAL, dimension(nmax, 5) :: A, B
+    TREAL, dimension(nmax, 9) :: C
+    TREAL, dimension(len, nmax) :: x, frc9, frc5
 
-  TINTEGER n, ij, seed, nmax_loc
-  TREAL RAN0, error, sol, diff
+    TINTEGER n, ij, seed, nmax_loc
+    TREAL RAN0, error, sol, diff
 
 ! ###################################################################
 #define A_a(n) A(n,1)
@@ -36,78 +35,78 @@ PROGRAM VNONAD
 #define C_h(n) C(n,8)
 #define C_i(n) C(n,9)
 
-  seed = 256
+    seed = 256
 
 ! create diagonals
-  DO n = 1,nmax
-     A_a(n) = RAN0(seed)
-     A_b(n) = RAN0(seed)
-     A_c(n) = RAN0(seed)
-     A_d(n) = RAN0(seed)
-     A_e(n) = RAN0(seed)
-  ENDDO
-  DO n = 1,nmax
-     B_a(n) = RAN0(seed)
-     B_b(n) = RAN0(seed)
-     B_c(n) = RAN0(seed)
-     B_d(n) = RAN0(seed)
-     B_e(n) = RAN0(seed)
-  ENDDO
+    do n = 1, nmax
+        A_a(n) = RAN0(seed)
+        A_b(n) = RAN0(seed)
+        A_c(n) = RAN0(seed)
+        A_d(n) = RAN0(seed)
+        A_e(n) = RAN0(seed)
+    end do
+    do n = 1, nmax
+        B_a(n) = RAN0(seed)
+        B_b(n) = RAN0(seed)
+        B_c(n) = RAN0(seed)
+        B_d(n) = RAN0(seed)
+        B_e(n) = RAN0(seed)
+    end do
 
 ! padding
-  A_a(1) = C_0_R; A_b(1) = C_0_R
-                  A_a(2) = C_0_R
-  A_e(nmax-1) = C_0_R
-  A_d(nmax  ) = C_0_R; A_e(nmax) = C_0_R
+    A_a(1) = C_0_R; A_b(1) = C_0_R
+    A_a(2) = C_0_R
+    A_e(nmax - 1) = C_0_R
+    A_d(nmax) = C_0_R; A_e(nmax) = C_0_R
 
-  B_a(1) = C_0_R; B_b(1) = C_0_R
-                  B_a(2) = C_0_R
-  B_e(nmax-1) = C_0_R
-  B_d(nmax  ) = C_0_R; B_e(nmax) = C_0_R
+    B_a(1) = C_0_R; B_b(1) = C_0_R
+    B_a(2) = C_0_R
+    B_e(nmax - 1) = C_0_R
+    B_d(nmax) = C_0_R; B_e(nmax) = C_0_R
 
 ! check [(N-2)xN] X [Nx(N-2)]
-  A_c(1) = C_0_R;    A_d(1) = C_0_R;    A_e(1) = C_0_R
-  A_a(nmax) = C_0_R; A_b(nmax) = C_0_R; A_c(nmax) = C_0_R
+    A_c(1) = C_0_R; A_d(1) = C_0_R; A_e(1) = C_0_R
+    A_a(nmax) = C_0_R; A_b(nmax) = C_0_R; A_c(nmax) = C_0_R
 
-  B_c(1) = C_0_R; B_e(nmax-2) = C_0_R
-  B_b(2) = C_0_R; B_d(nmax-1) = C_0_R
-  B_a(3) = C_0_R; B_c(nmax  ) = C_0_R
+    B_c(1) = C_0_R; B_e(nmax - 2) = C_0_R
+    B_b(2) = C_0_R; B_d(nmax - 1) = C_0_R
+    B_a(3) = C_0_R; B_c(nmax) = C_0_R
 !
 
-  CALL PENTADMT(nmax, A, B, C)
+    call PENTADMT(nmax, A, B, C)
 
 ! create solution
-  DO n = 1,nmax
-     DO ij = 1,len
-        x(ij,n) = RAN0(seed)
-     ENDDO
-  ENDDO
+    do n = 1, nmax
+        do ij = 1, len
+            x(ij, n) = RAN0(seed)
+        end do
+    end do
 ! check [(N-2)xN] X [Nx(N-2)]
-  n = 1
-  DO ij = 1,len
-     x(ij,n) = C_0_R
-  ENDDO
-  n = nmax
-  DO ij = 1,len
-     x(ij,n) = C_0_R
-  ENDDO
+    n = 1
+    do ij = 1, len
+        x(ij, n) = C_0_R
+    end do
+    n = nmax
+    do ij = 1, len
+        x(ij, n) = C_0_R
+    end do
 !
 
 ! compute forcing term
-  DO n = 1,nmax
-     DO ij = 1,len
-        frc9(ij,n) = x(ij,n-4)*C_a(n) + x(ij,n-3)*C_b(n) + x(ij,n-2)*C_c(n) + x(ij,n-1)*C_d(n) + x(ij,n)*C_e(n) &
-                   + x(ij,n+1)*C_f(n) + x(ij,n+2)*C_g(n) + x(ij,n+3)*C_h(n) + x(ij,n+4)*C_i(n)
-        frc5(ij,n) = frc9(ij,n)
-     ENDDO
-     write(*,'(9f10.3)') (C(n,ij),ij=1,9)
-  ENDDO
+    do n = 1, nmax
+        do ij = 1, len
+            frc9(ij, n) = x(ij, n - 4)*C_a(n) + x(ij, n - 3)*C_b(n) + x(ij, n - 2)*C_c(n) + x(ij, n - 1)*C_d(n) + x(ij, n)*C_e(n) &
+                          + x(ij, n + 1)*C_f(n) + x(ij, n + 2)*C_g(n) + x(ij, n + 3)*C_h(n) + x(ij, n + 4)*C_i(n)
+            frc5(ij, n) = frc9(ij, n)
+        end do
+        write (*, '(9f10.3)') (C(n, ij), ij=1, 9)
+    end do
 
 ! ###################################################################
 ! solve nonadiagonal system
-  nmax_loc = nmax-2
-  CALL NONADFS(nmax_loc, i1,  C_a(2),C_b(2),C_c(2),C_d(2),C_e(2),C_f(2),C_g(2),C_h(2),C_i(2))
-  CALL NONADSS(nmax_loc, len, C_a(2),C_b(2),C_c(2),C_d(2),C_e(2),C_f(2),C_g(2),C_h(2),C_i(2), frc9(1,2))
+    nmax_loc = nmax - 2
+    call NONADFS(nmax_loc, i1, C_a(2), C_b(2), C_c(2), C_d(2), C_e(2), C_f(2), C_g(2), C_h(2), C_i(2))
+    call NONADSS(nmax_loc, len, C_a(2), C_b(2), C_c(2), C_d(2), C_e(2), C_f(2), C_g(2), C_h(2), C_i(2), frc9(1, 2))
 
 ! solve two pentadiagonal systems
 !  CALL PENTADFS(nmax,      A_a(1), A_b(1), A_c(1), A_d(1), A_e(1))
@@ -116,19 +115,19 @@ PROGRAM VNONAD
 !  CALL PENTADSS(nmax, len, B_a(1), B_b(1), B_c(1), B_d(1), B_e(1), frc5)
 
 ! error
-  diff  = C_0_R
-  error = C_0_R
-  sol   = C_0_R
-  DO n = 1,nmax
-     DO ij = 1,len
-        diff  = diff  + (frc9(ij,n)-frc5(ij,n))*(frc9(ij,n)-frc5(ij,n))
-        error = error + (frc9(ij,n)-x(ij,n))*(frc9(ij,n)-x(ij,n))
-        sol   = sol   + x(ij,n)*x(ij,n)
-     ENDDO
-  ENDDO
-  WRITE(*,*) 'Solution L2-norm ..:', sqrt(sol)
-  WRITE(*,*) 'Relative error ....:', sqrt(error)/sqrt(sol)
-  WRITE(*,*) 'Diff 9 and 5 ......:', sqrt(diff)/sqrt(sol)
+    diff = C_0_R
+    error = C_0_R
+    sol = C_0_R
+    do n = 1, nmax
+        do ij = 1, len
+            diff = diff + (frc9(ij, n) - frc5(ij, n))*(frc9(ij, n) - frc5(ij, n))
+            error = error + (frc9(ij, n) - x(ij, n))*(frc9(ij, n) - x(ij, n))
+            sol = sol + x(ij, n)*x(ij, n)
+        end do
+    end do
+    write (*, *) 'Solution L2-norm ..:', sqrt(sol)
+    write (*, *) 'Relative error ....:', sqrt(error)/sqrt(sol)
+    write (*, *) 'Diff 9 and 5 ......:', sqrt(diff)/sqrt(sol)
 
-  STOP
-END PROGRAM VNONAD
+    stop
+end program VNONAD

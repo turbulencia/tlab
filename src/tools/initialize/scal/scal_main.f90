@@ -26,6 +26,7 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call SCAL_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
@@ -100,7 +101,7 @@ program INISCAL
         end if
         do is = 1, inb_scal
             if (radiation%active(is)) then
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), txc, wrk1d, wrk3d)
+                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), txc)
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do

@@ -26,7 +26,7 @@
 subroutine IBM_ALLOCATE(C_FILE_LOC)
 
   use IBM_VARS
-  use TLAB_VARS,      only : g, isize_field, istagger, inb_scal
+  use TLAB_VARS,      only : g, isize_field, inb_scal, stagger_on
   use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_CONSTANTS, only : wi
   use TLAB_PROCS  
@@ -87,7 +87,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   ! eps          (geometry fields)
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   eps,     [isize_field], 'eps'    )
 
-  if ( istagger == 1 ) then
+  if ( stagger_on ) then
     call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, epsp,    [isize_field], 'epsp'   )
   end if
 

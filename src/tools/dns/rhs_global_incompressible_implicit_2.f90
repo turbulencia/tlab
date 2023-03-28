@@ -29,7 +29,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLAB_VARS, only: icalc_scal
+    use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt
     use TLAB_PROCS
     use TLAB_ARRAYS
@@ -113,9 +113,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     end if
 
     do iq = 1, iq_max
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), hq(:, iq), wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp1, tmp2, wrk2d, wrk3d) ! tmp1 used for BCs below
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, iq), hq(:, iq))
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp3)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp1, tmp2) ! tmp1 used for BCs below
         hq(:, iq) = -u*hq(:, iq) - v*tmp2 - w*tmp3      ! hq(:,iq) contains explicit nonlinear tendency
 
 
@@ -187,14 +187,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! We need this code segment here because we need the old velocities
 ! ################################################################################
 ! hs  -> explicit tendency without diffusion
-    if (icalc_scal /= 0) then
+    if (scal_on) then
 
         do is = 1, inb_scal
             tmp7 = hs(:, is) ! save old values
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6, wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp4, tmp5, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6)
+            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp4, tmp5)
 
             hs(:, is) = -u*hs(:, is) - v*tmp5 - w*tmp6
 
@@ -238,8 +238,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! #######################################################################
             beta = -1.0_wp/(alpha/schmidt(is))
 
-            call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
-                                     tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4), wrk1d, wrk1d(1, 5), wrk3d)
+            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+                                     tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4))
 
             s(:, is) = beta*tmp4 - kef*s(:, is)
 
@@ -251,12 +251,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! ################################################################################
     beta = -1.0_wp/alpha
 
-    call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
-                             tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1), wrk1d, wrk1d(1, 5), wrk3d)
-    call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
-                             tmp2, tmp5, tmp6, bcs_locb(1, 1, 2), bcs_loct(1, 1, 2), wrk1d, wrk1d(1, 5), wrk3d)
-    call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, beta, &
-                             tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3), wrk1d, wrk1d(1, 5), wrk3d)
+    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+                             tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1))
+    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+                             tmp2, tmp5, tmp6, bcs_locb(1, 1, 2), bcs_loct(1, 1, 2))
+    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+                             tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3))
 
     u = beta*tmp1 - kef*u
     v = beta*tmp2 - kef*v
@@ -265,9 +265,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! #######################################################################
 ! Pressure term (actually solving for dte*p)
 ! #######################################################################
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
 ! -----------------------------------------------------------------------
     tmp1 = tmp1 + tmp2 + tmp3 ! forcing term in tmp1
@@ -284,8 +284,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient
@@ -361,7 +361,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 !      u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
 !      v(ip_b:ip_b+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);
-!      IF ( icalc_scal .NE. 0 ) THEN
+!      IF (  .NE. 0scal_on ) THEN
 !         DO is=1,inb_scal
 !            s(ip_b:ip_b+imax-1,is) = bcs_hb(1:imax,k,inb_flow+is)
 !         ENDDO
@@ -377,7 +377,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 !      u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
 !      v(ip_t:ip_t+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);
-!      IF ( icalc_scal .NE. 0 ) THEN
+!      IF ( scal_on ) THEN
 !         DO is=1,inb_scal
 !            s(ip_t:ip_t+imax-1,is) = bcs_ht(1:imax,k,inb_flow+is)
 !         ENDDO

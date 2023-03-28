@@ -16,10 +16,9 @@ program VHELMHOLTZ_FXZ
 #endif
     use OPR_FOURIER
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
 
     implicit none
-
-#include "integers.h"
 
     TREAL, dimension(:, :), allocatable, save, target :: x, y, z
     TREAL, dimension(:, :, :), allocatable :: b, c, d, h
@@ -110,9 +109,9 @@ program VHELMHOLTZ_FXZ
                 end do
 
                 call date_and_time(date, time1)
-                call OPR_HELMHOLTZ_FXZ_2_N(imax, jmax, kmax, h, nfield, i0, beta, &
+                call OPR_HELMHOLTZ_FXZ_D_N(imax, jmax, kmax, h, nfield, i0, beta, &
                                            data, txc(1, 1), txc(1, nfield + 1), &
-                                           bcs_hb(1, 1, 1), bcs_ht(1, 1, 1), wrk1d, wrk1d(1, 4*nfield + 1), wrk3d)
+                                           bcs_hb(1, 1, 1), bcs_ht(1, 1, 1))
                 call date_and_time(date, time2)
                 read (time1(1:10), '(i2,i2,i2,1x,i3)') h1, m1, s1, n1
                 read (time2(1:10), '(i2,i2,i2,1x,i3)') h2, m2, s2, n2
@@ -123,9 +122,9 @@ program VHELMHOLTZ_FXZ
                 a = f
                 call date_and_time(date, time1)
                 do ifield = 1, nfield
-                    call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, h, i0, beta, &
+                    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, h, 0, beta, &
                                              a(1, 1, 1, ifield), txc(1, 1), txc(1, 2), &
-                                             bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), wrk1d, wrk1d(1, 5), wrk3d)
+                                             bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield))
                 end do
                 call date_and_time(date, time2)
                 read (time1(1:10), '(i2,i2,i2,1x,i3)') h1, m1, s1, n1
@@ -155,9 +154,9 @@ program VHELMHOLTZ_FXZ
         ! Error
         ! ###################################################################
         do ifield = 1, nfield
-            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), a(1, 1, 1, ifield), b, h, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), a(1, 1, 1, ifield), c, h, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), a(1, 1, 1, ifield), d, h, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), a(1, 1, 1, ifield), b, h)
+            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), a(1, 1, 1, ifield), c, h)
+            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), a(1, 1, 1, ifield), d, h)
 
             error = C_0_R
             max_error = C_0_R

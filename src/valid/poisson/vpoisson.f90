@@ -16,8 +16,6 @@ program VPOISSON
 
     implicit none
 
-#include "integers.h"
-
     TREAL, dimension(:, :), allocatable, save, target :: x, y, z
     TREAL, dimension(:, :, :), allocatable :: a, b, c, d, e, f
     TREAL, dimension(:, :), allocatable :: txc
@@ -28,6 +26,8 @@ program VPOISSON
     TINTEGER itype
     TREAL dummy, error, lambda!, falpha
 
+    integer, parameter :: i0  = 0
+    
 ! ###################################################################
     call TLAB_START()
 
@@ -66,9 +66,9 @@ program VPOISSON
     ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
 
 ! Staggering of the pressure grid not implemented here
-    if (istagger == 1) then
+    if (stagger_on) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
-        istagger = i0 ! turn staggering off for OPR_POISSON_FXZ(...)
+        stagger_on = .false. ! turn staggering off for OPR_POISSON_FXZ(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
@@ -100,30 +100,30 @@ program VPOISSON
     itype = 1
 
     if (itype == 1) then
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, i3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, c)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, c)
         e = c ! save dp/dy
     else if (itype == 2) then
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
-        ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, i0, lambda,&
-        !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht, wrk1d,wrk1d(1,5),wrk3d)
-        call OPR_HELMHOLTZ_FXZ_2(imax, jmax, kmax, g, i0, lambda, &
-                                 a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, wrk1d, wrk1d(1, 5), wrk3d)
+        ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, 0, lambda,&
+        !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
+        call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, &
+                                 a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
     end if
 
 ! -------------------------------------------------------------------
-    ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c, wrk3d, wrk2d,wrk3d)
-    ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), c, b, wrk3d, wrk2d,wrk3d)
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c, wrk2d, wrk3d)
+    ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c)
+    ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), c, b)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
 
-    ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, c, wrk3d, wrk2d,wrk3d)
-    ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), c, d, wrk3d, wrk2d,wrk3d)
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c, wrk2d, wrk3d)
+    ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, c)
+    ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), c, d)
+    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
     b = b + d
 
-    ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c, wrk3d, wrk2d,wrk3d)
-    ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), c, d, wrk3d, wrk2d,wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c, wrk2d, wrk3d)
+    ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c)
+    ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), c, d)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
     b = b + d
 !  bcs_hb(:,:) = c(:,1,   :); bcs_ht(:,:) = c(:,jmax,:) ! Neumann BCs
 
@@ -135,11 +135,11 @@ program VPOISSON
 ! ###################################################################
 ! solve poisson eqn
 ! ###################################################################
-    ! CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, i3, &
+    ! CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, 3, &
     ! b,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
     call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
 ! -------------------------------------------------------------------
     a = f ! rhs
     d = e ! dp/dy

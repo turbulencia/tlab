@@ -1,5 +1,4 @@
 #include "dns_const.h"
-#include "dns_error.h"
 
 !########################################################################
 !#
@@ -20,7 +19,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: g, buoyancy
     use TLAB_VARS, only: idiffusion, visc, prandtl, mach
-    use TLAB_ARRAYS, only: s, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: s
     use TLAB_POINTERS
     use DNS_ARRAYS
     use THERMO_VARS, only: gama0
@@ -67,7 +66,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp6, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp6)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -79,9 +78,9 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! u-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -107,7 +106,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -120,9 +119,9 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! v-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -148,7 +147,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -161,9 +160,9 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! w-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -185,9 +184,9 @@ subroutine RHS_FLOW_GLOBAL_2()
     end do
 !$omp end do
 !$omp end parallel
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -232,9 +231,9 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! Cross derivatives
 ! -------------------------------------------------------------------
 ! energy equation
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), e, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), e, tmp3, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), e, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), e, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), e, tmp3)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), e, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -246,8 +245,8 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! momentum equations
     dummy = prefactor*visc
 
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), u, tmp5, tmp1, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), u, tmp6, tmp2, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), u, tmp5, tmp1)
+    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), u, tmp6, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -255,8 +254,8 @@ subroutine RHS_FLOW_GLOBAL_2()
     end do
 !$omp end do
 !$omp end parallel
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), v, tmp5, tmp3, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), v, tmp6, tmp4, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), v, tmp5, tmp3)
+    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), v, tmp6, tmp4)
 !$omp parallel default( shared ) private( i, dum1 )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -268,8 +267,8 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end parallel
 
 ! arrays tmp1 and tmp3 can be reused
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), w, tmp5, tmp1, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), w, tmp6, tmp3, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), w, tmp5, tmp1)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), w, tmp6, tmp3)
 !$omp parallel default( shared ) private( i, dum2, dum3 )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -284,9 +283,9 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! -------------------------------------------------------------------
 ! Dilatation part
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), w, tmp6, tmp3, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), v, tmp5, tmp2, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), u, tmp4, tmp1, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), w, tmp6, tmp3)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), v, tmp5, tmp2)
+    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), u, tmp4, tmp1)
     dummy = 2.0_wp*visc
 !$omp parallel default( shared ) private( i, dum1 )
 !$omp do
@@ -305,7 +304,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end parallel
 
 ! Second derivative terms in the momentum equation
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -314,7 +313,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end do
 !$omp end parallel
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -323,7 +322,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end do
 !$omp end parallel
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -342,9 +341,9 @@ subroutine RHS_FLOW_GLOBAL_2()
     call THERMO_CALORIC_ENTHALPY(imax, jmax, kmax, s, T, tmp4)
 
 ! total flux
-    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp4, tmp3, tmp5, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp4, tmp2, tmp5, wrk2d, wrk3d)
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp4, tmp1, tmp5, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp4, tmp3, tmp5)
+    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp4, tmp2, tmp5)
+    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp4, tmp1, tmp5)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax

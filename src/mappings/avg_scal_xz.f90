@@ -18,7 +18,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
     use TLAB_CONSTANTS, only: efile, lfile, wp, wi
     use TLAB_VARS
-    use TLAB_ARRAYS, only: wrk1d, wrk2d
+    use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use THERMO_VARS, only: imixture, thermo_param
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s, scal_bcs
@@ -28,6 +28,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #endif
     use TLAB_PROCS
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
+    use FI_GRADIENT_EQN
     use OPR_PARTIAL
     
     implicit none
@@ -483,14 +484,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (radiation%active(is)) then ! Radiation in tmp1 and dsdx
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, radiation%scalar(is)), tmp2)
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1, wrk1d, p_wrk3d)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx, wrk1d, p_wrk3d)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
             tmp2 = 0.0_wp
 
         else
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, p_wrk3d)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx, wrk1d, p_wrk3d)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx)
         end if
     end if
 
@@ -513,7 +514,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, dsdx, dsdy, dsdz) ! calculate xi in dsdx
-            call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1, wrk2d, p_wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1)
 
             dummy = -diff*coefQ
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
@@ -524,11 +525,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             if (radiation%active(is)) then ! radiation source; needs dsdy
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1, wrk1d, p_wrk3d)
+                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 ! Correction term needs dsdz
-                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx, wrk1d, p_wrk3d)
+                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx)
                 dsdx = dsdx*dsdz*dummy
             else
                 tmp1 = 0.0_wp; dsdx = 0.0_wp
@@ -546,7 +547,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
         else
             if (buoyancy%type /= EQNS_EXPLICIT) then
-                call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy, wrk2d, p_wrk3d)
+                call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy)
                 call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, dsdx, tmp1) ! dsdx contains gradient
                 tmp1 = tmp1*diff/froude
             end if

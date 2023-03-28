@@ -13,7 +13,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
-    use TLAB_ARRAYS, only: q, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: q
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
@@ -44,21 +44,21 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     end if
 
     do iq = 1, iq_max
-        call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3)
+        call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2)
+        call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1)
         hq(:, iq) = hq(:, iq) + visc*(tmp6 + tmp5 + tmp4)
 
         tmp6 = q(:, iq)*w
         tmp5 = q(:, iq)*v
         tmp4 = q(:, iq)*u
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3)
 !  For iq = 2, i.e., in the wall-normal direction
 !  BCs s.t. to make sure that product vd/dy(v) at the boundary is zero because v is zero.
 !  bcs_loc = 1
 !  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_loc, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
         hq(:, iq) = hq(:, iq) - (tmp3 + tmp2 + tmp1)
 
     end do
@@ -97,9 +97,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     tmp1 = hq(:, 1) + alpha*u
     tmp2 = hq(:, 2) + alpha*v
     tmp3 = hq(:, 3) + alpha*w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6)
 
 ! forcing term
     tmp1 = tmp6 + tmp5 + tmp4
@@ -114,8 +114,8 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient

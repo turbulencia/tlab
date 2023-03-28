@@ -27,7 +27,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   
   use IBM_VARS
   use TLAB_VARS,      only : imax,jmax,kmax, isize_field, inb_txc
-  use TLAB_VARS,      only : istagger
+  use TLAB_VARS,      only : stagger_on
   use TLAB_CONSTANTS, only : efile, wp
   use IO_FIELDS
   use TLAB_PROCS
@@ -81,7 +81,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   call IBM_VERIFY_GEOMETRY()
 
   ! generate epsp on pressure mesh
-  if ( istagger == 1 ) then
+  if ( stagger_on ) then
     call IBM_STAGGER_GEOMETRY(eps, epsp)
   end if
 

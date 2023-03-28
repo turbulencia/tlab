@@ -14,6 +14,7 @@ module OPR_FILTERS
     use FLT_EXPLICIT
     use OPR_FOURIER
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
 #ifdef USE_MPI
     use TLAB_MPI_VARS
     use TLAB_MPI_PROCS
@@ -108,7 +109,7 @@ contains
                 p_bcs(:, :, 2) = u(:, ny, :)
                 flag_bcs = 0
             else if (f(2)%BcsMin == DNS_FILTER_BCS_NEUMANN) then
-                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, txc(1, 1), wrk3d, wrk2d, wrk3d)
+                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, txc(1, 1))
                 ip_b = 1
                 ip_t = nx*(ny - 1) + 1
                 do k = 1, nz
@@ -125,7 +126,7 @@ contains
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
             call OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
                                    txc(1, 1), txc(1, 2), txc(1, 3), &
-                                   p_bcs(:, :, 1), p_bcs(:, :, 2), wrk1d, wrk1d(1, 5), wrk3d)
+                                   p_bcs(:, :, 1), p_bcs(:, :, 2))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)
 
         case (DNS_FILTER_BAND)

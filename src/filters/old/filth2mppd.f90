@@ -13,7 +13,6 @@ SUBROUTINE FILTH2MPPD(kmax, ijmax, nx0, nx1, cf, z1, zf1)
   IMPLICIT NONE
 
 #include "types.h"
-#include "integers.h"
 
   TINTEGER kmax, ijmax
   TINTEGER nx0, nx1

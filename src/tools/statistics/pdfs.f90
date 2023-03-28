@@ -19,6 +19,8 @@ program PDFS
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
+    use FI_GRADIENT_EQN
+    use FI_VORTICITY_EQN
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
@@ -48,7 +50,8 @@ program PDFS
     TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
     TINTEGER nfield, ifield, ij, is, bcs(2, 2), isize_pdf, ig
     TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
-    TINTEGER jmax_aux, iread_flow, iread_scal, idummy
+    TINTEGER jmax_aux, idummy
+    logical iread_flow, iread_scal
     TINTEGER ibc(16)
     TREAL vmin(16), vmax(16)
     logical reduce_data
@@ -77,6 +80,7 @@ program PDFS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -150,57 +154,57 @@ program PDFS
     end if
 
     ! -------------------------------------------------------------------
-    iread_flow = 0
-    iread_scal = 0
+    iread_flow = .false.
+    iread_scal = .false.
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then; inb_txc = 6; 
     else; inb_txc = 1
     end if
-    if (ifourier == 1) inb_txc = max(inb_txc, 1)
+    if (fourier_on) inb_txc = max(inb_txc, 1)
     nfield = 2
 
     select case (opt_main)
     case (1)
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 4 + inb_scal_array; isize_pdf = opt_bins(1) + 2
         if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) nfield = nfield + 2
     case (2) ! Scalar gradient equation
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 5; isize_pdf = opt_bins(1) + 2
     case (3) ! Enstrophy equation
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 8)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 8)
         nfield = 7; isize_pdf = opt_bins(1) + 2
     case (4) ! Strain equation
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 8)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 8)
         nfield = 5; isize_pdf = opt_bins(1) + 2
     case (5) ! Invariants
-        iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 3; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (6) ! Chi-flamelet
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 2; isize_pdf = opt_bins(1) + 2
     case (7)
-        iread_flow = 1; inb_txc = max(inb_txc, 4)
+        iread_flow = .true.; inb_txc = max(inb_txc, 4)
         nfield = 2; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (9)
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 3)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 3)
         nfield = 2; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (10)
-        iread_scal = 1; inb_txc = max(inb_txc, 4)
+        iread_scal = .true.; inb_txc = max(inb_txc, 4)
         nfield = 5; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     case (11) ! eigenvalues
-        iread_flow = 1; inb_txc = max(inb_txc, 9)
+        iread_flow = .true.; inb_txc = max(inb_txc, 9)
         nfield = 3; isize_pdf = opt_bins(1) + 2
     case (12) ! eigenframe
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 9)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 9)
         nfield = 6; isize_pdf = opt_bins(1) + 2
     case (13) ! longitudinal velocity derivatives
-        iread_flow = 1; inb_txc = max(inb_txc, 3)
+        iread_flow = .true.; inb_txc = max(inb_txc, 3)
         nfield = 3; isize_pdf = opt_bins(1) + 2
     case (14) ! potential vorticity
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 6)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 2; isize_pdf = opt_bins(1) + 2
     case (15) ! joint s and v
-        iread_scal = 1; iread_flow = 1; inb_txc = max(inb_txc, 8)
+        iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 8)
         nfield = 2; isize_pdf = opt_bins(1)*opt_bins(2) + 2 + 2*opt_bins(1)
     end select
 
@@ -248,7 +252,7 @@ program PDFS
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
-    if (ifourier == 1) then         ! For Poisson solver
+    if (fourier_on) then         ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()
     end if
 
@@ -271,12 +275,12 @@ program PDFS
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (iread_scal == 1) then
+        if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
-        if (iread_flow == 1) then
+        if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
@@ -347,11 +351,11 @@ program PDFS
             call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient equation...')
 
             call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s, q(1, 1), q(1, 2), q(1, 3), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call FI_GRADIENT_DIFFUSION(imax, jmax, kmax, s, & ! array q used as auxiliar
-                                       txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), q(1, 1), wrk2d, wrk3d)
+                                       txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), q(1, 1))
             txc(1:isize_field, 2) = txc(1:isize_field, 2)*visc/schmidt(inb_scal)
-            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 3), txc(1, 4), wrk2d, wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 3), txc(1, 4))
             txc(1:isize_field, 5) = txc(1:isize_field, 1)/txc(1:isize_field, 3)
             txc(1:isize_field, 4) = log(txc(1:isize_field, 3))
 
@@ -379,14 +383,14 @@ program PDFS
                     end if
                     s(1:isize_field, 1) = wrk3d(1:isize_field)*buoyancy%vector(2)
 
-                    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 4), wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 4))
                     txc(:, 4) = -txc(:, 4)
                     txc(:, 5) = C_0_R
-                    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 6), wrk3d, wrk2d, wrk3d)
+                    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 6))
                 end if
 
             else
-                call FI_VORTICITY_BAROCLINIC(imax, jmax, kmax, q(1, 5), q(1, 6), txc(1, 4), txc(1, 3), txc(1, 7), wrk2d, wrk3d)
+                call FI_VORTICITY_BAROCLINIC(imax, jmax, kmax, q(1, 5), q(1, 6), txc(1, 4), txc(1, 3), txc(1, 7))
             end if
             ! result vector in txc1, txc2, txc3
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 7))
@@ -394,13 +398,13 @@ program PDFS
       txc(1:isize_field,8) = txc(1:isize_field,1)*txc(1:isize_field,4) + txc(1:isize_field,2)*txc(1:isize_field,5) + txc(1:isize_field,3)*txc(1:isize_field,6)
 
             call FI_VORTICITY_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
-                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
+                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
 
             call FI_VORTICITY_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), &
-                                        txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), wrk2d, wrk3d)
+                                        txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
             txc(1:isize_field, 2) = visc*txc(1:isize_field, 2)
 
-            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4), txc(1, 5), wrk2d, wrk3d)
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 3), txc(1, 4), txc(1, 5))
 
             call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5))
 
@@ -492,7 +496,7 @@ program PDFS
         case (7)
             call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy-strain pdf...')
 
-            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), wrk2d, wrk3d)
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
             call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 2) = C_2_R*txc(1:isize_field, 2)
 
@@ -512,7 +516,7 @@ program PDFS
         case (9)
             call TLAB_WRITE_ASCII(lfile, 'Computing scalar-scalar--gradient pdf...')
 
-            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), wrk2d, wrk3d)
+            call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
             txc(1:isize_field, 2) = log(txc(1:isize_field, 1))
 
             ifield = ifield + 1; vars(1)%field => s(:, 1); vars(ifield)%tag = 's'; ibc(ifield) = 1
@@ -543,9 +547,9 @@ program PDFS
         case (10)
             call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient components...')
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 1), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s, txc(1, 2), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 3), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 1))
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s, txc(1, 2))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 3))
             ! Angles; s array is overwritten to save space
             do ij = 1, isize_field
                 dummy = txc(ij, 2)/sqrt(txc(ij, 1)*txc(ij, 1) + txc(ij, 2)*txc(ij, 2) + txc(ij, 3)*txc(ij, 3))
@@ -600,9 +604,9 @@ program PDFS
             ifield = ifield + 1; vars(ifield)%field => q(:, 2); vars(ifield)%tag = 'cos(w,lambda2)'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => q(:, 3); vars(ifield)%tag = 'cos(w,lambda3)'; ibc(ifield) = 2
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 7), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s, txc(1, 8), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 9), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 7))
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s, txc(1, 8))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 9))
 
             do ij = 1, isize_field ! local direction cosines of scalar gradient vector
                 dummy = sqrt(txc(ij, 7)*txc(ij, 7) + txc(ij, 8)*txc(ij, 8) + txc(ij, 9)*txc(ij, 9))
@@ -625,9 +629,9 @@ program PDFS
         case (13)
             call TLAB_WRITE_ASCII(lfile, 'Computing longitudinal velocity derivatives...')
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(1, 1), txc(1, 1), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 2), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(1, 3), txc(1, 3), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(1, 1), txc(1, 1))
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 2))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(1, 3), txc(1, 3))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'Sxx'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Syy'; ibc(ifield) = 2
@@ -641,13 +645,13 @@ program PDFS
 
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 6) = txc(1:isize_field, 1)**2 + txc(1:isize_field, 2)**2 + txc(1:isize_field, 3)**2 ! Enstrophy
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, 1), txc(1, 4), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, 1), txc(1, 4))
             txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = txc(1:isize_field, 4)*txc(1:isize_field, 4) ! norm grad b
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1), txc(1, 4), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1), txc(1, 4))
             txc(1:isize_field, 1) = txc(1:isize_field, 1) + txc(1:isize_field, 2)*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = txc(1:isize_field, 5) + txc(1:isize_field, 4)*txc(1:isize_field, 4) ! norm grad b
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, 1), txc(1, 4), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, 1), txc(1, 4))
             txc(1:isize_field, 1) = txc(1:isize_field, 1) + txc(1:isize_field, 3)*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = txc(1:isize_field, 5) + txc(1:isize_field, 4)*txc(1:isize_field, 4) ! norm grad b
 
@@ -681,9 +685,9 @@ program PDFS
             txc(1:isize_field, 2) = q(1:isize_field, 2)
 
             ! I need tmp1 w/o reduction to calculate derivatives
-            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 4), txc(1, 6), wrk2d, wrk3d)
-            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 3), txc(1, 6), wrk2d, wrk3d)
+            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 5), txc(1, 6))
+            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 4), txc(1, 6))
+            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 3), txc(1, 6))
             txc(1:isize_field, 3) = txc(1:isize_field, 3) + txc(1:isize_field, 4) + txc(1:isize_field, 5)
 
             ! -------------------------------------------------------------------
@@ -733,9 +737,9 @@ program PDFS
             call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             write (fname, *) itime; fname = 'cavgVii'//trim(adjustl(fname))
-            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(1, 2), txc(1, 5), txc(1, 6), wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 4), txc(1, 6), wrk2d, wrk3d)
-            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(1, 2), txc(1, 3), txc(1, 6), wrk2d, wrk3d)
+            call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(1, 2), txc(1, 5), txc(1, 6))
+            call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 4), txc(1, 6))
+            call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(1, 2), txc(1, 3), txc(1, 6))
             txc(1:isize_field, 3) = txc(1:isize_field, 3) + txc(1:isize_field, 4) + txc(1:isize_field, 5)
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)
@@ -748,7 +752,7 @@ program PDFS
             ! -------------------------------------------------------------------
             bbackground = C_0_R
             call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4))
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 4), wrk1d)

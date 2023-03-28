@@ -18,8 +18,6 @@ program VFFT
 
     implicit none
 
-#include "integers.h"
-
     TREAL, dimension(:), allocatable :: trans, trans2, trans_ref
     TREAL, dimension(:), allocatable :: tmp1, tmp2, tmp3, tmp4, wrk2d, wrk3d
 
@@ -51,8 +49,8 @@ program VFFT
         wrk3d(isize_fft3d), &
         wrk2d(isize_fft3d))
 
-        call OPR_FOURIER_INITIALIZE()
-        
+    call OPR_FOURIER_INITIALIZE()
+
     call FFT_CHECK(2, err_count, case_count, &
                    trans, &
                    trans_ref, &

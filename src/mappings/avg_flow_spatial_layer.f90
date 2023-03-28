@@ -327,14 +327,14 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     real(wp) fdTdx, fdTdy, fdTdz
     integer(wi) nj, jloc_max(1)
 
-    integer, parameter :: i1 = 1, i23 = 23
-
     real(wp) VAUXPRE(4), VAUXPOS(28)
     integer(wi) ivauxpre, ivauxpos, ivauxdum
     character*32 name
     character*400 line1
     character*2750 line2
 
+    integer, parameter :: i23 = 23
+    
 ! ###################################################################
 #ifdef TRACE_ON
     call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_SPATIAL_LAYER')
@@ -983,7 +983,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
 !         DO j = 1,jmax
 !            wrk1d(j,1) = fU(n,j)
 !         ENDDO
-!         CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2), wrk2d(1,2), wrk2d,wrk2d(1,2) )
+!         CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2))
 !         delta_w_u(n) = (fU(n,jmax)-fU(n,1)) / MINVAL(wrk1d(1:jmax,2))
 !      ENDDO
 !
@@ -1110,11 +1110,11 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
 ! Vorticity thickness
     do n = 1, nstatavg
         do j = 1, jmax
-            wrk2d(j, 1) = fU(n, j)
+            wrk1d(j, 1) = fU(n, j)
         end do
-        call OPR_PARTIAL_Y(OPR_P1, i1, jmax, i1, bcs, g(2), wrk2d(1, 1), wrk2d(1, 2), wrk2d(1, 4), wrk2d(1, 3), wrk2d(1, 4))
-        delta_w_u(n) = (fU(n, jmax/2 + 1) - U2)/abs(minval(wrk2d(1:jmax, 2)))
-        delta_w_d(n) = (fU(n, jmax/2) - U2)/abs(maxval(wrk2d(1:jmax, 2)))
+        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2))
+        delta_w_u(n) = (fU(n, jmax/2 + 1) - U2)/abs(minval(wrk1d(1:jmax, 2)))
+        delta_w_d(n) = (fU(n, jmax/2) - U2)/abs(maxval(wrk1d(1:jmax, 2)))
     end do
 
 ! Momentum thickness

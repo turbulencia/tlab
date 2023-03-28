@@ -5,7 +5,8 @@
 module TLAB_MPI_PROCS
     use MPI
     use TLAB_CONSTANTS, only: lfile, efile, wp, wi
-    use TLAB_VARS
+    use TLAB_VARS, only: imax, jmax, kmax, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: fourier_on
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use TLAB_MPI_VARS
     implicit none
@@ -130,7 +131,7 @@ contains
         end if
 
         ! -----------------------------------------------------------------------
-        if (ims_npro_i > 1 .and. ifourier == 1) then
+        if (ims_npro_i > 1 .and. fourier_on) then
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
             id = TLAB_MPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
@@ -145,7 +146,7 @@ contains
 
         end if
 
-        if (ims_npro_k > 1 .and. ifourier == 1) then
+        if (ims_npro_k > 1 .and. fourier_on) then
             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Oz FFTW in Poisson solver.')
             id = TLAB_MPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax

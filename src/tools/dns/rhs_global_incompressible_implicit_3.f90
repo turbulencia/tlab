@@ -23,22 +23,21 @@
 !# Scalar needed for the buoyancy term
 !#
 !########################################################################
-subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
-    (kex, kim, kco, &
+subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
      q, hq, u, v, w, h1, h2, h3, s, hs, &
-     tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, &
-     wrk1d, wrk2d, wrk3d)
+     tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8)
 
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_field, isize_txc_field, isize_wrk1d, inb_scal, inb_flow
-    use TLAB_VARS, only: icalc_scal
+    use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
+    use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby
     use TLAB_VARS, only: buoyancy, coriolis
     use TLAB_VARS, only: bbackground
+    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
     use BOUNDARY_BUFFER
@@ -49,17 +48,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 
     implicit none
 
-#include "integers.h"
-
     TREAL kex, kim, kco
     TREAL, dimension(isize_field, *) :: q, hq
     TREAL, dimension(isize_field), intent(INOUT) :: u, v, w, h1, h2, h3
     TREAL, dimension(isize_field, inb_scal), intent(INOUT) :: s, hs
     TREAL, dimension(isize_txc_field), intent(OUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8
-    TREAL, dimension(isize_wrk1d, *), intent(OUT) :: wrk1d
-    TREAL, dimension(*), intent(OUT) :: wrk2d, wrk3d
 
-    target tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, h2, wrk2d, u, v, w
+    target tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, h2, u, v, w
 
 ! -----------------------------------------------------------------------
     TINTEGER iq, is, ij, k, nxy, ip, ip_b, ip_t
@@ -69,6 +64,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
     TREAL, dimension(:), pointer :: p_bcs
     TREAL, dimension(imax, kmax, 4:6) :: bcs_hb, bcs_ht
 
+    integer, parameter :: i0 = 0
+    
     kef = kex/kim
     aug = C_1_R + kef
 
@@ -115,8 +112,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 ! #######################################################################
     ! h3   contains explicit nonlinear w-tendency (nonlinear operator N(u_n))
     if (g(3)%size > 1) then
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, h3, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp3, tmp2, wrk2d, wrk3d) ! tmp2 used for BCs below
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, h3)
+        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp3, tmp2) ! tmp2 used for BCs below
 
         do k = 1, kmax
             ip = (k - 1)*imax*jmax + 1; 
@@ -127,7 +124,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
             bcs_ht(1:imax, k, 6) = BcsFlowJmax%ref(1:imax, k, 3) + visc_tot*dte*tmp2(ip:ip + imax - 1) - dte*C_1_R; 
         end do
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
         do ij = 1, isize_field
             h3(ij) = -u(ij)*h3(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
         end do
@@ -160,8 +157,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 ! Diffusion and convection terms in Ox momentum eqn
 ! #######################################################################
 ! h1 contains explicit nonlinear u-tendency
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, h1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp3, tmp2, wrk2d, wrk3d) ! tmp2 used for BCs below
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, h1)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp3, tmp2) ! tmp2 used for BCs below
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; 
@@ -172,7 +169,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
         bcs_ht(1:imax, k, 4) = BcsFlowJmax%ref(1:imax, k, 1) + visc_tot*dte*tmp2(ip:ip + imax - 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp3)
     do ij = 1, isize_field
         h1(ij) = -u(ij)*h1(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
     end do
@@ -203,8 +200,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
 !   h2 contains explicit nonlinear v-tendency
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, h2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), v, tmp3, tmp2, wrk2d, wrk3d) ! tmp2 used for BCs below
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, h2)
+    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), v, tmp3, tmp2) ! tmp2 used for BCs below
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; 
@@ -213,7 +210,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
         bcs_ht(1:imax, k, 5) = C_0_R + visc_tot*dte*tmp2(ip:ip + imax - 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp3)
     do ij = 1, isize_field
         h2(ij) = -u(ij)*h2(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
     end do
@@ -240,9 +237,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
     end if
 
 ! old pressure tendencies
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp1, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp3, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp1)
+    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp3)
     do ij = 1, isize_field
         h1(ij) = h1(ij) - tmp1(ij)
         h2(ij) = h2(ij) - tmp2(ij)
@@ -264,20 +261,20 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 ! ADVECTION-DIFFUSION FOR SCALAR
 ! ################################################################################
 ! hs  -> explicit tendency without diffusion
-    if (icalc_scal /= i0) then
+    if (scal_on) then
         do is = 1, inb_scal
             diff = visc_exp/schmidt(is)
             tmp4 = hs(:, is)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp6, tmp5, wrk2d, wrk3d)
-!        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s,       tmp6,     tmp5,  wrk2d,wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is))
+            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp6, tmp5)
+!        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s,       tmp6,     tmp5)
             do k = 1, kmax
                 ! ip=(k-1)*imax*jmax+1; bcs_hb(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
                 ! ip=ip+(jmax-1)*imax;  bcs_ht(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
                 ip = (k - 1)*imax*jmax + 1; BcsFlowJmin%ref(1:imax, k, 2) = C_0_R + visc_tot*dte*tmp6(ip:ip + imax - 1)
                 ip = ip + (jmax - 1)*imax; BcsFlowJmax%ref(1:imax, k, 2) = C_0_R + visc_tot*dte*tmp6(ip:ip + imax - 1)
             end do
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6, wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6)
             do ij = 1, isize_field; 
                 hs(ij, is) = -u(ij)*hs(ij, is) - v(ij)*tmp5(ij) - w(ij)*tmp6(ij)
             end do
@@ -310,12 +307,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 !!!!!! I THINK THIS IS WRONG AND SHOULD USE BcsFlowJmin%ref(1:imax,k,2)
                 ! ip=(k-1)*imax*jmax+1; wrk2d(ip_b:ip_b+imax-1)=-alpha*aug*BcsScalJmin%ref(1:imax,k,is); ip_b=ip_b+imax
                 ! ip=ip+(jmax-1)*imax;  wrk2d(ip_t:ip_t+imax-1)=-alpha*aug*BcsScalJmax%ref(1:imax,k,is); ip_t=ip_t+imax
-                ip = (k - 1)*imax*jmax + 1; wrk2d(ip_b:ip_b + imax - 1) = -alpha*aug*BcsFlowJmin%ref(1:imax, k, 2); ip_b = ip_b + imax
-                ip = ip + (jmax - 1)*imax; wrk2d(ip_t:ip_t + imax - 1) = -alpha*aug*BcsFlowJmax%ref(1:imax, k, 2); ip_t = ip_t + imax
+                ip = (k - 1)*imax*jmax + 1; wrk2d(ip_b:ip_b + imax - 1, 1) = -alpha*aug*BcsFlowJmin%ref(1:imax, k, 2); ip_b = ip_b + imax
+                ip = ip + (jmax - 1)*imax; wrk2d(ip_t:ip_t + imax - 1, 1) = -alpha*aug*BcsFlowJmax%ref(1:imax, k, 2); ip_t = ip_t + imax
             end do
             ip_b = 1; ip_t = 1 + imax*kmax
-            call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                                   tmp7, tmp5, tmp6, wrk2d(ip_b), wrk2d(ip_t), wrk1d, wrk1d(1, 5), wrk3d)
+            call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                                   tmp7, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
 
             do ij = 1, isize_field
                 s(ij, is) = tmp7(ij)*beta - kef*s(ij, is)
@@ -334,12 +331,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 
     bcs_hb(1:imax, 1:kmax, 4:6) = -alpha*aug*bcs_hb(1:imax, 1:kmax, 4:6)
     bcs_ht(1:imax, 1:kmax, 4:6) = -alpha*aug*bcs_ht(1:imax, 1:kmax, 4:6)
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                           tmp1, tmp5, tmp6, bcs_hb(1, 1, 4), bcs_ht(1, 1, 4), wrk1d, wrk1d(:, 5), wrk3d)
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                           tmp2, tmp5, tmp6, bcs_hb(1, 1, 5), bcs_ht(1, 1, 5), wrk1d, wrk1d(:, 5), wrk3d)
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, i0, beta, &
-                           tmp3, tmp5, tmp6, bcs_hb(1, 1, 6), bcs_ht(1, 1, 6), wrk1d, wrk1d(:, 5), wrk3d)
+    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                           tmp1, tmp5, tmp6, bcs_hb(1, 1, 4), bcs_ht(1, 1, 4))
+    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                           tmp2, tmp5, tmp6, bcs_hb(1, 1, 5), bcs_ht(1, 1, 5))
+    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+                           tmp3, tmp5, tmp6, bcs_hb(1, 1, 6), bcs_ht(1, 1, 6))
 
     do ij = 1, isize_field
         u(ij) = tmp1(ij)*beta - kef*u(ij)
@@ -356,9 +353,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 ! Pressure term
 ! #######################################################################
     if (remove_divergence) then ! remove residual divergence
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d, wrk3d)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d, wrk3d)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
     end if
 
 ! -----------------------------------------------------------------------
@@ -385,8 +382,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
     end do
 
 ! horizontal derivatives
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2, wrk3d, wrk2d, wrk3d)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4, wrk3d, wrk2d, wrk3d)
+    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient
@@ -481,7 +478,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 !      u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
 !      v(ip_b:ip_b+imax-1) = C_0_R               ! no penetration
 !      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);
-!      IF ( icalc_scal .NE. 0 ) THEN
+!      IF ( scal_on ) THEN
 !         DO is=1,inb_scal
 !            s(ip_b:ip_b+imax-1,is) = bcs_sb(1:imax,k,is)
 !         ENDDO
@@ -497,7 +494,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3 &
 !      u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
 !      v(ip_t:ip_t+imax-1) = C_0_R               ! no penetration
 !      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);
-!      IF ( icalc_scal .NE. 0 ) THEN
+!      IF ( scal_on ) THEN
 !         DO is=1,inb_scal
 !            s(ip_t:ip_t+imax-1,is) = bcs_st(1:imax,k,is)
 !         ENDDO

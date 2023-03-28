@@ -42,7 +42,7 @@ subroutine DNS_FILTER()
 
     if (mod(itime - nitera_first, nitera_stats_spa) == 0) then   ! Accumulate statistics in spatially evolving cases
         call AVG_TKE_ZT_REDUCE(q(1, 5), q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), &
-                               txc(1, 5), txc(1, 6), txc(1, 7), mean_flow, wrk2d)
+                               txc(1, 5), txc(1, 6), txc(1, 7), mean_flow)
     end if
 
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then

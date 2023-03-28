@@ -10,9 +10,10 @@ module TLAB_ARRAYS
     real(wp), allocatable :: wrk1d(:, :)                   ! Work arrays (scratch space)
     real(wp), allocatable :: wrk2d(:, :)                   ! Work arrays (scratch space)
     real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
+    real(wp), allocatable :: wrkdea(:,:)                   ! Work arrays for dealiasing (scratch space)
 
     target x, y, z
-    target q, s, txc, wrk1d, wrk2d, wrk3d
+    target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
 
 end module TLAB_ARRAYS
 
@@ -36,6 +37,8 @@ module TLAB_POINTERS
     real(wp), pointer :: tmp5(:) => null()
     real(wp), pointer :: tmp6(:) => null()
     real(wp), pointer :: tmp7(:) => null()
+    real(wp), pointer :: tmp8(:) => null()
+    real(wp), pointer :: tmp9(:) => null()
 
 end module TLAB_POINTERS
 
@@ -64,6 +67,9 @@ module TLAB_POINTERS_3D
     real(wp), pointer :: tmp4(:, :, :) => null()
     real(wp), pointer :: tmp5(:, :, :) => null()
     real(wp), pointer :: tmp6(:, :, :) => null()
+    real(wp), pointer :: tmp7(:, :, :) => null()
+    real(wp), pointer :: tmp8(:, :, :) => null()
+    real(wp), pointer :: tmp9(:, :, :) => null()
 
 end module TLAB_POINTERS_3D
 

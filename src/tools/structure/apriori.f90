@@ -25,8 +25,6 @@ program APRIORI
 
     implicit none
 
-#include "integers.h"
-
 ! Parameter definitions
     TINTEGER, parameter :: itime_size_max = 512
     TINTEGER, parameter :: iopt_size_max = 512
@@ -37,12 +35,15 @@ program APRIORI
     TREAL, dimension(:), allocatable, save :: mean, y_aux
     type(pointers_dt), dimension(16) :: vars
 
+    integer, parameter :: i1 = 1
+    
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
     TINTEGER opt_main, opt_block, opt_order, opt_format
     TINTEGER iq, is, ig, ij, bcs(2, 2)
-    TINTEGER nfield, idummy, iread_flow, iread_scal, jmax_aux, MaskSize
+    TINTEGER nfield, idummy, jmax_aux, MaskSize
+    logical iread_flow, iread_scal
     character*32 fname, bakfile, flow_file, scal_file, plot_file, time_str
     TINTEGER subdomain(6)
 
@@ -65,6 +66,7 @@ program APRIORI
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -132,11 +134,11 @@ program APRIORI
 ! -------------------------------------------------------------------
     nfield = 1
 
-    iread_flow = icalc_flow
-    iread_scal = icalc_scal
+    iread_flow = flow_on
+    iread_scal = scal_on
 
     inb_txc = 4
-    if (ifourier == 1) inb_txc = max(inb_txc, 1)
+    if (fourier_on) inb_txc = max(inb_txc, 1)
 
     select case (opt_main)
 
@@ -159,8 +161,8 @@ program APRIORI
     jmax_aux = g(2)%size/opt_block
 
 ! -------------------------------------------------------------------
-    if (icalc_flow == 1) allocate (qf(imax*jmax*kmax, inb_flow))
-    if (icalc_scal == 1) allocate (sf(imax*jmax*kmax, inb_scal))
+    if (flow_on) allocate (qf(imax*jmax*kmax, inb_flow))
+    if (scal_on) allocate (sf(imax*jmax*kmax, inb_scal))
 
     allocate (mean(2*opt_order*nfield))
 
@@ -193,7 +195,7 @@ program APRIORI
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
-    if (ifourier == 1) call OPR_FOURIER_INITIALIZE()
+    if (fourier_on) call OPR_FOURIER_INITIALIZE()
 
     call OPR_CHECK()
 
@@ -206,14 +208,14 @@ program APRIORI
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
         call TLAB_WRITE_ASCII(lfile, sRes)
 
-        if (iread_flow == 1) then ! Flow variables
+        if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, i0, q)
+            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
         end if
 
-        if (iread_scal == 1) then ! Scalar variables
+        if (iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, i0, s)
+            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
 ! -------------------------------------------------------------------
@@ -293,17 +295,17 @@ program APRIORI
             nfield = nfield + 1; vars(nfield)%field => txc(:, 8); vars(nfield)%tag = 'Wy'
             nfield = nfield + 1; vars(nfield)%field => txc(:, 9); vars(nfield)%tag = 'Wz'
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 1), txc(1, 1), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 1), txc(1, 2), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 1), txc(1, 3), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 1), txc(1, 1))
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 1), txc(1, 2))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 1), txc(1, 3))
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 2), txc(1, 4), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 2), txc(1, 5), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 2), txc(1, 6), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 2), txc(1, 4))
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 2), txc(1, 5))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 2), txc(1, 6))
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 3), txc(1, 7), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 3), txc(1, 8), wrk3d, wrk2d, wrk3d)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 3), txc(1, 9), wrk3d, wrk2d, wrk3d)
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 3), txc(1, 7))
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 3), txc(1, 8))
+            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 3), txc(1, 9))
 
             do is = 1, nfield
                 call OPR_FILTER(imax, jmax, kmax, FilterDomain, txc(1, is), txc(1, 10))

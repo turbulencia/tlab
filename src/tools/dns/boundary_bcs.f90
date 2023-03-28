@@ -3,7 +3,7 @@
 #include "dns_const_mpi.h"
 
 module BOUNDARY_BCS
-    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, efile
+    use TLAB_CONSTANTS
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk3d
     implicit none
@@ -24,11 +24,6 @@ module BOUNDARY_BCS
 
     logical, public :: BcsDrift
 
-    ! BCs in incompressible mode at jmin/jmax:
-    integer, parameter :: bcsDD = 0     ! not used in this module
-    integer, parameter :: bcsND = 1     ! Neumann/-
-    integer, parameter :: bcsDN = 2     ! -      /Neumann
-    integer, parameter :: bcsNN = 3     ! Neumann/Neumann
     real(wp), allocatable :: luND(:, :), luDN(:, :), luNN(:, :)
     public :: BOUNDARY_BCS_NEUMANN_Y
 
@@ -189,23 +184,23 @@ contains
 
             select case (g(2)%mode_fdm)
             case (FDM_COM6_JACPENTA)
-                call FDM_C1N6M_BCS_LHS(ny, bcsND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3), luND(:, 4), luND(:, 5))
+                call FDM_C1N6M_BCS_LHS(ny, BCS_ND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3), luND(:, 4), luND(:, 5))
                 call PENTADFS2(ny - 1, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5))
 
-                call FDM_C1N6M_BCS_LHS(ny, bcsDN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3), luDN(:, 4), luDN(:, 5))
+                call FDM_C1N6M_BCS_LHS(ny, BCS_DN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3), luDN(:, 4), luDN(:, 5))
                 call PENTADFS2(ny - 1, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5))
 
-                call FDM_C1N6M_BCS_LHS(ny, bcsNN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3), luNN(:, 4), luNN(:, 5))
+                call FDM_C1N6M_BCS_LHS(ny, BCS_NN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3), luNN(:, 4), luNN(:, 5))
                call PENTADFS2(ny - 2, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3), luNN(2:ny - 1, 4), luNN(2:ny - 1, 5))
 
             case default ! some cases still need to be developed
-                call FDM_C1N6_BCS_LHS(ny, bcsND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3))
+                call FDM_C1N6_BCS_LHS(ny, BCS_ND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3))
                 call TRIDFS(ny - 1, luND(2:, 1), luND(2:, 2), luND(2:, 3))
 
-                call FDM_C1N6_BCS_LHS(ny, bcsDN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3))
+                call FDM_C1N6_BCS_LHS(ny, BCS_DN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3))
                 call TRIDFS(ny - 1, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3))
 
-                call FDM_C1N6_BCS_LHS(ny, bcsNN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3))
+                call FDM_C1N6_BCS_LHS(ny, BCS_NN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3))
                 call TRIDFS(ny - 2, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3))
 
             end select
@@ -456,15 +451,15 @@ contains
                 call FDM_C1N6M_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
 
                 select case (ibc)
-                case (bcsND)
+                case (BCS_ND)
                     call PENTADSS2(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5), p_dst(:, 2))
                     p_bcs_hb(:) = p_dst(:, 1) + luND(1,4)*p_dst(:, 2)
 
-                case (bcsDN)
+                case (BCS_DN)
                     call PENTADSS2(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5), p_dst)
                     p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 2)*p_dst(:, ny - 1)
 
-                case (bcsNN)
+                case (BCS_NN)
                     call PENTADSS2(ny - 2, nxz,  luNN(2:ny-1,1), luNN(2:ny-1,2), luNN(2:ny-1,3), luNN(2:ny-1,4), luNN(2:ny-1,5), p_dst(:, 2))
                     p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 4)*p_dst(:, 2)
                     p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 2)*p_dst(:, ny - 1)
@@ -475,15 +470,15 @@ contains
                 call FDM_C1N6_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
 
                 select case (ibc)
-                case (bcsND)
+                case (BCS_ND)
                     call TRIDSS(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), p_dst(:, 2))
                     p_bcs_hb(:) = p_dst(:, 1) + luND(1, 3)*p_dst(:, 2)
 
-                case (bcsDN)
+                case (BCS_DN)
                     call TRIDSS(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), p_dst)
                     p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 1)*p_dst(:, ny - 1)
 
-                case (bcsNN)
+                case (BCS_NN)
                     call TRIDSS(ny - 2, nxz, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3), p_dst(:, 2))
                     p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 3)*p_dst(:, 2)
                     p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 1)*p_dst(:, ny - 1)

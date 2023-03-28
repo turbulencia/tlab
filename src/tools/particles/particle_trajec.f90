@@ -41,7 +41,6 @@ program PARTICLE_TRAJEC
     use PARTICLE_PROCS
 
     implicit none
-#include "integers.h"
 
 ! -------------------------------------------------------------------
 
@@ -72,6 +71,7 @@ program PARTICLE_TRAJEC
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+    call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
