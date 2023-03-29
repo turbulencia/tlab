@@ -22,7 +22,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     use TLAB_ARRAYS, only: s
     use TLAB_POINTERS
     use DNS_ARRAYS
-    use THERMO_VARS, only: MRATIO, GRATIO
+    use THERMO_VARS, only: CRATIO_INV
     use BOUNDARY_BCS
     use OPR_PARTIAL
 
@@ -34,7 +34,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 
 ! -------------------------------------------------------------------
     integer(wi) bcs(2, 1), i, is
-    real(wp) g1, g2, g3, prefactor, cond, dummy, c13, dum1, dum2, dum3
+    real(wp) g1, g2, g3, cond, dummy, c13, dum1, dum2, dum3
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -46,7 +46,6 @@ subroutine RHS_FLOW_GLOBAL_2()
     g1 = buoyancy%vector(1)
     g2 = buoyancy%vector(2)
     g3 = buoyancy%vector(3)
-    prefactor = MRATIO*GRATIO 
     c13 = 1.0_wp/3.0_wp
 
 ! ###################################################################
@@ -243,7 +242,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end parallel
 
 ! momentum equations
-    dummy = prefactor*visc
+    dummy = CRATIO_INV*visc
 
     call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), u, tmp5, tmp1)
     call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), u, tmp6, tmp2)
@@ -295,7 +294,7 @@ subroutine RHS_FLOW_GLOBAL_2()
         hq(i, 3) = hq(i, 3) - 0.5_wp*rho(i)*w(i)*tmp3(i)
 
         dum1 = tmp1(i) + tmp2(i) + tmp3(i)
-        hq(i, 4) = hq(i, 4) + prefactor*( &
+        hq(i, 4) = hq(i, 4) + CRATIO_INV*( &
                    dummy*(tmp3(i)*tmp3(i) + tmp2(i)*tmp2(i) + tmp1(i)*tmp1(i) - c13*dum1*dum1) - p(i)*dum1)
 ! array tmp1 no longer needed
         tmp1(i) = c13*dum1

@@ -10,7 +10,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, MRATIO, GRATIO, THERMO_AI
+    use THERMO_VARS, only: imixture, CRATIO_INV, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
     use OPR_PARTIAL
@@ -42,7 +42,7 @@ contains
 
 ! -------------------------------------------------------------------
         TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2, 1)
-        TREAL prefactor, pl_out_min, pl_out_max, pl_inf_min, pl_inf_max, pl_aux
+        TREAL pl_out_min, pl_out_max, pl_inf_min, pl_inf_max, pl_aux
 
         TREAL, dimension(:, :, :), pointer :: tmin, mmin, tmax, mmax, inf_rhs
 
@@ -78,7 +78,6 @@ contains
         ip0 = 19
 
         nt = jmax*kmax
-        prefactor = MRATIO*GRATIO
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
             call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
@@ -212,7 +211,7 @@ contains
                 h1(1, j, k) = h1(1, j, k) + hu_loc(j, k)
                 h2(1, j, k) = h2(1, j, k) + hv_loc(j, k)
                 h3(1, j, k) = h3(1, j, k) + hw_loc(j, k)
-                h4(1, j, k) = h4(1, j, k) + he_loc(j, k)*prefactor
+                h4(1, j, k) = h4(1, j, k) + he_loc(j, k)*CRATIO_INV
             end do
         end do
         if (imixture > 0) then
@@ -271,7 +270,7 @@ contains
                 h1(imax, j, k) = h1(imax, j, k) + hu_loc(j, k)
                 h2(imax, j, k) = h2(imax, j, k) + hv_loc(j, k)
                 h3(imax, j, k) = h3(imax, j, k) + hw_loc(j, k)
-                h4(imax, j, k) = h4(imax, j, k) + he_loc(j, k)*prefactor
+                h4(imax, j, k) = h4(imax, j, k) + he_loc(j, k)*CRATIO_INV
             end do
         end do
         if (imixture > 0) then
@@ -464,7 +463,7 @@ contains
 ! -------------------------------------------------------------------
         TINTEGER i, k, is, nt, inb_scal_loc, iflag_min, iflag_max, idir, ip0, bcs(2, 1)
         TINTEGER imin_loc, imax_loc
-        TREAL prefactor, pl_out_min, pl_inf_min, pl_out_max, pl_inf_max
+        TREAL pl_out_min, pl_inf_min, pl_out_max, pl_inf_max
 
         TREAL, dimension(:, :, :), pointer :: tmin, lmin, tmax, lmax, inf_rhs
 
@@ -500,7 +499,6 @@ contains
         ip0 = 19
 
         nt = imax*kmax
-        prefactor = MRATIO*GRATIO
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
             call TLAB_WRITE_ASCII(efile, 'RHS_BCS_Y. Not enough space.')
@@ -614,7 +612,7 @@ contains
                 h1(i, 1, k) = h1(i, 1, k) + hv_loc(i, k)
                 h2(i, 1, k) = h2(i, 1, k) + hu_loc(i, k)
                 h3(i, 1, k) = h3(i, 1, k) + hw_loc(i, k)
-                h4(i, 1, k) = h4(i, 1, k) + he_loc(i, k)*prefactor
+                h4(i, 1, k) = h4(i, 1, k) + he_loc(i, k)*CRATIO_INV
             end do; end do
         if (imixture > 0) then
             do k = 1, kmax; do i = imin_loc, imax_loc
@@ -662,7 +660,7 @@ contains
                 h1(i, jmax, k) = h1(i, jmax, k) + hv_loc(i, k)
                 h2(i, jmax, k) = h2(i, jmax, k) + hu_loc(i, k)
                 h3(i, jmax, k) = h3(i, jmax, k) + hw_loc(i, k)
-                h4(i, jmax, k) = h4(i, jmax, k) + he_loc(i, k)*prefactor
+                h4(i, jmax, k) = h4(i, jmax, k) + he_loc(i, k)*CRATIO_INV
             end do; end do
         if (imixture > 0) then
             do k = 1, kmax; do i = imin_loc, imax_loc

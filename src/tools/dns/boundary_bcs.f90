@@ -122,7 +122,7 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use TLAB_VARS, only: g
         use TLAB_VARS, only: pbg, qbg
-        use THERMO_VARS, only: MRATIO, GRATIO
+        use THERMO_VARS, only: CRATIO_INV
         use THERMO_THERMAL
         use BOUNDARY_BUFFER
         use PROFILES
@@ -253,7 +253,7 @@ contains
             BcsFlowJmin%ref(:, :, 5) = pbg%mean; BcsFlowJmax%ref(:, :, 5) = pbg%mean
             BcsFlowKmin%ref(:, :, 5) = pbg%mean; BcsFlowKmax%ref(:, :, 5) = pbg%mean
 
-            prefactor = 0.5_wp*MRATIO*GRATIO
+            prefactor = 0.5_wp*CRATIO_INV
 
 ! -------------------------------------------------------------------
 ! Using buffer fields; bottom

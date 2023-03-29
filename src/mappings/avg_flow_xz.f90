@@ -21,7 +21,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
-    use THERMO_VARS
+    use THERMO_VARS, only: imixture, CRATIO_INV, GRATIO, MRATIO, THERMO_AI, WGHT_INV
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
@@ -46,7 +46,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     integer, parameter :: MAX_VARS_GROUPS = 20
     integer j, bcs(2, 2)
     real(wp) dummy
-    real(wp) c23, prefactor
+    real(wp) c23
 
     integer ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
 
@@ -73,8 +73,6 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     end if
 
     c23 = 2.0_wp/3.0_wp
-
-    prefactor = GRATIO*MRATIO
 
     ! Variable definition and memory management
     ! -----------------------------------------------------------------------
@@ -776,7 +774,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
         ! Means
         dudy = rho*e
-        dudz = e + prefactor*p/rho
+        dudz = e + CRATIO_INV*p/rho
         dvdx = rho*dudz
         dvdy = rho*dwdz    ! rho *S_LOC
         dvdz = rho*dwdx    ! rho *T_LOC
@@ -823,7 +821,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call AVG_IK_V(imax, jmax, kmax, jmax, dudz, g(1)%jac, g(3)%jac, fe2(1), wrk1d, area)
         fe2(:) = fe2(:)/rR(:)
 
-        p_wrk3d = e + prefactor*p/rho
+        p_wrk3d = e + CRATIO_INV*p/rho
         do j = 1, jmax
             dudy(:, j, :) = (p_wrk3d(:, j, :) - rh(j))**2
             dudz(:, j, :) = rho(:, j, :)*(p_wrk3d(:, j, :) - fh(j))**2
@@ -867,7 +865,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, g(1)%jac, g(3)%jac, potem_fr(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, psat(1), wrk1d, area)
         bfreq_fr(:) = -bfreq_fr(:)*buoyancy%vector(2)
-        lapse_fr(:) = -lapse_fr(:)*buoyancy%vector(2)*prefactor
+        lapse_fr(:) = -lapse_fr(:)*buoyancy%vector(2)*CRATIO_INV
 
 #undef S_LOC
 

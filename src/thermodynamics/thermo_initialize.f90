@@ -404,13 +404,12 @@ subroutine THERMO_INITIALIZE()
     if (imixture /= MIXT_TYPE_NONE) then ! othewise, gama0 is read in dns.ini
         gama0 = CPREF*WREF/(CPREF*WREF - RGAS)  ! Specific heat ratio
     end if
-    if (gama0 > 0.0_wp) GRATIO = (gama0 - 1.0_wp)/gama0 ! Value of R_0/(C_{p,0}W_0) is called GRATIO
+    if (gama0 > 0.0_wp) GRATIO = (gama0 - 1.0_wp)/gama0 ! Value of RGAS/(C_{p,0}W_0) is called GRATIO
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
         MRATIO = 1.0_wp
     else
         MRATIO = gama0*mach*mach
     end if
-    MRATIO_INV = 1/MRATIO
 
     if (nondimensional) then
         ! Thermal equation of state
@@ -441,8 +440,10 @@ subroutine THERMO_INITIALIZE()
 
     end if
 
-!   Definitions to save operations
-    THERMO_R(:) = WGHT_INV(:)/MRATIO    ! gas constants
+    ! Derived parameters to save operations
+    RRATIO = 1/MRATIO
+    CRATIO_INV = MRATIO*GRATIO
+    THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
 
 ! -------------------------------------------------------------------
 ! Output

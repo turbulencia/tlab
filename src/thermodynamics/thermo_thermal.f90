@@ -8,7 +8,7 @@
 
 module THERMO_THERMAL
     use TLAB_CONSTANTS, only: wp, wi
-    use THERMO_VARS, only: imixture, THERMO_R, MRATIO, MRATIO_INV, NSP
+    use THERMO_VARS, only: imixture, THERMO_R, MRATIO, RRATIO, NSP
     implicit none
     private
 
@@ -103,7 +103,7 @@ contains
 ! ###################################################################
         select case (imixture)
         case (MIXT_TYPE_NONE)
-            p(:) = MRATIO_INV*rho(:)*T(:)
+            p(:) = RRATIO*rho(:)*T(:)
 
         case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH, MIXT_TYPE_QUASIBS) ! Mass fractions defined by a conserved scalar Z.
 !     DO ij = 1,ijmax

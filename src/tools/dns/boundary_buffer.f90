@@ -27,7 +27,7 @@ module BOUNDARY_BUFFER
     use TLAB_VARS, only: g
     use TLAB_VARS, only: itime
     use TLAB_PROCS
-    use THERMO_VARS, only: MRATIO, GRATIO
+    use THERMO_VARS, only: CRATIO_INV
     use IO_FIELDS
     use OPR_FILTERS
     use AVGS, only: COV2V1D, COV2V2D
@@ -173,7 +173,7 @@ contains
         txc(:, 2:inb_flow + 1) = q(:, 1:inb_flow)
         if (imode_eqns == DNS_EQNS_TOTAL) then
             txc(:, 1) = q(:, 5) ! Density
-            dummy = 0.5_wp*MRATIO*GRATIO
+            dummy = 0.5_wp*CRATIO_INV
             txc(:, 5) = q(:, 4) + dummy*(q(:, 1)*q(:, 1) + q(:, 2)*q(:, 2) + q(:, 3)*q(:, 3))
             txc(:, 6) = 1.0_wp
         else if (imode_eqns == DNS_EQNS_INTERNAL) then
@@ -560,7 +560,7 @@ contains
 
         ! ###################################################################
         if (imode_eqns == DNS_EQNS_TOTAL) then
-            dummy = 0.5_wp*MRATIO*GRATIO
+            dummy = 0.5_wp*CRATIO_INV
         end if
 
         select case (idir)
