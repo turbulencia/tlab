@@ -14,8 +14,8 @@ module THERMO_VARS
     character*128 :: chemkin_file               ! File with thermodynamic data, if used
 
     ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
-    integer(wi) :: NSP                          ! Number of components (species) in a mixture
-    character(len=32) :: THERMO_SPNAME(MAX_NSP)
+    integer(wi) :: NSP = 0                      ! Number of components (species) in a mixture
+    character(len=32) :: THERMO_SPNAME(MAX_NSP) = ''
     real(wp) :: WGHT_INV(MAX_NSP)               ! Inverse of molar masses, i.e., gas constants
     real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants
 

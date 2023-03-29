@@ -50,8 +50,6 @@ subroutine THERMO_INITIALIZE()
 ! Thermal equation, molar masses in kg/kmol
 ! ###################################################################
     inb_scal_loc = inb_scal     ! Control that inb_scal read in dns.ini is correct
-    NSP = inb_scal              ! Default is general N scalars
-    WGHT(:) = 1.0_wp            ! Initialize molar masses to 1 kg /kmol
 
     select case (imixture)
 
