@@ -24,6 +24,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use THERMO_VARS, only: imixture, CRATIO_INV, GRATIO, MRATIO, THERMO_AI, WGHT_INV
     use THERMO_VARS, only: rd_ov_rv
     use THERMO_ANELASTIC
+    use THERMO_CALORIC, only: THERMO_GAMMA,  THERMO_CP
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
@@ -765,7 +766,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         ! Main fields
         ! -------------------------------------------------------------------
         call THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, s, e, rho, T_LOC(1, 1, 1), p_wrk3d)
-        call THERMO_GAMMA(imax, jmax, kmax, s, T_LOC(1, 1, 1), GAMMA_LOC(1, 1, 1))
+        call THERMO_GAMMA(imax*jmax*kmax, s, T_LOC(:, :, :), GAMMA_LOC(:, :, :))
         call THERMO_ENTROPY(imax, jmax, kmax, s, T_LOC(1, 1, 1), p, S_LOC(1, 1, 1))
 
         call AVG_IK_V(imax, jmax, kmax, jmax, T_LOC(1, 1, 1), g(1)%jac, g(3)%jac, rT(1), wrk1d, area)
@@ -854,7 +855,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, dvdy)
 
         call THERMO_POLYNOMIAL_PSAT(imax, jmax, kmax, T_LOC(1, 1, 1), dvdz)
-        call THERMO_CP(imax, jmax, kmax, s, GAMMA_LOC(1, 1, 1), dvdx)
+        call THERMO_CP(imax*jmax*kmax, s, GAMMA_LOC(:, :, :), dvdx)
 
         do j = 1, jmax
             dudy(:, j, :) = dwdy(:, j, :)/p(:, j, :)/GAMMA_LOC(:, j, :) - dvdy(:, j, :)/rho(:, j, :)

@@ -4,11 +4,12 @@
 ! Default is NSP species represented by the first NSP-1 mass fractions in array s
 ! Airwater considers the special case where qt=qv+ql and ql instead of qv and ql are used as prognostic
 
-! we use explicit-shape arrays in argements for the routines to be calleable with different array ranks
+! we use explicit-shape arrays in arguments for the routines to be callable with different array ranks
 
 module THERMO_THERMAL
     use TLAB_CONSTANTS, only: wp, wi
     use THERMO_VARS, only: imixture, THERMO_R, MRATIO, RRATIO, NSP
+    use THERMO_VARS, only: Rd, Rdv, Rv
     implicit none
     private
 
@@ -41,7 +42,8 @@ contains
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)
-            rho(:) = p(:)/(T(:)*(THERMO_R(2) + s(:, 1)*(THERMO_R(1) - THERMO_R(2)) - s(:, 2)*THERMO_R(1)))
+!            rho(:) = p(:)/(T(:)*(THERMO_R(2) + s(:, 1)*(THERMO_R(1) - THERMO_R(2)) - s(:, 2)*THERMO_R(1)))
+            rho(:) = p(:)/(T(:)*(Rd + s(:, 1)*Rdv - s(:, 2)*Rv))
 
         case default
             do ij = 1, ijmax
@@ -77,7 +79,8 @@ contains
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)
-            T(:) = p(:)/(rho(:)*(THERMO_R(2) + s(:, 1)*(THERMO_R(1) - THERMO_R(2)) - s(:, 2)*THERMO_R(1)))
+!            T(:) = p(:)/(rho(:)*(THERMO_R(2) + s(:, 1)*(THERMO_R(1) - THERMO_R(2)) - s(:, 2)*THERMO_R(1)))
+            T(:) = p(:)/(rho(:)*(Rd + s(:, 1)*Rdv - s(:, 2)*Rv))
 
         case default
             do ij = 1, ijmax
@@ -113,7 +116,8 @@ contains
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)
-            p(:) = rho(:)*T(:)*(THERMO_R(2) + s(:, 1)*(THERMO_R(1) - THERMO_R(2)) - s(:, 2)*THERMO_R(1))
+!            p(:) = rho(:)*T(:)*(THERMO_R(2) + s(:, 1)*(THERMO_R(1) - THERMO_R(2)) - s(:, 2)*THERMO_R(1))
+            p(:) = rho(:)*T(:)*(Rd + s(:, 1)*Rdv - s(:, 2)*Rv)
 
         case default
             do ij = 1, ijmax

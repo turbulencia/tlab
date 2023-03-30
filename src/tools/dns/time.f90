@@ -657,6 +657,7 @@ contains
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
         use TLAB_ARRAYS
         use TLAB_POINTERS
+        use THERMO_CALORIC, only: THERMO_GAMMA
         use DNS_ARRAYS
         use BOUNDARY_BUFFER
         use BOUNDARY_BCS, only: BcsDrift
@@ -747,7 +748,7 @@ contains
 #define GAMMA_LOC(i) txc(i,6)
 #define AUX_LOC(i)   T(i)
 
-        call THERMO_GAMMA(imax, jmax, kmax, s, T, GAMMA_LOC(1))
+        call THERMO_GAMMA(imax*jmax*kmax, s, T, GAMMA_LOC(:))
 
         ! Maximum Mach for Poinsot & Lele reference pressure BC
         if (BcsDrift) then
