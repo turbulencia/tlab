@@ -9,6 +9,7 @@ module PLANES
     use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
+    use THERMO_ANELASTIC
     use IO_FIELDS
     implicit none
     save
@@ -164,10 +165,10 @@ contains
             data_j(:, 1 + offset:jplanes%n + offset, :) = tmp1(:, jplanes%nodes(1:jplanes%n), :)
             offset = offset + jplanes%n
             if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and intgral of TWP
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(1, 1, 1, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
+                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(:, :, :, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
-             call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(1, 1, 1, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
+             call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(:, :, :, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
             end if

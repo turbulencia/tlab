@@ -7,6 +7,7 @@ PROGRAM REVERSAL
   USE TLAB_PROCS
   USE THERMO_VARS
   use THERMO_THERMAL
+  use THERMO_ANELASTIC
 
   IMPLICIT NONE
 
@@ -127,7 +128,7 @@ PROGRAM REVERSAL
         s(1) = h; s(2:3) = z1(1:2)
         CALL THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep,T)
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
-        qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*rd_ov_rv
         qsat = qsat/(C_1_R+qsat)
         CALL THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
         CALL THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
@@ -157,7 +158,7 @@ PROGRAM REVERSAL
         t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -168,7 +169,7 @@ PROGRAM REVERSAL
         alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
 
         dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
+             qvqd*(C_1_R+qvqd/rd_ov_rv)
         dummy = dummy +&
              THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
 
@@ -191,7 +192,7 @@ PROGRAM REVERSAL
         t = C_05_R*(t_2+t_1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -202,7 +203,7 @@ PROGRAM REVERSAL
         alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
 
         dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
+             qvqd*(C_1_R+qvqd/rd_ov_rv)
         dummy = dummy +&
              THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
 
@@ -225,7 +226,7 @@ PROGRAM REVERSAL
         t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -236,7 +237,7 @@ PROGRAM REVERSAL
         alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
 
         dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
+             qvqd*(C_1_R+qvqd/rd_ov_rv)
         dummy = dummy +&
              THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
 
@@ -265,7 +266,7 @@ PROGRAM REVERSAL
         t = C_05_R*(t_2+t_1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -276,7 +277,7 @@ PROGRAM REVERSAL
         alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
 
         dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
+             qvqd*(C_1_R+qvqd/rd_ov_rv)
         dummy = dummy +&
              THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
 
@@ -305,7 +306,7 @@ PROGRAM REVERSAL
         t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -318,7 +319,7 @@ PROGRAM REVERSAL
         dummy = (heat2-ba_ratio)/t*alpha
         dummy = dummy -&
              heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
+             qvqd*(C_1_R+qvqd/rd_ov_rv)
         dummy = dummy - &
              THERMO_AI(1,1,2) - qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3))
         dummy = dummy/THERMO_AI(1,1,3)
@@ -340,7 +341,7 @@ PROGRAM REVERSAL
         t = C_05_R*(t_2+t_1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -353,7 +354,7 @@ PROGRAM REVERSAL
         dummy = (heat2-ba_ratio)/t*alpha
         dummy = dummy -&
              heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
+             qvqd*(C_1_R+qvqd/rd_ov_rv)
         dummy = dummy - &
              THERMO_AI(1,1,2) - qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3))
         dummy = dummy/THERMO_AI(1,1,3)
@@ -375,7 +376,7 @@ PROGRAM REVERSAL
         t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
@@ -395,7 +396,7 @@ PROGRAM REVERSAL
         t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
 
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*rd_ov_rv
         qsat = qvqd/(C_1_R+qvqd)
 
         heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&

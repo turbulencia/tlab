@@ -434,16 +434,36 @@ subroutine THERMO_INITIALIZE()
             THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
         end do
 
+        CRATIO_INV = MRATIO*GRATIO
     else
         MRATIO = 1.0_wp
         GRATIO = 1.0_wp
-
+        CRATIO_INV = 1.0_wp
     end if
 
     ! Derived parameters to save operations
     RRATIO = 1/MRATIO
-    CRATIO_INV = MRATIO*GRATIO
     THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
+
+    ! Definitions for the case of the airwater mixture
+    ! Rv = WGHT_INV(1)
+    ! Rd = WGHT_INV(2)
+    ! Rdv = WGHT_INV(1) - WGHT_INV(2)
+    Rv = THERMO_R(1)
+    Rd = THERMO_R(2)
+    Rdv = THERMO_R(1) - THERMO_R(2)
+
+    Cd = THERMO_AI(1, 1, 2)
+    Cdv = THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2)
+    Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
+    Cdl= THERMO_AI(1,1,3) - THERMO_AI(1,1,2)
+    Cl = THERMO_AI(1, 1, 3)
+    Lv0 = -THERMO_AI(6, 1, 3)
+  
+    rd_ov_rv = Rd/Rv
+    rd_ov_cd = Rd/Cd*CRATIO_INV
+
+    PREF_THETA = 1.0_wp ! Assumes pressure is normalized by 1000 hPa
 
 ! -------------------------------------------------------------------
 ! Output

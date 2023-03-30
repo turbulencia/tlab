@@ -69,6 +69,7 @@ end subroutine THERMO_AIRWATER_PH_RE
 subroutine THERMO_ANELASTIC_AIRWATER_PH_RE(nx, ny, nz, s, e, p, wrk3d)
 
     use THERMO_VARS, only: CRATIO_INV, MRATIO
+    use THERMO_ANELASTIC
 
     implicit none
 

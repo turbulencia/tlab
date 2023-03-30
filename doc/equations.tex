@@ -8,12 +8,13 @@
 \def\Ro{\mathrm{\bf Ro}}
 \def\Ma{\mathrm{\bf Ma}}
 \def\Da{\mathrm{\bf Da}}
+\def\Rg{\mathrm{\bf Rg}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compressible formulation}
 
-The energy equation is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. The equation of state corresponding to an ideal gas is assumed:
+Let us consider first one single species. The evolution equation for the energy is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. We consider the ideal gas law. The final set of governing equations that are considered in the code are:
 \begin{subequations}
   \begin{align}
     \partial_t \rho       =& -\partial_k (\rho u_k)                                       \\
@@ -42,7 +43,7 @@ and
   p  = (\gamma_0 \Ma^2)^{-1}\rho T \;.
   \label{eq:state}
 \end{equation}
-The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$, where $R_0$ is the specific gas constant of the gas under consideration and $C_{p0}$ is its specific heat capacity at constant pressure. The dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
+These equations consider that the variables are normalized by the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$, which represent a length, a velocity, a density, and a temperature, respectively. The pressure is normalized by $\rho_0U_0^2$. Thermal energy variables are normalized with $C_{p0}T_0$, where $C_{p0}$ is a reference specific heat capacity at constant pressure. $R_0$ is the specific gas constant of the gas under consideration. The dimensionless numbers are defined by
 \begin{equation}
   \Re = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0}\;, \qquad
   \Pr = \frac{\mu_0}{(\lambda_0/C_{p0})}\;, \qquad
@@ -57,15 +58,21 @@ and
 \begin{equation}
   \Fr = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} \qquad \Ro = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
 \end{equation}
-Thermal energy variables are normalized with $C_{p0}T_0$. Note that the governing equations depend on $\gamma_0\Ma^2$ and $(\gamma_0-1)\Ma^2$, which suggests that, instead of $\gamma_0$ and $\Ma$, the pair of parameters
+Thermodynamic properties of the gas are given in terms of $\gamma_0$ and $\Ma$ as input parameters. Note that the governing equations depend on $\gamma_0\Ma^2$ and $(\gamma_0-1)\Ma^2$, which suggests that, instead of $\gamma_0$ and $\Ma$, the pair of parameters
+\begin{equation}
+    \Rg=(\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+\end{equation}
+which are normalized gas constants and heat capacities. Other combinations used in the code (to be removed) are
 \begin{equation}
     \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad \frac{\gamma_0-1}{\gamma_0}=\frac{R_0}{C_{p0}}
 \end{equation}
-is the relevant one. In the code, after initialization, all equations are expressed in terms of these 2 parameters (names \texttt{MRATIO} and \texttt{GRATIO}, respectively). The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+is the relevant one. In the code, after initialization, all equations are expressed in terms of these 2 parameters (names \texttt{MRATIO} and \texttt{GRATIO}, respectively). 
+
+The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 
-We consider a mixture of $N$ species or constituents with mass fractions $Y_i$:
+Let us consider a mixture of $N$ species or constituents with mass fractions $Y_i$:
 \begin{subequations}
   \begin{align}
     \partial_t \rho       =& -\partial_k (\rho u_k)                                                \\
@@ -96,18 +103,22 @@ and
 \end{equation}
 \begin{equation}
   h = \sum^N_1 h_{i} Y_i \;,\qquad h_{i} = \Delta h^0_i + \int^{T}_{T_0}
-  C_{pi}(T) dT\;,\qquad e = h - \frac{\gamma_0-1}{\gamma_0}\frac{T}{W}
+  C_{pi}(T) dT\;,\qquad e = h - (\gamma_0-1)\Ma^2\frac{p}{\rho}
 \end{equation}
 \begin{equation}
   C_p = \sum^N_1 C_{pi}(T) Y_i\;,\qquad
   \gamma = \frac{W C_p}{W C_p-\frac{\gamma_0-1}{\gamma_0}} \;,\qquad
-  \frac{1}{W} = \sum^N_1 \frac{Y_i}{W_i}
+  R=\frac{1}{W} = \sum^N_1 \frac{Y_i}{W_i}
 \end{equation}
 and
 \begin{equation}
-  p = (\gamma_0 \mathrm{\bf M}^2)^{-1} \frac{\rho T}{W}
+  p = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T R
 \end{equation}
-It can be verified that given all the thermo-chemical properties of the components of the mixture as a function of temperature, the previous set of equations are closed. Notice that $\gamma$ is no longer a constant and depend on the composition of the mixture. The reference specific gas constant is defined by $R_0\equiv \mathcal{R}/W_0$, where $\mathcal{R}$ is the universal gas constant and $W_0$ is the molecular weight of the reference species. The nondimensional specific gas constant of the gas mixture is given by $R=W^{-1}$.
+Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are nondimensionalized by some reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, those corresponding to one of the species in the mixture as defined in \texttt{termo\_initialize}. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to express the equations in terms of
+\begin{equation}
+    (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\frac{R_0}{U^2_0/T_0}\frac{R_i}{R_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;.
+\end{equation}
+Note that $\gamma$ depends on the composition of the mixture, and $\gamma_0$ is no longer and independent input parameter but is determined by the mixture in \texttt{termo\_initialize}.
 
 The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
 

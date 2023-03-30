@@ -53,6 +53,7 @@ contains
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: schmidt
         use TLAB_ARRAYS
+        use THERMO_ANELASTIC
         use DNS_ARRAYS
         use THERMO_VARS, only: imixture
         use PARTICLE_VARS

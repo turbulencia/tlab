@@ -7,13 +7,13 @@ program STATE
     use TLAB_PROCS
     use THERMO_VARS
     use THERMO_THERMAL
+    use THERMO_ANELASTIC
 
     implicit none
 
     TREAL p(1), ps(1), t(1), qs(1), qv(1), qt(1), ql(1), r(1), e(1), h(1), z1(2), dummy(1), dqldqt(1), ep(1), theta(1), theta_e(1), Td(1)
     TREAL heat1(1), heat2(1), cp1(1), cp2(1), alpha(1), as(1), bs(1)
     TREAL r1(1), h1(1), s(3)
-    TREAL Cd, Cdv, Cvl
     TINTEGER iopt
     integer, parameter :: i1 = 1
 
@@ -21,16 +21,12 @@ program STATE
     call TLAB_START()
 
     imixture = MIXT_TYPE_AIRWATER
-    call THERMO_INITIALIZE
+    call THERMO_INITIALIZE()
     MRATIO = C_1_R
     if (gama0 > C_0_R) GRATIO = (gama0 - C_1_R)/gama0
     ep = C_0_R
     dsmooth = C_0_R
     scaleheight = C_1_R
-
-    Cd = THERMO_AI(1, 1, 2)
-    Cdv = THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2)
-    Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
 
     write (*, *) 'Case p-t (1) or d-e (2) or p-h (3)?'
     read (*, *) iopt
@@ -63,7 +59,7 @@ program STATE
 ! ###################################################################
     if (iopt == 1) then
         call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
-        qs = C_1_R/(MRATIO*p/ps - C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         if (qt(1) > qs(1)) then
             qv = qs*(1 - qt)
@@ -92,7 +88,7 @@ program STATE
 !     CALL THERMO_CALORIC_QSAT(i1, i1, i1, e, r, qs, qs)
         call THERMO_THERMAL_PRESSURE(1, z1, r, t, p)
         call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
-        qs = C_1_R/(MRATIO*p/ps - C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t, h)
 
@@ -112,7 +108,7 @@ program STATE
         qv = qt - ql
 
         call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, ps)
-        qs = C_1_R/(MRATIO*p/ps - C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+        qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)
         call THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
@@ -122,7 +118,7 @@ program STATE
 
 ! check
         call THERMO_ANELASTIC_DENSITY(i1, i1, i1, s, ep, p, r1)
-!     r2 = p/(T*(1- qt +WGHT_INV(1)/WGHT_INV(2)*qv ) )
+!     r2 = p/(T*(1- qt +qv/rd_ov_rv ) )
         call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, T, h1)
 
     end if
@@ -160,7 +156,7 @@ program STATE
 
         cp1 = (C_1_R - qt)*THERMO_AI(1, 1, 2) + qv*THERMO_AI(1, 1, 1) + ql*THERMO_AI(1, 1, 3)
         dummy = (heat1**2)*qv/((t**2)*cp1*WGHT_INV(1)*GRATIO)
-        cp2 = cp1*(C_1_R + dummy*(C_1_R + qv/(C_1_R - qt)*WGHT_INV(1)/WGHT_INV(2)))
+        cp2 = cp1*(C_1_R + dummy*(C_1_R + qv/(C_1_R - qt)/rd_ov_rv))
 
         alpha = C_1_R + heat1*qv/((C_1_R - qt)*GRATIO*WGHT_INV(2)*t)
 
@@ -170,11 +166,10 @@ program STATE
         write (*, *) 'Water fraction coefficient ....:', bs
 
     else if (iopt == 1 .and. ql(1) == C_0_R) then
-        cp1 = THERMO_AI(1, 1, 2) + qt*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))
+        cp1 = Cd + qt*Cdv
 
         as = -C_1_R/cp1/t
-        bs = (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))/cp1 &
-             - (WGHT_INV(1) - WGHT_INV(2))/(WGHT_INV(2) + qt*(WGHT_INV(1) - WGHT_INV(2)))
+        bs = Cdv/cp1 - Rdv/(Rd + qt*Rdv)
         write (*, *) 'Enthalpy coefficient ..........:', as
         write (*, *) 'Water fraction coefficient ....:', bs
     end if

@@ -52,7 +52,7 @@ PROGRAM SATURATION
      t_loc = (t+273.15)/TREF
      CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t_loc,  psat)
      CALL THERMO_POLYNOMIAL_DPSAT(i1, i1, i1, t_loc, dpsat)
-     dummy = C_1_R/(MRATIO*p/psat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
+     dummy = C_1_R/(MRATIO*p/psat-C_1_R)*rd_ov_rv
      qsat = dummy/(C_1_R+dummy)
      IF ( iopt .EQ. 1 ) THEN
         ! dpsat2 = C_0_R

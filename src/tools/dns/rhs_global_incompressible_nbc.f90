@@ -26,6 +26,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use TLAB_VARS, only: isize_field, isize_wrk1d, imax, jmax, kmax
     use TLAB_VARS, only: rbackground, ribackground
     !
+    use THERMO_ANELASTIC
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use TIME, only: rkm_substep, rkm_endstep, dte

@@ -47,6 +47,7 @@ program SPECTRA
 #endif
     use FI_SOURCES, only: FI_BUOYANCY
     use THERMO_VARS, only: imixture
+    use THERMO_ANELASTIC
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS

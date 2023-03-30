@@ -18,6 +18,7 @@ program TRANSFIELDS
     use TLAB_MPI_PROCS
 #endif
     use IO_FIELDS
+    use THERMO_ANELASTIC
     use OPR_FILTERS
     use OPR_INTERPOLATORS
     use OPR_FOURIER
@@ -815,7 +816,7 @@ contains
 
         use TLAB_VARS, only: inb_scal, epbackground
         use THERMO_VARS, only: imixture, MRATIO, GRATIO, dsmooth
-        use THERMO_VARS, only: THERMO_AI, WGHT_INV
+        use THERMO_VARS, only: THERMO_AI, rd_ov_rv
 
         implicit none
 
@@ -850,11 +851,11 @@ contains
 
         ! Calculate saturation specific humidity
         call THERMO_POLYNOMIAL_PSAT(nx, ny, nz, txc(1, 5), txc(1, 1))
-        txc(:, 1) = 1.0_wp/(MRATIO*txc(:, 4)/txc(:, 1) - 1.0_wp)*WGHT_INV(2)/WGHT_INV(1)
+        txc(:, 1) = 1.0_wp/(MRATIO*txc(:, 4)/txc(:, 1) - 1.0_wp)*rd_ov_rv
         txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 
         ! Calculate parameter \beta (assuming c_p = c_p,d)
-        txc(:, 3) = WGHT_INV(2)/WGHT_INV(1)/GRATIO*LATENT_HEAT*LATENT_HEAT/(txc(:, 5)*txc(:, 5))
+        txc(:, 3) = rd_ov_rv/GRATIO*LATENT_HEAT*LATENT_HEAT/(txc(:, 5)*txc(:, 5))
 
         ! Calculate s
         b(:) = txc(:, 2) - txc(:, 1)*(1.0_wp + txc(:, 3)*txc(:, 2))/(1.0_wp + txc(:, 3)*txc(:, 1))

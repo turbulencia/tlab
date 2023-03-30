@@ -20,6 +20,7 @@ program AVERAGES
 #endif
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
+    use THERMO_ANELASTIC
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS

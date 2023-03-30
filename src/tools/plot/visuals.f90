@@ -23,6 +23,7 @@ program VISUALS
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
     use THERMO_VARS, only: NSP, THERMO_SPNAME
+    use THERMO_ANELASTIC
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS

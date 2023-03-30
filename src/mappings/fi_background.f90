@@ -15,6 +15,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, GRATIO, scaleheight, MRATIO
+    use THERMO_ANELASTIC
     use PROFILES
     use FI_SOURCES, only: FI_BUOYANCY
 #ifdef USE_MPI
@@ -128,7 +129,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         is = is + 1
-        call THERMO_ANELASTIC_THETA_L(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, p_wrk1d(1, inb_scal_array + 1))
+        call THERMO_ANELASTIC_THETA_L(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
         sbg(is) = sbg(1)
         sbg(is)%mean = (p_wrk1d(1, inb_scal_array + 1) + p_wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
         sbg(is)%delta = abs(p_wrk1d(1, inb_scal_array + 1) - p_wrk1d(g(2)%size, inb_scal_array + 1))
@@ -206,6 +207,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
     use THERMO_VARS, only: imixture, scaleheight
+    use THERMO_ANELASTIC
     use THERMO_THERMAL
 
     implicit none

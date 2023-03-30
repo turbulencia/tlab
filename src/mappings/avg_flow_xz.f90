@@ -22,6 +22,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use THERMO_VARS, only: imixture, CRATIO_INV, GRATIO, MRATIO, THERMO_AI, WGHT_INV
+    use THERMO_VARS, only: rd_ov_rv
+    use THERMO_ANELASTIC
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
@@ -759,7 +761,6 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), g(1)%jac, g(3)%jac, lapse_dew(1), wrk1d, area)
 
     else
-
         ! -------------------------------------------------------------------
         ! Main fields
         ! -------------------------------------------------------------------
@@ -889,9 +890,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, lapse_eq(1), wrk1d, area)
             lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)*MRATIO
 
-            dummy = WGHT_INV(1)/WGHT_INV(2)
             p_wrk3d = (dudz - buoyancy%vector(2)*MRATIO*p_wrk3d)/dwdx &
-                    *(1.0_wp + dummy*L_RATIO/(1.0_wp - s(:, :, :, 1)))
+                    *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, :, :, 1)))
             p_wrk3d = p_wrk3d - WGHT_INV(2)/WMEAN_INV*dudy
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, bfreq_eq(1), wrk1d, area)
             bfreq_eq(:) = -bfreq_eq(:)*buoyancy%vector(2)
