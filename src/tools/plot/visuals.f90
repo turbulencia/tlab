@@ -32,6 +32,7 @@ program VISUALS
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
+    use FI_SHEAR
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_FILTERS
@@ -86,7 +87,7 @@ program VISUALS
     bakfile = trim(adjustl(ifile))//'.bak'
 
     call TLAB_START()
-
+! 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
@@ -166,6 +167,7 @@ program VISUALS
         write (*, '(I2,A)') iscal_offset + 18, '. Particle Density'
         write (*, '(I2,A)') iscal_offset + 19, '. Thermodynamic quantities'
         write (*, '(I2,A)') iscal_offset + 20, '. Analysis of B and V'
+        write (*, '(I2,A)') iscal_offset + 21, '. Wall Shear Stress'
         read (*, '(A512)') sRes
 #endif
     end if
@@ -213,6 +215,7 @@ program VISUALS
         if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if (opt_vec(iv) == iscal_offset + 21) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
     end do
 
     ! check if enough memory is provided for the IBM
@@ -697,7 +700,7 @@ program VISUALS
             ! -------------------------------------------------------------------
             if (opt_vec(iv) == iscal_offset + 7) then ! Strain Tensor
                 plot_file = 'StrainTensor'//time_str(1:MaskSize)
-call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 6, subdomain, txc(1, 1), wrk3d)
             end if
 
@@ -952,6 +955,23 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
                 plot_file = 'PressureGradientY'//time_str(1:MaskSize)
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 2))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+            end if
+
+
+            ! ###################################################################
+            ! Wall shear stress
+            ! ###################################################################
+            if (opt_vec(iv) == iscal_offset + 21) then ! Shear stress
+                plot_file = 'flow.0'
+                ! plot_file = 'WallShearStress'//time_str(1:MaskSize)
+                if (imode_ibm == 0) then
+                    call FI_WALL_SHEAR_NOIBM(imax, jmax, kmax, q(1, 1), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
+                else if (imode_ibm == 1) then
+                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4)) ! pressure in txc(1,1)
+                    call FI_WALL_SHEAR_IBM(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
+                    txc(1:isize_field, 1) = txc(1:isize_field, 2)
+                end if 
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
         end do
