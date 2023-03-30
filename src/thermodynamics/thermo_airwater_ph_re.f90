@@ -17,6 +17,7 @@
 SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 
   USE THERMO_VARS, ONLY : GRATIO, MRATIO, THERMO_AI
+    use THERMO_THERMAL
 
   IMPLICIT NONE
   
@@ -25,13 +26,13 @@ SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 
 ! -------------------------------------------------------------------
   TINTEGER ij, iter, niter
-  TREAL r_loc, e_loc, t_loc, z1_loc(2), dummy, prefactor
+  TREAL r_loc(1), e_loc(1), t_loc(1), z1_loc(2), dummy, prefactor
 
   integer, parameter :: i1 = 1
 
 ! ###################################################################
   niter = 5
-  prefactor = GRATIO*MRATIO ! = (gama0-C_1_R)*mach*mach
+  prefactor = GRATIO*MRATIO
 
   DO ij = 1,nx*ny*nz
 ! -------------------------------------------------------------------
@@ -39,7 +40,7 @@ SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 ! -------------------------------------------------------------------
      z1_loc(1) = z1(ij,1)
      z1_loc(2) = C_0_R
-     t_loc = (h(ij)-THERMO_AI(6,1,2)-z1(ij,1)*(THERMO_AI(6,1,1)-THERMO_AI(6,1,2)))/&
+     t_loc(1) = (h(ij)-THERMO_AI(6,1,2)-z1(ij,1)*(THERMO_AI(6,1,1)-THERMO_AI(6,1,2)))/&
           (THERMO_AI(1,1,2)+z1(ij,1)*(THERMO_AI(1,1,1)-THERMO_AI(1,1,2)))
 
 ! -------------------------------------------------------------------
@@ -47,17 +48,17 @@ SUBROUTINE THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 ! -------------------------------------------------------------------
      DO iter = 1,niter
 ! calculate density from temperature/composition
-        CALL THERMO_THERMAL_DENSITY(i1, i1, i1, z1_loc, p(ij), t_loc, r_loc)
+        CALL THERMO_THERMAL_DENSITY(1, z1_loc, p(ij), t_loc, r_loc)
 
 ! calculate energy
-        e_loc = h(ij) - prefactor*p(ij)/r_loc
+        e_loc = h(ij) - prefactor*p(ij)/r_loc(1)
 
 ! solve equilibrium (rho,e,q_i)
         CALL THERMO_AIRWATER_RE(i1, i1, i1, z1_loc, e_loc, r_loc, t_loc, dummy)
 
      ENDDO
      z1(ij,2) = z1_loc(2)
-     T(ij)    = t_loc
+     T(ij)    = t_loc(1)
 
   ENDDO
 
@@ -79,16 +80,14 @@ SUBROUTINE THERMO_ANELASTIC_AIRWATER_PH_RE(nx,ny,nz, s, e,p, wrk3d)
 
 ! -------------------------------------------------------------------
   TINTEGER ij, jk, is, i, iter, niter
-  TREAL r_loc, en_loc, t_loc, z1_loc(2), dummy, prefactor
-  TREAL p_loc, e_loc
+  TREAL r_loc(1), en_loc(1), t_loc(1), z1_loc(2), dummy, prefactor
+  TREAL p_loc(1), e_loc(1)
 
   integer, parameter :: i1 = 1
 
 ! ###################################################################
   niter = 5
-  prefactor = GRATIO *MRATIO ! = (gama0-C_1_R)*mach*mach
-
-  print*,'hello'
+  prefactor = GRATIO *MRATIO
   
   s(:,3) = C_0_R ! initialize, q_l=0
 

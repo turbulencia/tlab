@@ -27,7 +27,7 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 
   USE TLAB_VARS, ONLY : pbg
 
-  USE THERMO_VARS, ONLY : imixture, gama0, GRATIO
+  USE THERMO_VARS, ONLY : imixture, GRATIO
   USE THERMO_VARS, ONLY : NSP, NCP, WGHT_INV, THERMO_AI, THERMO_TLIM
 
   IMPLICIT NONE
@@ -39,16 +39,15 @@ SUBROUTINE THERMO_ENTROPY(nx,ny,nz, z1,T,p, s)
 
 ! -------------------------------------------------------------------
   TINTEGER ij, is, im, icp
-  TREAL WMEAN_INV, ENTROPY_I, XMOL_I, alpha
+  TREAL WMEAN_INV, ENTROPY_I, XMOL_I
   TREAL, dimension(NSP) :: YMASS
 
 ! ###################################################################
 ! Single species
 ! ###################################################################
-  alpha = (gama0-C_1_R)/gama0
   IF ( imixture .EQ. 0 ) THEN
      DO ij = 1,nx*ny*nz
-        s(ij) = log(T(ij)/(p(ij)/pbg%mean)**alpha)
+        s(ij) = log(T(ij)/(p(ij)/pbg%mean)**GRATIO)
      ENDDO
 
 ! ###################################################################

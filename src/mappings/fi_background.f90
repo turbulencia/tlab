@@ -206,6 +206,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
     use THERMO_VARS, only: imixture, scaleheight
+    use THERMO_THERMAL
 
     implicit none
 
@@ -250,7 +251,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
             dummy = -1.0_wp/sign(scaleheight, buoyancy%vector(2))
         else
             call THERMO_AIRWATER_PH_RE(i1, g%size, i1, s(1, 2), p, s(1, 1), T)
-            call THERMO_THERMAL_DENSITY(i1, g%size, i1, s(1, 2), wrk1d(1, 6), T, wrk1d(1, 7)) ! Get 1/RT
+            call THERMO_THERMAL_DENSITY(g%size, s(:, 2), wrk1d(:, 6), T, wrk1d(:, 7)) ! Get 1/RT
             dummy = buoyancy%vector(2)
         end if
         wrk1d(:, 7) = dummy*wrk1d(:, 7)
@@ -306,6 +307,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
     use TLAB_CONSTANTS, only: wp, wi, wfile
     use TLAB_TYPES, only: profiles_dt
     use TLAB_PROCS
+    use THERMO_THERMAL
     use PROFILES
     implicit none
 
@@ -359,7 +361,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
             call FLOW_SPATIAL_SCALAR(i1, jmax, tbg, tbg%diam, ubg%diam, &
                                      tbg%parameters(2), tbg%parameters(3), tbg%parameters(4), x(i), y, &
                                      rho_vi, u_vi, tem_vi, rho_aux(1), u_vo, tem_vo, aux(1))
-            call THERMO_THERMAL_DENSITY(i1, jmax, i1, z1, p, tem_vo, wrk1d(1, 2))
+            call THERMO_THERMAL_DENSITY(jmax, z1, p, tem_vo, wrk1d(1, 2))
 ! Convergence criteria (infinity norm)
             do j = 1, jmax
                 wrk1d(j, 3) = abs(wrk1d(j, 2) - rho_aux(j))

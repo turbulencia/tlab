@@ -6,6 +6,7 @@ PROGRAM REVERSAL
   USE TLAB_VARS
   USE TLAB_PROCS
   USE THERMO_VARS
+  use THERMO_THERMAL
 
   IMPLICIT NONE
 
@@ -68,12 +69,12 @@ PROGRAM REVERSAL
      z1(1) = qt_1
      CALL THERMO_AIRWATER_PT(i1, i1, i1, z1, p, t_1)
      CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t_1, h_1)
-     CALL THERMO_THERMAL_DENSITY(i1, i1, i1, z1, p, t_1, r_1)
+     CALL THERMO_THERMAL_DENSITY(1, z1, p, t_1, r_1)
 
      z1(1) = qt_2
      CALL THERMO_AIRWATER_PT(i1, i1, i1, z1, p, t_2)
      CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t_2, h_2)
-     CALL THERMO_THERMAL_DENSITY(i1, i1, i1, z1, p, t_2, r_2)
+     CALL THERMO_THERMAL_DENSITY(1, z1, p, t_2, r_2)
 
   ELSE IF ( iopt .EQ. 3 .OR. iopt .EQ. 4 .OR. iopt .EQ. 5 .OR. iopt .EQ. 6 .OR. iopt .EQ. 7 ) THEN
      WRITE(*,*) 'pressure (bar) ?'
@@ -128,7 +129,7 @@ PROGRAM REVERSAL
         CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
         qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
         qsat = qsat/(C_1_R+qsat)
-        CALL THERMO_THERMAL_DENSITY(i1, i1, i1, z1, p, T, rho)
+        CALL THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
         CALL THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
 
         WRITE(21,1010) x, qt, h, z1(2), qt-z1(2), qsat, rho, T, p, e

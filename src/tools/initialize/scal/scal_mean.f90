@@ -9,6 +9,7 @@ subroutine SCAL_MEAN(is, s)
     use TLAB_VARS, only: pbg, rbg, tbg, sbg, qbg
     use TLAB_ARRAYS, only: wrk2d
     use TLAB_POINTERS_3D, only: p_wrk1d
+    use THERMO_THERMAL
     use PROFILES
     implicit none
 
@@ -56,7 +57,7 @@ subroutine SCAL_MEAN(is, s)
         end do
         ! the species array here is wrong for multispecies case !!!
         p_loc(:, :) = pbg%mean
-        call THERMO_THERMAL_DENSITY(imax, jmax, 1, s, p_loc(1, 1), t_loc(1, 1), rho_loc(1, 1))
+        call THERMO_THERMAL_DENSITY(imax*jmax, s, p_loc(:, :), t_loc(:, :), rho_loc(:, :))
 
         ! Inflow profile of density
         rho_vi(:) = rho_loc(1, :)

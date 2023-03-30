@@ -10,7 +10,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLAB_CONSTANTS, only: efile
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, gama0, THERMO_AI
+    use THERMO_VARS, only: imixture, MRATIO, GRATIO, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
     use OPR_PARTIAL
@@ -78,7 +78,7 @@ contains
         ip0 = 19
 
         nt = jmax*kmax
-        prefactor = (gama0 - C_1_R)*mach*mach
+        prefactor = MRATIO*GRATIO
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
             call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
@@ -500,7 +500,7 @@ contains
         ip0 = 19
 
         nt = imax*kmax
-        prefactor = (gama0 - C_1_R)*mach*mach
+        prefactor = MRATIO*GRATIO
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
             call TLAB_WRITE_ASCII(efile, 'RHS_BCS_Y. Not enough space.')

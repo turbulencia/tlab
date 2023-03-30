@@ -43,20 +43,25 @@ and
   \label{eq:state}
 \end{equation}
 The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$, where $R_0$ is the specific gas constant of the gas under consideration and $C_{p0}$ is its specific heat capacity at constant pressure. The dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
-\begin{alignat*}{3}
-  \Re & = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0} & \qquad
-  \Pr & = \frac{\mu_0}{(\lambda_0/C_{p0})} & \qquad
-  \Sc_i & = \frac{\mu_0}{\rho_0 D_{i0}}
-\end{alignat*}
+\begin{equation}
+  \Re = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0}\;, \qquad
+  \Pr = \frac{\mu_0}{(\lambda_0/C_{p0})}\;, \qquad
+  \Sc_i = \frac{\mu_0}{\rho_0 D_{i0}}\;,
+\end{equation}
 and
-\begin{equation*}
-  \Ma  = \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}}
-\end{equation*}
+\begin{equation}
+  \Ma  = \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}}\;, \qquad
+  \gamma_0 = \frac{C_{p0}}{C_{p0}-R_0}\;,
+\end{equation}
 and
-\begin{alignat*}{2}
-  \Fr & = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} & \qquad \Ro = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
-\end{alignat*}
-Thermal energy variables are normalized with $C_{p0}T_0$. The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+\begin{equation}
+  \Fr = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} \qquad \Ro = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
+\end{equation}
+Thermal energy variables are normalized with $C_{p0}T_0$. Note that the governing equations depend on $\gamma_0\Ma^2$ and $(\gamma_0-1)\Ma^2$, which suggests that, instead of $\gamma_0$ and $\Ma$, the pair of parameters
+\begin{equation}
+    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad \frac{\gamma_0-1}{\gamma_0}=\frac{R_0}{C_{p0}}
+\end{equation}
+is the relevant one. In the code, after initialization, all equations are expressed in terms of these 2 parameters (names \texttt{MRATIO} and \texttt{GRATIO}, respectively). The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 

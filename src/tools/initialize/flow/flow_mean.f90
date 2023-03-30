@@ -11,6 +11,7 @@ module FLOW_MEAN
     use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk3d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
+    use THERMO_THERMAL
     use PROFILES
     use OPR_PARTIAL
     implicit none
@@ -219,7 +220,7 @@ contains
                         call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, TEM_MEAN_LOC(:, :, :))
                     end if
 
-                    call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, TEM_MEAN_LOC(:, :, :), RHO_MEAN_LOC(:, :, :))
+                    call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, TEM_MEAN_LOC(:, :, :), RHO_MEAN_LOC(:, :, :))
                     rho(:, :, :) = rho(:, :, :) + RHO_MEAN_LOC(:, :, :)
 
                     ! density profile itself is given
@@ -242,7 +243,7 @@ contains
             else
                 ! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
                 if (imixture == MIXT_TYPE_AIRWATER) then
-                    call THERMO_THERMAL_DENSITY(imax, jmax, kmax, s, p, T, rho)
+                    call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, T, rho)
 
                     ! General case
                 else
