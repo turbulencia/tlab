@@ -19,6 +19,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     use TLAB_VARS, only: idiffusion, visc, prandtl
     use TLAB_POINTERS
     use TLAB_ARRAYS, only: s
+    use THERMO_CALORIC
     use DNS_ARRAYS, only: hq
     use BOUNDARY_BCS
     use OPR_PARTIAL
@@ -40,7 +41,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     end if
 
 ! calculate the enthalpy
-    call THERMO_CALORIC_ENTHALPY(imax, jmax, kmax, s, T, tmp4)
+    call THERMO_CALORIC_ENTHALPY(imax*jmax*kmax, s, T, tmp4)
 
 ! total flux
     call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp4, tmp3, tmp5)

@@ -8,6 +8,7 @@ program STATE
     use THERMO_VARS
     use THERMO_THERMAL
     use THERMO_ANELASTIC
+    use THERMO_CALORIC
 
     implicit none
 
@@ -70,8 +71,8 @@ program STATE
         end if
         z1(1) = qt(1)
         z1(2) = ql(1)
-        call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t, h)
-        call THERMO_CALORIC_ENERGY(i1, i1, i1, z1, t, e)
+        call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
+        call THERMO_CALORIC_ENERGY(1, z1, t, e)
         call THERMO_THERMAL_DENSITY(1, z1, p, t, r)
 
         s(1) = h(1); s(2:3) = z1(1:2)
@@ -90,7 +91,7 @@ program STATE
         call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
         qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
-        call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t, h)
+        call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
 
         s(1) = h(1); s(2:3) = z1(1:2)
         call THERMO_ANELASTIC_THETA_L(i1, i1, i1, s, ep, p, theta)
@@ -111,7 +112,7 @@ program STATE
         qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)
-        call THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
+        call THERMO_CALORIC_ENERGY(1, z1, T, e)
         call THERMO_ANELASTIC_THETA_L(i1, i1, i1, s, ep, p, theta)
         call THERMO_ANELASTIC_THETA_E(i1, i1, i1, s, ep, p, theta_e)
         call THERMO_ANELASTIC_DEWPOINT(i1, i1, i1, s, ep, p, r, Td, dummy)
@@ -119,7 +120,7 @@ program STATE
 ! check
         call THERMO_ANELASTIC_DENSITY(i1, i1, i1, s, ep, p, r1)
 !     r2 = p/(T*(1- qt +qv/rd_ov_rv ) )
-        call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, T, h1)
+        call THERMO_CALORIC_ENTHALPY(1, z1, T, h1)
 
     end if
 

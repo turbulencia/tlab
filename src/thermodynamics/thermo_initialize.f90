@@ -221,7 +221,7 @@ subroutine THERMO_INITIALIZE()
 ! The pressure contribution to the entropy still needs to be added
 !
 ! ###################################################################
-    THERMO_AI(:,:,:) = 0.0_wp               ! Initialize to zero
+    THERMO_AI(:, :, :) = 0.0_wp               ! Initialize to zero
     HREF_LOC(:) = 0.0_wp
     SREF_LOC(:) = 0.0_wp
 
@@ -258,7 +258,7 @@ subroutine THERMO_INITIALIZE()
         THERMO_AI(1, :, 5) = 28.88e+3_wp - 4.70833_wp*TREF_LOC; THERMO_AI(2, :, 5) = 4.70833_wp
 
 ! -------------------------------------------------------------------
-    case (MIXT_TYPE_UNIDECOMP)      ! Simple reaction, R -> P 
+    case (MIXT_TYPE_UNIDECOMP)      ! Simple reaction, R -> P
         TREF_LOC = 298.0_wp         ! K, auxiliar value to define caloric data
 
 ! Enthalpy of Formation in Jules/Kmol
@@ -355,8 +355,8 @@ subroutine THERMO_INITIALIZE()
 ! Flatau et al., J. Applied Meteorol., 1507-1513, 1992
         NPSAT = 9
         WRK1D_LOC(1) = 0.611213476e+3_wp
-        WRK1D_LOC(2) = 0.444007856e+2_wp 
-        WRK1D_LOC(3) = 0.143064234e+1_wp 
+        WRK1D_LOC(2) = 0.444007856e+2_wp
+        WRK1D_LOC(3) = 0.143064234e+1_wp
         WRK1D_LOC(4) = 0.264461437e-1_wp
         WRK1D_LOC(5) = 0.305930558e-3_wp
         WRK1D_LOC(6) = 0.196237241e-5_wp
@@ -454,12 +454,15 @@ subroutine THERMO_INITIALIZE()
     Rdv = THERMO_R(1) - THERMO_R(2)
 
     Cd = THERMO_AI(1, 1, 2)
+    Cl = THERMO_AI(1, 1, 3)
     Cdv = THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2)
     Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
-    Cdl= THERMO_AI(1,1,3) - THERMO_AI(1,1,2)
-    Cl = THERMO_AI(1, 1, 3)
+    Cdl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2)
     Lv0 = -THERMO_AI(6, 1, 3)
-  
+    Ld = THERMO_AI(6, 1, 1)
+    Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
+    Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
+
     rd_ov_rv = Rd/Rv
     rd_ov_cd = Rd/Cd*CRATIO_INV
 

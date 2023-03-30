@@ -8,6 +8,7 @@ program SMOOTH
     use THERMO_VARS
     use THERMO_THERMAL
     use THERMO_ANELASTIC
+    use THERMO_CALORIC
 
     implicit none
 
@@ -68,14 +69,14 @@ program SMOOTH
             call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qs)
             qs = qs/(rho*T*WGHT_INV(1))
             call THERMO_THERMAL_PRESSURE(1, z1, rho, T, p)
-            call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, T, h)
+            call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 2) then
             call THERMO_AIRWATER_RP(i1, i1, i1, z1, p, rho, T, dqldqt)
             call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qs)
             qs = qs/(rho*T*WGHT_INV(1))
-            call THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
-            call THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, T, h)
+            call THERMO_CALORIC_ENERGY(1, z1, T, e)
+            call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 3) then
             call THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep, p)
@@ -86,7 +87,7 @@ program SMOOTH
             qs = C_1_R/(MRATIO*p/qs - C_1_R)*rd_ov_rv
             qs = qs/(C_1_R + qs)
             call THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
-            call THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
+            call THERMO_CALORIC_ENERGY(1, z1, T, e)
 
         end if
         write (21, 1000) qt, z1(2), qt - z1(2), qs, rho, T, p, e, h

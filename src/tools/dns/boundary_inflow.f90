@@ -22,6 +22,7 @@ module BOUNDARY_INFLOW
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use THERMO_THERMAL
+    use THERMO_CALORIC
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
@@ -578,7 +579,7 @@ contains
             else
                 call THERMO_THERMAL_TEMPERATURE(imax*jmax*kmax, s, p, rho, T)
             end if
-            call THERMO_CALORIC_ENERGY(imax, jmax, kmax, s, T, e)
+            call THERMO_CALORIC_ENERGY(imax*jmax*kmax, s, T, e)
 
             ! This recalculation of T and p is made to make sure that the same numbers are
             ! obtained in statistics postprocessing as in the simulation; avg* files

@@ -44,6 +44,6 @@ module THERMO_VARS
 
     real(wp) :: dsmooth                         ! Smoothing factor for derivaative discontinuity in inifinitely fast chemistry and saturation adjustment
 
-    real(wp) :: Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_THETA
+    real(wp) :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Ldv, Lvl, rd_ov_rv, rd_ov_cd, PREF_THETA
 
 end module THERMO_VARS
