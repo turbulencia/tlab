@@ -4,25 +4,21 @@ module THERMO_VARS
     implicit none
     save
 
-    ! Compressibility, different combinations of parameters \gamma0 and mach to save calculations
-    real(wp) :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
-    real(wp) :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
-    real(wp) :: MRATIO                          ! gama0 mach^2 = (U0^2/T0)/R0
-    real(wp) :: RRATIO                          ! 1/MRATIO = R0/(U0^2/T0)
-    real(wp) :: CRATIO_INV                      ! GRATIO*MRATIO = (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
-
-    ! Anelastic formulation
-    real(wp) :: scaleheight                     ! Same as Fr/MRATIO in compressible formulation
-
-    ! Mixture
+    ! Thermodynamic properties
     integer(wi) :: imixture
     character*128 :: chemkin_file               ! File with thermodynamic data, if used
+
+    real(wp) :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
+    real(wp) :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
+    ! In case of imixture=NONE, I only need gama0 and it is set in dns.ini
+
+    ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
 
     ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
     integer(wi) :: NSP = 0                      ! Number of components (species) in a mixture
     character(len=32) :: THERMO_SPNAME(MAX_NSP) = ''
     real(wp) :: WGHT_INV(MAX_NSP)               ! Inverse of molar masses, i.e., gas constants
-    real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants
+    real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants, i.e., inverse of mola masses
 
     ! Caloric data
     integer(wi), parameter :: MAX_NCP = 7       ! Caloric data; cp(T), formation enthalpy, formation entropy
@@ -36,7 +32,16 @@ module THERMO_VARS
     integer(wi) :: NPSAT
     real(wp) :: THERMO_PSAT(MAX_NPSAT), NEWTONRAPHSON_ERROR
 
-    logical nondimensional                      ! Nondimensional formulation
+    ! Compressibility, different combinations of parameters \gamma0 and mach to save calculations
+    real(wp) :: MRATIO                          ! gama0 mach^2 = (U0^2/T0)/R0
+    real(wp) :: RRATIO                          ! 1/MRATIO = R0/(U0^2/T0)
+    real(wp) :: CRATIO_INV                      ! GRATIO*MRATIO = (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
+
+    ! Anelastic formulation
+    real(wp) :: scaleheight                     ! Same as Fr/MRATIO in compressible formulation
+
+    ! Nondimensional formulation
+    logical :: nondimensional = .true.          ! consider nondimensional formulation
     real(wp) :: WREF, TREF                      ! Reference values; together with gama0, they contain all information
     real(wp), parameter :: RGAS = 8314_wp       ! Universal gas constant, J /kg /K
 

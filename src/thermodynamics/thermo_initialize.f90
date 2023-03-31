@@ -52,7 +52,6 @@ subroutine THERMO_INITIALIZE()
     inb_scal_loc = inb_scal     ! Control that inb_scal read in dns.ini is correct
 
     select case (imixture)
-
 ! -------------------------------------------------------------------
 ! Burke-Schuman case
 ! Transport just mixture fraction, and then equilibrium
@@ -194,7 +193,7 @@ subroutine THERMO_INITIALIZE()
 
     end if
 
-    ! ###################################################################
+! ###################################################################
 ! Caloric equations
 !
 ! General formulation is CHEMKIN format: 7-coefficient NASA
@@ -392,25 +391,27 @@ subroutine THERMO_INITIALIZE()
 ! ###################################################################
     WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
 
-    ! Nondimensionalization
+    ! Reference values
     ISPREF = 2                              ! Species 2 is taken as reference
     WREF = WGHT(ISPREF)                     ! kg /kmol
-    TREF = 298.0_wp                          ! K
-    CPREF = 0.0_wp                           ! J /kg /K
+    TREF = 298.0_wp                         ! K
+    CPREF = 0.0_wp                          ! J /kg /K
     do icp = NCP, 1, -1
         CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
     end do
 
-    if (imixture /= MIXT_TYPE_NONE) then ! othewise, gama0 is read in dns.ini
+    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
         gama0 = CPREF*WREF/(CPREF*WREF - RGAS)  ! Specific heat ratio
     end if
-    if (gama0 > 0.0_wp) GRATIO = (gama0 - 1.0_wp)/gama0 ! Value of RGAS/(C_{p,0}W_0) is called GRATIO
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-        MRATIO = 1.0_wp
-    else
-        MRATIO = gama0*mach*mach
+
+    ! Nondimensionalization
+    if (imixture == MIXT_TYPE_NONE .and. .not. nondimensional) then
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    MRATIO = 1.0_wp
+    CRATIO_INV = 1.0_wp
     if (nondimensional) then
         ! Thermal equation of state
         WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)    ! normalized gas constants (Inverse of molar masses)
@@ -434,17 +435,20 @@ subroutine THERMO_INITIALIZE()
             THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
         end do
 
-        CRATIO_INV = MRATIO*GRATIO
-    else
-        MRATIO = 1.0_wp
-        GRATIO = 1.0_wp
-        CRATIO_INV = 1.0_wp
+        ! Paramters in the governing equations
+        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+            MRATIO = gama0*mach*mach
+            CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+        end if
+
     end if
 
     ! Derived parameters to save operations
+    GRATIO = (gama0 - 1.0_wp)/gama0 ! RGAS/(C_{p,0}W_0)
     RRATIO = 1/MRATIO
     THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
 
+! -------------------------------------------------------------------
     ! Definitions for the case of the airwater mixture
     ! Rv = WGHT_INV(1)
     ! Rd = WGHT_INV(2)
@@ -471,23 +475,25 @@ subroutine THERMO_INITIALIZE()
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-    call TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
-    do is = 1, NSP
-        write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))
+    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
+        call TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
+        do is = 1, NSP
+            write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))
+            call TLAB_WRITE_ASCII(lfile, str)
+        end do
+        write (str, 1010) 'Setting WREF = ', WREF
         call TLAB_WRITE_ASCII(lfile, str)
-    end do
-    write (str, 1010) 'Setting WREF = ', WREF
-    call TLAB_WRITE_ASCII(lfile, str)
-    write (str, 1010) 'Setting TREF = ', TREF
-    call TLAB_WRITE_ASCII(lfile, str)
-    if (NPSAT > 0) then
-        write (str, 1010) 'Setting RREF = ', PREF_LOC/(RGAS/WREF*TREF)
+        write (str, 1010) 'Setting TREF = ', TREF
+        call TLAB_WRITE_ASCII(lfile, str)
+        if (NPSAT > 0) then
+            write (str, 1010) 'Setting RREF = ', PREF_LOC/(RGAS/WREF*TREF)
+            call TLAB_WRITE_ASCII(lfile, str)
+        end if
+        write (str, 1020) 'Setting CPREF = ', CPREF
+        call TLAB_WRITE_ASCII(lfile, str)
+        write (str, 1020) 'Setting Gama0 = ', gama0
         call TLAB_WRITE_ASCII(lfile, str)
     end if
-    write (str, 1020) 'Setting CPREF = ', CPREF
-    call TLAB_WRITE_ASCII(lfile, str)
-    write (str, 1020) 'Setting Gama0 = ', gama0
-    call TLAB_WRITE_ASCII(lfile, str)
 
     return
 
