@@ -160,7 +160,7 @@ contains
             visc = visctmp
 
             ! array p contains the internal energy. Now we put in the pressure
-            call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size, g_inf(2)%size, kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)
+            call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)
             call THERMO_THERMAL_PRESSURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 5), txc, q_inf(1, 1, 1, 4))
 
             ! ###################################################################
@@ -585,7 +585,7 @@ contains
             ! obtained in statistics postprocessing as in the simulation; avg* files
             ! can then be compared with diff command.
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, s, e, rho, T, wrk3d)
+                call THERMO_CALORIC_TEMPERATURE(imax*jmax*kmax, s, e, rho, T, wrk3d)
                 call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, s, rho, T, p)
             end if
 

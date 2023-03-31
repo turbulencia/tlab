@@ -22,9 +22,8 @@ program STATE
     call TLAB_START()
 
     imixture = MIXT_TYPE_AIRWATER
+    nondimensional = .false.
     call THERMO_INITIALIZE()
-    MRATIO = C_1_R
-    if (gama0 > C_0_R) GRATIO = (gama0 - C_1_R)/gama0
     ep = C_0_R
     dsmooth = C_0_R
     scaleheight = C_1_R
@@ -82,11 +81,10 @@ program STATE
 
     else if (iopt == 2) then
         z1(1) = qt(1)
-        call THERMO_CALORIC_TEMPERATURE(i1, i1, i1, z1, e, r, T, dqldqt)
+        call THERMO_CALORIC_TEMPERATURE(1, z1, e, r, T, dqldqt)
         ql = z1(2)
         qv = qt - ql
         qs = qv ! initial condition for next routine
-!     CALL THERMO_CALORIC_QSAT(i1, i1, i1, e, r, qs, qs)
         call THERMO_THERMAL_PRESSURE(1, z1, r, t, p)
         call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
         qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv

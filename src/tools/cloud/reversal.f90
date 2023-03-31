@@ -23,8 +23,8 @@ program REVERSAL
     call TLAB_START()
 
     imixture = MIXT_TYPE_AIRWATER
-    call THERMO_INITIALIZE
-    MRATIO = C_1_R
+    nondimensional = .false.
+    call THERMO_INITIALIZE()
     dsmooth = C_0_R
 
     write (*, *) '1 - Density profile from nondimensional state'

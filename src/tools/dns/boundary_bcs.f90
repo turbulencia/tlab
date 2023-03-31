@@ -124,6 +124,7 @@ contains
         use TLAB_VARS, only: pbg, qbg
         use THERMO_VARS, only: CRATIO_INV
         use THERMO_THERMAL
+        use THERMO_CALORIC
         use BOUNDARY_BUFFER
         use PROFILES
 #ifdef USE_MPI
@@ -273,7 +274,7 @@ contains
                 do is = 1, inb_scal
                     BcsScalJmin%ref(:, :, is) = BuffScalJmin%Ref(:, 1, :, is)/BcsFlowJmin%ref(:, :, 1)
                 end do
-                call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalJmin%Ref, &
+                call THERMO_CALORIC_TEMPERATURE(imax*kmax, BcsScalJmin%Ref, &
                                                 BcsFlowJmin%ref(1, 1, 6), BcsFlowJmin%Ref(1, 1, 1), BcsFlowJmin%Ref(1, 1, 7), wrk3d)
                 call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalJmin%Ref, &
                                              BcsFlowJmin%Ref(1, 1, 1), BcsFlowJmin%Ref(1, 1, 7), BcsFlowJmin%Ref(1, 1, 5))
@@ -303,7 +304,7 @@ contains
                 do is = 1, inb_scal
                     BcsScalJmax%ref(:, :, is) = BuffScalJmax%Ref(:, j, :, is)/BcsFlowJmax%ref(:, :, 1)
                 end do
-                call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalJmax%Ref, &
+                call THERMO_CALORIC_TEMPERATURE(imax*kmax, BcsScalJmax%Ref, &
                                                 BcsFlowJmax%ref(1, 1, 6), BcsFlowJmax%Ref(1, 1, 1), BcsFlowJmax%Ref(1, 1, 7), wrk3d)
                 call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalJmax%Ref, &
                                              BcsFlowJmax%Ref(1, 1, 1), BcsFlowJmax%Ref(1, 1, 7), BcsFlowJmax%Ref(1, 1, 5))
@@ -331,7 +332,7 @@ contains
                 do is = 1, inb_scal
                     BcsScalImin%ref(:, :, is) = BuffScalImin%Ref(:, :, 1, is)/BcsFlowImin%ref(:, :, 1)
                 end do
-                call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalImin%Ref, &
+                call THERMO_CALORIC_TEMPERATURE(imax*kmax, BcsScalImin%Ref, &
                                                 BcsFlowImin%ref(1, 1, 6), BcsFlowImin%Ref(1, 1, 1), BcsFlowImin%Ref(1, 1, 7), wrk3d)
                 call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalImin%Ref, &
                                              BcsFlowImin%Ref(1, 1, 1), BcsFlowImin%Ref(1, 1, 7), BcsFlowImin%Ref(1, 1, 5))
@@ -369,7 +370,7 @@ contains
                 do is = 1, inb_scal
                     BcsScalImax%ref(:, :, is) = BuffScalImax%Ref(:, :, 1, is)/BcsFlowImax%ref(:, :, 1)
                 end do
-                call THERMO_CALORIC_TEMPERATURE(imax, i1, kmax, BcsScalImax%Ref, &
+                call THERMO_CALORIC_TEMPERATURE(imax*kmax, BcsScalImax%Ref, &
                                                 BcsFlowImax%ref(1, 1, 6), BcsFlowImax%Ref(1, 1, 1), BcsFlowImax%Ref(1, 1, 7), wrk3d)
                 call THERMO_THERMAL_PRESSURE(imax*kmax, BcsScalImax%Ref, &
                                              BcsFlowImax%Ref(1, 1, 1), BcsFlowImax%Ref(1, 1, 7), BcsFlowImax%Ref(1, 1, 5))

@@ -21,9 +21,8 @@ program SMOOTH
     call TLAB_START
 
     imixture = MIXT_TYPE_AIRWATER
+    nondimensional = .false.
     call THERMO_INITIALIZE
-    MRATIO = C_1_R
-    if (gama0 > C_0_R) GRATIO = (gama0 - C_1_R)/gama0
     ep = C_0_R
 
     write (*, *) 'Case d-e (1) or d-p (2) or p-h (3) ?'
@@ -65,7 +64,7 @@ program SMOOTH
 
         z1(1) = qt(1)
         if (opt == 1) then
-            call THERMO_CALORIC_TEMPERATURE(i1, i1, i1, z1, e, rho, T, dqldqt)
+            call THERMO_CALORIC_TEMPERATURE(1, z1, e, rho, T, dqldqt)
             call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qs)
             qs = qs/(rho*T*WGHT_INV(1))
             call THERMO_THERMAL_PRESSURE(1, z1, rho, T, p)

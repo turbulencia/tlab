@@ -53,7 +53,7 @@ subroutine THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
             e_loc = h(ij) - CRATIO_INV*p(ij)/r_loc(1)
 
 ! solve equilibrium (rho,e,q_i)
-            call THERMO_AIRWATER_RE(i1, i1, i1, z1_loc, e_loc, r_loc, t_loc, dummy)
+            call THERMO_AIRWATER_RE(i1, z1_loc, e_loc, r_loc, t_loc, dummy)
 
         end do
         z1(ij, 2) = z1_loc(2)
@@ -110,7 +110,7 @@ subroutine THERMO_ANELASTIC_AIRWATER_PH_RE(nx, ny, nz, s, e, p, wrk3d)
                 en_loc = s(ij, 1) - E_LOC - CRATIO_INV*P_LOC/r_loc
 
 ! solve equilibrium (rho,e,q_i)
-                call THERMO_AIRWATER_RE(i1, i1, i1, z1_loc, en_loc, r_loc, t_loc, dummy)
+                call THERMO_AIRWATER_RE(i1, z1_loc, en_loc, r_loc, t_loc, dummy)
 
                 s(ij, 3) = z1_loc(2)
 

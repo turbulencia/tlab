@@ -17,15 +17,15 @@
 !# using caloric equation of state.
 !#
 !########################################################################
-SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
+SUBROUTINE THERMO_AIRWATER_RE(ijmax, z1, e, rho, T, dqldqt)
 
   USE THERMO_VARS, ONLY : GRATIO, WGHT_INV, THERMO_AI, THERMO_PSAT, NPSAT, dsmooth
   USE THERMO_VARS, ONLY : NEWTONRAPHSON_ERROR
 
   IMPLICIT NONE
 
-  TINTEGER nx, ny, nz
-  TREAL e(*), z1(nx*ny*nz,*), rho(*), dqldqt(*)
+  TINTEGER ijmax
+  TREAL e(*), z1(ijmax,*), rho(*), dqldqt(*)
   TREAL T(*)
 
 ! -------------------------------------------------------------------
@@ -43,7 +43,7 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
 
 ! reference case q_l = 0
   HEAT_CAPACITY_VD = THERMO_AI(1,1,1)-THERMO_AI(1,1,2)+GRATIO*WGHT_INV(2)-GRATIO*WGHT_INV(1)
-  DO i = 1,nx*ny*nz
+  DO i = 1,ijmax
      T(i) = (e(i)-THERMO_AI(6,1,2)-z1(i,1)*(THERMO_AI(6,1,1)-THERMO_AI(6,1,2)))/&
           (THERMO_AI(1,1,2)-GRATIO*WGHT_INV(2)+z1(i,1)*HEAT_CAPACITY_VD)
   ENDDO
@@ -54,7 +54,7 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
   IF ( dsmooth .LE. C_0_R ) THEN
 ! calculate saturation specific humidity, in array z1(1,2).
 ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
-     DO i = 1,nx*ny*nz
+     DO i = 1,ijmax
         psat = C_0_R
         DO ipsat = NPSAT,1,-1
            psat = psat*T(i) + THERMO_PSAT(ipsat)
@@ -78,7 +78,7 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
      B_LOC_CONST_3 = B_LOC(3)
 
 ! loop on all points
-     DO i = 1, nx*ny*nz
+     DO i = 1, ijmax
         B_LOC(2) = B_LOC_CONST_2 + rho(i)*WGHT_INV(1)*&
              ( e(i)-THERMO_AI(6,1,2) )
         B_LOC(3) = B_LOC_CONST_3 - rho(i)*WGHT_INV(1)*&
@@ -141,7 +141,7 @@ SUBROUTINE THERMO_AIRWATER_RE(nx, ny, nz, z1, e, rho, T, dqldqt)
   B_LOC_CONST_3 = B_LOC(3)
 
 ! loop on all points
-  DO i = 1, nx*ny*nz
+  DO i = 1, ijmax
      qsat = z1(i,2)
 
      IF ( qsat .GE. z1(i,1) ) THEN
