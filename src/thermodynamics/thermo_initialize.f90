@@ -33,13 +33,14 @@ subroutine THERMO_INITIALIZE()
     implicit none
 
 ! -------------------------------------------------------------------
-    real(wp) WGHT(MAX_NSP)
+    real(wp), parameter :: RGAS = 8314_wp       ! Universal gas constant, J /kg /K
+
+    real(wp) WGHT(MAX_NSP), WREF
     integer(wi) icp, is, im, inb_scal_loc
     real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
-    integer(wi) ISPREF                     ! reference species for CPREF and WREF
+    integer(wi) ISPREF                     ! reference species for CPREF and RREF
     real(wp) CPREF
     real(wp) WRK1D_LOC(MAX_NPSAT)
-    real(wp) PREF_LOC
     integer(wi) ipsat, i, j
     real(wp) tmp1, tmp2
     character*46 str
@@ -394,14 +395,16 @@ subroutine THERMO_INITIALIZE()
     ! Reference values
     ISPREF = 2                              ! Species 2 is taken as reference
     WREF = WGHT(ISPREF)                     ! kg /kmol
+    RREF = RGAS/WREF
     TREF = 298.0_wp                         ! K
+    PREF = 1e5_wp                           ! Pa
     CPREF = 0.0_wp                          ! J /kg /K
     do icp = NCP, 1, -1
         CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
     end do
 
     if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
-        gama0 = CPREF*WREF/(CPREF*WREF - RGAS)  ! Specific heat ratio
+        gama0 = CPREF/(CPREF - RREF)  ! Specific heat ratio
     end if
 
     ! Nondimensionalization
@@ -413,6 +416,12 @@ subroutine THERMO_INITIALIZE()
     MRATIO = 1.0_wp
     CRATIO_INV = 1.0_wp
     if (nondimensional) then
+        ! Parameters in the governing equations
+        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+            MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
+            CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+        end if
+
         ! Thermal equation of state
         WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)    ! normalized gas constants (Inverse of molar masses)
 
@@ -429,22 +438,15 @@ subroutine THERMO_INITIALIZE()
         THERMO_TLIM = THERMO_TLIM/TREF          ! Temperature limis for polynomial fits to cp
 
         ! Saturation vapor pressure
-        PREF_LOC = 1e5_wp      ! Pa
         do ipsat = 1, NPSAT
-            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF_LOC
+            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF !/MRATIO         ! Scaling by rho_0U_0^2 as total pressure
             THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
         end do
-
-        ! Paramters in the governing equations
-        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-            MRATIO = gama0*mach*mach
-            CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-        end if
 
     end if
 
     ! Derived parameters to save operations
-    GRATIO = (gama0 - 1.0_wp)/gama0 ! RGAS/(C_{p,0}W_0)
+    GRATIO = (gama0 - 1.0_wp)/gama0     ! R_0/C_{p,0}
     RRATIO = 1/MRATIO
     THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
 
@@ -487,7 +489,7 @@ subroutine THERMO_INITIALIZE()
         write (str, 1010) 'Setting TREF = ', TREF
         call TLAB_WRITE_ASCII(lfile, str)
         if (NPSAT > 0) then
-            write (str, 1010) 'Setting RREF = ', PREF_LOC/(RGAS/WREF*TREF)
+            write (str, 1010) 'Setting RHOREF = ', PREF/(RREF*TREF)
             call TLAB_WRITE_ASCII(lfile, str)
         end if
         write (str, 1020) 'Setting CPREF = ', CPREF

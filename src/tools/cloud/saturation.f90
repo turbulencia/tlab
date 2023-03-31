@@ -59,8 +59,8 @@ program SATURATION
             !    dpsat2 = dpsat2 *t_loc + THERMO_PSAT(ipsat)*M_REAL(ipsat-1)
             ! ENDDO
             ! PRINT*,dpsat-dpsat2
-            write (21, 1000) t, t_loc*TREF, psat, dpsat*t_loc**2/psat*WGHT_INV(1)*(RGAS*TREF/WREF), &
-                ((THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t_loc + THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3))*(RGAS*TREF/WREF)/GRATIO
+            write (21, 1000) t, t_loc*TREF, psat, dpsat*t_loc**2/psat*WGHT_INV(1)*(RREF*TREF), &
+                ((THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t_loc + THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3))*(RREF*TREF)/GRATIO
         else if (iopt == 2) then
             write (21, 2000) t, t_loc, qsat*1.d3
         end if

@@ -42,8 +42,8 @@ module THERMO_VARS
 
     ! Nondimensional formulation
     logical :: nondimensional = .true.          ! consider nondimensional formulation
-    real(wp) :: WREF, TREF                      ! Reference values; together with gama0, they contain all information
-    real(wp), parameter :: RGAS = 8314_wp       ! Universal gas constant, J /kg /K
+    real(wp) :: TREF, PREF, RREF                ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
+    !                                           Reference density results from rho_0=p_0/(T_0R_0)
 
     real(wp) :: thermo_param(MAX_PROF)          ! Additional data
 
