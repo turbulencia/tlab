@@ -1,64 +1,59 @@
-#include "types.h"
 #include "dns_error.h"
 
-SUBROUTINE THERMO_POLYNOMIAL_PSAT(nx,ny,nz, T, p)
+subroutine THERMO_POLYNOMIAL_PSAT(ijmax, T, p)
+    use TLAB_CONSTANTS, only: wp, wi
+    use THERMO_VARS, only: THERMO_PSAT, NPSAT
 
-  USE THERMO_VARS, ONLY : THERMO_PSAT, NPSAT
+    implicit none
 
-  IMPLICIT NONE
-
-  TINTEGER nx, ny, nz
-  TREAL T(*)
-  TREAL p(*)
-
-! -------------------------------------------------------------------
-  TINTEGER i, ipsat
-
-! ###################################################################
-  IF ( NPSAT .GT. 0 ) THEN
-     DO i = 1, nx*ny*nz
-        p(i) = THERMO_PSAT(NPSAT)
-        DO ipsat = NPSAT-1,1,-1
-           p(i) = p(i)*T(i) + THERMO_PSAT(ipsat)
-        ENDDO
-     ENDDO
-  ELSE
-     DO i = 1, nx*ny*nz
-        p(i) = C_0_R
-     ENDDO
-  ENDIF
-
-  RETURN
-END SUBROUTINE THERMO_POLYNOMIAL_PSAT
-
-! ###################################################################
-! ###################################################################
-SUBROUTINE THERMO_POLYNOMIAL_DPSAT(nx,ny,nz, T, dp)
-
-  USE THERMO_VARS, ONLY : THERMO_PSAT, NPSAT
-
-  IMPLICIT NONE
-
-  TINTEGER nx, ny, nz
-  TREAL T(*)
-  TREAL dp(*)
+    integer(wi) ijmax
+    real(wp) T(ijmax)
+    real(wp) p(ijmax)
 
 ! -------------------------------------------------------------------
-  TINTEGER i, ipsat
+    integer(wi) i, ipsat
 
 ! ###################################################################
-  IF ( NPSAT .GT. 0 ) THEN
-     DO i = 1, nx*ny*nz
-        dp(i) = C_0_R
-        DO ipsat = NPSAT-1,1,-1
-           dp(i) = dp(i)*T(i) + THERMO_PSAT(ipsat+1) *M_REAL(ipsat)
-        ENDDO
-     ENDDO
-  ELSE
-     DO i = 1, nx*ny*nz
-        dp(i) = C_0_R
-     ENDDO
-  ENDIF
+    if (NPSAT > 0) then
+        do i = 1, ijmax
+            p(i) = THERMO_PSAT(NPSAT)
+            do ipsat = NPSAT - 1, 1, -1
+                p(i) = p(i)*T(i) + THERMO_PSAT(ipsat)
+            end do
+        end do
+    else
+        p(:) = 0.0_wp
+    end if
 
-  RETURN
-END SUBROUTINE THERMO_POLYNOMIAL_DPSAT
+    return
+end subroutine THERMO_POLYNOMIAL_PSAT
+
+! ###################################################################
+! ###################################################################
+subroutine THERMO_POLYNOMIAL_DPSAT(ijmax, T, dp)
+    use TLAB_CONSTANTS, only: wp, wi
+    use THERMO_VARS, only: THERMO_PSAT, NPSAT
+
+    implicit none
+
+    integer(wi) ijmax
+    real(wp) T(ijmax)
+    real(wp) dp(ijmax)
+
+! -------------------------------------------------------------------
+    integer(wi) i, ipsat
+
+! ###################################################################
+    if (NPSAT > 0) then
+        do i = 1, ijmax
+            dp(i) = 0.0_wp
+            do ipsat = NPSAT - 1, 1, -1
+                dp(i) = dp(i)*T(i) + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
+            end do
+        end do
+    else
+        dp(:) = 0.0_wp
+    end if
+
+    return
+end subroutine THERMO_POLYNOMIAL_DPSAT

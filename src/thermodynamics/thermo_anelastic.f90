@@ -16,8 +16,8 @@
 module THERMO_ANELASTIC
     use TLAB_CONSTANTS, only: wp, wi
     use THERMO_VARS, only: imixture, MRATIO, RRATIO, GRATIO, CRATIO_INV, THERMO_PSAT, NPSAT
-    use THERMO_VARS, only: scaleheight
     use THERMO_VARS, only: imixture, Rv, Rd, Rdv, Cd, Cdv, Lv0, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_THETA
+    use THERMO_VARS, only: scaleheight
     implicit none
     private
 

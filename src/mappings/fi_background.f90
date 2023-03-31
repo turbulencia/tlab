@@ -16,6 +16,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, GRATIO, scaleheight, MRATIO
     use THERMO_ANELASTIC
+    use THERMO_AIRWATER
     use PROFILES
     use FI_SOURCES, only: FI_BUOYANCY
 #ifdef USE_MPI
@@ -98,7 +99,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
         call THERMO_AIRWATER_PH(i1, g(2)%size, i1, p_wrk1d(1, 2), p_wrk1d(1, 1), epbackground, pbackground)
     else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, p_wrk1d, p_wrk1d(1, inb_scal_array))
+        call THERMO_AIRWATER_LINEAR(g(2)%size, p_wrk1d, p_wrk1d(:, inb_scal_array))
     end if
 
     if (scaleheight > 0.0_wp) then

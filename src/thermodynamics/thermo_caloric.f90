@@ -1,7 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-! Implementation of thermal equation of state
+! Implementation of caloric equation of state
 ! Default is NSP species represented by the first NSP-1 mass fractions in array s
 ! Airwater considers the special case where qt=qv+ql and ql instead of qv and ql are used as prognostic
 

@@ -69,12 +69,12 @@ program REVERSAL
 
 ! calculate nondimensional limits
         z1(1) = qt_1
-        call THERMO_AIRWATER_PT(i1, i1, i1, z1, p, t_1)
+        call THERMO_AIRWATER_PT(1, z1, p, t_1)
         call THERMO_CALORIC_ENTHALPY(1, z1, t_1, h_1)
         call THERMO_THERMAL_DENSITY(1, z1, p, t_1, r_1)
 
         z1(1) = qt_2
-        call THERMO_AIRWATER_PT(i1, i1, i1, z1, p, t_2)
+        call THERMO_AIRWATER_PT(1, z1, p, t_2)
         call THERMO_CALORIC_ENTHALPY(1, z1, t_2, h_2)
         call THERMO_THERMAL_DENSITY(1, z1, p, t_2, r_2)
 
@@ -128,7 +128,7 @@ program REVERSAL
             call THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep, p)
             s(1) = h; s(2:3) = z1(1:2)
             call THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
+            call THERMO_POLYNOMIAL_PSAT(1, T, qsat)
             qsat = C_1_R/(MRATIO*p/qsat - C_1_R)*rd_ov_rv
             qsat = qsat/(C_1_R + qsat)
             call THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
@@ -158,7 +158,7 @@ program REVERSAL
         do n = 1, nmax
             t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -192,7 +192,7 @@ program REVERSAL
 
             t = C_05_R*(t_2 + t_1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -226,7 +226,7 @@ program REVERSAL
         do n = 1, nmax
             t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -266,7 +266,7 @@ program REVERSAL
 
             t = C_05_R*(t_2 + t_1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -306,7 +306,7 @@ program REVERSAL
         do n = 1, nmax
             t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -341,7 +341,7 @@ program REVERSAL
 
             t = C_05_R*(t_2 + t_1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -376,7 +376,7 @@ program REVERSAL
         do n = 1, nmax
             t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 
@@ -396,7 +396,7 @@ program REVERSAL
         do n = 1, nmax
             t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-            call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
             qvqd = C_1_R/(MRATIO*p/qvqd - C_1_R)*rd_ov_rv
             qsat = qvqd/(C_1_R + qvqd)
 

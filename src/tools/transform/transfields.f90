@@ -850,7 +850,7 @@ contains
         call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, txc(1, 1), epbackground, txc(1, 5))
 
         ! Calculate saturation specific humidity
-        call THERMO_POLYNOMIAL_PSAT(nx, ny, nz, txc(1, 5), txc(1, 1))
+        call THERMO_POLYNOMIAL_PSAT(nx*ny*nz, txc(1, 5), txc(1, 1))
         txc(:, 1) = 1.0_wp/(MRATIO*txc(:, 4)/txc(:, 1) - 1.0_wp)*rd_ov_rv
         txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 

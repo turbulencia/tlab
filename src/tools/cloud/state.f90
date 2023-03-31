@@ -58,7 +58,7 @@ program STATE
 
 ! ###################################################################
     if (iopt == 1) then
-        call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
+        call THERMO_POLYNOMIAL_PSAT(1, t, ps)
         qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         if (qt(1) > qs(1)) then
@@ -86,7 +86,7 @@ program STATE
         qv = qt - ql
         qs = qv ! initial condition for next routine
         call THERMO_THERMAL_PRESSURE(1, z1, r, t, p)
-        call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, ps)
+        call THERMO_POLYNOMIAL_PSAT(1, t, ps)
         qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
@@ -106,7 +106,7 @@ program STATE
         ql(1) = z1(2)
         qv = qt - ql
 
-        call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, ps)
+        call THERMO_POLYNOMIAL_PSAT(1, T, ps)
         qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)

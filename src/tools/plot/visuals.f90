@@ -24,6 +24,7 @@ program VISUALS
     use THERMO_VARS, only: imixture
     use THERMO_VARS, only: NSP, THERMO_SPNAME
     use THERMO_ANELASTIC
+    use THERMO_AIRWATER
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -798,7 +799,7 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
 
                 plot_file = 'LnBuoyancySource'//time_str(1:MaskSize)
                 if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                    call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), txc(1, 3))
+                    call THERMO_AIRWATER_LINEAR_SOURCE(imax*jmax*kmax, s, txc(1, 1), txc(1, 2), txc(1, 3))
                     call FI_GRADIENT(imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 4))
                     dummy = buoyancy%parameters(inb_scal_array)
                     txc(1:isize_field, 2) = txc(1:isize_field, 2)*txc(1:isize_field, 3)*dummy

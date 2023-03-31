@@ -49,8 +49,8 @@ program SATURATION
     do while (t <= t_max)
 
         t_loc = (t + 273.15)/TREF
-        call THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t_loc, psat)
-        call THERMO_POLYNOMIAL_DPSAT(i1, i1, i1, t_loc, dpsat)
+        call THERMO_POLYNOMIAL_PSAT(1, t_loc, psat)
+        call THERMO_POLYNOMIAL_DPSAT(1, t_loc, dpsat)
         dummy = C_1_R/(MRATIO*p/psat - C_1_R)*rd_ov_rv
         qsat = dummy/(C_1_R + dummy)
         if (iopt == 1) then

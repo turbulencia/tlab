@@ -23,6 +23,7 @@ module BOUNDARY_INFLOW
     use THERMO_VARS, only: imixture
     use THERMO_THERMAL
     use THERMO_CALORIC
+    use THERMO_AIRWATER
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
@@ -569,7 +570,7 @@ contains
                 call THERMO_AIRWATER_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1), epbackground, pbackground)
 
             else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                call THERMO_AIRWATER_LINEAR(imax, jmax, kmax, s, s(1, 1, 1, inb_scal_array))
+                call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, 1, 1, inb_scal_array))
 
             end if
 
@@ -589,7 +590,7 @@ contains
                 call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, s, rho, T, p)
             end if
 
-     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax, jmax, kmax, T, vis)
+     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax*jmax*kmax, T, vis)
 
         end if
 

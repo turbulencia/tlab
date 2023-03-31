@@ -14,6 +14,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
     use PARTICLE_ARRAYS, only: l_g ! but this is also varying, like l_q...
     use PARTICLE_INTERPOLATE
     use THERMO_VARS,    only: imixture
+    use THERMO_AIRWATER
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS
@@ -162,7 +163,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
             call FIELD_TO_PARTICLE(data(1:nvar), data_out(1:nvar), l_g, l_q)
 
             l_q(:, 4) = 0.0_wp
-            call THERMO_AIRWATER_LINEAR(l_g%np, 1, 1, l_txc(1, 1), l_q(1, 4))
+            call THERMO_AIRWATER_LINEAR(l_g%np, l_txc(1, 1), l_q(1, 4))
 
             l_q(:, 5) = l_q(:, 4) ! l_q(:,6) for bil_cloud_4 is set =0 in dns_main at initialization
 

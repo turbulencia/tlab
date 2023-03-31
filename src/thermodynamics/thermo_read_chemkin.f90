@@ -1,127 +1,113 @@
-#include "types.h"
 #include "dns_error.h"
 
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS
-!#
-!########################################################################
-SUBROUTINE THERMO_READ_CHEMKIN(name)
+subroutine THERMO_READ_CHEMKIN(name)
+    use TLAB_CONSTANTS, only: wp, wi
+    use THERMO_VARS
+    use TLAB_CONSTANTS, only: efile, lfile
+    use TLAB_PROCS
 
-  USE THERMO_VARS
-  USE TLAB_CONSTANTS, ONLY : efile, lfile
-  USE TLAB_PROCS
+    implicit none
 
-  IMPLICIT NONE
-
-  CHARACTER*(*) name
+    character*(*) name
 
 ! -----------------------------------------------------------------------
-  TREAL T1, T2, T3
-  TINTEGER i, il, is
-  LOGICAL frun
-  CHARACTER*15 token
-  CHARACTER*225 wline
-  CHARACTER*80 line, line1, line2, line3
-  TINTEGER THERMO_FLAG(MAX_NSP)
+    real(wp) T1, T2, T3
+    integer(wi) i, il, is
+    logical frun
+    character*15 token
+    character*225 wline
+    character*80 line, line1, line2, line3
+    integer(wi) THERMO_FLAG(MAX_NSP)
 
-  integer, parameter :: i23 = 23
-  
+    integer, parameter :: i23 = 23
+
 ! #######################################################################
 ! Initialize thermodynamic data structure
-  DO is=1, NSP
-     THERMO_FLAG(is) = 0
-  ENDDO
+    do is = 1, NSP
+        THERMO_FLAG(is) = 0
+    end do
 
 ! Read Thermodynamic file
-  OPEN(i23,file=name,status='old')
+    open (i23, file=name, status='old')
 
-  REWIND(i23)
+    rewind (i23)
 
 ! Read Header
-  READ(i23,*) line
-  CALL TLAB_WRITE_ASCII(lfile, line)
+    read (i23, *) line
+    call TLAB_WRITE_ASCII(lfile, line)
 
-  IF ( TRIM(ADJUSTL(line)) .NE. 'THERMO' ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
-     CALL TLAB_STOP(DNS_ERROR_THERMOFORMAT)
-  ENDIF
+    if (trim(adjustl(line)) /= 'THERMO') then
+        call TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
+        call TLAB_STOP(DNS_ERROR_THERMOFORMAT)
+    end if
 
 ! Read Temperature ranges
-  READ(i23, *) T1, T2, T3
-  WRITE(wline,*) T1, T2, T3
-  CALL TLAB_WRITE_ASCII(lfile, wline(1:80))
+    read (i23, *) T1, T2, T3
+    write (wline, *) T1, T2, T3
+    call TLAB_WRITE_ASCII(lfile, wline(1:80))
 
 ! Remove comments
-  frun = .TRUE.
-  DO WHILE( frun )
-     READ(i23,'(A80)',END=50) line
-     IF ( line(1:1) .NE. '!' ) frun = .FALSE.
-  ENDDO
+    frun = .true.
+    do while (frun)
+        read (i23, '(A80)', end=50) line
+        if (line(1:1) /= '!') frun = .false.
+    end do
 
-  frun = .TRUE.
-  DO WHILE ( frun )
+    frun = .true.
+    do while (frun)
 !    Check for end of file
-     READ(line,'(A15)',END=50) token
-     IF ( TRIM(ADJUSTL(token)) .EQ. 'END' ) THEN
-        frun = .FALSE.
-        GOTO 50
-     ENDIF
+        read (line, '(A15)', end=50) token
+        if (trim(adjustl(token)) == 'END') then
+            frun = .false.
+            goto 50
+        end if
 
 !    Read all relevant information
-     READ(i23,'(A80)',END=50) line1
-     READ(i23,'(A80)',END=50) line2
-     READ(i23,'(A80)',END=50) line3
+        read (i23, '(A80)', end=50) line1
+        read (i23, '(A80)', end=50) line2
+        read (i23, '(A80)', end=50) line3
 
 !    Process lines
-     DO is = 1,NSP
-        IF ( TRIM(ADJUSTL(token)) .EQ. THERMO_SPNAME(is) ) THEN
-           CALL TLAB_WRITE_ASCII(lfile, line)
-           CALL TLAB_WRITE_ASCII(lfile, line1)
-           CALL TLAB_WRITE_ASCII(lfile, line2)
-           CALL TLAB_WRITE_ASCII(lfile, line3)
+        do is = 1, NSP
+            if (trim(adjustl(token)) == THERMO_SPNAME(is)) then
+                call TLAB_WRITE_ASCII(lfile, line)
+                call TLAB_WRITE_ASCII(lfile, line1)
+                call TLAB_WRITE_ASCII(lfile, line2)
+                call TLAB_WRITE_ASCII(lfile, line3)
 
 !          Required species found, process information
 !          Get limit temperatures
-           DO i=1, 225
-              wline(i:i) = ' '
-           ENDDO
-           wline=line(46:75)
-           READ(wline,*) (THERMO_TLIM(i,is),i=1,3)
+                do i = 1, 225
+                    wline(i:i) = ' '
+                end do
+                wline = line(46:75)
+                read (wline, *) (THERMO_TLIM(i, is), i=1, 3)
 
 !          Concatenate lines so read is simpler
-           wline=line1(1:75)//line2(1:75)//line3(1:75)
+                wline = line1(1:75)//line2(1:75)//line3(1:75)
 
-           DO i=1,14
-              il = (i-1)*15+1
-              READ(wline(il:il+14),*) THERMO_AI(i,1,is)
-           ENDDO
+                do i = 1, 14
+                    il = (i - 1)*15 + 1
+                    read (wline(il:il + 14), *) THERMO_AI(i, 1, is)
+                end do
 
-           THERMO_FLAG(is) = 1
-        ENDIF
-     ENDDO
+                THERMO_FLAG(is) = 1
+            end if
+        end do
 
 !    Read next line
-     READ(i23, '(A80)',END=50) line
+        read (i23, '(A80)', end=50) line
 
-  ENDDO
+    end do
 
-50 CLOSE(i23)
+50  close (i23)
 
-  DO is = 1,NSP
-     IF ( THERMO_FLAG(is) .EQ. 0 ) THEN
-        CALL TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
-        CALL TLAB_STOP(DNS_ERROR_THERMOCONT)
-     ENDIF
-  ENDDO
+    do is = 1, NSP
+        if (THERMO_FLAG(is) == 0) then
+            call TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
+            call TLAB_STOP(DNS_ERROR_THERMOCONT)
+        end if
+    end do
 
-  RETURN
-END SUBROUTINE THERMO_READ_CHEMKIN
+    return
+end subroutine THERMO_READ_CHEMKIN

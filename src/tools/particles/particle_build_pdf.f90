@@ -19,6 +19,7 @@ program PARTICLE_BUILD_PDF
 #ifdef USE_MPI
     use TLAB_MPI_PROCS
 #endif
+    use THERMO_AIRWATER
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -33,7 +34,7 @@ program PARTICLE_BUILD_PDF
     character*64 fname
     character*32 bakfile
 
-    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+    bakfile = trim(adjustl(ifile))//'.bak'
 
     call TLAB_START
 
@@ -56,11 +57,11 @@ program PARTICLE_BUILD_PDF
     call PARTICLE_ALLOCATE(C_FILE_LOC)
 
     isize_wrk3d = imax*jmax*kmax
-    isize_wrk3d = MAX(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    isize_wrk3d = MAX(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
-    isize_wrk3d = MAX(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
+    isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
+    isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
+    isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
 
-    isize_wrk2d = MAX(isize_wrk2d, jmax*inb_part_interp)
+    isize_wrk2d = max(isize_wrk2d, jmax*inb_part_interp)
 
     ! IF (jmax_part .EQ. 1) THEN
     !    jmax_part   = jmax ! 1 by default
@@ -94,17 +95,17 @@ program PARTICLE_BUILD_PDF
 !#######################################################################
 !READ ALL FILES
 !#######################################################################
-        write (fname, *) i; fname = TRIM(ADJUSTL(tag_scal))//TRIM(ADJUSTL(fname))
+        write (fname, *) i; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
         call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
-        call THERMO_AIRWATER_LINEAR(imax, jmax, kmax, s, s(1, inb_scal_array))
+        call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, inb_scal_array))
 
-        write (fname, *) i; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+        write (fname, *) i; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
         call IO_READ_PARTICLE(fname, l_g, l_q)
 
 ! ######################################################################
 ! Save particle pathlines for particle_pdf
 ! ######################################################################
-        write (fname, *) i; fname = "particle_pdf."//TRIM(ADJUSTL(fname))
+        write (fname, *) i; fname = "particle_pdf."//trim(adjustl(fname))
         call PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
 
     end do
