@@ -39,7 +39,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     implicit none
 
     real(wp), intent(IN) :: q(imax, jmax, kmax, inb_flow_array)
-    real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
+!    real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
+    real(wp), intent(INOUT) :: s(imax, jmax, kmax, inb_scal_array) ! caluclates equi composition in airwater
     real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz
     real(wp), intent(INOUT) :: mean2d(jmax, MAX_AVG_TEMPORAL)
 

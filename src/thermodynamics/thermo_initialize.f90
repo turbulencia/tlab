@@ -464,9 +464,10 @@ subroutine THERMO_INITIALIZE()
     Cdl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2)
     Lv0 = -THERMO_AI(6, 1, 3)
     Ld = THERMO_AI(6, 1, 1)
+    Lv = THERMO_AI(6, 1, 2)
     Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
     Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
-
+    Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
     rd_ov_rv = Rd/Rv
     rd_ov_cd = Rd/Cd*CRATIO_INV
 

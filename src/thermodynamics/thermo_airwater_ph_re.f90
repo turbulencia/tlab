@@ -18,7 +18,8 @@ subroutine THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 
     use THERMO_VARS, only: CRATIO_INV, THERMO_AI
     use THERMO_THERMAL
-
+    use THERMO_AIRWATER
+    
     implicit none
 
     TINTEGER nx, ny, nz
@@ -26,7 +27,7 @@ subroutine THERMO_AIRWATER_PH_RE(nx, ny, nz, z1, p, h, T)
 
 ! -------------------------------------------------------------------
     TINTEGER ij, iter, niter
-    TREAL r_loc(1), e_loc(1), t_loc(1), z1_loc(2), dummy
+    TREAL r_loc(1), e_loc(1), t_loc(1), z1_loc(2), dummy(1)
 
     integer, parameter :: i1 = 1
 
@@ -70,6 +71,7 @@ subroutine THERMO_ANELASTIC_AIRWATER_PH_RE(nx, ny, nz, s, e, p, wrk3d)
 
     use THERMO_VARS, only: CRATIO_INV, MRATIO
     use THERMO_ANELASTIC
+    use THERMO_AIRWATER
 
     implicit none
 
@@ -80,7 +82,7 @@ subroutine THERMO_ANELASTIC_AIRWATER_PH_RE(nx, ny, nz, s, e, p, wrk3d)
 
 ! -------------------------------------------------------------------
     TINTEGER ij, jk, is, i, iter, niter
-    TREAL r_loc(1), en_loc(1), t_loc(1), z1_loc(2), dummy
+    TREAL r_loc(1), en_loc(1), t_loc(1), z1_loc(2), dummy(1)
     TREAL p_loc(1), e_loc(1)
 
     integer, parameter :: i1 = 1

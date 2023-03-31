@@ -13,6 +13,7 @@ module THERMO_CALORIC
     use THERMO_VARS, only: imixture, THERMO_R, NSP
     use THERMO_VARS, only: gama0, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
     use THERMO_VARS, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
+    use THERMO_AIRWATER
     implicit none
     private
 
@@ -153,7 +154,8 @@ contains
     !########################################################################
     subroutine THERMO_CALORIC_TEMPERATURE(ijmax, s, e, rho, T, dqldqt)
         integer(wi), intent(in) :: ijmax
-        real(wp), intent(in) :: s(ijmax, *), e(ijmax), rho(ijmax)
+        real(wp), intent(inout) :: s(ijmax, *) ! in case equilibrium composition is calculated
+        real(wp), intent(in) :: e(ijmax), rho(ijmax)
         real(wp), intent(out) :: T(ijmax)
         real(wp), intent(inout) :: dqldqt(ijmax)
 
