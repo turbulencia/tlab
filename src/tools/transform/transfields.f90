@@ -825,7 +825,7 @@ contains
         real(wp), dimension(nx*ny*nz, *) :: txc
 
         ! -----------------------------------------------------------------------
-        real(wp) qt_0, qt_1, h_0, h_1, p
+        real(wp) qt_0, qt_1, h_0, h_1, p(1)
         real(wp) LATENT_HEAT
 
         ! #######################################################################
@@ -846,7 +846,7 @@ contains
         txc(:, 3) = 0.0_wp
         txc(:, 4) = p                       ! pressure
 
-        call THERMO_AIRWATER_PH(nx, ny, nz, txc(1, 2), txc(1, 1), epbackground, p)        ! Calculate q_l
+        call THERMO_ANELASTIC_PH(nx, ny, nz, txc(1, 2), txc(1, 1), epbackground, p)        ! Calculate q_l
         call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, txc(1, 1), epbackground, txc(1, 5))
 
         ! Calculate saturation specific humidity

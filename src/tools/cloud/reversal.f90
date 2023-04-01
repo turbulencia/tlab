@@ -125,7 +125,7 @@ program REVERSAL
             ep = C_0_R
 
             z1(1) = qt
-            call THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep, p)
+            call THERMO_ANELASTIC_PH(i1, i1, i1, z1, h, ep, p)
             s(1) = h; s(2:3) = z1(1:2)
             call THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
             call THERMO_POLYNOMIAL_PSAT(1, T, qsat)

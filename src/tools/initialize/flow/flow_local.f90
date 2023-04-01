@@ -10,6 +10,7 @@ module FLOW_LOCAL
     use TLAB_PROCS
     use THERMO_THERMAL
     use THERMO_AIRWATER
+    use THERMO_ANELASTIC
     use IO_FIELDS
     use AVGS, only: AVG1V2D
     use PROFILES
@@ -513,7 +514,7 @@ contains
             end do
 
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_AIRWATER_PH_RE(imax, jmax, kmax, s, p, h, T)
+                call THERMO_AIRWATER_PH_RE(imax*jmax*kmax, s, p, h, T)
             end if
 
             call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, T, rho)

@@ -447,7 +447,7 @@ subroutine THERMO_INITIALIZE()
 
     ! Derived parameters to save operations
     GRATIO = (gama0 - 1.0_wp)/gama0     ! R_0/C_{p,0}
-    RRATIO = 1/MRATIO
+    RRATIO = 1.0_wp/MRATIO
     THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
 
 ! -------------------------------------------------------------------
@@ -465,8 +465,8 @@ subroutine THERMO_INITIALIZE()
     Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
     Cdl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2)
     Lv0 = -THERMO_AI(6, 1, 3)
-    Ld = THERMO_AI(6, 1, 1)
-    Lv = THERMO_AI(6, 1, 2)
+    Ld = THERMO_AI(6, 1, 2)
+    Lv = THERMO_AI(6, 1, 1)
     Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
     Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
     Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)

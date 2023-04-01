@@ -99,10 +99,10 @@ program STATE
     else if (iopt == 3) then
         h = h/TREF/1.007
         z1(1) = qt(1)
-        call THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep, p)
+        call THERMO_ANELASTIC_PH(i1, i1, i1, z1, h, ep, p)
         s(1) = h(1); s(2:3) = z1(1:2)
         call THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
-        ! CALL THERMO_AIRWATER_PH_RE(i1,i1,i1, z1, p, h, T)
+        ! CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
         ql(1) = z1(2)
         qv = qt - ql
 

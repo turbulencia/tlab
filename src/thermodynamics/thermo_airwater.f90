@@ -15,17 +15,22 @@ module THERMO_AIRWATER
     use THERMO_VARS, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
     use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
     use THERMO_VARS, only: thermo_param
+    use THERMO_THERMAL
     implicit none
     private
 
-    integer(wi) ij, is
+    integer(wi) ij, is, ipsat
     real(wp) RMEAN, CPMEAN, T_LOC, psat, qsat, dsmooth_loc, dummy
+    integer(wi) inr, nrmax
+    real(wp) B_LOC(10), FUN, DER, ERROR_LOC
 
     public :: THERMO_AIRWATER_PT
+    public :: THERMO_AIRWATER_RP
+    public :: THERMO_AIRWATER_PH_RE
     public :: THERMO_AIRWATER_RE
     public :: THERMO_AIRWATER_LINEAR
     public :: THERMO_AIRWATER_LINEAR_SOURCE
-
+    
 contains
     !########################################################################
     !# Calculate liquid content from p, T and water content.
@@ -36,7 +41,7 @@ contains
         real(wp), intent(out) :: s(ijmax, *)
 
         real(wp) dqldqt
-        
+
         ! ###################################################################
         call THERMO_POLYNOMIAL_PSAT(ijmax, T, s(1, 2))
         do ij = 1, ijmax
@@ -61,6 +66,188 @@ contains
         return
     end subroutine THERMO_AIRWATER_PT
 
+    !########################################################################
+    !# Calculate T and liquid content from rho, p and water content using thermal equation of state.
+    !# The difference with THERMO_THERMAL_TEMPERATURE is that the equilibrium
+    !# partition of q_t between vapor and liquid here is not known and q_l has to be calculated.
+    !########################################################################
+    subroutine THERMO_AIRWATER_RP(ijmax, s, p, rho, T, dqldqt)
+        integer(wi) ijmax
+        real(wp), intent(in) :: p(ijmax), rho(ijmax)
+        real(wp), intent(inout) :: s(ijmax, *), dqldqt(ijmax)
+        real(wp), intent(out) :: T(ijmax)
+
+        ! -------------------------------------------------------------------
+        real(wp) B_LOC_CONST_1, B_LOC_CONST_2, alpha
+
+        ! ###################################################################
+        ERROR_LOC = 0.0_wp
+        ! maximum number of iterations in Newton-Raphson
+        nrmax = 3
+
+        ! reference case q_l = 0
+        T(:) = p(:)/(rho(:)*(Rd + s(:, 1)*Rdv - s(:, 2)*Rv))
+
+        ! -------------------------------------------------------------------
+        ! calculate saturation specific humidity q_s(\rho,p)
+        ! -------------------------------------------------------------------
+        if (dsmooth <= 0.0_wp) then
+            ! calculate saturation specific humidity, in array s(1,2).
+            ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+            do ij = 1, ijmax
+                psat = 0.0_wp
+                do ipsat = NPSAT, 1, -1
+                    psat = psat*T(ij) + THERMO_PSAT(ipsat)
+                end do
+                s(ij, 2) = psat/(rho(ij)*T(ij)*WGHT_INV(1))
+            end do
+
+        else
+            ! initialize homogeneous data
+            do ij = 1, 9
+                B_LOC(ij) = THERMO_PSAT(ij)*(rd_ov_rv - 1.0_wp)
+            end do
+            B_LOC_CONST_1 = B_LOC(1)
+            B_LOC_CONST_2 = B_LOC(2)
+
+            ! loop on all points
+            do ij = 1, ijmax
+                B_LOC(1) = B_LOC_CONST_1 + MRATIO*p(ij)
+                B_LOC(2) = B_LOC_CONST_2 - rho(ij)*WGHT_INV(2)
+
+                ! Newton-Raphson
+                t_loc = T(ij)
+                do inr = 1, nrmax
+                    FUN = B_LOC(9)
+                    DER = 0.0_wp
+                    do is = 8, 1, -1
+                        FUN = FUN*t_loc + B_LOC(is)
+                        DER = DER*t_loc + B_LOC(is + 1)*real(is, wp)
+                    end do
+                    t_loc = t_loc - FUN/DER
+                end do
+                ERROR_LOC = max(ERROR_LOC, abs(FUN/DER)/t_loc)
+
+                ! calculate saturation specific humidity, in array s(1,2).
+                s(ij, 2) = (MRATIO*p(ij) - rho(ij)*WGHT_INV(2)*t_loc)/ &
+                           (rho(ij)*(WGHT_INV(1) - WGHT_INV(2))*t_loc)
+
+                ! calculate dqldqt
+                qsat = s(ij, 2)
+                alpha = -Lvl - (Cvl + GRATIO*WGHT_INV(1))*t_loc
+                alpha = alpha/(t_loc*GRATIO*WGHT_INV(1)) - 1.0_wp
+
+                dummy = p(ij)/(qsat*rho(ij)*Rv*t_loc)
+
+                dqldqt(ij) = 1.0_wp - alpha*rd_ov_rv/(1.0_wp + dummy)
+            end do
+
+        end if
+
+        ! -------------------------------------------------------------------
+        ! check if condesation occurs and, if so, solve nonlinear equation
+        ! -------------------------------------------------------------------
+        ! initialize homogeneous data
+        B_LOC(1:9) = THERMO_PSAT(1:9)
+
+        ! loop on all points
+        do ij = 1, ijmax
+            qsat = s(ij, 2)
+
+            if (qsat > s(ij, 1)) then
+                s(ij, 2) = 0.0_wp
+                if (dsmooth > 0.0_wp) then
+                    dsmooth_loc = dsmooth*qsat
+                    s(ij, 2) = dsmooth_loc*dqldqt(ij) &
+                               *log(exp((s(ij, 1) - qsat)/dsmooth_loc) + 1.0_wp)
+                    ! change T consistently
+                    T(ij) = p(ij)/ &
+                            (((s(ij, 1) - s(ij, 2))*Rv + (1.0_wp - s(ij, 1))*Rd)*rho(ij))
+                end if
+
+                ! if q_s < q_t, then we have to repeat calculation of T
+            else
+                B_LOC(1) = THERMO_PSAT(1) - MRATIO*p(ij)
+                B_LOC(2) = THERMO_PSAT(2) + (1.0_wp - s(ij, 1))*rho(ij)*WGHT_INV(2)
+
+                ! Newton-Raphson
+                do inr = 1, nrmax
+                    FUN = B_LOC(9)
+                    DER = 0.0_wp
+                    do is = 8, 1, -1
+                        FUN = FUN*T(ij) + B_LOC(is)
+                        DER = DER*T(ij) + B_LOC(is + 1)*real(is, wp)
+                    end do
+                    T(ij) = T(ij) - FUN/DER
+                end do
+                ERROR_LOC = max(ERROR_LOC, abs(FUN/DER)/T(ij))
+
+                ! calculate saturation specific humidity, in array s(1,2).
+                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+                psat = 0.0_wp
+                do ipsat = NPSAT, 1, -1
+                    psat = psat*T(ij) + THERMO_PSAT(ipsat)
+                end do
+                s(ij, 2) = psat/(rho(ij)*T(ij)*WGHT_INV(1))
+
+                ! liquid content
+                s(ij, 2) = s(ij, 1) - s(ij, 2)
+                if (dsmooth > 0.0_wp) then
+                    dsmooth_loc = dsmooth*qsat
+                    s(ij, 2) = dsmooth_loc*dqldqt(ij) &
+                               *log(exp((s(ij, 1) - qsat)/dsmooth_loc) + 1.0_wp) &
+                               + s(ij, 2) - dqldqt(ij)*(s(ij, 1) - qsat)
+                    ! change T consistently
+                    T(ij) = p(ij)/ &
+                            (((s(ij, 1) - s(ij, 2))*Rv + (1.0_wp - s(ij, 1))*Rd)*rho(ij))
+                end if
+            end if
+
+        end do
+
+        return
+    end subroutine THERMO_AIRWATER_RP
+
+    !########################################################################
+    !Calculating the equilibrium T and q_l for given enthalpy and pressure
+    !Iterative method based on (rho,e,q_i)
+    !########################################################################
+    subroutine THERMO_AIRWATER_PH_RE(ijmax, s, p, h, T)
+        integer(wi) ijmax
+        real(wp), intent(in) :: p(ijmax), h(ijmax)
+        real(wp), intent(inout) :: s(ijmax, *)
+        real(wp), intent(out) :: T(ijmax)
+
+        ! -------------------------------------------------------------------
+        integer(wi) iter, niter
+        integer(wi) ij_loc
+        real(wp) r_loc(1), e_loc(1), t_loc(1), s_loc(2), dummy(1)
+
+        ! ###################################################################
+        niter = 5
+
+        do ij_loc = 1, ijmax
+            ! initialize, q_l=0
+            s_loc(1) = s(ij_loc, 1)
+            s_loc(2) = 0.0_wp
+            t_loc(1) = (h(ij_loc) - Ld - s(ij_loc, 1)*Ldv)/(Cd + s(ij_loc, 1)*Cdv)
+
+            do iter = 1, niter      ! iteration
+                ! calculate density from temperature/composition
+                call THERMO_THERMAL_DENSITY(1, s_loc, p(ij_loc), t_loc, r_loc)
+                ! calculate energy
+                e_loc = h(ij_loc) - CRATIO_INV*p(ij_loc)/r_loc(1)
+                ! solve equilibrium (rho,e,q_i)
+                call THERMO_AIRWATER_RE(1, s_loc, e_loc, r_loc, t_loc(:), dummy(:))
+            end do
+            s(ij_loc, 2) = s_loc(2)
+            T(ij_loc) = t_loc(1)
+
+        end do
+
+        return
+    end subroutine THERMO_AIRWATER_PH_RE
+
 !########################################################################
 !# Calculate T and liquid content from rho, e and water content using caloric equation of state.
 !########################################################################
@@ -71,9 +258,9 @@ contains
         real(wp), intent(inout) :: s(ijmax, *), dqldqt(ijmax)
 
         ! -------------------------------------------------------------------
-        integer(wi) i, inr, nrmax, ipsat
+        integer(wi) i
         real(wp) HEAT_CAPACITY_LD, HEAT_CAPACITY_LV, HEAT_CAPACITY_VD
-        real(wp) B_LOC(10), FUN, DER, B_LOC_CONST_2, B_LOC_CONST_3
+        real(wp) B_LOC_CONST_2, B_LOC_CONST_3
         real(wp) alpha, dummy1, dummy2
 
         ! ###################################################################

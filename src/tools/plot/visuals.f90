@@ -485,7 +485,7 @@ program VISUALS
                     if (damkohler(1) > 0.0_wp) then ! Supersaturated liquid; this is wrong
                         plot_file = 'Supsat'//time_str(1:MaskSize)
                         txc(1:isize_field, 1:2) = s(1:isize_field, 1:2)
-                        call THERMO_AIRWATER_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1), epbackground, pbackground)
+                        call THERMO_ANELASTIC_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1), epbackground, pbackground)
                         txc(1:isize_field, 3) = (s(1:isize_field, 3) - txc(1:isize_field, 3))/s(1, 3)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
                     end if
@@ -992,7 +992,7 @@ contains
         epbackground = 0.0_wp                                    ! potential energy
         pbackground = p                                        ! pressure
 
-        call THERMO_AIRWATER_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
+        call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
         call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s(1, 1), epbackground, txc(1, 1))
         call THERMO_ANELASTIC_DENSITY(nx, ny, nz, s(1, 1), epbackground, pbackground, txc(1, 2))
 

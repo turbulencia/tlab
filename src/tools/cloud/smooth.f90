@@ -7,8 +7,9 @@ program SMOOTH
     use TLAB_PROCS
     use THERMO_VARS
     use THERMO_THERMAL
-    use THERMO_ANELASTIC
     use THERMO_CALORIC
+    use THERMO_AIRWATER
+    use THERMO_ANELASTIC
 
     implicit none
 
@@ -71,17 +72,17 @@ program SMOOTH
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 2) then
-            call THERMO_AIRWATER_RP(i1, i1, i1, z1, p, rho, T, dqldqt)
+            call THERMO_AIRWATER_RP(1, z1, p, rho, T, dqldqt)
             call THERMO_POLYNOMIAL_PSAT(1, T, qs)
             qs = qs/(rho*T*WGHT_INV(1))
             call THERMO_CALORIC_ENERGY(1, z1, T, e)
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 3) then
-            call THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep, p)
+            call THERMO_ANELASTIC_PH(i1, i1, i1, z1, h, ep, p)
             s(1) = h(1); s(2:3) = z1(1:2)
             call THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
-!        CALL THERMO_AIRWATER_PH_RE(i1,i1,i1, z1, p, h, T)
+!        CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
             call THERMO_POLYNOMIAL_PSAT(1, T, qs)
             qs = C_1_R/(MRATIO*p/qs - C_1_R)*rd_ov_rv
             qs = qs/(C_1_R + qs)
