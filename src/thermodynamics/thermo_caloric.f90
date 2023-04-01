@@ -11,7 +11,7 @@ module THERMO_CALORIC
     use TLAB_CONSTANTS, only: wp, wi, MAX_NSP, efile
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, THERMO_R, NSP
-    use THERMO_VARS, only: gama0, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
+    use THERMO_VARS, only: gama0, GRATIO, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
     use THERMO_VARS, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
     use THERMO_AIRWATER
     implicit none
@@ -25,6 +25,7 @@ module THERMO_CALORIC
     public :: THERMO_CALORIC_TEMPERATURE
     public :: THERMO_GAMMA
     public :: THERMO_CP
+    public :: THERMO_ENTROPY            ! It is not caloric, but entropic, but fits in this module
 
 contains
     !########################################################################
@@ -273,7 +274,7 @@ contains
 !     DO ij = 1,ijmax
 !#define MACRO_ZINPUT s(ij,inb_scal)
 !#include "dns_chem_mass.h"
-!        cp(ij) = gama(ij)*GRATIO/((gama(ij)-C_1_R)*WMEAN)
+!        cp(ij) = gama(ij)*GRATIO/((gama(ij)-1.0_wp)*WMEAN)
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)   ! s(1,2) contains liquid mass fraction
@@ -295,5 +296,93 @@ contains
 
         return
     end subroutine THERMO_CP
+
+    !########################################################################
+    !# Calculate entropy from T, p and composition. The reference state
+    !# is T_0, which is set to 298 K in the case of multispecies, and
+    !# pbg%mean. Nondimensional with C_{p,0}.
+    !########################################################################
+    subroutine THERMO_ENTROPY(ijmax, z1, T, p, result)
+        use TLAB_VARS, only: pbg
+
+        integer(wi), intent(in) :: ijmax
+        real(wp), intent(in) :: z1(ijmax, *), T(ijmax), p(ijmax)
+        real(wp), intent(out) :: result(ijmax)
+
+        ! -------------------------------------------------------------------
+        real(wp) ENTROPY_I, XMOL_I
+
+        select case (imixture)
+        case (MIXT_TYPE_NONE)
+            result(:) = log(T(:)/(p(:)/pbg%mean)**GRATIO)
+
+        case (MIXT_TYPE_AIRWATER)       ! to be reformulated in terms of Cd, Rd, ...
+            do ij = 1, ijmax
+                YMASS(1) = z1(ij, 1) - z1(ij, 2) !q_v=q_t-q_l
+                YMASS(2) = 1.0_wp - z1(ij, 1)    !q_d=1-q_t
+                ! calculate temperature part
+                result(ij) = 0.0_wp
+                RMEAN = 0.0_wp
+                do is = 1, 2
+                    if (T(ij) < THERMO_TLIM(3, is)) then; im = 2
+                    else; im = 1; end if
+                    ENTROPY_I = 0.0_wp
+                    do icp = NCP, 2, -1
+                        ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(icp, im, is)/real(icp - 1, wp)
+                    end do
+                    ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(7, im, is) + &
+                                THERMO_AI(1, im, is)*log(T(ij))
+                    result(ij) = result(ij) + YMASS(is)*ENTROPY_I
+                    RMEAN = RMEAN + YMASS(is)*THERMO_R(is)
+                end do
+                ! calculate pressure part
+                do is = 1, 2
+                    XMOL_I = YMASS(is)*THERMO_R(is)/RMEAN
+                    if (XMOL_I > 0.0_wp) then
+                        result(ij) = result(ij) - CRATIO_INV*YMASS(is)*THERMO_R(is)*log(XMOL_I)
+                    end if
+                end do
+                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
+
+                result(ij) = result(ij) + z1(ij, 2)*(THERMO_AI(7, im, 3) + THERMO_AI(1, 1, 3)*log(T(ij)))
+
+            end do
+
+        case default
+            do ij = 1, ijmax
+                ! pass species to YMASS vector
+                YMASS(NSP) = 1.0_wp
+                do is = 1, NSP - 1
+                    YMASS(is) = z1(ij, is)
+                    YMASS(NSP) = YMASS(NSP) - YMASS(is)
+                end do
+                ! calculate temperature part
+                result(ij) = 0.0_wp
+                RMEAN = 0.0_wp
+                do is = 1, NSP
+                    if (T(ij) < THERMO_TLIM(3, is)) then; im = 2
+                    else; im = 1; end if
+                    ENTROPY_I = 0.0_wp
+                    do icp = NCP, 2, -1
+                        ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(icp, im, is)/real(icp - 1, wp)
+                    end do
+                    ENTROPY_I = ENTROPY_I*T(ij) + THERMO_AI(7, im, is) + THERMO_AI(1, im, is)*log(T(ij))
+                    result(ij) = result(ij) + YMASS(is)*ENTROPY_I
+                    RMEAN = RMEAN + YMASS(is)*THERMO_R(is)
+                end do
+                ! calculate pressure part
+                do is = 1, NSP
+                    XMOL_I = YMASS(is)*THERMO_R(is)/RMEAN
+                    if (XMOL_I > 0.0_wp) then
+                        result(ij) = result(ij) - CRATIO_INV*YMASS(is)*THERMO_R(is)*log(XMOL_I)
+                    end if
+                end do
+                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
+            end do
+
+        end select
+
+        return
+    end subroutine THERMO_ENTROPY
 
 end module THERMO_CALORIC

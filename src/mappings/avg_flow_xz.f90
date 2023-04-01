@@ -768,7 +768,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         ! -------------------------------------------------------------------
         call THERMO_CALORIC_TEMPERATURE(imax*jmax*kmax, s, e, rho, T_LOC(1, 1, 1), p_wrk3d)
         call THERMO_GAMMA(imax*jmax*kmax, s, T_LOC(:, :, :), GAMMA_LOC(:, :, :))
-        call THERMO_ENTROPY(imax, jmax, kmax, s, T_LOC(1, 1, 1), p, S_LOC(1, 1, 1))
+        call THERMO_ENTROPY(imax*jmax*kmax, s, T_LOC(1, 1, 1), p, S_LOC(1, 1, 1))
 
         call AVG_IK_V(imax, jmax, kmax, jmax, T_LOC(1, 1, 1), g(1)%jac, g(3)%jac, rT(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, e, g(1)%jac, g(3)%jac, re(1), wrk1d, area)
