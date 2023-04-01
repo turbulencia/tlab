@@ -414,12 +414,10 @@ subroutine THERMO_INITIALIZE()
     end if
 
     MRATIO = 1.0_wp
-    CRATIO_INV = 1.0_wp
     if (nondimensional) then
         ! Parameters in the governing equations
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
             MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
-            CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
         end if
 
         ! Thermal equation of state
@@ -447,6 +445,7 @@ subroutine THERMO_INITIALIZE()
 
     ! Derived parameters to save operations
     GRATIO = (gama0 - 1.0_wp)/gama0     ! R_0/C_{p,0}
+    CRATIO_INV = GRATIO*MRATIO          ! (gama0 - 1.0_wp)*mach*mach
     RRATIO = 1.0_wp/MRATIO
     THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
 
