@@ -451,9 +451,6 @@ subroutine THERMO_INITIALIZE()
 
 ! -------------------------------------------------------------------
     ! Definitions for the case of the airwater mixture
-    ! Rv = WGHT_INV(1)
-    ! Rd = WGHT_INV(2)
-    ! Rdv = WGHT_INV(1) - WGHT_INV(2)
     Rv = THERMO_R(1)
     Rd = THERMO_R(2)
     Rdv = THERMO_R(1) - THERMO_R(2)

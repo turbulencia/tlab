@@ -59,7 +59,7 @@ program STATE
 ! ###################################################################
     if (iopt == 1) then
         call THERMO_POLYNOMIAL_PSAT(1, t, ps)
-        qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
+        qs = C_1_R/(p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         if (qt(1) > qs(1)) then
             qv = qs*(1 - qt)
@@ -87,7 +87,7 @@ program STATE
         qs = qv ! initial condition for next routine
         call THERMO_THERMAL_PRESSURE(1, z1, r, t, p)
         call THERMO_POLYNOMIAL_PSAT(1, t, ps)
-        qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
+        qs = C_1_R/(p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
 
@@ -107,7 +107,7 @@ program STATE
         qv = qt - ql
 
         call THERMO_POLYNOMIAL_PSAT(1, T, ps)
-        qs = C_1_R/(MRATIO*p/ps - C_1_R)*rd_ov_rv
+        qs = C_1_R/(p/ps - C_1_R)*rd_ov_rv
         qs = qs/(C_1_R + qs)
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)
         call THERMO_CALORIC_ENERGY(1, z1, T, e)
@@ -134,7 +134,7 @@ program STATE
     write (*, 1000) 'Specific energy ...................:', e
     write (*, 1000) 'Specific enthalpy .................:', h
     write (*, 1000) 'Reference latent heat (kJ/kg) .....:', -THERMO_AI(6, 1, 3)*1.007*TREF
-    WRITE(*,1000) 'Latent heat (kJ/kg) ...............:', (-THERMO_AI(6,1,3)-t*(THERMO_AI(1,1,3)-THERMO_AI(1,1,1)) ) *1.007 *TREF
+    WRITE(*,1000) 'Latent heat (kJ/kg) ...............:', (-Cl-t*Lvl ) *1.007 *TREF
     write (*, 1000) 'Liquid-water potential T (K) ......:', theta*TREF
     write (*, 1000) 'Equivalent potential T (K) ........:', theta_e*TREF
     if (iopt == 3) then
@@ -148,13 +148,11 @@ program STATE
     read (*, *) iopt
 
     if (iopt == 1 .and. ql(1) > C_0_R) then
-        heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
-                (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
-        heat2 = heat1*(C_1_R + qv/(C_1_R - qt)) - &
-                (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
+        heat1 = -Lvl -Cvl*t
+        heat2 = heat1*(C_1_R + qv/(C_1_R - qt)) - Cdv*t
 
-        cp1 = (C_1_R - qt)*THERMO_AI(1, 1, 2) + qv*THERMO_AI(1, 1, 1) + ql*THERMO_AI(1, 1, 3)
-        dummy = (heat1**2)*qv/((t**2)*cp1*WGHT_INV(1)*GRATIO)
+        cp1 = (C_1_R - qt)*Cd + qv*THERMO_AI(1, 1, 1) + ql*Cl
+        dummy = (heat1**2)*qv/((t**2)*cp1*GRATIO*WGHT_INV(1))
         cp2 = cp1*(C_1_R + dummy*(C_1_R + qv/(C_1_R - qt)/rd_ov_rv))
 
         alpha = C_1_R + heat1*qv/((C_1_R - qt)*GRATIO*WGHT_INV(2)*t)

@@ -22,7 +22,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use THERMO_VARS, only: imixture, CRATIO_INV, GRATIO, MRATIO, THERMO_AI, WGHT_INV
-    use THERMO_VARS, only: rd_ov_rv
+    use THERMO_VARS, only: rd_ov_rv, Cd, Cvl, Lvl, Ldl, Rd, PREF_THETA
     use THERMO_ANELASTIC
     use THERMO_CALORIC
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s
@@ -861,7 +861,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         do j = 1, jmax
             dudy(:, j, :) = dwdy(:, j, :)/p(:, j, :)/GAMMA_LOC(:, j, :) - dvdy(:, j, :)/rho(:, j, :)
             dvdx(:, j, :) = 1.0_wp/dvdx(:, j, :)
-            dvdy(:, j, :) = T_LOC(:, j, :)*((MRATIO*p(:, j, :))**(1.0_wp/GAMMA_LOC(:, j, :) - 1.0_wp))
+            dvdy(:, j, :) = T_LOC(:, j, :)*((p(:, j, :)/PREF_THETA)**(1.0_wp/GAMMA_LOC(:, j, :) - 1.0_wp))
         end do
         call AVG_IK_V(imax, jmax, kmax, jmax, dudy, g(1)%jac, g(3)%jac, bfreq_fr(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, g(1)%jac, g(3)%jac, lapse_fr(1), wrk1d, area)
@@ -874,41 +874,41 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
 #define L_RATIO   dvdx
 #define Q_RATIO   dvdy
-#define WMEAN_INV dwdy
+#define RMEAN     dwdy
 #define C_RATIO   dwdz
 
         if (imixture == MIXT_TYPE_AIRWATER) then
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T_LOC(1, 1, 1), dudz)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 2), dudy)
 
-            dummy = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1) + GRATIO*WGHT_INV(1)
-            L_RATIO = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) - dummy*dwdx ! dwdx is T_LOC
+            dummy = Cvl + GRATIO*WGHT_INV(1)
+            L_RATIO = -Lvl - dummy*dwdx ! dwdx is T_LOC
             L_RATIO = L_RATIO/(GRATIO*WGHT_INV(1)*dwdx)
-            Q_RATIO = 1.0_wp/(MRATIO*p/dvdz - 1.0_wp)                ! dvdz is psat
-            WMEAN_INV = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, :, :, 1))*WGHT_INV(2)
+            Q_RATIO = 1.0_wp/(p/dvdz - 1.0_wp)                ! dvdz is psat
+            RMEAN = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, :, :, 1))*Rd
 
-            p_wrk3d = (1.0_wp + Q_RATIO*L_RATIO)/WMEAN_INV/ &
+            p_wrk3d = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
                     (dudx/(dudx - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)  ! dudx is GAMMA_LOC
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, lapse_eq(1), wrk1d, area)
             lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)*MRATIO
 
             p_wrk3d = (dudz - buoyancy%vector(2)*MRATIO*p_wrk3d)/dwdx &
                     *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, :, :, 1)))
-            p_wrk3d = p_wrk3d - WGHT_INV(2)/WMEAN_INV*dudy
+            p_wrk3d = p_wrk3d - Rd/RMEAN*dudy
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, bfreq_eq(1), wrk1d, area)
             bfreq_eq(:) = -bfreq_eq(:)*buoyancy%vector(2)
 
-            C_RATIO = THERMO_AI(1, 1, 2) + s(:, :, :, 1)*(THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2))
+            C_RATIO = Cd + s(:, :, :, 1)*Ldl
             C_RATIO = (1.0_wp - s(:, :, :, 1))*GRATIO*WGHT_INV(2)/C_RATIO
-            p_wrk3d = dwdx/((MRATIO*p)**C_RATIO)*exp(Q_RATIO*C_RATIO*L_RATIO)
-            p_wrk3d = p_wrk3d*(1.0_wp + Q_RATIO)**C_RATIO/((MRATIO*p/dvdz)**(Q_RATIO*C_RATIO))
+            p_wrk3d = dwdx/((p/PREF_THETA)**C_RATIO)*exp(Q_RATIO*C_RATIO*L_RATIO)
+            p_wrk3d = p_wrk3d*(1.0_wp + Q_RATIO)**C_RATIO/((p/dvdz)**(Q_RATIO*C_RATIO))
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, potem_eq(1), wrk1d, area)
 
         end if
 
 #undef L_RATIO
 #undef Q_RATIO
-#undef WMEAN_INV
+#undef RMEAN
 #undef C_RATIO
 
     end if

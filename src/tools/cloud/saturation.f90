@@ -51,7 +51,7 @@ program SATURATION
         t_loc = (t + 273.15)/TREF
         call THERMO_POLYNOMIAL_PSAT(1, t_loc, psat)
         call THERMO_POLYNOMIAL_DPSAT(1, t_loc, dpsat)
-        dummy = C_1_R/(MRATIO*p/psat - C_1_R)*rd_ov_rv
+        dummy = C_1_R/(p/psat - C_1_R)*rd_ov_rv
         qsat = dummy/(C_1_R + dummy)
         if (iopt == 1) then
             ! dpsat2 = C_0_R
@@ -60,9 +60,9 @@ program SATURATION
             ! ENDDO
             ! PRINT*,dpsat-dpsat2
             write (21, 1000) t, t_loc*TREF, psat, dpsat*t_loc**2/psat*WGHT_INV(1)*(RREF*TREF), &
-                ((THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t_loc + THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3))*(RREF*TREF)/GRATIO
+                -(Cvl*t_loc +Lvl)*(RREF*TREF)/GRATIO
         else if (iopt == 2) then
-            write (21, 2000) t, t_loc, qsat*1.d3
+            write (21, 2000) t, t_loc, qsat*1.0e3_wp
         end if
 
         t = t + t_del
