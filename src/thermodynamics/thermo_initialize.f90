@@ -437,7 +437,7 @@ subroutine THERMO_INITIALIZE()
 
         ! Saturation vapor pressure
         do ipsat = 1, NPSAT
-            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF !/MRATIO         ! Scaling by rho_0U_0^2 as total pressure
+            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF /MRATIO         ! Scaling by rho_0U_0^2 as total pressure
             THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
         end do
 
@@ -472,7 +472,7 @@ subroutine THERMO_INITIALIZE()
     rd_ov_rv = Rd/Rv
     rd_ov_cd = Rd/Cd*CRATIO_INV
 
-    PREF_THETA = 1.0_wp ! Assumes pressure is normalized by 1000 hPa
+    PREF_THETA = 1.0_wp /MRATIO ! Assumes pressure is normalized by 1000 hPa
 
 ! -------------------------------------------------------------------
 ! Output

@@ -1,5 +1,4 @@
 #include "dns_const.h"
-#include "dns_error.h"
 
 !########################################################################
 !#
@@ -14,8 +13,11 @@
 
 module THERMO_ANELASTIC
     use TLAB_CONSTANTS, only: wp, wi
-    use THERMO_VARS, only: imixture, MRATIO, RRATIO, GRATIO, CRATIO_INV, THERMO_PSAT, NPSAT
-    use THERMO_VARS, only: imixture, Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_THETA
+    use THERMO_VARS, only: imixture, gama0, GRATIO, WGHT_INV
+    use THERMO_VARS, only: MRATIO
+    use THERMO_VARS, only: CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
+    use THERMO_VARS, only: THERMO_PSAT, NPSAT
+    use THERMO_VARS, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_THETA
     use THERMO_VARS, only: scaleheight
     implicit none
     private
@@ -296,7 +298,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
+                P_LOC = p(is)
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -328,7 +330,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
+                P_LOC = p(is)
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -367,13 +369,13 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_THETA*RRATIO/p(is))**rd_ov_cd !MRATIO*p(is)/PREF_THETA
+                PI_LOC = (PREF_THETA/p(is))**rd_ov_cd
                 E_LOC = e(is)
 
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC*PI_LOC !/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC*PI_LOC
                 end do
 
             end do
@@ -382,13 +384,13 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_THETA*RRATIO/p(is))**rd_ov_cd !MRATIO*p(is)/PREF_THETA
+                PI_LOC = (PREF_THETA/p(is))**rd_ov_cd
                 E_LOC = e(is)
 
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    theta(ij) = T_LOC*PI_LOC !/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC*PI_LOC
                 end do
 
             end do
@@ -397,13 +399,13 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_THETA*RRATIO/p(is))**rd_ov_cd !MRATIO*p(is)/PREF_THETA
+                PI_LOC = (PREF_THETA/p(is))**rd_ov_cd
                 E_LOC = e(is)
 
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    theta(ij) = T_LOC*PI_LOC !/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC*PI_LOC
                 end do
 
             end do
@@ -428,13 +430,13 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_THETA*RRATIO/p(is))**rd_ov_cd !MRATIO*p(is)/PREF_THETA
+                PI_LOC = (PREF_THETA/p(is))**rd_ov_cd 
                 E_LOC = e(is)
 
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC*PI_LOC !/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC*PI_LOC 
                 end do
 
             end do
@@ -443,13 +445,13 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_THETA*RRATIO/p(is))**rd_ov_cd !MRATIO*p(is)/PREF_THETA
+                PI_LOC = (PREF_THETA/p(is))**rd_ov_cd
                 E_LOC = e(is)
 
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    theta(ij) = T_LOC*(Rd + s(ij, 2)*Rdv)/Rd*PI_LOC !/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC*(Rd + s(ij, 2)*Rdv)/Rd*PI_LOC
                 end do
 
             end do
@@ -458,13 +460,13 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_THETA*RRATIO/p(is))**rd_ov_cd !MRATIO*p(is)/PREF_THETA
+                PI_LOC = (PREF_THETA/p(is))**rd_ov_cd 
                 E_LOC = e(is)
 
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    theta(ij) = T_LOC*(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)/Rd*PI_LOC !/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC*(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)/Rd*PI_LOC 
                 end do
 
             end do
@@ -489,7 +491,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)/PREF_THETA
+                P_LOC = p(is)/PREF_THETA
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -504,7 +506,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)/PREF_THETA
+                P_LOC = p(is)/PREF_THETA
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -520,7 +522,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)/PREF_THETA
+                P_LOC = p(is)/PREF_THETA
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -556,7 +558,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)/PREF_THETA
+                P_LOC = p(is)/PREF_THETA
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -571,7 +573,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)/PREF_THETA
+                P_LOC = p(is)/PREF_THETA
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -591,7 +593,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)/PREF_THETA
+                P_LOC = p(is)/PREF_THETA
                 E_LOC = e(is)
 
                 do i = 1, nx
@@ -725,11 +727,11 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
+                P_LOC = p(is)
                 E_LOC = e(is)
                 R_LOC = r(is)
 
-                RT_INV = R_LOC/P_LOC/scaleheight
+                RT_INV = R_LOC/(MRATIO*P_LOC)/scaleheight
 
                 do i = 1, nx
                     ij = ij + 1
@@ -801,7 +803,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
+                P_LOC = p(is)
                 E_LOC = e(is)
                 R_LOC = r(is)
 
@@ -823,7 +825,7 @@ contains
                     end do
 !           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                     Td(ij) = T_LOC
-                    Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat
+                    Lapse(ij) = scaleheightinv*R_LOC/(MRATIO*P_LOC)*psat/dpsat
 
                 end do
             end do
@@ -832,7 +834,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
+                P_LOC = p(is)
                 E_LOC = e(is)
                 R_LOC = r(is)
 
@@ -869,7 +871,7 @@ contains
                         ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                         ! print*,NEWTONRAPHSON_ERROR
                         Td(ij) = T_LOC
-                        Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat
+                        Lapse(ij) = scaleheightinv*R_LOC/(MRATIO*P_LOC)*psat/dpsat
 
                     end if
 
@@ -1084,7 +1086,7 @@ contains
         ij = 0
         do jk = 0, ny*nz - 1
             is = mod(jk, ny) + 1
-            P_LOC = MRATIO*p(is)
+            P_LOC = p(is)
             E_LOC = e(is)
 
             do i = 1, nx

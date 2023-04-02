@@ -8,9 +8,8 @@
 module THERMO_AIRWATER
     use TLAB_VARS, only: inb_scal
     use TLAB_CONSTANTS, only: wp, wi, small_wp, big_wp
-    use THERMO_VARS, only: imixture, WGHT_INV
-    use THERMO_VARS, only: gama0, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
-    use THERMO_VARS, only: MRATIO, RRATIO, GRATIO
+    use THERMO_VARS, only: imixture, gama0, GRATIO, WGHT_INV
+    use THERMO_VARS, only: CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
     use THERMO_VARS, only: THERMO_PSAT, NPSAT
     use THERMO_VARS, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
     use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
@@ -30,7 +29,7 @@ module THERMO_AIRWATER
     public :: THERMO_AIRWATER_RE
     public :: THERMO_AIRWATER_LINEAR
     public :: THERMO_AIRWATER_LINEAR_SOURCE
-    
+
 contains
     !########################################################################
     !# Calculate liquid content from p, T and water content.
@@ -46,7 +45,7 @@ contains
         call THERMO_POLYNOMIAL_PSAT(ijmax, T, s(1, 2))
         do ij = 1, ijmax
             ! this is really the vapor content
-            qsat = 1.0_wp/(MRATIO*p(ij)/s(ij, 2) - 1.0_wp)*rd_ov_rv*(1 - s(ij, 1))
+            qsat = 1.0_wp/(p(ij)/s(ij, 2) - 1.0_wp)*rd_ov_rv*(1.0_wp - s(ij, 1))
             if (qsat >= s(ij, 1)) then
                 s(ij, 2) = 0.0_wp
             else
@@ -99,7 +98,7 @@ contains
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(ij) + THERMO_PSAT(ipsat)
                 end do
-                s(ij, 2) = psat/(rho(ij)*T(ij)*WGHT_INV(1))
+                s(ij, 2) = psat/(rho(ij)*T(ij)*Rv)
             end do
 
         else
@@ -112,8 +111,8 @@ contains
 
             ! loop on all points
             do ij = 1, ijmax
-                B_LOC(1) = B_LOC_CONST_1 + MRATIO*p(ij)
-                B_LOC(2) = B_LOC_CONST_2 - rho(ij)*WGHT_INV(2)
+                B_LOC(1) = B_LOC_CONST_1 + p(ij)
+                B_LOC(2) = B_LOC_CONST_2 - rho(ij)*Rd
 
                 ! Newton-Raphson
                 t_loc = T(ij)
@@ -129,8 +128,7 @@ contains
                 ERROR_LOC = max(ERROR_LOC, abs(FUN/DER)/t_loc)
 
                 ! calculate saturation specific humidity, in array s(1,2).
-                s(ij, 2) = (MRATIO*p(ij) - rho(ij)*WGHT_INV(2)*t_loc)/ &
-                           (rho(ij)*(WGHT_INV(1) - WGHT_INV(2))*t_loc)
+                s(ij, 2) = (p(ij) - rho(ij)*Rd*t_loc)/(rho(ij)*Rdv*t_loc)
 
                 ! calculate dqldqt
                 qsat = s(ij, 2)
@@ -161,14 +159,13 @@ contains
                     s(ij, 2) = dsmooth_loc*dqldqt(ij) &
                                *log(exp((s(ij, 1) - qsat)/dsmooth_loc) + 1.0_wp)
                     ! change T consistently
-                    T(ij) = p(ij)/ &
-                            (((s(ij, 1) - s(ij, 2))*Rv + (1.0_wp - s(ij, 1))*Rd)*rho(ij))
+                    T(ij) = p(ij)/(((s(ij, 1) - s(ij, 2))*Rv + (1.0_wp - s(ij, 1))*Rd)*rho(ij))
                 end if
 
                 ! if q_s < q_t, then we have to repeat calculation of T
             else
-                B_LOC(1) = THERMO_PSAT(1) - MRATIO*p(ij)
-                B_LOC(2) = THERMO_PSAT(2) + (1.0_wp - s(ij, 1))*rho(ij)*WGHT_INV(2)
+                B_LOC(1) = THERMO_PSAT(1) - p(ij)
+                B_LOC(2) = THERMO_PSAT(2) + (1.0_wp - s(ij, 1))*rho(ij)*Rd
 
                 ! Newton-Raphson
                 do inr = 1, nrmax
@@ -188,7 +185,7 @@ contains
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(ij) + THERMO_PSAT(ipsat)
                 end do
-                s(ij, 2) = psat/(rho(ij)*T(ij)*WGHT_INV(1))
+                s(ij, 2) = psat/(rho(ij)*T(ij)*Rv)
 
                 ! liquid content
                 s(ij, 2) = s(ij, 1) - s(ij, 2)
@@ -287,7 +284,7 @@ contains
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(i) + THERMO_PSAT(ipsat)
                 end do
-                s(i, 2) = psat/(rho(i)*T(i)*WGHT_INV(1))
+                s(i, 2) = psat/(rho(i)*T(i)*Rv)
             end do
 
         else
@@ -305,8 +302,8 @@ contains
 
             ! loop on all points
             do i = 1, ijmax
-                B_LOC(2) = B_LOC_CONST_2 + rho(i)*WGHT_INV(1)*(e(i) - Lv)
-                B_LOC(3) = B_LOC_CONST_3 - rho(i)*WGHT_INV(1)*(Cd - GRATIO*WGHT_INV(2))
+                B_LOC(2) = B_LOC_CONST_2 + rho(i)*Rv*(e(i) - Lv)
+                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(Cd - GRATIO*WGHT_INV(2))
                 ! Newton-Raphson
                 t_loc = T(i)
                 do inr = 1, nrmax
@@ -325,7 +322,7 @@ contains
                 do ipsat = NPSAT, 1, -1
                     psat = psat*t_loc + THERMO_PSAT(ipsat)
                 end do
-                s(i, 2) = psat/(rho(i)*t_loc*WGHT_INV(1))
+                s(i, 2) = psat/(rho(i)*t_loc*Rv)
 
                 ! calculate dqldqt
                 qsat = s(i, 2)
@@ -377,16 +374,14 @@ contains
 
                 ! if q_s < q_t, then we have to repeat calculation of T
             else
-                B_LOC(2) = B_LOC_CONST_2 + rho(i)*WGHT_INV(1)* &
-                           (e(i) - s(i, 1)*(THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)) - THERMO_AI(6, 1, 2))
-                B_LOC(3) = B_LOC_CONST_3 - rho(i)*WGHT_INV(1)* &
-                           (s(i, 1)*HEAT_CAPACITY_LD + THERMO_AI(1, 1, 2) - GRATIO*WGHT_INV(2))
+                B_LOC(2) = B_LOC_CONST_2 + rho(i)*Rv*(e(i) - s(i, 1)*Ldl - Ld)
+                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(s(i, 1)*HEAT_CAPACITY_LD + Cd - GRATIO*WGHT_INV(2))
                 ! IF ( dsmooth .GT. 0.0_wp ) THEN
                 ! dsmooth_loc = dsmooth*qsat
                 ! alpha =-( dsmooth_loc*LOG(EXP((s(i,1)-qsat)/dsmooth_loc)+1.0_wp)
                 ! $                 -(s(i,1)-qsat) )*dqldqt(i)
-                ! B_LOC(2) = B_LOC(2) + rho(i)*WGHT_INV(1)*alpha*Lvl
-                ! B_LOC(3) = B_LOC(3) + rho(i)*WGHT_INV(1)*alpha*HEAT_CAPACITY_LV
+                ! B_LOC(2) = B_LOC(2) + rho(i)*Rv*alpha*Lvl
+                ! B_LOC(3) = B_LOC(3) + rho(i)*Rv*alpha*HEAT_CAPACITY_LV
                 ! ENDIF
 
                 ! Newton-Raphson
@@ -407,7 +402,7 @@ contains
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(i) + THERMO_PSAT(ipsat)
                 end do
-                s(i, 2) = psat/(rho(i)*T(i)*WGHT_INV(1))
+                s(i, 2) = psat/(rho(i)*T(i)*Rv)
 
                 ! liquid content
                 s(i, 2) = s(i, 1) - s(i, 2)
