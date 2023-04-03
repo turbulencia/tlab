@@ -59,13 +59,9 @@ and
 \end{equation}
 Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations depend on $\gamma_0\Ma^2$ and $(\gamma_0-1)\Ma^2$, which suggests to introduce the derived set of parameters
 \begin{equation}
-    (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation. These are a normalized gas constant, and a normalized heat capacity (names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). Other combinations used in the code are
-\begin{equation}
-    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad \frac{\gamma_0-1}{\gamma_0}=\frac{R_0}{C_{p0}}
-\end{equation}
-(names \texttt{MRATIO} and \texttt{GRATIO}, respectively). The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
+in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). The last two are a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
 
 The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
@@ -115,9 +111,9 @@ and
 \end{equation}
 Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species and are defined in \texttt{termo\_initialize}. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
 \begin{equation}
-    (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-(names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively) and use 
+in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively) and use 
 \begin{equation}
     \tilde{R}\equiv (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\tilde{R}_i\;,\qquad\tilde{R}_i\equiv (\gamma_0\Ma^2)^{-1}R_i
     \;,
@@ -126,17 +122,24 @@ to save computation time. Note that specific heat ratio
 \begin{equation}
     \gamma=\frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2\tilde{R}}
 \end{equation}
-depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in \texttt{termo\_initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$.
+depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in \texttt{termo\_initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. The parameter
+\begin{equation}
+    \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
+\end{equation}
+is defined as \texttt{GRATIO} in the code and it is defined as $(\gamma_0-1)/\gamma_0/\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily.
 
-The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
-
-(Same information as in the previous paragraph; needs to be fixed.) Some scalars can be diagnostic and not prognostic variables, so that there is no evolution equation associated with them. One common example is liquid content in a moist air formulation assuming phase equilibrium. The two global variables {\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In principle, this should be specified through the variable {\tt imixture}. The routine {\tt thermodynamics/thermo\_initialize} defines the mixture properties. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
 
 \subsubsection{Dimensional Formulation}
 
-In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{dns.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation.
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{dns.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities.
 
-\subsection{Multi-species compressible reacting flows}
+\subsubsection{On the difference between the species and the prognostic scalars}
+
+The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
+
+(Same information as in the previous paragraph; needs to be appropriately rewritten.) Some scalars can be diagnostic and not prognostic variables, so that there is no evolution equation associated with them. One common example is liquid content in a moist air formulation assuming phase equilibrium. The two global variables {\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In principle, this should be specified through the variable {\tt imixture}. The routine {\tt thermodynamics/thermo\_initialize} defines the mixture properties. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
+
+\subsubsection{Reacting flows}
 
 Add reaction terms to the scalar equations
 \begin{equation}

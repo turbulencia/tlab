@@ -17,8 +17,7 @@ module THERMO_VARS
     ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
     integer(wi) :: NSP = 0                      ! Number of components (species) in a mixture
     character(len=32) :: THERMO_SPNAME(MAX_NSP) = ''
-    real(wp) :: WGHT_INV(MAX_NSP)               ! Inverse of molar masses, i.e., gas constants
-    real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants, i.e., inverse of mola masses
+    real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants
 
     ! Caloric data
     integer(wi), parameter :: MAX_NCP = 7       ! Caloric data; cp(T), formation enthalpy, formation entropy
@@ -35,7 +34,7 @@ module THERMO_VARS
     ! Compressibility, different combinations of parameters \gamma0 and mach to save calculations
     real(wp) :: MRATIO                          ! gama0 mach^2 = (U0^2/T0)/R0
     real(wp) :: RRATIO                          ! 1/MRATIO = R0/(U0^2/T0)
-    real(wp) :: CRATIO_INV                      ! GRATIO*MRATIO = (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
+    real(wp) :: CRATIO_INV                      ! (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
 
     ! Anelastic formulation
     real(wp) :: scaleheight                     ! Same as Fr/MRATIO in compressible formulation
@@ -49,6 +48,6 @@ module THERMO_VARS
 
     real(wp) :: dsmooth                         ! Smoothing factor for derivaative discontinuity in inifinitely fast chemistry and saturation adjustment
 
-    real(wp) :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, rd_ov_cd, PREF_THETA
+    real(wp) :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, rd_ov_cd, PREF_1000
 
 end module THERMO_VARS

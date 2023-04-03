@@ -152,10 +152,10 @@ program STATE
         heat2 = heat1*(C_1_R + qv/(C_1_R - qt)) - Cdv*t
 
         cp1 = (C_1_R - qt)*Cd + qv*THERMO_AI(1, 1, 1) + ql*Cl
-        dummy = (heat1**2)*qv/((t**2)*cp1*GRATIO*WGHT_INV(1))
+        dummy = (heat1**2)*qv/((t**2)*cp1*GRATIO*Rv)
         cp2 = cp1*(C_1_R + dummy*(C_1_R + qv/(C_1_R - qt)/rd_ov_rv))
 
-        alpha = C_1_R + heat1*qv/((C_1_R - qt)*GRATIO*WGHT_INV(2)*t)
+        alpha = C_1_R + heat1*qv/((C_1_R - qt)*GRATIO*Rd*t)
 
         as = -alpha/cp2/t
         bs = heat2*as + C_1_R/(C_1_R - qt)

@@ -815,8 +815,8 @@ contains
     subroutine TRANS_FUNCTION(nx, ny, nz, a, b, txc)
 
         use TLAB_VARS, only: inb_scal, epbackground
-        use THERMO_VARS, only: imixture, MRATIO, GRATIO, dsmooth
-        use THERMO_VARS, only: THERMO_AI, rd_ov_rv
+        use THERMO_VARS, only: imixture!, MRATIO, GRATIO, dsmooth
+        use THERMO_VARS, only: rd_ov_rv, Lvl
 
         implicit none
 
@@ -826,16 +826,13 @@ contains
 
         ! -----------------------------------------------------------------------
         real(wp) qt_0, qt_1, h_0, h_1, p(1)
-        real(wp) LATENT_HEAT
 
         ! #######################################################################
         imixture = MIXT_TYPE_AIRWATER
         call THERMO_INITIALIZE()
-        MRATIO = 1.0_wp
-        dsmooth = 0.0_wp
+        ! MRATIO = 1.0_wp
+        ! dsmooth = 0.0_wp
         inb_scal = 1
-
-        LATENT_HEAT = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3)
 
         qt_0 = 9.0d-3; qt_1 = 1.5d-3
         h_0 = 0.955376d0; h_1 = 0.981965d0
@@ -855,7 +852,7 @@ contains
         txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 
         ! Calculate parameter \beta (assuming c_p = c_p,d)
-        txc(:, 3) = rd_ov_rv/LATENT_HEAT*LATENT_HEAT/(txc(:, 5)*txc(:, 5))
+        txc(:, 3) = rd_ov_rv*Lvl*Lvl/(txc(:, 5)*txc(:, 5))
 
         ! Calculate s
         b(:) = txc(:, 2) - txc(:, 1)*(1.0_wp + txc(:, 3)*txc(:, 2))/(1.0_wp + txc(:, 3)*txc(:, 1))

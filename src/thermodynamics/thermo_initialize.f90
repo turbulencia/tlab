@@ -33,12 +33,12 @@ subroutine THERMO_INITIALIZE()
     implicit none
 
 ! -------------------------------------------------------------------
-    real(wp), parameter :: RGAS = 8314_wp       ! Universal gas constant, J /kg /K
+    real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
 
-    real(wp) WGHT(MAX_NSP), WREF
+    real(wp) WGHT(MAX_NSP), WGHT_INV(MAX_NSP), WREF     ! Molar masses
     integer(wi) icp, is, im, inb_scal_loc
     real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
-    integer(wi) ISPREF                     ! reference species for CPREF and RREF
+    integer(wi) ISPREF                                  ! reference species for CPREF and RREF
     real(wp) CPREF
     real(wp) WRK1D_LOC(MAX_NPSAT)
     integer(wi) ipsat, i, j
@@ -414,10 +414,12 @@ subroutine THERMO_INITIALIZE()
     end if
 
     MRATIO = 1.0_wp
+    CRATIO_INV = 1.0_wp
     if (nondimensional) then
         ! Parameters in the governing equations
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
             MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
+            CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
         end if
 
         ! Thermal equation of state
@@ -444,10 +446,9 @@ subroutine THERMO_INITIALIZE()
     end if
 
     ! Derived parameters to save operations
-    GRATIO = (gama0 - 1.0_wp)/gama0     ! R_0/C_{p,0}
-    CRATIO_INV = GRATIO*MRATIO          ! (gama0 - 1.0_wp)*mach*mach
+    GRATIO = (gama0 - 1.0_wp)/gama0*MRATIO      ! R_0/C_{p,0} *MRATIO
     RRATIO = 1.0_wp/MRATIO
-    THERMO_R(:) = WGHT_INV(:)*RRATIO    ! gas constants normalized by dynamic reference value U0^2/T0
+    THERMO_R(:) = WGHT_INV(:)*RRATIO            ! gas constants normalized by dynamic reference value U0^2/T0
 
 ! -------------------------------------------------------------------
     ! Definitions for the case of the airwater mixture
@@ -467,9 +468,9 @@ subroutine THERMO_INITIALIZE()
     Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
     Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
     rd_ov_rv = Rd/Rv
-    rd_ov_cd = Rd/Cd*CRATIO_INV
+    rd_ov_cd = Rd/Cd*GRATIO
 
-    PREF_THETA = 1.0_wp /MRATIO ! Assumes pressure is normalized by 1000 hPa
+    PREF_1000 = 1.0_wp /MRATIO ! Assumes pressure is normalized by 1000 hPa
 
 ! -------------------------------------------------------------------
 ! Output

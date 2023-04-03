@@ -8,7 +8,7 @@
 module THERMO_AIRWATER
     use TLAB_VARS, only: inb_scal
     use TLAB_CONSTANTS, only: wp, wi, small_wp, big_wp
-    use THERMO_VARS, only: imixture, gama0, GRATIO, WGHT_INV
+    use THERMO_VARS, only: imixture, gama0, GRATIO
     use THERMO_VARS, only: CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
     use THERMO_VARS, only: THERMO_PSAT, NPSAT
     use THERMO_VARS, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
@@ -132,8 +132,8 @@ contains
 
                 ! calculate dqldqt
                 qsat = s(ij, 2)
-                alpha = -Lvl - (Cvl + GRATIO*WGHT_INV(1))*t_loc
-                alpha = alpha/(t_loc*GRATIO*WGHT_INV(1)) - 1.0_wp
+                alpha = -Lvl - (Cvl + GRATIO*Rv)*t_loc
+                alpha = alpha/(t_loc*GRATIO*Rv) - 1.0_wp
 
                 dummy = p(ij)/(qsat*rho(ij)*Rv*t_loc)
 
@@ -270,7 +270,7 @@ contains
             T(ij) = e(ij) - (Ld + s(ij, 1)*Ldv)
             CPMEAN = Cd + s(ij, 1)*Cdv
             RMEAN = Rd + s(ij, 1)*Rdv
-            T(ij) = (e(ij) - (Ld + s(ij, 1)*Ldv))/(CPMEAN - RMEAN*CRATIO_INV)
+            T(ij) = (e(ij) - (Ld + s(ij, 1)*Ldv))/(CPMEAN - RMEAN*GRATIO)
         end do
 
         ! -------------------------------------------------------------------
@@ -289,7 +289,7 @@ contains
 
         else
             ! initialize homogeneous data
-            HEAT_CAPACITY_VD = Rdv*CRATIO_INV - Cdv
+            HEAT_CAPACITY_VD = Rdv*GRATIO - Cdv
             do i = 1, 9
                 B_LOC(i) = -THERMO_PSAT(i)*Ldv
             end do
@@ -303,7 +303,7 @@ contains
             ! loop on all points
             do i = 1, ijmax
                 B_LOC(2) = B_LOC_CONST_2 + rho(i)*Rv*(e(i) - Lv)
-                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(Cd - GRATIO*WGHT_INV(2))
+                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(Cd - GRATIO*Rd)
                 ! Newton-Raphson
                 t_loc = T(i)
                 do inr = 1, nrmax
@@ -326,13 +326,13 @@ contains
 
                 ! calculate dqldqt
                 qsat = s(i, 2)
-                alpha = -Lvl - (Cvl + GRATIO*WGHT_INV(1))*t_loc
-                alpha = alpha/(t_loc*GRATIO*WGHT_INV(1)) - 1.0_wp
+                alpha = -Lvl - (Cvl + GRATIO*Rv)*t_loc
+                alpha = alpha/(t_loc*GRATIO*Rv) - 1.0_wp
 
-                dummy1 = -Ldl - (Cdl + GRATIO*WGHT_INV(2))*t_loc
+                dummy1 = -Ldl - (Cdl + GRATIO*Rd)*t_loc
                 dummy1 = dummy1*qsat*alpha
 
-                dummy2 = -Ldv + t_loc*GRATIO*WGHT_INV(1)*alpha*(alpha + 1.0_wp)
+                dummy2 = -Ldv + t_loc*GRATIO*Rv*alpha*(alpha + 1.0_wp)
                 dummy2 = dummy2*qsat + e(i) - Lv
 
                 dqldqt(i) = 1.0_wp - dummy1/dummy2
@@ -344,8 +344,8 @@ contains
         ! calculate final T and q_l
         ! -------------------------------------------------------------------
         ! initialize homogeneous data
-        HEAT_CAPACITY_LV = Cvl + GRATIO*WGHT_INV(1)
-        HEAT_CAPACITY_LD = Cdl + GRATIO*WGHT_INV(2)
+        HEAT_CAPACITY_LV = Cvl + GRATIO*Rv
+        HEAT_CAPACITY_LD = Cdl + GRATIO*Rd
         HEAT_CAPACITY_VD = HEAT_CAPACITY_LD - HEAT_CAPACITY_LV
         do i = 1, 9
             B_LOC(i) = THERMO_PSAT(i)*Lvl
@@ -369,13 +369,13 @@ contains
                               *log(exp((s(i, 1) - qsat)/dsmooth_loc) + 1.0_wp)
                     ! change T consistently
                     T(i) = (e(i) - s(i, 1)*Ldv - Lv - s(i, 2)*Lvl)/ &
-                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - GRATIO*WGHT_INV(2) + s(i, 2)*HEAT_CAPACITY_LV)
+                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - GRATIO*Rd + s(i, 2)*HEAT_CAPACITY_LV)
                 end if
 
                 ! if q_s < q_t, then we have to repeat calculation of T
             else
                 B_LOC(2) = B_LOC_CONST_2 + rho(i)*Rv*(e(i) - s(i, 1)*Ldl - Ld)
-                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(s(i, 1)*HEAT_CAPACITY_LD + Cd - GRATIO*WGHT_INV(2))
+                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(s(i, 1)*HEAT_CAPACITY_LD + Cd - GRATIO*Rd)
                 ! IF ( dsmooth .GT. 0.0_wp ) THEN
                 ! dsmooth_loc = dsmooth*qsat
                 ! alpha =-( dsmooth_loc*LOG(EXP((s(i,1)-qsat)/dsmooth_loc)+1.0_wp)
@@ -413,7 +413,7 @@ contains
                               + s(i, 2) - dqldqt(i)*(s(i, 1) - qsat)
                     ! change T consistently
                     T(i) = (e(i) - s(i, 1)*Ldv - Lv - s(i, 2)*Lvl)/ &
-                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - GRATIO*WGHT_INV(2) &
+                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - GRATIO*Rd &
                             + s(i, 2)*HEAT_CAPACITY_LV)
                 end if
             end if
