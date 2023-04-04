@@ -1,8 +1,7 @@
-program SMOOTH
-
-#include "types.h"
 #include "dns_const.h"
 
+program SMOOTH
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
     use TLAB_PROCS
     use THERMO_VARS
@@ -13,10 +12,9 @@ program SMOOTH
 
     implicit none
 
-    TREAL qt_min(1), qt_max(1), qt_del(1), qt(1), qs(1), dqldqt(1)
-    TREAL z1(2), e(1), rho(1), p(1), T(1), h(1), ep(1), s(3)
-    TINTEGER opt
-    integer, parameter :: i1 = 1
+    real(wp) qt_min(1), qt_max(1), qt_del(1), qt(1), qs(1), dqldqt(1)
+    real(wp) z1(2), e(1), rho(1), p(1), T(1), h(1), ep(1), s(3)
+    integer(wi) opt
 
 ! ###################################################################
     call TLAB_START
@@ -24,7 +22,7 @@ program SMOOTH
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
     call THERMO_INITIALIZE
-    ep = C_0_R
+    ep = 0.0_wp
 
     write (*, *) 'Case d-e (1) or d-p (2) or p-h (3) ?'
     read (*, *) opt
@@ -79,13 +77,13 @@ program SMOOTH
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 3) then
-            call THERMO_ANELASTIC_PH(i1, i1, i1, z1, h, ep, p)
+            call THERMO_ANELASTIC_PH(1, 1, 1, z1, h, ep, p)
             s(1) = h(1); s(2:3) = z1(1:2)
-            call THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep, T)
+            call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, ep, T)
 !        CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
             call THERMO_POLYNOMIAL_PSAT(1, T, qs)
-            qs = C_1_R/(p/qs - C_1_R)*rd_ov_rv
-            qs = qs/(C_1_R + qs)
+            qs = 1.0_wp/(p/qs - 1.0_wp)*rd_ov_rv
+            qs = qs/(1.0_wp + qs)
             call THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
             call THERMO_CALORIC_ENERGY(1, z1, T, e)
 

@@ -392,7 +392,7 @@ subroutine THERMO_INITIALIZE()
 ! ###################################################################
     WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
 
-    ! Reference values
+    ! Reference values; in principle, these could be changed, if desired.
     ISPREF = 2                              ! Species 2 is taken as reference
     WREF = WGHT(ISPREF)                     ! kg /kmol
     RREF = RGAS/WREF
@@ -420,6 +420,9 @@ subroutine THERMO_INITIALIZE()
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
             MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
             CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+            PREF_1000 = 1.0_wp /MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from dns.ini
+        else
+            PREF_1000 = 1e5_wp /PREF            ! 1000 hPa, used as reference
         end if
 
         ! Thermal equation of state
@@ -470,8 +473,6 @@ subroutine THERMO_INITIALIZE()
     rd_ov_rv = Rd/Rv
     rd_ov_cd = Rd/Cd*GRATIO
 
-    PREF_1000 = 1.0_wp /MRATIO ! Assumes pressure is normalized by 1000 hPa
-
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
@@ -481,9 +482,11 @@ subroutine THERMO_INITIALIZE()
             write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))
             call TLAB_WRITE_ASCII(lfile, str)
         end do
-        write (str, 1010) 'Setting WREF = ', WREF
+        write (str, 1010) 'Setting RREF = ', RREF
         call TLAB_WRITE_ASCII(lfile, str)
         write (str, 1010) 'Setting TREF = ', TREF
+        call TLAB_WRITE_ASCII(lfile, str)
+        write (str, 1010) 'Setting PREF = ', PREF
         call TLAB_WRITE_ASCII(lfile, str)
         if (NPSAT > 0) then
             write (str, 1010) 'Setting RHOREF = ', PREF/(RREF*TREF)

@@ -63,7 +63,7 @@ Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations 
 \end{equation}
 in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). The last two are a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
 
-The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 
@@ -254,22 +254,6 @@ The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of th
 
 \section{Anelastic formulation}
 
-We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, R_\mathrm{bg}\}$. The background profiles are steady and satisfy the hydrostatic balance,
-\begin{equation}
-  \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
-\end{equation}
-and the thermal equation of state,
-\begin{equation}
-  p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
-\end{equation}
-$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy), and
-\begin{equation}
-  \mathbf{H} = \frac{R_0T_0}{gL_0}
-\end{equation}
-is a nondimensional scale height. The pressure is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0(R_0T_0)^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
-%
-If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint.
-
 The evolution equations are:
 \begin{subequations}
   \begin{align}
@@ -284,17 +268,37 @@ where the buoyancy is
 \begin{equation}
   b=\rho_\mathrm{bg}^{-1}(\rho_\mathrm{bg}-\rho) \;.
 \end{equation}
-The pressure deviation satisfies the following Poisson equation:
+The dynamic pressure $p'$ satisfies the following Poisson equation:
 \begin{equation}
   \partial_i\partial_ip'=\partial_i\left[\rho_\mathrm{bg}\left(
   -\partial_k ( u_i u_k )+\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
   \right)\right]\;.
 \end{equation}
-The first scalar is the static energy
+The variables in these equations are assumed to be nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
+
+The thermodynamics is defined by the background profiles $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, Y_\mathrm{bg}\}$, which are steady and satisfy the hydrostatic balance equation,
+\begin{equation}
+  \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
+\end{equation}
+and the thermal equation of state,
+\begin{equation}
+  p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
+\end{equation}
+$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy). The background profile information in the input file {\tt dns.ini}. The values $x_{2,0}$ and $p_\mathrm{bg,0}$ are provided through the background profile information for the pressure. 
+
+The two equations above relate 4 thermodynamic variables, so we need two additional constraints. Typically, we impose the background profile of static energy (enthalpy plus potential energy) and the composition. In this case, the first scalar is the static energy
 \begin{equation}
   \zeta_1 = h + \frac{\gamma_0-1}{\gamma_0}\mathbf{H}^{-1}(x_2-x_{2,0}) \;.
 \end{equation}
-The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture).
+The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture). If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint. 
+
+The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ and $R_0$, such that $\rho_0=p_0(R_0T_0)^{-1}$ and
+\begin{equation}
+  \mathbf{H} = \frac{R_0T_0}{gL_0}
+\end{equation}
+is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{dns.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
+
+The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
 
 \section{Particle formulation}
 

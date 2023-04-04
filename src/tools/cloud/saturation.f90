@@ -1,18 +1,16 @@
-program SATURATION
-
-#include "types.h"
 #include "dns_const.h"
 
+program SATURATION
+
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
     use TLAB_PROCS
     use THERMO_VARS
 
     implicit none
 
-    TREAL t_min, t_max, t_del, t, psat, qsat, dummy, t_loc, p, dpsat!, dpsat2
-    TINTEGER iopt
-
-    integer, parameter :: i1 = 1
+    real(wp) t_min, t_max, t_del, t, psat, qsat, dummy, t_loc, p, dpsat!, dpsat2
+    integer(wi) iopt
 
 ! ###################################################################
     call TLAB_START
@@ -51,10 +49,10 @@ program SATURATION
         t_loc = (t + 273.15)/TREF
         call THERMO_POLYNOMIAL_PSAT(1, t_loc, psat)
         call THERMO_POLYNOMIAL_DPSAT(1, t_loc, dpsat)
-        dummy = C_1_R/(p/psat - C_1_R)*rd_ov_rv
-        qsat = dummy/(C_1_R + dummy)
+        dummy = 1.0_wp/(p/psat - 1.0_wp)*rd_ov_rv
+        qsat = dummy/(1.0_wp + dummy)
         if (iopt == 1) then
-            ! dpsat2 = C_0_R
+            ! dpsat2 = 0.0_wp
             ! DO ipsat = NPSAT,2,-1
             !    dpsat2 = dpsat2 *t_loc + THERMO_PSAT(ipsat)*M_REAL(ipsat-1)
             ! ENDDO
