@@ -13,18 +13,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compressible formulation}
 
-Let us consider first one single gas species. The evolution equation for the energy is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. We consider the ideal gas law. The governing equations are written as follows:
+Let us consider first a gas with one single species. The evolution equation for the energy is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. We consider the ideal gas law. The governing equations are written as follows:
 \begin{subequations}
   \begin{align}
     \partial_t \rho       =& -\partial_k (\rho u_k)                                       \\
-    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )- \partial_i p
-    && +\Re^{-1}\partial_k \tau_{ik}                                            \nonumber \\
-    & && +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
-    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )
-    && +\Re^{-1}\Pr^{-1} \partial_k \left(\lambda^{*}\partial_kT\right)         \nonumber \\
-    & &&-(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi           \\
-    \partial_t (\rho \zeta_i) =& -\partial_k (\rho \zeta_i u_k)
-    && -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
+    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )+\Re^{-1}\partial_k \tau_{ik}   \nonumber \\
+    &  - \partial_i p +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
+    \partial_t (\rho e)   =& -\partial_k (\rho e u_k ) +\Re^{-1}\Pr^{-1} \partial_k \left(\lambda^{*}\partial_kT\right) \nonumber \\
+    &-(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi           \\
+    \partial_t (\rho \zeta_i) =& -\partial_k (\rho \zeta_i u_k)-\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
   \end{align}
 \end{subequations}
 with
@@ -61,9 +58,9 @@ Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations 
 \begin{equation}
     \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). The last two are a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
+in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
 
-The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 
@@ -71,16 +68,13 @@ Let us consider a mixture of $N$ species or constituents with mass fractions $Y_
 \begin{subequations}
   \begin{align}
     \partial_t \rho       =& -\partial_k (\rho u_k)                                                \\
-    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )-\partial_i p
-    && +\Re^{-1}\partial_k \tau_{ik}                                                    \nonumber\\
-    & && +\Fr^{-1} g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
-    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )
-    && +\Re^{-1}\Pr^{-1}\partial_k\color{red}{\left[(\lambda/C_p)^{*}\partial_kh\right]}\nonumber\\
-    & && \color{red}{+\Re^{-1}\Pr^{-1} \partial_k\left[\sum\left(\Le_i^{-1}(\rho D)_i^*
+    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )+\Re^{-1}\partial_k \tau_{ik}  \nonumber\\
+    & -\partial_i p +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
+    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )+\Re^{-1}\Pr^{-1}\partial_k\color{red}{\left[(\lambda/C_p)^{*}\partial_kh\right]}\nonumber\\
+    & \color{red}{+\Re^{-1}\Pr^{-1} \partial_k\left[\sum\left(\Le_i^{-1}(\rho D)_i^*
     -(\lambda/C_p)^*\right)h_i \partial_k  Y_i\right]}                                  \nonumber\\
-    & && -(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi                 \\
-    \partial_t (\rho \zeta_i)=& -\partial_k (\rho \zeta_i u_k)
-    && -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
+    & -(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi                 \\
+    \partial_t (\rho \zeta_i)=& -\partial_k (\rho \zeta_i u_k) -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
   \end{align}
 \end{subequations}
 and
@@ -109,7 +103,7 @@ and
   p = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T R \;,\qquad
   R =\sum^N_1 R_iY_i\;.
 \end{equation}
-Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species and are defined in \texttt{termo\_initialize}. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
+Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in \texttt{termo\_initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
 \begin{equation}
     \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
@@ -118,7 +112,7 @@ in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{C
     \tilde{R}\equiv (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\tilde{R}_i\;,\qquad\tilde{R}_i\equiv (\gamma_0\Ma^2)^{-1}R_i
     \;,
 \end{equation}
-to save computation time. Note that specific heat ratio
+to save computation time and facilitate the consideration of a dimensional formulation in addition to the default non-dimensional formulation here described (see below). Note that specific heat ratio
 \begin{equation}
     \gamma=\frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2\tilde{R}}
 \end{equation}
@@ -135,9 +129,17 @@ In this case of a multi-species, a dimensional formulation can be considered by 
 
 \subsubsection{On the difference between the species and the prognostic scalars}
 
-The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
+The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. We assume that $\sum_1^NY_i=1$ and use this relation to use $Y_N=1-\sum_1^N$ in the expressions above. For instance,
+\begin{equation}
+    \tilde{R}=\sum_1^{N-1}Y_i(\tilde{R}_i-\tilde{R}_N) \;.
+\end{equation}
+It is then clear that we do not need $Y_N$ as prognostic variable. More generally, the total number of species is $N$, need not be equal to the total number of scalars with an evolution equation. The former can be considered as part of the diagnostic variables and the latter as part of the prognostic variables. This includes the simplest possible case of $Y_i^e = \zeta_i$ for $i=1,\ldots,N-1$. 
 
-(Same information as in the previous paragraph; needs to be appropriately rewritten.) Some scalars can be diagnostic and not prognostic variables, so that there is no evolution equation associated with them. One common example is liquid content in a moist air formulation assuming phase equilibrium. The two global variables {\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In principle, this should be specified through the variable {\tt imixture}. The routine {\tt thermodynamics/thermo\_initialize} defines the mixture properties. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
+Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
+
+Another possible case is phase equilibrium (saturation adjustment), as considered for an misture of air and water, where only the total water content is a prognostic variables and the partition into liquid and vapor is done assuming phase equilibrium. 
+
+To reserve memory space for some of these diagnostic variables, the code implementation considers two global variables, namely, {\tt inb\_scal} and {\tt inb\_scal\_array}. The first one is the number of prognostic variables, and the latter is the number of prognostic and diagnostic variables. In principle, this should be specified through the variable {\tt imixture} in the input file. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
 
 \subsubsection{Reacting flows}
 
@@ -156,11 +158,11 @@ The Boussinesq approximation is used:
 \begin{subequations}
   \begin{align}
     0                   =& -\partial_k u_k                                          \\
-    \partial_t  u_i     =& -\partial_k ( u_i u_k )-\partial_i p                     &
-    +\Re^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right)  &
+    \partial_t  u_i     =& -\partial_k ( u_i u_k )  
+    +\Re^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right)  -\partial_i p&&
     +\Fr^{-1}\, g_i\,b +\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-    \partial_t \zeta_i  =& -\partial_k (\zeta_i u_k)                                &
-    +\Re^{-1}\Sc_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \Da_i\,w_i
+    \partial_t \zeta_i  =& -\partial_k (\zeta_i u_k)                    
+    +\Re^{-1}\Sc_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &&+ \Da_i\,w_i
   \end{align}
 \end{subequations}
 The body force is now the buoyancy and the buoyancy function $b^e(\zeta_i)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
