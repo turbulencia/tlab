@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -24,12 +23,13 @@
 !#
 !########################################################################
 subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
-     q, hq, u, v, w, h1, h2, h3, s, hs, &
-     tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8)
+                                                q, hq, u, v, w, h1, h2, h3, s, hs, &
+                                                tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8)
 
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
@@ -48,26 +48,26 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 
     implicit none
 
-    TREAL kex, kim, kco
-    TREAL, dimension(isize_field, *) :: q, hq
-    TREAL, dimension(isize_field), intent(INOUT) :: u, v, w, h1, h2, h3
-    TREAL, dimension(isize_field, inb_scal), intent(INOUT) :: s, hs
-    TREAL, dimension(isize_txc_field), intent(OUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8
+    real(wp) kex, kim, kco
+    real(wp), dimension(isize_field, *) :: q, hq
+    real(wp), dimension(isize_field), intent(INOUT) :: u, v, w, h1, h2, h3
+    real(wp), dimension(isize_field, inb_scal), intent(INOUT) :: s, hs
+    real(wp), dimension(isize_txc_field), intent(OUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8
 
     target tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, h2, u, v, w
 
 ! -----------------------------------------------------------------------
-    TINTEGER iq, is, ij, k, nxy, ip, ip_b, ip_t
-    TINTEGER ibc, bcs(2, 2)
-    TREAL dummy, visc_exp, visc_imp, visc_tot, diff, alpha, beta, kef, aug
+    integer(wi) iq, is, ij, k, nxy, ip, ip_b, ip_t
+    integer(wi) ibc, bcs(2, 2)
+    real(wp) dummy, visc_exp, visc_imp, visc_tot, diff, alpha, beta, kef, aug
 
-    TREAL, dimension(:), pointer :: p_bcs
-    TREAL, dimension(imax, kmax, 4:6) :: bcs_hb, bcs_ht
+    real(wp), dimension(:), pointer :: p_bcs
+    real(wp), dimension(imax, kmax, 4:6) :: bcs_hb, bcs_ht
 
     integer, parameter :: i0 = 0
-    
+
     kef = kex/kim
-    aug = C_1_R + kef
+    aug = 1.0_wp + kef
 
 ! #######################################################################
     nxy = imax*jmax
@@ -117,11 +117,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 
         do k = 1, kmax
             ip = (k - 1)*imax*jmax + 1; 
-!        bcs_hb(1:imax,k,6)=bcs_hb(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
-            bcs_hb(1:imax, k, 6) = BcsFlowJmin%ref(1:imax, k, 3) + visc_tot*dte*tmp2(ip:ip + imax - 1) - dte*C_1_R; 
+!        bcs_hb(1:imax,k,6)=bcs_hb(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*1.0_wp;
+            bcs_hb(1:imax, k, 6) = BcsFlowJmin%ref(1:imax, k, 3) + visc_tot*dte*tmp2(ip:ip + imax - 1) - dte*1.0_wp; 
             ip = ip + (jmax - 1)*imax; 
-!        bcs_ht(1:imax,k,6)=bcs_ht(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*C_1_R;
-            bcs_ht(1:imax, k, 6) = BcsFlowJmax%ref(1:imax, k, 3) + visc_tot*dte*tmp2(ip:ip + imax - 1) - dte*C_1_R; 
+!        bcs_ht(1:imax,k,6)=bcs_ht(1:imax,k,2) + visc_tot*dte*tmp2(ip:ip+imax-1) - dte*1.0_wp;
+            bcs_ht(1:imax, k, 6) = BcsFlowJmax%ref(1:imax, k, 3) + visc_tot*dte*tmp2(ip:ip + imax - 1) - dte*1.0_wp; 
         end do
 
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
@@ -133,7 +133,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
         if (buoyancy%active(3)) then
-            wrk1d(:, 1) = C_0_R
+            wrk1d(:, 1) = 0.0_wp
             call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
             dummy = buoyancy%vector(3)
             do ij = 1, isize_field
@@ -145,9 +145,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Coriolis (so far, rotation only in the Oy direction)
 ! -----------------------------------------------------------------------
         if (coriolis%type == EQNS_COR_NORMALIZED) then
-            dummy = C_1_R/rossby
+            dummy = 1.0_wp/rossby
             do ij = 1, isize_field
-                h3(ij) = h3(ij) + dummy*(u(ij) - C_1_R)
+                h3(ij) = h3(ij) + dummy*(u(ij) - 1.0_wp)
             end do
         end if
 
@@ -177,7 +177,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
     if (buoyancy%active(1)) then
-        wrk1d(:, 1) = C_0_R
+        wrk1d(:, 1) = 0.0_wp
         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
         dummy = buoyancy%vector(1)
         do ij = 1, isize_field
@@ -190,7 +190,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! -----------------------------------------------------------------------
 
     if (coriolis%type == EQNS_COR_NORMALIZED) then
-        dummy = C_1_R/rossby
+        dummy = 1.0_wp/rossby
         do ij = 1, isize_field
             h1(ij) = h1(ij) - dummy*w(ij)
         end do
@@ -205,9 +205,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; 
-        bcs_hb(1:imax, k, 5) = C_0_R + visc_tot*dte*tmp2(ip:ip + imax - 1)
+        bcs_hb(1:imax, k, 5) = 0.0_wp + visc_tot*dte*tmp2(ip:ip + imax - 1)
         ip = ip + (jmax - 1)*imax; 
-        bcs_ht(1:imax, k, 5) = C_0_R + visc_tot*dte*tmp2(ip:ip + imax - 1)
+        bcs_ht(1:imax, k, 5) = 0.0_wp + visc_tot*dte*tmp2(ip:ip + imax - 1)
     end do
 
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp3)
@@ -269,10 +269,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
             call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp6, tmp5)
 !        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s,       tmp6,     tmp5)
             do k = 1, kmax
-                ! ip=(k-1)*imax*jmax+1; bcs_hb(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
-                ! ip=ip+(jmax-1)*imax;  bcs_ht(1:imax,k,3)= C_0_R + visc_tot*dte*tmp6(ip:ip+imax-1)
-                ip = (k - 1)*imax*jmax + 1; BcsFlowJmin%ref(1:imax, k, 2) = C_0_R + visc_tot*dte*tmp6(ip:ip + imax - 1)
-                ip = ip + (jmax - 1)*imax; BcsFlowJmax%ref(1:imax, k, 2) = C_0_R + visc_tot*dte*tmp6(ip:ip + imax - 1)
+                ! ip=(k-1)*imax*jmax+1; bcs_hb(1:imax,k,3)= 0.0_wp + visc_tot*dte*tmp6(ip:ip+imax-1)
+                ! ip=ip+(jmax-1)*imax;  bcs_ht(1:imax,k,3)= 0.0_wp + visc_tot*dte*tmp6(ip:ip+imax-1)
+                ip = (k - 1)*imax*jmax + 1; BcsFlowJmin%ref(1:imax, k, 2) = 0.0_wp + visc_tot*dte*tmp6(ip:ip + imax - 1)
+                ip = ip + (jmax - 1)*imax; BcsFlowJmax%ref(1:imax, k, 2) = 0.0_wp + visc_tot*dte*tmp6(ip:ip + imax - 1)
             end do
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6)
             do ij = 1, isize_field; 
@@ -297,7 +297,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! --------------------------------------------------
             diff = visc_imp/schmidt(is)
             alpha = dte*diff
-            beta = -C_1_R/alpha
+            beta = -1.0_wp/alpha
 
             ip_b = 1; ip_t = 1 + imax*kmax
             do k = 1, kmax
@@ -327,7 +327,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 
     visc = visc_imp
     alpha = dte*visc_imp
-    beta = -C_1_R/alpha
+    beta = -1.0_wp/alpha
 
     bcs_hb(1:imax, 1:kmax, 4:6) = -alpha*aug*bcs_hb(1:imax, 1:kmax, 4:6)
     bcs_ht(1:imax, 1:kmax, 4:6) = -alpha*aug*bcs_ht(1:imax, 1:kmax, 4:6)
@@ -402,8 +402,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! -----------------------------------------------------------------------
 ! Default is Dirichlet -> values at boundary are kept const;
 ! BcsFlowJmin/Jmax for u and w initialized to old BC values above
-    BcsFlowJmin%ref(:, :, 2) = C_0_R
-    BcsFlowJmax%ref(:, :, 2) = C_0_R
+    BcsFlowJmin%ref(:, :, 2) = 0.0_wp
+    BcsFlowJmax%ref(:, :, 2) = 0.0_wp
     do iq = 1, inb_flow
         ibc = 0
         if (BcsFlowJmin%type(iq) == DNS_BCS_NEUMANN) ibc = ibc + 1
@@ -476,7 +476,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 !   ip_b =                 1
 !   DO k = 1,kmax
 !      u(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,1)
-!      v(ip_b:ip_b+imax-1) = C_0_R               ! no penetration
+!      v(ip_b:ip_b+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_b:ip_b+imax-1) = bcs_hb(1:imax,k,2);
 !      IF ( scal_on ) THEN
 !         DO is=1,inb_scal
@@ -492,7 +492,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 !   ip_t = imax*(jmax-1) + 1
 !   DO k = 1,kmax
 !      u(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,1)
-!      v(ip_t:ip_t+imax-1) = C_0_R               ! no penetration
+!      v(ip_t:ip_t+imax-1) = 0.0_wp               ! no penetration
 !      w(ip_t:ip_t+imax-1) = bcs_ht(1:imax,k,2);
 !      IF ( scal_on ) THEN
 !         DO is=1,inb_scal

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #include "info_vars.h"
@@ -58,25 +57,25 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     !
     ! PARAMETERS
     !
-    TINTEGER, parameter :: nmeasure = 3
+    integer(wi), parameter :: nmeasure = 3
 
-    TREAL, dimension(isize_field), intent(IN) :: u, v, w
-    TREAL, dimension(isize_field, inb_scal_array), intent(IN) :: s
+    real(wp), dimension(isize_field), intent(IN) :: u, v, w
+    real(wp), dimension(isize_field, inb_scal_array), intent(IN) :: s
 
-    TREAL, dimension(isize_field), intent(INOUT) :: h1, h2, h3
-    TREAL, dimension(isize_field, inb_scal), target, intent(OUT) :: hs
-    TREAL, dimension(isize_field), intent(INOUT) :: tmpu, tmpw, tmp11, tmp12, tmp21, tmp22, tmp31, tmp32, tmp41, tmp42
-    TREAL, dimension(isize_field) :: bt1, bt2, bt3, bt4
-    TREAL, dimension(isize_wrk1d, *) :: wrk1d
-    TREAL, dimension(*) :: wrk2d, wrk3d
-    TREAL, dimension(:), pointer :: p_h
+    real(wp), dimension(isize_field), intent(INOUT) :: h1, h2, h3
+    real(wp), dimension(isize_field, inb_scal), target, intent(OUT) :: hs
+    real(wp), dimension(isize_field), intent(INOUT) :: tmpu, tmpw, tmp11, tmp12, tmp21, tmp22, tmp31, tmp32, tmp41, tmp42
+    real(wp), dimension(isize_field) :: bt1, bt2, bt3, bt4
+    real(wp), dimension(isize_wrk1d, *) :: wrk1d
+    real(wp), dimension(*) :: wrk2d, wrk3d
+    real(wp), dimension(:), pointer :: p_h
     !
     ! LOCAL VARIABLES
     !
-    TINTEGER :: nxy_trans, nyz_trans, nxy, id, imeasure, ij, k, is, commID, iq
-    TINTEGER :: finished, ip_b, ip_t, ibc, bcs(2, 2)
-    TREAL tdummy
-    TREAL, dimension(:), pointer :: p_bcs
+    integer(wi) :: nxy_trans, nyz_trans, nxy, id, imeasure, ij, k, is, commID, iq
+    integer(wi) :: finished, ip_b, ip_t, ibc, bcs(2, 2)
+    real(wp) tdummy
+    real(wp), dimension(:), pointer :: p_bcs
     !
     type(nb3dfft_infoType), dimension(24) :: info
     integer(KIND=4), dimension(2) :: cur_time
@@ -84,7 +83,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     real(KIND=8), dimension(6) :: t_snd, t_rcv
     type(nb3dfft_schedlType) :: nbcsetup_
     integer :: pkg_cnt
-    TREAL rtime, rtime_loc, t_run, ptime, ctime_loc
+    real(wp) rtime, rtime_loc, t_run, ptime, ctime_loc
 
     target h1, h2, h3
 
@@ -99,8 +98,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 ! (flow BCs initialized below as they are used for pressure in between)
 ! #######################################################################
 ! Default is zero
-    BcsScalJmin%ref(:, :, :) = C_0_R
-    BcsScalJmax%ref(:, :, :) = C_0_R
+    BcsScalJmin%ref(:, :, :) = 0.0_wp
+    BcsScalJmax%ref(:, :, :) = 0.0_wp
 
 ! Keep the old tendency of the scalar at the boundary to be used in dynamic BCs
     ip_b = 1
@@ -431,7 +430,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         !
         ! Calculate divergence for pressure solver
         !
-        tdummy = C_1_R/dte
+        tdummy = 1.0_wp/dte
         tmp32 = h1 + u*tdummy
         tmp42 = h3 + w*tdummy
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
@@ -525,7 +524,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         end do
         !
         t_tmp = -MPI_WTime()
-        tdummy = C_1_R/dte
+        tdummy = 1.0_wp/dte
         tmp11 = h2 + v*tdummy
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp11)
@@ -629,8 +628,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 ! -----------------------------------------------------------------------
 ! Preliminaries
 ! -----------------------------------------------------------------------
-    BcsFlowJmin%ref = C_0_R ! default is no-slip (dirichlet)
-    BcsFlowJmax%ref = C_0_R
+    BcsFlowJmin%ref = 0.0_wp ! default is no-slip (dirichlet)
+    BcsFlowJmax%ref = 0.0_wp
 
     do iq = 1, inb_flow
         ibc = 0

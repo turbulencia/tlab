@@ -18,7 +18,7 @@
 !########################################################################
 
 module IO_FIELDS
-    use TLAB_CONSTANTS, only: lfile, wfile, efile, wp, wi, sp, dp
+    use TLAB_CONSTANTS, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
     use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
     use TLAB_ARRAYS, only: wrk3d
 #ifdef USE_MPI
@@ -78,9 +78,6 @@ module IO_FIELDS
     character(len=128) line
 
     real(sp), pointer :: s_wrk(:) => null()
-
-    integer, parameter :: sizeofreal = sizeof(1.0_wp)
-    integer, parameter :: sizeofint = sizeof(1_wi)
 
 #ifdef USE_MPI
     integer mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE)
