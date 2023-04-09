@@ -355,14 +355,18 @@ contains
         ! -----------------------------------------------------------------------
         ! Strength of the relaxation terms
         allocate (item%tau(item%size, item%nfields))
-        do iq = 1, item%nfields
-            dummy = 1.0_wp/(g(idir)%nodes(item%offset + item%size) - g(idir)%nodes(item%offset + 1)) ! Inverse of segment length
-            do jloc = 1, item%size
-                j = item%offset + jloc
-        IF ( item%form == FORM_POWER_MAX ) item%tau(jloc,iq) = item%strength(iq) *( ( g(idir)%nodes(j) -g(idir)%nodes(item%offset+1) ) *dummy ) **item%sigma(iq)
-        IF ( item%form == FORM_POWER_MIN ) item%tau(jloc,iq) = item%strength(iq) *( ( g(idir)%nodes(item%offset+item%size) -g(idir)%nodes(j)) *dummy ) **item%sigma(iq)
+        if (item%size > 1) then
+            do iq = 1, item%nfields
+                dummy = 1.0_wp/(g(idir)%nodes(item%offset + item%size) - g(idir)%nodes(item%offset + 1)) ! Inverse of segment length
+                do jloc = 1, item%size
+                    j = item%offset + jloc
+                    if (item%form == FORM_POWER_MAX) &
+                        item%tau(jloc, iq) = item%strength(iq)*((g(idir)%nodes(j) - g(idir)%nodes(item%offset + 1))*dummy)**item%sigma(iq)
+                    if (item%form == FORM_POWER_MIN) &
+                        item%tau(jloc, iq) = item%strength(iq)*((g(idir)%nodes(item%offset + item%size) - g(idir)%nodes(j))*dummy)**item%sigma(iq)
+                end do
             end do
-        end do
+        end if
 
         ! -----------------------------------------------------------------------
         ! Filters at boundaries; nseeds to be checked

@@ -36,16 +36,21 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! being then mean_rho=(rho1+rho2)/2
 ! should we not use the thermal equation of state in thermo routines?
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        if (rbg%type == PROFILE_NONE) then
+        if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
             rbg = tbg
             dummy = tbg%delta/tbg%mean
             rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             rbg%delta = -rbg%mean*dummy
+
+        else if (rbg%type == PROFILE_NONE .and. hbg%type /= PROFILE_NONE) then
+            rbg%mean = 1.0_wp ! to be done; I need a nonzero value for dns_control.
+
         else
             tbg = rbg
             dummy = rbg%delta/rbg%mean
             tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             tbg%delta = -tbg%mean*dummy
+            
         end if
     end if
 

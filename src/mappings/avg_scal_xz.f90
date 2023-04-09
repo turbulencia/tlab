@@ -510,9 +510,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             if (is == inb_scal_array + 1) then ! Default values are for liquid; defining them for buoyancy
                 coefQ = buoyancy%parameters(inb_scal_array)/froude
                 coefR = buoyancy%parameters(inb_scal)/froude
-                do is_loc = 1, inb_scal
-                    coefT = coefT + transport%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
-                end do
+                if ( transport%active(is) ) then
+                    do is_loc = 1, inb_scal
+                        coefT = coefT + transport%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
+                    end do
+                end if
             end if
 
             call THERMO_AIRWATER_LINEAR_SOURCE(imax*jmax*kmax, s, dsdx, dsdy, dsdz) ! calculate xi in dsdx
