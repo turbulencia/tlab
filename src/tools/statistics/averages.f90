@@ -13,9 +13,6 @@ program AVERAGES
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
     use TLAB_MPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE

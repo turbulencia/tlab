@@ -883,7 +883,7 @@ contains
         use PARTICLE_ARRAYS
 
         ! -------------------------------------------------------------------
-        integer(wi) is, i
+        integer(wi) is
 
 #ifdef USE_MPI
         integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north

@@ -51,6 +51,7 @@ subroutine THERMO_INITIALIZE()
 ! Thermal equation, molar masses in kg/kmol
 ! ###################################################################
     inb_scal_loc = inb_scal     ! Control that inb_scal read in dns.ini is correct
+    WGHT(:) = 1.0_wp            ! We devide by WGTH below even when mxiture is none
 
     select case (imixture)
 ! -------------------------------------------------------------------
@@ -420,9 +421,9 @@ subroutine THERMO_INITIALIZE()
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
             MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
             CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-            PREF_1000 = 1.0_wp /MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from dns.ini
+            PREF_1000 = 1.0_wp/MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from dns.ini
         else
-            PREF_1000 = 1e5_wp /PREF            ! 1000 hPa, used as reference
+            PREF_1000 = 1e5_wp/PREF            ! 1000 hPa, used as reference
         end if
 
         ! Thermal equation of state
@@ -442,7 +443,7 @@ subroutine THERMO_INITIALIZE()
 
         ! Saturation vapor pressure
         do ipsat = 1, NPSAT
-            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF /MRATIO         ! Scaling by rho_0U_0^2 as total pressure
+            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF/MRATIO         ! Scaling by rho_0U_0^2 as total pressure
             THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
         end do
 
@@ -454,24 +455,27 @@ subroutine THERMO_INITIALIZE()
     THERMO_R(:) = WGHT_INV(:)*RRATIO            ! gas constants normalized by dynamic reference value U0^2/T0
 
 ! -------------------------------------------------------------------
-    ! Definitions for the case of the airwater mixture
-    Rv = THERMO_R(1)
-    Rd = THERMO_R(2)
-    Rdv = THERMO_R(1) - THERMO_R(2)
+    select case (imixture)
+    case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
+        Rv = THERMO_R(1)
+        Rd = THERMO_R(2)
+        Rdv = THERMO_R(1) - THERMO_R(2)
 
-    Cd = THERMO_AI(1, 1, 2)
-    Cl = THERMO_AI(1, 1, 3)
-    Cdv = THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2)
-    Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
-    Cdl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2)
-    Lv0 = -THERMO_AI(6, 1, 3)
-    Ld = THERMO_AI(6, 1, 2)
-    Lv = THERMO_AI(6, 1, 1)
-    Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
-    Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
-    Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
-    rd_ov_rv = Rd/Rv
-    rd_ov_cd = Rd/Cd*GRATIO
+        Cd = THERMO_AI(1, 1, 2)
+        Cl = THERMO_AI(1, 1, 3)
+        Cdv = THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2)
+        Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
+        Cdl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2)
+        Lv0 = -THERMO_AI(6, 1, 3)
+        Ld = THERMO_AI(6, 1, 2)
+        Lv = THERMO_AI(6, 1, 1)
+        Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
+        Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
+        Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
+        rd_ov_rv = Rd/Rv
+        rd_ov_cd = Rd/Cd*GRATIO
+
+    end select
 
 ! -------------------------------------------------------------------
 ! Output

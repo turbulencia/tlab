@@ -72,7 +72,7 @@ contains
         allocate (ims_request(2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
 
         ! #######################################################################
-        ims_pro_i = MOD(ims_pro, ims_npro_i) ! Starting at 0
+        ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
         ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
 
         ims_offset_i = ims_pro_i*imax
@@ -159,17 +159,17 @@ contains
         ! ######################################################################
         do ip = 0, ims_npro_i - 1
             ims_plan_trps_i(ip + 1) = ip
-            ims_plan_trpr_i(ip + 1) = MOD(ims_npro_i - ip, ims_npro_i)
+            ims_plan_trpr_i(ip + 1) = mod(ims_npro_i - ip, ims_npro_i)
         end do
-        ims_plan_trps_i = CSHIFT(ims_plan_trps_i, ims_pro_i)
-        ims_plan_trpr_i = CSHIFT(ims_plan_trpr_i, -(ims_pro_i))
+        ims_plan_trps_i = cshift(ims_plan_trps_i, ims_pro_i)
+        ims_plan_trpr_i = cshift(ims_plan_trpr_i, -(ims_pro_i))
 
         do ip = 0, ims_npro_k - 1
             ims_plan_trps_k(ip + 1) = ip
-            ims_plan_trpr_k(ip + 1) = MOD(ims_npro_k - ip, ims_npro_k)
+            ims_plan_trpr_k(ip + 1) = mod(ims_npro_k - ip, ims_npro_k)
         end do
-        ims_plan_trps_k = CSHIFT(ims_plan_trps_k, ims_pro_k)
-        ims_plan_trpr_k = CSHIFT(ims_plan_trpr_k, -(ims_pro_k))
+        ims_plan_trps_k = cshift(ims_plan_trps_k, ims_pro_k)
+        ims_plan_trpr_k = cshift(ims_plan_trpr_k, -(ims_pro_k))
 
         ! DO ip=0,ims_npro_i-1
         !    IF ( ims_pro == ip ) THEN
@@ -234,7 +234,7 @@ contains
         character*64 str, line
 
         ! #######################################################################
-        if (MOD(npage, npro_i) == 0) then
+        if (mod(npage, npro_i) == 0) then
             nsize = npage/npro_i
         else
             call TLAB_WRITE_ASCII(efile, 'TLAB_MPI_TYPE_I. Ratio npage/npro_i not an integer.')
@@ -267,9 +267,9 @@ contains
 
         if (ims_ss /= ims_rs) then
             write (str, *) ims_ss; write (line, *) ims_rs
-            line = 'Send size '//TRIM(ADJUSTL(str))//'differs from recv size '//TRIM(ADJUSTL(line))
+            line = 'Send size '//trim(adjustl(str))//'differs from recv size '//trim(adjustl(line))
             write (str, *) 1  ! i
-            line = TRIM(ADJUSTL(line))//' in message '//TRIM(ADJUSTL(str))
+            line = trim(adjustl(line))//' in message '//trim(adjustl(str))
             call TLAB_WRITE_ASCII(efile, line)
             call TLAB_STOP(DNS_ERROR_MPITYPECHECK)
         end if
@@ -294,7 +294,7 @@ contains
         integer ims_tmp1, ims_tmp2, ims_tmp3
 
         ! #######################################################################
-        if (MOD(npage, npro_k) == 0) then
+        if (mod(npage, npro_k) == 0) then
             nsize = npage/npro_k
         else
             call TLAB_WRITE_ASCII(efile, 'TLAB_MPI_TYPE_K. Ratio npage/npro_k not an integer.')
@@ -338,7 +338,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine TLAB_MPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
-        use, intrinsic :: ISO_C_BINDING, only: c_int
+        use, intrinsic :: iso_c_binding, only: c_int
 
         interface
             function DNS_USLEEP(useconds) bind(C, name="usleep")
@@ -354,10 +354,8 @@ contains
         integer, intent(in) :: tsend, trecv
 
         ! -----------------------------------------------------------------------
-        integer(wi) j, l, m, n, ns, nr, ips, ipr, idummy
-        integer ip
-        real(wp) rdum
-        character*256 line
+        integer(wi) j, l, m, ns, nr, ips, ipr
+
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
 #endif
@@ -368,7 +366,7 @@ contains
 #endif
         do j = 1, ims_npro_k, ims_sizBlock_k
             l = 0
-            do m = j, MIN(j + ims_sizBlock_k - 1, ims_npro_k)
+            do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
                 ns = ims_plan_trps_k(m) + 1; ips = ns - 1
                 nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
                 if (ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) then
@@ -407,11 +405,10 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer ip
 
         do j = 1, ims_npro_i, ims_sizBlock_i
             l = 0
-            do m = j, MIN(j + ims_sizBlock_i - 1, ims_npro_i)
+            do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
                 ns = ims_plan_trps_i(m) + 1; ips = ns - 1
                 nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
                 if (ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS) then
@@ -446,7 +443,6 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer ip
 
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
@@ -458,7 +454,7 @@ contains
 #endif
         do j = 1, ims_npro_k, ims_sizBlock_k
             l = 0
-            do m = j, MIN(j + ims_sizBlock_k - 1, ims_npro_k)
+            do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
                 ns = ims_plan_trps_k(m) + 1; ips = ns - 1
                 nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
                 if (ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) then
@@ -498,11 +494,10 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer ip
 
         do j = 1, ims_npro_i, ims_sizBlock_i
             l = 0
-            do m = j, MIN(j + ims_sizBlock_i - 1, ims_npro_i)
+            do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
                 ns = ims_plan_trps_i(m) + 1; ips = ns - 1
                 nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
                 if (ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS) then
@@ -533,7 +528,7 @@ contains
         integer, intent(in) :: mpi_error_code
 
         !##############################
-        character error_string*1024, line*512
+        character error_string*1024
         integer error_local, error_len
 
         call MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
@@ -613,7 +608,7 @@ contains
                     end if
 
                     do jk = 1, nyz
-                        j_loc = MOD((jk - 1 + joffset_loc), ny_total) + 1
+                        j_loc = mod((jk - 1 + joffset_loc), ny_total) + 1
                         k_loc = ((jk - 1 + joffset_loc)/ny_total) + 1 + koffset_loc
 
                         if ((j_loc >= ny_min) .and. (j_loc <= ny_max) .and. &
@@ -661,8 +656,8 @@ contains
             end if
 
             ! left and right PEs
-            ims_pro_l = MOD(ims_pro - 1 + ims_npro, ims_npro)
-            ims_pro_r = MOD(ims_pro + 1 + ims_npro, ims_npro)
+            ims_pro_l = mod(ims_pro - 1 + ims_npro, ims_npro)
+            ims_pro_r = mod(ims_pro + 1 + ims_npro, ims_npro)
 
             icount = ijmax*npl
 
@@ -715,8 +710,8 @@ contains
             ! -----------------------------------------------------------------------
             npl_loc = kmax
 
-            ims_pro_l = MOD(ims_pro - 1 + ims_npro, ims_npro)
-            ims_pro_r = MOD(ims_pro + 1 + ims_npro, ims_npro)
+            ims_pro_l = mod(ims_pro - 1 + ims_npro, ims_npro)
+            ims_pro_r = mod(ims_pro + 1 + ims_npro, ims_npro)
 
             icount = ijmax*npl_loc
 
@@ -739,8 +734,8 @@ contains
             ! -----------------------------------------------------------------------
             npl_loc = npl - kmax
 
-            ims_pro_l = MOD(ims_pro - 2 + ims_npro, ims_npro)
-            ims_pro_r = MOD(ims_pro + 2 + ims_npro, ims_npro)
+            ims_pro_l = mod(ims_pro - 2 + ims_npro, ims_npro)
+            ims_pro_r = mod(ims_pro + 2 + ims_npro, ims_npro)
 
             icount = ijmax*npl_loc
 

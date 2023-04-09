@@ -102,7 +102,10 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) idummy(3)
         real(wp) dummy
+#ifdef USE_MPI
+#else
         real(sp) tdummy(2), wall_time_loc
+#endif
         character*128 line
         character*32 str
 

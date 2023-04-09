@@ -45,10 +45,6 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) id
-#ifdef USE_MPI
-        integer(wi) :: ndims
-        integer(wi), dimension(3) :: sizes, locsize, offset
-#endif
 
         ! ###################################################################
         iplanes%size = (inb_flow_array + inb_scal_array + 1)*iplanes%n           ! Flow and scal variables, pressure
