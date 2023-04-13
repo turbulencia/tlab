@@ -32,7 +32,7 @@ program VISUALS
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
-    use FI_SHEAR
+    use FI_TOTAL_STRESS
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_FILTERS
@@ -214,8 +214,8 @@ program VISUALS
         if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
-        if (opt_vec(iv) == iscal_offset + 21) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7 ); end if
+        if (opt_vec(iv) == iscal_offset + 21) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
     end do
 
     ! check if enough memory is provided for the IBM
@@ -961,17 +961,28 @@ program VISUALS
             ! ###################################################################
             ! Wall shear stress
             ! ###################################################################
-            if (opt_vec(iv) == iscal_offset + 21) then ! Shear stress
-                plot_file = 'flow.0'
-                ! plot_file = 'WallShearStress'//time_str(1:MaskSize)
-                if (imode_ibm == 0) then
-                    call FI_WALL_SHEAR_NOIBM(imax, jmax, kmax, q(1, 1), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
-                else if (imode_ibm == 1) then
-                    call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4)) ! pressure in txc(1,1)
-                    call FI_WALL_SHEAR_IBM(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
-                    txc(1:isize_field, 1) = txc(1:isize_field, 2)
+            if (opt_vec(iv) == iscal_offset + 21) then ! Total stress tensor 
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3)) ! pressure in txc(1,7)
+                call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1 ,8), txc(1 ,6))            ! avg vel. + pre. in time               
+                if (it == itime_size) then
+                    call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                    if (imode_ibm == 1) then ! not sure if this is needed
+                        CALL IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, txc(1, 8), txc(1, 9)) ! eps_fluid in txc(1, 8)
+                        txc(:, 8) = (1.0_wp - txc(:, 8))                                                  ! eps_solid
+
+                        txc(:, 8) = eps
+                        plot_file = 'EpsSolid'//time_str(1:MaskSize)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 8), wrk3d)
+                        ! do is = 1, 6
+                        !     call IBM_BCS_FIELD(txc(1, is))
+                        ! end do
+                    end if
+                    plot_file = 'StressTensor'
+                    if (itime_size > 1) plot_file = trim(adjustl(plot_file))//'Avg'
+                    plot_file = trim(adjustl(plot_file))//time_str(1:MaskSize) 
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 6, subdomain, txc(1, 1), wrk3d)
                 end if 
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
+
             end if
 
         end do
@@ -982,6 +993,36 @@ program VISUALS
     call TLAB_STOP(0)
 
 contains
+!########################################################################
+!# Accumulate itime_size fields before processing the temp. avg. fields
+!########################################################################
+subroutine VISUALS_ACCUMULATE_FIELDS(q, p, q_avg, p_avg)
+
+    real(wp), dimension(isize_field, 3), intent(inout) :: q     ! inst. vel. fields
+    real(wp), dimension(isize_field   ), intent(inout) :: p     ! inst. pre. fields
+    real(wp), dimension(isize_field, 3), intent(inout) :: q_avg ! time avg. vel. fields
+    real(wp), dimension(isize_field   ), intent(inout) :: p_avg ! time avg. pre. fields
+
+    integer(wi) :: is
+    ! ================================================================== !
+    ! if only one iteration is chosen, do nothing
+    if (itime_size > 1) then
+        if (it == 1) then 
+            q_avg(:,:) = q(:,:); p_avg(:) = p(:)
+        else if (it > 1) then
+            do is = 1, 3    
+                q_avg(:,is) = q_avg(:,is) + q(:,is)
+            end do 
+            p_avg(:) = p_avg(:) + p(:)
+        end if
+        if (it == itime_size) then    
+            q = q_avg / itime_size
+            p = p_avg / itime_size
+        end if
+    end if
+
+    return
+end subroutine VISUALS_ACCUMULATE_FIELDS
 !########################################################################
 !# Calculate thermodynamic information for THERMO_AIRWATER_LINEAR
 !########################################################################
@@ -1120,7 +1161,7 @@ contains
                 call TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
                 if (ims_pro == 0) then
 #else
-      call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), txc)
+                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), txc)
                     write (LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux, ifield))
 #endif
                     close (LOC_UNIT_ID)
