@@ -12,6 +12,7 @@ module FI_SOURCES
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
     use TLAB_VARS, only: radiation, transport, chemistry, subsidence
     use TLAB_VARS, only: bbackground, pbackground, rbackground, ribackground, epbackground
+    use THERMO_ANELASTIC
     implicit none
     private
 

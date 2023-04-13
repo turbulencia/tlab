@@ -13,18 +13,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compressible formulation}
 
-The energy equation is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. The equation of state corresponding to an ideal gas is assumed:
+Let us consider first a gas with one single species. The evolution equation for the energy is written in terms of the specific internal energy (sensible plus formation). Viscosity, thermal conductivity, diffusivity and the specific heat ratio can depend on the temperature. We consider the ideal gas law. The governing equations are written as follows:
 \begin{subequations}
   \begin{align}
     \partial_t \rho       =& -\partial_k (\rho u_k)                                       \\
-    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )- \partial_i p
-    && +\Re^{-1}\partial_k \tau_{ik}                                            \nonumber \\
-    & && +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
-    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )
-    && +\Re^{-1}\Pr^{-1} \partial_k \left(\lambda^{*}\partial_kT\right)         \nonumber \\
-    & &&-(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi           \\
-    \partial_t (\rho \zeta_i) =& -\partial_k (\rho \zeta_i u_k)
-    && -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
+    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )+\Re^{-1}\partial_k \tau_{ik}   \nonumber \\
+    &  - \partial_i p +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
+    \partial_t (\rho e)   =& -\partial_k (\rho e u_k ) +\Re^{-1}\Pr^{-1} \partial_k \left(\lambda^{*}\partial_kT\right) \nonumber \\
+    &-(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi           \\
+    \partial_t (\rho \zeta_i) =& -\partial_k (\rho \zeta_i u_k)-\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
   \end{align}
 \end{subequations}
 with
@@ -42,38 +39,42 @@ and
   p  = (\gamma_0 \Ma^2)^{-1}\rho T \;.
   \label{eq:state}
 \end{equation}
-The specific heat ratio, $\gamma$, is constant and equal to the reference value $\gamma_0=1/(1-R_0/C_{p0})$, where $R_0$ is the specific gas constant of the gas under consideration and $C_{p0}$ is its specific heat capacity at constant pressure. The dimensionless numbers are defined using the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$ in the usual way,
-\begin{alignat*}{3}
-  \Re & = \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0} & \qquad
-  \Pr & = \frac{\mu_0}{(\lambda_0/C_{p0})} & \qquad
-  \Sc_i & = \frac{\mu_0}{\rho_0 D_{i0}}
-\end{alignat*}
+The variables in these equations are normalized by the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$, which represent a length, a velocity, a density, and a temperature, respectively. The pressure is normalized by $\rho_0U_0^2$. Thermal energy variables are normalized with $C_{p0}T_0$, where $C_{p0}$ is a reference specific heat capacity at constant pressure. $R_0$ is the specific gas constant of the gas under consideration. The dimensionless numbers are defined by
+\begin{equation}
+  \Re \equiv \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0}\;, \qquad
+  \Pr \equiv \frac{\mu_0}{(\lambda_0/C_{p0})}\;, \qquad
+  \Sc_i \equiv \frac{\mu_0}{\rho_0 D_{i0}}\;,
+\end{equation}
 and
-\begin{equation*}
-  \Ma  = \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}}
-\end{equation*}
+\begin{equation}
+  \Ma  \equiv \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}}\;, \qquad
+  \gamma_0 \equiv \frac{C_{p0}}{C_{p0}-R_0}\;,
+\end{equation}
 and
-\begin{alignat*}{2}
-  \Fr & = \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} & \qquad \Ro = \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
-\end{alignat*}
-Thermal energy variables are normalized with $C_{p0}T_0$. The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the vector is complete determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+\begin{equation}
+  \Fr \equiv \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} \qquad \Ro \equiv \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
+\end{equation}
+Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations depend on $\gamma_0\Ma^2$ and $(\gamma_0-1)\Ma^2$, which suggests to introduce the derived set of parameters
+\begin{equation}
+    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+\end{equation}
+in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
+
+The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsection{Multi-species compressible flows}
 
-We consider a mixture of $N$ species or constituents with mass fractions $Y_i$:
+Let us consider a mixture of $N$ species or constituents with mass fractions $Y_i$:
 \begin{subequations}
   \begin{align}
     \partial_t \rho       =& -\partial_k (\rho u_k)                                                \\
-    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )-\partial_i p
-    && +\Re^{-1}\partial_k \tau_{ik}                                                    \nonumber\\
-    & && +\Fr^{-1} g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
-    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )
-    && +\Re^{-1}\Pr^{-1}\partial_k\color{red}{\left[(\lambda/C_p)^{*}\partial_kh\right]}\nonumber\\
-    & && \color{red}{+\Re^{-1}\Pr^{-1} \partial_k\left[\sum\left(\Le_i^{-1}(\rho D)_i^*
+    \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )+\Re^{-1}\partial_k \tau_{ik}  \nonumber\\
+    & -\partial_i p +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
+    \partial_t (\rho e)   =& -\partial_k (\rho e u_k )+\Re^{-1}\Pr^{-1}\partial_k\color{red}{\left[(\lambda/C_p)^{*}\partial_kh\right]}\nonumber\\
+    & \color{red}{+\Re^{-1}\Pr^{-1} \partial_k\left[\sum\left(\Le_i^{-1}(\rho D)_i^*
     -(\lambda/C_p)^*\right)h_i \partial_k  Y_i\right]}                                  \nonumber\\
-    & && -(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi                 \\
-    \partial_t (\rho \zeta_i)=& -\partial_k (\rho \zeta_i u_k)
-    && -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
+    & -(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi                 \\
+    \partial_t (\rho \zeta_i)=& -\partial_k (\rho \zeta_i u_k) -\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
   \end{align}
 \end{subequations}
 and
@@ -91,22 +92,56 @@ and
 \end{equation}
 \begin{equation}
   h = \sum^N_1 h_{i} Y_i \;,\qquad h_{i} = \Delta h^0_i + \int^{T}_{T_0}
-  C_{pi}(T) dT\;,\qquad e = h - \frac{\gamma_0-1}{\gamma_0}\frac{T}{W}
+  C_{pi}(T) dT\;,\qquad e = h - (\gamma_0-1)\Ma^2\frac{p}{\rho}
 \end{equation}
 \begin{equation}
   C_p = \sum^N_1 C_{pi}(T) Y_i\;,\qquad
-  \gamma = \frac{W C_p}{W C_p-\frac{\gamma_0-1}{\gamma_0}} \;,\qquad
-  \frac{1}{W} = \sum^N_1 \frac{Y_i}{W_i}
+  \gamma = \frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}R}
 \end{equation}
 and
 \begin{equation}
-  p = (\gamma_0 \mathrm{\bf M}^2)^{-1} \frac{\rho T}{W}
+  p = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T R \;,\qquad
+  R =\sum^N_1 R_iY_i\;.
 \end{equation}
-It can be verified that given all the thermo-chemical properties of the components of the mixture as a function of temperature, the previous set of equations are closed. Notice that $\gamma$ is no longer a constant and depend on the composition of the mixture. The reference specific gas constant is defined by $R_0\equiv \mathcal{R}/W_0$, where $\mathcal{R}$ is the universal gas constant and $W_0$ is the molecular weight of the reference species. The nondimensional specific gas constant of the gas mixture is given by $R=W^{-1}$.
+Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in \texttt{termo\_initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
+\begin{equation}
+    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+\end{equation}
+in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively) and use 
+\begin{equation}
+    \tilde{R}\equiv (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\tilde{R}_i\;,\qquad\tilde{R}_i\equiv (\gamma_0\Ma^2)^{-1}R_i
+    \;,
+\end{equation}
+to save computation time and facilitate the consideration of a dimensional formulation in addition to the default non-dimensional formulation here described (see below). Note that specific heat ratio
+\begin{equation}
+    \gamma=\frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2\tilde{R}}
+\end{equation}
+depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in \texttt{termo\_initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. The parameter
+\begin{equation}
+    \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
+\end{equation}
+is defined as \texttt{GRATIO} in the code and it is defined as $(\gamma_0-1)/\gamma_0/\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily.
 
-The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. The total number of species is $N$, need not be equal to the total number of scalars transported. (If you want, one set is prognostic variables and the other one is diagnostic variables.) This includes the simplest possible case of $Y_i^e = \zeta_i$. Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
 
-\subsection{Multi-species compressible reacting flows}
+\subsubsection{Dimensional Formulation}
+
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{dns.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities.
+
+\subsubsection{On the difference between the species and the prognostic scalars}
+
+The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. We assume that $\sum_1^NY_i=1$ and use this relation to use $Y_N=1-\sum_1^N$ in the expressions above. For instance,
+\begin{equation}
+    \tilde{R}=\sum_1^{N-1}Y_i(\tilde{R}_i-\tilde{R}_N) \;.
+\end{equation}
+It is then clear that we do not need $Y_N$ as prognostic variable. More generally, the total number of species is $N$, need not be equal to the total number of scalars with an evolution equation. The former can be considered as part of the diagnostic variables and the latter as part of the prognostic variables. This includes the simplest possible case of $Y_i^e = \zeta_i$ for $i=1,\ldots,N-1$. 
+
+Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
+
+Another possible case is phase equilibrium (saturation adjustment), as considered for an misture of air and water, where only the total water content is a prognostic variables and the partition into liquid and vapor is done assuming phase equilibrium. 
+
+To reserve memory space for some of these diagnostic variables, the code implementation considers two global variables, namely, {\tt inb\_scal} and {\tt inb\_scal\_array}. The first one is the number of prognostic variables, and the latter is the number of prognostic and diagnostic variables. In principle, this should be specified through the variable {\tt imixture} in the input file. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
+
+\subsubsection{Reacting flows}
 
 Add reaction terms to the scalar equations
 \begin{equation}
@@ -123,11 +158,11 @@ The Boussinesq approximation is used:
 \begin{subequations}
   \begin{align}
     0                   =& -\partial_k u_k                                          \\
-    \partial_t  u_i     =& -\partial_k ( u_i u_k )-\partial_i p                     &
-    +\Re^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right)  &
+    \partial_t  u_i     =& -\partial_k ( u_i u_k )  
+    +\Re^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right)  -\partial_i p&&
     +\Fr^{-1}\, g_i\,b +\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-    \partial_t \zeta_i  =& -\partial_k (\zeta_i u_k)                                &
-    +\Re^{-1}\Sc_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \Da_i\,w_i
+    \partial_t \zeta_i  =& -\partial_k (\zeta_i u_k)                    
+    +\Re^{-1}\Sc_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &&+ \Da_i\,w_i
   \end{align}
 \end{subequations}
 The body force is now the buoyancy and the buoyancy function $b^e(\zeta_i)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
@@ -136,7 +171,7 @@ So far, only the case $\mu^*=1$ in the equations above has been implemented.
 
 Because of the decoupling between the momentum and the internal energy evolution equations, one of the scalar equations can correspond to the internal energy equation; reaction or phase change processes, as well as radiation processes, can then be formulated as the appropriate source terms $\mathrm{\bf   Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$, respectively, in the corresponding scalar equation. Note that the physical meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf   Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a non-dimensional heat parameter, and not a timescale ratio -- which is the correct meaning of the Damk{\"o}hler numbers appearing in the evolution equations for the components in a compressible mixture. We maintain this inconsistency, instead of introducing new symbols and variables, for code simplicity.
 
-Some scalars can be diagnostic and not prognostic variables, so that there is no evolution equation associated with them. One common example is liquid content in a moist air formulation assuming phase equilibrium. The two global variables {\tt inb\_scal} and {\tt inb\_scal\_array} accounts for that possibility. In principle, this should be specified through the variable {\tt imixture}. The routine {\tt thermodynamics/thermo\_initialize} defines the mixture properties. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
+Another consequence of the decoupling between the momentum and the internal energy evolution equations is that the compressibility terms in the code are not needed. We set \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1. The thermodynamic modules can still be used, and the formulation can also be dimensional or non-dimensional. In non-dimensional, the thermodynamic pressure is nondimensionalized by $p_0=\rho_0R_0T_0$ instead of $\rho_0U_0^2$. The parameter \texttt{GRATIO} remains in the governing equations to relate gas constant and heat capacity (thermal equation of state and caloric equation of state).
 
 Different expressions for the buoyancy and the Coriolis terms are possible depending on the geometry and the definition of the (kinematic) modified pressure.
 
@@ -221,22 +256,6 @@ The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of th
 
 \section{Anelastic formulation}
 
-We retain a background vertical variation of thermodynamic variables $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, R_\mathrm{bg}=W_\mathrm{bg}^{-1}\}$. The background profiles are steady and satisfy the hydrostatic balance,
-\begin{equation}
-  \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
-\end{equation}
-and the thermal equation of state,
-\begin{equation}
-  p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
-\end{equation}
-$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy), and
-\begin{equation}
-  \mathbf{H} = \frac{R_0T_0}{gL_0}
-\end{equation}
-is a nondimensional scale height. The pressure is nondimensionalized with $p_0=$10$^5$~Pa and the reference density is obtained from $\rho_0=p_0(R_0T_0)^{-1}$. We need two additional constraints, which are set through the background profile information in the file {\tt dns.ini}. Typically, we impose the static energy (enthalpy plus potential energy) and the composition.
-%
-If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint.
-
 The evolution equations are:
 \begin{subequations}
   \begin{align}
@@ -251,17 +270,37 @@ where the buoyancy is
 \begin{equation}
   b=\rho_\mathrm{bg}^{-1}(\rho_\mathrm{bg}-\rho) \;.
 \end{equation}
-The pressure deviation satisfies the following Poisson equation:
+The dynamic pressure $p'$ satisfies the following Poisson equation:
 \begin{equation}
   \partial_i\partial_ip'=\partial_i\left[\rho_\mathrm{bg}\left(
   -\partial_k ( u_i u_k )+\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
   \right)\right]\;.
 \end{equation}
-The first scalar is the static energy
+The variables in these equations are assumed to be nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
+
+The thermodynamics is defined by the background profiles $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, Y_\mathrm{bg}\}$, which are steady and satisfy the hydrostatic balance equation,
+\begin{equation}
+  \partial_2\,p_\mathrm{bg}=-\mathbf{H}^{-1}\, g_2\,\rho_\mathrm{bg}\;,\qquad p_\mathrm{bg}|_{x_2=x_{2,0}}=p_{\mathrm{bg},0}\;,
+\end{equation}
+and the thermal equation of state,
+\begin{equation}
+  p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
+\end{equation}
+$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy). The background profile information in the input file {\tt dns.ini}. The values $x_{2,0}$ and $p_\mathrm{bg,0}$ are provided through the background profile information for the pressure. 
+
+The two equations above relate 4 thermodynamic variables, so we need two additional constraints. Typically, we impose the background profile of static energy (enthalpy plus potential energy) and the composition. In this case, the first scalar is the static energy
 \begin{equation}
   \zeta_1 = h + \frac{\gamma_0-1}{\gamma_0}\mathbf{H}^{-1}(x_2-x_{2,0}) \;.
 \end{equation}
-The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture).
+The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture). If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint. 
+
+The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ and $R_0$, such that $\rho_0=p_0(R_0T_0)^{-1}$ and
+\begin{equation}
+  \mathbf{H} = \frac{R_0T_0}{gL_0}
+\end{equation}
+is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{dns.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
+
+The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
 
 \section{Particle formulation}
 

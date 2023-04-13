@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
@@ -7,10 +6,10 @@
 
 !  Nonperiodic characteristic BCs at xmin and xmax
 module BOUNDARY_BCS_COMPRESSIBLE
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_CONSTANTS, only: efile, wp, wi
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, gama0, THERMO_AI
+    use THERMO_VARS, only: imixture, CRATIO_INV, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
     use OPR_PARTIAL
@@ -30,21 +29,21 @@ contains
     subroutine BOUNDARY_BCS_X(iaux, M2_max, etime, rho, u, v, w, p, gama, z1, &
                               h0, h1, h2, h3, h4, zh1, txc, aux2d)
 
-        TINTEGER iaux
+        integer(wi) iaux
 
-        TREAL M2_max, etime
+        real(wp) M2_max, etime
 
-        TREAL, dimension(imax, jmax, kmax) :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
-        TREAL, dimension(imax, jmax, kmax, *) :: z1, zh1, txc
-        TREAL, dimension(jmax, kmax, *) :: aux2d
+        real(wp), dimension(imax, jmax, kmax) :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
+        real(wp), dimension(imax, jmax, kmax, *) :: z1, zh1, txc
+        real(wp), dimension(jmax, kmax, *) :: aux2d
 
         target aux2d
 
 ! -------------------------------------------------------------------
-        TINTEGER j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2, 1)
-        TREAL prefactor, pl_out_min, pl_out_max, pl_inf_min, pl_inf_max, pl_aux
+        integer(wi) j, k, is, nt, inb_scal_loc, isize, iflag_min, iflag_max, idir, ip0, bcs(2, 1)
+        real(wp) pl_out_min, pl_out_max, pl_inf_min, pl_inf_max, pl_aux
 
-        TREAL, dimension(:, :, :), pointer :: tmin, mmin, tmax, mmax, inf_rhs
+        real(wp), dimension(:, :, :), pointer :: tmin, mmin, tmax, mmax, inf_rhs
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -78,7 +77,6 @@ contains
         ip0 = 19
 
         nt = jmax*kmax
-        prefactor = (gama0 - C_1_R)*mach*mach
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
             call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
@@ -112,27 +110,27 @@ contains
         if (imode_sim == DNS_MODE_TEMPORAL) then ! not used
         else if (imode_sim == DNS_MODE_SPATIAL) then; iflag_min = -4; iflag_max = 3; end if
 
-        pl_out_min = C_0_R ! default is only nonreflective
+        pl_out_min = 0.0_wp ! default is only nonreflective
         if (BcsFlowImin%cout > 0) then
-            pl_out_min = BcsFlowImin%cout*(C_1_R - M2_max)/g(1)%scale
+            pl_out_min = BcsFlowImin%cout*(1.0_wp - M2_max)/g(1)%scale
         end if
 
-        pl_inf_min = C_0_R ! jet inflow region (dimensions 1/time)
+        pl_inf_min = 0.0_wp ! jet inflow region (dimensions 1/time)
         if (BcsFlowImin%cinf > 0) then
             pl_inf_min = BcsFlowImin%cinf*qbg(1)%mean/qbg(1)%diam
         end if
 
-        pl_aux = C_0_R     ! far from jet inflow region
+        pl_aux = 0.0_wp     ! far from jet inflow region
         if (BcsFlowJmin%cinf > 0) then
             pl_aux = BcsFlowJmin%cinf/g(2)%scale
         end if
 
-        pl_out_max = C_0_R ! default is only nonreflective
+        pl_out_max = 0.0_wp ! default is only nonreflective
         if (BcsFlowImax%cout > 0) then
-            pl_out_max = BcsFlowImax%cout*(C_1_R - M2_max)/g(1)%scale
+            pl_out_max = BcsFlowImax%cout*(1.0_wp - M2_max)/g(1)%scale
         end if
 
-        pl_inf_max = C_0_R
+        pl_inf_max = 0.0_wp
         if (BcsFlowImax%cinf > 0) then
             pl_inf_max = BcsFlowImax%cinf/g(1)%scale
         end if
@@ -141,7 +139,7 @@ contains
 ! forcing terms in array inf_rhs
         if (inflow_mode /= 0) then
             isize = inb_flow + inb_scal_array
-            inf_rhs(:, :, isize) = C_0_R
+            inf_rhs(:, :, isize) = 0.0_wp
 
             if (inflow_mode == 1 .or. inflow_mode == 4) then
                 call BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
@@ -212,7 +210,7 @@ contains
                 h1(1, j, k) = h1(1, j, k) + hu_loc(j, k)
                 h2(1, j, k) = h2(1, j, k) + hv_loc(j, k)
                 h3(1, j, k) = h3(1, j, k) + hw_loc(j, k)
-                h4(1, j, k) = h4(1, j, k) + he_loc(j, k)*prefactor
+                h4(1, j, k) = h4(1, j, k) + he_loc(j, k)*CRATIO_INV
             end do
         end do
         if (imixture > 0) then
@@ -271,7 +269,7 @@ contains
                 h1(imax, j, k) = h1(imax, j, k) + hu_loc(j, k)
                 h2(imax, j, k) = h2(imax, j, k) + hv_loc(j, k)
                 h3(imax, j, k) = h3(imax, j, k) + hw_loc(j, k)
-                h4(imax, j, k) = h4(imax, j, k) + he_loc(j, k)*prefactor
+                h4(imax, j, k) = h4(imax, j, k) + he_loc(j, k)*CRATIO_INV
             end do
         end do
         if (imixture > 0) then
@@ -451,22 +449,22 @@ contains
     subroutine BOUNDARY_BCS_Y(iaux, M2_max, rho, u, v, w, p, gama, z1, &
                               h0, h1, h2, h3, h4, zh1, tmp1, tmp2, tmp3, tmp4, tmp5, aux2d)
 
-        TINTEGER iaux
-        TREAL M2_max
+        integer(wi) iaux
+        real(wp) M2_max
 
-        TREAL, dimension(imax, jmax, kmax) :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
-        TREAL, dimension(imax, jmax, kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5
-        TREAL, dimension(imax, jmax, kmax, *) :: z1, zh1
-        TREAL, dimension(imax, kmax, *) :: aux2d
+        real(wp), dimension(imax, jmax, kmax) :: rho, u, v, w, p, gama, h0, h1, h2, h3, h4
+        real(wp), dimension(imax, jmax, kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5
+        real(wp), dimension(imax, jmax, kmax, *) :: z1, zh1
+        real(wp), dimension(imax, kmax, *) :: aux2d
 
         target aux2d
 
 ! -------------------------------------------------------------------
-        TINTEGER i, k, is, nt, inb_scal_loc, iflag_min, iflag_max, idir, ip0, bcs(2, 1)
-        TINTEGER imin_loc, imax_loc
-        TREAL prefactor, pl_out_min, pl_inf_min, pl_out_max, pl_inf_max
+        integer(wi) i, k, is, nt, inb_scal_loc, iflag_min, iflag_max, idir, ip0, bcs(2, 1)
+        integer(wi) imin_loc, imax_loc
+        real(wp) pl_out_min, pl_inf_min, pl_out_max, pl_inf_max
 
-        TREAL, dimension(:, :, :), pointer :: tmin, lmin, tmax, lmax, inf_rhs
+        real(wp), dimension(:, :, :), pointer :: tmin, lmin, tmax, lmax, inf_rhs
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -500,7 +498,6 @@ contains
         ip0 = 19
 
         nt = imax*kmax
-        prefactor = (gama0 - C_1_R)*mach*mach
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
             call TLAB_WRITE_ASCII(efile, 'RHS_BCS_Y. Not enough space.')
@@ -531,27 +528,27 @@ contains
 ! -------------------------------------------------------------------
         idir = 2
 
-        pl_out_min = C_0_R ! default is only nonreflective
+        pl_out_min = 0.0_wp ! default is only nonreflective
         iflag_min = -1
         if (BcsFlowJmin%cout > 0) then
-            pl_out_min = BcsFlowJmin%cout*(C_1_R - M2_max)/g(2)%scale
+            pl_out_min = BcsFlowJmin%cout*(1.0_wp - M2_max)/g(2)%scale
             iflag_min = -3
         end if
 
-        pl_inf_min = C_0_R
+        pl_inf_min = 0.0_wp
         if (BcsFlowJmin%cinf > 0) then
             pl_inf_min = BcsFlowJmin%cinf/g(2)%scale
             iflag_min = -3
         end if
 
-        pl_out_max = C_0_R ! default is only nonreflective
+        pl_out_max = 0.0_wp ! default is only nonreflective
         iflag_max = -1
         if (BcsFlowJmax%cout > 0) then
-            pl_out_max = BcsFlowJmax%cout*(C_1_R - M2_max)/g(2)%scale
+            pl_out_max = BcsFlowJmax%cout*(1.0_wp - M2_max)/g(2)%scale
             iflag_max = 3
         end if
 
-        pl_inf_max = C_0_R
+        pl_inf_max = 0.0_wp
         if (BcsFlowJmax%cinf > 0) then
             pl_inf_max = BcsFlowJmax%cinf/g(2)%scale
             iflag_max = 3
@@ -614,7 +611,7 @@ contains
                 h1(i, 1, k) = h1(i, 1, k) + hv_loc(i, k)
                 h2(i, 1, k) = h2(i, 1, k) + hu_loc(i, k)
                 h3(i, 1, k) = h3(i, 1, k) + hw_loc(i, k)
-                h4(i, 1, k) = h4(i, 1, k) + he_loc(i, k)*prefactor
+                h4(i, 1, k) = h4(i, 1, k) + he_loc(i, k)*CRATIO_INV
             end do; end do
         if (imixture > 0) then
             do k = 1, kmax; do i = imin_loc, imax_loc
@@ -662,7 +659,7 @@ contains
                 h1(i, jmax, k) = h1(i, jmax, k) + hv_loc(i, k)
                 h2(i, jmax, k) = h2(i, jmax, k) + hu_loc(i, k)
                 h3(i, jmax, k) = h3(i, jmax, k) + hw_loc(i, k)
-                h4(i, jmax, k) = h4(i, jmax, k) + he_loc(i, k)*prefactor
+                h4(i, jmax, k) = h4(i, jmax, k) + he_loc(i, k)*CRATIO_INV
             end do; end do
         if (imixture > 0) then
             do k = 1, kmax; do i = imin_loc, imax_loc
@@ -824,18 +821,18 @@ contains
 !#
 !########################################################################
     subroutine BOUNDARY_BCS_FLOW_NR_2(iflag, nt, pl_const, pl_pref, &
-         r, un, v1, v2, p, gama, drdn, dundn, dv1dn, dv2dn, dpdn, gn, &
-         hr, hun, hv1, hv2, he)
+                                      r, un, v1, v2, p, gama, drdn, dundn, dv1dn, dv2dn, dpdn, gn, &
+                                      hr, hun, hv1, hv2, he)
 
-        TINTEGER iflag, nt
-        TREAL pl_const, pl_pref(*)
-        TREAL r(*), un(*), v1(*), v2(*), p(*), gama(*)
-        TREAL drdn(*), dundn(*), dv1dn(*), dv2dn(*), dpdn(*), gn
-        TREAL hr(*), hun(*), hv1(*), hv2(*), he(*)
+        integer(wi) iflag, nt
+        real(wp) pl_const, pl_pref(*)
+        real(wp) r(*), un(*), v1(*), v2(*), p(*), gama(*)
+        real(wp) drdn(*), dundn(*), dv1dn(*), dv2dn(*), dpdn(*), gn
+        real(wp) hr(*), hun(*), hv1(*), hv2(*), he(*)
 
 ! -------------------------------------------------------------------
-        TINTEGER i
-        TREAL c, Mn, M2, dummy
+        integer(wi) i
+        real(wp) c, Mn, M2, dummy
 
 ! ###################################################################
 ! BCs at x_min
@@ -845,15 +842,15 @@ contains
             do i = 1, nt
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
-                M2 = C_05_R*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
+                M2 = 0.5_wp*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
 
-                if (un(i) + c > C_0_R) then
+                if (un(i) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) > C_0_R) then
-                        dummy = C_05_R*(r(i)*(C_1_R + Mn)*dundn(i) + (C_1_R - Mn)/c*dpdn(i) &
+                    if (un(i) > 0.0_wp) then
+                        dummy = 0.5_wp*(r(i)*(1.0_wp + Mn)*dundn(i) + (1.0_wp - Mn)/c*dpdn(i) &
                                         - r(i)*gn/c)
 
                         hr(i) = un(i)*drdn(i) + dummy
@@ -861,21 +858,21 @@ contains
                         hv1(i) = un(i)*v1(i)*drdn(i) + r(i)*un(i)*dv1dn(i) + dummy*v1(i)
                         hv2(i) = un(i)*v2(i)*drdn(i) + r(i)*un(i)*dv2dn(i) + dummy*v2(i)
                         he(i) = un(i)*M2*c*c*drdn(i) + r(i)*un(i)*(v1(i)*dv1dn(i) + v2(i)*dv2dn(i)) &
-                                + dummy*c*c*(C_1_R/(gama(i) - C_1_R) + M2 + Mn) &
-                                + un(i)*(C_1_R/(gama(i) - C_1_R) + Mn)*dpdn(i)
+                                + dummy*c*c*(1.0_wp/(gama(i) - 1.0_wp) + M2 + Mn) &
+                                + un(i)*(1.0_wp/(gama(i) - 1.0_wp) + Mn)*dpdn(i)
 
 ! -------------------------------------------------------------------
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        dummy = C_05_R*(r(i)*(C_1_R + Mn)*dundn(i) + (C_1_R + Mn)/c*dpdn(i) &
+                        dummy = 0.5_wp*(r(i)*(1.0_wp + Mn)*dundn(i) + (1.0_wp + Mn)/c*dpdn(i) &
                                         - r(i)*gn/c - pl_const*(p(i) - pl_pref(i))/c)
 
                         hr(i) = dummy
-                        hun(i) = dummy*c*(C_1_R + Mn)
+                        hun(i) = dummy*c*(1.0_wp + Mn)
                         hv1(i) = dummy*v1(i)
                         hv2(i) = dummy*v2(i)
-                        he(i) = dummy*c*c*(C_1_R/(gama(i) - C_1_R) + M2 + Mn)
+                        he(i) = dummy*c*c*(1.0_wp/(gama(i) - 1.0_wp) + M2 + Mn)
 
                     end if
 
@@ -891,15 +888,15 @@ contains
             do i = 1, nt
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
-                M2 = C_05_R*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
+                M2 = 0.5_wp*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
 
-                if (un(i) - c < C_0_R) then
+                if (un(i) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) < C_0_R) then
-                        dummy = C_05_R*(r(i)*(C_1_R - Mn)*dundn(i) - (C_1_R + Mn)/c*dpdn(i) &
+                    if (un(i) < 0.0_wp) then
+                        dummy = 0.5_wp*(r(i)*(1.0_wp - Mn)*dundn(i) - (1.0_wp + Mn)/c*dpdn(i) &
                                         + r(i)*gn/c)
 
                         hr(i) = un(i)*drdn(i) + dummy
@@ -907,21 +904,21 @@ contains
                         hv1(i) = un(i)*v1(i)*drdn(i) + r(i)*un(i)*dv1dn(i) + dummy*v1(i)
                         hv2(i) = un(i)*v2(i)*drdn(i) + r(i)*un(i)*dv2dn(i) + dummy*v2(i)
                         he(i) = un(i)*M2*c*c*drdn(i) + r(i)*un(i)*(v1(i)*dv1dn(i) + v2(i)*dv2dn(i)) &
-                                + dummy*c*c*(C_1_R/(gama(i) - C_1_R) + M2 - Mn) &
-                                + un(i)*(C_1_R/(gama(i) - C_1_R) - Mn)*dpdn(i)
+                                + dummy*c*c*(1.0_wp/(gama(i) - 1.0_wp) + M2 - Mn) &
+                                + un(i)*(1.0_wp/(gama(i) - 1.0_wp) - Mn)*dpdn(i)
 
 ! -------------------------------------------------------------------
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        dummy = C_05_R*(r(i)*(C_1_R - Mn)*dundn(i) - (C_1_R - Mn)/c*dpdn(i) &
+                        dummy = 0.5_wp*(r(i)*(1.0_wp - Mn)*dundn(i) - (1.0_wp - Mn)/c*dpdn(i) &
                                         + r(i)*gn/c - pl_const*(p(i) - pl_pref(i))/c)
 
                         hr(i) = dummy
-                        hun(i) = -dummy*c*(C_1_R - Mn)
+                        hun(i) = -dummy*c*(1.0_wp - Mn)
                         hv1(i) = dummy*v1(i)
                         hv2(i) = dummy*v2(i)
-                        he(i) = dummy*c*c*(C_1_R/(gama(i) - C_1_R) + M2 - Mn)
+                        he(i) = dummy*c*c*(1.0_wp/(gama(i) - 1.0_wp) + M2 - Mn)
 
                     end if
 
@@ -970,17 +967,17 @@ contains
     subroutine BOUNDARY_BCS_FLOW_NR_3(iflag, idir, nt, pl_out, pl_inf, inf_rhs, bf, bf_shape, &
                                       r, un, v1, v2, p, gama, drdn, dundn, dv1dn, dv2dn, dpdn, gn, hr, hun, hv1, hv2, he)
 
-        TINTEGER iflag, idir, nt
-        TREAL pl_out, pl_inf
-        TREAL inf_rhs(nt, *), bf(nt, *), bf_shape(*)
-        TREAL r(*), un(*), v1(*), v2(*), p(*), gama(*)
-        TREAL drdn(*), dundn(*), dv1dn(*), dv2dn(*), dpdn(*), gn
-        TREAL hr(*), hun(*), hv1(*), hv2(*), he(*)
+        integer(wi) iflag, idir, nt
+        real(wp) pl_out, pl_inf
+        real(wp) inf_rhs(nt, *), bf(nt, *), bf_shape(*)
+        real(wp) r(*), un(*), v1(*), v2(*), p(*), gama(*)
+        real(wp) drdn(*), dundn(*), dv1dn(*), dv2dn(*), dpdn(*), gn
+        real(wp) hr(*), hun(*), hv1(*), hv2(*), he(*)
 
 ! -------------------------------------------------------------------
-        TINTEGER i
-        TREAL c, Mn, M2, dummy
-        TREAL F1, F2, F3, F4, F5
+        integer(wi) i
+        real(wp) c, Mn, M2, dummy
+        real(wp) F1, F2, F3, F4, F5
 
 ! ###################################################################
 ! BCs at x_min
@@ -990,27 +987,27 @@ contains
             do i = 1, nt
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
-                M2 = C_05_R*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
+                M2 = 0.5_wp*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
 
-                if (un(i) + c > C_0_R) then
+                if (un(i) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) > C_0_R) then
-                        dummy = C_05_R*(r(i)*(C_1_R + Mn)*dundn(i) + (C_1_R - Mn)/c*dpdn(i) - r(i)*gn/c)
+                    if (un(i) > 0.0_wp) then
+                        dummy = 0.5_wp*(r(i)*(1.0_wp + Mn)*dundn(i) + (1.0_wp - Mn)/c*dpdn(i) - r(i)*gn/c)
 
                         hr(i) = un(i)*drdn(i) + dummy
                         hun(i) = un(i)*un(i)*drdn(i) + dummy*c*(1 + Mn) + Mn*dpdn(i)
                         hv1(i) = un(i)*v1(i)*drdn(i) + r(i)*un(i)*dv1dn(i) + dummy*v1(i)
                         hv2(i) = un(i)*v2(i)*drdn(i) + r(i)*un(i)*dv2dn(i) + dummy*v2(i)
-                        he(i) = (un(i)*dpdn(i) + dummy*c*c)/(gama(i) - C_1_R)
+                        he(i) = (un(i)*dpdn(i) + dummy*c*c)/(gama(i) - 1.0_wp)
 
 ! add forcing terms
-                        F2 = C_0_R
-                        F3 = C_0_R
-                        F4 = C_0_R
-                        F5 = C_0_R
+                        F2 = 0.0_wp
+                        F3 = 0.0_wp
+                        F4 = 0.0_wp
+                        F5 = 0.0_wp
                         if (abs(iflag) == 2 .or. abs(iflag) == 4) then ! fluctuation
                             F2 = F2 + (inf_rhs(i, 1) - inf_rhs(i, 5)/c/c)*bf_shape(i)
                             F3 = F3 + (inf_rhs(i, 3))*bf_shape(i)
@@ -1021,12 +1018,12 @@ contains
                             if (idir == 1) then      ! OX direction; possible v1 forcing w/ F3
 !                    F2 = F2 - pl_inf*( (r(i)-p(i)/c/c) - (bf(i,1)-bf(i,5)/c/c) )
                                 F2 = F2 - pl_inf*(r(i) - bf(i, 1))*bf_shape(i) &
-                                     - pl_out*c*(r(i) - bf(i, 1))*(C_1_R - bf_shape(i))
+                                     - pl_out*c*(r(i) - bf(i, 1))*(1.0_wp - bf_shape(i))
                                 F3 = F3 - pl_inf*(v1(i) - bf(i, 3))*bf_shape(i)
                                 F4 = F4 - pl_inf*(v2(i) - bf(i, 4))*bf_shape(i) &
-                                     - pl_out*c*(v2(i) - bf(i, 4))*(C_1_R - bf_shape(i))
+                                     - pl_out*c*(v2(i) - bf(i, 4))*(1.0_wp - bf_shape(i))
                                 F5 = F5 - pl_inf*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*bf_shape(i) &
-                                     - pl_out*c*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(C_1_R - bf_shape(i))
+                                     - pl_out*c*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(1.0_wp - bf_shape(i))
                             else if (idir == 2) then ! OY direction; no un forcing w/ F5
                                 F2 = F2 - pl_inf*c*(r(i) - bf(i, 1))
                                 F3 = F3 - pl_inf*c*(v1(i) - bf(i, 3))
@@ -1035,34 +1032,34 @@ contains
                             end if
                         end if
 
-                        dummy = F2 + C_05_R*F5/c/c
+                        dummy = F2 + 0.5_wp*F5/c/c
 
                         hr(i) = hr(i) + dummy
-                        hun(i) = hun(i) + un(i)*F2 + C_05_R*(Mn + C_1_R)*F5/c
+                        hun(i) = hun(i) + un(i)*F2 + 0.5_wp*(Mn + 1.0_wp)*F5/c
                         hv1(i) = hv1(i) + r(i)*F3 + v1(i)*dummy
                         hv2(i) = hv2(i) + r(i)*F4 + v2(i)*dummy
-                        he(i) = he(i) + C_05_R*F5/(gama(i) - C_1_R)
+                        he(i) = he(i) + 0.5_wp*F5/(gama(i) - 1.0_wp)
 
 ! -------------------------------------------------------------------
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        F5 = C_0_R
+                        F5 = 0.0_wp
 ! Poinsot & Lele term. Multiplication by c done in the definition of dummy below
                         if (idir == 1) then      ! OX treatment at xmin; complete forcing
                             F5 = -pl_inf/c*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*bf_shape(i) &
-                                 - pl_out*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(C_1_R - bf_shape(i))
+                                 - pl_out*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(1.0_wp - bf_shape(i))
                         else if (idir == 2) then ! OY treatment; no un forcing w/ F5
                             F5 = -pl_out*(p(i) - bf(i, 5))
                         end if
 
-                        dummy = C_05_R*(r(i)*(C_1_R + Mn)*dundn(i) + (C_1_R + Mn)/c*dpdn(i) - r(i)*gn/c + F5/c)
+                        dummy = 0.5_wp*(r(i)*(1.0_wp + Mn)*dundn(i) + (1.0_wp + Mn)/c*dpdn(i) - r(i)*gn/c + F5/c)
 
                         hr(i) = dummy
-                        hun(i) = dummy*c*(C_1_R + Mn)
+                        hun(i) = dummy*c*(1.0_wp + Mn)
                         hv1(i) = dummy*v1(i)
                         hv2(i) = dummy*v2(i)
-                        he(i) = dummy*c*c/(gama(i) - C_1_R)
+                        he(i) = dummy*c*c/(gama(i) - 1.0_wp)
 
                     end if
 
@@ -1078,27 +1075,27 @@ contains
             do i = 1, nt
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
-                M2 = C_05_R*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
+                M2 = 0.5_wp*(un(i)*un(i) + v1(i)*v1(i) + v2(i)*v2(i))/c/c
 
-                if (un(i) - c < C_0_R) then
+                if (un(i) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) < C_0_R) then
-                        dummy = C_05_R*(r(i)*(C_1_R - Mn)*dundn(i) - (C_1_R + Mn)/c*dpdn(i) + r(i)*gn/c)
+                    if (un(i) < 0.0_wp) then
+                        dummy = 0.5_wp*(r(i)*(1.0_wp - Mn)*dundn(i) - (1.0_wp + Mn)/c*dpdn(i) + r(i)*gn/c)
 
                         hr(i) = un(i)*drdn(i) + dummy
                         hun(i) = un(i)*un(i)*drdn(i) - (1 - Mn)*c*dummy - Mn*dpdn(i)
                         hv1(i) = un(i)*v1(i)*drdn(i) + r(i)*un(i)*dv1dn(i) + dummy*v1(i)
                         hv2(i) = un(i)*v2(i)*drdn(i) + r(i)*un(i)*dv2dn(i) + dummy*v2(i)
-                        he(i) = (un(i)*dpdn(i) + dummy*c*c)/(gama(i) - C_1_R)
+                        he(i) = (un(i)*dpdn(i) + dummy*c*c)/(gama(i) - 1.0_wp)
 
 ! add forcing terms: only mean
-                        F1 = C_0_R
-                        F2 = C_0_R
-                        F3 = C_0_R
-                        F4 = C_0_R
+                        F1 = 0.0_wp
+                        F2 = 0.0_wp
+                        F3 = 0.0_wp
+                        F4 = 0.0_wp
                         if (abs(iflag) == 3 .or. abs(iflag) == 4) then ! mean
                             if (idir == 1) then      ! OX direction
                                 F1 = F1 - pl_inf*c*((p(i) - r(i)*c*un(i)) - (bf(i, 5) - r(i)*c*bf(i, 2)))
@@ -1113,32 +1110,32 @@ contains
                             end if
                         end if
 
-                        dummy = F2 + C_05_R*F1/c/c
+                        dummy = F2 + 0.5_wp*F1/c/c
 
                         hr(i) = hr(i) + dummy
-                        hun(i) = hun(i) + un(i)*F2 + C_05_R*(Mn - C_1_R)*F1/c
+                        hun(i) = hun(i) + un(i)*F2 + 0.5_wp*(Mn - 1.0_wp)*F1/c
                         hv1(i) = hv1(i) + r(i)*F3 + v1(i)*dummy
                         hv2(i) = hv2(i) + r(i)*F4 + v2(i)*dummy
-                        he(i) = he(i) + C_05_R*F1/(gama(i) - C_1_R)
+                        he(i) = he(i) + 0.5_wp*F1/(gama(i) - 1.0_wp)
 
 ! -------------------------------------------------------------------
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        F1 = C_0_R
+                        F1 = 0.0_wp
 ! Poinsot & Lele term. Multiplication by c done in the definition of dummy below
                         if (idir == 1) then      ! OX treatment; no un forcing w/ F1
                             F1 = -pl_out*(p(i) - bf(i, 5))
                         else if (idir == 2) then ! OY treatment; no un forcing w/ F1
                             F1 = -pl_out*(p(i) - bf(i, 5))
                         end if
-                        dummy = C_05_R*(r(i)*(C_1_R - Mn)*dundn(i) - (C_1_R - Mn)/c*dpdn(i) + r(i)*gn/c + F1/c)
+                        dummy = 0.5_wp*(r(i)*(1.0_wp - Mn)*dundn(i) - (1.0_wp - Mn)/c*dpdn(i) + r(i)*gn/c + F1/c)
 
                         hr(i) = dummy
-                        hun(i) = -dummy*c*(C_1_R - Mn)
+                        hun(i) = -dummy*c*(1.0_wp - Mn)
                         hv1(i) = dummy*v1(i)
                         hv2(i) = dummy*v2(i)
-                        he(i) = dummy*c*c/(gama(i) - C_1_R)
+                        he(i) = dummy*c*c/(gama(i) - 1.0_wp)
 
                     end if
 
@@ -1174,17 +1171,17 @@ contains
     subroutine BOUNDARY_BCS_SCAL_NR_3(iflag, idir, nt, pl_out, pl_inf, inf_rhs, inf_rhs_z, bf, bf_z, &
                                       bf_shape, r, un, z1, p, gama, drdn, dundn, dz1dn, dpdn, gn, hz1)
 
-        TINTEGER iflag, idir, nt
-        TREAL pl_out, pl_inf
-        TREAL inf_rhs(nt, *), inf_rhs_z(nt), bf(nt, *), bf_z(nt), bf_shape(*)
-        TREAL r(*), un(*), z1(*), p(*), gama(*)
-        TREAL drdn(*), dundn(*), dz1dn(*), dpdn(*), gn
-        TREAL hz1(*)
+        integer(wi) iflag, idir, nt
+        real(wp) pl_out, pl_inf
+        real(wp) inf_rhs(nt, *), inf_rhs_z(nt), bf(nt, *), bf_z(nt), bf_shape(*)
+        real(wp) r(*), un(*), z1(*), p(*), gama(*)
+        real(wp) drdn(*), dundn(*), dz1dn(*), dpdn(*), gn
+        real(wp) hz1(*)
 
 ! -------------------------------------------------------------------
-        TINTEGER i
-        TREAL c, Mn, dummy
-        TREAL F1, F2, F5, FZ
+        integer(wi) i
+        real(wp) c, Mn, dummy
+        real(wp) F1, F2, F5, FZ
 
 ! ###################################################################
 ! BCs at x_min
@@ -1195,20 +1192,20 @@ contains
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
 
-                if (un(i) + c > C_0_R) then
+                if (un(i) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) > C_0_R) then
-                        dummy = C_05_R*(r(i)*(C_1_R + Mn)*dundn(i) + (C_1_R - Mn)/c*dpdn(i) - r(i)*gn/c)
+                    if (un(i) > 0.0_wp) then
+                        dummy = 0.5_wp*(r(i)*(1.0_wp + Mn)*dundn(i) + (1.0_wp - Mn)/c*dpdn(i) - r(i)*gn/c)
 
                         hz1(i) = un(i)*z1(i)*drdn(i) + r(i)*un(i)*dz1dn(i) + dummy*z1(i)
 
 ! add forcing terms
-                        F2 = C_0_R
-                        F5 = C_0_R
-                        FZ = C_0_R
+                        F2 = 0.0_wp
+                        F5 = 0.0_wp
+                        FZ = 0.0_wp
                         if (abs(iflag) == 2 .or. abs(iflag) == 4) then ! fluctuation
                             F2 = F2 + (inf_rhs(i, 1) - inf_rhs(i, 5)/c/c)*bf_shape(i)
                             F5 = F5 + (inf_rhs(i, 5) + inf_rhs(i, 2)*r(i)*c)*bf_shape(i)
@@ -1218,11 +1215,11 @@ contains
                             if (idir == 1) then      ! OX direction
 !                    F2 = F2 - pl_inf*( (r(i)-p(i)/c/c) - (bf(i,1)-bf(i,5)/c/c) )
                                 F2 = F2 - pl_inf*(r(i) - bf(i, 1))*bf_shape(i) &
-                                     - pl_out*c*(r(i) - bf(i, 1))*(C_1_R - bf_shape(i))
+                                     - pl_out*c*(r(i) - bf(i, 1))*(1.0_wp - bf_shape(i))
                                 F5 = F5 - pl_inf*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*bf_shape(i) &
-                                     - pl_out*c*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(C_1_R - bf_shape(i))
+                                     - pl_out*c*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(1.0_wp - bf_shape(i))
                                 FZ = FZ - pl_inf*(z1(i) - bf_z(i))*bf_shape(i) &
-                                     - pl_out*c*(z1(i) - bf_z(i))*(C_1_R - bf_shape(i))
+                                     - pl_out*c*(z1(i) - bf_z(i))*(1.0_wp - bf_shape(i))
                             else if (idir == 2) then ! OY direction; no un forcing w/ F5
                                 F2 = F2 - pl_inf*c*(r(i) - bf(i, 1))
                                 F5 = F5 - pl_inf*c*(p(i) - bf(i, 5))
@@ -1230,7 +1227,7 @@ contains
                             end if
                         end if
 
-                        dummy = F2 + C_05_R*F5/c/c
+                        dummy = F2 + 0.5_wp*F5/c/c
 
                         hz1(i) = hz1(i) + r(i)*FZ + z1(i)*dummy
 
@@ -1238,15 +1235,15 @@ contains
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        F5 = C_0_R
+                        F5 = 0.0_wp
 ! Poinsot & Lele term. Multiplication by c is done in the definition of dummy below
                         if (idir == 1) then      ! OX treatment at xmin; complete forcing
                             F5 = -pl_inf/c*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*bf_shape(i) &
-                                 - pl_out*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(C_1_R - bf_shape(i))
+                                 - pl_out*(p(i) + r(i)*c*un(i) - (bf(i, 5) + r(i)*c*bf(i, 2)))*(1.0_wp - bf_shape(i))
                         else if (idir == 2) then ! OY treatment; no un forcing w/ F5
                             F5 = -pl_out*(p(i) - bf(i, 5))
                         end if
-                        dummy = C_05_R*(r(i)*(C_1_R + Mn)*dundn(i) + (C_1_R + Mn)/c*dpdn(i) - r(i)*gn/c + F5/c)
+                        dummy = 0.5_wp*(r(i)*(1.0_wp + Mn)*dundn(i) + (1.0_wp + Mn)/c*dpdn(i) - r(i)*gn/c + F5/c)
 
                         hz1(i) = dummy*z1(i)
 
@@ -1265,20 +1262,20 @@ contains
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
 
-                if (un(i) - c < C_0_R) then
+                if (un(i) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) < C_0_R) then
-                        dummy = C_05_R*(r(i)*(C_1_R - Mn)*dundn(i) - (C_1_R + Mn)/c*dpdn(i) + r(i)*gn/c)
+                    if (un(i) < 0.0_wp) then
+                        dummy = 0.5_wp*(r(i)*(1.0_wp - Mn)*dundn(i) - (1.0_wp + Mn)/c*dpdn(i) + r(i)*gn/c)
 
                         hz1(i) = un(i)*z1(i)*drdn(i) + r(i)*un(i)*dz1dn(i) + dummy*z1(i)
 
 ! add forcing terms: only mean
-                        F1 = C_0_R
-                        F2 = C_0_R
-                        FZ = C_0_R
+                        F1 = 0.0_wp
+                        F2 = 0.0_wp
+                        FZ = 0.0_wp
                         if (abs(iflag) == 3 .or. abs(iflag) == 4) then ! mean
                             if (idir == 1) then      ! OX direction; only acoustic, with un
                                 F1 = F1 - pl_inf*c*((p(i) - r(i)*c*un(i)) - (bf(i, 5) - r(i)*c*bf(i, 2)))
@@ -1291,7 +1288,7 @@ contains
                             end if
                         end if
 
-                        dummy = F2 + C_05_R*F1/c/c
+                        dummy = F2 + 0.5_wp*F1/c/c
 
                         hz1(i) = hz1(i) + r(i)*FZ + z1(i)*dummy
 
@@ -1299,7 +1296,7 @@ contains
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        F1 = C_0_R
+                        F1 = 0.0_wp
 ! Poinsot & Lele term. Multiplication by c is done in the definition
 ! of dummy below
                         if (idir == 1) then      ! OX treatment; no un forcing w/ F1
@@ -1307,7 +1304,7 @@ contains
                         else if (idir == 2) then ! OY treatment; no un forcing w/ F1
                             F1 = -pl_out*(p(i) - bf(i, 5))
                         end if
-                        dummy = C_05_R*(r(i)*(C_1_R - Mn)*dundn(i) - (C_1_R - Mn)/c*dpdn(i) + r(i)*gn/c + F1/c)
+                        dummy = 0.5_wp*(r(i)*(1.0_wp - Mn)*dundn(i) - (1.0_wp - Mn)/c*dpdn(i) + r(i)*gn/c + F1/c)
 
                         hz1(i) = dummy*z1(i)
 
@@ -1341,16 +1338,16 @@ contains
     subroutine BOUNDARY_BCS_FLOW_NR_4(iflag, idir, nt, beta, &
                                       r, un, v1, v2, p, gama, t1, t2, t3, t4, t5, m1, m5, hr, hun, hv1, hv2, he)
 
-        TINTEGER iflag, idir, nt
-        TREAL beta
+        integer(wi) iflag, idir, nt
+        real(wp) beta
 
-        TREAL, dimension(*) :: r, un, v1, v2, p, gama
-        TREAL, dimension(*) :: t1, t2, t3, t4, t5, m1, m5
-        TREAL, dimension(*) :: hr, hun, hv1, hv2, he
+        real(wp), dimension(*) :: r, un, v1, v2, p, gama
+        real(wp), dimension(*) :: t1, t2, t3, t4, t5, m1, m5
+        real(wp), dimension(*) :: hr, hun, hv1, hv2, he
 
 ! -------------------------------------------------------------------
-        TINTEGER i
-        TREAL c, Mn, dummy
+        integer(wi) i
+        real(wp) c, Mn, dummy
 
 ! ###################################################################
 ! BCs at x_min
@@ -1361,36 +1358,36 @@ contains
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
 
-                if (un(i) + c > C_0_R) then
+                if (un(i) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) > C_0_R) then
-                        dummy = C_05_R*t5(i)/c/c - C_05_R*r(i)*t2(i)/c - t1(i)
+                    if (un(i) > 0.0_wp) then
+                        dummy = 0.5_wp*t5(i)/c/c - 0.5_wp*r(i)*t2(i)/c - t1(i)
 
                         hr(i) = hr(i) + dummy
-                        hun(i) = hun(i) + C_05_R*(Mn - C_1_R)*t5(i)/c - C_05_R*r(i)*(Mn + C_1_R)*t2(i) - t1(i)*un(i)
+                        hun(i) = hun(i) + 0.5_wp*(Mn - 1.0_wp)*t5(i)/c - 0.5_wp*r(i)*(Mn + 1.0_wp)*t2(i) - t1(i)*un(i)
                         hv1(i) = hv1(i) + dummy*v1(i) - r(i)*t3(i)
                         hv2(i) = hv2(i) + dummy*v2(i) - r(i)*t4(i)
-                        he(i) = he(i) - C_05_R*(t5(i) + r(i)*c*t2(i))/(gama(i) - C_1_R)
+                        he(i) = he(i) - 0.5_wp*(t5(i) + r(i)*c*t2(i))/(gama(i) - 1.0_wp)
 
 ! recover lateral term for v1 velocity at inflow in Ox
                         if (idir == 1 .or. idir == 2) then
-                            hv1(i) = hv1(i) - C_05_R*(m5(i) - m1(i))/c
+                            hv1(i) = hv1(i) - 0.5_wp*(m5(i) - m1(i))/c
                         end if
 
 ! -------------------------------------------------------------------
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        dummy = -C_05_R*(C_1_R - beta)*(r(i)*c*t2(i) + t5(i))/c/c
+                        dummy = -0.5_wp*(1.0_wp - beta)*(r(i)*c*t2(i) + t5(i))/c/c
 
                         hr(i) = hr(i) + dummy
-                        hun(i) = hun(i) + dummy*c*(C_1_R + Mn)
+                        hun(i) = hun(i) + dummy*c*(1.0_wp + Mn)
                         hv1(i) = hv1(i) + dummy*v1(i)
                         hv2(i) = hv2(i) + dummy*v2(i)
-                        he(i) = he(i) + dummy*c*c/(gama(i) - C_1_R)
+                        he(i) = he(i) + dummy*c*c/(gama(i) - 1.0_wp)
 
                     end if
 
@@ -1407,36 +1404,36 @@ contains
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
 
-                if (un(i) - c < C_0_R) then
+                if (un(i) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) < C_0_R) then
-                        dummy = C_05_R*t5(i)/c/c + C_05_R*r(i)*t2(i)/c - t1(i)
+                    if (un(i) < 0.0_wp) then
+                        dummy = 0.5_wp*t5(i)/c/c + 0.5_wp*r(i)*t2(i)/c - t1(i)
 
                         hr(i) = hr(i) + dummy
-                        hun(i) = hun(i) + C_05_R*(Mn + C_1_R)*t5(i)/c + C_05_R*r(i)*(Mn - C_1_R)*t2(i) - t1(i)*un(i)
+                        hun(i) = hun(i) + 0.5_wp*(Mn + 1.0_wp)*t5(i)/c + 0.5_wp*r(i)*(Mn - 1.0_wp)*t2(i) - t1(i)*un(i)
                         hv1(i) = hv1(i) + dummy*v1(i) - r(i)*t3(i)
                         hv2(i) = hv2(i) + dummy*v2(i) - r(i)*t4(i)
-                        he(i) = he(i) - C_05_R*(t5(i) - r(i)*c*t2(i))/(gama(i) - C_1_R)
+                        he(i) = he(i) - 0.5_wp*(t5(i) - r(i)*c*t2(i))/(gama(i) - 1.0_wp)
 
 ! recover lateral term for v1 velocity at inflow in Ox
                         if (idir == 1 .or. idir == 2) then
-                            hv1(i) = hv1(i) - C_05_R*(m5(i) - m1(i))/c
+                            hv1(i) = hv1(i) - 0.5_wp*(m5(i) - m1(i))/c
                         end if
 
 ! -------------------------------------------------------------------
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        dummy = C_05_R*(C_1_R - beta)*(r(i)*c*t2(i) - t5(i))/c/c
+                        dummy = 0.5_wp*(1.0_wp - beta)*(r(i)*c*t2(i) - t5(i))/c/c
 
                         hr(i) = hr(i) + dummy
-                        hun(i) = hun(i) - dummy*c*(C_1_R - Mn)
+                        hun(i) = hun(i) - dummy*c*(1.0_wp - Mn)
                         hv1(i) = hv1(i) + dummy*v1(i)
                         hv2(i) = hv2(i) + dummy*v2(i)
-                        he(i) = he(i) + dummy*c*c/(gama(i) - C_1_R)
+                        he(i) = he(i) + dummy*c*c/(gama(i) - 1.0_wp)
                     end if
 
                 end if ! subsonic branch
@@ -1467,16 +1464,16 @@ contains
 !########################################################################
     subroutine BOUNDARY_BCS_SCAL_NR_4(iflag, nt, beta, r, un, z1, p, gama, t1, t2, t5, tz1, hz1)
 
-        TINTEGER iflag, nt
-        TREAL beta
+        integer(wi) iflag, nt
+        real(wp) beta
 
-        TREAL, dimension(*) :: r, un, z1, p, gama
-        TREAL, dimension(*) :: t1, t2, t5, tz1
-        TREAL, dimension(*) :: hz1
+        real(wp), dimension(*) :: r, un, z1, p, gama
+        real(wp), dimension(*) :: t1, t2, t5, tz1
+        real(wp), dimension(*) :: hz1
 
 ! -------------------------------------------------------------------
-        TINTEGER i
-        TREAL c, Mn, dummy
+        integer(wi) i
+        real(wp) c, Mn, dummy
 
 ! ###################################################################
 ! BCs at x_min
@@ -1487,13 +1484,13 @@ contains
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
 
-                if (un(i) + c > C_0_R) then
+                if (un(i) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) > C_0_R) then
-                        dummy = C_05_R*t5(i)/c/c - C_05_R*r(i)*t2(i)/c - t1(i)
+                    if (un(i) > 0.0_wp) then
+                        dummy = 0.5_wp*t5(i)/c/c - 0.5_wp*r(i)*t2(i)/c - t1(i)
 
                         hz1(i) = hz1(i) + dummy*z1(i) - r(i)*tz1(i)
 
@@ -1501,7 +1498,7 @@ contains
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        dummy = -C_05_R*(C_1_R - beta)*(r(i)*c*t2(i) + t5(i))/c/c
+                        dummy = -0.5_wp*(1.0_wp - beta)*(r(i)*c*t2(i) + t5(i))/c/c
 
                         hz1(i) = hz1(i) + dummy*z1(i)
 
@@ -1520,13 +1517,13 @@ contains
                 c = sqrt(gama(i)*p(i)/r(i))
                 Mn = un(i)/c
 
-                if (un(i) - c < C_0_R) then
+                if (un(i) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow
 ! -------------------------------------------------------------------
-                    if (un(i) < C_0_R) then
-                        dummy = C_05_R*t5(i)/c/c + C_05_R*r(i)*t2(i)/c - t1(i)
+                    if (un(i) < 0.0_wp) then
+                        dummy = 0.5_wp*t5(i)/c/c + 0.5_wp*r(i)*t2(i)/c - t1(i)
 
                         hz1(i) = hz1(i) + dummy*z1(i) - r(i)*tz1(i)
 
@@ -1534,7 +1531,7 @@ contains
 ! Outflow
 ! -------------------------------------------------------------------
                     else
-                        dummy = C_05_R*(C_1_R - beta)*(r(i)*c*t2(i) - t5(i))/c/c
+                        dummy = 0.5_wp*(1.0_wp - beta)*(r(i)*c*t2(i) - t5(i))/c/c
 
                         hz1(i) = hz1(i) + dummy*z1(i)
 
@@ -1569,16 +1566,16 @@ contains
     subroutine BOUNDARY_BCS_FLOW_NR_EDGE(iflag, jmax, kmax, beta, &
                                          r, un, v1, v2, p, gama, m1, m2, m3, m4, m5, hr, hun, hv1, hv2, he)
 
-        TINTEGER iflag, jmax, kmax
-        TREAL beta
+        integer(wi) iflag, jmax, kmax
+        real(wp) beta
 
-        TREAL, dimension(jmax, *) :: r, un, v1, v2, p, gama
-        TREAL, dimension(jmax, *) :: m1, m2, m3, m4, m5
-        TREAL, dimension(jmax, *) :: hr, hun, hv1, hv2, he
+        real(wp), dimension(jmax, *) :: r, un, v1, v2, p, gama
+        real(wp), dimension(jmax, *) :: m1, m2, m3, m4, m5
+        real(wp), dimension(jmax, *) :: hr, hun, hv1, hv2, he
 
 ! -------------------------------------------------------------------
-        TINTEGER j, k
-        TREAL c, Mn, dummy, F1, F2, F3, F4, F5
+        integer(wi) j, k
+        real(wp) c, Mn, dummy, F1, F2, F3, F4, F5
 
 ! ###################################################################
 ! BCs at x_min
@@ -1590,92 +1587,92 @@ contains
                     c = sqrt(gama(j, k)*p(j, k)/r(j, k))
                     Mn = un(j, k)/c
 
-                    if (un(j, k) + c > C_0_R) then
+                    if (un(j, k) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow in Ox
 ! -------------------------------------------------------------------
-                        if (un(j, k) > C_0_R) then
+                        if (un(j, k) > 0.0_wp) then
                             if (j == 1) then
-                                if (v1(j, k) < C_0_R) then ! & Outflow in Oy
-                                    F1 = C_05_R*m5(j, k)
-                                    F2 = C_0_R
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = C_0_R
+                                if (v1(j, k) < 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.5_wp*m5(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = 0.0_wp
                                 else                           ! & Inflow in Oy
-                                    F1 = C_05_R*m5(j, k) - r(j, k)*c*m2(j, k)
-                                    F2 = C_0_R
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = C_0_R
+                                    F1 = 0.5_wp*m5(j, k) - r(j, k)*c*m2(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = 0.0_wp
                                 end if
                             end if
                             if (j == jmax) then
-                                if (v1(j, k) > C_0_R) then ! & Outflow in Oy
-                                    F1 = C_05_R*m1(j, k)
-                                    F2 = C_0_R
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = C_0_R
+                                if (v1(j, k) > 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.5_wp*m1(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = 0.0_wp
                                 else                           ! & Inflow in Oy
-                                    F1 = C_05_R*m1(j, k) - r(j, k)*c*m2(j, k)
-                                    F2 = C_0_R
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = C_0_R
+                                    F1 = 0.5_wp*m1(j, k) - r(j, k)*c*m2(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = 0.0_wp
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hr(j, k) = hr(j, k) + dummy
-                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*C_05_R/c
+                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*0.5_wp/c
                             hv1(j, k) = hv1(j, k) + dummy*v1(j, k) + r(j, k)*F3
                             hv2(j, k) = hv2(j, k) + dummy*v2(j, k) + r(j, k)*F4
-                            he(j, k) = he(j, k) + C_05_R*(F1 + F5)/(gama(j, k) - C_1_R)
+                            he(j, k) = he(j, k) + 0.5_wp*(F1 + F5)/(gama(j, k) - 1.0_wp)
 
 ! -------------------------------------------------------------------
 ! Outflow in Ox
 ! -------------------------------------------------------------------
                         else
                             if (j == 1) then
-                                if (v1(j, k) < C_0_R) then ! & Outflow in Oy
-                                    F1 = C_05_R*m5(j, k)
-                                    F2 = C_0_R
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = beta*C_05_R*m5(j, k)
+                                if (v1(j, k) < 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.5_wp*m5(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = beta*0.5_wp*m5(j, k)
                                 else                           ! & Inflow in Oy
-                                    F1 = C_05_R*m5(j, k) - r(j, k)*c*m2(j, k)
+                                    F1 = 0.5_wp*m5(j, k) - r(j, k)*c*m2(j, k)
                                     F2 = m3(j, k)
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
                                     F4 = m4(j, k)
-                                    F5 = beta*(C_05_R*m5(j, k) + r(j, k)*c*m2(j, k))
+                                    F5 = beta*(0.5_wp*m5(j, k) + r(j, k)*c*m2(j, k))
                                 end if
                             end if
 
                             if (j == jmax) then
-                                if (v1(j, k) > C_0_R) then ! & Outflow in Oy
-                                    F1 = C_05_R*m1(j, k)
-                                    F2 = C_0_R
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = beta*C_05_R*m1(j, k)
+                                if (v1(j, k) > 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.5_wp*m1(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = beta*0.5_wp*m1(j, k)
                                 else                           ! & Inflow in Oy
-                                    F1 = C_05_R*m1(j, k) - r(j, k)*c*m2(j, k)
+                                    F1 = 0.5_wp*m1(j, k) - r(j, k)*c*m2(j, k)
                                     F2 = m3(j, k)
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
                                     F4 = m4(j, k)
-                                    F5 = beta*(C_05_R*m1(j, k) + r(j, k)*c*m2(j, k))
+                                    F5 = beta*(0.5_wp*m1(j, k) + r(j, k)*c*m2(j, k))
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hr(j, k) = hr(j, k) + dummy
-                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*C_05_R/c
+                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*0.5_wp/c
                             hv1(j, k) = hv1(j, k) + dummy*v1(j, k) + r(j, k)*F3
                             hv2(j, k) = hv2(j, k) + dummy*v2(j, k) + r(j, k)*F4
-                            he(j, k) = he(j, k) + C_05_R*(F1 + F5)/(gama(j, k) - C_1_R)
+                            he(j, k) = he(j, k) + 0.5_wp*(F1 + F5)/(gama(j, k) - 1.0_wp)
 
                         end if
 
@@ -1694,98 +1691,98 @@ contains
                     c = sqrt(gama(j, k)*p(j, k)/r(j, k))
                     Mn = un(j, k)/c
 
-                    if (un(j, k) - c < C_0_R) then
+                    if (un(j, k) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow in Ox
 ! -------------------------------------------------------------------
-                        if (un(j, k) < C_0_R) then
-                            dummy = C_0_R
+                        if (un(j, k) < 0.0_wp) then
+                            dummy = 0.0_wp
 
                             if (j == 1) then
-                                if (v1(j, k) < C_0_R) then ! & Outflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
-                                    F3 = C_0_R
-                                    F4 = C_0_R
-                                    F5 = C_05_R*m5(j, k)
+                                if (v1(j, k) < 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
+                                    F3 = 0.0_wp
+                                    F4 = 0.0_wp
+                                    F5 = 0.5_wp*m5(j, k)
                                 else                           ! & Inflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
-                                    F3 = C_0_R
-                                    F4 = C_0_R
-                                    F5 = C_05_R*m5(j, k) + r(j, k)*c*m2(j, k)
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
+                                    F3 = 0.0_wp
+                                    F4 = 0.0_wp
+                                    F5 = 0.5_wp*m5(j, k) + r(j, k)*c*m2(j, k)
                                 end if
                             end if
                             if (j == jmax) then
-                                if (v1(j, k) > C_0_R) then ! & Outflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
-                                    F3 = C_0_R
-                                    F4 = C_0_R
-                                    F5 = C_05_R*m1(j, k)
+                                if (v1(j, k) > 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
+                                    F3 = 0.0_wp
+                                    F4 = 0.0_wp
+                                    F5 = 0.5_wp*m1(j, k)
                                 else                           ! & Inflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
-                                    F3 = C_0_R
-                                    F4 = C_0_R
-                                    F5 = C_05_R*m1(j, k) + r(j, k)*c*m2(j, k)
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
+                                    F3 = 0.0_wp
+                                    F4 = 0.0_wp
+                                    F5 = 0.5_wp*m1(j, k) + r(j, k)*c*m2(j, k)
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hr(j, k) = hr(j, k) + dummy
-                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*C_05_R/c
+                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*0.5_wp/c
                             hv1(j, k) = hv1(j, k) + dummy*v1(j, k) + r(j, k)*F3
                             hv2(j, k) = hv2(j, k) + dummy*v2(j, k) + r(j, k)*F4
-                            he(j, k) = he(j, k) + C_05_R*(F1 + F5)/(gama(j, k) - C_1_R)
+                            he(j, k) = he(j, k) + 0.5_wp*(F1 + F5)/(gama(j, k) - 1.0_wp)
 
 ! -------------------------------------------------------------------
 ! Outflow in Ox
 ! -------------------------------------------------------------------
                         else
                             if (j == 1) then
-                                if (v1(j, k) > C_0_R) then ! Inflow in Oy
-                                    F1 = beta*(C_05_R*m5(j, k) - r(j, k)*c*m2(j, k))
+                                if (v1(j, k) > 0.0_wp) then ! Inflow in Oy
+                                    F1 = beta*(0.5_wp*m5(j, k) - r(j, k)*c*m2(j, k))
                                     F2 = m3(j, k)
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
                                     F4 = m4(j, k)
-                                    F5 = C_05_R*m5(j, k) + r(j, k)*c*m2(j, k)
+                                    F5 = 0.5_wp*m5(j, k) + r(j, k)*c*m2(j, k)
                                 else                           ! Outflow in Oy
-                                    F1 = beta*C_05_R*m5(j, k)
-                                    F2 = C_0_R
-                                    F3 = C_05_R*m5(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = C_05_R*m5(j, k)
+                                    F1 = beta*0.5_wp*m5(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = 0.5_wp*m5(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = 0.5_wp*m5(j, k)
                                 end if
                             end if
 
                             if (j == jmax) then
-                                if (v1(j, k) < C_0_R) then ! Inflow in Oy
-                                    F1 = beta*(C_05_R*m1(j, k) - r(j, k)*c*m2(j, k))
+                                if (v1(j, k) < 0.0_wp) then ! Inflow in Oy
+                                    F1 = beta*(0.5_wp*m1(j, k) - r(j, k)*c*m2(j, k))
                                     F2 = m3(j, k)
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
                                     F4 = m4(j, k)
-                                    F5 = C_05_R*m1(j, k) + r(j, k)*c*m2(j, k)
+                                    F5 = 0.5_wp*m1(j, k) + r(j, k)*c*m2(j, k)
                                 else                           ! Outflow in Oy
-                                    F1 = beta*C_05_R*m1(j, k)
-                                    F2 = C_0_R
-                                    F3 = -C_05_R*m1(j, k)/r(j, k)/c
-                                    F4 = C_0_R
-                                    F5 = C_05_R*m1(j, k)
+                                    F1 = beta*0.5_wp*m1(j, k)
+                                    F2 = 0.0_wp
+                                    F3 = -0.5_wp*m1(j, k)/r(j, k)/c
+                                    F4 = 0.0_wp
+                                    F5 = 0.5_wp*m1(j, k)
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hr(j, k) = hr(j, k) + dummy
-                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*C_05_R/c
+                            hun(j, k) = hun(j, k) + dummy*un(j, k) + (F5 - F1)*0.5_wp/c
                             hv1(j, k) = hv1(j, k) + dummy*v1(j, k) + r(j, k)*F3
                             hv2(j, k) = hv2(j, k) + dummy*v2(j, k) + r(j, k)*F4
-                            he(j, k) = he(j, k) + C_05_R*(F1 + F5)/(gama(j, k) - C_1_R)
+                            he(j, k) = he(j, k) + 0.5_wp*(F1 + F5)/(gama(j, k) - 1.0_wp)
 
                         end if
 
@@ -1819,16 +1816,16 @@ contains
     subroutine BOUNDARY_BCS_SCAL_NR_EDGE(iflag, jmax, kmax, beta, &
                                          r, un, v1, z1, p, gama, m1, m2, m3, m5, m6, hz1)
 
-        TINTEGER iflag, jmax, kmax
-        TREAL beta
+        integer(wi) iflag, jmax, kmax
+        real(wp) beta
 
-        TREAL, dimension(jmax, *) :: r, un, v1, z1, p, gama
-        TREAL, dimension(jmax, *) :: m1, m2, m3, m5, m6
-        TREAL, dimension(jmax, *) :: hz1
+        real(wp), dimension(jmax, *) :: r, un, v1, z1, p, gama
+        real(wp), dimension(jmax, *) :: m1, m2, m3, m5, m6
+        real(wp), dimension(jmax, *) :: hz1
 
 ! -------------------------------------------------------------------
-        TINTEGER j, k
-        TREAL c, Mn, dummy, F1, F2, F5, F6
+        integer(wi) j, k
+        real(wp) c, Mn, dummy, F1, F2, F5, F6
 
 ! ###################################################################
 ! BCs at x_min
@@ -1840,35 +1837,35 @@ contains
                     c = sqrt(gama(j, k)*p(j, k)/r(j, k))
                     Mn = un(j, k)/c
 
-                    if (un(j, k) + c > C_0_R) then
+                    if (un(j, k) + c > 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow in Ox
 ! -------------------------------------------------------------------
-                        if (un(j, k) > C_0_R) then
+                        if (un(j, k) > 0.0_wp) then
                             if (j == 1) then
-                                if (v1(j, k) < C_0_R) then ! & Outflow in Oy
-                                    F1 = C_05_R*m5(j, k)
-                                    F2 = C_0_R
-                                    F5 = C_0_R
+                                if (v1(j, k) < 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.5_wp*m5(j, k)
+                                    F2 = 0.0_wp
+                                    F5 = 0.0_wp
                                 else                           ! & Inflow in Oy
-                                    F1 = C_05_R*m5(j, k) - r(j, k)*c*m2(j, k)
-                                    F2 = C_0_R
-                                    F5 = C_0_R
+                                    F1 = 0.5_wp*m5(j, k) - r(j, k)*c*m2(j, k)
+                                    F2 = 0.0_wp
+                                    F5 = 0.0_wp
                                 end if
                             end if
                             if (j == jmax) then
-                                if (v1(j, k) > C_0_R) then ! & Outflow in Oy
-                                    F1 = C_05_R*m1(j, k)
-                                    F2 = C_0_R
-                                    F5 = C_0_R
+                                if (v1(j, k) > 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.5_wp*m1(j, k)
+                                    F2 = 0.0_wp
+                                    F5 = 0.0_wp
                                 else                           ! & Inflow in Oy
-                                    F1 = C_05_R*m1(j, k) - r(j, k)*c*m2(j, k)
-                                    F2 = C_0_R
-                                    F5 = C_0_R
+                                    F1 = 0.5_wp*m1(j, k) - r(j, k)*c*m2(j, k)
+                                    F2 = 0.0_wp
+                                    F5 = 0.0_wp
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hz1(j, k) = hz1(j, k) + dummy*z1(j, k)
 
@@ -1877,25 +1874,25 @@ contains
 ! -------------------------------------------------------------------
                         else
                             if (j == 1) then
-                                if (v1(j, k) < C_0_R) then ! & Outflow in Oy
+                                if (v1(j, k) < 0.0_wp) then ! & Outflow in Oy
                                 else ! & Inflow in Oy
-                                    F1 = C_05_R*m5(j, k) - r(j, k)*c*m2(j, k)
+                                    F1 = 0.5_wp*m5(j, k) - r(j, k)*c*m2(j, k)
                                     F2 = m3(j, k)
-                                    F5 = beta*(C_05_R*m5(j, k) + r(j, k)*c*m2(j, k))
+                                    F5 = beta*(0.5_wp*m5(j, k) + r(j, k)*c*m2(j, k))
                                     F6 = m6(j, k)
                                 end if
                             end if
 
                             if (j == jmax) then
-                                if (v1(j, k) > C_0_R) then ! & Outflow in Oy
+                                if (v1(j, k) > 0.0_wp) then ! & Outflow in Oy
                                 else ! & Inflow in Oy
-                                    F1 = C_05_R*m1(j, k) - r(j, k)*c*m2(j, k)
+                                    F1 = 0.5_wp*m1(j, k) - r(j, k)*c*m2(j, k)
                                     F2 = m3(j, k)
-                                    F5 = beta*(C_05_R*m1(j, k) + r(j, k)*c*m2(j, k))
+                                    F5 = beta*(0.5_wp*m1(j, k) + r(j, k)*c*m2(j, k))
                                     F6 = m6(j, k)
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hz1(j, k) = hz1(j, k) + dummy*z1(j, k) + r(j, k)*F6
 
@@ -1916,37 +1913,37 @@ contains
                     c = sqrt(gama(j, k)*p(j, k)/r(j, k))
                     Mn = un(j, k)/c
 
-                    if (un(j, k) - c < C_0_R) then
+                    if (un(j, k) - c < 0.0_wp) then
 
 ! -------------------------------------------------------------------
 ! Inflow in Ox
 ! -------------------------------------------------------------------
-                        if (un(j, k) < C_0_R) then
-                            dummy = C_0_R
+                        if (un(j, k) < 0.0_wp) then
+                            dummy = 0.0_wp
 
                             if (j == 1) then
-                                if (v1(j, k) < C_0_R) then ! & Outflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F5 = C_05_R*m5(j, k)
+                                if (v1(j, k) < 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F5 = 0.5_wp*m5(j, k)
                                 else                           ! & Inflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F5 = C_05_R*m5(j, k) + r(j, k)*c*m2(j, k)
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F5 = 0.5_wp*m5(j, k) + r(j, k)*c*m2(j, k)
                                 end if
                             end if
                             if (j == jmax) then
-                                if (v1(j, k) > C_0_R) then ! & Outflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F5 = C_05_R*m1(j, k)
+                                if (v1(j, k) > 0.0_wp) then ! & Outflow in Oy
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F5 = 0.5_wp*m1(j, k)
                                 else                           ! & Inflow in Oy
-                                    F1 = C_0_R
-                                    F2 = C_0_R
-                                    F5 = C_05_R*m1(j, k) + r(j, k)*c*m2(j, k)
+                                    F1 = 0.0_wp
+                                    F2 = 0.0_wp
+                                    F5 = 0.5_wp*m1(j, k) + r(j, k)*c*m2(j, k)
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hz1(j, k) = hz1(j, k) + dummy*z1(j, k)
 
@@ -1955,25 +1952,25 @@ contains
 ! -------------------------------------------------------------------
                         else
                             if (j == 1) then
-                                if (v1(j, k) > C_0_R) then ! Inflow in Oy
-                                    F1 = beta*(C_05_R*m5(j, k) - r(j, k)*c*m2(j, k))
+                                if (v1(j, k) > 0.0_wp) then ! Inflow in Oy
+                                    F1 = beta*(0.5_wp*m5(j, k) - r(j, k)*c*m2(j, k))
                                     F2 = m3(j, k)
-                                    F5 = C_05_R*m5(j, k) + r(j, k)*c*m2(j, k)
+                                    F5 = 0.5_wp*m5(j, k) + r(j, k)*c*m2(j, k)
                                     F6 = m6(j, k)
                                 else
                                 end if
                             end if
 
                             if (j == jmax) then
-                                if (v1(j, k) < C_0_R) then ! Inflow in Oy
-                                    F1 = beta*(C_05_R*m1(j, k) - r(j, k)*c*m2(j, k))
+                                if (v1(j, k) < 0.0_wp) then ! Inflow in Oy
+                                    F1 = beta*(0.5_wp*m1(j, k) - r(j, k)*c*m2(j, k))
                                     F2 = m3(j, k)
-                                    F5 = C_05_R*m1(j, k) + r(j, k)*c*m2(j, k)
+                                    F5 = 0.5_wp*m1(j, k) + r(j, k)*c*m2(j, k)
                                     F6 = m6(j, k)
                                 else
                                 end if
                             end if
-                            dummy = (F2 + C_05_R*(F1 + F5))/c/c
+                            dummy = (F2 + 0.5_wp*(F1 + F5))/c/c
 
                             hz1(j, k) = hz1(j, k) + dummy*z1(j, k) + r(j, k)*F6
 
@@ -2005,18 +2002,18 @@ contains
     subroutine BOUNDARY_BCS_TRANSVERSE_X(u, v, w, p, r, gamma, z1, &
                                          tmin, mmin, tmax, mmax, tmp1, ddy, ddz)
 
-        TREAL, dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
+        real(wp), dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
 #ifdef USE_MPI
-        TREAL, dimension(ims_bcs_imax, jmax, kmax) :: tmp1, ddy, ddz
+        real(wp), dimension(ims_bcs_imax, jmax, kmax) :: tmp1, ddy, ddz
 #else
-        TREAL, dimension(2*(inb_flow + inb_scal_array), jmax, kmax) :: tmp1, ddy, ddz
+        real(wp), dimension(2*(inb_flow + inb_scal_array), jmax, kmax) :: tmp1, ddy, ddz
 #endif
-        TREAL, dimension(imax, jmax, kmax, *) :: z1
-        TREAL, dimension(jmax, kmax, *) :: tmin, tmax, mmin, mmax
+        real(wp), dimension(imax, jmax, kmax, *) :: z1
+        real(wp), dimension(jmax, kmax, *) :: tmin, tmax, mmin, mmax
 
 ! -----------------------------------------------------------------------
-        TINTEGER ip, j, k, is, bcs(2, 2)
-        TREAL c
+        integer(wi) ip, j, k, is, bcs(2, 2)
+        real(wp) c
 
 ! #######################################################################
         bcs = 0
@@ -2161,18 +2158,18 @@ contains
     subroutine BOUNDARY_BCS_TRANSVERSE_Y(u, v, w, p, r, gamma, z1, &
                                          tmin, lmin, tmax, lmax, tmp1, ddx, ddz)
 
-        TREAL, dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
+        real(wp), dimension(imax, jmax, kmax) :: u, v, w, p, r, gamma
 #ifdef USE_MPI
-        TREAL, dimension(imax, ims_bcs_jmax, kmax) :: tmp1, ddx, ddz
+        real(wp), dimension(imax, ims_bcs_jmax, kmax) :: tmp1, ddx, ddz
 #else
-        TREAL, dimension(imax, 2*(inb_flow + inb_scal_array), kmax) :: tmp1, ddx, ddz
+        real(wp), dimension(imax, 2*(inb_flow + inb_scal_array), kmax) :: tmp1, ddx, ddz
 #endif
-        TREAL, dimension(imax, jmax, kmax, *) :: z1
-        TREAL, dimension(imax, kmax, *) :: tmin, lmin, tmax, lmax
+        real(wp), dimension(imax, jmax, kmax, *) :: z1
+        real(wp), dimension(imax, kmax, *) :: tmin, lmin, tmax, lmax
 
 ! -----------------------------------------------------------------------
-        TINTEGER ip, i, k, is, bcs(2, 2)
-        TREAL c
+        integer(wi) ip, i, k, is, bcs(2, 2)
+        real(wp) c
 
 ! #######################################################################
         bcs = 0

@@ -12,6 +12,10 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLAB_VARS, only: epbackground, pbackground
     use TLAB_ARRAYS, only: wrk3d
     use THERMO_VARS, only: imixture
+    use THERMO_THERMAL
+    use THERMO_CALORIC
+    use THERMO_AIRWATER
+    use THERMO_ANELASTIC
 
     implicit none
 
@@ -24,10 +28,10 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     select case (imode_eqns)
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-            call THERMO_AIRWATER_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
+            call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
 
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-            call THERMO_AIRWATER_LINEAR(nx, ny, nz, s, s(1, inb_scal_array))
+            call THERMO_AIRWATER_LINEAR(nx*ny*nz, s, s(1, inb_scal_array))
 
         end if
 
@@ -38,9 +42,9 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
 #define T(j)    q(j,7)
 #define vis(j)  q(j,8)
 
-        call THERMO_CALORIC_TEMPERATURE(nx, ny, nz, s, e(1), rho(1), T(1), wrk3d)
-        call THERMO_THERMAL_PRESSURE(nx, ny, nz, s, rho(1), T(1), p(1))
-     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(nx, ny, nz, T(1), vis(1))
+        call THERMO_CALORIC_TEMPERATURE(nx*ny*nz, s, e(1), rho(1), T(1), wrk3d)
+        call THERMO_THERMAL_PRESSURE(nx*ny*nz, s, rho(1), T(1), p(1))
+     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(nx*ny*nz, T(1), vis(1))
 
     end select
 

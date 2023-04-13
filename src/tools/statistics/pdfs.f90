@@ -16,6 +16,7 @@ program PDFS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY
     use THERMO_VARS, only: imixture
+    use THERMO_ANELASTIC
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN

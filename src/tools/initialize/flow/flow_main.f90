@@ -14,6 +14,8 @@ program INIFLOW
     use TLAB_MPI_PROCS
 #endif
     use THERMO_VARS, only: imixture
+    use THERMO_THERMAL
+    use THERMO_CALORIC
     use IO_FIELDS
     use OPR_FOURIER
     use FLOW_LOCAL
@@ -113,8 +115,8 @@ program INIFLOW
         end if
 
         ! Calculate specfic energy. Array s should contain the species fields at this point.
-        call THERMO_THERMAL_TEMPERATURE(imax, jmax, kmax, s, p, rho, txc(1, 1))
-        call THERMO_CALORIC_ENERGY(imax, jmax, kmax, s, txc(1, 1), e)
+        call THERMO_THERMAL_TEMPERATURE(imax*jmax*kmax, s, p, rho, txc(:, 1))
+        call THERMO_CALORIC_ENERGY(imax*jmax*kmax, s, txc(:, 1), e)
 
     end if
 

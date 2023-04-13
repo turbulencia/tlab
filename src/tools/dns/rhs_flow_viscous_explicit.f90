@@ -18,10 +18,10 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: visc, mach
+    use TLAB_VARS, only: visc
     use TLAB_POINTERS
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: CRATIO_INV
     use BOUNDARY_BCS
     use OPR_PARTIAL
 
@@ -29,7 +29,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 
 ! -------------------------------------------------------------------
     integer(wi) bcs(2, 1), i
-    real(wp) prefactor, c13, c23, dummy
+    real(wp) c13, c23, dummy
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -38,14 +38,13 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 
     bcs = 0
 
-    prefactor = (gama0 - 1.0_wp)*mach*mach
     c13 = 1.0_wp/3.0_wp
     c23 = 2.0_wp/3.0_wp
 
 ! ###################################################################
 ! First derivatives in energy equation
 ! ###################################################################
-    dummy = prefactor*visc
+    dummy = CRATIO_INV*visc
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp3)
     hq(:, 4) = hq(:, 4) + dummy*vis*((tmp2 + tmp3)*(tmp2 + tmp3))
@@ -71,7 +70,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     dummy = c23*visc
     do i = 1, imax*jmax*kmax
         tmp5(i) = tmp1(i) + tmp2(i) + tmp3(i)
-        hq(i, 4) = hq(i, 4) + prefactor*(dummy*vis(i)*( &
+        hq(i, 4) = hq(i, 4) + CRATIO_INV*(dummy*vis(i)*( &
                                          (tmp1(i) - tmp2(i))*(tmp1(i) - tmp2(i)) + &
                                          (tmp2(i) - tmp3(i))*(tmp2(i) - tmp3(i)) + &
                                          (tmp3(i) - tmp1(i))*(tmp3(i) - tmp1(i))) - p(i)*tmp5(i))

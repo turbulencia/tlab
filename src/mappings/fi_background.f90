@@ -15,6 +15,8 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
     use THERMO_VARS, only: imixture, GRATIO, scaleheight, MRATIO
+    use THERMO_ANELASTIC
+    use THERMO_AIRWATER
     use PROFILES
     use FI_SOURCES, only: FI_BUOYANCY
 #ifdef USE_MPI
@@ -34,16 +36,21 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! being then mean_rho=(rho1+rho2)/2
 ! should we not use the thermal equation of state in thermo routines?
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        if (rbg%type == PROFILE_NONE) then
+        if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
             rbg = tbg
             dummy = tbg%delta/tbg%mean
             rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             rbg%delta = -rbg%mean*dummy
+
+        else if (rbg%type == PROFILE_NONE .and. hbg%type /= PROFILE_NONE) then
+            rbg%mean = 1.0_wp ! to be done; I need a nonzero value for dns_control.
+
         else
             tbg = rbg
             dummy = rbg%delta/rbg%mean
             tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             tbg%delta = -tbg%mean*dummy
+            
         end if
     end if
 
@@ -95,19 +102,19 @@ subroutine FI_BACKGROUND_INITIALIZE()
     end if
 
     if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-        call THERMO_AIRWATER_PH(i1, g(2)%size, i1, p_wrk1d(1, 2), p_wrk1d(1, 1), epbackground, pbackground)
+        call THERMO_ANELASTIC_PH(1, g(2)%size, 1, p_wrk1d(:, 2), p_wrk1d(:, 1), epbackground, pbackground)
     else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        call THERMO_AIRWATER_LINEAR(i1, g(2)%size, i1, p_wrk1d, p_wrk1d(1, inb_scal_array))
+        call THERMO_AIRWATER_LINEAR(g(2)%size, p_wrk1d, p_wrk1d(:, inb_scal_array))
     end if
 
     if (scaleheight > 0.0_wp) then
-        call THERMO_ANELASTIC_DENSITY(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, rbackground)
+        call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, rbackground)
         ribackground = 1.0_wp/rbackground
     end if
 
 ! Calculate buoyancy profile
     if (buoyancy%type == EQNS_EXPLICIT) then
-        call THERMO_ANELASTIC_BUOYANCY(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, rbackground, bbackground)
+        call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, rbackground, bbackground)
     else
         p_wrk1d(:, inb_scal_array + 1) = 0.0_wp
         call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, p_wrk1d(:, 1), bbackground, p_wrk1d(:, inb_scal_array + 1))
@@ -128,7 +135,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         is = is + 1
-        call THERMO_ANELASTIC_THETA_L(i1, g(2)%size, i1, p_wrk1d, epbackground, pbackground, p_wrk1d(1, inb_scal_array + 1))
+        call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
         sbg(is) = sbg(1)
         sbg(is)%mean = (p_wrk1d(1, inb_scal_array + 1) + p_wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
         sbg(is)%delta = abs(p_wrk1d(1, inb_scal_array + 1) - p_wrk1d(g(2)%size, inb_scal_array + 1))
@@ -206,6 +213,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
     use THERMO_VARS, only: imixture, scaleheight
+    use THERMO_ANELASTIC
+    use THERMO_AIRWATER
+    use THERMO_THERMAL
 
     implicit none
 
@@ -246,11 +256,11 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     end if
     do iter = 1, niter           ! iterate
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_DENSITY(i1, g%size, i1, s, e, wrk1d(1, 6), wrk1d(1, 7))   ! Get 1/RT
+            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, e, wrk1d(1, 6), wrk1d(1, 7))   ! Get 1/RT
             dummy = -1.0_wp/sign(scaleheight, buoyancy%vector(2))
         else
-            call THERMO_AIRWATER_PH_RE(i1, g%size, i1, s(1, 2), p, s(1, 1), T)
-            call THERMO_THERMAL_DENSITY(i1, g%size, i1, s(1, 2), wrk1d(1, 6), T, wrk1d(1, 7)) ! Get 1/RT
+            call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
+            call THERMO_THERMAL_DENSITY(g%size, s(:, 2), wrk1d(:, 6), T, wrk1d(:, 7)) ! Get 1/RT
             dummy = buoyancy%vector(2)
         end if
         wrk1d(:, 7) = dummy*wrk1d(:, 7)
@@ -273,9 +283,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Get ql, if necessary
             if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_AIRWATER_PH(i1, g%size, i1, s(1, 2), s(1, 1), e, p)
+                call THERMO_ANELASTIC_PH(1, g%size, 1, s(1, 2), s(1, 1), e, p)
             else
-                call THERMO_AIRWATER_PH_RE(i1, g%size, i1, s(1, 2), p, s(1, 1), T)
+                call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
             end if
         end if
 
@@ -283,7 +293,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
     ! compute equilibrium values of T
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_TEMPERATURE(i1, g%size, i1, s, e, T)
+        call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, e, T)
     end if
 
     return
@@ -306,6 +316,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
     use TLAB_CONSTANTS, only: wp, wi, wfile
     use TLAB_TYPES, only: profiles_dt
     use TLAB_PROCS
+    use THERMO_THERMAL
     use PROFILES
     implicit none
 
@@ -359,7 +370,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
             call FLOW_SPATIAL_SCALAR(i1, jmax, tbg, tbg%diam, ubg%diam, &
                                      tbg%parameters(2), tbg%parameters(3), tbg%parameters(4), x(i), y, &
                                      rho_vi, u_vi, tem_vi, rho_aux(1), u_vo, tem_vo, aux(1))
-            call THERMO_THERMAL_DENSITY(i1, jmax, i1, z1, p, tem_vo, wrk1d(1, 2))
+            call THERMO_THERMAL_DENSITY(jmax, z1, p, tem_vo, wrk1d(1, 2))
 ! Convergence criteria (infinity norm)
             do j = 1, jmax
                 wrk1d(j, 3) = abs(wrk1d(j, 2) - rho_aux(j))

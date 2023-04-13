@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #include "avgij_map.h"
@@ -25,7 +24,7 @@
 ! #####################################################
 subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_CONSTANTS, only: efile, wp, wi
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
@@ -39,17 +38,17 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use OPR_PARTIAL
     implicit none
 
-    TREAL, dimension(imax, jmax, kmax, *), intent(IN), target :: q
-    TREAL, dimension(imax, jmax, kmax, *), intent(INOUT), target :: txc, hq
-    TREAL mean1d(nstatavg, jmax, *)
+    real(wp), dimension(imax, jmax, kmax, *), intent(IN), target :: q
+    real(wp), dimension(imax, jmax, kmax, *), intent(INOUT), target :: txc, hq
+    real(wp) mean1d(nstatavg, jmax, *)
 
-    TINTEGER j, bcs(2, 1)
-    TINTEGER NNstat
-    TREAL c2, c23, cs2
+    integer(wi) j, bcs(2, 1)
+    integer(wi) NNstat
+    real(wp) c2, c23, cs2
 
     ! Pointers to existing allocated space
-    TREAL, dimension(:, :, :), pointer :: u, v, w, rho, p, T, vis
-    TREAL, dimension(:, :, :), pointer :: xc, yc, zc, vc, wc, uc, tc, sc, rc, qc, oc, pc
+    real(wp), dimension(:, :, :), pointer :: u, v, w, rho, p, T, vis
+    real(wp), dimension(:, :, :), pointer :: xc, yc, zc, vc, wc, uc, tc, sc, rc, qc, oc, pc
 
     ! ###################################################################
 #ifdef TRACE_ON
@@ -64,9 +63,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     nstatavg_points = nstatavg_points + g(3)%size
 
     bcs = 0
-    c2 = C_2_R
-    c23 = C_2_R/C_3_R
-    cs2 = C_14_R*C_1EM2_R
+    c2 = 2.0_wp
+    c23 = 2.0_wp/3.0_wp
+    cs2 = 0.14_wp
     NNstat = nstatavg*jmax
 
     ! Define pointers
@@ -145,7 +144,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
         end do
     else
         do j = 1, NNstat
-            MA_VIS(j) = MA_VIS(j) + M_REAL(g(3)%size)
+            MA_VIS(j) = MA_VIS(j) + real(g(3)%size, wp)
         end do
     end if
 
@@ -207,7 +206,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
         end do
     else
         do j = 1, NNstat
-            MA_VIS2(j) = MA_VIS2(j) + M_REAL(g(3)%size)
+            MA_VIS2(j) = MA_VIS2(j) + real(g(3)%size, wp)
         end do
     end if
 
@@ -458,7 +457,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
 
     do j = 1, NNstat*kmax
-        tc(j, 1, 1) = C_2_R*oc(j, 1, 1)*vc(j, 1, 1) + uc(j, 1, 1)*wc(j, 1, 1) + pc(j, 1, 1)*tc(j, 1, 1)
+        tc(j, 1, 1) = 2.0_wp*oc(j, 1, 1)*vc(j, 1, 1) + uc(j, 1, 1)*wc(j, 1, 1) + pc(j, 1, 1)*tc(j, 1, 1)
     end do
 
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
@@ -586,9 +585,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 3), wrk2d(1, 11))
 
     do j = 1, NNstat
-        MA_RUUx(j) = MA_RUUx(j) + C_2_R*wrk2d(j, 1)
-        MA_RUUy(j) = MA_RUUy(j) + C_2_R*wrk2d(j, 2)
-        MA_RUUz(j) = MA_RUUz(j) + C_2_R*wrk2d(j, 3)
+        MA_RUUx(j) = MA_RUUx(j) + 2.0_wp*wrk2d(j, 1)
+        MA_RUUy(j) = MA_RUUy(j) + 2.0_wp*wrk2d(j, 2)
+        MA_RUUz(j) = MA_RUUz(j) + 2.0_wp*wrk2d(j, 3)
     end do
 
     do j = 1, NNstat*kmax
@@ -653,7 +652,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 3), wrk2d(1, 11))
 
     do j = 1, NNstat
-        MA_RUUUkk(j) = MA_RUUUkk(j) + C_3_R*wrk2d(j, 1) + C_2_R*wrk2d(j, 2) + C_2_R*wrk2d(j, 3)
+        MA_RUUUkk(j) = MA_RUUUkk(j) + 3.0_wp*wrk2d(j, 1) + 2.0_wp*wrk2d(j, 2) + 2.0_wp*wrk2d(j, 3)
     end do
 
     call REDUCE(imax, jmax, kmax, v, nstatavg, statavg, tc)
@@ -669,7 +668,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 3), wrk2d(1, 11))
 
     do j = 1, NNstat
-        MA_RUVUkk(j) = MA_RUVUkk(j) + C_2_R*wrk2d(j, 1) + wrk2d(j, 2) + wrk2d(j, 3)
+        MA_RUVUkk(j) = MA_RUVUkk(j) + 2.0_wp*wrk2d(j, 1) + wrk2d(j, 2) + wrk2d(j, 3)
     end do
 
     call REDUCE(imax, jmax, kmax, w, nstatavg, statavg, tc)
@@ -685,7 +684,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 3), wrk2d(1, 11))
 
     do j = 1, NNstat
-        MA_RUWUkk(j) = MA_RUWUkk(j) + C_2_R*wrk2d(j, 1) + wrk2d(j, 2) + wrk2d(j, 3)
+        MA_RUWUkk(j) = MA_RUWUkk(j) + 2.0_wp*wrk2d(j, 1) + wrk2d(j, 2) + wrk2d(j, 3)
     end do
 
     call REDUCE(imax, jmax, kmax, v, nstatavg, statavg, tc)
@@ -765,7 +764,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
         uc(j, 1, 1) = qc(j, 1, 1)
         rc(j, 1, 1) = -sc(j, 1, 1)
         qc(j, 1, 1) = -sc(j, 1, 1)
-        sc(j, 1, 1) = C_2_R*sc(j, 1, 1)
+        sc(j, 1, 1) = 2.0_wp*sc(j, 1, 1)
     end do
 
     ! ############################################################
@@ -795,7 +794,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     do j = 1, imax*jmax*kmax
         oc(j, 1, 1) = oc(j, 1, 1) + wc(j, 1, 1)
         sc(j, 1, 1) = sc(j, 1, 1) - tc(j, 1, 1)
-        rc(j, 1, 1) = rc(j, 1, 1) + C_2_R*tc(j, 1, 1)
+        rc(j, 1, 1) = rc(j, 1, 1) + 2.0_wp*tc(j, 1, 1)
         qc(j, 1, 1) = qc(j, 1, 1) - tc(j, 1, 1)
     end do
 
@@ -888,7 +887,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
         MA_PHI3(j) = MA_PHI3(j) + wrk2d(j, 1)
-        MA_PHI4(j) = MA_PHI4(j) + C_2_R*wrk2d(j, 1)
+        MA_PHI4(j) = MA_PHI4(j) + 2.0_wp*wrk2d(j, 1)
     end do
 
     call REDUCE(imax, jmax, kmax, w, nstatavg, statavg, tc)
@@ -1037,7 +1036,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVVUkk(j) = MA_RVVUkk(j) + C_2_R*wrk2d(j, 1)
+        MA_RVVUkk(j) = MA_RVVUkk(j) + 2.0_wp*wrk2d(j, 1)
     end do
     call REDUCE(imax, jmax, kmax, v, nstatavg, statavg, tc)
     do j = 1, NNstat*kmax
@@ -1045,7 +1044,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RUVUkk(j) = MA_RUVUkk(j) + C_2_R*wrk2d(j, 1)
+        MA_RUVUkk(j) = MA_RUVUkk(j) + 2.0_wp*wrk2d(j, 1)
     end do
 
     call REDUCE(imax, jmax, kmax, w, nstatavg, statavg, tc)
@@ -1109,7 +1108,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVVx(j) = MA_RVVx(j) + C_2_R*wrk2d(j, 1)
+        MA_RVVx(j) = MA_RVVx(j) + 2.0_wp*wrk2d(j, 1)
     end do
 
     do j = 1, NNstat*kmax
@@ -1117,7 +1116,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVVy(j) = MA_RVVy(j) + C_2_R*wrk2d(j, 1)
+        MA_RVVy(j) = MA_RVVy(j) + 2.0_wp*wrk2d(j, 1)
     end do
 
     ! ###################################################
@@ -1143,7 +1142,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVVUkk(j) = MA_RVVUkk(j) + C_3_R*wrk2d(j, 1)
+        MA_RVVUkk(j) = MA_RVVUkk(j) + 3.0_wp*wrk2d(j, 1)
     end do
 
     call REDUCE(imax, jmax, kmax, w, nstatavg, statavg, tc)
@@ -1152,7 +1151,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVWUkk(j) = MA_RVWUkk(j) + C_2_R*wrk2d(j, 1)
+        MA_RVWUkk(j) = MA_RVWUkk(j) + 2.0_wp*wrk2d(j, 1)
     end do
 
     ! ###################################################
@@ -1291,7 +1290,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
         uc(j, 1, 1) = uc(j, 1, 1) + tc(j, 1, 1)
         sc(j, 1, 1) = sc(j, 1, 1) - vc(j, 1, 1)
         rc(j, 1, 1) = rc(j, 1, 1) - vc(j, 1, 1)
-        qc(j, 1, 1) = qc(j, 1, 1) + C_2_R*vc(j, 1, 1)
+        qc(j, 1, 1) = qc(j, 1, 1) + 2.0_wp*vc(j, 1, 1)
     end do
 
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, yc)
@@ -1389,7 +1388,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
         MA_PHI3(j) = MA_PHI3(j) + wrk2d(j, 2)
         MA_PHI4(j) = MA_PHI4(j) + wrk2d(j, 2)
         MA_PHI5(j) = MA_PHI5(j) + wrk2d(j, 3)
-        MA_PHI6(j) = MA_PHI6(j) + C_2_R*wrk2d(j, 3)
+        MA_PHI6(j) = MA_PHI6(j) + 2.0_wp*wrk2d(j, 3)
     end do
 
     ! ###################################################
@@ -1518,8 +1517,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, xc, wrk2d(1, 1), wrk2d(1, 11))
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 2), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RUWUkk(j) = MA_RUWUkk(j) + C_2_R*wrk2d(j, 1)
-        MA_RWWUkk(j) = MA_RWWUkk(j) + C_2_R*wrk2d(j, 2)
+        MA_RUWUkk(j) = MA_RUWUkk(j) + 2.0_wp*wrk2d(j, 1)
+        MA_RWWUkk(j) = MA_RWWUkk(j) + 2.0_wp*wrk2d(j, 2)
     end do
 
     ! ###################################################
@@ -1600,7 +1599,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, xc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVWUkk(j) = MA_RVWUkk(j) + C_2_R*wrk2d(j, 1)
+        MA_RVWUkk(j) = MA_RVWUkk(j) + 2.0_wp*wrk2d(j, 1)
     end do
 
     ! ###################################################
@@ -1645,8 +1644,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, wc, wrk2d(1, 2), wrk2d(1, 11))
 
     do j = 1, NNstat
-        MA_RWWz(j) = MA_RWWz(j) + C_2_R*wrk2d(j, 1)
-        MA_RWWx(j) = MA_RWWx(j) + C_2_R*wrk2d(j, 2)
+        MA_RWWz(j) = MA_RWWz(j) + 2.0_wp*wrk2d(j, 1)
+        MA_RWWx(j) = MA_RWWx(j) + 2.0_wp*wrk2d(j, 2)
     end do
 
     ! ###################################################
@@ -1672,7 +1671,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
     call SUM1V1D_V(NNstat, kmax, xc, wrk2d(1, 1), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RWWUkk(j) = MA_RWWUkk(j) + C_3_R*wrk2d(j, 1)
+        MA_RWWUkk(j) = MA_RWWUkk(j) + 3.0_wp*wrk2d(j, 1)
     end do
 
     ! ###################################################
@@ -1952,7 +1951,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, vc, wrk2d(1, 2), wrk2d(1, 11))
 
     do j = 1, NNstat
-        MA_RVVz(j) = MA_RVVz(j) + C_2_R*wrk2d(j, 1)
+        MA_RVVz(j) = MA_RVVz(j) + 2.0_wp*wrk2d(j, 1)
         MA_RVWy(j) = MA_RVWy(j) + wrk2d(j, 2)
     end do
 
@@ -1990,8 +1989,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call SUM1V1D_V(NNstat, kmax, wc, wrk2d(1, 1), wrk2d(1, 11))
     call SUM1V1D_V(NNstat, kmax, tc, wrk2d(1, 2), wrk2d(1, 11))
     do j = 1, NNstat
-        MA_RVVUkk(j) = MA_RVVUkk(j) + C_2_R*wrk2d(j, 1)
-        MA_RWWUkk(j) = MA_RWWUkk(j) + C_2_R*wrk2d(j, 2)
+        MA_RVVUkk(j) = MA_RVVUkk(j) + 2.0_wp*wrk2d(j, 1)
+        MA_RWWUkk(j) = MA_RWWUkk(j) + 2.0_wp*wrk2d(j, 2)
     end do
 
     ! ####################################################
@@ -2037,7 +2036,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 
     do j = 1, NNstat
         MA_RVWz(j) = MA_RVWz(j) + wrk2d(j, 1)
-        MA_RWWy(j) = MA_RWWy(j) + C_2_R*wrk2d(j, 2)
+        MA_RWWy(j) = MA_RWWy(j) + 2.0_wp*wrk2d(j, 2)
     end do
 
     ! ####################################################
@@ -3201,12 +3200,12 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     call REDUCE(imax, jmax, kmax, T, nstatavg, statavg, tc)
 
     do j = 1, NNstat*kmax
-        sc(j, 1, 1) = xc(j, 1, 1)**C_3_R
-        rc(j, 1, 1) = yc(j, 1, 1)**C_3_R
-        qc(j, 1, 1) = zc(j, 1, 1)**C_3_R
-        oc(j, 1, 1) = vc(j, 1, 1)**C_3_R
-        uc(j, 1, 1) = wc(j, 1, 1)**C_3_R
-        pc(j, 1, 1) = tc(j, 1, 1)**C_3_R
+        sc(j, 1, 1) = xc(j, 1, 1)**3.0_wp
+        rc(j, 1, 1) = yc(j, 1, 1)**3.0_wp
+        qc(j, 1, 1) = zc(j, 1, 1)**3.0_wp
+        oc(j, 1, 1) = vc(j, 1, 1)**3.0_wp
+        uc(j, 1, 1) = wc(j, 1, 1)**3.0_wp
+        pc(j, 1, 1) = tc(j, 1, 1)**3.0_wp
     end do
     call SUM1V1D_V(NNstat, kmax, sc, wrk2d(1, 1), wrk2d(1, 11))
     call SUM1V1D_V(NNstat, kmax, rc, wrk2d(1, 2), wrk2d(1, 11))
@@ -3327,9 +3326,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! #################################
 
     do j = 1, imax*jmax*kmax
-        xc(j, 1, 1) = rho(j, 1, 1)*u(j, 1, 1)*T(j, 1, 1)**C_2_R
-        yc(j, 1, 1) = rho(j, 1, 1)*v(j, 1, 1)*T(j, 1, 1)**C_2_R
-        zc(j, 1, 1) = rho(j, 1, 1)*w(j, 1, 1)*T(j, 1, 1)**C_2_R
+        xc(j, 1, 1) = rho(j, 1, 1)*u(j, 1, 1)*T(j, 1, 1)**2.0_wp
+        yc(j, 1, 1) = rho(j, 1, 1)*v(j, 1, 1)*T(j, 1, 1)**2.0_wp
+        zc(j, 1, 1) = rho(j, 1, 1)*w(j, 1, 1)*T(j, 1, 1)**2.0_wp
     end do
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), xc, vc)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), yc, wc)
@@ -3368,14 +3367,14 @@ subroutine AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
 
     implicit none
 
-    TREAL, dimension(imax, jmax, kmax) :: rho, u, v, w
-    TREAL, dimension(imax, jmax, kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
+    real(wp), dimension(imax, jmax, kmax) :: rho, u, v, w
+    real(wp), dimension(imax, jmax, kmax) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
 
-    TREAL mean1d(nstatavg, jmax, *)
-    TREAL wrk2d(isize_wrk2d, *)
+    real(wp) mean1d(nstatavg, jmax, *)
+    real(wp) wrk2d(isize_wrk2d, *)
 
-    TINTEGER j
-    TINTEGER NNstat
+    integer(wi) j
+    integer(wi) NNstat
 
     NNstat = jmax*nstatavg
 

@@ -23,6 +23,8 @@ program VISUALS
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
     use THERMO_VARS, only: NSP, THERMO_SPNAME
+    use THERMO_ANELASTIC
+    use THERMO_AIRWATER
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -483,7 +485,7 @@ program VISUALS
                     if (damkohler(1) > 0.0_wp) then ! Supersaturated liquid; this is wrong
                         plot_file = 'Supsat'//time_str(1:MaskSize)
                         txc(1:isize_field, 1:2) = s(1:isize_field, 1:2)
-                        call THERMO_AIRWATER_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1), epbackground, pbackground)
+                        call THERMO_ANELASTIC_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1), epbackground, pbackground)
                         txc(1:isize_field, 3) = (s(1:isize_field, 3) - txc(1:isize_field, 3))/s(1, 3)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
                     end if
@@ -797,7 +799,7 @@ call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), tx
 
                 plot_file = 'LnBuoyancySource'//time_str(1:MaskSize)
                 if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                    call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, txc(1, 1), txc(1, 2), txc(1, 3))
+                    call THERMO_AIRWATER_LINEAR_SOURCE(imax*jmax*kmax, s, txc(1, 1), txc(1, 2), txc(1, 3))
                     call FI_GRADIENT(imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 4))
                     dummy = buoyancy%parameters(inb_scal_array)
                     txc(1:isize_field, 2) = txc(1:isize_field, 2)*txc(1:isize_field, 3)*dummy
@@ -990,7 +992,7 @@ contains
         epbackground = 0.0_wp                                    ! potential energy
         pbackground = p                                        ! pressure
 
-        call THERMO_AIRWATER_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
+        call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
         call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s(1, 1), epbackground, txc(1, 1))
         call THERMO_ANELASTIC_DENSITY(nx, ny, nz, s(1, 1), epbackground, pbackground, txc(1, 2))
 

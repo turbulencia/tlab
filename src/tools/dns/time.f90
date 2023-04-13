@@ -15,7 +15,7 @@ module TIME
 #endif
     use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
     use TLAB_VARS
-    use THERMO_VARS, only: gama0
+    use THERMO_VARS, only: gama0, CRATIO_INV
     use TLAB_PROCS
     use PARTICLE_VARS
 #ifdef USE_MPI
@@ -657,6 +657,7 @@ contains
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
         use TLAB_ARRAYS
         use TLAB_POINTERS
+        use THERMO_CALORIC, only: THERMO_GAMMA
         use DNS_ARRAYS
         use BOUNDARY_BUFFER
         use BOUNDARY_BCS, only: BcsDrift
@@ -747,7 +748,7 @@ contains
 #define GAMMA_LOC(i) txc(i,6)
 #define AUX_LOC(i)   T(i)
 
-        call THERMO_GAMMA(imax, jmax, kmax, s, T, GAMMA_LOC(1))
+        call THERMO_GAMMA(imax*jmax*kmax, s, T, GAMMA_LOC(:))
 
         ! Maximum Mach for Poinsot & Lele reference pressure BC
         if (BcsDrift) then
@@ -788,7 +789,7 @@ contains
         ! Perform the time stepping
         ! ###################################################################
         rho_ratio = 1.0_wp
-        prefactor = (gama0 - 1.0_wp)*mach*mach
+        prefactor = CRATIO_INV*0.5_wp
 
         if (flow_on) then
             if (scal_on) then; inb_scal_loc = inb_scal
@@ -807,14 +808,14 @@ contains
                     rho_ratio = rho_ratio/rho(i)
                     dt_rho_ratio = dte/rho(i)
 
-                    e(i) = rho_ratio*(e(i) + prefactor*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) &
+                    e(i) = rho_ratio*(e(i) + prefactor*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) &
                            + dt_rho_ratio*hq(i, 4)
 
                     u(i) = rho_ratio*u(i) + dt_rho_ratio*hq(i, 1)
                     v(i) = rho_ratio*v(i) + dt_rho_ratio*hq(i, 2)
                     w(i) = rho_ratio*w(i) + dt_rho_ratio*hq(i, 3)
 
-                    e(i) = e(i) - prefactor*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))
+                    e(i) = e(i) - prefactor*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))
 
                     do is = 1, inb_scal_loc
                         s(i, is) = rho_ratio*s(i, is) + dt_rho_ratio*hs(i, is)
@@ -882,7 +883,7 @@ contains
         use PARTICLE_ARRAYS
 
         ! -------------------------------------------------------------------
-        integer(wi) is, i
+        integer(wi) is
 
 #ifdef USE_MPI
         integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
