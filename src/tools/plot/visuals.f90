@@ -78,7 +78,7 @@ program VISUALS
     integer(wi) params_size
     real(wp) params(params_size_max)
 
-    integer, parameter :: i0 = 0, i1 = 1
+    integer, parameter :: i1 = 1
 
     !########################################################################
     !########################################################################
@@ -386,8 +386,8 @@ program VISUALS
         end if
 
         if (imode_ibm == 1) then
-            call IBM_BCS_FIELD_COMBINED(i0, q)
-            if (scal_on) call IBM_INITIALIZE_SCAL(i0, s)
+            call IBM_BCS_FIELD_COMBINED(0, q)
+            if (scal_on) call IBM_INITIALIZE_SCAL(0, s)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
