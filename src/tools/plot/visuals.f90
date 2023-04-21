@@ -959,7 +959,7 @@ program VISUALS
 
 
             ! ###################################################################
-            ! Wall shear stress
+            ! Shear stress tensor
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 21) then ! Total stress tensor 
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3)) ! pressure in txc(1,7)
