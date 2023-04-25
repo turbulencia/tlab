@@ -977,7 +977,7 @@ contains
         !#######################################################################
         ! Recalculating closest node below in Y direction
         !#######################################################################
-        call PARTICLE_LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
+        call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
 
         return
     end subroutine TIME_SUBSTEP_PARTICLE
