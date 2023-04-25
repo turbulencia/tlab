@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module PLANES
-    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
+    use TLAB_CONSTANTS, only: lfile, efile, wp, wi, fmt_r
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array
     use TLAB_VARS, only: rbackground, g
     use TLAB_VARS, only: itime, rtime
@@ -43,7 +43,7 @@ contains
         use TLAB_MPI_VARS
 #endif
 
-        ! -----------------------------------------------------------------------
+        ! -------------------------------------------------------------------
         integer(wi) id
 
         ! ###################################################################
@@ -118,86 +118,94 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine PLANES_SAVE()
-        use TLAB_POINTERS_3D
+        use TLAB_TYPES
+        use TLAB_POINTERS_3D, only: p_wrk2d
 
         ! -------------------------------------------------------------------
-        integer(wi) offset, j, k
-        character*32 fname
+        integer(wi) offset, j, k, iv, nvars
+        character*32 fname, str, fmt
         character*250 line1
+        type(pointers3d_dt) :: vars(16)
 
         ! ###################################################################
-        write (fname, *) rtime
-        write (line1, *) itime; line1 = 'Writing planes at It'//trim(adjustl(line1))//' and time '//trim(adjustl(fname))//'.'
-        call TLAB_WRITE_ASCII(lfile, line1)
+        fmt = '('//fmt_r//')'
+        write (line1, fmt) rtime
+        write (str, *) itime; str = 'at It'//trim(adjustl(str))//' and time '//trim(adjustl(line1))//'.'
 
-        call FI_PRESSURE_BOUSSINESQ(q, s, tmp1, tmp2, tmp3, tmp4)
+        nvars = 0       ! define pointers
+        do iv = 1, inb_flow_array
+            nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => q(1:imax*jmax*kmax, iv)
+        end do
+        do iv = 1, inb_scal_array
+            nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => s(1:imax*jmax*kmax, iv)
+        end do
+        call FI_PRESSURE_BOUSSINESQ(q, s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+        nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 1)
 
+        ! -------------------------------------------------------------------
         if (kplanes%n > 0) then
+            line1 = 'Writing K-planes'
+            do iv = 1, kplanes%n
+                write (fname, *) kplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
+            end do
+            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+
             offset = 0
-            do idummy = 1, inb_flow_array
-                data_k(:, :, 1 + offset:kplanes%n + offset) = p_q(:, :, kplanes%nodes(1:kplanes%n), idummy)
+            do iv = 1, nvars
+                data_k(:, :, 1 + offset:kplanes%n + offset) = vars(iv)%field(:, :, kplanes%nodes(1:kplanes%n))
                 offset = offset + kplanes%n
             end do
-            do idummy = 1, inb_scal_array
-                data_k(:, :, 1 + offset:kplanes%n + offset) = p_s(:, :, kplanes%nodes(1:kplanes%n), idummy)
-                offset = offset + kplanes%n
-            end do
-            data_k(:, :, 1 + offset:kplanes%n + offset) = tmp1(:, :, kplanes%nodes(1:kplanes%n))
-            offset = offset + kplanes%n
             write (fname, *) itime; fname = 'planesK.'//trim(adjustl(fname))
             call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOY), fname, varname, data_k, kplanes%io)
+
         end if
 
+        ! -------------------------------------------------------------------
         if (jplanes%n > 0) then
+            line1 = 'Writing J-planes'
+            do iv = 1, jplanes%n
+                write (fname, *) jplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
+            end do
+            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+
             offset = 0
-            do idummy = 1, inb_flow_array
-                data_j(:, 1 + offset:jplanes%n + offset, :) = p_q(:, jplanes%nodes(1:jplanes%n), :, idummy)
+            do iv = 1, nvars
+                data_j(:, 1 + offset:jplanes%n + offset, :) = vars(iv)%field(:, jplanes%nodes(1:jplanes%n), :)
                 offset = offset + jplanes%n
             end do
-            do idummy = 1, inb_scal_array
-                data_j(:, 1 + offset:jplanes%n + offset, :) = p_s(:, jplanes%nodes(1:jplanes%n), :, idummy)
-                offset = offset + jplanes%n
-            end do
-            data_j(:, 1 + offset:jplanes%n + offset, :) = tmp1(:, jplanes%nodes(1:jplanes%n), :)
-            offset = offset + jplanes%n
-            if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and intgral of TWP
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(:, :, :, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
+            if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and integral of total water
+                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, s(:, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
-             call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, p_s(:, :, :, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
+                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, s(:, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))
             call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOZ), fname, varname, data_j, jplanes%io)
+
         end if
 
+        ! -------------------------------------------------------------------
         if (iplanes%n > 0) then       ! We transpose to make j-lines together in memory
+            line1 = 'Writing I-planes'
+            do iv = 1, iplanes%n
+                write (fname, *) iplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
+            end do
+            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+
             offset = 0
-            do idummy = 1, inb_flow_array
+            do iv = 1, nvars
                 do k = 1, kmax
                     do j = 1, jmax
-                        data_i(j, 1 + offset:iplanes%n + offset, k) = p_q(iplanes%nodes(1:iplanes%n), j, k, idummy)
+                        data_i(j, 1 + offset:iplanes%n + offset, k) = vars(iv)%field(iplanes%nodes(1:iplanes%n), j, k)
                     end do
                 end do
                 offset = offset + iplanes%n
             end do
-            do idummy = 1, inb_scal_array
-                do k = 1, kmax
-                    do j = 1, jmax
-                        data_i(j, 1 + offset:iplanes%n + offset, k) = p_s(iplanes%nodes(1:iplanes%n), j, k, idummy)
-                    end do
-                end do
-                offset = offset + iplanes%n
-            end do
-            do k = 1, kmax
-                do j = 1, jmax
-                    data_i(j, 1 + offset:iplanes%n + offset, k) = tmp1(iplanes%nodes(1:iplanes%n), j, k)
-                end do
-            end do
-            offset = offset + iplanes%n
             write (fname, *) itime; fname = 'planesI.'//trim(adjustl(fname))
             call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_ZOY), fname, varname, data_i, iplanes%io)
+            
         end if
 
         return

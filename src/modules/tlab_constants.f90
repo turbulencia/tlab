@@ -26,7 +26,9 @@ module TLAB_CONSTANTS
     character(len=*), parameter :: tag_part = 'part.'
     character(len=*), parameter :: tag_traj = 'traj.'
 
-! from https://fortran-lang.org/en/learn/best_practices/floating_point/
+    character(len=*), parameter :: fmt_r = 'e13.5e3'
+
+    ! from https://fortran-lang.org/en/learn/best_practices/floating_point/
     integer, parameter :: sp = kind(1.0)
     integer, parameter :: dp = kind(1.0d0)
 ! !> Single precision real numbers, 6 digits, range 10⁻³⁷ to 10³⁷-1; 32 bits
