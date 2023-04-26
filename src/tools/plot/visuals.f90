@@ -957,7 +957,6 @@ program VISUALS
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
             end if
 
-
             ! ###################################################################
             ! Shear stress tensor
             ! ###################################################################
@@ -966,16 +965,10 @@ program VISUALS
                 call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1 ,8), txc(1 ,6))            ! avg vel. + pre. in time               
                 if (it == itime_size) then
                     call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-                    if (imode_ibm == 1) then ! not sure if this is needed
-                        CALL IBM_AVG_GAMMA(gamma_0, gamma_1, gamma_f, gamma_s, eps, txc(1, 8), txc(1, 9)) ! eps_fluid in txc(1, 8)
-                        txc(:, 8) = (1.0_wp - txc(:, 8))                                                  ! eps_solid
-
+                    if (imode_ibm == 1) then
                         txc(:, 8) = eps
                         plot_file = 'EpsSolid'//time_str(1:MaskSize)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 8), wrk3d)
-                        ! do is = 1, 6
-                        !     call IBM_BCS_FIELD(txc(1, is))
-                        ! end do
                     end if
                     plot_file = 'StressTensor'
                     if (itime_size > 1) plot_file = trim(adjustl(plot_file))//'Avg'

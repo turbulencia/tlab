@@ -68,11 +68,11 @@ contains
 
         ! diagonal terms
         call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1)
-        tmp1 =  -p !+ 2.0_wp*visc*tmp1
+        tmp1 =  -p + 2.0_wp*visc*tmp1
         call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2)
-        tmp2 =  -p !+ 2.0_wp*visc*tmp2
+        tmp2 =  -p + 2.0_wp*visc*tmp2
         call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp3)
-        tmp3 =  -p !+ 2.0_wp*visc*tmp3
+        tmp3 =  -p + 2.0_wp*visc*tmp3
 
         if ( imode_ibm == 1 ) ibm_partial = .false.
 
