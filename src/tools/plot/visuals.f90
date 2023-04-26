@@ -89,7 +89,7 @@ program VISUALS
     bakfile = trim(adjustl(ifile))//'.bak'
 
     call TLAB_START()
-! 
+ 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
@@ -169,7 +169,7 @@ program VISUALS
         write (*, '(I2,A)') iscal_offset + 18, '. Particle Density'
         write (*, '(I2,A)') iscal_offset + 19, '. Thermodynamic quantities'
         write (*, '(I2,A)') iscal_offset + 20, '. Analysis of B and V'
-        write (*, '(I2,A)') iscal_offset + 21, '. Wall Shear Stress'
+        write (*, '(I2,A)') iscal_offset + 21, '. Total Stress Tensor'
         read (*, '(A512)') sRes
 #endif
     end if
@@ -960,7 +960,7 @@ program VISUALS
             end if
 
             ! ###################################################################
-            ! Shear stress tensor
+            ! Total stress tensor
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 21) then ! Total stress tensor 
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3)) ! pressure in txc(1,7)

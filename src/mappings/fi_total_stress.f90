@@ -7,7 +7,7 @@
 !#
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
-!#   Calculate the total stress tensor
+!#   Calculate the total stress tensor (Batchelor eq. 3.3.11, p. 147)
 !#
 !########################################################################
 !# ARGUMENTS
