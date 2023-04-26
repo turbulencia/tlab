@@ -1,417 +1,418 @@
-PROGRAM REVERSAL
-
-#include "types.h"
 #include "dns_const.h"
 
-  USE TLAB_VARS
-  USE TLAB_PROCS
-  USE THERMO_VARS
-  use THERMO_THERMAL
+program REVERSAL
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS
+    use TLAB_PROCS
+    use THERMO_VARS
+    use THERMO_THERMAL
+    use THERMO_ANELASTIC
+    use THERMO_CALORIC
 
-  IMPLICIT NONE
+    implicit none
 
-  TREAL qt_1, qt_2, h_1, h_2, qt, h, x, qsat, dqldqt
-  TREAL qvqd, ba_ratio, heat1, heat2, alpha, dummy
-  TREAL z1(2), e, rho, p, T, ep, s(3)
-  TREAL t_1, t_2, c0, c1, c2
-  TREAL r_1, r_2, r_max, r_old, x_c, x_max
-  TINTEGER n, nmax, iopt, iup
+    real(wp) qt_1, qt_2, h_1, h_2, qt, h, x, qsat, dqldqt
+    real(wp) qvqd, ba_ratio, heat1, heat2, alpha, dummy
+    real(wp) z1(2), e, rho, p, T, ep, s(3)
+    real(wp) t_1, t_2, c0, c1, c2
+    real(wp) r_1, r_2, r_max, r_old, x_c, x_max
+    integer(wi) n, nmax, iopt, iup
 
 ! ###################################################################
-  CALL TLAB_START()
+    call TLAB_START()
 
-  imixture = MIXT_TYPE_AIRWATER
-  CALL THERMO_INITIALIZE
-  MRATIO = C_1_R
-  dsmooth = C_0_R
+    imixture = MIXT_TYPE_AIRWATER
+    nondimensional = .false.
+    call THERMO_INITIALIZE()
+    dsmooth = 0.0_wp
 
-  WRITE(*,*) '1 - Density profile from nondimensional state'
-  WRITE(*,*) '2 - Density profile from dimensional state'
-  WRITE(*,*) '3 - Coefficient as (enthalpy) table'
-  WRITE(*,*) '4 - Coefficient bs (water content) table'
-  WRITE(*,*) '5 - Coefficients ratio table'
-  WRITE(*,*) '6 - Correction temperature table'
-  WRITE(*,*) '7 - Correction temperature table (negative branch)'
+    write (*, *) '1 - Density profile from nondimensional state'
+    write (*, *) '2 - Density profile from dimensional state'
+    write (*, *) '3 - Coefficient as (enthalpy) table'
+    write (*, *) '4 - Coefficient bs (water content) table'
+    write (*, *) '5 - Coefficients ratio table'
+    write (*, *) '6 - Correction temperature table'
+    write (*, *) '7 - Correction temperature table (negative branch)'
 
-  READ(*,*) iopt
+    read (*, *) iopt
 
-  IF ( iopt .EQ. 1 ) THEN
-     WRITE(*,*) 'Initial enthalpy, h_1 ?'
-     READ(*,*) h_1
-     WRITE(*,*) 'Final enthalpy, h_2 ?'
-     READ(*,*) h_2
-     WRITE(*,*) 'Initial water, qt_1 ?'
-     READ(*,*) qt_1
-     WRITE(*,*) 'Final water, qt_2 ?'
-     READ(*,*) qt_2
+    if (iopt == 1) then
+        write (*, *) 'Initial enthalpy, h_1 ?'
+        read (*, *) h_1
+        write (*, *) 'Final enthalpy, h_2 ?'
+        read (*, *) h_2
+        write (*, *) 'Initial water, qt_1 ?'
+        read (*, *) qt_1
+        write (*, *) 'Final water, qt_2 ?'
+        read (*, *) qt_2
 
-     WRITE(*,*) 'pressure (bar) ?'
-     READ(*,*) p
+        write (*, *) 'pressure (bar) ?'
+        read (*, *) p
 
-  ELSE IF ( iopt .EQ. 2 ) THEN
-     WRITE(*,*) 'Lower temperature (C) ?'
-     READ(*,*) t_1
-     t_1 = (t_1+273.15)/TREF
-     WRITE(*,*) 'Upper temperature (C) ?'
-     READ(*,*) t_2
-     t_2 = (t_2+273.15)/TREF
-     WRITE(*,*) 'Lower water content (g/kg) ?'
-     READ(*,*) qt_1
-     qt_1 = qt_1*C_1EM3_R
-     WRITE(*,*) 'Upper water content (g/kg) ?'
-     READ(*,*) qt_2
-     qt_2 = qt_2*C_1EM3_R
+    else if (iopt == 2) then
+        write (*, *) 'Lower temperature (C) ?'
+        read (*, *) t_1
+        t_1 = (t_1 + 273.15)/TREF
+        write (*, *) 'Upper temperature (C) ?'
+        read (*, *) t_2
+        t_2 = (t_2 + 273.15)/TREF
+        write (*, *) 'Lower water content (g/kg) ?'
+        read (*, *) qt_1
+        qt_1 = qt_1*C_1EM3_R
+        write (*, *) 'Upper water content (g/kg) ?'
+        read (*, *) qt_2
+        qt_2 = qt_2*C_1EM3_R
 
-     WRITE(*,*) 'pressure (bar) ?'
-     READ(*,*) p
+        write (*, *) 'pressure (bar) ?'
+        read (*, *) p
 
 ! calculate nondimensional limits
-     z1(1) = qt_1
-     CALL THERMO_AIRWATER_PT(i1, i1, i1, z1, p, t_1)
-     CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t_1, h_1)
-     CALL THERMO_THERMAL_DENSITY(1, z1, p, t_1, r_1)
+        z1(1) = qt_1
+        call THERMO_AIRWATER_PT(1, z1, p, t_1)
+        call THERMO_CALORIC_ENTHALPY(1, z1, t_1, h_1)
+        call THERMO_THERMAL_DENSITY(1, z1, p, t_1, r_1)
 
-     z1(1) = qt_2
-     CALL THERMO_AIRWATER_PT(i1, i1, i1, z1, p, t_2)
-     CALL THERMO_CALORIC_ENTHALPY(i1, i1, i1, z1, t_2, h_2)
-     CALL THERMO_THERMAL_DENSITY(1, z1, p, t_2, r_2)
+        z1(1) = qt_2
+        call THERMO_AIRWATER_PT(1, z1, p, t_2)
+        call THERMO_CALORIC_ENTHALPY(1, z1, t_2, h_2)
+        call THERMO_THERMAL_DENSITY(1, z1, p, t_2, r_2)
 
-  ELSE IF ( iopt .EQ. 3 .OR. iopt .EQ. 4 .OR. iopt .EQ. 5 .OR. iopt .EQ. 6 .OR. iopt .EQ. 7 ) THEN
-     WRITE(*,*) 'pressure (bar) ?'
-     READ(*,*) p
+    else if (iopt == 3 .or. iopt == 4 .or. iopt == 5 .or. iopt == 6 .or. iopt == 7) then
+        write (*, *) 'pressure (bar) ?'
+        read (*, *) p
 
-     WRITE(*,*) 'Minimum temperature (C) ?'
-     READ(*,*) t_1
-     t_1 = (t_1+273.15)/TREF
-     WRITE(*,*) 'Maximum temperature (C) ?'
-     READ(*,*) t_2
-     t_2 = (t_2+273.15)/TREF
+        write (*, *) 'Minimum temperature (C) ?'
+        read (*, *) t_1
+        t_1 = (t_1 + 273.15)/TREF
+        write (*, *) 'Maximum temperature (C) ?'
+        read (*, *) t_2
+        t_2 = (t_2 + 273.15)/TREF
 
-     IF ( iopt .EQ. 3 ) THEN
-        WRITE(*,*) 'Coefficient -as ?'
-        READ(*,*) ba_ratio
-     ELSE IF ( iopt .EQ. 4 ) THEN
-        WRITE(*,*) 'Coefficient -bs ?'
-        READ(*,*) ba_ratio
-     ELSE IF ( iopt .EQ. 5 ) THEN
-        WRITE(*,*) 'Coefficients ratio ?'
-        READ(*,*) ba_ratio
-     ELSE
-        WRITE(*,*) 'Correction temperature difference (K) ?'
-        READ(*,*) ba_ratio
-        ba_ratio=ba_ratio/TREF
-     ENDIF
+        if (iopt == 3) then
+            write (*, *) 'Coefficient -as ?'
+            read (*, *) ba_ratio
+        else if (iopt == 4) then
+            write (*, *) 'Coefficient -bs ?'
+            read (*, *) ba_ratio
+        else if (iopt == 5) then
+            write (*, *) 'Coefficients ratio ?'
+            read (*, *) ba_ratio
+        else
+            write (*, *) 'Correction temperature difference (K) ?'
+            read (*, *) ba_ratio
+            ba_ratio = ba_ratio/TREF
+        end if
 
-  ENDIF
+    end if
 
-  WRITE(*,*) 'number of points ?'
-  READ(*,*) nmax
+    write (*, *) 'number of points ?'
+    read (*, *) nmax
 
-  OPEN(21,file='reversal.dat')
+    open (21, file='reversal.dat')
 ! ###################################################################
-  IF ( iopt .EQ. 1 .OR. iopt .EQ. 2 ) THEN
-     WRITE(21,*) '# x, qt, h, ql, qv, qsat(T), r, T, p, e'
-     r_max = C_0_R
-     r_old = r_1
-     x_c   =-C_1_R
-     iup   = 0
-     DO n = 1,nmax
-        x = M_REAL(n-1)/M_REAL(nmax-1)
+    if (iopt == 1 .or. iopt == 2) then
+        write (21, *) '# x, qt, h, ql, qv, qsat(T), r, T, p, e'
+        r_max = 0.0_wp
+        r_old = r_1
+        x_c = -1.0_wp
+        iup = 0
+        do n = 1, nmax
+            x = M_REAL(n - 1)/M_REAL(nmax - 1)
 
-        qt = qt_1 + x*(qt_2-qt_1)
-        h  = h_1  + x*(h_2-h_1)
-        ep = C_0_R
+            qt = qt_1 + x*(qt_2 - qt_1)
+            h = h_1 + x*(h_2 - h_1)
+            ep = 0.0_wp
 
-        z1(1) = qt
-        CALL THERMO_AIRWATER_PH(i1, i1, i1, z1, h, ep,p)
-        s(1) = h; s(2:3) = z1(1:2)
-        CALL THERMO_ANELASTIC_TEMPERATURE(i1, i1, i1, s, ep,T)
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, T, qsat)
-        qsat = C_1_R/(MRATIO*p/qsat-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qsat/(C_1_R+qsat)
-        CALL THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
-        CALL THERMO_CALORIC_ENERGY(i1, i1, i1, z1, T, e)
+            z1(1) = qt
+            call THERMO_ANELASTIC_PH(1, 1, 1, z1, h, ep, p)
+            s(1) = h; s(2:3) = z1(1:2)
+            call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, ep, T)
+            call THERMO_POLYNOMIAL_PSAT(1, T, qsat)
+            qsat = 1.0_wp/(p/qsat - 1.0_wp)*rd_ov_rv
+            qsat = qsat/(1.0_wp + qsat)
+            call THERMO_THERMAL_DENSITY(1, z1, p, T, rho)
+            call THERMO_CALORIC_ENERGY(1, z1, T, e)
 
-        WRITE(21,1010) x, qt, h, z1(2), qt-z1(2), qsat, rho, T, p, e
+            write (21, 1010) x, qt, h, z1(2), qt - z1(2), qsat, rho, T, p, e
 
-        IF ( (rho-r_old) .GT. 0 .AND. iup .EQ. 0 ) iup=1
-        IF ( rho .LT. r_1 .AND. iup .EQ. 1 .AND. x_c .LT. C_0_R ) x_c=x
-        IF ( rho .GT. r_max ) THEN
-           r_max = rho
-           x_max = x
-        ENDIF
+            if ((rho - r_old) > 0 .and. iup == 0) iup = 1
+            if (rho < r_1 .and. iup == 1 .and. x_c < 0.0_wp) x_c = x
+            if (rho > r_max) then
+                r_max = rho
+                x_max = x
+            end if
 
-     ENDDO
+        end do
 
-     WRITE(*,*) 'Maximum density  r_max .................:',  r_max
-     WRITE(*,*) 'Maximum density diference r_max-r_1 ....:',  r_max-r_1
-     WRITE(*,*) 'Ratio (r_max-r_1)/(r_1-r_2) ............:', (r_max-r_1)/(r_1-r_2)
-     WRITE(*,*) 'Maximum mixing fraction ................:',  x_max
-     WRITE(*,*) 'Cross-over mixing fraction .............:',  x_c
+        write (*, *) 'Maximum density  r_max .................:', r_max
+        write (*, *) 'Maximum density diference r_max-r_1 ....:', r_max - r_1
+        write (*, *) 'Ratio (r_max-r_1)/(r_1-r_2) ............:', (r_max - r_1)/(r_1 - r_2)
+        write (*, *) 'Maximum mixing fraction ................:', x_max
+        write (*, *) 'Cross-over mixing fraction .............:', x_c
 
 ! ###################################################################
-  ELSE IF ( iopt .EQ. 3 ) THEN
-     WRITE(21,*) '# T (C), T/298K, qt (g/kg)'
+    else if (iopt == 3) then
+        write (21, *) '# T (C), T/298K, qt (g/kg)'
 
-     DO n = 1,nmax
-        t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
+        do n = 1, nmax
+            t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-        heat2 =  heat1*( C_1_R + qvqd ) -&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+            heat2 = heat1*(1.0_wp + qvqd) - &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-        alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
+            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
 
-        dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
-        dummy = dummy +&
-             THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
+            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+                    qvqd*(1.0_wp + qvqd/rd_ov_rv)
+            dummy = dummy + &
+                    THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
 
-        dummy = (alpha/(ba_ratio*t) - THERMO_AI(1,1,3))/dummy
+            dummy = (alpha/(ba_ratio*t) - THERMO_AI(1, 1, 3))/dummy
 
-        qt = C_1_R-dummy
+            qt = 1.0_wp - dummy
 
-        IF ( qt .LT. qsat ) EXIT
+            if (qt < qsat) exit
 
-        WRITE(21,*) t*TREF-273.15, t, qt*1000
+            write (21, *) t*TREF - 273.15, t, qt*1000
 
-     ENDDO
+        end do
 
 ! look for crossing point with saturation curve using bracketing
-     dummy = (t_2-t_1)/M_REAL(nmax-1)
-     t_2 = t
-     t_1 = t - dummy
-     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R )
+        dummy = (t_2 - t_1)/M_REAL(nmax - 1)
+        t_2 = t
+        t_1 = t - dummy
+        do while ((t_2 - t_1)/t_1 > C_1EM6_R)
 
-        t = C_05_R*(t_2+t_1)
+            t = C_05_R*(t_2 + t_1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-        heat2 =  heat1*( C_1_R + qvqd ) -&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+            heat2 = heat1*(1.0_wp + qvqd) - &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-        alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
+            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
 
-        dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
-        dummy = dummy +&
-             THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
+            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+                    qvqd*(1.0_wp + qvqd/rd_ov_rv)
+            dummy = dummy + &
+                    THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
 
-        dummy = (alpha/(ba_ratio*t) - THERMO_AI(1,1,3))/dummy
+            dummy = (alpha/(ba_ratio*t) - THERMO_AI(1, 1, 3))/dummy
 
-        qt = C_1_R-dummy
+            qt = 1.0_wp - dummy
 
-        IF ( qt .GT. qsat ) t_1 = t
-        IF ( qt .LE. qsat ) t_2 = t
+            if (qt > qsat) t_1 = t
+            if (qt <= qsat) t_2 = t
 
-     ENDDO
+        end do
 
-     WRITE(21,*) t*TREF-273.15, t, qt*1000
+        write (21, *) t*TREF - 273.15, t, qt*1000
 
 ! ###################################################################
-  ELSE IF ( iopt .EQ. 4 ) THEN
-     WRITE(21,*) '# T (C), T/298K, qt (g/kg)'
+    else if (iopt == 4) then
+        write (21, *) '# T (C), T/298K, qt (g/kg)'
 
-     DO n = 1,nmax
-        t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
+        do n = 1, nmax
+            t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-        heat2 =  heat1*( C_1_R + qvqd ) -&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+            heat2 = heat1*(1.0_wp + qvqd) - &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-        alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
+            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
 
-        dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
-        dummy = dummy +&
-             THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
+            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+                    qvqd*(1.0_wp + qvqd/rd_ov_rv)
+            dummy = dummy + &
+                    THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
 
-        c2 = ba_ratio*dummy
-        c1 =-( dummy*(C_1_R+ba_ratio) + (dummy+THERMO_AI(1,1,3))*ba_ratio - alpha*heat2/t )
-        c0 = (C_1_R+ba_ratio)*(dummy+THERMO_AI(1,1,3)) - alpha*heat2/t
+            c2 = ba_ratio*dummy
+            c1 = -(dummy*(1.0_wp + ba_ratio) + (dummy + THERMO_AI(1, 1, 3))*ba_ratio - alpha*heat2/t)
+            c0 = (1.0_wp + ba_ratio)*(dummy + THERMO_AI(1, 1, 3)) - alpha*heat2/t
 
-        qt = (-c1 + SQRT(c1*c1-C_4_R*c0*c2)) / (C_2_R*c2)
+            qt = (-c1 + sqrt(c1*c1 - C_4_R*c0*c2))/(C_2_R*c2)
 
-        IF ( (-c1 - SQRT(c1*c1-C_4_R*c0*c2)) / (C_2_R*c2) .LT. C_1_R ) THEN
-           PRINT*,'error, second root also less than 1'
-        ENDIF
+            if ((-c1 - sqrt(c1*c1 - C_4_R*c0*c2))/(C_2_R*c2) < 1.0_wp) then
+                print *, 'error, second root also less than 1'
+            end if
 
-        IF ( qt .LT. qsat ) EXIT
+            if (qt < qsat) exit
 
-        WRITE(21,*) t*TREF-273.15, t, qt*1000
+            write (21, *) t*TREF - 273.15, t, qt*1000
 
-     ENDDO
+        end do
 
 ! look for crossing point with saturation curve using bracketing
-     dummy = (t_2-t_1)/M_REAL(nmax-1)
-     t_2 = t
-     t_1 = t - dummy
-     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R )
+        dummy = (t_2 - t_1)/M_REAL(nmax - 1)
+        t_2 = t
+        t_1 = t - dummy
+        do while ((t_2 - t_1)/t_1 > C_1EM6_R)
 
-        t = C_05_R*(t_2+t_1)
+            t = C_05_R*(t_2 + t_1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-        heat2 =  heat1*( C_1_R + qvqd ) -&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+            heat2 = heat1*(1.0_wp + qvqd) - &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-        alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
+            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
 
-        dummy = heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
-        dummy = dummy +&
-             THERMO_AI(1,1,2) + qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3)) - THERMO_AI(1,1,3)
+            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+                    qvqd*(1.0_wp + qvqd/rd_ov_rv)
+            dummy = dummy + &
+                    THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
 
-        c2 = ba_ratio*dummy
-        c1 =-( dummy*(C_1_R+ba_ratio) + (dummy+THERMO_AI(1,1,3))*ba_ratio - alpha*heat2/t )
-        c0 = (C_1_R+ba_ratio)*(dummy+THERMO_AI(1,1,3)) - alpha*heat2/t
+            c2 = ba_ratio*dummy
+            c1 = -(dummy*(1.0_wp + ba_ratio) + (dummy + THERMO_AI(1, 1, 3))*ba_ratio - alpha*heat2/t)
+            c0 = (1.0_wp + ba_ratio)*(dummy + THERMO_AI(1, 1, 3)) - alpha*heat2/t
 
-        qt = (-c1 + SQRT(c1*c1-C_4_R*c0*c2)) / (C_2_R*c2)
+            qt = (-c1 + sqrt(c1*c1 - C_4_R*c0*c2))/(C_2_R*c2)
 
-        IF ( (-c1 - SQRT(c1*c1-C_4_R*c0*c2)) / (C_2_R*c2) .LT. C_1_R ) THEN
-           PRINT*,'error, second root also less than 1'
-        ENDIF
+            if ((-c1 - sqrt(c1*c1 - C_4_R*c0*c2))/(C_2_R*c2) < 1.0_wp) then
+                print *, 'error, second root also less than 1'
+            end if
 
-        IF ( qt .GT. qsat ) t_1 = t
-        IF ( qt .LE. qsat ) t_2 = t
+            if (qt > qsat) t_1 = t
+            if (qt <= qsat) t_2 = t
 
-     ENDDO
+        end do
 
-     WRITE(21,*) t*TREF-273.15, t, qt*1000
+        write (21, *) t*TREF - 273.15, t, qt*1000
 
 ! ###################################################################
-  ELSE IF ( iopt .EQ. 5 ) THEN
-     WRITE(21,*) '# T (C), T/298K, qt (g/kg)'
+    else if (iopt == 5) then
+        write (21, *) '# T (C), T/298K, qt (g/kg)'
 
-     DO n = 1,nmax
-        t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
+        do n = 1, nmax
+            t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-        heat2 =  heat1*( C_1_R + qvqd ) -&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+            heat2 = heat1*(1.0_wp + qvqd) - &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-        alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
+            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
 
-        dummy = (heat2-ba_ratio)/t*alpha
-        dummy = dummy -&
-             heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
-        dummy = dummy - &
-             THERMO_AI(1,1,2) - qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3))
-        dummy = dummy/THERMO_AI(1,1,3)
+            dummy = (heat2 - ba_ratio)/t*alpha
+            dummy = dummy - &
+                    heat1*heat1/(GRATIO*Rv*(t**2))* &
+                    qvqd*(1.0_wp + qvqd/rd_ov_rv)
+            dummy = dummy - &
+                    THERMO_AI(1, 1, 2) - qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))
+            dummy = dummy/THERMO_AI(1, 1, 3)
 
-        qt = dummy/(C_1_R+dummy)
+            qt = dummy/(1.0_wp + dummy)
 
-        IF ( qt .LT. qsat ) EXIT
+            if (qt < qsat) exit
 
-        WRITE(21,*) t*TREF-273.15, t, qt*1000
+            write (21, *) t*TREF - 273.15, t, qt*1000
 
-     ENDDO
+        end do
 
 ! look for crossing point with saturation curve using bracketing
-     dummy = (t_2-t_1)/M_REAL(nmax-1)
-     t_2 = t
-     t_1 = t - dummy
-     DO WHILE ( (t_2-t_1)/t_1 .GT. C_1EM6_R )
+        dummy = (t_2 - t_1)/M_REAL(nmax - 1)
+        t_2 = t
+        t_1 = t - dummy
+        do while ((t_2 - t_1)/t_1 > C_1EM6_R)
 
-        t = C_05_R*(t_2+t_1)
+            t = C_05_R*(t_2 + t_1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-        heat2 =  heat1*( C_1_R + qvqd ) -&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+            heat2 = heat1*(1.0_wp + qvqd) - &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-        alpha = C_1_R + heat1*qvqd/(GRATIO*WGHT_INV(2)*t)
+            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
 
-        dummy = (heat2-ba_ratio)/t*alpha
-        dummy = dummy -&
-             heat1*heat1/(GRATIO*(t**2)*WGHT_INV(1))*&
-             qvqd*(C_1_R+qvqd*WGHT_INV(1)/WGHT_INV(2))
-        dummy = dummy - &
-             THERMO_AI(1,1,2) - qvqd*(THERMO_AI(1,1,1)-THERMO_AI(1,1,3))
-        dummy = dummy/THERMO_AI(1,1,3)
+            dummy = (heat2 - ba_ratio)/t*alpha
+            dummy = dummy - &
+                    heat1*heat1/(GRATIO*Rv*t**2)* &
+                    qvqd*(1.0_wp + qvqd/rd_ov_rv)
+            dummy = dummy - &
+                    THERMO_AI(1, 1, 2) - qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))
+            dummy = dummy/THERMO_AI(1, 1, 3)
 
-        qt = dummy/(C_1_R+dummy)
+            qt = dummy/(1.0_wp + dummy)
 
-        IF ( qt .GT. qsat ) t_1 = t
-        IF ( qt .LE. qsat ) t_2 = t
+            if (qt > qsat) t_1 = t
+            if (qt <= qsat) t_2 = t
 
-     ENDDO
+        end do
 
-     WRITE(21,*) t*TREF-273.15, t, qt*1000
-
-! ###################################################################
-  ELSE IF ( iopt .EQ. 6 ) THEN
-     WRITE(21,*) '# T (C), T/298K, qt (g/kg)'
-
-     DO n = 1,nmax
-        t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
-
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
-
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
-
-        qt = (qsat*heat1 + ba_ratio)/(heat1-(THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t)
-
-        IF ( qt .GT. qsat ) WRITE(21,*) t*TREF-273.15, t, qt*1000
-
-     ENDDO
+        write (21, *) t*TREF - 273.15, t, qt*1000
 
 ! ###################################################################
-  ELSE IF ( iopt .EQ. 7 ) THEN
-     WRITE(21,*) '# T (C), T/298K, qt (g/kg)'
+    else if (iopt == 6) then
+        write (21, *) '# T (C), T/298K, qt (g/kg)'
 
-     DO n = 1,nmax
-        t = t_1 + (t_2-t_1)*M_REAL(n-1)/M_REAL(nmax-1)
+        do n = 1, nmax
+            t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-        CALL THERMO_POLYNOMIAL_PSAT(i1, i1, i1, t, qvqd)
-        qvqd = C_1_R/(MRATIO*p/qvqd-C_1_R)*WGHT_INV(2)/WGHT_INV(1)
-        qsat = qvqd/(C_1_R+qvqd)
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
 
-        heat1 = THERMO_AI(6,1,1) - THERMO_AI(6,1,3) +&
-             (THERMO_AI(1,1,1)-THERMO_AI(1,1,3))*t
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
 
-        qt = -ba_ratio/((THERMO_AI(1,1,1)-THERMO_AI(1,1,2))*t)
+            qt = (qsat*heat1 + ba_ratio)/(heat1 - (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t)
 
-        IF ( qt .LT. qsat ) WRITE(21,*) t*TREF-273.15, t, qt*1000
+            if (qt > qsat) write (21, *) t*TREF - 273.15, t, qt*1000
 
-     ENDDO
-  ENDIF
+        end do
 
-  CLOSE(21)
+! ###################################################################
+    else if (iopt == 7) then
+        write (21, *) '# T (C), T/298K, qt (g/kg)'
 
-  CALL TLAB_STOP
+        do n = 1, nmax
+            t = t_1 + (t_2 - t_1)*M_REAL(n - 1)/M_REAL(nmax - 1)
 
-  STOP
-1010 FORMAT(10(1X,G_FORMAT_R))
-END PROGRAM REVERSAL
+            call THERMO_POLYNOMIAL_PSAT(1, t, qvqd)
+            qvqd = 1.0_wp/(p/qvqd - 1.0_wp)*rd_ov_rv
+            qsat = qvqd/(1.0_wp + qvqd)
+
+            heat1 = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) + &
+                    (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))*t
+
+            qt = -ba_ratio/((THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t)
+
+            if (qt < qsat) write (21, *) t*TREF - 273.15, t, qt*1000
+
+        end do
+    end if
+
+    close (21)
+
+    call TLAB_STOP
+
+    stop
+1010 format(10(1x, G_FORMAT_R))
+end program REVERSAL

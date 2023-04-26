@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #include "avgij_map.h"
@@ -27,7 +26,7 @@
 
 module AVG_SCAL_ZT
 
-    use TLAB_CONSTANTS, only: efile
+    use TLAB_CONSTANTS, only: efile, wp, wi
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
     use TLAB_PROCS, only: TLAB_WRITE_ASCII
@@ -43,7 +42,7 @@ module AVG_SCAL_ZT
     implicit none
     private
 
-    TINTEGER is, j, bcs(2, 2)
+    integer(wi) is, j, bcs(2, 2)
 
     public :: AVG_SCAL_ZT_REDUCE
 
@@ -54,16 +53,16 @@ contains
     subroutine AVG_SCAL_ZT_REDUCE(q, z1, hq, txc, mean1d_sc)
         implicit none
 
-        TREAL, dimension(isize_field, *), intent(IN), target :: q, z1
-        TREAL, dimension(isize_field, *), intent(INOUT), target :: txc, hq
-        TREAL mean1d_sc(nstatavg, jmax, MS_SCALAR_SIZE, *)
+        real(wp), dimension(isize_field, *), intent(IN), target :: q, z1
+        real(wp), dimension(isize_field, *), intent(INOUT), target :: txc, hq
+        real(wp) mean1d_sc(nstatavg, jmax, MS_SCALAR_SIZE, *)
 
-        TINTEGER NNstat
+        integer(wi) NNstat
         ! -------------------------------------------------------------------
 
         ! Pointers to existing allocated space
-        TREAL, dimension(:), pointer :: u, v, w, rho, p, vis
-        TREAL, dimension(:), pointer :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12
+        real(wp), dimension(:), pointer :: u, v, w, rho, p, vis
+        real(wp), dimension(:), pointer :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12
 
         ! ###################################################################
 #ifdef TRACE_ON
@@ -267,22 +266,22 @@ contains
                                      m_z1, z1, tmp1, tmp2, tmp3, tmp4, tmp5, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_rho(*)
-        TREAL m_u(*)
-        TREAL m_v(*)
-        TREAL m_w(*)
-        TREAL m_z1(*)
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
-        TREAL tmp5(*)
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
-        TINTEGER j
+        integer(wi) NNstat
+        real(wp) m_rho(*)
+        real(wp) m_u(*)
+        real(wp) m_v(*)
+        real(wp) m_w(*)
+        real(wp) m_z1(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
+        real(wp) tmp5(*)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
+        integer(wi) j
 
-        TREAL inter1, inter2
+        real(wp) inter1, inter2
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -434,13 +433,13 @@ contains
 #else
         inter1 = 0.02d0
 #endif
-        inter2 = C_1_R - inter1
+        inter2 = 1.0_wp - inter1
 
         do j = 1, NNstat*kmax
             if (inter1 <= m_z1(j) .and. m_z1(j) <= inter2) then
-                m_z1_gamma(j) = C_1_R
+                m_z1_gamma(j) = 1.0_wp
             else
-                m_z1_gamma(j) = C_0_R
+                m_z1_gamma(j) = 0.0_wp
             end if
         end do
 
@@ -482,18 +481,18 @@ contains
                                      m_z1, z1, m_p_x_z1, m_p_y_z1, m_p_z_z1, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_p_x(*)
-        TREAL m_p_y(*)
-        TREAL m_p_z(*)
-        TREAL m_z1(*)
-        TREAL m_p_x_z1(*)
-        TREAL m_p_y_z1(*)
-        TREAL m_p_z_z1(*)
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
+        integer(wi) NNstat
+        real(wp) m_p_x(*)
+        real(wp) m_p_y(*)
+        real(wp) m_p_z(*)
+        real(wp) m_z1(*)
+        real(wp) m_p_x_z1(*)
+        real(wp) m_p_y_z1(*)
+        real(wp) m_p_z_z1(*)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
 
-        TINTEGER j
+        integer(wi) j
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -522,24 +521,24 @@ contains
                                      m_u, m_v, m_w, m_z1, z1, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_rho_x(*)
-        TREAL m_rho_y(*)
-        TREAL m_u(*)
-        TREAL m_v(*)
-        TREAL m_w(*)
-        TREAL m_z1(*)
+        integer(wi) NNstat
+        real(wp) m_rho_x(*)
+        real(wp) m_rho_y(*)
+        real(wp) m_u(*)
+        real(wp) m_v(*)
+        real(wp) m_w(*)
+        real(wp) m_z1(*)
 
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
-        TREAL tmp5(*)
-        TREAL tmp6(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
+        real(wp) tmp5(*)
+        real(wp) tmp6(*)
 
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
-        TINTEGER j
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
+        integer(wi) j
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -678,24 +677,24 @@ contains
                                      tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_rho(*)
-        TREAL m_u(*)
-        TREAL m_v(*)
-        TREAL m_w(*)
-        TREAL m_z1(*)
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
-        TREAL tmp5(*)
-        TREAL tmp6(*)
-        TREAL tmp7(*)
+        integer(wi) NNstat
+        real(wp) m_rho(*)
+        real(wp) m_u(*)
+        real(wp) m_v(*)
+        real(wp) m_w(*)
+        real(wp) m_z1(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
+        real(wp) tmp5(*)
+        real(wp) tmp6(*)
+        real(wp) tmp7(*)
 
-        TREAL p(*)
-        TREAL vis(*)
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
+        real(wp) p(*)
+        real(wp) vis(*)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
 
         bcs = 0
 
@@ -867,7 +866,7 @@ contains
             call REDUCE(imax, jmax, kmax, vis, nstatavg, statavg, m_vis)
         else
             do j = 1, NNstat*kmax
-                m_vis(j) = C_1_R
+                m_vis(j) = 1.0_wp
             end do
         end if
 
@@ -970,8 +969,8 @@ contains
         do j = 1, NNstat
             MS_RSx(j) = MS_RSx(j) + wrk2d(j, 1)
             MS_RSy(j) = MS_RSy(j) + wrk2d(j, 2)
-            MS_RSSx(j) = MS_RSSx(j) + C_2_R*wrk2d(j, 3)
-            MS_RSSy(j) = MS_RSSy(j) + C_2_R*wrk2d(j, 4)
+            MS_RSSx(j) = MS_RSSx(j) + 2.0_wp*wrk2d(j, 3)
+            MS_RSSy(j) = MS_RSSy(j) + 2.0_wp*wrk2d(j, 4)
         end do
 
 #undef m_rho_z1_x
@@ -999,8 +998,8 @@ contains
         do j = 1, NNstat
             MS_RSUx(j) = MS_RSUx(j) + wrk2d(j, 1)
             MS_RSVy(j) = MS_RSVy(j) + wrk2d(j, 2)
-            MS_RSSUx(j) = MS_RSSUx(j) + C_2_R*wrk2d(j, 3)
-            MS_RSSVy(j) = MS_RSSVy(j) + C_2_R*wrk2d(j, 4)
+            MS_RSSUx(j) = MS_RSSUx(j) + 2.0_wp*wrk2d(j, 3)
+            MS_RSSVy(j) = MS_RSSVy(j) + 2.0_wp*wrk2d(j, 4)
         end do
 
 #undef m_rho_z1_x_u
@@ -1089,31 +1088,31 @@ contains
                                       tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_z1(*)
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
-        TREAL tmp5(*)
-        TREAL tmp6(*)
-        TREAL tmp7(*)
-        TREAL tmp8(*)
-        TREAL tmp9(*)
-        TREAL tmp10(*)
-        TREAL tmp11(*)
+        integer(wi) NNstat
+        real(wp) m_z1(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
+        real(wp) tmp5(*)
+        real(wp) tmp6(*)
+        real(wp) tmp7(*)
+        real(wp) tmp8(*)
+        real(wp) tmp9(*)
+        real(wp) tmp10(*)
+        real(wp) tmp11(*)
 
-        TREAL u(*)
-        TREAL v(*)
-        TREAL w(*)
-        TREAL vis(*)
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
+        real(wp) u(*)
+        real(wp) v(*)
+        real(wp) w(*)
+        real(wp) vis(*)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
 
-        TREAL c23, c43, aux1, aux2
+        real(wp) c23, c43, aux1, aux2
 
-        c23 = C_2_R/C_3_R
-        c43 = C_4_R/C_3_R
+        c23 = 2.0_wp/3.0_wp
+        c43 = 4.0_wp/3.0_wp
 
         bcs = 0
 
@@ -1124,7 +1123,7 @@ contains
             call REDUCE(imax, jmax, kmax, vis, nstatavg, statavg, m_vis)
         else
             do j = 1, NNstat*kmax
-                m_vis(j) = C_1_R
+                m_vis(j) = 1.0_wp
             end do
         end if
 
@@ -1553,23 +1552,23 @@ contains
                                       tmp5, tmp6, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_u_x(*)
-        TREAL m_v_y(*)
-        TREAL m_rho(*)
-        TREAL m_u(*)
-        TREAL m_v(*)
-        TREAL m_w(*)
-        TREAL m_z1(*)
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
-        TREAL tmp5(*)
-        TREAL tmp6(*)
+        integer(wi) NNstat
+        real(wp) m_u_x(*)
+        real(wp) m_v_y(*)
+        real(wp) m_rho(*)
+        real(wp) m_u(*)
+        real(wp) m_v(*)
+        real(wp) m_w(*)
+        real(wp) m_z1(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
+        real(wp) tmp5(*)
+        real(wp) tmp6(*)
 
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -1626,8 +1625,8 @@ contains
         call SUM1V1D_V(NNstat, kmax, m_rho_v_y_w_z1, wrk2d(1, 6), wrk2d(1, 11))
 
         do j = 1, NNstat
-            MS_RUUSx(j) = MS_RUUSx(j) + C_2_R*wrk2d(j, 1)
-            MS_RVVSy(j) = MS_RVVSy(j) + C_2_R*wrk2d(j, 2)
+            MS_RUUSx(j) = MS_RUUSx(j) + 2.0_wp*wrk2d(j, 1)
+            MS_RVVSy(j) = MS_RVVSy(j) + 2.0_wp*wrk2d(j, 2)
             MS_RUVSx(j) = MS_RUVSx(j) + wrk2d(j, 3)
             MS_RUVSy(j) = MS_RUVSy(j) + wrk2d(j, 4)
             MS_RUWSx(j) = MS_RUWSx(j) + wrk2d(j, 5)
@@ -1651,19 +1650,19 @@ contains
                                       mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_v_x(*)
-        TREAL m_u_y(*)
-        TREAL m_rho(*)
-        TREAL m_u(*)
-        TREAL m_v(*)
-        TREAL m_z1(*)
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
+        integer(wi) NNstat
+        real(wp) m_v_x(*)
+        real(wp) m_u_y(*)
+        real(wp) m_rho(*)
+        real(wp) m_u(*)
+        real(wp) m_v(*)
+        real(wp) m_z1(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
@@ -1706,20 +1705,20 @@ contains
                                      tmp4, mean1d_sc)
         implicit none
 
-        TINTEGER NNstat
-        TREAL m_w_x(*)
-        TREAL m_w_y(*)
-        TREAL m_rho(*)
-        TREAL m_u(*)
-        TREAL m_v(*)
-        TREAL m_z1(*)
-        TREAL tmp1(*)
-        TREAL tmp2(*)
-        TREAL tmp3(*)
-        TREAL tmp4(*)
+        integer(wi) NNstat
+        real(wp) m_w_x(*)
+        real(wp) m_w_y(*)
+        real(wp) m_rho(*)
+        real(wp) m_u(*)
+        real(wp) m_v(*)
+        real(wp) m_z1(*)
+        real(wp) tmp1(*)
+        real(wp) tmp2(*)
+        real(wp) tmp3(*)
+        real(wp) tmp4(*)
 
-        TREAL z1(imax, jmax, kmax)
-        TREAL mean1d_sc(nstatavg, jmax, *)
+        real(wp) z1(imax, jmax, kmax)
+        real(wp) mean1d_sc(nstatavg, jmax, *)
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 

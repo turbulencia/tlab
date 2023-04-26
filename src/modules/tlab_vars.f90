@@ -58,12 +58,15 @@ module TLAB_VARS
     real(wp) :: area                            ! Horizontal area and volume
 
 ! ###################################################################
-    type(profiles_dt) :: qbg(3)             ! Velocity background
-    type(profiles_dt) :: sbg(MAX_NSP)       ! Scalars backgrounds
-    type(profiles_dt) :: pbg, rbg, tbg, hbg ! Pressure, density, temperature, enthalpy backgrounds
+    type(profiles_dt) :: qbg(3)             ! Velocity background information
+    type(profiles_dt) :: sbg(MAX_NSP)       ! Scalars background information
+    type(profiles_dt) :: pbg, rbg, tbg, hbg ! Pressure, density, temperature, enthalpy background information
 
-    real(wp), dimension(:), allocatable :: pbackground, tbackground, rbackground, ribackground
-    real(wp), dimension(:), allocatable :: bbackground, epbackground
+    real(wp), allocatable :: pbackground(:)                     ! Pressure background profile; used in anelastic
+    real(wp), allocatable :: tbackground(:)                     ! Temperature
+    real(wp), allocatable :: rbackground(:), ribackground(:)    ! Density and its inverse
+    real(wp), allocatable :: bbackground(:)                     ! Buoyancy
+    real(wp), allocatable :: epbackground(:)                    ! Potential energy
 
 ! ###################################################################
     type(term_dt) :: buoyancy   ! Buoyancy parameters

@@ -9,7 +9,7 @@ module TLAB_PROCS
 #endif
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_time_max, ims_time_min, ims_time_trans, ims_err
 #endif
     implicit none
     save
@@ -400,10 +400,10 @@ contains
         call TLAB_WRITE_ASCII(lfile, '########################################')
 
 #ifdef USE_MPI
-        if (ims_err == 0) then
+        if (error_code == 0) then
             call MPI_FINALIZE(ims_err)
         else
-            call MPI_Abort(MPI_COMM_WORLD, ims_err, ims_err)
+            call MPI_Abort(MPI_COMM_WORLD, error_code, ims_err)
         end if
 #endif
         return

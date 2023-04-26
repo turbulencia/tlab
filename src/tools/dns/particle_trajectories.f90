@@ -1,10 +1,11 @@
 #include "dns_error.h"
 #include "dns_const.h"
-#include "types.h"
+
+#define USE_ACCESS_STREAM
 
 module PARTICLE_TRAJECTORIES
 
-    use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi
+    use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi, sizeofint
     use PARTICLE_VARS
     use TLAB_PROCS
     use DNS_LOCAL, only: nitera_save

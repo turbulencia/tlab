@@ -12,6 +12,7 @@ module FLOW_MEAN
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use THERMO_THERMAL
+    use THERMO_AIRWATER
     use PROFILES
     use OPR_PARTIAL
     implicit none
@@ -217,7 +218,7 @@ contains
 
                     ! define liquid content in AirWater case: (p,T) given
                     if (imixture == MIXT_TYPE_AIRWATER) then
-                        call THERMO_AIRWATER_PT(imax, jmax, kmax, s, p, TEM_MEAN_LOC(:, :, :))
+                        call THERMO_AIRWATER_PT(imax*jmax*kmax, s, p, TEM_MEAN_LOC(:, :, :))
                     end if
 
                     call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, TEM_MEAN_LOC(:, :, :), RHO_MEAN_LOC(:, :, :))

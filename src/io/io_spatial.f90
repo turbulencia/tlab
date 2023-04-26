@@ -58,7 +58,7 @@ subroutine WRT_STHD(unit, irec, &
                     iter, rtime, iterorg, rtimeorg, &
                     nstatavg, jmax, nstat, nstatavg_points, statavg)
 
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, sizeofint, sizeofreal
     implicit none
 
     integer(wi) unit, irec
@@ -69,9 +69,6 @@ subroutine WRT_STHD(unit, irec, &
 
     real(wp) tmp(1)
     integer(wi) reclen
-
-    integer, parameter :: sizeofreal = sizeof(1.0_wp)
-    integer, parameter :: sizeofint = sizeof(1_wi)
 
     tmp(1) = rtime
     reclen = SIZEOFINT + SIZEOFREAL

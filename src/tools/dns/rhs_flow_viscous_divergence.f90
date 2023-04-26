@@ -18,7 +18,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLAB_VARS, only: visc
     use TLAB_POINTERS
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: MRATIO, GRATIO
+    use THERMO_VARS, only: CRATIO_INV
     use BOUNDARY_BCS
     use OPR_PARTIAL
 
@@ -26,7 +26,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 
 ! -------------------------------------------------------------------
     integer(wi) bcs(2, 1), i
-    real(wp) prefactor, dil, c23
+    real(wp) dil, c23
 
 ! ###################################################################
 #ifdef TRACE_ON
@@ -34,7 +34,6 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 #endif
 
     bcs = 0
-    prefactor = MRATIO*GRATIO
     c23 = 2.0_wp/3.0_wp*visc
 
 #define tau_xx(i) tmp4(i)
@@ -60,7 +59,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
             tau_yy(i) = c23*vis(i)*(2.0_wp*tmp2(i) - (tmp1(i) + tmp3(i)))
             tau_zz(i) = c23*vis(i)*(2.0_wp*tmp3(i) - (tmp1(i) + tmp2(i)))
             dil = tmp1(i) + tmp2(i) + tmp3(i)
-            hq(i, 4) = hq(i, 4) + prefactor*(tau_xx(i)*tmp1(i) + tau_yy(i)*tmp2(i) + tau_zz(i)*tmp3(i) - p(i)*dil)
+            hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_xx(i)*tmp1(i) + tau_yy(i)*tmp2(i) + tau_zz(i)*tmp3(i) - p(i)*dil)
         end do
 
     else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
@@ -80,7 +79,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xy(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
-            hq(i, 4) = hq(i, 4) + prefactor*(tau_xy(i)*(tmp1(i) + tmp2(i)))
+            hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_xy(i)*(tmp1(i) + tmp2(i)))
         end do
 
     else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
@@ -94,7 +93,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xz(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
-            hq(i, 4) = hq(i, 4) + prefactor*(tau_xz(i)*(tmp1(i) + tmp2(i)))
+            hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_xz(i)*(tmp1(i) + tmp2(i)))
         end do
 
     else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
@@ -108,7 +107,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_yz(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
-            hq(i, 4) = hq(i, 4) + prefactor*(tau_yz(i)*(tmp1(i) + tmp2(i)))
+            hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_yz(i)*(tmp1(i) + tmp2(i)))
         end do
 
     else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
@@ -149,7 +148,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tau_xx(:), tmp3)
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tau_yy(:), tmp2)
         call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tau_zz(:), tmp1)
-        hq(:, 4) = hq(:, 4) + prefactor*(tmp1 + tmp2 + tmp3)
+        hq(:, 4) = hq(:, 4) + CRATIO_INV*(tmp1 + tmp2 + tmp3)
 
     end if
 

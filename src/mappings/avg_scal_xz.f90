@@ -21,6 +21,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use THERMO_VARS, only: imixture, thermo_param
+    use THERMO_ANELASTIC
+    use THERMO_AIRWATER
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s, scal_bcs
     use AVGS, only: AVG_IK_V
 #ifdef USE_MPI
@@ -508,12 +510,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             if (is == inb_scal_array + 1) then ! Default values are for liquid; defining them for buoyancy
                 coefQ = buoyancy%parameters(inb_scal_array)/froude
                 coefR = buoyancy%parameters(inb_scal)/froude
-                do is_loc = 1, inb_scal
-                    coefT = coefT + transport%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
-                end do
+                if ( transport%active(is) ) then
+                    do is_loc = 1, inb_scal
+                        coefT = coefT + transport%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
+                    end do
+                end if
             end if
 
-            call THERMO_AIRWATER_LINEAR_SOURCE(imax, jmax, kmax, s, dsdx, dsdy, dsdz) ! calculate xi in dsdx
+            call THERMO_AIRWATER_LINEAR_SOURCE(imax*jmax*kmax, s, dsdx, dsdy, dsdz) ! calculate xi in dsdx
             call FI_GRADIENT(imax, jmax, kmax, dsdx, tmp2, tmp1)
 
             dummy = -diff*coefQ

@@ -28,6 +28,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
+    use THERMO_ANELASTIC
     use DNS_ARRAYS
     use DNS_LOCAL, only: remove_divergence
     use DNS_LOCAL, only: use_tower

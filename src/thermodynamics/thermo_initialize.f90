@@ -33,13 +33,14 @@ subroutine THERMO_INITIALIZE()
     implicit none
 
 ! -------------------------------------------------------------------
-    real(wp) WGHT(MAX_NSP)
+    real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
+
+    real(wp) WGHT(MAX_NSP), WGHT_INV(MAX_NSP), WREF     ! Molar masses
     integer(wi) icp, is, im, inb_scal_loc
     real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
-    integer(wi) ISPREF                     ! reference species for CPREF and WREF
+    integer(wi) ISPREF                                  ! reference species for CPREF and RREF
     real(wp) CPREF
     real(wp) WRK1D_LOC(MAX_NPSAT)
-    real(wp) PREF_LOC
     integer(wi) ipsat, i, j
     real(wp) tmp1, tmp2
     character*46 str
@@ -50,9 +51,9 @@ subroutine THERMO_INITIALIZE()
 ! Thermal equation, molar masses in kg/kmol
 ! ###################################################################
     inb_scal_loc = inb_scal     ! Control that inb_scal read in dns.ini is correct
+    WGHT(:) = 1.0_wp            ! We devide by WGTH below even when mxiture is none
 
     select case (imixture)
-
 ! -------------------------------------------------------------------
 ! Burke-Schuman case
 ! Transport just mixture fraction, and then equilibrium
@@ -194,7 +195,7 @@ subroutine THERMO_INITIALIZE()
 
     end if
 
-    ! ###################################################################
+! ###################################################################
 ! Caloric equations
 !
 ! General formulation is CHEMKIN format: 7-coefficient NASA
@@ -221,7 +222,7 @@ subroutine THERMO_INITIALIZE()
 ! The pressure contribution to the entropy still needs to be added
 !
 ! ###################################################################
-    THERMO_AI(:,:,:) = 0.0_wp               ! Initialize to zero
+    THERMO_AI(:, :, :) = 0.0_wp               ! Initialize to zero
     HREF_LOC(:) = 0.0_wp
     SREF_LOC(:) = 0.0_wp
 
@@ -258,7 +259,7 @@ subroutine THERMO_INITIALIZE()
         THERMO_AI(1, :, 5) = 28.88e+3_wp - 4.70833_wp*TREF_LOC; THERMO_AI(2, :, 5) = 4.70833_wp
 
 ! -------------------------------------------------------------------
-    case (MIXT_TYPE_UNIDECOMP)      ! Simple reaction, R -> P 
+    case (MIXT_TYPE_UNIDECOMP)      ! Simple reaction, R -> P
         TREF_LOC = 298.0_wp         ! K, auxiliar value to define caloric data
 
 ! Enthalpy of Formation in Jules/Kmol
@@ -355,8 +356,8 @@ subroutine THERMO_INITIALIZE()
 ! Flatau et al., J. Applied Meteorol., 1507-1513, 1992
         NPSAT = 9
         WRK1D_LOC(1) = 0.611213476e+3_wp
-        WRK1D_LOC(2) = 0.444007856e+2_wp 
-        WRK1D_LOC(3) = 0.143064234e+1_wp 
+        WRK1D_LOC(2) = 0.444007856e+2_wp
+        WRK1D_LOC(3) = 0.143064234e+1_wp
         WRK1D_LOC(4) = 0.264461437e-1_wp
         WRK1D_LOC(5) = 0.305930558e-3_wp
         WRK1D_LOC(6) = 0.196237241e-5_wp
@@ -392,27 +393,39 @@ subroutine THERMO_INITIALIZE()
 ! ###################################################################
     WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
 
-    ! Nondimensionalization
+    ! Reference values; in principle, these could be changed, if desired.
     ISPREF = 2                              ! Species 2 is taken as reference
     WREF = WGHT(ISPREF)                     ! kg /kmol
-    TREF = 298.0_wp                          ! K
-    CPREF = 0.0_wp                           ! J /kg /K
+    RREF = RGAS/WREF
+    TREF = 298.0_wp                         ! K
+    PREF = 1e5_wp                           ! Pa
+    CPREF = 0.0_wp                          ! J /kg /K
     do icp = NCP, 1, -1
         CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
     end do
 
-    if (imixture /= MIXT_TYPE_NONE) then ! othewise, gama0 is read in dns.ini
-        gama0 = CPREF*WREF/(CPREF*WREF - RGAS)  ! Specific heat ratio
+    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
+        gama0 = CPREF/(CPREF - RREF)  ! Specific heat ratio
     end if
-    if (gama0 > 0.0_wp) GRATIO = (gama0 - 1.0_wp)/gama0 ! Value of R_0/(C_{p,0}W_0) is called GRATIO
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-        MRATIO = 1.0_wp
-    else
-        MRATIO = gama0*mach*mach
-    end if
-    MRATIO_INV = 1/MRATIO
 
+    ! Nondimensionalization
+    if (imixture == MIXT_TYPE_NONE .and. .not. nondimensional) then
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    MRATIO = 1.0_wp
+    CRATIO_INV = 1.0_wp
     if (nondimensional) then
+        ! Parameters in the governing equations
+        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+            MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
+            CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+            PREF_1000 = 1.0_wp/MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from dns.ini
+        else
+            PREF_1000 = 1e5_wp/PREF            ! 1000 hPa, used as reference
+        end if
+
         ! Thermal equation of state
         WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)    ! normalized gas constants (Inverse of molar masses)
 
@@ -429,45 +442,178 @@ subroutine THERMO_INITIALIZE()
         THERMO_TLIM = THERMO_TLIM/TREF          ! Temperature limis for polynomial fits to cp
 
         ! Saturation vapor pressure
-        PREF_LOC = 1e5_wp      ! Pa
         do ipsat = 1, NPSAT
-            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF_LOC
+            THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF/MRATIO         ! Scaling by rho_0U_0^2 as total pressure
             THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
         end do
 
-    else
-        MRATIO = 1.0_wp
-        GRATIO = 1.0_wp
-
     end if
 
-!   Definitions to save operations
-    THERMO_R(:) = WGHT_INV(:)/MRATIO    ! gas constants
+    ! Derived parameters to save operations
+    GRATIO = (gama0 - 1.0_wp)/gama0*MRATIO      ! R_0/C_{p,0} *MRATIO
+    RRATIO = 1.0_wp/MRATIO
+    THERMO_R(:) = WGHT_INV(:)*RRATIO            ! gas constants normalized by dynamic reference value U0^2/T0
+
+! -------------------------------------------------------------------
+    select case (imixture)
+    case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
+        Rv = THERMO_R(1)
+        Rd = THERMO_R(2)
+        Rdv = THERMO_R(1) - THERMO_R(2)
+
+        Cd = THERMO_AI(1, 1, 2)
+        Cl = THERMO_AI(1, 1, 3)
+        Cdv = THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2)
+        Cvl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1)
+        Cdl = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2)
+        Lv0 = -THERMO_AI(6, 1, 3)
+        Ld = THERMO_AI(6, 1, 2)
+        Lv = THERMO_AI(6, 1, 1)
+        Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
+        Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
+        Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
+        rd_ov_rv = Rd/Rv
+        rd_ov_cd = Rd/Cd*GRATIO
+
+    end select
 
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-    call TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
-    do is = 1, NSP
-        write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))
+    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
+        call TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
+        do is = 1, NSP
+            write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))
+            call TLAB_WRITE_ASCII(lfile, str)
+        end do
+        write (str, 1010) 'Setting RREF = ', RREF
         call TLAB_WRITE_ASCII(lfile, str)
-    end do
-    write (str, 1010) 'Setting WREF = ', WREF
-    call TLAB_WRITE_ASCII(lfile, str)
-    write (str, 1010) 'Setting TREF = ', TREF
-    call TLAB_WRITE_ASCII(lfile, str)
-    if (NPSAT > 0) then
-        write (str, 1010) 'Setting RREF = ', PREF_LOC/(RGAS/WREF*TREF)
+        write (str, 1010) 'Setting TREF = ', TREF
+        call TLAB_WRITE_ASCII(lfile, str)
+        write (str, 1010) 'Setting PREF = ', PREF
+        call TLAB_WRITE_ASCII(lfile, str)
+        if (NPSAT > 0) then
+            write (str, 1010) 'Setting RHOREF = ', PREF/(RREF*TREF)
+            call TLAB_WRITE_ASCII(lfile, str)
+        end if
+        write (str, 1020) 'Setting CPREF = ', CPREF
+        call TLAB_WRITE_ASCII(lfile, str)
+        write (str, 1020) 'Setting Gama0 = ', gama0
         call TLAB_WRITE_ASCII(lfile, str)
     end if
-    write (str, 1020) 'Setting CPREF = ', CPREF
-    call TLAB_WRITE_ASCII(lfile, str)
-    write (str, 1020) 'Setting Gama0 = ', gama0
-    call TLAB_WRITE_ASCII(lfile, str)
 
     return
 
 1010 format(A14, 1x, G_FORMAT_R)
 1020 format(A15, 1x, G_FORMAT_R)
+
+contains
+    !########################################################################
+    ! Read chemkin mixtures ! To be checked
+    !########################################################################
+    subroutine THERMO_READ_CHEMKIN(name)
+        character(len=*), intent(in) :: name
+
+! -----------------------------------------------------------------------
+        real(wp) T1, T2, T3
+        integer(wi) il
+        logical frun
+        character*15 token
+        character*225 wline
+        character*80 line, line1, line2, line3
+        integer(wi) THERMO_FLAG(MAX_NSP)
+
+        integer, parameter :: i23 = 23
+
+! #######################################################################
+! Initialize thermodynamic data structure
+        do is = 1, NSP
+            THERMO_FLAG(is) = 0
+        end do
+
+! Read Thermodynamic file
+        open (i23, file=name, status='old')
+
+        rewind (i23)
+
+! Read Header
+        read (i23, *) line
+        call TLAB_WRITE_ASCII(lfile, line)
+
+        if (trim(adjustl(line)) /= 'THERMO') then
+            call TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
+            call TLAB_STOP(DNS_ERROR_THERMOFORMAT)
+        end if
+
+! Read Temperature ranges
+        read (i23, *) T1, T2, T3
+        write (wline, *) T1, T2, T3
+        call TLAB_WRITE_ASCII(lfile, wline(1:80))
+
+! Remove comments
+        frun = .true.
+        do while (frun)
+            read (i23, '(A80)', end=50) line
+            if (line(1:1) /= '!') frun = .false.
+        end do
+
+        frun = .true.
+        do while (frun)
+!    Check for end of file
+            read (line, '(A15)', end=50) token
+            if (trim(adjustl(token)) == 'END') then
+                frun = .false.
+                goto 50
+            end if
+
+!    Read all relevant information
+            read (i23, '(A80)', end=50) line1
+            read (i23, '(A80)', end=50) line2
+            read (i23, '(A80)', end=50) line3
+
+!    Process lines
+            do is = 1, NSP
+                if (trim(adjustl(token)) == THERMO_SPNAME(is)) then
+                    call TLAB_WRITE_ASCII(lfile, line)
+                    call TLAB_WRITE_ASCII(lfile, line1)
+                    call TLAB_WRITE_ASCII(lfile, line2)
+                    call TLAB_WRITE_ASCII(lfile, line3)
+
+!          Required species found, process information
+!          Get limit temperatures
+                    do i = 1, 225
+                        wline(i:i) = ' '
+                    end do
+                    wline = line(46:75)
+                    read (wline, *) (THERMO_TLIM(i, is), i=1, 3)
+
+!          Concatenate lines so read is simpler
+                    wline = line1(1:75)//line2(1:75)//line3(1:75)
+
+                    do i = 1, 14
+                        il = (i - 1)*15 + 1
+                        read (wline(il:il + 14), *) THERMO_AI(i, 1, is)
+                    end do
+
+                    THERMO_FLAG(is) = 1
+                end if
+            end do
+
+!    Read next line
+            read (i23, '(A80)', end=50) line
+
+        end do
+
+50      close (i23)
+
+        do is = 1, NSP
+            if (THERMO_FLAG(is) == 0) then
+                call TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
+                call TLAB_STOP(DNS_ERROR_THERMOCONT)
+            end if
+        end do
+
+        return
+    end subroutine THERMO_READ_CHEMKIN
 
 end subroutine THERMO_INITIALIZE

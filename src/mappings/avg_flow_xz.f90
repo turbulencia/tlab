@@ -21,7 +21,10 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
-    use THERMO_VARS
+    use THERMO_VARS, only: imixture, CRATIO_INV, GRATIO, MRATIO
+    use THERMO_VARS, only: rd_ov_rv, Cd, Rv, Cvl, Lvl, Ldl, Rd, PREF_1000
+    use THERMO_ANELASTIC
+    use THERMO_CALORIC
     use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
@@ -36,7 +39,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     implicit none
 
     real(wp), intent(IN) :: q(imax, jmax, kmax, inb_flow_array)
-    real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
+!    real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
+    real(wp), intent(INOUT) :: s(imax, jmax, kmax, inb_scal_array) ! caluclates equi composition in airwater
     real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz
     real(wp), intent(INOUT) :: mean2d(jmax, MAX_AVG_TEMPORAL)
 
@@ -46,7 +50,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     integer, parameter :: MAX_VARS_GROUPS = 20
     integer j, bcs(2, 2)
     real(wp) dummy
-    real(wp) c23, prefactor
+    real(wp) c23
 
     integer ig(MAX_VARS_GROUPS), sg(MAX_VARS_GROUPS), ng, nv
 
@@ -73,8 +77,6 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     end if
 
     c23 = 2.0_wp/3.0_wp
-
-    prefactor = GRATIO*MRATIO
 
     ! Variable definition and memory management
     ! -----------------------------------------------------------------------
@@ -728,7 +730,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         end do
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, g(1)%jac, g(3)%jac, rT2(1), wrk1d, area)
 
-        call THERMO_POLYNOMIAL_PSAT(imax, jmax, kmax, T_LOC(1, 1, 1), dvdz)
+        call THERMO_POLYNOMIAL_PSAT(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, psat(1), wrk1d, area)
 
         call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, epbackground, pbackground, T_LOC(1, 1, 1), p_wrk3d)
@@ -761,13 +763,12 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), g(1)%jac, g(3)%jac, lapse_dew(1), wrk1d, area)
 
     else
-
         ! -------------------------------------------------------------------
         ! Main fields
         ! -------------------------------------------------------------------
-        call THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, s, e, rho, T_LOC(1, 1, 1), p_wrk3d)
-        call THERMO_GAMMA(imax, jmax, kmax, s, T_LOC(1, 1, 1), GAMMA_LOC(1, 1, 1))
-        call THERMO_ENTROPY(imax, jmax, kmax, s, T_LOC(1, 1, 1), p, S_LOC(1, 1, 1))
+        call THERMO_CALORIC_TEMPERATURE(imax*jmax*kmax, s, e, rho, T_LOC(1, 1, 1), p_wrk3d)
+        call THERMO_GAMMA(imax*jmax*kmax, s, T_LOC(:, :, :), GAMMA_LOC(:, :, :))
+        call THERMO_ENTROPY(imax*jmax*kmax, s, T_LOC(1, 1, 1), p, S_LOC(1, 1, 1))
 
         call AVG_IK_V(imax, jmax, kmax, jmax, T_LOC(1, 1, 1), g(1)%jac, g(3)%jac, rT(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, e, g(1)%jac, g(3)%jac, re(1), wrk1d, area)
@@ -776,7 +777,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
         ! Means
         dudy = rho*e
-        dudz = e + prefactor*p/rho
+        dudz = e + CRATIO_INV*p/rho
         dvdx = rho*dudz
         dvdy = rho*dwdz    ! rho *S_LOC
         dvdz = rho*dwdx    ! rho *T_LOC
@@ -823,7 +824,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call AVG_IK_V(imax, jmax, kmax, jmax, dudz, g(1)%jac, g(3)%jac, fe2(1), wrk1d, area)
         fe2(:) = fe2(:)/rR(:)
 
-        p_wrk3d = e + prefactor*p/rho
+        p_wrk3d = e + CRATIO_INV*p/rho
         do j = 1, jmax
             dudy(:, j, :) = (p_wrk3d(:, j, :) - rh(j))**2
             dudz(:, j, :) = rho(:, j, :)*(p_wrk3d(:, j, :) - fh(j))**2
@@ -854,61 +855,60 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         ! -------------------------------------------------------------------
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, dvdy)
 
-        call THERMO_POLYNOMIAL_PSAT(imax, jmax, kmax, T_LOC(1, 1, 1), dvdz)
-        call THERMO_CP(imax, jmax, kmax, s, GAMMA_LOC(1, 1, 1), dvdx)
+        call THERMO_POLYNOMIAL_PSAT(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
+        call THERMO_CP(imax*jmax*kmax, s, GAMMA_LOC(:, :, :), dvdx)
 
         do j = 1, jmax
             dudy(:, j, :) = dwdy(:, j, :)/p(:, j, :)/GAMMA_LOC(:, j, :) - dvdy(:, j, :)/rho(:, j, :)
             dvdx(:, j, :) = 1.0_wp/dvdx(:, j, :)
-            dvdy(:, j, :) = T_LOC(:, j, :)*((MRATIO*p(:, j, :))**(1.0_wp/GAMMA_LOC(:, j, :) - 1.0_wp))
+            dvdy(:, j, :) = T_LOC(:, j, :)*((p(:, j, :)/PREF_1000)**(1.0_wp/GAMMA_LOC(:, j, :) - 1.0_wp))
         end do
         call AVG_IK_V(imax, jmax, kmax, jmax, dudy, g(1)%jac, g(3)%jac, bfreq_fr(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, g(1)%jac, g(3)%jac, lapse_fr(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, g(1)%jac, g(3)%jac, potem_fr(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, psat(1), wrk1d, area)
         bfreq_fr(:) = -bfreq_fr(:)*buoyancy%vector(2)
-        lapse_fr(:) = -lapse_fr(:)*buoyancy%vector(2)*prefactor
+        lapse_fr(:) = -lapse_fr(:)*buoyancy%vector(2)*CRATIO_INV
 
 #undef S_LOC
 
 #define L_RATIO   dvdx
 #define Q_RATIO   dvdy
-#define WMEAN_INV dwdy
+#define RMEAN     dwdy
 #define C_RATIO   dwdz
 
         if (imixture == MIXT_TYPE_AIRWATER) then
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T_LOC(1, 1, 1), dudz)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 2), dudy)
 
-            dummy = THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 1) + GRATIO*WGHT_INV(1)
-            L_RATIO = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 3) - dummy*dwdx ! dwdx is T_LOC
-            L_RATIO = L_RATIO/(GRATIO*WGHT_INV(1)*dwdx)
-            Q_RATIO = 1.0_wp/(MRATIO*p/dvdz - 1.0_wp)                ! dvdz is psat
-            WMEAN_INV = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, :, :, 1))*WGHT_INV(2)
+            dummy = Cvl + GRATIO*Rv
+            L_RATIO = -Lvl - dummy*dwdx ! dwdx is T_LOC
+            L_RATIO = L_RATIO/(GRATIO*Rv*dwdx)
+            Q_RATIO = 1.0_wp/(p/dvdz - 1.0_wp)                ! dvdz is psat
+            RMEAN = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, :, :, 1))*Rd
 
-            p_wrk3d = (1.0_wp + Q_RATIO*L_RATIO)/WMEAN_INV/ &
+            p_wrk3d = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
                     (dudx/(dudx - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)  ! dudx is GAMMA_LOC
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, lapse_eq(1), wrk1d, area)
             lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)*MRATIO
 
-            dummy = WGHT_INV(1)/WGHT_INV(2)
             p_wrk3d = (dudz - buoyancy%vector(2)*MRATIO*p_wrk3d)/dwdx &
-                    *(1.0_wp + dummy*L_RATIO/(1.0_wp - s(:, :, :, 1)))
-            p_wrk3d = p_wrk3d - WGHT_INV(2)/WMEAN_INV*dudy
+                    *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, :, :, 1)))
+            p_wrk3d = p_wrk3d - Rd/RMEAN*dudy
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, bfreq_eq(1), wrk1d, area)
             bfreq_eq(:) = -bfreq_eq(:)*buoyancy%vector(2)
 
-            C_RATIO = THERMO_AI(1, 1, 2) + s(:, :, :, 1)*(THERMO_AI(1, 1, 3) - THERMO_AI(1, 1, 2))
-            C_RATIO = (1.0_wp - s(:, :, :, 1))*GRATIO*WGHT_INV(2)/C_RATIO
-            p_wrk3d = dwdx/((MRATIO*p)**C_RATIO)*exp(Q_RATIO*C_RATIO*L_RATIO)
-            p_wrk3d = p_wrk3d*(1.0_wp + Q_RATIO)**C_RATIO/((MRATIO*p/dvdz)**(Q_RATIO*C_RATIO))
+            C_RATIO = Cd + s(:, :, :, 1)*Ldl
+            C_RATIO = (1.0_wp - s(:, :, :, 1))*GRATIO*Rv/C_RATIO
+            p_wrk3d = dwdx/((p/PREF_1000)**C_RATIO)*exp(Q_RATIO*C_RATIO*L_RATIO)
+            p_wrk3d = p_wrk3d*(1.0_wp + Q_RATIO)**C_RATIO/((p/dvdz)**(Q_RATIO*C_RATIO))
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, potem_eq(1), wrk1d, area)
 
         end if
 
 #undef L_RATIO
 #undef Q_RATIO
-#undef WMEAN_INV
+#undef RMEAN
 #undef C_RATIO
 
     end if

@@ -13,6 +13,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_VARS, only: rbackground
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_POINTERS_3D, only: p_wrk2d
+    use THERMO_ANELASTIC
     use IBM_VARS, only: ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS

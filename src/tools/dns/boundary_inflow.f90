@@ -22,6 +22,9 @@ module BOUNDARY_INFLOW
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use THERMO_THERMAL
+    use THERMO_CALORIC
+    use THERMO_AIRWATER
+    use THERMO_ANELASTIC
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
@@ -159,7 +162,7 @@ contains
             visc = visctmp
 
             ! array p contains the internal energy. Now we put in the pressure
-            call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size, g_inf(2)%size, kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)
+            call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)
             call THERMO_THERMAL_PRESSURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 5), txc, q_inf(1, 1, 1, 4))
 
             ! ###################################################################
@@ -565,30 +568,30 @@ contains
         ! recalculation of diagnostic variables
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
             if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
-                call THERMO_AIRWATER_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1), epbackground, pbackground)
+                call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1), epbackground, pbackground)
 
             else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                call THERMO_AIRWATER_LINEAR(imax, jmax, kmax, s, s(1, 1, 1, inb_scal_array))
+                call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, 1, 1, inb_scal_array))
 
             end if
 
         else
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_AIRWATER_RP(imax, jmax, kmax, s, p, rho, T, wrk3d)
+                call THERMO_AIRWATER_RP(imax*jmax*kmax, s, p, rho, T, wrk3d)
             else
                 call THERMO_THERMAL_TEMPERATURE(imax*jmax*kmax, s, p, rho, T)
             end if
-            call THERMO_CALORIC_ENERGY(imax, jmax, kmax, s, T, e)
+            call THERMO_CALORIC_ENERGY(imax*jmax*kmax, s, T, e)
 
             ! This recalculation of T and p is made to make sure that the same numbers are
             ! obtained in statistics postprocessing as in the simulation; avg* files
             ! can then be compared with diff command.
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, s, e, rho, T, wrk3d)
+                call THERMO_CALORIC_TEMPERATURE(imax*jmax*kmax, s, e, rho, T, wrk3d)
                 call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, s, rho, T, p)
             end if
 
-     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax, jmax, kmax, T, vis)
+     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax*jmax*kmax, T, vis)
 
         end if
 

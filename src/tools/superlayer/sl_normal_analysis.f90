@@ -216,7 +216,7 @@ program SL_NORMAL_ANALYSIS
         write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
         call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, inb_scal, z1)
 
-        call THERMO_CALORIC_TEMPERATURE(imax, jmax, kmax, z1, p, field, txc, wrk3d)
+        call THERMO_CALORIC_TEMPERATURE(imax*jmax*kmax, z1, p, field, txc, wrk3d)
         call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, z1, field, txc, p)
 
 ! -------------------------------------------------------------------
