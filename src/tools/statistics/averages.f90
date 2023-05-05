@@ -756,7 +756,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 7); vars(ifield)%tag = 'Lambda1'
@@ -771,7 +771,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))  ! txc7-txc9
             call TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7))   ! txc1-txc6
 
