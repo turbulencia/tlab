@@ -211,6 +211,7 @@ contains
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(bcs), r_bcs, shape=[3*2])
 
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
@@ -292,7 +293,7 @@ contains
             call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, a)
         end if
 
-        nullify (c_tmp1, c_tmp2)
+        nullify (c_tmp1, c_tmp2, r_bcs)
 
         return
     end subroutine OPR_HELMHOLTZ_FXZ

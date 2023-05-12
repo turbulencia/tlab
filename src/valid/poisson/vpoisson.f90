@@ -1,69 +1,61 @@
-#include "types.h"
 #include "dns_const.h"
 
 #define C_FILE_LOC "VPOISSON"
 
-program VPOISSON
+! We can check for
+!       lap a = f, given f,
+! or for
+!       lap a = f, given a (constructing first f and then solving)
 
+program VPOISSON
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_PROCS
+    use TLAB_ARRAYS
+#ifdef USE_MPI
+    use MPI
+    use TLAB_MPI_PROCS
+#endif
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use AVGS
 
     implicit none
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :, :), allocatable :: a, b, c, d, e, f
-    TREAL, dimension(:, :), allocatable :: txc
-    TREAL, dimension(:, :), allocatable :: wrk1d, wrk2d, bcs_hb, bcs_ht
-    TREAL, dimension(:), allocatable :: wrk3d!, cx, cy, cz
+    real(wp), dimension(:, :), allocatable :: bcs_hb, bcs_ht
+    real(wp), dimension(:, :, :), pointer :: a, b, c, d, e, f
+    real(wp) mean, delta, lambda
+    real(wp) SIMPSON_NU
 
-    TINTEGER i, j, k, bcs(2, 2) !, ibc_x(4), ibc_y(4), ibc_z(4)
-    TINTEGER itype
-    TREAL dummy, error, lambda!, falpha
+    integer(wi) i, j, k, ig, bcs(2, 2)
+    integer(wi) type_of_operator, type_of_problem
 
-    integer, parameter :: i0  = 0
-    
 ! ###################################################################
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
 
     isize_wrk3d = isize_txc_field
+    inb_txc = 8
 
-! -------------------------------------------------------------------
-! Allocating memory space
-! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
+    call TLAB_ALLOCATE(__FILE__)
 
-    allocate (wrk1d(isize_wrk1d, inb_wrk1d + 1))
-    allocate (wrk2d(isize_wrk2d, inb_wrk2d))
     allocate (bcs_ht(imax, kmax), bcs_hb(imax, kmax))
-    allocate (a(imax, jmax, kmax), b(imax, jmax, kmax), c(imax, jmax, kmax))
-    allocate (d(imax, jmax, kmax), e(imax, jmax, kmax), f(imax, jmax, kmax))
-    allocate (txc(isize_txc_field, 2), wrk3d(isize_wrk3d))
-    ! ALLOCATE(cx(6*imax),cy(6*jmax),cz(6*kmax_total))
+
+    a(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
+    b(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 4)
+    c(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 5)
+    d(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 6)
+    e(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 7)
+    f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
-
-! Filter routines have been updated.
-! falpha = 0.49d0
-    ! CALL FLT_C4_INI(imax_total, i1bc, falpha, dx, cx)
-    ! CALL FLT_C4_INI(jmax_total, j1bc, falpha, dy, cy)
-    ! CALL FLT_C4_INI(kmax_total, k1bc, falpha, dz, cz)
-! BCs for the filters (see routine FILTER)
-    ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 0; ibc_x(4) = 0
-    ! ibc_y(1) = 0; ibc_y(2) = j1bc; ibc_y(3) = 0; ibc_y(4) = 0
-    ! ibc_z(1) = 1; ibc_z(2) = k1bc; ibc_z(3) = 0; ibc_z(4) = 0
 
 ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
@@ -78,105 +70,147 @@ program VPOISSON
 
     call OPR_FOURIER_INITIALIZE()
 
-! ###################################################################
-! Define forcing term
-! ###################################################################
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+    do ig = 1, 3
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
+    end do
 
-! remove 2\Delta x wave
-!  CALL OPR_FILTER(i1,imax,jmax,kmax, ibc_x,ibc_y,ibc_z, i1, a, cx,cy,cz,wrk1d,wrk2d,wrk3d)
-! -------------------------------------------------------------------
-    ! DO j = 1,jmax
-    !    mean = AVG_IK(imax,jmax,kmax, j, a, dx,dz, area)
-    !    a(:,j,:) = a(:,j,:) - mean
-    ! ENDDO
-! -------------------------------------------------------------------
-! DC level at lower boundary set to zero
-    ! mean = AVG_IK(imax,jmax,kmax, i1, a, dx,dz, area)
-    ! a = a - mean
-
-! ###################################################################
-    f = a; bcs_hb = C_0_R; bcs_ht = C_0_R
-    itype = 1
-
-    if (itype == 1) then
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, c)
-        e = c ! save dp/dy
-    else if (itype == 2) then
+    ! type_of_operator = 1   ! Poisson routines
+    type_of_operator = 2   ! Helmholtz routines
+    if (type_of_operator == 2) then
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
-        ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, 0, lambda,&
-        !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
-        call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, &
-                                 a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
     end if
 
+    type_of_problem = 1     ! the forcing in the rhs is given
+    ! type_of_problem = 2     ! the field in the lhs is given
+
+    select case (type_of_problem)
+! ###################################################################
+    case (1) ! The input field f is used as rhs in lap a = f and we solve for a
+
+        call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, f)
+
+        a = f
+        bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+        ! For Neumann conditions, we need to satisfy the compatibility constraint dpdy_top-dpdy_bottom=int f
+        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb, g(1)%jac, g(3)%jac, area)
+        ! call AVG_IK_V(imax, jmax, kmax, jmax, a, g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+        ! delta = mean + SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
+        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht, g(1)%jac, g(3)%jac, area)
+        ! bcs_ht = bcs_ht - mean + delta
+
+        if (type_of_operator == 1) then
+            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+
+        else if (type_of_operator == 2) then
+            ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+
+        end if
+
+        ! -------------------------------------------------------------------
+        ! With the calculated a, we calculate the b = lap a
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, txc(:,1))
+
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, e)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, e, txc(:,1))
+        b = b + e
+
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, e)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, e, txc(:,1))
+        b = b + e
+
+        if (type_of_operator == 2) then
+            b = b + lambda*a
+        end if
+
+        ! -------------------------------------------------------------------
+        call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
+        call check(f, b, txc(:, 1), 'field.dif')
+
+! ###################################################################
+    case (2) ! The input field a is used to construct the forcing term as lap a = f
+        call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+
+        ! remove 2\Delta x wave
+!  CALL OPR_FILTER(i1,imax,jmax,kmax, ibc_x,ibc_y,ibc_z, i1, a, cx,cy,cz,wrk1d,wrk2d,wrk3d)
 ! -------------------------------------------------------------------
-    ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c)
-    ! CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), c, b)
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+        ! DO j = 1,jmax
+        !    mean = AVG_IK(imax,jmax,kmax, j, a, dx,dz, area)
+        !    a(:,j,:) = a(:,j,:) - mean
+        ! ENDDO
 
-    ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), a, c)
-    ! CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), c, d)
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
-    b = b + d
+        ! DC level at lower boundary set to zero
+        mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
+        a = a - mean
 
-    ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), a, c)
-    ! CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), c, d)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
-    b = b + d
-!  bcs_hb(:,:) = c(:,1,   :); bcs_ht(:,:) = c(:,jmax,:) ! Neumann BCs
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, txc(:,1))
 
-! ###################################################################
-    if (itype == 2) then
-        b = b + lambda*a
-    end if
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, txc(:,1))
+        b = b + d
 
-! ###################################################################
-! solve poisson eqn
-! ###################################################################
-    ! CALL OPR_POISSON_FXZ(.TRUE., imax,jmax,kmax, g, 3, &
-    ! b,c, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
-    call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, txc(:,1))
+        b = b + d
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-! -------------------------------------------------------------------
-    a = f ! rhs
-    d = e ! dp/dy
+        !  bcs_hb(:,:) = c(:,1,   :); bcs_ht(:,:) = c(:,jmax,:) ! Neumann BCs
 
-! ###################################################################
-! Error
-! ###################################################################
-    error = C_0_R
-    dummy = C_0_R
-    do k = 1, kmax
-!     DO j = 1,jmax
-        do j = 2, jmax - 1
-            do i = 1, imax
-                e(i, j, k) = b(i, j, k) - a(i, j, k)
-                error = error + e(i, j, k)*e(i, j, k)
-                dummy = dummy + a(i, j, k)*a(i, j, k)
-            end do
-        end do
-    end do
-    write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
-    call IO_WRITE_FIELDS('field.dif', IO_SCAL, imax, jmax, kmax, 1, e)
+        if (type_of_operator == 1) then
+            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+        else if (type_of_operator == 2) then
+            ! CALL OPR_HELMHOLTZ_FXZ(imax,jmax,kmax, g, 0, lambda,&
+            !      a, txc(1,1),txc(1,2), bcs_hb,bcs_ht)
+            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, &
+                                     b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+        end if
 
-! first derivative
-    error = C_0_R
-    dummy = C_0_R
-    do k = 1, kmax
-!     DO j = 1,jmax
-        do j = 2, jmax - 1
-            do i = 1, imax
-                e(i, j, k) = d(i, j, k) - c(i, j, k)
-                error = error + e(i, j, k)*e(i, j, k)
-                dummy = dummy + c(i, j, k)*c(i, j, k)
-            end do
-        end do
-    end do
-    write (*, *) 'Relative error in df/dy ....: ', sqrt(error)/sqrt(dummy)
-!  CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, 1, e)
+        ! -------------------------------------------------------------------
+        call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
+        call check(a, b, txc(:, 1), 'field.dif')
+
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        call check(c, d, txc(:, 1))
+
+    end select
 
     stop
+
+! ###################################################################
+contains
+    subroutine check(a1, a2, dif, name)
+        real(wp), intent(in) :: a1(imax, jmax, kmax), a2(imax, jmax, kmax)
+        real(wp), intent(inout) :: dif(imax, jmax, kmax)
+        character(len=*), optional :: name
+
+        real(wp) dummy, error
+
+        error = 0.0_wp
+        dummy = 0.0_wp
+        do k = 1, kmax
+            do j = 1, jmax
+                ! do j = 2, jmax - 1
+                do i = 1, imax
+                    dif(i, j, k) = a2(i, j, k) - a1(i, j, k)
+                    error = error + dif(i, j, k)*dif(i, j, k)
+                    dummy = dummy + a1(i, j, k)*a1(i, j, k)
+                end do
+            end do
+        end do
+        write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+        if (present(name)) then
+            call IO_WRITE_FIELDS(name, IO_SCAL, imax, jmax, kmax, 1, dif)
+        end if
+
+        return
+    end subroutine check
+
 end program VPOISSON

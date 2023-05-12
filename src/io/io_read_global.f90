@@ -1053,8 +1053,8 @@ subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
     else if (trim(adjustl(sRes)) == 'explicit6') then; variable(:)%type = DNS_FILTER_6E
     else if (trim(adjustl(sRes)) == 'explicit4') then; variable(:)%type = DNS_FILTER_4E
         variable(:)%inb_filter = 5
-    else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
-        variable(:)%inb_filter = 5
+    ! else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
+    !     variable(:)%inb_filter = 5
     else if (trim(adjustl(sRes)) == 'tophat') then; variable(:)%type = DNS_FILTER_TOPHAT
         variable(:)%parameters(1) = 2    ! default filter size (in grid-step units)
         default = 'free'
