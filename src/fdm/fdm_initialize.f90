@@ -21,7 +21,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     real(wp), intent(inout) :: wrk1d(g%size, 5)
 
     target x
-    
+
 ! -------------------------------------------------------------------
     integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
     real(wp) r04, r28, r24, r48, r25, r60, dummy
@@ -133,8 +133,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             call FDM_C2N4_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            ! CALL FDM_C2N6_LHS( nx,    i0,i0, wrk1d(1,4), wrk1d(1,1),wrk1d(1,2),wrk1d(1,3))
-            ! CALL FDM_C2N6_RHS( nx,i1, i0,i0,             x, g%jac(1,2))
+            ! call FDM_C2N6_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            ! call FDM_C2N6_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
             call FDM_C2N6H_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
             call FDM_C2N6H_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
@@ -193,7 +193,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
     else
         do i = 0, 3
-            ibc_min = MOD(i, 2)
+            ibc_min = mod(i, 2)
             ibc_max = i/2
             ip = i*5
             select case (g%mode_fdm)
@@ -240,7 +240,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             call FDM_C2N4P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)  ! Direct = Jacobian because uniform grid
-            ! CALL FDM_C2N6P_LHS(nx, g%jac, g%lu2(1,1),g%lu2(1,2),g%lu2(1,3))
+            ! call FDM_C2N6P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
             call FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
         case (FDM_COM8_JACOBIAN)                   ! Not yet developed
@@ -256,7 +256,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
     else
         do i = 0, 3
-            ibc_min = MOD(i, 2)
+            ibc_min = mod(i, 2)
             ibc_max = i/2
             ip = i*3
             select case (g%mode_fdm)
@@ -265,7 +265,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
                 call FDM_C2N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                ! CALL FDM_C2N6_LHS(nx, ibc_min,ibc_max, g%jac, g%lu2(1,ip+1),g%lu2(1,ip+2),g%lu2(1,ip+3))
+                ! call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
                 call FDM_C2N6H_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
 
             case (FDM_COM8_JACOBIAN) ! Not yet implemented
@@ -374,7 +374,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         do i = 1, nx ! Define wavenumbers
             if (i <= nx/2 + 1) then
                 wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
-            else 
+            else
                 wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
             end if
         end do
@@ -439,8 +439,13 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         select case (g%mode_fdm)
 
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            g%mwn(:, 2) = (r24*(1 - cos(wrk1d(:, 1))) + 1.5_wp*(1.0_wp - cos(2.0_wp*wrk1d(:, 1)))) &
+        case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+            g%mwn(:, 2) = (r24*(1.0_wp - cos(wrk1d(:, 1))) + 1.5_wp*(1.0_wp - cos(2.0_wp*wrk1d(:, 1)))) &
+                          /(11.0_wp + 4.0_wp*cos(wrk1d(:, 1)))
+
+        case (FDM_COM6_JACOBIAN)
+            ! This is for the normal C2N6P and for C2N6P but not for C2N6HP !!!
+            g%mwn(:, 2) = (r24*(1.0_wp - cos(wrk1d(:, 1))) + 1.5_wp*(1.0_wp - cos(2.0_wp*wrk1d(:, 1)))) &
                           /(11.0_wp + 4.0_wp*cos(wrk1d(:, 1)))
 
         case (FDM_COM8_JACOBIAN) ! Not yet implemented

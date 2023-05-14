@@ -314,7 +314,7 @@ contains
         real(wp), intent(inout) :: a(nx, ny, nz)                       ! Forcing term, and solution field p
         real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
         real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
-        real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)      ! Boundary-condition fields
+        real(wp), intent(inout) :: bcs_hb(nx, nz), bcs_ht(nx, nz)      ! Boundary-condition fields
 
         target tmp1, tmp2
 
@@ -323,11 +323,6 @@ contains
         integer, parameter :: i1 = 1, i2 = 2
 
         ! #######################################################################
-        if (ibc /= BCS_DD) then ! So far only implemented for Dirichlet BCs
-            call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
 
@@ -381,10 +376,9 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                ! if (ibc == 0) then ! Dirichlet BCs
                 select case (g(2)%mode_fdm)
                 case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                    call INT_C2N6_LHS_E(ny, g(2)%jac, lambda, &
+                    call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
@@ -405,7 +399,14 @@ contains
 
                 c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
 
-                ! end if
+                !   Corrections to the BCS_DD to account for Neumann
+                if (any([BCS_ND, BCS_NN] == ibc)) then
+                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                end if
+
+                if (any([BCS_DN, BCS_NN] == ibc)) then
+                    c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6)
+                end if
 
                 ! Rearrange in memory and normalize
                 do j = 1, ny
@@ -468,7 +469,7 @@ contains
 
         call c_f_pointer(c_loc(tmp1), c_tmp1_n, shape=[isize_txc_dimz/2, nz, nfield])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(p_wrk1d(1,9)), aux_n, shape=[nfield, ny, 2]) ! lines of forcing and solution 
+        call c_f_pointer(c_loc(p_wrk1d(1, 9)), aux_n, shape=[nfield, ny, 2]) ! lines of forcing and solution
 
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
@@ -531,7 +532,7 @@ contains
                 ! if (ibc == 0) then ! Dirichlet BCs
                 select case (g(2)%mode_fdm)
                 case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                    call INT_C2N6_LHS_E(ny, g(2)%jac, lambda, &
+                    call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2N6_RHS(ny, i2*nfield, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, ip_sol))
 
@@ -548,12 +549,12 @@ contains
                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
 
-                call PENTADSS(ny - 2, i2*nfield, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, ip_sol))
+     call PENTADSS(ny - 2, i2*nfield, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, ip_sol))
 
                 do ifield = 1, nfield
                     ! BCa
                     aux_n(ifield, :, 2) = aux_n(ifield, :, 2) &
-                        + bcs_n(ifield, 1)*p_wrk1d(:, 6) + bcs_n(ifield, 2)*p_wrk1d(:, 7)
+                                          + bcs_n(ifield, 1)*p_wrk1d(:, 6) + bcs_n(ifield, 2)*p_wrk1d(:, 7)
 
                     ! Rearrange in memory and normalize
                     do j = 1, ny
