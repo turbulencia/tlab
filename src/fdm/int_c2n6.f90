@@ -93,27 +93,54 @@ subroutine INT_C2N6_LHS_E(imax, dx, ibc, lambda2, a, b, c, d, e, f1, f2)
     f2(imax - 1) = -1.0_wp
     f2(imax) = 1.0_wp ! This element is simply the solution at imax of s(+)
 
+    ! ! -------------------------------------------------------------------
+    ! ! Corrections to the BCS_DD to account for Neumann using second-order fdm for derivative at the boundary
+    ! if (any([BCS_ND, BCS_NN] == ibc)) then
+    !     c(1) = 4.0_wp/3.0_wp                                ! To calculate p_1 in terms of p_2, p_3
+    !     d(1) = -1.0_wp/3.0_wp
+    !     e(1) = 0.0_wp
+    !     c(2) = c(2) + c(1)                                  ! in reduced matrix
+    !     d(2) = d(2) + d(1)
+    !     b(3) = b(3) + c(1)*3.0_wp/44.0_wp
+    !     c(3) = c(3) + d(1)*3.0_wp/44.0_wp
+    !     f1(:) = -2.0_wp/3.0_wp*dx(1, 1)*f1(:)               ! for particular solutions
+    ! end if
+    ! if (any([BCS_DN, BCS_NN] == ibc)) then
+    !     a(imax) = 0.0_wp                                    ! To calculate p_n in terms of p_{n-1}, p_{n-2}
+    !     b(imax) = -1.0_wp/3.0_wp
+    !     c(imax) = 4.0_wp/3.0_wp
+    !     b(imax - 1) = b(imax - 1) + b(imax)                 ! in reduced matrix
+    !     c(imax - 1) = c(imax - 1) + c(imax)
+    !     c(imax - 2) = c(imax - 2) + b(imax)*3.0_wp/44.0_wp
+    !     d(imax - 2) = d(imax - 2) + c(imax)*3.0_wp/44.0_wp
+    !     f2(:) = 2.0_wp/3.0_wp*dx(imax, 1)*f2(:)             ! for particular solutions
+    ! end if
+
     ! -------------------------------------------------------------------
-!   Corrections to the BCS_DD to account for Neumann using second-order fdm for derivative at the boundary
+    ! Corrections to the BCS_DD to account for Neumann using third-order fdm for derivative at the boundary
     if (any([BCS_ND, BCS_NN] == ibc)) then
-        c(1) = 4.0_wp/3.0_wp                                ! To calculate p_1 in terms of p_2, p_3
-        d(1) = -1.0_wp/3.0_wp
-        e(1) = 0.0_wp
-        c(2) = c(2) + 4.0_wp/3.0_wp                         ! in reduced matrix
-        d(2) = d(2) - 1.0_wp/3.0_wp
-        b(3) = b(3) + 1.0_wp/11.0_wp
-        c(3) = c(3) - 1.0_wp/44.0_wp
-        f1(:) = -2.0_wp/3.0_wp*dx(1, 1)*f1(:)               ! for particular solutions
+        c(1) = 18.0_wp/11.0_wp                                  ! To calculate p_1 in terms of p_2, p_3, p_4
+        d(1) = -9.0_wp/11.0_wp
+        e(1) = 2.0_wp/11.0_wp
+        c(2) = c(2) + c(1)                                      ! in reduced matrix
+        d(2) = d(2) + d(1)
+        e(2) = e(2) + e(1)
+        b(3) = b(3) + c(1)*3.0_wp/44.0_wp
+        c(3) = c(3) + d(1)*3.0_wp/44.0_wp
+        d(3) = d(3) + e(1)*3.0_wp/44.0_wp
+        f1(:) = -6.0_wp/11.0_wp*dx(1, 1)*f1(:)                  ! for particular solutions
     end if
     if (any([BCS_DN, BCS_NN] == ibc)) then
-        c(imax - 2) = c(imax - 2) - 1.0_wp/44.0_wp          ! in reduced matrix
-        d(imax - 2) = d(imax - 2) + 1.0_wp/11.0_wp
-        b(imax - 1) = b(imax - 1) - 1.0_wp/3.0_wp
-        c(imax - 1) = c(imax - 1) + 4.0_wp/3.0_wp
-        f2(:) = 2.0_wp/3.0_wp*dx(imax, 1)*f2(:)             ! for particular solutions
-        a(imax) = 0.0_wp
-        b(imax) = -1.0_wp/3.0_wp                            ! To calculate p_n in terms of p_{n-1}, p_{n-2}
-        c(imax) = 4.0_wp/3.0_wp
+        a(imax) = 2.0_wp/11.0_wp                                ! To calculate p_n in terms of p_{n-1}, p_{n-2}
+        b(imax) = -9.0_wp/11.0_wp
+        c(imax) = 18.0_wp/11.0_wp
+        a(imax - 1) = a(imax - 1) + a(imax)                     ! in reduced matrix
+        b(imax - 1) = b(imax - 1) + b(imax)
+        c(imax - 1) = c(imax - 1) + c(imax)
+        b(imax - 2) = b(imax - 2) + a(imax)*3.0_wp/44.0_wp
+        c(imax - 2) = c(imax - 2) + b(imax)*3.0_wp/44.0_wp
+        d(imax - 2) = d(imax - 2) + c(imax)*3.0_wp/44.0_wp
+        f2(:) = 6.0_wp/11.0_wp*dx(imax, 1)*f2(:)                ! for particular solutions
     end if
 
     return

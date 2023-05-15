@@ -75,8 +75,8 @@ program VPOISSON
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
     end do
 
-    ! type_of_operator = 1   ! Poisson routines
-    type_of_operator = 2   ! Helmholtz routines
+    type_of_operator = 1   ! Poisson routines
+    ! type_of_operator = 2   ! Helmholtz routines
     if (type_of_operator == 2) then
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
@@ -104,6 +104,7 @@ program VPOISSON
 
         if (type_of_operator == 1) then
             call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
             ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
@@ -149,8 +150,8 @@ program VPOISSON
         ! ENDDO
 
         ! DC level at lower boundary set to zero
-        ! mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
-        ! a = a - mean
+        mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
+        a = a - mean
 
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
@@ -178,18 +179,22 @@ program VPOISSON
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
         case (BCS_ND)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
-            bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
+            ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
+            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
         case (BCS_NN)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
-            bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
+            ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
+            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
         end select
 
         if (type_of_operator == 1) then
-            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
             ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
             call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
 
         end if
 
@@ -197,7 +202,6 @@ program VPOISSON
         call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
         call check(a, b, txc(:, 1), 'field.dif')
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
         call check(c, d, txc(:, 1))
 
     end select

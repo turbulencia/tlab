@@ -11,6 +11,7 @@ module OPR_ELLIPTIC
     use TLAB_PROCS
     use OPR_FOURIER
     use OPR_FDE
+    use OPR_PARTIAL
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -25,6 +26,7 @@ module OPR_ELLIPTIC
     real(wp) lambda, norm
 
     public :: OPR_POISSON_FXZ
+    public :: OPR_POISSON_FXZ_D         ! Using direct formulation of FDM schemes
     public :: OPR_HELMHOLTZ_FXZ
     public :: OPR_HELMHOLTZ_FXZ_D       ! Using direct formulation of FDM schemes
     public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields
@@ -181,11 +183,166 @@ contains
     end subroutine OPR_POISSON_FXZ
 
 !########################################################################
+!########################################################################
+! Same, but using the direct mode of FDM
+! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
+! and the last ones for the forcing and solution. The reason is the routine after this one.
+    subroutine OPR_POISSON_FXZ_D(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+        integer(wi), intent(in) :: nx, ny, nz
+        integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
+        !                                                   1, for Neumann   & Dirichlet
+        !                                                   2, for Dirichlet & Neumann
+        !                                                   3, for Neumann   & Neumann
+        type(grid_dt), intent(in) :: g(3)
+        real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
+        real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
+        real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
+        real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)      ! Boundary-condition fields
+        real(wp), intent(out), optional :: dpdy(nx, ny, nz)           ! Vertical derivative of solution
+
+        target tmp1, tmp2
+
+        ! -----------------------------------------------------------------------
+        integer(wi) i_sing(2), k_sing(2)    ! singular global modes
+        integer ibc_loc, bcs_p(2,2)
+        integer, parameter :: i1 = 1, i2 = 2
+
+        ! #######################################################################
+        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+
+        norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
+
+        isize_line = nx/2 + 1
+
+        if (.not. stagger_on) then
+            i_sing = [1, g(1)%size/2 + 1]
+            k_sing = [1, g(3)%size/2 + 1]
+        else                    ! In case of staggering only one singular mode + different modified wavenumbers
+            i_sing = [1, 1]
+            k_sing = [1, 1]
+        end if
+
+        ! #######################################################################
+        ! Fourier transform of forcing term; output of this section in array tmp1
+        ! #######################################################################
+        if (g(3)%size > 1) then
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2)
+            call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
+        else
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp1)
+        end if
+
+        ! ###################################################################
+        ! Solve FDE \hat{p}''-\lambda \hat{p} = \hat{f}
+        ! ###################################################################
+        do k = 1, nz
+#ifdef USE_MPI
+            kglobal = k + ims_offset_k
+#else
+            kglobal = k
+#endif
+
+            do i = 1, isize_line
+#ifdef USE_MPI
+                iglobal = i + ims_offset_i/2
+#else
+                iglobal = i
+#endif
+
+                ! Define \lambda based on modified wavenumbers (real)
+                if (g(3)%size > 1) then
+                    lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                else
+                    lambda = g(1)%mwn(iglobal, 2)
+                end if
+
+                ! forcing term in c_wrk1d(:,5), i.e. p_wrk1d(:,9), solution will be in c_wrk1d(:,6), i.e., p_wrk1d(:,11)
+                do j = 1, ny
+                    ip = (j - 1)*isize_line + i; c_wrk1d(j, 5) = c_tmp1(ip, k)
+                end do
+
+                ! BCs
+                j = ny + 1; ip = (j - 1)*isize_line + i; bcs(1) = c_tmp1(ip, k) ! Dirichlet or Neumann
+                j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
+
+                ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
+                if (any(i_sing == iglobal) .and. any(k_sing == kglobal) .and. ibc == BCS_NN) then
+                    ibc_loc = BCS_DN
+                    bcs(1) = 0.0_wp
+                else
+                    ibc_loc = ibc
+                end if
+
+                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                select case (g(2)%mode_fdm)
+                case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
+                    call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
+                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+                    call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
+
+                case (FDM_COM6_DIRECT)
+                    p_wrk1d(:, 1:7) = 0.0_wp
+                    call INT_C2N6N_LHS_E(ny, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
+                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+                    call INT_C2N6N_RHS(ny, i2, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, 11))
+
+                end select
+
+                call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
+
+                call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
+                call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
+
+                call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
+
+                c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
+
+                !   Corrections to the BCS_DD to account for Neumann
+                if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+             c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                end if
+
+                if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                    c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6)
+                end if
+
+                ! Rearrange in memory and normalize
+                do j = 1, ny
+                    ip = (j - 1)*isize_line + i
+                    c_tmp1(ip, k) = c_wrk1d(j, 2)*norm ! solution
+                end do
+
+            end do
+        end do
+
+        ! ###################################################################
+        ! Fourier field p (based on array tmp1)
+        ! ###################################################################
+        if (g(3)%size > 1) then
+            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
+        else
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, p)    ! tmp2 might be overwritten
+        end if
+
+        ! Fourier derivatives (based on array tmp2)
+        if (present(dpdy)) then
+            bcs_p = 0
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs_p, g(2), p, dpdy)
+        end if
+
+        nullify (c_tmp1, c_tmp2)
+
+        return
+    end subroutine OPR_POISSON_FXZ_D
+
+!########################################################################
 !#
-!# Solve Lap a + \alpha a = f using Fourier in xOz planes, to rewritte
+!# Solve Lap a + lpha a = f using Fourier in xOz planes, to rewritte
 !# the problem as
 !#
-!#      \hat{a}''-(\lambda-\alpha) \hat{a} = \hat{f}
+!#      \hat{a}''-(\lambda-lpha) \hat{a} = \hat{f}
 !#
 !# where \lambda = kx^2+kz^2
 !#
@@ -228,7 +385,7 @@ contains
         end if
 
         ! ###################################################################
-        ! Solve FDE (\hat{p}')'-(\lambda+\alpha) \hat{p} = \hat{f}
+        ! Solve FDE (\hat{p}')'-(\lambda+lpha) \hat{p} = \hat{f}
         ! ###################################################################
         do k = 1, nz
 #ifdef USE_MPI
@@ -341,7 +498,7 @@ contains
         end if
 
         ! ###################################################################
-        ! Solve FDE \hat{p}''-(\lambda+\alpha) \hat{p} = \hat{f}
+        ! Solve FDE \hat{p}''-(\lambda+lpha) \hat{p} = \hat{f}
         ! ###################################################################
         do k = 1, nz
 #ifdef USE_MPI
@@ -401,7 +558,7 @@ contains
 
                 !   Corrections to the BCS_DD to account for Neumann
                 if (any([BCS_ND, BCS_NN] == ibc)) then
-                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+             c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
                 end if
 
                 if (any([BCS_DN, BCS_NN] == ibc)) then
@@ -490,7 +647,7 @@ contains
         end do
 
         ! ###################################################################
-        ! Solve FDE \hat{p}''-(\lambda+\alpha) \hat{p} = \hat{f}
+        ! Solve FDE \hat{p}''-(\lambda+lpha) \hat{p} = \hat{f}
         ! ###################################################################
         do k = 1, nz
 #ifdef USE_MPI
