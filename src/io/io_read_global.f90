@@ -166,6 +166,15 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    call SCANINICHAR(bakfile, inifile, 'Main', 'TermPressure', 'compactjacobian6', sRes)
+    if (trim(adjustl(sRes)) == 'compactjacobian6') then; ipressure = FDM_COM6_JACOBIAN
+    else if (trim(adjustl(sRes)) == 'compactdirect4') then; ipressure = FDM_COM4_DIRECT
+    else if (trim(adjustl(sRes)) == 'compactdirect6') then; ipressure = FDM_COM6_DIRECT
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermPressure option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermDiffusion', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; idiffusion = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'divergence') then; idiffusion = EQNS_DIVERGENCE
@@ -639,7 +648,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform '//g(ig)%name(1:1)//' grid')
             call TLAB_STOP(DNS_ERROR_UNIFORMX)
         end if
-        
+
         call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
         if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
         else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
@@ -647,7 +656,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic '//g(ig)%name(1:1)//' grid')
             call TLAB_STOP(DNS_ERROR_IBC)
         end if
-    
+
         ! Consistency check
         if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
@@ -1053,8 +1062,8 @@ subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
     else if (trim(adjustl(sRes)) == 'explicit6') then; variable(:)%type = DNS_FILTER_6E
     else if (trim(adjustl(sRes)) == 'explicit4') then; variable(:)%type = DNS_FILTER_4E
         variable(:)%inb_filter = 5
-    ! else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
-    !     variable(:)%inb_filter = 5
+        ! else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
+        !     variable(:)%inb_filter = 5
     else if (trim(adjustl(sRes)) == 'tophat') then; variable(:)%type = DNS_FILTER_TOPHAT
         variable(:)%parameters(1) = 2    ! default filter size (in grid-step units)
         default = 'free'

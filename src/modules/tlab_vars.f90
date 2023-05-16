@@ -21,6 +21,7 @@ module TLAB_VARS
     integer :: imode_eqns               ! set of equations to be solved
     integer :: iadvection, iviscous, idiffusion,  itransport ! formulation
     integer :: imode_fdm                ! finite-difference method for spatial operators
+    integer :: ipressure                ! inite-difference method for pressure-Poisson equation
 
     logical :: flow_on = .true.         ! calculate flow parts of the code
     logical :: scal_on = .true.         ! calculate scal parts of the code

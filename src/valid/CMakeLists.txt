@@ -4,9 +4,13 @@ FILE(GLOB sourcefiles "efilter/*.f90")
 add_executable(vefilter.x efilter/vefilter.f90)
 target_link_libraries(vefilter.x operators filters ibm fdm ${LEVEL1_LIBS} ${LIBS})
 
-FILE(GLOB sourcefiles "partial/*.f90")
+FILE(GLOB sourcefiles "partial/vpartial.f90")
 add_executable(vpartial.x ${sourcefiles})
-target_link_libraries(vpartial.x operators ibm io fdm ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(vpartial.x operators ibm io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})
+
+FILE(GLOB sourcefiles "partial/vpartial3d.f90")
+add_executable(vpartial3d.x ${sourcefiles})
+target_link_libraries(vpartial3d.x operators ibm io thermodynamics fdm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "integral/*.f90")
 add_executable(vintegral.x ${sourcefiles})

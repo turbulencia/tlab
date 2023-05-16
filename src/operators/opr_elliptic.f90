@@ -24,7 +24,9 @@ module OPR_ELLIPTIC
     complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) lambda, norm
+    real(wp), allocatable :: lhs(:, :), rhs(:, :)
 
+    public :: OPR_ELLIPTIC_INITIALIZE
     public :: OPR_POISSON_FXZ
     public :: OPR_POISSON_FXZ_D         ! Using direct formulation of FDM schemes
     public :: OPR_HELMHOLTZ_FXZ
@@ -32,6 +34,25 @@ module OPR_ELLIPTIC
     public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields
 
 contains
+! #######################################################################
+! #######################################################################
+    subroutine OPR_ELLIPTIC_INITIALIZE()
+        use TLAB_VARS, only: g, ipressure
+
+        select case (ipressure)
+        case (FDM_COM4_DIRECT)
+            allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
+            call FDM_C2N4ND_INITIALIZE(g(2)%size, g(2)%nodes, lhs, rhs)
+
+        case default !(FDM_COM6_DIRECT) ! I need it for helmholtz
+            allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
+            call FDM_C2N6ND_INITIALIZE(g(2)%size, g(2)%nodes, lhs, rhs)
+
+        end select
+
+        return
+    end subroutine OPR_ELLIPTIC_INITIALIZE
+
 !########################################################################
 !#
 !# Solve Lap p = f using Fourier in xOz planes, to rewritte the problem as
@@ -204,7 +225,7 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) i_sing(2), k_sing(2)    ! singular global modes
-        integer ibc_loc, bcs_p(2,2)
+        integer(wi) ibc_loc, bcs_p(2, 2)
         integer, parameter :: i1 = 1, i2 = 2
 
         ! #######################################################################
@@ -269,25 +290,24 @@ contains
                 ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
                 if (any(i_sing == iglobal) .and. any(k_sing == kglobal) .and. ibc == BCS_NN) then
                     ibc_loc = BCS_DN
-                    bcs(1) = 0.0_wp
+                    bcs(1) = (0.0_wp, 0.0_wp)
                 else
                     ibc_loc = ibc
                 end if
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                select case (g(2)%mode_fdm)
-                case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
+                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
                     call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                case (FDM_COM6_DIRECT)
+                else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2N6N_LHS_E(ny, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
+                    call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6N_RHS(ny, i2, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, 11))
+                    call INT_C2N6ND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                end select
+                end if
 
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
@@ -310,7 +330,7 @@ contains
                 ! Rearrange in memory and normalize
                 do j = 1, ny
                     ip = (j - 1)*isize_line + i
-                    c_tmp1(ip, k) = c_wrk1d(j, 2)*norm ! solution
+                    c_tmp1(ip, k) = c_wrk1d(j, 6)*norm ! solution
                 end do
 
             end do
@@ -533,19 +553,21 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                select case (g(2)%mode_fdm)
-                case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
+                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
                     call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                case (FDM_COM6_DIRECT)
+                else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2N6N_LHS_E(ny, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
+                    call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6N_RHS(ny, i2, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, 11))
+                    call INT_C2N6ND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
+                    ! call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
+                    !         p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+                    ! call INT_C2N6ND_RHS(ny, i2, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                end select
+                end if
 
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
@@ -687,19 +709,21 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 ! if (ibc == 0) then ! Dirichlet BCs
-                select case (g(2)%mode_fdm)
-                case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
+                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
                     call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2N6_RHS(ny, i2*nfield, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, ip_sol))
 
-                case (FDM_COM6_DIRECT)
+                else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2N6N_LHS_E(ny, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
+                    call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6N_RHS(ny, i2*nfield, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, ip_sol))
+                    call INT_C2N6ND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
+                    ! call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
+                    !         p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+                    ! call INT_C2N6ND_RHS(ny, i2*nfield, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, ip_sol))
 
-                end select
+                end if
 
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 

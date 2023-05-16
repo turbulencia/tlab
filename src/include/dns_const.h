@@ -73,6 +73,7 @@
 #define FDM_COM8_JACOBIAN     8
 
 #define FDM_COM6_DIRECT      16
+#define FDM_COM4_DIRECT      17
 
 ! Operators
 #define OPR_P1                1

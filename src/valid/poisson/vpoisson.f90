@@ -27,8 +27,8 @@ program VPOISSON
 
     real(wp), dimension(:, :), allocatable :: bcs_hb, bcs_ht
     real(wp), dimension(:, :, :), pointer :: a, b, c, d, e, f
-    real(wp) mean, delta, lambda
-    real(wp) SIMPSON_NU
+    real(wp) mean, lambda
+    ! real(wp) SIMPSON_NU, delta
 
     integer(wi) i, j, k, ig, bcs(2, 2)
     integer(wi) type_of_operator, type_of_problem
@@ -57,6 +57,8 @@ program VPOISSON
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call OPR_ELLIPTIC_INITIALIZE()
 
 ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
@@ -153,18 +155,18 @@ program VPOISSON
         mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
         a = a - mean
 
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
 
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
         b = b + d
 
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
         b = b + d
 
         if (type_of_operator == 2) then
@@ -177,14 +179,16 @@ program VPOISSON
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
         case (BCS_DN)
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
+            ! bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         case (BCS_ND)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
             ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
+            ! bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
         case (BCS_NN)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
-            ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
+            bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
             bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
+            bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         end select
 
         if (type_of_operator == 1) then
