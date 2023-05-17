@@ -138,7 +138,7 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
 
 #endif
 
-    call PARTICLE_LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
+    call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
 
     return
 end subroutine IO_READ_PARTICLE
@@ -264,32 +264,3 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
     return
 end subroutine IO_WRITE_PARTICLE
-
-!#######################################################################
-!#######################################################################
-subroutine PARTICLE_LOCATE_Y(pmax, y_part, j_part, jmax, y_grid)
-    use TLAB_CONSTANTS, only: wp, wi
-    implicit none
-
-    integer(wi), intent(in)  :: pmax, jmax
-    real(wp),    intent(in)  :: y_part(pmax)
-    integer(wi), intent(out) :: j_part(pmax)
-    real(wp),    intent(in)  :: y_grid(jmax)
-
-    integer(wi) ip, jm, jp, jc
-
-    do ip = 1, pmax
-        jp = jmax
-        jm = 1
-        jc = (jm + jp)/2
-        do while ((y_part(ip) - y_grid(jc))*(y_part(ip) - y_grid(jc + 1)) > 0.0_wp .and. jc > jm)
-            if (y_part(ip) < y_grid(jc)) then; jp = jc; 
-            else; jm = jc; end if
-            jc = (jm + jp)/2
-        end do
-        j_part(ip) = jc
-!     WRITE(*,'(i,3f)') ip, y_grid(jc), y_part(ip), y_grid(jc+1)
-    end do
-
-    return
-end subroutine PARTICLE_LOCATE_Y

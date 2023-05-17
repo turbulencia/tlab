@@ -410,30 +410,10 @@ subroutine DNS_READ_LOCAL(inifile)
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[SavePlanes]')
-    call TLAB_WRITE_ASCII(bakfile, '#PlanesI=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#PlanesJ=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#PlanesK=<value>')
 
-    call SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesI', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') then
-        iplanes%n = 0; iplanes%nodes = 0
-    else
-        iplanes%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, iplanes%n, iplanes%nodes)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesJ', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') then
-        jplanes%n = 0; jplanes%nodes = 0
-    else
-        jplanes%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, jplanes%n, jplanes%nodes)
-    end if
-
-    call SCANINICHAR(bakfile, inifile, 'SavePlanes', 'PlanesK', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') then
-        kplanes%n = 0; kplanes%nodes = 0
-    else
-        kplanes%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, kplanes%n, kplanes%nodes)
-    end if
+    call PLANES_READBLOCK(bakfile, inifile, 'SavePlanes', 'PlanesI', iplanes)
+    call PLANES_READBLOCK(bakfile, inifile, 'SavePlanes', 'PlanesJ', jplanes)
+    call PLANES_READBLOCK(bakfile, inifile, 'SavePlanes', 'PlanesK', kplanes)
 
 ! ###################################################################
 ! Save lines to disk

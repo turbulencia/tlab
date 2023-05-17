@@ -112,7 +112,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
         y_limits(1) = IniP%ymean - 0.5_wp*IniP%diam
         y_limits(2) = IniP%ymean + 0.5_wp*IniP%diam
-        call PARTICLE_LOCATE_Y(2, y_limits, j_limits, g(2)%size, g(2)%nodes)
+        call LOCATE_Y(2, y_limits, j_limits, g(2)%size, g(2)%nodes)
         dy_loc = g(2)%nodes(j_limits(2)) - g(2)%nodes(j_limits(1))
 
         i = 1
@@ -145,7 +145,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
     end select
 
 ! Calculating closest node below in Y direction
-    call PARTICLE_LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
+    call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
 
 !########################################################################
 ! Remaining scalar properties of the lagrangian field
