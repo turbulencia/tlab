@@ -86,7 +86,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
     ! #######################################################################
-    ! Diffcuion and advection terms
+    ! Diffusion and advection terms
     ! #######################################################################
     ! Preliminaries for IBM use
     ! (OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
