@@ -1,9 +1,9 @@
 #include "dns_const.h"
 
 module FI_VECTORCALCULUS
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: imode_ibm
+    use TLAB_VARS, only: imode_ibm, ipressure
     use IBM_VARS, only: ibm_partial
     use OPR_PARTIAL
     implicit none

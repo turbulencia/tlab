@@ -426,7 +426,7 @@ end subroutine FDM_C2N6ND_INITIALIZE
 ! #######################################################################
 ! Constructing forcing term
 ! #######################################################################
-subroutine FDM_C2N6ND_RHS(nmax, mmax, rhs, u, d)
+subroutine FDM_C2NXND_RHS(nmax, mmax, rhs, u, d)
     use TLAB_CONSTANTS
     implicit none
 
@@ -468,7 +468,7 @@ subroutine FDM_C2N6ND_RHS(nmax, mmax, rhs, u, d)
               + u(:, n)
 
     return
-end subroutine FDM_C2N6ND_RHS
+end subroutine FDM_C2NXND_RHS
 
 !########################################################################
 !# 4th-order approximation to 2nd-order derivative:

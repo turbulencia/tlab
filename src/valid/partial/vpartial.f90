@@ -151,7 +151,7 @@ program VPARTIAL
         ! Direct metrics
         ! CALL FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
         ! CALL TRIDFS(imax,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-        ! CALL FDM_C2N6ND_RHS(imax,len, wrk1d(1,4), u, du2_n3)
+        ! CALL FDM_C2NXND_RHS(imax,len, wrk1d(1,4), u, du2_n3)
         ! CALL TRIDSS(imax,len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), du2_n3)
 
 ! -------------------------------------------------------------------

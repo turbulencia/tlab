@@ -25,16 +25,15 @@
 subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
                                                 q, hq, u, v, w, h1, h2, h3, s, hs, &
                                                 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8)
-
+    use TLAB_CONSTANTS
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
-    use TLAB_VARS, only: visc, schmidt, rossby
+    use TLAB_VARS, only: visc, schmidt, rossby, ipressure
     use TLAB_VARS, only: buoyancy, coriolis
     use TLAB_VARS, only: bbackground
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
@@ -373,8 +372,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     end do
 
 ! pressure in tmp8, Oy derivative in tmp3
-    ibc = 3
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    select case (ipressure)
+    case (FDM_COM6_JACOBIAN)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    end select
 
 ! update pressure with correction from pressure solver
     do ij = 1, isize_field

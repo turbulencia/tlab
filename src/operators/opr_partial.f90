@@ -271,7 +271,7 @@ contains
                 end if
 
             case (FDM_COM6_DIRECT)
-                call FDM_C2N6ND_RHS(g%size, nlines, g%lu2(1, 4), u, result)
+                call FDM_C2NXND_RHS(g%size, nlines, g%lu2(1, 4), u, result)
 
             end select
 
