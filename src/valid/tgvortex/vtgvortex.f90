@@ -6,6 +6,7 @@ program VTGVORTEX
     use TLAB_VARS
     use IO_FIELDS
     use OPR_FOURIER
+    use OPR_ELLIPTIC
     use FI_SOURCES
 
     implicit none
@@ -42,6 +43,8 @@ program VTGVORTEX
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call OPR_ELLIPTIC_INITIALIZE()
 
 ! ###################################################################
     call OPR_FOURIER_INITIALIZE()

@@ -53,6 +53,7 @@ program SPECTRA
     use OPR_FILTERS
     use AVGS, only: AVG1V2D, COV2V2D
     use OPR_FOURIER
+    use OPR_ELLIPTIC
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
@@ -377,6 +378,8 @@ program SPECTRA
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call OPR_ELLIPTIC_INITIALIZE()
 
     call FI_BACKGROUND_INITIALIZE()
 

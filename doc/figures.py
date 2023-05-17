@@ -16,10 +16,10 @@ rc('lines', solid_capstyle='round')
 rc('savefig',    dpi=100)
 
 FiguresToPlot = []
-FiguresToPlot +=['profiles']
+# FiguresToPlot +=['profiles']
 # FiguresToPlot +=['spectra']
 # FiguresToPlot +=['wavenumber']
-# FiguresToPlot +=['stability']
+FiguresToPlot +=['stability']
 # FiguresToPlot +=['convergence']
 
 ###############################################################################
@@ -157,43 +157,43 @@ tag='stability'
 if tag in FiguresToPlot:
     fig_id = 0
 
-    def PlotBackground(w,r,s,tag,wi,wr,cfl_a,cfl_d):
+    def PlotBackground( axid, w,r,s,tag,wi,wr,cfl_a,cfl_d):
         colors = [ '#507dbc', '#86A7D3', '#bbd1ea', '#f9b5ac', '#F49690', '#ee7674' ]
 
         # plt.contourf(np.real(w),np.imag(w),r,[0., 1.],colors=['#aedcc0'],alpha=0.5)
-        plt.contourf(np.real(w),np.imag(w),s,[-0.1,-0.01,0.,0.01,0.1],colors=colors,alpha=0.75,extend='both')
+        pcm = axid.contourf(np.real(w),np.imag(w),s,[-0.1,-0.01,0.,0.01,0.1],colors=colors,alpha=0.75,extend='both')
         # plt.contour( np.real(w),np.imag(w),abs(s_masked),[1.],linewidths=[1.0],colors='w')
-        plt.colorbar(orientation='horizontal',shrink=0.6, label=tag, pad=0.05)
-        plt.contour( np.real(w),np.imag(w),r,    [1.],colors=['k'],linewidths=[1.0])
-        plt.xlabel(r'Re($\lambda\tau)$',loc='right',labelpad=-2)
-        plt.ylabel(r'Im($\lambda\tau)$',loc='bottom',labelpad=-22)
-        plt.gca().set_aspect('equal')#,'box')
-        plt.gca().spines['left'].set_position(('data', 0))
-        plt.gca().spines['bottom'].set_position(('data', 0))
-        plt.gca().spines['top'].set_visible(False)
-        plt.gca().spines['right'].set_visible(False)
-        plt.grid()
-        plt.gca().xaxis.set_ticklabels([])
-        plt.gca().yaxis.set_ticklabels([])
+        fig.colorbar(pcm, ax=axid,orientation='horizontal',shrink=0.6, label=tag, pad=0.05)
+        axid.contour( np.real(w),np.imag(w),r,    [1.],colors=['k'],linewidths=[1.0])
+        axid.set_xlabel(r'Re($\lambda\tau)$',loc='right',labelpad=-2)
+        axid.set_ylabel(r'Im($\lambda\tau)$',loc='bottom',labelpad=-22)
+        axid.set_aspect('equal')#,'box')
+        axid.spines['left'].set_position(('data', 0))
+        axid.spines['bottom'].set_position(('data', 0))
+        axid.spines['top'].set_visible(False)
+        axid.spines['right'].set_visible(False)
+        axid.grid()
+        axid.xaxis.set_ticklabels([])
+        axid.yaxis.set_ticklabels([])
 
         # wi, wr = 3.34, -4.65
-        plt.text( -1.5, wi, r'${:3.2f}$'.format(wi), va='bottom' )
-        plt.plot( (0.,-1.5), (wi,wi), 'k', ls='-', lw=0.5, marker='o', mfc='w', markevery=2, ms=4 )
-        plt.text( wr, -1.5, r'${:3.2f}$'.format(wr), ha='left' )
-        plt.plot( (wr,wr), (0,-1.5), 'k', ls='-', lw=0.5, marker='o', mfc='w', markevery=2, ms=4 )
+        axid.text( -1.5, wi, r'${:3.2f}$'.format(wi), va='bottom' )
+        axid.plot( (0.,-1.5), (wi,wi), 'k', ls='-', lw=0.5, marker='o', mfc='w', markevery=2, ms=4 )
+        axid.text( wr, -1.5, r'${:3.2f}$'.format(wr), ha='left' )
+        axid.plot( (wr,wr), (0,-1.5), 'k', ls='-', lw=0.5, marker='o', mfc='w', markevery=2, ms=4 )
 
         wi, wr = cfl_a *1.99,-cfl_d *np.pi **2. #6.86
-        plt.plot( wr *np.array([0., 1., 1., 0., 0.]), wi *np.array([1., 1., -1., -1., 1.]), 'k', lw='0.5')
+        axid.plot( wr *np.array([0., 1., 1., 0., 0.]), wi *np.array([1., 1., -1., -1., 1.]), 'k', lw='0.5')
 
-        plt.text( wr-1.5, wi, r'${}={:3.2f}$'.format('\mathrm{CFL}_\mathrm{a}',cfl_a),     va='bottom' )
-        plt.plot( (wr-0.1,wr-1.5), (wi,wi), 'k', ls='-', lw=0.5 )
-        plt.text( wr, -wi-1., r'${}={:3.2f}$'.format('\mathrm{CFL}_\mathrm{d}',cfl_d),     ha='right' )
-        plt.plot( (wr,wr), (-wi-0.1,-wi-1.), 'k', ls='-', lw=0.5 )
+        axid.text( wr-1.5, wi, r'${}={:3.2f}$'.format('\mathrm{CFL}_\mathrm{a}',cfl_a),     va='bottom' )
+        axid.plot( (wr-0.1,wr-1.5), (wi,wi), 'k', ls='-', lw=0.5 )
+        axid.text( wr, -wi-1., r'${}={:3.2f}$'.format('\mathrm{CFL}_\mathrm{d}',cfl_d),     ha='right' )
+        axid.plot( (wr,wr), (-wi-0.1,-wi-1.), 'k', ls='-', lw=0.5 )
 
         wi, wr = cfl_a *np.pi /2., -cfl_d *(np.pi /2.) **2.
-        plt.plot( wr *np.array([0., 1., 1., 0., 0.]), wi *np.array([1., 1., -1., -1., 1.]), 'k', lw='0.5')
-        plt.text( wr-1.5, -wi, r'$\mathrm{PPW}=4$',     va='bottom' )
-        plt.plot( (wr-0.1,wr-1.5), (-wi,-wi), 'k', ls='-', lw=0.5 )
+        axid.plot( wr *np.array([0., 1., 1., 0., 0.]), wi *np.array([1., 1., -1., -1., 1.]), 'k', lw='0.5')
+        axid.text( wr-1.5, -wi, r'$\mathrm{PPW}=4$',     va='bottom' )
+        axid.plot( (wr-0.1,wr-1.5), (-wi,-wi), 'k', ls='-', lw=0.5 )
 
         return
 
@@ -294,17 +294,15 @@ if tag in FiguresToPlot:
     fig_id = fig_id +1
     fig, ((f1, f2)) = plt.subplots(nrows=1, ncols=2, figsize=(8,6))
 
-    plt.subplot(f1)
-    PlotBackground( w, r, abs(s_masked)-1.,             r'amplitude error $\rho-1$',wi,wr,cfl_a,cfl_d )
-    plt.plot(np.real(lambdasS),np.imag(lambdasS),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='0.5')
-    plt.plot(np.real(lambdasC),np.imag(lambdasC),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#6a2202')
-    plt.plot(np.real(lambdas), np.imag(lambdas), marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#bc7201')
+    PlotBackground( f1, w, r, abs(s_masked)-1.,             r'amplitude error $\rho-1$',wi,wr,cfl_a,cfl_d )
+    f1.plot(np.real(lambdasS),np.imag(lambdasS),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='0.5')
+    f1.plot(np.real(lambdasC),np.imag(lambdasC),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#6a2202')
+    f1.plot(np.real(lambdas), np.imag(lambdas), marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#bc7201')
 
-    plt.subplot(f2)
-    PlotBackground( w, r, np.angle(s_masked) /np.pi,    r'phase error $\theta/\pi$',wi,wr,cfl_a,cfl_d )
-    plt.plot(np.real(lambdasS),np.imag(lambdasS),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='0.5')
-    plt.plot(np.real(lambdasC),np.imag(lambdasC),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#6a2202')
-    plt.plot(np.real(lambdas), np.imag(lambdas), marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#bc7201')
+    PlotBackground( f2, w, r, np.angle(s_masked) /np.pi,    r'phase error $\theta/\pi$',wi,wr,cfl_a,cfl_d )
+    f2.plot(np.real(lambdasS),np.imag(lambdasS),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='0.5')
+    f2.plot(np.real(lambdasC),np.imag(lambdasC),marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#6a2202')
+    f2.plot(np.real(lambdas), np.imag(lambdas), marker='o',markersize=5.,markeredgewidth=0.,lw=0.,color='#bc7201')
 
     plt.tight_layout(pad=0.0)
     plt.savefig("{}.pdf".format(tag+str(fig_id)),bbox_inches='tight')
