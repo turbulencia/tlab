@@ -22,7 +22,7 @@
 !########################################################################
 !Left-hand side; pentadiagonal matrix of the linear system and f1 and f2
 !########################################################################
-subroutine INT_C2N6ND_LHS_E(imax, dx, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2)
+subroutine INT_C2NXND_LHS_E(imax, dx, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2)
     use TLAB_CONSTANTS
     implicit none
 
@@ -135,12 +135,12 @@ subroutine INT_C2N6ND_LHS_E(imax, dx, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1,
     end if
 
     return
-end subroutine INT_C2N6ND_LHS_E
+end subroutine INT_C2NXND_LHS_E
 
 ! #######################################################################
 ! Right-hand side; mmax forcing terms at the same time
 ! #######################################################################
-subroutine INT_C2N6ND_RHS(imax, mmax, lhs, f, g)
+subroutine INT_C2NXND_RHS(imax, mmax, lhs, f, g)
     use TLAB_CONSTANTS
     implicit none
 
@@ -167,4 +167,4 @@ subroutine INT_C2N6ND_RHS(imax, mmax, lhs, f, g)
     g(:, imax) = 0.0_wp ! This element is simply the solution at imax of p(0)
 
     return
-end subroutine INT_C2N6ND_RHS
+end subroutine INT_C2NXND_RHS

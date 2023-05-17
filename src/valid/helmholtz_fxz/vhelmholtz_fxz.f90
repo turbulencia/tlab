@@ -11,6 +11,7 @@ program VHELMHOLTZ_FXZ
     use TLAB_ARRAYS
 #ifdef USE_MPI
     use MPI
+    use TLAB_MPI_VARS,  only : ims_pro, ims_err 
     use TLAB_MPI_PROCS
 #endif
     use IO_FIELDS
@@ -36,7 +37,7 @@ program VHELMHOLTZ_FXZ
     target a
 
 #ifdef USE_MPI
-    dummy
+    real(wp) dummy
 #else
     integer(wi), parameter :: ims_pro = 0
 #endif

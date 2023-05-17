@@ -48,7 +48,7 @@ subroutine SCAL_READ_LOCAL(inifile)
     else if (trim(adjustl(sRes)) == 'fluxbroadband') then; flag_s = 8
     else if (trim(adjustl(sRes)) == 'fluxdiscrete') then; flag_s = 9; end if
 
-    ! Sini(:) = sbg(:) ! default geometry and scaling of perturbation
+    Sini(:) = sbg(:) ! default geometry and scaling of perturbation
 
     call SCANINICHAR(bakfile, inifile, 'IniFields', 'ProfileIniS', 'GaussianSurface', sRes)
     if (trim(adjustl(sRes)) == 'none') then; Sini(:)%type = PROFILE_NONE

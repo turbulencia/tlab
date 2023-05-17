@@ -303,9 +303,9 @@ contains
 
                 else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                    call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6ND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
+                    call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 end if
 
@@ -320,7 +320,7 @@ contains
 
                 !   Corrections to the BCS_DD to account for Neumann
                 if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-             c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
                 end if
 
                 if (any([BCS_DN, BCS_NN] == ibc_loc)) then
@@ -553,19 +553,16 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
+                if (g(2)%uniform) then          ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
                     call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
+                else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
+                    call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6ND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
-                    ! call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
-                    !         p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    ! call INT_C2N6ND_RHS(ny, i2, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, 11))
+                    call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 end if
 
@@ -580,7 +577,7 @@ contains
 
                 !   Corrections to the BCS_DD to account for Neumann
                 if (any([BCS_ND, BCS_NN] == ibc)) then
-             c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
                 end if
 
                 if (any([BCS_DN, BCS_NN] == ibc)) then
@@ -716,12 +713,9 @@ contains
 
                 else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
+                    call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6ND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
-                    ! call INT_C2N6ND_LHS_E(ny, g(2)%jac, ibc, g(2)%lu2(1, 8), g(2)%lu2(1, 4), lambda, &
-                    !         p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    ! call INT_C2N6ND_RHS(ny, i2*nfield, g(2)%lu2(1, 8), p_wrk1d(1, 9), p_wrk1d(1, ip_sol))
+                    call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 end if
 

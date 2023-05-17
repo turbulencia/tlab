@@ -4,7 +4,8 @@ program VPARTIAL
     use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk3d, inb_txc, isize_txc_field
-    use TLAB_VARS, only: C1N6M_ALPHA, reynolds, schmidt
+    use TLAB_VARS, only: reynolds, schmidt
+    ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, txc, x
     use OPR_PARTIAL
