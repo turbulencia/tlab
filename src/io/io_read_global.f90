@@ -261,8 +261,7 @@ subroutine IO_READ_GLOBAL(inifile)
     elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; imode_fdm = FDM_COM6_JACPENTA; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian8') then; imode_fdm = FDM_COM8_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactdirect6') then; imode_fdm = FDM_COM6_DIRECT; 
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder option.')
         call TLAB_STOP(DNS_ERROR_OPTION)

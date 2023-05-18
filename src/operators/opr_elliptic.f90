@@ -4,7 +4,7 @@
 module OPR_ELLIPTIC
     use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
-    use TLAB_VARS, only: isize_txc_dimz
+    use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
@@ -25,6 +25,8 @@ module OPR_ELLIPTIC
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) lambda, norm
     real(wp), allocatable :: lhs(:, :), rhs(:, :)
+    real(wp), allocatable, target :: lu_poisson(:, :)       ! 3D array; here or in TLAB_ARRAYS?
+    real(wp), pointer :: a(:, :, :), b(:, :, :), c(:, :, :), d(:, :, :), e(:, :, :), f1(:, :, :), f2(:, :, :)
 
     public :: OPR_ELLIPTIC_INITIALIZE
     public :: OPR_POISSON_FXZ
@@ -36,9 +38,14 @@ module OPR_ELLIPTIC
 contains
 ! #######################################################################
 ! #######################################################################
+! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_ELLIPTIC_INITIALIZE()
         use TLAB_VARS, only: g, ipressure
 
+        integer ibc_loc
+        integer, parameter :: i1 = 1, i2 = 2
+
+        ! -----------------------------------------------------------------------
         select case (ipressure)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
@@ -47,6 +54,73 @@ contains
         case default !(FDM_COM6_DIRECT) ! I need it for helmholtz
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
             call FDM_C2N6ND_INITIALIZE(g(2)%size, g(2)%nodes, lhs, rhs)
+
+        end select
+
+        ! -----------------------------------------------------------------------
+        ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
+        select case (ipressure)
+        case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+            isize_line = imax/2 + 1
+
+            call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, lu_poisson, [g(2)%size*isize_line*kmax, 7], 'lu_poisson')
+
+            a(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 1)
+            b(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 2)
+            c(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 3)
+            d(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 4)
+            e(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 5)
+            f1(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 6)
+            f2(1:g(2)%size, 1:isize_line, 1:kmax) => lu_poisson(1:g(2)%size*isize_line*kmax, 7)
+
+            do k = 1, kmax
+#ifdef USE_MPI
+                kglobal = k + ims_offset_k
+#else
+                kglobal = k
+#endif
+
+                do i = 1, isize_line
+#ifdef USE_MPI
+                    iglobal = i + ims_offset_i/2
+#else
+                    iglobal = i
+#endif
+
+                    ! Define \lambda based on modified wavenumbers (real)
+                    if (g(3)%size > 1) then
+                        lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                    else
+                        lambda = g(1)%mwn(iglobal, 2)
+                    end if
+
+                    ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
+                    if (iglobal == 1 .and. kglobal == 1) then
+                        ibc_loc = BCS_DN
+                    else
+                        ibc_loc = BCS_NN
+                    end if
+
+                    ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                    if (g(2)%uniform) then          ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
+                        call INT_C2N6_LHS_E(g(2)%size, g(2)%jac, ibc_loc, lambda, &
+                                            a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
+
+                    else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
+                        call INT_C2NXND_LHS_E(g(2)%size, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                                              a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
+
+                    end if
+
+                    ! LU decomposizion
+                    call PENTADFS(g(2)%size - 2, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k))
+
+                    ! Particular solutions
+                    call PENTADSS(g(2)%size - 2, i1, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k), f1(2, i, k))
+                    call PENTADSS(g(2)%size - 2, i1, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k), f2(2, i, k))
+
+                end do
+            end do
 
         end select
 
@@ -224,7 +298,6 @@ contains
         target tmp1, tmp2
 
         ! -----------------------------------------------------------------------
-        integer(wi) i_sing(2), k_sing(2)    ! singular global modes
         integer(wi) ibc_loc, bcs_p(2, 2)
         integer, parameter :: i1 = 1, i2 = 2
 
@@ -235,14 +308,6 @@ contains
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
         isize_line = nx/2 + 1
-
-        if (.not. stagger_on) then
-            i_sing = [1, g(1)%size/2 + 1]
-            k_sing = [1, g(3)%size/2 + 1]
-        else                    ! In case of staggering only one singular mode + different modified wavenumbers
-            i_sing = [1, 1]
-            k_sing = [1, 1]
-        end if
 
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
@@ -271,13 +336,6 @@ contains
                 iglobal = i
 #endif
 
-                ! Define \lambda based on modified wavenumbers (real)
-                if (g(3)%size > 1) then
-                    lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
-                else
-                    lambda = g(1)%mwn(iglobal, 2)
-                end if
-
                 ! forcing term in c_wrk1d(:,5), i.e. p_wrk1d(:,9), solution will be in c_wrk1d(:,6), i.e., p_wrk1d(:,11)
                 do j = 1, ny
                     ip = (j - 1)*isize_line + i; c_wrk1d(j, 5) = c_tmp1(ip, k)
@@ -287,44 +345,85 @@ contains
                 j = ny + 1; ip = (j - 1)*isize_line + i; bcs(1) = c_tmp1(ip, k) ! Dirichlet or Neumann
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
-                ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
-                if (any(i_sing == iglobal) .and. any(k_sing == kglobal) .and. ibc == BCS_NN) then
+                ! Compatibility constraint for singular modes. 2nd order FDMs are non-zero at Nyquist
+                ! The reference value of p at the lower boundary is set to zero
+                if (iglobal == 1 .and. kglobal == 1 .and. ibc == BCS_NN) then
                     ibc_loc = BCS_DN
                     bcs(1) = (0.0_wp, 0.0_wp)
                 else
                     ibc_loc = ibc
                 end if
 
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                    call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
+                ! -----------------------------------------------------------------------
+                if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
+                    ! Define \lambda based on modified wavenumbers (real)
+                    if (g(3)%size > 1) then
+                        lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                    else
+                        lambda = g(1)%mwn(iglobal, 2)
+                    end if
+
+                    ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                    if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
+                        call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+
+                    else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
+                        call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+
+                    end if
+
+                    ! LU factorization
+                    call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
+
+                    ! Parciular solutions
+                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
+                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
+
+                end if
+
+                ! -----------------------------------------------------------------------
+                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
                     call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                    p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+                else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 end if
 
-                call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
-
-                call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
-                call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
-
+                if (ibc /= BCS_NN) then     ! use local LU factorization
                 call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
 
-                c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
+                    c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
 
-                !   Corrections to the BCS_DD to account for Neumann
-                if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
-                end if
+                    !   Corrections to the BCS_DD to account for Neumann
+                    if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+                        c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) &
+                                        + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                    end if
 
-                if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                    c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6)
+                    if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                        c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) &
+                                         + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6)
+                    end if
+
+                else                        ! use precalculated LU factorization
+                    call PENTADSS(ny - 2, i2, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k), p_wrk1d(3, 11))
+
+                    c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*f1(:, i, k) + bcs(2)*f2(:, i, k)
+
+                    !   Corrections to the BCS_DD to account for Neumann
+                    if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+                        c_wrk1d(1, 6) = c_wrk1d(1, 6) + c(1, i, k)*c_wrk1d(2, 6) &
+                                        + d(1, i, k)*c_wrk1d(3, 6) + e(1, i, k)*c_wrk1d(4, 6)
+                    end if
+
+                    if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                        c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + c(ny, i, k)*c_wrk1d(ny - 1, 6) &
+                                         + b(ny, i, k)*c_wrk1d(ny - 2, 6) + a(ny, i, k)*c_wrk1d(ny - 3, 6)
+                    end if
+
                 end if
 
                 ! Rearrange in memory and normalize
@@ -577,7 +676,7 @@ contains
 
                 !   Corrections to the BCS_DD to account for Neumann
                 if (any([BCS_ND, BCS_NN] == ibc)) then
-                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+             c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
                 end if
 
                 if (any([BCS_DN, BCS_NN] == ibc)) then
