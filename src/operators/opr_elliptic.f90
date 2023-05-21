@@ -31,6 +31,7 @@ module OPR_ELLIPTIC
     public :: OPR_ELLIPTIC_INITIALIZE
     public :: OPR_POISSON_FXZ
     public :: OPR_POISSON_FXZ_D         ! Using direct formulation of FDM schemes
+    ! public :: OPR_POISSON_FXZ_D_TRANSPOSE   ! Not yet working; txc shape (isize_txc_dimz,nz) cannot always be reshape to contiguous (nx+2)*(ny+2)*nz
     public :: OPR_HELMHOLTZ_FXZ
     public :: OPR_HELMHOLTZ_FXZ_D       ! Using direct formulation of FDM schemes
     public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields
@@ -279,6 +280,204 @@ contains
 
 !########################################################################
 !########################################################################
+! The tranpose step does not work because the txc arrays are not necessarily contiguous...
+! Same, but using the direct mode of FDM
+! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
+! and the last ones for the forcing and solution. The reason is the routine after this one.
+    subroutine OPR_POISSON_FXZ_D_TRANSPOSE(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+        integer(wi), intent(in) :: nx, ny, nz
+        integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
+        !                                                   1, for Neumann   & Dirichlet
+        !                                                   2, for Dirichlet & Neumann
+        !                                                   3, for Neumann   & Neumann
+        type(grid_dt), intent(in) :: g(3)
+        real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
+        real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
+        real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
+        real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)      ! Boundary-condition fields
+        real(wp), intent(out), optional :: dpdy(nx, ny, nz)           ! Vertical derivative of solution
+
+        target tmp1, tmp2
+
+        ! -----------------------------------------------------------------------
+        integer(wi) ibc_loc, bcs_p(2, 2)
+        integer, parameter :: i1 = 1, i2 = 2
+
+        integer(wi) ny_txc, nyz_txc
+        complex(wp), pointer :: c_tmp1_t(:, :, :) => null(), c_tmp2_t(:, :, :) => null()
+        real(wp), pointer :: r_tmp1_t(:, :, :) => null(), r_tmp2_t(:, :, :) => null()
+
+        ! #######################################################################
+        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+
+        norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
+
+        isize_line = nx/2 + 1
+
+        ny_txc = isize_txc_dimz/2/isize_line
+        print *, isize_txc_dimz/2, isize_line, isize_line*(ny+2)
+        nyz_txc = ny_txc*nz
+        call c_f_pointer(c_loc(tmp2), c_tmp2_t, shape=[ny_txc, nz, isize_line])
+        call c_f_pointer(c_loc(tmp2), r_tmp2_t, shape=[ny_txc*2, nz, isize_line])
+        call c_f_pointer(c_loc(tmp1), c_tmp1_t, shape=[ny_txc, nz, isize_line])
+        call c_f_pointer(c_loc(tmp1), r_tmp1_t, shape=[ny_txc*2, nz, isize_line])
+
+        ! #######################################################################
+        ! Fourier transform of forcing term; output of this section in array tmp1
+        ! #######################################################################
+        if (g(3)%size > 1) then
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp1)
+            call OPR_FOURIER_F_Z_EXEC(c_tmp1, c_tmp2) ! tmp1 might be overwritten
+        else
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2)
+        end if
+
+        ! ###################################################################
+        ! Local transposition: make x-direction the last one
+        ! ###################################################################
+#ifdef USE_ESSL
+        call ZGECMO(c_tmp2, isize_line, isize_line, nyz_txc, c_tmp1_t, nyz_txc)
+#else
+        call DNS_TRANSPOSE_COMPLEX(c_tmp2, isize_line, nyz_txc, isize_line, c_tmp1_t, nyz_txc)
+#endif
+
+        ! ###################################################################
+        ! Solve FDE \hat{p}''-\lambda \hat{p} = \hat{f}
+        ! ###################################################################
+        do i = 1, isize_line
+#ifdef USE_MPI
+            iglobal = i + ims_offset_i/2
+#else
+            iglobal = i
+#endif
+
+            do k = 1, nz
+#ifdef USE_MPI
+                kglobal = k + ims_offset_k
+#else
+                kglobal = k
+#endif
+
+                bcs(1) = c_tmp1_t(ny + 1, k, i)
+                bcs(2) = c_tmp1_t(ny + 2, k, i)
+
+                ! Compatibility constraint for singular modes. 2nd order FDMs are non-zero at Nyquist
+                ! The reference value of p at the lower boundary is set to zero
+                if (iglobal == 1 .and. kglobal == 1 .and. ibc == BCS_NN) then
+                    ibc_loc = BCS_DN
+                    bcs(1) = (0.0_wp, 0.0_wp)
+                else
+                    ibc_loc = ibc
+                end if
+
+                ! -----------------------------------------------------------------------
+                if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
+                    ! Define \lambda based on modified wavenumbers (real)
+                    if (g(3)%size > 1) then
+                        lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                    else
+                        lambda = g(1)%mwn(iglobal, 2)
+                    end if
+
+                    ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                    if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
+                        call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
+                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+
+                    else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
+                        call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+
+                    end if
+
+                    ! LU factorization
+                    call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
+
+                    ! Parciular solutions
+                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
+                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
+
+                end if
+
+                ! -----------------------------------------------------------------------
+                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
+                    call INT_C2N6_RHS(ny, i2, g(2)%jac, r_tmp1_t(1, k, i), r_tmp2_t(1, k, i))
+
+                else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
+                    call INT_C2NXND_RHS(ny, i2, lhs, r_tmp1_t(1, k, i), r_tmp2_t(1, k, i))
+
+                end if
+
+                if (ibc /= BCS_NN) then     ! use local LU factorization
+             call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), r_tmp2_t(3, k, i))
+
+                    c_tmp2_t(1:ny, k, i) = (c_tmp2_t(1:ny, k, i) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7))*norm
+
+                    !   Corrections to the BCS_DD to account for Neumann
+                    if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+                        c_tmp2_t(1, k, i) = c_tmp2_t(1, k, i) + p_wrk1d(1, 3)*c_tmp2_t(2, k, i) &
+                                            + p_wrk1d(1, 4)*c_tmp2_t(3, k, i) + p_wrk1d(1, 5)*c_tmp2_t(4, k, i)
+                    end if
+
+                    if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                        c_tmp2_t(ny, k, i) = c_tmp2_t(ny, k, i) + p_wrk1d(ny, 3)*c_tmp2_t(ny - 1, k, i) &
+                                             + p_wrk1d(ny, 2)*c_tmp2_t(ny - 2, k, i) + p_wrk1d(ny, 1)*c_tmp2_t(ny - 3, k, i)
+                    end if
+
+                else                        ! use precalculated LU factorization
+                    call PENTADSS(ny - 2, i2, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k), r_tmp2_t(3, k, i))
+
+                    c_tmp2_t(1:ny, k, i) = (c_tmp2_t(1:ny, k, i) + bcs(1)*f1(1:ny, i, k) + bcs(2)*f2(1:ny, i, k))*norm
+
+                    !   Corrections to the BCS_DD to account for Neumann
+                    if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+                        c_tmp2_t(1, k, i) = c_tmp2_t(1, k, i) + c(1, i, k)*c_tmp2_t(2, k, i) &
+                                            + d(1, i, k)*c_tmp2_t(3, k, i) + e(1, i, k)*c_tmp2_t(4, k, i)
+                    end if
+
+                    if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                        c_tmp2_t(ny, k, i) = c_tmp2_t(ny, k, i) + c(ny, i, k)*c_tmp2_t(ny - 1, k, i) &
+                                             + b(ny, i, k)*c_tmp2_t(ny - 2, k, i) + a(ny, i, k)*c_tmp2_t(ny - 3, k, i)
+                    end if
+
+                end if
+
+            end do
+        end do
+
+        ! ###################################################################
+        ! Put arrays back in the order in which they came in
+        ! ###################################################################
+#ifdef USE_ESSL
+        call ZGECMO(c_tmp2_t, nyz_txc, nyz_txc, isize_line, c_tmp1, isize_line)
+#else
+        call DNS_TRANSPOSE_COMPLEX(c_tmp2_t, nyz_txc, isize_line, nyz_txc, c_tmp1, isize_line)
+#endif
+
+        ! ###################################################################
+        ! Fourier field p (based on array tmp1)
+        ! ###################################################################
+        if (g(3)%size > 1) then
+            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
+        else
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, p)    ! tmp2 might be overwritten
+        end if
+
+        ! Fourier derivatives (based on array tmp2)
+        if (present(dpdy)) then
+            bcs_p = 0
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs_p, g(2), p, dpdy)
+        end if
+
+        nullify (c_tmp1, c_tmp2, c_tmp1_t, c_tmp2_t, r_tmp1_t, r_tmp2_t)
+
+        return
+    end subroutine OPR_POISSON_FXZ_D_TRANSPOSE
+
+!########################################################################
+!########################################################################
 ! Same, but using the direct mode of FDM
 ! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
 ! and the last ones for the forcing and solution. The reason is the routine after this one.
@@ -378,8 +577,8 @@ contains
                     call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
                     ! Parciular solutions
-                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
-                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
+                    call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
+                    call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
 
                 end if
 
@@ -395,7 +594,7 @@ contains
                 if (ibc /= BCS_NN) then     ! use local LU factorization
                 call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
 
-                    c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
+                    c_wrk1d(:, 6) = (c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7))*norm
 
                     !   Corrections to the BCS_DD to account for Neumann
                     if (any([BCS_ND, BCS_NN] == ibc_loc)) then
@@ -411,7 +610,7 @@ contains
                 else                        ! use precalculated LU factorization
                     call PENTADSS(ny - 2, i2, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k), p_wrk1d(3, 11))
 
-                    c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*f1(:, i, k) + bcs(2)*f2(:, i, k)
+                    c_wrk1d(:, 6) = (c_wrk1d(:, 6) + bcs(1)*f1(:, i, k) + bcs(2)*f2(:, i, k))*norm
 
                     !   Corrections to the BCS_DD to account for Neumann
                     if (any([BCS_ND, BCS_NN] == ibc_loc)) then
@@ -429,7 +628,7 @@ contains
                 ! Rearrange in memory and normalize
                 do j = 1, ny
                     ip = (j - 1)*isize_line + i
-                    c_tmp1(ip, k) = c_wrk1d(j, 6)*norm ! solution
+                    c_tmp1(ip, k) = c_wrk1d(j, 6) 
                 end do
 
             end do

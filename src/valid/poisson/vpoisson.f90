@@ -38,6 +38,9 @@ program VPOISSON
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLAB_MPI_INITIALIZE
+#endif
 
     isize_wrk3d = isize_txc_field
     inb_txc = 8
@@ -72,6 +75,7 @@ program VPOISSON
     bcs = 0
 
     call OPR_FOURIER_INITIALIZE()
+    call OPR_CHECK()
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
@@ -183,16 +187,17 @@ program VPOISSON
         case (BCS_ND)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
             ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
+            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
         case (BCS_NN)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
             ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :)+18.0_wp*a(:, 2, :)-9.0_wp*a(:, 3, :)+2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1,1)
+            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
             bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         end select
 
         if (type_of_operator == 1) then
             ! call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_POISSON_FXZ_D_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
             call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then

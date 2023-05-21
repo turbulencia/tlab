@@ -273,6 +273,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             case (FDM_COM6_DIRECT)
                 if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(1, ip + 1), g%lu2(1, ip + 4))
+                ! if (i == 0) call FDM_C2N4ND_INITIALIZE(nx, x, g%lu2(1, ip + 1), g%lu2(1, ip + 4))
 
             end select
 
