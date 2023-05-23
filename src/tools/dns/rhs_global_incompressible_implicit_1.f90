@@ -29,7 +29,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby
-    use TLAB_VARS, only: buoyancy, coriolis, ipressure
+    use TLAB_VARS, only: buoyancy, coriolis, imode_elliptic
     use TLAB_VARS, only: bbackground
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLAB_PROCS
@@ -424,7 +424,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     end do
 
 ! pressure in tmp1, Oy derivative in tmp3
-    select case (ipressure)
+    select case (imode_elliptic)
     case (FDM_COM6_JACOBIAN)
         call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)

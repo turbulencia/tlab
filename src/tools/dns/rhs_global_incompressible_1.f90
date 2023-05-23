@@ -25,7 +25,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: rbackground, ribackground
-    use TLAB_VARS, only: PressureFilter, stagger_on, ipressure
+    use TLAB_VARS, only: PressureFilter, stagger_on, imode_elliptic
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use THERMO_ANELASTIC
@@ -279,7 +279,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
     ! pressure in tmp1, Oy derivative in tmp3
-    select case (ipressure)
+    select case (imode_elliptic)
     case (FDM_COM6_JACOBIAN)
         call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)

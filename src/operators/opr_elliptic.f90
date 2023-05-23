@@ -41,13 +41,13 @@ contains
 ! #######################################################################
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_ELLIPTIC_INITIALIZE()
-        use TLAB_VARS, only: g, ipressure
+        use TLAB_VARS, only: g, imode_elliptic
 
         integer ibc_loc
         integer, parameter :: i1 = 1, i2 = 2
 
         ! -----------------------------------------------------------------------
-        select case (ipressure)
+        select case (imode_elliptic)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
             call FDM_C2N4ND_INITIALIZE(g(2)%size, g(2)%nodes, lhs, rhs)
@@ -60,7 +60,7 @@ contains
 
         ! -----------------------------------------------------------------------
         ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
-        select case (ipressure)
+        select case (imode_elliptic)
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
             isize_line = imax/2 + 1
 
@@ -410,7 +410,7 @@ contains
                 end if
 
                 if (ibc /= BCS_NN) then     ! use local LU factorization
-             call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), r_tmp2_t(3, k, i))
+                    call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), r_tmp2_t(3, k, i))
 
                     c_tmp2_t(1:ny, k, i) = (c_tmp2_t(1:ny, k, i) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7))*norm
 

@@ -29,7 +29,7 @@ module TLAB_TYPES
         sequence
         character*8 name
         integer(wi) size, inb_grid
-        integer mode_fdm
+        integer mode_fdm                    ! finite-difference method for spatial operators
         logical uniform, periodic, anelastic
         real(wp) scale
         real(wp), pointer :: nodes(:)

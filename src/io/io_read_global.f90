@@ -166,17 +166,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermPressure', 'compactjacobian6', sRes)
-    if (trim(adjustl(sRes)) == 'compactjacobian6') then; ipressure = FDM_COM6_JACOBIAN
-    else if (trim(adjustl(sRes)) == 'compactdirect4') then; ipressure = FDM_COM4_DIRECT
-    else if (trim(adjustl(sRes)) == 'compactdirect6') then; ipressure = FDM_COM6_DIRECT
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermPressure option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermDiffusion', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; idiffusion = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'divergence') then; idiffusion = EQNS_DIVERGENCE
@@ -256,20 +245,29 @@ subroutine IO_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'compactjacobian4') then; imode_fdm = FDM_COM4_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_fdm = FDM_COM6_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; imode_fdm = FDM_COM6_JACPENTA; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian8') then; imode_fdm = FDM_COM8_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; imode_fdm = FDM_COM6_DIRECT; 
+    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm = FDM_COM4_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm = FDM_COM6_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; g(1:3)%mode_fdm = FDM_COM6_JACPENTA; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian8') then; g(1:3)%mode_fdm = FDM_COM8_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm = FDM_COM6_DIRECT; 
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    g(1:3)%mode_fdm = imode_fdm
+    call SCANINICHAR(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
+    if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
+    else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
+    else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermPressure option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
-! -------------------------------------------------------------------
+! -------------------------------
 #ifdef USE_MPI
     call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
     if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLAB_MPI_TRP_NONE
@@ -330,7 +328,7 @@ subroutine IO_READ_GLOBAL(inifile)
           call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
-        if (.not. (imode_fdm == FDM_COM6_JACOBIAN)) then
+        if (any([g(1)%mode_fdm, g(2)%mode_fdm, g(3)%mode_fdm] /= FDM_COM6_JACOBIAN)) then
 call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
@@ -840,7 +838,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
     end select
 
-    if (imode_fdm == FDM_COM6_JACPENTA) then ! CFL_max depends on max[g%mwn(:,1)]
+    if (any([g(1)%mode_fdm, g(2)%mode_fdm, g(3)%mode_fdm] == FDM_COM6_JACPENTA)) then ! CFL_max depends on max[g%mwn(:,1)]
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
     end if
 

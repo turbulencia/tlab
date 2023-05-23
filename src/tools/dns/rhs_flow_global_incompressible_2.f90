@@ -13,7 +13,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
-    use TLAB_VARS, only: imode_ibm, stagger_on, ipressure
+    use TLAB_VARS, only: imode_ibm, stagger_on, imode_elliptic
     use TLAB_ARRAYS, only: q
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
@@ -157,7 +157,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     BcsFlowJmax%ref(:, :, 2) = p_bcs(:, jmax, :)
 
 ! pressure in tmp1, Oy derivative in tmp3
-    select case (ipressure)
+    select case (imode_elliptic)
     case (FDM_COM6_JACOBIAN)
         call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
