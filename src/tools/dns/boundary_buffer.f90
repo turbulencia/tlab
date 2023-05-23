@@ -127,7 +127,7 @@ contains
                 if (is == nfields) then
                     variable%hard = .true.
                 else
-           call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//trim(adjustl(tag))//'.')
+                    call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//trim(adjustl(tag))//'.')
                     call TLAB_STOP(DNS_ERROR_OPTION)
                 end if
             end if

@@ -21,6 +21,7 @@ program AVERAGES
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
+    use IBM_VARS
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -94,6 +95,17 @@ program AVERAGES
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
+
+    ! -------------------------------------------------------------------
+    ! IBM status (before TLAB_MPI_INITIALIZE!)
+    ! -------------------------------------------------------------------
+    call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+    if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
+    else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
+    else
+        call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -229,6 +241,21 @@ program AVERAGES
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     end select
 
+    if (imode_ibm == 1) then ! check if enough memory is provided for the IBM
+#ifdef IBM_DEBUG
+        inb_txc = max(inb_txc, 6)
+#else
+        inb_txc = max(inb_txc, 3)
+#endif
+    end if
+
+    ! -------------------------------------------------------------------
+    ! Read local options - IBM parameters and geometry
+    ! -------------------------------------------------------------------
+    if (imode_ibm == 1) then
+        call IBM_READ_INI(ifile)
+    end if
+
     ! -------------------------------------------------------------------
     ! Defining gate levels for conditioning
     ! -------------------------------------------------------------------
@@ -285,6 +312,10 @@ program AVERAGES
 
     call PARTICLE_ALLOCATE(C_FILE_LOC)
 
+    if (imode_ibm == 1) then
+        call IBM_ALLOCATE(C_FILE_LOC)
+    end if
+
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
@@ -322,6 +353,10 @@ program AVERAGES
         w => q(:, 3)
     end if
 
+    if (imode_ibm == 1) then
+        call IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+    end if
+
     ! ###################################################################
     ! Postprocess given list of files
     ! ###################################################################
@@ -339,6 +374,11 @@ program AVERAGES
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
             call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
+        end if
+
+        if (imode_ibm == 1) then
+            call IBM_BCS_FIELD_COMBINED(0, q)
+            if (scal_on) call IBM_INITIALIZE_SCAL(0, s)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
@@ -719,7 +759,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 7); vars(ifield)%tag = 'Lambda1'
@@ -734,7 +774,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-    call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7))  ! txc7-txc9
             call TENSOR_EIGENFRAME(imax, jmax, kmax, txc(1, 1), txc(1, 7))   ! txc1-txc6
 

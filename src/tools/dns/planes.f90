@@ -2,15 +2,19 @@
 #include "dns_error.h"
 
 module PLANES
-    use TLAB_CONSTANTS, only: lfile, efile, wp, wi, fmt_r
-    use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array
-    use TLAB_VARS, only: rbackground, g
+    use TLAB_CONSTANTS, only: lfile, efile, wp, wi, fmt_r, small_wp
+    use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
+    use TLAB_VARS, only: rbackground, g, imode_ibm, scal_on
     use TLAB_VARS, only: itime, rtime
     use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
+    use IBM_VARS, only: ibm_partial
     use TLAB_PROCS
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
     use IO_FIELDS
+    use FI_VORTICITY_EQN
+    use FI_GRADIENT_EQN
+
     implicit none
     save
     private
@@ -29,8 +33,10 @@ module PLANES
 
     type(planes_dt) :: iplanes, jplanes, kplanes
     integer, parameter :: PLANES_NONE = 0
-    integer, parameter :: PLANES_FIX = 1
-    integer, parameter :: PLANES_CBL = 2
+    integer, parameter :: PLANES_FIX  = 1
+    integer, parameter :: PLANES_CBL  = 2
+    integer, parameter :: PLANES_LOG  = 3 ! flow fields: log of enstrophy
+                                          ! if scal_on: +log of magnitude of scalar gradient
 
     character*32 varname(1)
     integer(wi) idummy
@@ -57,9 +63,10 @@ contains
         var%n = 0
 
         call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; var%type = PLANES_NONE
+        if (trim(adjustl(sRes)) == 'none')    then; var%type = PLANES_NONE
         elseif (trim(adjustl(sRes)) == 'fix') then; var%type = PLANES_FIX
         elseif (trim(adjustl(sRes)) == 'cbl') then; var%type = PLANES_CBL
+        elseif (trim(adjustl(sRes)) == 'log') then; var%type = PLANES_LOG
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Planes.Type.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
@@ -87,13 +94,27 @@ contains
 #endif
 
         ! -------------------------------------------------------------------
-        integer(wi) id
+        integer(wi) id, inb_scal_dummy
 
         ! ###################################################################
-        iplanes%size = (inb_flow_array + inb_scal_array + 1)*iplanes%n           ! Flow and scal variables, pressure
-        jplanes%size = (inb_flow_array + inb_scal_array + 1)*jplanes%n
-        kplanes%size = (inb_flow_array + inb_scal_array + 1)*kplanes%n
+        if (scal_on) then; inb_scal_dummy = inb_scal_array
+        else; inb_scal_dummy = 0 ; end if
+
+        iplanes%size = (inb_flow_array + inb_scal_dummy + 1)*iplanes%n       ! Flow and scal variables, pressure
+        jplanes%size = (inb_flow_array + inb_scal_dummy + 1)*jplanes%n
+        kplanes%size = (inb_flow_array + inb_scal_dummy + 1)*kplanes%n
+        
         if (imixture == MIXT_TYPE_AIRWATER) jplanes%size = jplanes%size + 2  ! Add LWP and intgral of TWP
+
+        if (iplanes%type == PLANES_LOG) then; iplanes%size = iplanes%size + iplanes%n
+            if (scal_on) iplanes%size = iplanes%size + inb_scal_dummy*iplanes%n
+        end if
+        if (jplanes%type == PLANES_LOG) then; jplanes%size = jplanes%size + jplanes%n
+            if (scal_on) jplanes%size = jplanes%size + inb_scal_dummy*jplanes%n
+        end if
+        if (kplanes%type == PLANES_LOG) then; kplanes%size = kplanes%size + kplanes%n
+            if (scal_on) kplanes%size = kplanes%size + inb_scal_dummy*kplanes%n
+        end if
 
         if (iplanes%size > imax) then
             call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is is insufficient.')
@@ -106,6 +127,14 @@ contains
         if (kplanes%size > kmax) then
             call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is is insufficient.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then
+            if (scal_on) then
+                if ((inb_scal_array + 4) > inb_txc) then
+                    call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Not enough memory for log(grad(scal)) [inb_txc too small].')
+                    call TLAB_STOP(DNS_ERROR_ALLOC)
+                end if
+            end if
         end if
 
         ! Pointers
@@ -175,6 +204,9 @@ contains
         real(wp) SIMPSON_NU
 
         ! ###################################################################
+        ! general order of variabeles 
+        ! [u,v,w,{scal1,...},p,{log(entstrophy),log(grad(scal1)),...)}]
+
         fmt = '('//fmt_r//')'
         write (line1, fmt) rtime
         write (str, *) itime; str = 'at It'//trim(adjustl(str))//' and time '//trim(adjustl(line1))//'.'
@@ -183,12 +215,30 @@ contains
         do iv = 1, inb_flow_array
             nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => q(1:imax*jmax*kmax, iv)
         end do
-        do iv = 1, inb_scal_array
-            nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => s(1:imax*jmax*kmax, iv)
-        end do
+        if (scal_on) then
+            do iv = 1, inb_scal_array
+                nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => s(1:imax*jmax*kmax, iv)
+            end do
+        end if
         call FI_PRESSURE_BOUSSINESQ(q, s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
         nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 1)
 
+        ! -------------------------------------------------------------------
+        if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then   
+            call FI_VORTICITY(imax, jmax, kmax, q(:, 1), q(:, 2), q(:, 3), txc(:, 3), txc(:, 4), txc(:, 5))
+            txc(1:imax*jmax*kmax, 3) = log(txc(1:imax*jmax*kmax, 3) + small_wp)
+            if (imode_ibm == 1) call IBM_BCS_FIELD( txc(1:imax*jmax*kmax, 3))
+            nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
+            if (scal_on) then
+                do iv = 1, inb_scal_array
+                    call FI_GRADIENT(imax, jmax, kmax, s(:, iv), txc(:, iv+3), txc(:, iv+4))
+                    txc(1:imax*jmax*kmax, iv+3) = log(txc(1:imax*jmax*kmax, iv+3) + small_wp)
+                    if (imode_ibm == 1) call IBM_BCS_FIELD( txc(1:imax*jmax*kmax, iv+3))
+                    nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, iv+3)
+                end do
+            end if
+        end if
+        
         ! -------------------------------------------------------------------
         if (jplanes%type == PLANES_CBL) then    ! Calculate CBL encroachment height to reevaluate planes
             if (sbg(1)%uslope /= 0.0_wp) then
