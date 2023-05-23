@@ -7,7 +7,8 @@
 !########################################################################
 module FI_GRADIENT_EQN
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: g
+    use TLAB_VARS, only: g, imode_ibm
+    use IBM_VARS, only: ibm_partial
     use OPR_PARTIAL
     implicit none
     private
@@ -29,11 +30,19 @@ contains
         real(wp), intent(inout) :: tmp1(nx*ny*nz)
 
 ! ###################################################################
+        ! IBM   (if .true., OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
+        if (imode_ibm == 1) ibm_partial = .true.
+
         call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, result)
         call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, tmp1)
         result = result*result + tmp1*tmp1
         call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, tmp1)
         result = result + tmp1*tmp1
+
+        if (imode_ibm == 1) then
+            ibm_partial = .false.
+            call IBM_BCS_FIELD(result)
+        end if
 
         return
     end subroutine FI_GRADIENT
