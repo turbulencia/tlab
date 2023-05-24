@@ -13,6 +13,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_VARS, only: C1N6M_ALPHA2, C1N6M_BETA2
     use TLAB_VARS, only: C1N6M_A, C1N6M_BD2, C1N6M_CD3
     use TLAB_PROCS
+    use FDM_COM_DIRECT
 
     implicit none
 
@@ -272,7 +273,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
                 call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3)) ! 8th not yet developed
 
             case (FDM_COM6_DIRECT)
-                if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(1, ip + 1), g%lu2(1, ip + 4))
+                if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
                 ! if (i == 0) call FDM_C2N4ND_INITIALIZE(nx, x, g%lu2(1, ip + 1), g%lu2(1, ip + 4))
 
             end select

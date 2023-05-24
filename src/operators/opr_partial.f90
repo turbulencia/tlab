@@ -181,6 +181,8 @@ contains
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
+        use FDM_COM_DIRECT
+
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
         !                                       0            viscosity (velocity)
@@ -271,7 +273,7 @@ contains
                 end if
 
             case (FDM_COM6_DIRECT)
-                call FDM_C2NXND_RHS(g%size, nlines, g%lu2(1, 4), u, result)
+                call FDM_C2NXND_RHS(g%size, nlines, g%lu2(:, 4), u, result)
 
             end select
 

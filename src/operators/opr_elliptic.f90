@@ -42,7 +42,8 @@ contains
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_ELLIPTIC_INITIALIZE()
         use TLAB_VARS, only: g, imode_elliptic
-
+        use FDM_COM_DIRECT
+        
         integer ibc_loc
         integer, parameter :: i1 = 1, i2 = 2
 
