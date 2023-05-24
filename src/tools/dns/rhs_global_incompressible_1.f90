@@ -19,13 +19,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imode_ibm
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: rbackground, ribackground
-    use TLAB_VARS, only: PressureFilter, stagger_on
+    use TLAB_VARS, only: PressureFilter, stagger_on, imode_elliptic
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use THERMO_ANELASTIC
@@ -279,15 +279,17 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
     ! pressure in tmp1, Oy derivative in tmp3
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    select case (imode_elliptic)
+    case (FDM_COM6_JACOBIAN)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    end select
 
-    ! filter pressure and dpdy
-    if (PressureFilter(1)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp1); call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), tmp3)
-    else if (PressureFilter(2)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp1); call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), tmp3)
-    else if (PressureFilter(3)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp1); call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), tmp3)
+    ! filter pressure p and its vertical gradient dpdy
+    if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, tmp4)
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp3, tmp4)
     end if
 
     ! Saving pressure for towers to tmp array

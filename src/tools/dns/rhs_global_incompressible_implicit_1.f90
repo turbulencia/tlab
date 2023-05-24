@@ -23,13 +23,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_CONSTANTS
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby
-    use TLAB_VARS, only: buoyancy, coriolis
+    use TLAB_VARS, only: buoyancy, coriolis, imode_elliptic
     use TLAB_VARS, only: bbackground
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLAB_PROCS
@@ -424,8 +424,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     end do
 
 ! pressure in tmp1, Oy derivative in tmp3
-    ibc = 3
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    select case (imode_elliptic)
+    case (FDM_COM6_JACOBIAN)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    end select
 
 ! horizontal derivatives
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)

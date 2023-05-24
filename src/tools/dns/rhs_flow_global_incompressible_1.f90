@@ -11,13 +11,13 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: visc
+    use TLAB_VARS, only: visc, imode_elliptic
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS
     use TIME, only: dte
@@ -174,8 +174,12 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     end do
 
 ! pressure in tmp1, Oy derivative in tmp3
-    ibc = 3
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    select case (imode_elliptic)
+    case (FDM_COM6_JACOBIAN)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    end select
 
 ! horizontal derivatives
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)

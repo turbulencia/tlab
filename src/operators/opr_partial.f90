@@ -234,6 +234,7 @@ contains
                 call FDM_C2N4P_RHS(g%size, nlines, u, result)
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA) ! Direct = Jacobian because uniform grid
+                ! call FDM_C2N6P_RHS(g%size, nlines, u, result)
                 call FDM_C2N6HP_RHS(g%size, nlines, u, result)
 
             case (FDM_COM8_JACOBIAN)                  ! Not yet implemented
@@ -255,8 +256,10 @@ contains
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
                 if (g%uniform) then
+                    ! call FDM_C2N6_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
                     call FDM_C2N6H_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
                 else        ! need first derivative from above
+                    ! call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                     call FDM_C2N6HNJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                 end if
 
@@ -268,7 +271,7 @@ contains
                 end if
 
             case (FDM_COM6_DIRECT)
-                call FDM_C2N6ND_RHS(g%size, nlines, g%lu2(1, 4), u, result)
+                call FDM_C2NXND_RHS(g%size, nlines, g%lu2(1, 4), u, result)
 
             end select
 

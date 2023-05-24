@@ -25,6 +25,7 @@ program DNS
     use PARTICLE_TRAJECTORIES
     use AVG_SCAL_ZT
     use IO_FIELDS
+    use OPR_ELLIPTIC
     use OPR_FILTERS
     use OPR_FOURIER
     implicit none
@@ -64,6 +65,8 @@ program DNS
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call OPR_ELLIPTIC_INITIALIZE()
 
     call FI_BACKGROUND_INITIALIZE()
 

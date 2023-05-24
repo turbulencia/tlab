@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 
 program VBURGERS
@@ -6,6 +5,8 @@ program VBURGERS
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_PROCS
+    use TLAB_ARRAYS
+    use TLAB_POINTERS_3D, only: tmp1
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_PROCS
@@ -14,43 +15,39 @@ program VBURGERS
     use IO_FIELDS
     use OPR_PARTIAL
     use OPR_BURGERS
+    use OPR_FILTERS
     implicit none
 
 #ifdef USE_MPI
-    TREAL error2, dummy2
+    real(wp) error2, dummy2
 #else
-    TINTEGER, parameter :: ims_pro = 0
+    integer(wi), parameter :: ims_pro = 0
 #endif
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :, :), allocatable :: a, b, c
-    TREAL, dimension(:, :), allocatable :: wrk1d, wrk2d
-    TREAL, dimension(:), allocatable :: wrk3d, tmp1
+    real(wp), dimension(:, :, :), pointer :: a, b, c
 
-    TINTEGER i, j, k, bcs(2, 2)
-    TREAL dummy, error
+    integer(wi) i, j, k, ig, bcs(2, 2)
+    real(wp) dummy, error
 
 ! ###################################################################
     call TLAB_START()
 
-    call IO_READ_GLOBAL('dns.ini')
+    call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
 
     isize_wrk3d = isize_txc_field
+    inb_txc = 4
 
-! -------------------------------------------------------------------
-! Allocating memory space
-! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
+    call TLAB_ALLOCATE(__FILE__)
 
-    allocate (wrk1d(isize_wrk1d, inb_wrk1d + 1))
-    allocate (wrk2d(isize_wrk2d, inb_wrk2d))
-    allocate (a(imax, jmax, kmax), b(imax, jmax, kmax), c(imax, jmax, kmax))
-    allocate (tmp1(isize_txc_field), wrk3d(isize_wrk3d))
+    a(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 2)
+    b(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
+    c(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 4)
+
+    reynolds = big_wp   ! inviscid
+    visc = 1.0_wp/reynolds
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
@@ -61,23 +58,31 @@ program VBURGERS
 
     bcs = 0
 
+    do ig = 1, 3
+        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
+    end do
+
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
     call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+
+    visc = 1.0_wp/reynolds
 
 ! ###################################################################
     call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
     do k = 1, kmax
         do j = 1, jmax
             do i = 1, imax
-!           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
-                b(i, j, k) = b(i, j, k)*visc*ribackground(j) - a(i, j, k)*c(i, j, k)
+                b(i, j, k) = b(i, j, k)*visc - a(i, j, k)*c(i, j, k)
+                ! b(i, j, k) = b(i, j, k)*visc*ribackground(j) - a(i, j, k)*c(i, j, k)
             end do
         end do
     end do
+    call IO_WRITE_FIELDS('fieldXdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
     call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), a, a, c, tmp1)
+    call IO_WRITE_FIELDS('fieldXburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -86,22 +91,24 @@ program VBURGERS
     call MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
     if (ims_pro == 0) then
-        write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+        write (*, *) 'Relative error X ...........: ', sqrt(error)/sqrt(dummy)
     end if
-! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
+    call IO_WRITE_FIELDS('fieldX.dif', IO_SCAL, imax, jmax, kmax, 1, c)
 
 ! ###################################################################
     call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c)
     do k = 1, kmax
         do j = 1, jmax
             do i = 1, imax
-!           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
-                b(i, j, k) = b(i, j, k)*visc*ribackground(j) - a(i, j, k)*c(i, j, k)
+                b(i, j, k) = b(i, j, k)*visc - a(i, j, k)*c(i, j, k)
+                ! b(i, j, k) = b(i, j, k)*visc*ribackground(j) - a(i, j, k)*c(i, j, k)
             end do
         end do
     end do
+    call IO_WRITE_FIELDS('fieldYdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
     call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), a, a, c, tmp1)
+    call IO_WRITE_FIELDS('fieldYburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -110,9 +117,9 @@ program VBURGERS
     call MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
     if (ims_pro == 0) then
-        write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+        write (*, *) 'Relative error Y ...........: ', sqrt(error)/sqrt(dummy)
     end if
-! CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
+    call IO_WRITE_FIELDS('fieldY.dif', IO_SCAL, imax, jmax, kmax, 1, c)
 
 ! ###################################################################
     if (g(3)%size > 1) then
@@ -121,13 +128,15 @@ program VBURGERS
         do k = 1, kmax
             do j = 1, jmax
                 do i = 1, imax
-                    !           b(i,j,k) = b(i,j,k) *visc - a(i,j,k) *c(i,j,k)
-                    b(i, j, k) = b(i, j, k)*visc*ribackground(j) - a(i, j, k)*c(i, j, k)
+                    b(i, j, k) = b(i, j, k)*visc - a(i, j, k)*c(i, j, k)
+                    ! b(i, j, k) = b(i, j, k)*visc*ribackground(j) - a(i, j, k)*c(i, j, k)
                 end do
             end do
         end do
+        call IO_WRITE_FIELDS('fieldZdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
         call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), a, a, c, tmp1)
+        call IO_WRITE_FIELDS('fieldZburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
         c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -136,9 +145,9 @@ program VBURGERS
         call MPI_ALLREDUCE(error2, error, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
         if (ims_pro == 0) then
-            write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
+            write (*, *) 'Relative error Z ...........: ', sqrt(error)/sqrt(dummy)
         end if
-!    CALL IO_WRITE_FIELDS('field.dif', IO_SCAL, imax,jmax,kmax, i1, c)
+        call IO_WRITE_FIELDS('fieldZ.dif', IO_SCAL, imax, jmax, kmax, 1, c)
 
     end if
 

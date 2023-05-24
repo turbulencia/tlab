@@ -1,8 +1,3 @@
-#include "types.h"
-
-!########################################################################
-!# Tool/Library
-!#
 !########################################################################
 !# HISTORY
 !#
@@ -10,134 +5,204 @@
 !#              Created
 !#
 !########################################################################
-!# DESCRIPTION
 !#
 !# Transposition using Cache-Blocking and OpenMP
 !# transpose of the matrix a and place the transposed matrix in b
 !# routine trans below is faster than TRANSPOSE routine from f90
 !#
 !########################################################################
-!# ARGUMENTS
-!#
-!# nra   In    Number of rows in a
-!# nca   In    Number of columns in b
-!# ma    In    Leading dimension on the input matrix a
-!# mb    In    Leading dimension on the output matrix b
-!#
-!########################################################################
-SUBROUTINE DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
+subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
+    use TLAB_CONSTANTS
+    implicit none
 
-  IMPLICIT NONE
+    integer(wi), intent(in) :: nra      ! Number of rows in a
+    integer(wi), intent(in) :: nca      ! Number of columns in b
+    integer(wi), intent(in) :: ma       ! Leading dimension on the input matrix a
+    integer(wi), intent(in) :: mb       ! Leading dimension on the output matrix b
+    real(wp), intent(in)    :: a(ma, *) ! Input array
+    real(wp), intent(out)   :: b(mb, *) ! Transposed array
 
-  TINTEGER jb,kb
+! -------------------------------------------------------------------
+    integer(wi) jb, kb
 #ifdef HLRS_HAWK
-  PARAMETER(jb=16,kb=8)
+    parameter(jb=16, kb=8)
 #else
-  PARAMETER(jb=64, kb=64)
+    parameter(jb=64, kb=64)
 #endif
 
-  TINTEGER nra, nca, ma, mb
-  TREAL a(ma,*),b(mb,*)
+    integer(wi) :: srt, end, siz
 
-  TINTEGER :: srt,end,siz
+    integer(wi) k, j, jj, kk
+    integer(wi) last_k, last_j
 
-  TINTEGER k,j,jj,kk
-  TINTEGER last_k, last_j
-
+! -------------------------------------------------------------------
 #ifdef USE_MKL
-  CALL MKL_DOMATCOPY('c','t',nra,nca,C_1_R,a,ma,b,mb)
+    call MKL_DOMATCOPY('c', 't', nra, nca, 1.0_wp, a, ma, b, mb)
 #else
-   !use own implementation
+    !use own implementation
 !$omp parallel default(none) &
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-  CALL DNS_OMP_PARTITION(nca,srt,end,siz)
+    call DNS_OMP_PARTITION(nca, srt, end, siz)
 
-  kk=1; jj=1
+    kk = 1; jj = 1
 
-  DO k=srt,end-kb+1,kb;
-     DO j=1,nra-jb+1,jb;
-        DO jj=j,j+jb-1
-           DO kk=k,k+kb-1
-              b(kk,jj) = a(jj,kk)
-           ENDDO
-        ENDDO
-     ENDDO
-  ENDDO
+    do k = srt, end - kb + 1, kb; 
+        do j = 1, nra - jb + 1, jb; 
+            do jj = j, j + jb - 1
+                do kk = k, k + kb - 1
+                    b(kk, jj) = a(jj, kk)
+                end do
+            end do
+        end do
+    end do
 
-  last_k = kk
-  last_j = jj
+    last_k = kk
+    last_j = jj
 
-  DO k=last_k,end
-     DO j=1,nra
-        b(k,j) = a(j,k)
-     ENDDO
-  ENDDO
+    do k = last_k, end
+        do j = 1, nra
+            b(k, j) = a(j, k)
+        end do
+    end do
 
-  DO k=srt,end
-     DO j=last_j,nra
-        b(k,j) = a(j,k)
-     ENDDO
-  ENDDO
+    do k = srt, end
+        do j = last_j, nra
+            b(k, j) = a(j, k)
+        end do
+    end do
 
 !$omp end parallel
 
 #endif
-  RETURN
-END SUBROUTINE DNS_TRANSPOSE
+
+    return
+end subroutine DNS_TRANSPOSE
 
 !########################################################################
 !########################################################################
-SUBROUTINE DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
+subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
+    use TLAB_CONSTANTS
+    implicit none
 
-  IMPLICIT NONE
+    integer(wi), intent(in) :: nra      ! Number of rows in a
+    integer(wi), intent(in) :: nca      ! Number of columns in b
+    integer(wi), intent(in) :: ma       ! Leading dimension on the input matrix a
+    integer(wi), intent(in) :: mb       ! Leading dimension on the output matrix b
+    integer(1), intent(in)    :: a(ma, *) ! Input array
+    integer(1), intent(out)   :: b(mb, *) ! Transposed array
 
-  TINTEGER jb,kb
-  PARAMETER(jb=32, kb=32)
+! -------------------------------------------------------------------
+    integer(wi) jb, kb
+    parameter(jb=32, kb=32)
 
-  TINTEGER nra, nca, ma, mb
-  INTEGER(1) a(ma,*),b(mb,*)
+    integer(wi) :: srt, end, siz
 
-  TINTEGER :: srt,end,siz
+    integer(wi) k, j, jj, kk
+    integer(wi) last_k, last_j
 
-  TINTEGER k,j,jj,kk
-  TINTEGER last_k, last_j
-
+! -------------------------------------------------------------------
 !$omp parallel default(none) &
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-  CALL DNS_OMP_PARTITION(nca,srt,end,siz)
+    call DNS_OMP_PARTITION(nca, srt, end, siz)
 
-  kk=1; jj=1
+    kk = 1; jj = 1
 
-  DO k=srt,end-kb+1,kb;
-     DO j=1,nra-jb+1,jb;
-        DO jj=j,j+jb-1
-           DO kk=k,k+kb-1
-              b(kk,jj) = a(jj,kk)
-           ENDDO
-        ENDDO
-     ENDDO
-  ENDDO
+    do k = srt, end - kb + 1, kb; 
+        do j = 1, nra - jb + 1, jb; 
+            do jj = j, j + jb - 1
+                do kk = k, k + kb - 1
+                    b(kk, jj) = a(jj, kk)
+                end do
+            end do
+        end do
+    end do
 
-  last_k = kk
-  last_j = jj
+    last_k = kk
+    last_j = jj
 
-  DO k=last_k,end
-     DO j=1,nra
-        b(k,j) = a(j,k)
-     ENDDO
-  ENDDO
+    do k = last_k, end
+        do j = 1, nra
+            b(k, j) = a(j, k)
+        end do
+    end do
 
-  DO k=srt,end
-     DO j=last_j,nra
-        b(k,j) = a(j,k)
-     ENDDO
-  ENDDO
+    do k = srt, end
+        do j = last_j, nra
+            b(k, j) = a(j, k)
+        end do
+    end do
 
 !$omp end parallel
 
-  RETURN
-END SUBROUTINE DNS_TRANSPOSE_INT1
+    return
+end subroutine DNS_TRANSPOSE_INT1
+
+!########################################################################
+!########################################################################
+subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
+    use TLAB_CONSTANTS
+    implicit none
+
+    integer(wi), intent(in) :: nra      ! Number of rows in a
+    integer(wi), intent(in) :: nca      ! Number of columns in b
+    integer(wi), intent(in) :: ma       ! Leading dimension on the input matrix a
+    integer(wi), intent(in) :: mb       ! Leading dimension on the output matrix b
+    complex(wp), intent(in)    :: a(ma, *) ! Input array
+    complex(wp), intent(out)   :: b(mb, *) ! Transposed array
+
+! -------------------------------------------------------------------
+    integer(wi) jb, kb
+#ifdef HLRS_HAWK
+    parameter(jb=16, kb=8)
+#else
+    parameter(jb=64, kb=64)
+#endif
+
+    integer(wi) :: srt, end, siz
+
+    integer(wi) k, j, jj, kk
+    integer(wi) last_k, last_j
+
+! -------------------------------------------------------------------
+!$omp parallel default(none) &
+!$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
+!$omp shared(a,b,nca,nra)
+
+    call DNS_OMP_PARTITION(nca, srt, end, siz)
+
+    kk = 1; jj = 1
+
+    do k = srt, end - kb + 1, kb; 
+        do j = 1, nra - jb + 1, jb; 
+            do jj = j, j + jb - 1
+                do kk = k, k + kb - 1
+                    b(kk, jj) = a(jj, kk)
+                end do
+            end do
+        end do
+    end do
+
+    last_k = kk
+    last_j = jj
+
+    do k = last_k, end
+        do j = 1, nra
+            b(k, j) = a(j, k)
+        end do
+    end do
+
+    do k = srt, end
+        do j = last_j, nra
+            b(k, j) = a(j, k)
+        end do
+    end do
+
+!$omp end parallel
+
+    return
+end subroutine DNS_TRANSPOSE_COMPLEX
+

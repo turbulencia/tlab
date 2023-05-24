@@ -60,7 +60,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     if (TRIM(ADJUSTL(sRes)) == 'void') &        ! backwards compatilibity
         call SCANINICHAR(bakfile, inifile, block, '2DPhi', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') then     ! Default
-        var%phasex = 0
+        var%phasex = 0.0_wp
     else
         idummy = MAX_MODES
         call LIST_REAL(sRes, idummy, var%phasex)
@@ -72,7 +72,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
 
     call SCANINICHAR(bakfile, inifile, block, 'PhaseZ', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') then     ! Default
-        var%phasez = 0
+        var%phasez = 0.0_wp
     else
         idummy = MAX_MODES
         call LIST_REAL(sRes, idummy, var%phasez)

@@ -6,10 +6,10 @@
 !#
 !########################################################################
 subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: imode_eqns, imode_ibm
+    use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
     use TLAB_VARS, only: rbackground
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_POINTERS_3D, only: p_wrk2d
@@ -146,15 +146,17 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
-    call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    select case (imode_elliptic)
+    case (FDM_COM6_JACOBIAN)
+        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
-! filter pressure and dpdy
-    if      (PressureFilter(1)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_X(imax, jmax, kmax, PressureFilter(1), p)
-    else if (PressureFilter(2)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Y(imax, jmax, kmax, PressureFilter(2), p)
-    else if (PressureFilter(3)%type /= DNS_FILTER_NONE) then
-        call OPR_FILTER_Z(imax, jmax, kmax, PressureFilter(3), p)
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    end select
+
+    ! filter pressure p
+    if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, tmp4)
     end if
 
 ! Stagger pressure field p back on velocity grid

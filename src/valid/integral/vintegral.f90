@@ -1,26 +1,7 @@
-!########################################################################
-!# Valid
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2021/12/20 - J. Kostelecky
-!#              Modified for pentadiagonal schemes
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!# Validate.
-!#
-!########################################################################
-!# ARGUMENTS
-!#
-!########################################################################
-#include "types.h"
 #include "dns_const.h"
 
 program VINTEGRAL
-
+    use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: C1N6M_ALPHA
     use OPR_PARTIAL
@@ -28,23 +9,23 @@ program VINTEGRAL
     implicit none
 
     type(grid_dt) :: g
-    TINTEGER :: jmax, kmax, i
-    TINTEGER, parameter :: imax = 128, inb_grid = 57
-    TREAL, dimension(imax, inb_grid) :: x
-    TREAL, dimension(imax) :: u, w_n, f, tmp
-    TREAL, dimension(imax) :: du1_a, dw1_n, du2_a
-    TREAL, dimension(imax, 8) :: wrk1d
+    integer(wi) :: jmax, kmax, i
+    integer(wi), parameter :: imax = 128, inb_grid = 57
+    real(wp), dimension(imax, inb_grid) :: x
+    real(wp), dimension(imax) :: u, w_n, f, tmp
+    real(wp), dimension(imax) :: du1_a, dw1_n, du2_a
+    real(wp), dimension(imax, 8) :: wrk1d
     integer, dimension(2, 2) :: bcs
-    TREAL :: lambda, error, sol, dummy, wk, x_0
-    TINTEGER :: test_type, ibc
-    TINTEGER :: imin_loc, imax_loc
+    real(wp) :: lambda, error, sol, dummy, wk, x_0
+    integer(wi) :: test_type, ibc
+    integer(wi) :: imin_loc, imax_loc
 
     integer, parameter :: i1 = 1
-    
+
 ! ###################################################################
 ! Initialize
     g%size = imax
-    g%scale = C_1_R
+    g%scale = 1.0_wp
     g%uniform = .true.
     jmax = 1
     kmax = 1
@@ -54,36 +35,37 @@ program VINTEGRAL
     g%periodic = .true.
     wk = 1 ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
-    test_type = 1
     g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
 
     if (g%mode_fdm == FDM_COM6_JACPENTA) C1N6M_ALPHA = 0.56
 
-! ###################################################################
+    test_type = 2
+
+    ! ###################################################################
 
     do i = 1, imax
-        x(i, 1) = M_REAL(i - 1)/M_REAL(imax - 1)*g%scale
+        x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
     end do
 
     call FDM_INITIALIZE(x, g, wrk1d)
 
-    x_0 = C_075_R
+    x_0 = 0.75_wp
 
-    wrk1d = C_0_R
+    wrk1d = 0.0_wp
 
 ! ###################################################################
 ! Define the function f and analytic derivatives
     do i = 1, imax
 ! single-mode
-        u(i) = sin(C_2_R*C_PI_R/g%scale*wk*g%nodes(i) + C_PI_R/C_4_R)
-        du1_a(i) = (C_2_R*C_PI_R/g%scale*wk) &
-                   *cos(C_2_R*C_PI_R/g%scale*wk*g%nodes(i) + C_PI_R/C_4_R)
-        ! u(i)     =              COS(C_2_R*C_PI_R*g%nodes(i))
-        ! du1_a(i) =-C_PI_R*C_2_R*SIN(C_2_R*C_PI_R*g%nodes(i))
+        u(i) = sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i) + pi_wp/4.0_wp)
+        du1_a(i) = (2.0_wp*pi_wp/g%scale*wk) &
+                   *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i) + pi_wp/4.0_wp)
+        ! u(i)     =              COS(2.0_wp*pi_wp*g%nodes(i))
+        ! du1_a(i) =-pi_wp*2.0_wp*SIN(2.0_wp*pi_wp*g%nodes(i))
 ! Gaussian
-        ! u(i)     = EXP(-(g%nodes(i)-x_0*g%scale)**2/(C_2_R*(g%scale/wk)**2))
+        ! u(i)     = EXP(-(g%nodes(i)-x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
         ! du1_a(i) =-(g%nodes(i)-x_0*g%scale)/(g%scale/wk)**2*u(i)
-        ! v(i)     = EXP(-(g%nodes(i)-x_0*C_05_R*g%scale)**2/(C_2_R*(g%scale/wk)**2))
+        ! v(i)     = EXP(-(g%nodes(i)-x_0*C_05_R*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
         ! dv1_a(i) =-(g%nodes(i)-x_0*C_05_R*g%scale)/(g%scale/wk)**2*v(i)
 ! exponential
         ! u(i) = EXP(-g%nodes(i)*lambda)
@@ -92,17 +74,17 @@ program VINTEGRAL
         ! v(i) = EXP(g%nodes(i)*x_0/g%scale)
         ! dv1_a(i) = x_0/g%scale*v(i)
 ! step
-        ! u(i) = MAX(C_0_R,(g%nodes(i)-g%nodes(imax/2))*x_0)
-        ! du1_a(i) = (C_1_R+SIGN(C_1_R,g%nodes(i)-g%nodes(imax/2)))*C_05_R*x_0
+        ! u(i) = MAX(0.0_wp,(g%nodes(i)-g%nodes(imax/2))*x_0)
+        ! du1_a(i) = (1.0_wp+SIGN(1.0_wp,g%nodes(i)-g%nodes(imax/2)))*C_05_R*x_0
 ! tanh
-        ! u(i) = x_0 * LOG( C_1_R + EXP( (g%nodes(i)-g%nodes(imax/2))/x_0 ) )
-        ! du1_a(i) = C_05_R*( C_1_R + TANH( C_05_R*(g%nodes(i)-g%nodes(imax/2))/x_0 ) )
+        ! u(i) = x_0 * LOG( 1.0_wp + EXP( (g%nodes(i)-g%nodes(imax/2))/x_0 ) )
+        ! du1_a(i) = C_05_R*( 1.0_wp + TANH( C_05_R*(g%nodes(i)-g%nodes(imax/2))/x_0 ) )
 ! polynomial
         ! u(i)     =         g%nodes(i)** lambda
-        ! du1_a(i) = lambda*(g%nodes(i)**(lambda-C_1_R))
+        ! du1_a(i) = lambda*(g%nodes(i)**(lambda-1.0_wp))
 ! zero
-        ! u(i) = C_0_R
-        ! du1_a(i) = C_0_R
+        ! u(i) = 0.0_wp
+        ! du1_a(i) = 0.0_wp
     end do
 
 ! ###################################################################
@@ -126,22 +108,22 @@ program VINTEGRAL
             if (g%mode_fdm == FDM_COM6_JACOBIAN) then
                 call PENTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), w_n(2))
-                w_n(1) = C_0_R; w_n = w_n + u(1)    ! BCs
+                w_n(1) = 0.0_wp; w_n = w_n + u(1)    ! BCs
             elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
                 call HEPTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7))
-                call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), w_n(2))
-                w_n(1) = C_0_R; w_n = w_n + u(1)    ! BCs
+      call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), w_n(2))
+                w_n(1) = 0.0_wp; w_n = w_n + u(1)    ! BCs
             end if
 
         else if (ibc == 2) then ! at the top
             if (g%mode_fdm == FDM_COM6_JACOBIAN) then
                 call PENTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), w_n(1))
-                w_n(imax) = C_0_R; w_n = w_n + u(imax) ! BCs
+                w_n(imax) = 0.0_wp; w_n = w_n + u(imax) ! BCs
             elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
                 call HEPTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
-                call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), w_n(1))
-                w_n(imax) = C_0_R; w_n = w_n + u(imax) ! BCs
+      call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), w_n(1))
+                w_n(imax) = 0.0_wp; w_n = w_n + u(imax) ! BCs
             end if
         end if
 
@@ -155,7 +137,7 @@ program VINTEGRAL
         ibc = 2
 
         if (g%mode_fdm == FDM_COM6_JACOBIAN) then
-            call INT_C1N6_LHS_E(imax, ibc, g%jac, lambda, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
+         call INT_C1N6_LHS_E(imax, ibc, g%jac, lambda, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
             call INT_C1N6_RHS(imax, i1, ibc, g%jac, f, w_n)
         elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
             call INT_C1N6M_LHS_E(imax,    ibc, g%jac, lambda, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5),wrk1d(1,6),wrk1d(1,7), wrk1d(1,8))
@@ -167,14 +149,14 @@ program VINTEGRAL
                 call PENTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), w_n(2))
                 call PENTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
-                dummy = w_n(1); w_n(1) = C_0_R
+                dummy = w_n(1); w_n(1) = 0.0_wp
                 w_n = w_n + u(1)*wrk1d(1:imax, 6) ! BCs
                 dummy = (dummy + wrk1d(1, 3)*w_n(1) + wrk1d(1, 4)*w_n(2) + wrk1d(1, 5)*w_n(3))/g%jac(1, 1)
             elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
                 call HEPTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7))
-                call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), w_n(2))
-                call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), wrk1d(2, 8))
-                dummy = w_n(1); w_n(1) = C_0_R
+      call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), w_n(2))
+ call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), wrk1d(2, 8))
+                dummy = w_n(1); w_n(1) = 0.0_wp
                 w_n = w_n + u(1)*wrk1d(1:imax, 8) ! BCs
                 dummy = (dummy + wrk1d(1, 4)*w_n(1) + wrk1d(1, 5)*w_n(2) + wrk1d(1, 6)*w_n(3))/g%jac(1, 1)
             end if
@@ -184,14 +166,14 @@ program VINTEGRAL
                 call PENTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), w_n(1))
                 call PENTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
-                dummy = w_n(imax); w_n(imax) = C_0_R
+                dummy = w_n(imax); w_n(imax) = 0.0_wp
                 w_n = w_n + u(imax)*wrk1d(1:imax, 6) ! BCs
              dummy = (dummy + wrk1d(imax, 1)*w_n(imax - 2) + wrk1d(imax, 2)*w_n(imax - 1) + wrk1d(imax, 3)*w_n(imax))/g%jac(imax, 1)
             elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
                 call HEPTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
-                call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), w_n(1))
-                call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), wrk1d(1, 8))
-                dummy = w_n(imax); w_n(imax) = C_0_R
+      call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), w_n(1))
+ call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), wrk1d(1, 8))
+                dummy = w_n(imax); w_n(imax) = 0.0_wp
                 w_n = w_n + u(imax)*wrk1d(1:imax, 8) ! BCs
              dummy = (dummy + wrk1d(imax, 2)*w_n(imax - 2) + wrk1d(imax, 3)*w_n(imax - 1) + wrk1d(imax, 4)*w_n(imax))/g%jac(imax, 1)
             end if
@@ -215,7 +197,7 @@ program VINTEGRAL
         dummy = lambda*lambda
         f = du2_a - dummy*u
 
-        call INT_C2N6_LHS_E(imax, g%jac, dummy, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
+        call INT_C2N6_LHS_E(imax, g%jac, ibc, dummy, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
         call PENTADFS(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
         call PENTADSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
         call PENTADSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 7))
@@ -228,8 +210,8 @@ program VINTEGRAL
 ! ###################################################################
 ! IO - Error and function values
     open (20, file='integral.dat')
-    error = C_0_R
-    sol = C_0_R
+    error = 0.0_wp
+    sol = 0.0_wp
     imin_loc = 1; imax_loc = imax
     do i = imin_loc, imax_loc
         write (20, 1000) g%nodes(i), u(i), w_n(i), u(i) - w_n(i)

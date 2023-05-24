@@ -30,6 +30,7 @@ program AVERAGES
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
+    use OPR_ELLIPTIC
 
     implicit none
 
@@ -322,6 +323,8 @@ program AVERAGES
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call OPR_ELLIPTIC_INITIALIZE()
 
     call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
 
