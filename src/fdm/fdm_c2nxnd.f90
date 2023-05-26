@@ -42,8 +42,9 @@ contains
         real(wp) bm2, bm1, b, bp1, bp2, bp3             ! Right-hand side
         real(wp) tmp1, tmp2, tmpa, tmpb, tmpd, tmpp, tmpq   ! Intermediate ops
         real(wp) dummy1, dummy2
-        real(wp) D, dx1, Ap1d, Am1d, Ap2d, Am2d, Bp1d, Bm1d, Bp2d, Bm2d
-        real(wp) C01d, C02d, Cp1d, Cm1d, Cp2d, Cm2d
+        real(wp) D, dx, dxp, dxm
+        ! real(wp) Ap1d, Am1d, Ap2d, Am2d, Bp1d, Bm1d, Bp2d, Bm2d
+        ! real(wp) C01d, C02d, Cp1d, Cm1d, Cp2d, Cm2d
 
 ! #######################################################################
 ! n = 1
@@ -144,192 +145,192 @@ contains
 ! #######################################################################
 ! 2 < n < nmax-1
 ! #######################################################################
-        do n = 3, nmax - 2
+!         do n = 3, nmax - 2
 
-            tmpa = (x(n - 1) - x(n + 1))* &
-                   (1.0_wp/(x(n - 1) - x(n - 2)) + 1.0_wp/(x(n - 1) - x(n + 2)) + 1.0_wp/(x(n - 1) - x(n)))
-            tmpb = (x(n + 1) - x(n - 1))* &
-                   (1.0_wp/(x(n + 1) - x(n - 2)) + 1.0_wp/(x(n + 1) - x(n + 2)) + 1.0_wp/(x(n + 1) - x(n)))
-            tmpd = 1.0_wp/ &                                    ! constant 2/D in Table 2 in Shukla&Zhong(2005)
-                   ((tmpb + 2.0_wp)*(tmpa + 2.0_wp) - 1.0_wp)
-            tmpa = tmpa + 1.0_wp                                 ! constant a in ...
-            tmpb = tmpb + 1.0_wp                                 ! constant b in ...
+!             tmpa = (x(n - 1) - x(n + 1))* &
+!                    (1.0_wp/(x(n - 1) - x(n - 2)) + 1.0_wp/(x(n - 1) - x(n + 2)) + 1.0_wp/(x(n - 1) - x(n)))
+!             tmpb = (x(n + 1) - x(n - 1))* &
+!                    (1.0_wp/(x(n + 1) - x(n - 2)) + 1.0_wp/(x(n + 1) - x(n + 2)) + 1.0_wp/(x(n + 1) - x(n)))
+!             tmpd = 1.0_wp/ &                                    ! constant 2/D in Table 2 in Shukla&Zhong(2005)
+!                    ((tmpb + 2.0_wp)*(tmpa + 2.0_wp) - 1.0_wp)
+!             tmpa = tmpa + 1.0_wp                                 ! constant a in ...
+!             tmpb = tmpb + 1.0_wp                                 ! constant b in ...
 
-            tmpp = (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))* &         ! constant p
-                   (1.0_wp/((x(n - 1) - x(n))*(x(n - 1) - x(n + 2))) &
-                    + 1.0_wp/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2))) &
-                    + 1.0_wp/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n))))
-            tmpq = (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))* &         ! constant q
-                   (1.0_wp/((x(n + 1) - x(n))*(x(n + 1) - x(n + 2))) &
-                    + 1.0_wp/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2))) &
-                    + 1.0_wp/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n))))
+!             tmpp = (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))* &         ! constant p
+!                    (1.0_wp/((x(n - 1) - x(n))*(x(n - 1) - x(n + 2))) &
+!                     + 1.0_wp/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2))) &
+!                     + 1.0_wp/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n))))
+!             tmpq = (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))* &         ! constant q
+!                    (1.0_wp/((x(n + 1) - x(n))*(x(n + 1) - x(n + 2))) &
+!                     + 1.0_wp/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2))) &
+!                     + 1.0_wp/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n))))
 
-! -------------------------------------------------------------------
-            a = 1.0_wp
+! ! -------------------------------------------------------------------
+!             a = 1.0_wp
 
-! -------------------------------------------------------------------
-            dummy1 = 1.0_wp + tmpb
-            dummy2 = -tmpb
+! ! -------------------------------------------------------------------
+!             dummy1 = 1.0_wp + tmpb
+!             dummy2 = -tmpb
 
-            tmp1 = (x(n) - x(n - 2))*(x(n) - x(n + 2))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))
-            tmp2 = dummy1*(1.0_wp + (x(n) - x(n + 1))/(x(n) - x(n - 1))) &
-                   + dummy2*(2.0_wp*(x(n) - x(n + 1)) + (x(n) - x(n - 1)))/(x(n + 1) - x(n - 1))
-            am1 = tmp1*tmp2
+!             tmp1 = (x(n) - x(n - 2))*(x(n) - x(n + 2))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))
+!             tmp2 = dummy1*(1.0_wp + (x(n) - x(n + 1))/(x(n) - x(n - 1))) &
+!                    + dummy2*(2.0_wp*(x(n) - x(n + 1)) + (x(n) - x(n - 1)))/(x(n + 1) - x(n - 1))
+!             am1 = tmp1*tmp2
 
-            tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))*(x(n) - x(n + 1))
-            tmp2 = dummy1 &
-                   + dummy2*(x(n) - x(n - 1))/(x(n + 1) - x(n - 1))
-            tmp2 = tmp1*tmp2
+!             tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))*(x(n) - x(n + 1))
+!             tmp2 = dummy1 &
+!                    + dummy2*(x(n) - x(n - 1))/(x(n + 1) - x(n - 1))
+!             tmp2 = tmp1*tmp2
 
-            am1 = (am1 + tmp2)*tmpd
+!             am1 = (am1 + tmp2)*tmpd
 
-! -------------------------------------------------------------------
-            dummy1 = 4.0_wp + 2.0_wp*(1.0_wp + tmpb)*(tmpa - 2.0_wp) + 2.0_wp*tmpp*(1.0_wp + tmpb)
-            dummy2 = 1.0_wp + (1.0_wp - 2.0_wp*tmpa)*(2.0_wp*tmpb - 1.0_wp) - 2.0_wp*tmpp*tmpb
+! ! -------------------------------------------------------------------
+!             dummy1 = 4.0_wp + 2.0_wp*(1.0_wp + tmpb)*(tmpa - 2.0_wp) + 2.0_wp*tmpp*(1.0_wp + tmpb)
+!             dummy2 = 1.0_wp + (1.0_wp - 2.0_wp*tmpa)*(2.0_wp*tmpb - 1.0_wp) - 2.0_wp*tmpp*tmpb
 
-            tmp1 = (x(n) - x(n - 2))*(x(n) - x(n + 2))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))
-            tmp2 = dummy1*(1.0_wp + (x(n) - x(n + 1))/(x(n) - x(n - 1))) &
-                   + dummy2*(2.0_wp*(x(n) - x(n + 1)) + (x(n) - x(n - 1)))/(x(n + 1) - x(n - 1)) &
-                   + 2.0_wp/tmpd*(x(n + 1) - x(n - 1))/(x(n) - x(n - 1))
-            bm1 = tmp1*tmp2
+!             tmp1 = (x(n) - x(n - 2))*(x(n) - x(n + 2))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))
+!             tmp2 = dummy1*(1.0_wp + (x(n) - x(n + 1))/(x(n) - x(n - 1))) &
+!                    + dummy2*(2.0_wp*(x(n) - x(n + 1)) + (x(n) - x(n - 1)))/(x(n + 1) - x(n - 1)) &
+!                    + 2.0_wp/tmpd*(x(n + 1) - x(n - 1))/(x(n) - x(n - 1))
+!             bm1 = tmp1*tmp2
 
-            tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))*(x(n) - x(n + 1))
-            tmp2 = dummy1 &
-                   + dummy2*(x(n) - x(n - 1))/(x(n + 1) - x(n - 1)) &
-                   + 2.0_wp/tmpd*(x(n + 1) - x(n - 1))/(x(n) - x(n - 1))
-            tmp2 = tmp1*tmp2
+!             tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n - 1) - x(n - 2))*(x(n - 1) - x(n + 2)))*(x(n) - x(n + 1))
+!             tmp2 = dummy1 &
+!                    + dummy2*(x(n) - x(n - 1))/(x(n + 1) - x(n - 1)) &
+!                    + 2.0_wp/tmpd*(x(n + 1) - x(n - 1))/(x(n) - x(n - 1))
+!             tmp2 = tmp1*tmp2
 
-            bm1 = (bm1 + tmp2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
+!             bm1 = (bm1 + tmp2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
 
-! -------------------------------------------------------------------
-            dummy1 = 1.0_wp + tmpa
-            dummy2 = -tmpa
+! ! -------------------------------------------------------------------
+!             dummy1 = 1.0_wp + tmpa
+!             dummy2 = -tmpa
 
-            tmp1 = (x(n) - x(n + 2))*(x(n) - x(n - 2))/((x(n + 1) - x(n + 2))*(x(n + 1) - x(n - 2)))
-            tmp2 = dummy1*(1.0_wp + (x(n) - x(n - 1))/(x(n) - x(n + 1))) &
-                   + dummy2*(2.0_wp*(x(n) - x(n - 1)) + (x(n) - x(n + 1)))/(x(n - 1) - x(n + 1))
-            ap1 = tmp1*tmp2
+!             tmp1 = (x(n) - x(n + 2))*(x(n) - x(n - 2))/((x(n + 1) - x(n + 2))*(x(n + 1) - x(n - 2)))
+!             tmp2 = dummy1*(1.0_wp + (x(n) - x(n - 1))/(x(n) - x(n + 1))) &
+!                    + dummy2*(2.0_wp*(x(n) - x(n - 1)) + (x(n) - x(n + 1)))/(x(n - 1) - x(n + 1))
+!             ap1 = tmp1*tmp2
 
-            tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2)))*(x(n) - x(n - 1))
-            tmp2 = dummy1 &
-                   + dummy2*(x(n) - x(n + 1))/(x(n - 1) - x(n + 1))
-            tmp2 = tmp1*tmp2
+!             tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2)))*(x(n) - x(n - 1))
+!             tmp2 = dummy1 &
+!                    + dummy2*(x(n) - x(n + 1))/(x(n - 1) - x(n + 1))
+!             tmp2 = tmp1*tmp2
 
-            ap1 = (ap1 + tmp2)*tmpd
+!             ap1 = (ap1 + tmp2)*tmpd
 
-! -------------------------------------------------------------------
-            dummy1 = 4.0_wp + 2.0_wp*(1.0_wp + tmpa)*(tmpb - 2.0_wp) + 2.0_wp*tmpq*(1.0_wp + tmpa)
-            dummy2 = 1.0_wp + (1.0_wp - 2.0_wp*tmpa)*(2.0_wp*tmpb - 1.0_wp) - 2.0_wp*tmpq*tmpa
+! ! -------------------------------------------------------------------
+!             dummy1 = 4.0_wp + 2.0_wp*(1.0_wp + tmpa)*(tmpb - 2.0_wp) + 2.0_wp*tmpq*(1.0_wp + tmpa)
+!             dummy2 = 1.0_wp + (1.0_wp - 2.0_wp*tmpa)*(2.0_wp*tmpb - 1.0_wp) - 2.0_wp*tmpq*tmpa
 
-            tmp1 = (x(n) - x(n - 2))*(x(n) - x(n + 2))/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2)))
-            tmp2 = dummy1*(1.0_wp + (x(n) - x(n - 1))/(x(n) - x(n + 1))) &
-                   + dummy2*(2.0_wp*(x(n) - x(n - 1)) + (x(n) - x(n + 1)))/(x(n - 1) - x(n + 1)) &
-                   + 2.0_wp/tmpd*(x(n - 1) - x(n + 1))/(x(n) - x(n + 1))
-            bp1 = tmp1*tmp2
+!             tmp1 = (x(n) - x(n - 2))*(x(n) - x(n + 2))/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2)))
+!             tmp2 = dummy1*(1.0_wp + (x(n) - x(n - 1))/(x(n) - x(n + 1))) &
+!                    + dummy2*(2.0_wp*(x(n) - x(n - 1)) + (x(n) - x(n + 1)))/(x(n - 1) - x(n + 1)) &
+!                    + 2.0_wp/tmpd*(x(n - 1) - x(n + 1))/(x(n) - x(n + 1))
+!             bp1 = tmp1*tmp2
 
-            tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2)))*(x(n) - x(n - 1))
-            tmp2 = dummy1 &
-                   + dummy2*(x(n) - x(n + 1))/(x(n - 1) - x(n + 1)) &
-                   + 2.0_wp/tmpd*(x(n - 1) - x(n + 1))/(x(n) - x(n + 1))
-            tmp2 = tmp1*tmp2
+!             tmp1 = ((x(n) - x(n - 2)) + (x(n) - x(n + 2)))/((x(n + 1) - x(n - 2))*(x(n + 1) - x(n + 2)))*(x(n) - x(n - 1))
+!             tmp2 = dummy1 &
+!                    + dummy2*(x(n) - x(n + 1))/(x(n - 1) - x(n + 1)) &
+!                    + 2.0_wp/tmpd*(x(n - 1) - x(n + 1))/(x(n) - x(n + 1))
+!             tmp2 = tmp1*tmp2
 
-            bp1 = (bp1 + tmp2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
+!             bp1 = (bp1 + tmp2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
 
-! -------------------------------------------------------------------
-            j = n
+! ! -------------------------------------------------------------------
+!             j = n
 
-            dummy1 = (x(n + 1) - x(j))/(x(n + 1) - x(n - 1))
-            dummy2 = (x(n - 1) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy1 = (x(n + 1) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy2 = (x(n - 1) - x(j))/(x(n + 1) - x(n - 1))
 
-            tmp1 = (dummy1/dummy2 - dummy2/dummy1)*(1.0_wp - tmpa)*(tmpb - 1.0_wp) &
-                   + (1.0_wp - tmpa)*(2.0_wp/dummy1 + 2.0_wp/dummy2 - 1.0_wp/(dummy1*dummy1)) &
-                   - (tmpb - 1.0_wp)*(2.0_wp/dummy1 + 2.0_wp/dummy2 + 1.0_wp/(dummy2*dummy2)) &
-                   - (1.0_wp/dummy1 + 1.0_wp/dummy2)*(5.0_wp + 2.0_wp/(dummy1*dummy2))
-            tmp2 = 1.0_wp/(dummy1*dummy1) + 1.0_wp/(dummy2*dummy2) + 1.0_wp/(dummy1*dummy2) &
-                   - ((tmpb - 1.0_wp)/dummy2*(1.0_wp - tmpa)/dummy1) &
-                   + ((tmpb - 1.0_wp)/dummy2 - (1.0_wp - tmpa)/dummy1)*(1.0_wp/dummy1 + 1.0_wp/dummy2)
+!             tmp1 = (dummy1/dummy2 - dummy2/dummy1)*(1.0_wp - tmpa)*(tmpb - 1.0_wp) &
+!                    + (1.0_wp - tmpa)*(2.0_wp/dummy1 + 2.0_wp/dummy2 - 1.0_wp/(dummy1*dummy1)) &
+!                    - (tmpb - 1.0_wp)*(2.0_wp/dummy1 + 2.0_wp/dummy2 + 1.0_wp/(dummy2*dummy2)) &
+!                    - (1.0_wp/dummy1 + 1.0_wp/dummy2)*(5.0_wp + 2.0_wp/(dummy1*dummy2))
+!             tmp2 = 1.0_wp/(dummy1*dummy1) + 1.0_wp/(dummy2*dummy2) + 1.0_wp/(dummy1*dummy2) &
+!                    - ((tmpb - 1.0_wp)/dummy2*(1.0_wp - tmpa)/dummy1) &
+!                    + ((tmpb - 1.0_wp)/dummy2 - (1.0_wp - tmpa)/dummy1)*(1.0_wp/dummy1 + 1.0_wp/dummy2)
 
-            b = (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))/((x(n) - x(n - 2))*(x(n) - x(n + 2))) &
-                - (x(n + 1) - x(n - 1))*(1.0_wp/(x(n) - x(n - 2)) + 1.0_wp/(x(n) - x(n + 2)))*(1.0_wp/dummy1 + 1.0_wp/dummy2) &
-                + 1.0_wp/(dummy1*dummy2)
-            b = b/tmpd &
-              + tmp1*((x(n + 1) - x(n - 1))*(1.0_wp/(x(n) - x(n - 2)) + 1.0_wp/(x(n) - x(n + 2))) - (1.0_wp/dummy1 + 1.0_wp/dummy2))
-            b = (b + tmp2)*2.0_wp*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
+!             b = (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))/((x(n) - x(n - 2))*(x(n) - x(n + 2))) &
+!                 - (x(n + 1) - x(n - 1))*(1.0_wp/(x(n) - x(n - 2)) + 1.0_wp/(x(n) - x(n + 2)))*(1.0_wp/dummy1 + 1.0_wp/dummy2) &
+!                 + 1.0_wp/(dummy1*dummy2)
+!             b = b/tmpd &
+!               + tmp1*((x(n + 1) - x(n - 1))*(1.0_wp/(x(n) - x(n - 2)) + 1.0_wp/(x(n) - x(n + 2))) - (1.0_wp/dummy1 + 1.0_wp/dummy2))
+!             b = (b + tmp2)*2.0_wp*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
 
-! -------------------------------------------------------------------
-            j = n - 2
+! ! -------------------------------------------------------------------
+!             j = n - 2
 
-            dummy1 = (x(n + 1) - x(j))/(x(n + 1) - x(n - 1))
-            dummy2 = (x(n - 1) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy1 = (x(n + 1) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy2 = (x(n - 1) - x(j))/(x(n + 1) - x(n - 1))
 
-            tmp1 = (dummy1/dummy2 - dummy2/dummy1)*(1.0_wp - tmpa)*(tmpb - 1.0_wp) &
-                   + (1.0_wp - tmpa)*(2.0_wp/dummy1 + 2.0_wp/dummy2 - 1.0_wp/(dummy1*dummy1)) &
-                   - (tmpb - 1.0_wp)*(2.0_wp/dummy1 + 2.0_wp/dummy2 + 1.0_wp/(dummy2*dummy2)) &
-                   - (1.0_wp/dummy1 + 1.0_wp/dummy2)*(5.0_wp + 2.0_wp/(dummy1*dummy2))
-            tmp2 = 1.0_wp/(dummy1*dummy1) + 1.0_wp/(dummy2*dummy2) + 1.0_wp/(dummy1*dummy2) &
-                   - ((tmpb - 1.0_wp)/dummy2*(1.0_wp - tmpa)/dummy1) &
-                   + ((tmpb - 1.0_wp)/dummy2 - (1.0_wp - tmpa)/dummy1)*(1.0_wp/dummy1 + 1.0_wp/dummy2)
+!             tmp1 = (dummy1/dummy2 - dummy2/dummy1)*(1.0_wp - tmpa)*(tmpb - 1.0_wp) &
+!                    + (1.0_wp - tmpa)*(2.0_wp/dummy1 + 2.0_wp/dummy2 - 1.0_wp/(dummy1*dummy1)) &
+!                    - (tmpb - 1.0_wp)*(2.0_wp/dummy1 + 2.0_wp/dummy2 + 1.0_wp/(dummy2*dummy2)) &
+!                    - (1.0_wp/dummy1 + 1.0_wp/dummy2)*(5.0_wp + 2.0_wp/(dummy1*dummy2))
+!             tmp2 = 1.0_wp/(dummy1*dummy1) + 1.0_wp/(dummy2*dummy2) + 1.0_wp/(dummy1*dummy2) &
+!                    - ((tmpb - 1.0_wp)/dummy2*(1.0_wp - tmpa)/dummy1) &
+!                    + ((tmpb - 1.0_wp)/dummy2 - (1.0_wp - tmpa)/dummy1)*(1.0_wp/dummy1 + 1.0_wp/dummy2)
 
-            dummy1 = 1.0_wp/(x(n) - x(n + 1)) + 1.0_wp/(x(n) - x(n - 1))
-            dummy1 = tmp1*(1.0_wp + (x(n) - x(j))*dummy1) &
-                     + tmp2*(2.0_wp + (x(n) - x(j))*dummy1)*(x(n) - x(j))/(x(n + 1) - x(n - 1)) &
-                     + 1.0_wp/tmpd*((x(n + 1) - x(n - 1))*dummy1)
-            dummy1 = dummy1*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n) - x(n + 2))/(x(n) - x(n - 2)) ! for n-2
+!             dummy1 = 1.0_wp/(x(n) - x(n + 1)) + 1.0_wp/(x(n) - x(n - 1))
+!             dummy1 = tmp1*(1.0_wp + (x(n) - x(j))*dummy1) &
+!                      + tmp2*(2.0_wp + (x(n) - x(j))*dummy1)*(x(n) - x(j))/(x(n + 1) - x(n - 1)) &
+!                      + 1.0_wp/tmpd*((x(n + 1) - x(n - 1))*dummy1)
+!             dummy1 = dummy1*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n) - x(n + 2))/(x(n) - x(n - 2)) ! for n-2
 
-            dummy2 = (x(n) - x(j))/(x(n + 1) - x(n - 1))
-            dummy2 = tmp1*dummy2 &
-                     + tmp2*dummy2*dummy2 &
-                     + 1.0_wp/tmpd
-            dummy2 = dummy2*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n + 1) - x(n - 1))/(x(n) - x(n - 2)) ! for n-2
+!             dummy2 = (x(n) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy2 = tmp1*dummy2 &
+!                      + tmp2*dummy2*dummy2 &
+!                      + 1.0_wp/tmpd
+!             dummy2 = dummy2*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n + 1) - x(n - 1))/(x(n) - x(n - 2)) ! for n-2
 
-            bm2 = (dummy1 + dummy2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))) &
-                  *2.0_wp*(x(n) - x(n + 1))/(x(j) - x(n + 1))*(x(n) - x(n - 1))/(x(j) - x(n - 1))
+!             bm2 = (dummy1 + dummy2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))) &
+!                   *2.0_wp*(x(n) - x(n + 1))/(x(j) - x(n + 1))*(x(n) - x(n - 1))/(x(j) - x(n - 1))
 
-! -------------------------------------------------------------------
-            j = n + 2
+! ! -------------------------------------------------------------------
+!             j = n + 2
 
-            dummy1 = (x(n + 1) - x(j))/(x(n + 1) - x(n - 1))
-            dummy2 = (x(n - 1) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy1 = (x(n + 1) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy2 = (x(n - 1) - x(j))/(x(n + 1) - x(n - 1))
 
-            tmp1 = (dummy1/dummy2 - dummy2/dummy1)*(1.0_wp - tmpa)*(tmpb - 1.0_wp) &
-                   + (1.0_wp - tmpa)*(2.0_wp/dummy1 + 2.0_wp/dummy2 - 1.0_wp/(dummy1*dummy1)) &
-                   - (tmpb - 1.0_wp)*(2.0_wp/dummy1 + 2.0_wp/dummy2 + 1.0_wp/(dummy2*dummy2)) &
-                   - (1.0_wp/dummy1 + 1.0_wp/dummy2)*(5.0_wp + 2.0_wp/(dummy1*dummy2))
-            tmp2 = 1.0_wp/(dummy1*dummy1) + 1.0_wp/(dummy2*dummy2) + 1.0_wp/(dummy1*dummy2) &
-                   - ((tmpb - 1.0_wp)/dummy2*(1.0_wp - tmpa)/dummy1) &
-                   + ((tmpb - 1.0_wp)/dummy2 - (1.0_wp - tmpa)/dummy1)*(1.0_wp/dummy1 + 1.0_wp/dummy2)
+!             tmp1 = (dummy1/dummy2 - dummy2/dummy1)*(1.0_wp - tmpa)*(tmpb - 1.0_wp) &
+!                    + (1.0_wp - tmpa)*(2.0_wp/dummy1 + 2.0_wp/dummy2 - 1.0_wp/(dummy1*dummy1)) &
+!                    - (tmpb - 1.0_wp)*(2.0_wp/dummy1 + 2.0_wp/dummy2 + 1.0_wp/(dummy2*dummy2)) &
+!                    - (1.0_wp/dummy1 + 1.0_wp/dummy2)*(5.0_wp + 2.0_wp/(dummy1*dummy2))
+!             tmp2 = 1.0_wp/(dummy1*dummy1) + 1.0_wp/(dummy2*dummy2) + 1.0_wp/(dummy1*dummy2) &
+!                    - ((tmpb - 1.0_wp)/dummy2*(1.0_wp - tmpa)/dummy1) &
+!                    + ((tmpb - 1.0_wp)/dummy2 - (1.0_wp - tmpa)/dummy1)*(1.0_wp/dummy1 + 1.0_wp/dummy2)
 
-            dummy1 = 1.0_wp/(x(n) - x(n + 1)) + 1.0_wp/(x(n) - x(n - 1))
-            dummy1 = tmp1*(1.0_wp + (x(n) - x(j))*dummy1) &
-                     + tmp2*(2.0_wp + (x(n) - x(j))*dummy1)*(x(n) - x(j))/(x(n + 1) - x(n - 1)) &
-                     + 1.0_wp/tmpd*((x(n + 1) - x(n - 1))*dummy1)
-            dummy1 = dummy1*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n) - x(n - 2))/(x(n + 2) - x(n)) ! for n+2
+!             dummy1 = 1.0_wp/(x(n) - x(n + 1)) + 1.0_wp/(x(n) - x(n - 1))
+!             dummy1 = tmp1*(1.0_wp + (x(n) - x(j))*dummy1) &
+!                      + tmp2*(2.0_wp + (x(n) - x(j))*dummy1)*(x(n) - x(j))/(x(n + 1) - x(n - 1)) &
+!                      + 1.0_wp/tmpd*((x(n + 1) - x(n - 1))*dummy1)
+!             dummy1 = dummy1*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n) - x(n - 2))/(x(n + 2) - x(n)) ! for n+2
 
-            dummy2 = (x(n) - x(j))/(x(n + 1) - x(n - 1))
-            dummy2 = tmp1*dummy2 &
-                     + tmp2*dummy2*dummy2 &
-                     + 1.0_wp/tmpd
-            dummy2 = dummy2*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n)) ! for n+2
+!             dummy2 = (x(n) - x(j))/(x(n + 1) - x(n - 1))
+!             dummy2 = tmp1*dummy2 &
+!                      + tmp2*dummy2*dummy2 &
+!                      + 1.0_wp/tmpd
+!             dummy2 = dummy2*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n - 2))*(x(n + 1) - x(n - 1))/(x(n + 2) - x(n)) ! for n+2
 
-            bp2 = (dummy1 + dummy2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))) &
-                  *2.0_wp*(x(n) - x(n + 1))/(x(j) - x(n + 1))*(x(n) - x(n - 1))/(x(j) - x(n - 1))
+!             bp2 = (dummy1 + dummy2)*tmpd/((x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1))) &
+!                   *2.0_wp*(x(n) - x(n + 1))/(x(j) - x(n + 1))*(x(n) - x(n - 1))/(x(j) - x(n - 1))
 
-! -------------------------------------------------------------------
-! if uniform, we should have ( 2/11 1 2/11 ) and ( 3/44 12/11 -51/22 12/11 3/44 )/h^2
-! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
-! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
-            tmp1 = 1.0_wp/b
+! ! -------------------------------------------------------------------
+! ! if uniform, we should have ( 2/11 1 2/11 ) and ( 3/44 12/11 -51/22 12/11 3/44 )/h^2
+! ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
+! ! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
+!             tmp1 = 1.0_wp/b
 
-            lhs(n, 1) = am1*tmp1
-            lhs(n, 2) = a*tmp1
-            lhs(n, 3) = ap1*tmp1
+!             lhs(n, 1) = am1*tmp1
+!             lhs(n, 2) = a*tmp1
+!             lhs(n, 3) = ap1*tmp1
 
-            rhs(n, 1) = bm2*tmp1
-            rhs(n, 2) = bm1*tmp1
-            rhs(n, 3) = bp1*tmp1
-            rhs(n, 4) = bp2*tmp1
+!             rhs(n, 1) = bm2*tmp1
+!             rhs(n, 2) = bm1*tmp1
+!             rhs(n, 3) = bp1*tmp1
+!             rhs(n, 4) = bp2*tmp1
 
-        end do
+!         end do
 
 ! #######################################################################
 ! n = nmax-1; just a copy of case n = 2
@@ -430,58 +431,46 @@ contains
         rhs(n, 1) = bp2*tmp1
 
 ! #######################################################################
+! New implementation
         do n = 3, nmax - 2
-            dx1 = x(n + 1) - x(n - 1)
 
-            D = 6.0_wp + 4.0_wp*dx1*(PIp_o_PI(x(:), n + 1, n) - PIp_o_PI(x(:), n - 1, n)) &
-                - 2.0_wp*dx1**2.0_wp*PIp_o_PI(x(:), n + 1, n)*PIp_o_PI(x(:), n + 1, n)
+            D = D_coef(x, n)
 
-            ! I am not sure if I need these intermediate data...
-            Ap1D = A1D(x, n - 1, n + 1, n)
-            Am1D = A1D(x, n + 1, n - 1, n)
-
-            Ap2D = A2D(x, n - 1, n + 1, n)
-            Am2D = A2D(x, n + 1, n - 1, n)
-
-            Bp1D = B1D(x, n + 1, n - 1, n)
-            Bm1D = B1D(x, n - 1, n + 1, n)
-
-            Bp2D = B2D(x, n - 1, n + 1, n)
-            Bm2D = B2D(x, n + 1, n - 1, n)
-
-            C01D = C1D(x, n, n)         ! values C_{1j]D in paper for j=i
-            C02D = C2D(x, n, n)         ! values C_{2j]D in paper for j=i
-
-            Cp1D = C1D(x, n + 2, n)     ! values C_{1j]D in paper for j=i+2
-            Cp2D = C2D(x, n + 2, n)     ! values C_{2j]D in paper for j=i+2
-
-            Cm1D = C1D(x, n - 2, n)     ! values C_{1j]D in paper for j=i-2
-            Cm2D = C2D(x, n - 2, n)     ! values C_{2j]D in paper for j=i-2
-
+! left-hand side
             a = 1.0_wp
-            ap1 = a_coef(x, n - 1, n + 1, n) /D
-            am1 = a_coef(x, n + 1, n - 1, n) /D
+            ap1 = a_coef(x, n - 1, n + 1, n)/D
+            am1 = a_coef(x, n + 1, n - 1, n)/D
 
-            bp1 = b_coef(x, n - 1, n + 1, n) /D
-            bm1 = b_coef(x, n + 1, n - 1, n) /D
+! right-hand side
+            bp1 = b_coef(x, n - 1, n + 1, n)
+            bm1 = b_coef(x, n + 1, n - 1, n)
 
-            b = 0.0_wp      ! to be finished
-            bp2 = 0.0_wp
-            bm2 = 0.0_wp
+            dx = x(n + 1) - x(n - 1)
+            dxp = x(n) - x(n + 1)
+            dxm = x(n) - x(n - 1)
 
-! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
+            b = 2.0_wp*C2D(x, n, n)/D + 2.0_wp*C1D(x, n, n)/D*((dxm + dxp)/(dxp*dxm) + lp(x, n, n)) &
+                + (2.0_wp + 2.0_wp*lp(x, n, n)*(dxm + dxp))/(dxp*dxm) + lpp(x, n, n)
+            bp2 = b2_coef(x, n + 2, n)
+            bm2 = b2_coef(x, n - 2, n)
+
+! -------------------------------------------------------------------
+! if uniform, we should have ( 2/11 1 2/11 ) and ( 3/44 12/11 -51/22 12/11 3/44 )/h^2
 ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
 ! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
+            print *, am1, a, ap1
+            print *, bm2*dxp**2., bm1*dxp**2., b*dxp**2., bp1*dxp**2., bp2*dxp**2.
+
             tmp1 = 1.0_wp/b
 
             lhs(n, 1) = am1*tmp1
             lhs(n, 2) = a*tmp1
             lhs(n, 3) = ap1*tmp1
-    
-            rhs(n, 1) = 0.0_wp
+
+            rhs(n, 1) = bm2*tmp1
             rhs(n, 2) = bm1*tmp1
             rhs(n, 3) = bp1*tmp1
-            rhs(n, 4) = 0.0_wp
+            rhs(n, 4) = bp2*tmp1
 
         end do
 
@@ -490,7 +479,72 @@ contains
 
     !########################################################################
 !########################################################################
-    function PI(x, j, i) result(f)        ! Interval m around i
+    function a_coef(x, im, ip, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: ip, im, i
+        real(wp) f, f1, f2, dxm, dxp
+
+        real(wp) dx
+
+        dx = x(ip) - x(im)
+        dxp = x(i) - x(ip)
+        dxm = x(i) - x(im)
+
+        f1 = B1D(x, ip, im, i)*(dxm + dxp) + B2D(x, im, ip, i)*dxp*(dxp + 2.0_wp*dxm)
+        f1 = f1*2.0_wp*PIp(x(:), i, i)
+        f2 = B1D(x, ip, im, i) + B2D(x, im, ip, i)*dxp
+        f2 = f2*PIpp(x(:), i, i)*dxp*dxm
+        f = -(f1 + f2)/dx/PI(x, ip, i)
+
+        return
+    end function
+
+    function b_coef(x, im, ip, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: ip, im, i
+        real(wp) f, f1, f2, dxm, dxp, D
+
+        real(wp) dx
+
+        dx = x(ip) - x(im)
+        dxp = x(i) - x(ip)
+        dxm = x(i) - x(im)
+        D = D_coef(x, i)
+
+        f1 = 1.0_wp + A1D(x, im, ip, i)/D*(dxm + dxp) + A2D(x, im, ip, i)/D*dxp*(dxp + 2.0_wp*dxm)
+        f1 = f1*2.0_wp*PIp(x(:), i, i)
+        f2 = 1.0_wp + A1D(x, im, ip, i)/D*dxp + A2D(x, im, ip, i)/D*dxp**2.0_wp
+        f2 = f2*PIpp(x(:), i, i)*dxm
+        f = (f1 + f2)/dx/PI(x, ip, i)
+
+        return
+    end function
+
+    function b2_coef(x, j, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: j, i
+        real(wp) f, f1, f2, dxm, dxp, dxm2, dxp2, D
+
+        real(wp) dx
+
+        dx = x(i) - x(j)
+        dxp = x(i) - x(i + 1)
+        dxm = x(i) - x(i - 1)
+        dxp2 = x(j) - x(i + 1)
+        dxm2 = x(j) - x(i - 1)
+        D = D_coef(x, i)
+
+        f1 = C1D(x, j, i)/D*(1.0_wp + dx/dxp + dx/dxm) &
+             + C2D(x, j, i)/D*(2.0_wp + dx/dxp + dx/dxm)*dx + 1.0_wp/dxp + 1.0_wp/dxm
+        f1 = f1*2.0_wp*lp(x, j, i)*dxp*dxm/(dxp2*dxm2) !dxp*dxp/(dxp2*dxp2) this was a mistake in the paper
+        f2 = 1.0_wp + C1D(x, j, i)/D*dx + C2D(x, j, i)/D*dx**2.0_wp
+        f2 = f2*lpp(x, j, i)*dxp*dxm/(dxp2*dxm2)
+        f = f1 + f2
+
+        return
+    end function
+
+    function PI(x, j, i) result(f)        ! Interval m around i, i.e, {i-2,i,i+2}
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: i, j
         real(wp) f
@@ -500,7 +554,7 @@ contains
         return
     end function
 
-    function PIp_o_PI(x, j, i) result(f)
+    function PIp_o_PI(x, j, i) result(f)        ! Interval m around i
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: i, j
         real(wp) f
@@ -513,13 +567,102 @@ contains
         return
     end function
 
-    function PIpp_o_PI(x, j, i) result(f)
+    function PIpp_o_PI(x, j, i) result(f)        ! Interval m around i
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: i, j
         real(wp) f
 
         f = x(j) - x(i + 2) + x(j) - x(i - 2) + x(j) - x(i)
         f = 2.0_wp*f/PI(x, j, i)
+
+        return
+    end function
+
+    function PIp(x, j, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i, j
+        real(wp) f
+
+        f = (x(j) - x(i + 2))*(x(j) - x(i - 2)) &
+            + (x(j) - x(i))*(x(j) - x(i - 2)) &
+            + (x(j) - x(i))*(x(j) - x(i + 2))
+
+        return
+    end function
+
+    function PIpp(x, j, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i, j
+        real(wp) f
+
+        f = x(j) - x(i + 2) + x(j) - x(i - 2) + x(j) - x(i)
+
+        return
+    end function
+
+    function D_coef(x, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        real(wp) f
+
+        real(wp) dx
+
+        dx = x(i + 1) - x(i - 1)
+
+        f = 6.0_wp + 4.0_wp*dx*(PIp_o_PI(x(:), i + 1, i) - PIp_o_PI(x(:), i - 1, i)) &
+            - 2.0_wp*dx**2.0_wp*PIp_o_PI(x(:), i + 1, i)*PIp_o_PI(x(:), i - 1, i)
+
+        return
+    end function
+
+    function lp(x, j, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i, j
+        real(wp) f
+
+        real(wp) dx, dxp, dxm
+
+        dx = x(i + 2) - x(i - 2)
+        dxp = x(i + 2) - x(i)
+        dxm = x(i) - x(i - 2)
+
+        select case (j - i)
+        case (-2)
+            f = -dxp/(dxm*dx)
+
+        case (0)
+            f = (dxp - dxm)/(dxp*dxm)
+
+        case (+2)
+            f = dxm/(dxp*dx)
+
+        end select
+
+        return
+    end function
+
+    function lpp(x, j, i) result(f)        ! Interval m around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i, j
+        real(wp) f
+
+        real(wp) dx, dxp, dxm
+
+        dx = x(i + 2) - x(i - 2)
+        dxp = x(i + 2) - x(i)
+        dxm = x(i) - x(i - 2)
+
+        select case (j - i)
+        case (-2)
+            f = 2.0_wp/(dxm*dx)
+
+        case (0)
+            f = -2.0_wp/(dxp*dxm)
+
+        case (+2)
+            f = 2.0_wp/(dxp*dx)
+
+        end select
 
         return
     end function
@@ -567,7 +710,7 @@ contains
 
         dx = x(ip) - x(im)
 
-        f = -(2.0_wp/dx + PIp_o_PI(x(:), im, i))*dx**2.0_wp
+        f = -(2.0_wp/dx + PIp_o_PI(x(:), ip, i))*dx**2.0_wp
 
         return
     end function
@@ -581,7 +724,7 @@ contains
 
         dx = x(ip) - x(im)
 
-        f = 1.0_wp - dx*PIp_o_PI(x(:), ip, i)
+        f = 1.0_wp - dx*PIp_o_PI(x(:), im, i)
 
         return
     end function
@@ -597,10 +740,10 @@ contains
         dxp = x(i + 1) - x(j)
         dxm = x(j) - x(i - 1)
 
-        f = (dxp - dxm)/(dxp*dxm)*(10.0_wp + 4.0_wp*dx**2.0/(dxp*dxm)) &
-            + 2.0_wp*dx*(dxp/dxm - dxm/dxp)*PIp_o_PI(x(:), i - 1, i)*PIp_o_PI(x(:), i + 1, i) &
-            + PIp_o_PI(x(:), i - 1, i)*(4.0_wp*dx/dxp - 4.0_wp*dx/dxm - 2.0*dx**2.0/dxp**2.0) &
-            - PIp_o_PI(x(:), i + 1, i)*(4.0_wp*dx/dxp - 4.0_wp*dx/dxm + 2.0*dx**2.0/dxm**2.0)
+        f = (dxp - dxm)/(dxp*dxm)*(10.0_wp - 4.0_wp*dx**2.0_wp/(dxp*dxm)) &
+            + 2.0_wp*dx*(-dxp/dxm + dxm/dxp)*PIp_o_PI(x(:), i - 1, i)*PIp_o_PI(x(:), i + 1, i) &
+            + PIp_o_PI(x(:), i - 1, i)*(4.0_wp*dx/dxp - 4.0_wp*dx/dxm - 2.0_wp*dx**2.0/dxp**2.0) &
+            - PIp_o_PI(x(:), i + 1, i)*(4.0_wp*dx/dxp - 4.0_wp*dx/dxm + 2.0_wp*dx**2.0/dxm**2.0)
 
         return
     end function
@@ -616,59 +759,15 @@ contains
         dxp = x(i + 1) - x(j)
         dxm = x(j) - x(i - 1)
 
-        f = 2.0_wp*(1.0_wp/dxp**2.0 + 1.0_wp/dxm**2.0 + 1.0_wp/(dxp*dxm)) &
-            - 2.0_wp*dx**2.0/(dxp*dxm)*PIp_o_PI(x(:), i + 1, i)*PIp_o_PI(x(:), i - 1, i) &
+        f = 2.0_wp*(1.0_wp/dxp**2.0 + 1.0_wp/dxm**2.0 - 1.0_wp/(dxp*dxm)) &
+            + 2.0_wp*dx**2.0/(dxp*dxm)*PIp_o_PI(x(:), i + 1, i)*PIp_o_PI(x(:), i - 1, i) &
             - 2.0_wp*PIp_o_PI(x(:), i + 1, i)*dx/dxm*(1.0_wp/dxp - 1.0_wp/dxm) &
             - 2.0_wp*PIp_o_PI(x(:), i - 1, i)*dx/dxp*(1.0_wp/dxp - 1.0_wp/dxm)
 
         return
     end function
 
-    function a_coef(x, im, ip, i) result(f)        ! Interval m around i
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: ip, im, i
-        real(wp) f, f1, f2, dxm, dxp
-
-        real(wp) dx
-
-        dx = x(ip) - x(im)
-        dxp = x(i) - x(i + 1)
-        dxm = x(i) - x(i - 1)
-
-        f1 = B1D(x, ip, im, i)*(dxm + dxp) &
-             + B2D(x, im, ip, i)*dxp*(dxp + 2.0_wp*dxm)
-        f1 = 2.0_wp*PIp_o_PI(x(:), i, i)*f1
-        f2 = B1D(x, ip, im, i) &
-             + B2D(x, im, ip, i)*dxp
-        f2 = PIpp_o_PI(x(:), i, i)*dxp*dxm*f2
-        f = -(f1 + f2)/dx*Pi(x, i, i)/PI(x, ip, i)
-
-        return
-    end function
-
-    function b_coef(x, im, ip, i) result(f)        ! Interval m around i
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: ip, im, i
-        real(wp) f, f1, f2, dxm, dxp
-
-        real(wp) dx
-
-        dx = x(ip) - x(im)
-        dxp = x(i) - x(i + 1)
-        dxm = x(i) - x(i - 1)
-
-        f1 = 1.0_wp + A1D(x, im, ip, i)*(dxm + dxp) &
-             + A2D(x, im, ip, i)*dxp*(dxp + 2.0_wp*dxm)
-        f1 = 2.0_wp*PIp_o_PI(x(:), i, i)*f1
-        f2 = 1.0_wp + A1D(x, im, ip, i)*dxp &
-             + A2D(x, im, ip, i)*dxp**2.0_wp
-        f2 = PIpp_o_PI(x(:), i, i)*dxm*f2
-        f = (f1 + f2)/dx*Pi(x, i, i)/PI(x, ip, i)
-
-        return
-    end function
-
-    ! #######################################################################
+! #######################################################################
 ! Constructing forcing term
 ! #######################################################################
     subroutine FDM_C2NXND_RHS(nmax, mmax, rhs, u, d)
