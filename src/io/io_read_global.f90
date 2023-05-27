@@ -260,8 +260,6 @@ subroutine IO_READ_GLOBAL(inifile)
     if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
     else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
     else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
-        call TLAB_STOP(DNS_ERROR_OPTION)
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermPressure option.')
         call TLAB_STOP(DNS_ERROR_OPTION)

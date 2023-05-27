@@ -8,6 +8,7 @@ program VPARTIAL
     ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, txc, x
+    use FDM_COM_DIRECT
     use OPR_PARTIAL
 
     implicit none
@@ -69,8 +70,8 @@ program VPARTIAL
     g%periodic = .false.
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     ibc = 3
-    ! g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
-    g%mode_fdm = FDM_COM6_DIRECT
+    g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
+    ! g%mode_fdm = FDM_COM6_DIRECT
 
     ! if (g%mode_fdm == FDM_COM6_JACOBIAN) C1N6M_ALPHA = 0.56_wp
 
@@ -130,7 +131,7 @@ program VPARTIAL
             ! du1_a(l,i) = C_05_R*(1.0_wp+TANH(C_05_R*g%nodes(i)/lambda))
             ! du2_a(l,i) = C_025_R/lambda/(COSH(C_05_R*g%nodes(i)/lambda))**2
 ! Polynomial
-            ! dummy = C_4_R
+            ! dummy = 4.0_wp
             ! u(l,i)     =                       ( (g%scale-g%nodes(i)) /lambda)** dummy
             ! du1_a(l,i) = dummy                *( (g%scale-g%nodes(i)) /lambda)**(dummy-1.0_wp)
             ! du2_a(l,i) = dummy *(dummy-1.0_wp) *( (g%scale-g%nodes(i)) /lambda)**(dummy-2.0_wp)
@@ -146,13 +147,14 @@ program VPARTIAL
 
 ! Testing second-order derivatives
         ! Jacobian based
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n2, du1_n)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n2, du1_n)
+        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
         ! Direct metrics
-        ! CALL FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
-        ! CALL TRIDFS(imax,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-        ! CALL FDM_C2NXND_RHS(imax,len, wrk1d(1,4), u, du2_n3)
-        ! CALL TRIDSS(imax,len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), du2_n3)
+        CALL FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
+        ! CALL FDM_C2N4ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
+        CALL TRIDFS(imax,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
+        CALL FDM_C2NXND_RHS(imax,len, wrk1d(1,4), u, du2_n2)
+        CALL TRIDSS(imax,len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), du2_n2)
 
 ! -------------------------------------------------------------------
     elseif (test_type == 2) then ! Testing new BCs routines
