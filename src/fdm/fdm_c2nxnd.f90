@@ -15,6 +15,12 @@
 !# Equations (16) for the first/last points.
 !# Table B.2 for the second/second-to-last points.
 !#
+!# Notation in paper for the interpolation:
+!#
+!#             +       +             I_n: set of points where the function and derivatives are given
+!#   ...---+---+---+---+---+---...
+!#         +       +       +         I_m: set of points where only the function is given.
+!#
 !########################################################################
 module FDM_COM_DIRECT
     use TLAB_CONSTANTS
@@ -37,10 +43,10 @@ contains
         real(wp), dimension(nmax, 4), intent(OUT) :: rhs ! RHS diagonals (#=5-1 because of normalization)
 
 ! -------------------------------------------------------------------
-        integer(wi) n !, j
+        integer(wi) n, idx(2)
         real(wp) am1, a, ap1                            ! Left-hand side
         real(wp) bm2, bm1, b, bp1, bp2, bp3             ! Right-hand side
-        real(wp) tmp1 
+        real(wp) tmp1, coef(6)
         real(wp) D, dx, dxp, dxm
 
 ! #######################################################################
@@ -100,82 +106,6 @@ contains
         rhs(n, 2) = 0.0_wp
         rhs(n, 3) = bp1*tmp1
         rhs(n, 4) = bp2*tmp1
-
-! #######################################################################
-! n = 2
-! #######################################################################
-        n = 2
-
-        bm2 = 0.0_wp; bp2 = 0.0_wp
-
-        tmp1 = 1.0_wp/ &
-               ((x(n + 1) - x(n))*(x(n) - x(n - 1)) + (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
-
-        bm1 = (x(n + 1) - x(n))/(x(n + 1) - x(n - 1))
-        b = -1.0_wp
-        bp1 = (x(n) - x(n - 1))/(x(n + 1) - x(n - 1))
-
-        am1 = (x(n) - x(n - 1))*(x(n) - x(n - 1)) + (x(n + 1) - x(n))*(x(n) - x(n - 1)) - (x(n + 1) - x(n))*(x(n + 1) - x(n))
-        am1 = am1*bm1*tmp1
-        a = 1.0_wp
-        ap1 = (x(n + 1) - x(n))*(x(n + 1) - x(n)) + (x(n + 1) - x(n))*(x(n) - x(n - 1)) - (x(n) - x(n - 1))*(x(n) - x(n - 1))
-        ap1 = ap1*bp1*tmp1
-
-        bm1 = bm1*12.0_wp*tmp1
-        b = b*12.0_wp*tmp1
-        bp1 = bp1*12.0_wp*tmp1
-
-! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
-! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
-! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
-        tmp1 = 1.0_wp/b
-
-        lhs(n, 1) = am1*tmp1
-        lhs(n, 2) = a*tmp1
-        lhs(n, 3) = ap1*tmp1
-
-        rhs(n, 1) = 0.0_wp
-        rhs(n, 2) = bm1*tmp1
-        rhs(n, 3) = bp1*tmp1
-        rhs(n, 4) = 0.0_wp
-
-! #######################################################################
-! n = nmax-1; just a copy of case n = 2
-! #######################################################################
-        n = nmax - 1
-
-        bm2 = 0.0_wp; bp2 = 0.0_wp
-
-        tmp1 = 1.0_wp/ &
-               ((x(n + 1) - x(n))*(x(n) - x(n - 1)) + (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
-
-        bm1 = (x(n + 1) - x(n))/(x(n + 1) - x(n - 1))
-        b = -1.0_wp
-        bp1 = (x(n) - x(n - 1))/(x(n + 1) - x(n - 1))
-
-        am1 = (x(n) - x(n - 1))*(x(n) - x(n - 1)) + (x(n + 1) - x(n))*(x(n) - x(n - 1)) - (x(n + 1) - x(n))*(x(n + 1) - x(n))
-        am1 = am1*bm1*tmp1
-        a = 1.0_wp
-        ap1 = (x(n + 1) - x(n))*(x(n + 1) - x(n)) + (x(n + 1) - x(n))*(x(n) - x(n - 1)) - (x(n) - x(n - 1))*(x(n) - x(n - 1))
-        ap1 = ap1*bp1*tmp1
-
-        bm1 = bm1*12.0_wp*tmp1
-        b = b*12.0_wp*tmp1
-        bp1 = bp1*12.0_wp*tmp1
-
-! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
-! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
-! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
-        tmp1 = 1.0_wp/b
-
-        lhs(n, 1) = am1*tmp1
-        lhs(n, 2) = a*tmp1
-        lhs(n, 3) = ap1*tmp1
-
-        rhs(n, 1) = 0.0_wp
-        rhs(n, 2) = bm1*tmp1
-        rhs(n, 3) = bp1*tmp1
-        rhs(n, 4) = 0.0_wp
 
 ! #######################################################################
 ! n = nmax; same as n = 1, but changing the signs of the increments w.r.t. n
@@ -238,6 +168,30 @@ contains
         rhs(n, 1) = bp2*tmp1
 
 ! #######################################################################
+! second and second-to-last points
+! #######################################################################
+        idx = [2, nmax - 1]
+
+        do n = 1, size(idx)
+            coef = coef_c2n4(x, idx(n))
+
+! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
+! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
+! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
+            tmp1 = 1.0_wp/coef(5)
+
+            lhs(idx(n), 1) = coef(1)*tmp1
+            lhs(idx(n), 2) = coef(2)*tmp1
+            lhs(idx(n), 3) = coef(3)*tmp1
+
+            rhs(idx(n), 1) = 0.0_wp
+            rhs(idx(n), 2) = coef(4)*tmp1
+            rhs(idx(n), 3) = coef(6)*tmp1
+            rhs(idx(n), 4) = 0.0_wp
+
+        end do
+
+! #######################################################################
 ! 2 < n < nmax-1
 ! #######################################################################
         do n = 3, nmax - 2
@@ -246,12 +200,12 @@ contains
 
 ! left-hand side
             a = 1.0_wp
-            ap1 = a_coef(x, n - 1, n + 1, n)/D
-            am1 = a_coef(x, n + 1, n - 1, n)/D
+            ap1 = a2n6_coef(x, n - 1, n + 1, n)/D
+            am1 = a2n6_coef(x, n + 1, n - 1, n)/D
 
 ! right-hand side
-            bp1 = b_coef(x, n - 1, n + 1, n)
-            bm1 = b_coef(x, n + 1, n - 1, n)
+            bp1 = b2n6_coef(x, n - 1, n + 1, n)
+            bm1 = b2n6_coef(x, n + 1, n - 1, n)
 
             dx = x(n + 1) - x(n - 1)
             dxp = x(n) - x(n + 1)
@@ -259,8 +213,8 @@ contains
 
             b = 2.0_wp*C2D(x, n, n)/D + 2.0_wp*C1D(x, n, n)/D*((dxm + dxp)/(dxp*dxm) + lp(x, n, n)) &
                 + (2.0_wp + 2.0_wp*lp(x, n, n)*(dxm + dxp))/(dxp*dxm) + lpp(x, n, n)
-            bp2 = b2_coef(x, n + 2, n)
-            bm2 = b2_coef(x, n - 2, n)
+            bp2 = c2n6_coef(x, n + 2, n)
+            bm2 = c2n6_coef(x, n - 2, n)
 
 ! -------------------------------------------------------------------
 ! if uniform, we should have ( 2/11 1 2/11 ) and ( 3/44 12/11 -51/22 12/11 3/44 )/h^2
@@ -286,13 +240,40 @@ contains
     end subroutine FDM_C2N6ND_INITIALIZE
 
 !########################################################################
+! First line in Table B.2
 !########################################################################
-    function a_coef(x, im, ip, i) result(f)        ! Interval m around i
+    function coef_c2n4(x, i) result(coef)           ! Interval around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        real(wp) coef(6)
+        real(wp) am1, a, ap1, bm1, b, bp1           ! for clarity below
+        real(wp) D, dx, dxm, dxp
+
+        dx = x(i + 1) - x(i - 1)
+        dxp = x(i + 1) - x(i)
+        dxm = x(i) - x(i - 1)
+
+        D = dxp*dxm + dx**2.0_wp
+
+        am1 = (dxm**2.0_wp - dxp**2.0_wp + dxp*dxm)*dxp/dx/D
+        a = 1.0_wp
+        ap1 = (dxp**2.0_wp - dxm**2.0_wp + dxp*dxm)*dxm/dx/D
+
+        bm1 = dxp/dx*12.0_wp/D
+        b = -12.0_wp/D
+        bp1 = dxm/dx*12.0_wp/D
+
+        coef = [am1, a, ap1, bm1, b, bp1]
+
+        return
+    end function
+
+!########################################################################
+!########################################################################
+    function a2n6_coef(x, im, ip, i) result(f)        ! Interval m around i
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: ip, im, i
-        real(wp) f, f1, f2, dxm, dxp
-
-        real(wp) dx
+        real(wp) f, f1, f2, dx, dxm, dxp
 
         dx = x(ip) - x(im)
         dxp = x(i) - x(ip)
@@ -307,7 +288,7 @@ contains
         return
     end function
 
-    function b_coef(x, im, ip, i) result(f)        ! Interval m around i
+    function b2n6_coef(x, im, ip, i) result(f)        ! Interval m around i
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: ip, im, i
         real(wp) f, f1, f2, dxm, dxp, D
@@ -328,7 +309,7 @@ contains
         return
     end function
 
-    function b2_coef(x, j, i) result(f)        ! Interval m around i
+    function c2n6_coef(x, j, i) result(f)        ! Interval m around i
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: j, i
         real(wp) f, f1, f2, dxm, dxp, dxm2, dxp2, D
@@ -550,7 +531,7 @@ contains
 
 !        f = (dxp - dxm)/(dxp*dxm)*(10.0_wp - 4.0_wp*dx**2.0_wp/(dxp*dxm))  this was a mistake in the paper
         f = (dxp - dxm)/(dxp*dxm)*(6.0_wp - 4.0_wp*dx**2.0_wp/(dxp*dxm)) &
-            + 2.0_wp*dx*(dxm/dxp-dxp/dxm)*PIp_o_PI(x(:), i - 1, i)*PIp_o_PI(x(:), i + 1, i) &
+            + 2.0_wp*dx*(dxm/dxp - dxp/dxm)*PIp_o_PI(x(:), i - 1, i)*PIp_o_PI(x(:), i + 1, i) &
             + PIp_o_PI(x(:), i - 1, i)*(4.0_wp*dx/dxp - 4.0_wp*dx/dxm - 2.0_wp*dx**2.0/dxp**2.0) &
             - PIp_o_PI(x(:), i + 1, i)*(4.0_wp*dx/dxp - 4.0_wp*dx/dxm + 2.0_wp*dx**2.0/dxm**2.0)
 
@@ -636,6 +617,7 @@ contains
         real(wp) am1, a, ap1                            ! Left-hand side
         real(wp) bm2, bm1, b, bp1, bp2, bp3             ! Right-hand side
         real(wp) tmp1                                   ! Intermediate ops
+        real(wp) coef(6)
 
 ! #######################################################################
 ! n = 1
@@ -699,37 +681,20 @@ contains
 ! n = 2
 ! #######################################################################
         do n = 2, nmax - 1
-            bm2 = 0.0_wp; bp2 = 0.0_wp
+            coef = coef_c2n4(x, n)
 
-            tmp1 = 1.0_wp/ &
-                   ((x(n + 1) - x(n))*(x(n) - x(n - 1)) + (x(n + 1) - x(n - 1))*(x(n + 1) - x(n - 1)))
+            ! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
+            ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
+            ! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
+            tmp1 = 1.0_wp/coef(5)
 
-            bm1 = (x(n + 1) - x(n))/(x(n + 1) - x(n - 1))
-            b = -1.0_wp
-            bp1 = (x(n) - x(n - 1))/(x(n + 1) - x(n - 1))
-
-            am1 = (x(n) - x(n - 1))*(x(n) - x(n - 1)) + (x(n + 1) - x(n))*(x(n) - x(n - 1)) - (x(n + 1) - x(n))*(x(n + 1) - x(n))
-            am1 = am1*bm1*tmp1
-            a = 1.0_wp
-            ap1 = (x(n + 1) - x(n))*(x(n + 1) - x(n)) + (x(n + 1) - x(n))*(x(n) - x(n - 1)) - (x(n) - x(n - 1))*(x(n) - x(n - 1))
-            ap1 = ap1*bp1*tmp1
-
-            bm1 = bm1*12.0_wp*tmp1
-            b = b*12.0_wp*tmp1
-            bp1 = bp1*12.0_wp*tmp1
-
-! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
-! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
-! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
-            tmp1 = 1.0_wp/b
-
-            lhs(n, 1) = am1*tmp1
-            lhs(n, 2) = a*tmp1
-            lhs(n, 3) = ap1*tmp1
+            lhs(n, 1) = coef(1)*tmp1
+            lhs(n, 2) = coef(2)*tmp1
+            lhs(n, 3) = coef(3)*tmp1
 
             rhs(n, 1) = 0.0_wp
-            rhs(n, 2) = bm1*tmp1
-            rhs(n, 3) = bp1*tmp1
+            rhs(n, 2) = coef(4)*tmp1
+            rhs(n, 3) = coef(6)*tmp1
             rhs(n, 4) = 0.0_wp
 
         end do
