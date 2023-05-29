@@ -698,6 +698,7 @@ contains
             rhs(n, 4) = 0.0_wp
 
         end do
+        
 ! #######################################################################
 ! n = nmax; same as n = 1, but changing the signs of the increments w.r.t. n
 ! To understand it, e.g., define a new variable i = -j, where i is the

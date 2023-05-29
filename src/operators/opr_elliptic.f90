@@ -109,7 +109,7 @@ contains
                                             a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
 
                     else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                        call INT_C2NXND_LHS_E(g(2)%size, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                        call INT_C2NXND_LHS_E(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                                               a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
 
                     end if
@@ -387,7 +387,7 @@ contains
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
 
                     else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                        call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                        call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
 
                     end if
@@ -569,7 +569,7 @@ contains
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
 
                     else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                        call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc_loc, lhs, rhs, lambda, &
+                        call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
 
                     end if
@@ -859,7 +859,7 @@ contains
 
                 else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
+                    call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
@@ -1012,7 +1012,7 @@ contains
 
                 else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
                     p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2NXND_LHS_E(ny, g(2)%jac, ibc, lhs, rhs, lambda, &
+                    call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
                     call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
