@@ -180,13 +180,14 @@ contains
 ! the  RHS diagonals are then O(1), the LHS diagonal O(h^2)
             tmp1 = 1.0_wp/coef(5)
 
-            lhs(idx(n), 1) = coef(1)*tmp1
-            lhs(idx(n), 2) = coef(2)*tmp1
-            lhs(idx(n), 3) = coef(3)*tmp1
+            ! lhs(idx(n), 1) = coef(1)*tmp1
+            ! lhs(idx(n), 2) = coef(2)*tmp1
+            ! lhs(idx(n), 3) = coef(3)*tmp1
+            lhs(idx(n), 1:3) = coef(1:3)*tmp1
 
             rhs(idx(n), 1) = 0.0_wp
-            rhs(idx(n), 2) = coef(4)*tmp1
-            rhs(idx(n), 3) = coef(6)*tmp1
+            rhs(idx(n), 2:3) = coef([4, 6])*tmp1
+            ! rhs(idx(n), 3) = coef(6)*tmp1
             rhs(idx(n), 4) = 0.0_wp
 
         end do
@@ -211,8 +212,10 @@ contains
             dxp = x(n) - x(n + 1)
             dxm = x(n) - x(n - 1)
 
-            b = 2.0_wp*C2D(x, n, n)/D + 2.0_wp*C1D(x, n, n)/D*((dxm + dxp)/(dxp*dxm) + lp(x, n, n)) &
-                + (2.0_wp + 2.0_wp*lp(x, n, n)*(dxm + dxp))/(dxp*dxm) + lpp(x, n, n)
+!            b = 2.0_wp*C2D(x, n, n)/D + 2.0_wp*C1D(x, n, n)/D*((dxm + dxp)/(dxp*dxm) + lp(x, n, n)) &
+            ! + (2.0_wp + 2.0_wp*lp(x, n, n)*(dxm + dxp))/(dxp*dxm) + lpp(x, n, n)
+            b = 2.0_wp*C2D(x, n, n)/D + 2.0_wp*C1D(x, n, n)/D*((dxm + dxp)/(dxp*dxm) + Lag_p(x, n, n, [n - 2, n, n + 2])) &
+                + (2.0_wp + 2.0_wp*Lag_p(x, n, n, [n - 2, n, n + 2])*(dxm + dxp))/(dxp*dxm) + Lag_pp_3(x, n, n, [n - 2, n, n + 2]) !lpp(x, n, n)
             bp2 = c2n6_coef(x, n + 2, n)
             bm2 = c2n6_coef(x, n - 2, n)
 
@@ -225,14 +228,16 @@ contains
 
             tmp1 = 1.0_wp/b
 
-            lhs(n, 1) = am1*tmp1
-            lhs(n, 2) = a*tmp1
-            lhs(n, 3) = ap1*tmp1
+            ! lhs(n, 1) = am1*tmp1
+            ! lhs(n, 2) = a*tmp1
+            ! lhs(n, 3) = ap1*tmp1
+            lhs(n, 1:3) = [am1, a, ap1]*tmp1
 
-            rhs(n, 1) = bm2*tmp1
-            rhs(n, 2) = bm1*tmp1
-            rhs(n, 3) = bp1*tmp1
-            rhs(n, 4) = bp2*tmp1
+            ! rhs(n, 1) = bm2*tmp1
+            ! rhs(n, 2) = bm1*tmp1
+            ! rhs(n, 3) = bp1*tmp1
+            ! rhs(n, 4) = bp2*tmp1
+            rhs(n, 1:4) = [bm2, bm1, bp1, bp2]*tmp1
 
         end do
 
@@ -268,6 +273,59 @@ contains
         return
     end function
 
+    function coef_c2n3_biased(x, i, mirrorred) result(coef)         ! biased
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        logical, intent(in), optional :: mirrorred
+        real(wp) coef(6)
+        real(wp) a1, a2, b1, b2, b3, b4           ! for clarity below
+        real(wp) D, dx1, dx3, dx4
+        integer(wi) set_m(3), i1, i2, i3, i4
+
+        i1 = i
+        if (present(mirrorred)) then
+            i2 = i - 1
+            i3 = i - 2
+            i4 = i - 3
+        else
+            i2 = i + 1
+            i3 = i + 2
+            i4 = i + 3
+        end if
+        dx1 = x(i2) - x(i1)
+        dx3 = x(i2) - x(i3)
+        dx4 = x(i2) - x(i4)
+        set_m = [i1, i3, i4]
+
+        a1 = 1.0_wp
+
+        a2 = 0.5_wp*dx1*(Pi_pp_3(x, i1, set_m) - Pi_p(x, i1, set_m))/Pi_p(x, i2, set_m)
+
+        D = Lag(x, i2, i1, set_m) + dx1*Lag_p(x, i2, i1, set_m)
+        b1 = Lag_pp_3(x, i1, i1, set_m) &
+             - 2.0_wp/dx1/D*Lag_p(x, i1, i1, set_m)*(Lag(x, i2, i1, set_m) + 2.0_wp*dx1*Lag_p(x, i2, i1, set_m)) &
+             + 2.0_wp/dx1/D*Lag_p(x, i2, i1, set_m)
+
+        b2 = Pi_pp_3(x, i1, set_m) &
+             + 0.5_wp*dx1*Pi_pp_3(x, i1, set_m)*Pi_pp_3(x, i2, set_m)/Pi_p(x, i2, set_m) &
+             - Pi_p(x, i1, set_m)/Pi_p(x, i2, set_m)*Pi_pp_3(x, i2, set_m)
+        b2 = b2/Pi(x, i2, set_m)
+
+        D = Lag(x, i2, i3, set_m) + dx3*Lag_p(x, i2, i3, set_m)
+        b3 = (Lag(x, i2, i3, set_m) + dx1*Lag_p(x, i2, i3, set_m))*dx1/dx3*Lag_pp_3(x, i1, i3, set_m) &
+             - 2.0_wp*(Lag(x, i2, i3, set_m) + 2.0_wp*dx1*Lag_p(x, i2, i3, set_m))/dx3*Lag_p(x, i1, i3, set_m)
+        b3 = b3/D
+
+        D = Lag(x, i2, i4, set_m) + dx4*Lag_p(x, i2, i4, set_m)
+        b4 = (Lag(x, i2, i4, set_m) + dx1*Lag_p(x, i2, i4, set_m))*dx1/dx3*Lag_pp_3(x, i1, i4, set_m) &
+             - 2.0_wp*(Lag(x, i2, i4, set_m) + 2.0_wp*dx1*Lag_p(x, i2, i4, set_m))/dx3*Lag_p(x, i1, i4, set_m)
+        b4 = b4/D
+
+        coef = [a1, a2, b1, b2, b3, b4]
+
+        return
+    end function
+
 !########################################################################
 !########################################################################
     function a2n6_coef(x, im, ip, i) result(f)        ! Interval m around i
@@ -280,10 +338,10 @@ contains
         dxm = x(i) - x(im)
 
         f1 = B1D(x, ip, im, i)*(dxm + dxp) + B2D(x, im, ip, i)*dxp*(dxp + 2.0_wp*dxm)
-        f1 = f1*2.0_wp*PIp(x(:), i, i)
+        f1 = f1*2.0_wp*PI_p(x(:), i, [i - 2, i, i + 2]) ! PIp(x(:), i, i)
         f2 = B1D(x, ip, im, i) + B2D(x, im, ip, i)*dxp
-        f2 = f2*PIpp(x(:), i, i)*dxp*dxm
-        f = -(f1 + f2)/dx/PI(x, ip, i)
+        f2 = f2*PI_pp_3(x(:), i, [i - 2, i, i + 2])*dxp*dxm
+        f = -(f1 + f2)/dx/Pi(x, ip, [i - 2, i, i + 2]) !PI(x, ip, i)
 
         return
     end function
@@ -301,10 +359,10 @@ contains
         D = D_coef(x, i)
 
         f1 = 1.0_wp + A1D(x, im, ip, i)/D*(dxm + dxp) + A2D(x, im, ip, i)/D*dxp*(dxp + 2.0_wp*dxm)
-        f1 = f1*2.0_wp*PIp(x(:), i, i)
+        f1 = f1*2.0_wp*PI_p(x(:), i, [i - 2, i, i + 2]) ! PIp(x(:), i, i)
         f2 = 1.0_wp + A1D(x, im, ip, i)/D*dxp + A2D(x, im, ip, i)/D*dxp**2.0_wp
-        f2 = f2*PIpp(x(:), i, i)*dxm
-        f = (f1 + f2)/dx/PI(x, ip, i)
+        f2 = f2*PI_pp_3(x(:), i, [i - 2, i, i + 2])*dxm
+        f = (f1 + f2)/dx/Pi(x, ip, [i - 2, i, i + 2]) !PI(x, ip, i)
 
         return
     end function
@@ -325,20 +383,12 @@ contains
 
         f1 = C1D(x, j, i)/D*(1.0_wp + dx/dxp + dx/dxm) &
              + C2D(x, j, i)/D*(2.0_wp + dx/dxp + dx/dxm)*dx + 1.0_wp/dxp + 1.0_wp/dxm
-        f1 = f1*2.0_wp*lp(x, j, i)*dxp*dxm/(dxp2*dxm2) !dxp*dxp/(dxp2*dxp2) this was a mistake in the paper
+        ! f1 = f1*2.0_wp*lp(x, j, i)*dxp*dxm/(dxp2*dxm2) !dxp*dxp/(dxp2*dxp2) this was a mistake in the paper
+        f1 = f1*2.0_wp*Lag_p(x, i, j, [i - 2, i, i + 2])*dxp*dxm/(dxp2*dxm2) !dxp*dxp/(dxp2*dxp2) this was a mistake in the paper
         f2 = 1.0_wp + C1D(x, j, i)/D*dx + C2D(x, j, i)/D*dx**2.0_wp
-        f2 = f2*lpp(x, j, i)*dxp*dxm/(dxp2*dxm2)
+        ! f2 = f2*lpp(x, j, i)*dxp*dxm/(dxp2*dxm2)
+        f2 = f2*Lag_pp_3(x, j, j, [i - 2, i, i + 2])*dxp*dxm/(dxp2*dxm2)
         f = f1 + f2
-
-        return
-    end function
-
-    function PI(x, j, i) result(f)        ! Interval m around i, i.e, {i-2,i,i+2}
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j
-        real(wp) f
-
-        f = (x(j) - x(i))*(x(j) - x(i + 2))*(x(j) - x(i - 2))
 
         return
     end function
@@ -351,7 +401,7 @@ contains
         f = (x(j) - x(i + 2))*(x(j) - x(i - 2)) &
             + (x(j) - x(i))*(x(j) - x(i - 2)) &
             + (x(j) - x(i))*(x(j) - x(i + 2))
-        f = f/PI(x, j, i)
+        f = f/Pi(x, j, [i - 2, i, i + 2]) !PI(x, j, i)
 
         return
     end function
@@ -362,32 +412,198 @@ contains
         real(wp) f
 
         f = x(j) - x(i + 2) + x(j) - x(i - 2) + x(j) - x(i)
-        f = 2.0_wp*f/PI(x, j, i)
+        f = 2.0_wp*f/Pi(x, j, [i - 2, i, i + 2]) !/PI(x, j, i)
 
         return
     end function
 
-    function PIp(x, j, i) result(f)        ! Interval m around i
+    ! function PI(x, j, i) result(f)        ! Interval m around i, i.e, {i-2,i,i+2}
+    !     real(wp), intent(in) :: x(:)
+    !     integer(wi), intent(in) :: i, j
+    !     real(wp) f
+
+    !     f = (x(j) - x(i))*(x(j) - x(i + 2))*(x(j) - x(i - 2))
+
+    !     return
+    ! end function
+
+    ! function PIpp(x, j, i) result(f)        ! Interval m around i
+    !     real(wp), intent(in) :: x(:)
+    !     integer(wi), intent(in) :: i, j
+    !     real(wp) f
+
+    !     f = 2.0_wp*(x(j) - x(i + 2) + x(j) - x(i - 2) + x(j) - x(i))
+
+    !     return
+    ! end function
+
+    ! function PIp(x, j, i) result(f)        ! Interval m around i
+    !     real(wp), intent(in) :: x(:)
+    !     integer(wi), intent(in) :: i, j
+    !     real(wp) f
+
+    !     f = (x(j) - x(i + 2))*(x(j) - x(i - 2)) &
+    !         + (x(j) - x(i))*(x(j) - x(i - 2)) &
+    !         + (x(j) - x(i))*(x(j) - x(i + 2))
+
+    !     return
+    ! end function
+
+    function Pi(x, j, idx) result(f)    ! Product function defined over interval given by idx(:)
         real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j
+        integer(wi), intent(in) :: j, idx(:)
+        real(wp) f
+        integer(wi) k
+
+        f = 1.0_wp
+        do k = 1, size(idx)
+            f = f*(x(j) - x(idx(k)))
+        end do
+
+        return
+    end function
+
+    function Pi_p(x, j, idx) result(f)
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: j, idx(:)
+        real(wp) f, dummy
+        integer(wi) k, m
+
+        f = 0.0_wp
+        do k = 1, size(idx)
+            dummy = 1.0_wp
+            do m = 1, size(idx)
+                if (m /= k) then
+                    dummy = dummy*(x(j) - x(idx(m)))
+                end if
+            end do
+            f = f + dummy
+        end do
+
+        return
+    end function
+
+    function Pi_pp_3(x, j, idx) result(f)       ! It assumes idx has only 3 points
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: j, idx(:)
         real(wp) f
 
-        f = (x(j) - x(i + 2))*(x(j) - x(i - 2)) &
-            + (x(j) - x(i))*(x(j) - x(i - 2)) &
-            + (x(j) - x(i))*(x(j) - x(i + 2))
+        f = 2.0_wp*(x(j) - x(idx(1)) + x(j) - x(idx(2)) + x(j) - x(idx(3)))
 
         return
     end function
 
-    function PIpp(x, j, i) result(f)        ! Interval m around i
+    function Lag(x, j, i, idx) result(f)        ! 1. derivative of Lagrange polynomials on idx(:) around i
         real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j
-        real(wp) f
+        integer(wi), intent(in) :: i, j, idx(:)
+        real(wp) f, num, den
+        integer(wi) k
 
-        f = 2.0_wp*(x(j) - x(i + 2) + x(j) - x(i - 2) + x(j) - x(i))
+        den = 1.0_wp
+        num = 0.0_wp
+        do k = 1, size(idx)
+            if (idx(k) /= i) then
+                num = num*(x(j) - x(idx(k)))
+                den = den*(x(i) - x(idx(k)))
+            end if
+        end do
+        f = num/den
 
         return
     end function
+
+    function Lag_p(x, j, i, idx) result(f)        ! 1. derivative of Lagrange polynomials on idx(:) around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i, j, idx(:)
+        real(wp) f, num, den, dummy
+        integer(wi) k, m
+
+        den = 1.0_wp
+        num = 0.0_wp
+        do k = 1, size(idx)
+            if (idx(k) /= i) then
+                dummy = 1.0_wp
+                do m = 1, size(idx)
+                    if (idx(m) /= i .and. m /= k) then
+                        dummy = dummy*(x(j) - x(idx(m)))
+                    end if
+                end do
+                num = num + dummy
+                den = den*(x(i) - x(idx(k)))
+            end if
+        end do
+        f = num/den
+
+        return
+    end function
+
+    ! function lp(x, j, i) result(f)        ! Interval m around i
+    !     real(wp), intent(in) :: x(:)
+    !     integer(wi), intent(in) :: i, j
+    !     real(wp) f
+
+    !     real(wp) dx, dxp, dxm
+
+    !     dx = x(i + 2) - x(i - 2)
+    !     dxp = x(i + 2) - x(i)
+    !     dxm = x(i) - x(i - 2)
+
+    !     select case (j - i)
+    !     case (-2)
+    !         f = -dxp/(dxm*dx)
+
+    !     case (0)
+    !         f = (dxp - dxm)/(dxp*dxm)
+
+    !     case (+2)
+    !         f = dxm/(dxp*dx)
+
+    !     end select
+
+    !     return
+    ! end function
+
+    function Lag_pp_3(x, j, i, idx) result(f)    ! It assumes idx has only 3 points
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: j, i, idx(:)
+        real(wp) f
+        integer(wi) k
+
+        f = 2.0_wp
+        do k = 1, size(idx)
+            if (idx(k) /= i) then
+                f = f/(x(j) - x(idx(k)))
+            end if
+        end do
+
+        return
+    end function
+
+    ! function lpp(x, j, i) result(f)        ! Interval m around i
+    !     real(wp), intent(in) :: x(:)
+    !     integer(wi), intent(in) :: i, j
+    !     real(wp) f
+
+    !     real(wp) dx, dxp, dxm
+
+    !     dx = x(i + 2) - x(i - 2)
+    !     dxp = x(i + 2) - x(i)
+    !     dxm = x(i) - x(i - 2)
+
+    !     select case (j - i)
+    !     case (-2)
+    !         f = 2.0_wp/(dxm*dx)
+
+    !     case (0)
+    !         f = -2.0_wp/(dxp*dxm)
+
+    !     case (+2)
+    !         f = 2.0_wp/(dxp*dx)
+
+    !     end select
+
+    !     return
+    ! end function
 
     function D_coef(x, i) result(f)        ! Interval m around i
         real(wp), intent(in) :: x(:)
@@ -400,58 +616,6 @@ contains
 
         f = 6.0_wp + 4.0_wp*dx*(PIp_o_PI(x(:), i + 1, i) - PIp_o_PI(x(:), i - 1, i)) &
             - 2.0_wp*dx**2.0_wp*PIp_o_PI(x(:), i + 1, i)*PIp_o_PI(x(:), i - 1, i)
-
-        return
-    end function
-
-    function lp(x, j, i) result(f)        ! Interval m around i
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j
-        real(wp) f
-
-        real(wp) dx, dxp, dxm
-
-        dx = x(i + 2) - x(i - 2)
-        dxp = x(i + 2) - x(i)
-        dxm = x(i) - x(i - 2)
-
-        select case (j - i)
-        case (-2)
-            f = -dxp/(dxm*dx)
-
-        case (0)
-            f = (dxp - dxm)/(dxp*dxm)
-
-        case (+2)
-            f = dxm/(dxp*dx)
-
-        end select
-
-        return
-    end function
-
-    function lpp(x, j, i) result(f)        ! Interval m around i
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j
-        real(wp) f
-
-        real(wp) dx, dxp, dxm
-
-        dx = x(i + 2) - x(i - 2)
-        dxp = x(i + 2) - x(i)
-        dxm = x(i) - x(i - 2)
-
-        select case (j - i)
-        case (-2)
-            f = 2.0_wp/(dxm*dx)
-
-        case (0)
-            f = -2.0_wp/(dxp*dxm)
-
-        case (+2)
-            f = 2.0_wp/(dxp*dx)
-
-        end select
 
         return
     end function
@@ -698,7 +862,7 @@ contains
             rhs(n, 4) = 0.0_wp
 
         end do
-        
+
 ! #######################################################################
 ! n = nmax; same as n = 1, but changing the signs of the increments w.r.t. n
 ! To understand it, e.g., define a new variable i = -j, where i is the
