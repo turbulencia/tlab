@@ -42,9 +42,9 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines*g%size)
-        real(wp),      intent(out)   :: result(nlines*g%size)
+        type(grid_dt), intent(in)  :: g
+        real(wp),      intent(in)  :: u(nlines*g%size)
+        real(wp),      intent(out) :: result(nlines*g%size)
 
 ! ###################################################################
         if (g%periodic) then
@@ -112,9 +112,9 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1,*) and xmax (2,*):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines*g%size)
-        real(wp),      intent(out)   :: result(nlines*g%size)
+        type(grid_dt), intent(in)  :: g
+        real(wp),      intent(in)  :: u(nlines*g%size)
+        real(wp),      intent(out) :: result(nlines*g%size)
 
         integer(wi), parameter :: is = 0    ! scalar index; if 0, then velocity
 
@@ -155,10 +155,10 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_IBM(nlines, g, u, result)
-        integer(wi),   intent(in)    :: nlines
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines*g%size)
-        real(wp),      intent(out)   :: result(nlines*g%size)
+        integer(wi),   intent(in)  :: nlines
+        type(grid_dt), intent(in)  :: g
+        real(wp),      intent(in)  :: u(nlines*g%size)
+        real(wp),      intent(out) :: result(nlines*g%size)
 
         integer(wi), parameter :: is = 0 ! scalar index; if 0, then velocity
 
@@ -196,7 +196,7 @@ contains
         real(wp),      intent(out)   :: result(nlines, g%size)
         real(wp),      intent(inout) :: du(nlines, g%size)  ! First derivative
 
-        real(wp), dimension(:, :), pointer :: lu2_p
+        real(wp),      pointer       :: lu2_p(:, :)
 
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
@@ -272,7 +272,7 @@ contains
                     call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                 end if
 
-            case (FDM_COM6_DIRECT)
+            case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
                 call FDM_C2NXND_RHS(g%size, nlines, g%lu2(:, 4), u, result)
 
             end select
@@ -289,7 +289,7 @@ contains
     subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, u, result, du)
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
-        integer(wi), intent(in) :: bcs(2,2)     ! BCs at xmin (1,*) and xmax (2,*):
+        integer(wi), intent(in) :: bcs(2, 2)     ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
         type(grid_dt), intent(in)    :: g
@@ -297,8 +297,8 @@ contains
         real(wp),      intent(out)   :: result(nlines, g%size)
         real(wp),      intent(inout) :: du(nlines, g%size)  ! First derivative
 
-        real(wp), dimension(:, :), pointer :: p_fld
-        real(wp), dimension(:), pointer :: p_fld_ibm
+        real(wp),      pointer :: p_fld(:, :)
+        real(wp),      pointer :: p_fld_ibm(:)
 
         target u
 
@@ -355,10 +355,10 @@ contains
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
-        integer(wi), intent(in) :: nlines   ! number of lines to be solved
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines, g%size)
-        real(wp),      intent(out)   :: result(nlines, g%size)
+        integer(wi),   intent(in)  :: nlines   ! number of lines to be solved
+        type(grid_dt), intent(in)  :: g
+        real(wp),      intent(in)  :: u(nlines, g%size)
+        real(wp),      intent(out) :: result(nlines, g%size)
 
 ! ###################################################################
 ! Interpolation, direction 'vp': vel. --> pre. grid
@@ -397,10 +397,10 @@ contains
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
-        integer(wi), intent(in) :: nlines   ! number of lines to be solved
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines, g%size)
-        real(wp),      intent(out)   :: result(nlines, g%size)
+        integer(wi),   intent(in)  :: nlines   ! number of lines to be solved
+        type(grid_dt), intent(in)  :: g
+        real(wp),      intent(in)  :: u(nlines, g%size)
+        real(wp),      intent(out) :: result(nlines, g%size)
 
 ! ###################################################################
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
@@ -441,11 +441,11 @@ contains
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
         !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        integer(wi),   intent(in)    :: nx, ny, nz
-        integer(wi),   intent(in)    :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nx*ny*nz)
-        real(wp),      intent(out)   :: result(nx*ny*nz)
+        integer(wi),   intent(in)     :: nx, ny, nz
+        integer(wi),   intent(in)     :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in)     :: g
+        real(wp),      intent(in)     :: u(nx*ny*nz)
+        real(wp),      intent(out)    :: result(nx*ny*nz)
         real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
 
         target u, tmp1, result
@@ -562,7 +562,7 @@ contains
 #endif
 
         nullify (p_a, p_b, p_c)
-        if (associated(p_c)) nullify(p_d)
+        if (associated(p_c)) nullify (p_d)
 
         return
     end subroutine OPR_PARTIAL_X
@@ -578,11 +578,11 @@ contains
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
         !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        integer(wi),   intent(in)    :: nx, ny, nz
-        integer(wi),   intent(in)    :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nx*ny*nz)
-        real(wp),      intent(out)   :: result(nx*ny*nz)
+        integer(wi),   intent(in)     :: nx, ny, nz
+        integer(wi),   intent(in)     :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in)     :: g
+        real(wp),      intent(in)     :: u(nx*ny*nz)
+        real(wp),      intent(out)    :: result(nx*ny*nz)
         real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
 
         target u, tmp1, result
@@ -624,7 +624,7 @@ contains
                 p_b => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_c => tmp1
-                endif
+                end if
                 nxy = nx*ny
 #ifdef USE_MPI
             end if
@@ -680,7 +680,7 @@ contains
 #endif
 
             nullify (p_a, p_b)
-            if (associated(p_c)) nullify(p_c)
+            if (associated(p_c)) nullify (p_c)
 
         end if
 
@@ -696,11 +696,11 @@ contains
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
         !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        integer(wi),   intent(in)    :: nx, ny, nz
-        integer(wi),   intent(in)    :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nx*ny*nz)
-        real(wp),      intent(out)   :: result(nx*ny*nz)
+        integer(wi),   intent(in)     :: nx, ny, nz
+        integer(wi),   intent(in)     :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in)     :: g
+        real(wp),      intent(in)     :: u(nx*ny*nz)
+        real(wp),      intent(out)    :: result(nx*ny*nz)
         real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
 
         target u, tmp1, result
@@ -742,7 +742,7 @@ contains
                 p_b => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_c => tmp1
-                endif
+                end if
 
             end if
 
@@ -802,7 +802,7 @@ contains
             end if
 
             nullify (p_a, p_b)
-            if (associated(p_c)) nullify(p_c)
+            if (associated(p_c)) nullify (p_c)
 
         end if
 

@@ -274,13 +274,15 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             case (FDM_COM6_DIRECT)
                 if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
-                ! if (i == 0) call FDM_C2N4ND_INITIALIZE(nx, x, g%lu2(1, ip + 1), g%lu2(1, ip + 4))
+
+            case (FDM_COM4_DIRECT)
+                if (i == 0) call FDM_C2N4ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
 
             end select
 
 ! The direct mode is only implemented for bcs=(0,0); we use the remaining array
 ! to save other data
-            if (g%mode_fdm == FDM_COM6_DIRECT) then
+            if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
                 if (i == 0) then
                     g%lu2(:, ip + 8:ip + 10) = g%lu2(:, ip + 1:ip + 3) ! saving the array A w/o LU decomposition
                     call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
