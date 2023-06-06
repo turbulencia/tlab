@@ -66,8 +66,6 @@ program DNS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
-
     call FI_BACKGROUND_INITIALIZE()
 
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
@@ -91,15 +89,15 @@ program DNS
     ! ###################################################################
     ! Initialize operators and reference data
     ! ###################################################################
+    call OPR_ELLIPTIC_INITIALIZE()
+
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
-    if (fourier_on) then
-        call OPR_FOURIER_INITIALIZE()
-    end if
+    if (fourier_on) call OPR_FOURIER_INITIALIZE()
 
     call OPR_CHECK()
 

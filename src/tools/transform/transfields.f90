@@ -31,11 +31,11 @@ program TRANSFIELDS
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    real(wp), dimension(:), allocatable, save :: x_dst, y_dst, z_dst
-    real(wp), dimension(:, :), allocatable, save :: q_dst, s_dst
+    real(wp), allocatable, save :: x_dst(:), y_dst(:), z_dst(:)
+    real(wp), allocatable, save :: q_dst(:, :), s_dst(:, :)
 
-    real(wp), dimension(:), allocatable, save :: y_aux
-    real(wp), dimension(:, :, :), allocatable, save :: txc_aux
+    real(wp), allocatable, save :: x_aux(:), y_aux(:), z_aux(:)
+    real(wp), pointer :: txc_aux(:, :, :)
 
     ! -------------------------------------------------------------------
     ! Local variables
@@ -52,7 +52,7 @@ program TRANSFIELDS
     type(grid_dt), dimension(3) :: g_dst
     integer(wi) imax_dst, jmax_dst, kmax_dst
 
-    logical flag_crop, flag_extend
+    logical :: flag_crop = .false., flag_extend = .false.
     integer(wi) jmax_aux, inb_scal_dst
     real(wp) dummy, tolerance
 
@@ -247,16 +247,14 @@ program TRANSFIELDS
     kmax_dst = g_dst(3)%size
 #endif
 
-    ! -------------------------------------------------------------------
-    ! Further allocation of memory space
-    ! -------------------------------------------------------------------
-    inb_txc = 0
-
-    inb_scal_dst = inb_scal
-
     iread_flow = flow_on
     iread_scal = scal_on
 
+    ! #######################################################################
+    ! Initialize memory space and grid data
+    ! #######################################################################
+    inb_txc = 0
+    inb_scal_dst = inb_scal
     if (opt_main == 3) then ! Remesh
         isize_txc_field = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
         inb_txc = 5
@@ -266,27 +264,11 @@ program TRANSFIELDS
         inb_txc = 5
         inb_scal_dst = 1
     end if
-
-    if (fourier_on) inb_txc = max(inb_txc, 1)
-
-    ! -------------------------------------------------------------------
     isize_wrk3d = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
-
-    ! -------------------------------------------------------------------
-    if (flow_on) allocate (q_dst(imax_dst*jmax_dst*kmax_dst, inb_flow))
-    if (scal_on) allocate (s_dst(imax_dst*jmax_dst*kmax_dst, inb_scal_dst))
-
-    if (opt_main == 3) then
-        allocate (x_dst(g_dst(1)%size))
-        allocate (y_dst(g_dst(2)%size))
-        allocate (z_dst(g_dst(3)%size))
-    end if
+    if (fourier_on) inb_txc = max(inb_txc, 1)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 
-    ! -------------------------------------------------------------------
-    ! Read the grid
-    ! -------------------------------------------------------------------
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
@@ -294,15 +276,25 @@ program TRANSFIELDS
 
     call FI_BACKGROUND_INITIALIZE()
 
+    ! Further allocation
+    if (flow_on) call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
+    if (scal_on) call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
+
+    if (opt_main == 3) then
+        allocate (x_dst(g_dst(1)%size))
+        allocate (y_dst(g_dst(2)%size))
+        allocate (z_dst(g_dst(3)%size))
+    end if
+
+    ! ###################################################################
+    ! Initialize operators and reference data
+    ! ###################################################################
     if (opt_main == 5) then
         do ig = 1, 3
             call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         end do
     end if
 
-    ! -------------------------------------------------------------------
-    ! Initialize Poisson solver
-    ! -------------------------------------------------------------------
     if (fourier_on) call OPR_FOURIER_INITIALIZE()
 
     call OPR_CHECK()
@@ -322,7 +314,7 @@ program TRANSFIELDS
         call IO_READ_GRID('grid.trn', g_dst(1)%size, g_dst(2)%size, g_dst(3)%size, &
                           g_dst(1)%scale, g_dst(2)%scale, g_dst(3)%scale, x_dst, y_dst, z_dst, dummy)
 
-        tolerance = 0.001_wp
+        tolerance = 0.001_wp    ! percentage of grid spacing
 
         ! Check grids; Ox and Oz directions are assumed to be periodic
         dummy = (g_dst(1)%scale - g(1)%scale)/(x(g(1)%size, 1) - x(g(1)%size - 1, 1))
@@ -330,14 +322,14 @@ program TRANSFIELDS
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
             call TLAB_STOP(DNS_ERROR_GRID_SCALE)
         end if
-        wrk1d(1:g(1)%size, 1) = x(1:g(1)%size, 1) ! we need extra space
+        ! wrk1d(1:g(1)%size, 1) = x(1:g(1)%size, 1) ! we need extra space
 
         dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size, 1) - z(g(3)%size - 1, 1))
         if (abs(dummy) > tolerance) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
             call TLAB_STOP(DNS_ERROR_GRID_SCALE)
         end if
-        wrk1d(1:g(3)%size, 3) = z(1:g(3)%size, 1) ! we need extra space
+        ! wrk1d(1:g(3)%size, 3) = z(1:g(3)%size, 1) ! we need extra space
 
         ! In the Oy direction, we allow to have a different box
         jmax_aux = g(2)%size; subdomain = 0
@@ -376,12 +368,13 @@ program TRANSFIELDS
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
 
-        ! Reallocating memory space
-        idummy = max(jmax_aux, max(g(1)%size, g(3)%size))
-        isize_wrk1d = max(isize_wrk1d, idummy)
-        isize_wrk1d = isize_wrk1d + 1
+        ! Reallocating memory space because jmax_aux can be larger than jmax, jmax_dst
 
-        inb_txc = inb_txc - 1    ! Creating txc_aux
+        ! idummy = max(jmax_aux, max(g(1)%size, g(3)%size))
+        isize_wrk1d = max(isize_wrk1d, jmax_aux)
+        ! isize_wrk1d = isize_wrk1d + 1
+
+        ! inb_txc = inb_txc - 1    ! Creating txc_aux
         idummy = max(imax, imax_dst)*max(jmax_aux, max(jmax, jmax_dst))*max(kmax, kmax_dst)
         isize_txc_field = max(isize_txc_field, idummy)
 #ifdef USE_MPI
@@ -395,15 +388,25 @@ program TRANSFIELDS
 #endif
         isize_wrk3d = isize_txc_field
 
-        idummy = isize_wrk1d*7 + (isize_wrk1d + 10)*36
-        isize_wrk3d = max(isize_wrk3d, idummy)
+        ! idummy = isize_wrk1d*7 + (isize_wrk1d + 10)*36
+        ! isize_wrk3d = max(isize_wrk3d, idummy)
 
-        deallocate (txc, wrk3d)
+        deallocate (txc, wrk1d, wrk3d)
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
+        txc_aux(1:imax, 1:jmax_aux, 1:kmax) => txc(1:imax*jmax_aux*kmax, 1)
 
-        allocate (txc(isize_txc_field, inb_txc))
-        allocate (wrk3d(isize_wrk3d))
-        allocate (y_aux(isize_wrk1d))
-        allocate (txc_aux(imax, jmax_aux, kmax))
+        ! allocate (txc(isize_txc_field, inb_txc))
+        ! allocate (txc_aux(imax, jmax_aux, kmax))
+        ! allocate (wrk3d(isize_wrk3d))
+
+        allocate (x_aux(imax + 1))      ! need extra space in cubic splines
+        allocate (z_aux(kmax + 1))
+        allocate (y_aux(jmax_aux + 1))
+
+        x_aux(1:g(1)%size) = x(1:g(1)%size, 1) ! need extra space in cubic splines
+        z_aux(1:g(3)%size) = z(1:g(3)%size, 1) ! need extra space in cubic splines
 
         ! Creating grid
         if (flag_crop) then
@@ -519,8 +522,8 @@ program TRANSFIELDS
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
-                                         g, wrk1d(:, 1), y_aux, wrk1d(:, 3), x_dst, y_dst, z_dst, &
-                                         txc_aux, q_dst(:, iq), txc)
+                                         g, x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
+                                         txc_aux, q_dst(:, iq), txc(:,2))
                 end do
             end if
 
@@ -539,8 +542,8 @@ program TRANSFIELDS
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
-                                         g, wrk1d(:, 1), y_aux, wrk1d(:, 3), x_dst, y_dst, z_dst, &
-                                         txc_aux, s_dst(:, is), txc)
+                                         g, x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
+                                         txc_aux, s_dst(:, is), txc(:,2))
                 end do
             end if
 
@@ -851,7 +854,7 @@ contains
         txc(:, 1) = 1.0_wp/(txc(:, 4)/txc(:, 1) - 1.0_wp)*rd_ov_rv
         txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 
-        ! Calculate parameter \beta (assuming c_p = c_p,d)
+        ! Calculate parameter eta (assuming c_p = c_p,d)
         txc(:, 3) = rd_ov_rv*Lvl*Lvl/(txc(:, 5)*txc(:, 5))
 
         ! Calculate s
