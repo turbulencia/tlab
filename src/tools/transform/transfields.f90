@@ -35,7 +35,7 @@ program TRANSFIELDS
     real(wp), allocatable, save :: q_dst(:, :), s_dst(:, :)
 
     real(wp), allocatable, save :: x_aux(:), y_aux(:), z_aux(:)
-    real(wp), pointer :: txc_aux(:, :, :)
+    real(wp), pointer :: txc_aux(:, :, :) => null()
 
     ! -------------------------------------------------------------------
     ! Local variables
@@ -401,8 +401,8 @@ program TRANSFIELDS
         ! allocate (txc_aux(imax, jmax_aux, kmax))
         ! allocate (wrk3d(isize_wrk3d))
 
-        allocate (x_aux(imax + 1))      ! need extra space in cubic splines
-        allocate (z_aux(kmax + 1))
+        allocate (x_aux(g(1)%size + 1))      ! need extra space in cubic splines
+        allocate (z_aux(g(3)%size + 1))
         allocate (y_aux(jmax_aux + 1))
 
         x_aux(1:g(1)%size) = x(1:g(1)%size, 1) ! need extra space in cubic splines
