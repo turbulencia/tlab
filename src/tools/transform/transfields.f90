@@ -322,44 +322,42 @@ program TRANSFIELDS
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
             call TLAB_STOP(DNS_ERROR_GRID_SCALE)
         end if
-        ! wrk1d(1:g(1)%size, 1) = x(1:g(1)%size, 1) ! we need extra space
 
         dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size, 1) - z(g(3)%size - 1, 1))
         if (abs(dummy) > tolerance) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
             call TLAB_STOP(DNS_ERROR_GRID_SCALE)
         end if
-        ! wrk1d(1:g(3)%size, 3) = z(1:g(3)%size, 1) ! we need extra space
 
         ! In the Oy direction, we allow to have a different box
         jmax_aux = g(2)%size; subdomain = 0
 
         dummy = (y_dst(g_dst(2)%size) - y(g(2)%size, 1))/(y(g(2)%size, 1) - y(g(2)%size - 1, 1))
-        if (dummy > tolerance) then ! Extend
+        if (dummy > tolerance) then                 ! Extend
             flag_extend = .true.
-            subdomain(4) = int(dummy) + 1       ! # planes to add at the top
+            subdomain(4) = int(dummy) + 1           ! # planes to add at the top
             jmax_aux = jmax_aux + subdomain(4)
-        else if (dummy < -tolerance) then ! Crop
+        else if (dummy < -tolerance) then           ! Crop
             flag_crop = .true.
             do j = jmax - 1, 1, -1
                 if ((g(2)%nodes(j) - y_dst(g_dst(2)%size))*(g(2)%nodes(j + 1) - y_dst(g_dst(2)%size)) < 0.0_wp) exit
             end do
-            subdomain(4) = j + 1                ! top plane of cropped region
+            subdomain(4) = j + 1                    ! top plane of cropped region
             jmax_aux = subdomain(4)
             subdomain(3) = 1
         end if
 
         dummy = (y_dst(1) - y(1, 1))/(y(2, 1) - y(1, 1))
-        if (dummy < -tolerance) then ! Extend
+        if (dummy < -tolerance) then                ! Extend
             flag_extend = .true.
-            subdomain(3) = int(abs(dummy)) + 1       ! # planes to add at the bottom
+            subdomain(3) = int(abs(dummy)) + 1      ! # planes to add at the bottom
             jmax_aux = jmax_aux + subdomain(3)
-        else if (dummy > tolerance) then ! Crop
+        else if (dummy > tolerance) then            ! Crop
             flag_crop = .true.
             do j = 1, jmax - 1, 1
                 if ((g(2)%nodes(j) - y_dst(1))*(g(2)%nodes(j + 1) - y_dst(1)) < 0.0_wp) exit
             end do
-            subdomain(3) = j                   ! bottom plane of cropped region
+            subdomain(3) = j                        ! bottom plane of cropped region
             jmax_aux = jmax_aux - subdomain(3) + 1
         end if
 
@@ -369,17 +367,13 @@ program TRANSFIELDS
         end if
 
         ! Reallocating memory space because jmax_aux can be larger than jmax, jmax_dst
-
-        ! idummy = max(jmax_aux, max(g(1)%size, g(3)%size))
         isize_wrk1d = max(isize_wrk1d, jmax_aux)
-        ! isize_wrk1d = isize_wrk1d + 1
 
-        ! inb_txc = inb_txc - 1    ! Creating txc_aux
         idummy = max(imax, imax_dst)*max(jmax_aux, max(jmax, jmax_dst))*max(kmax, kmax_dst)
         isize_txc_field = max(isize_txc_field, idummy)
 #ifdef USE_MPI
         idummy = kmax*jmax_aux
-        if (mod(idummy, ims_npro_i) /= 0) then ! add space for MPI transposition
+        if (mod(idummy, ims_npro_i) /= 0) then  ! add space for MPI transposition
             idummy = idummy/ims_npro_i
             idummy = (idummy + 1)*ims_npro_i
         end if
@@ -388,25 +382,18 @@ program TRANSFIELDS
 #endif
         isize_wrk3d = isize_txc_field
 
-        ! idummy = isize_wrk1d*7 + (isize_wrk1d + 10)*36
-        ! isize_wrk3d = max(isize_wrk3d, idummy)
-
         deallocate (txc, wrk1d, wrk3d)
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
         txc_aux(1:imax, 1:jmax_aux, 1:kmax) => txc(1:imax*jmax_aux*kmax, 1)
 
-        ! allocate (txc(isize_txc_field, inb_txc))
-        ! allocate (txc_aux(imax, jmax_aux, kmax))
-        ! allocate (wrk3d(isize_wrk3d))
-
-        allocate (x_aux(g(1)%size + 1))      ! need extra space in cubic splines
+        allocate (x_aux(g(1)%size + 1))         ! need extra space in cubic splines
         allocate (z_aux(g(3)%size + 1))
         allocate (y_aux(jmax_aux + 1))
 
-        x_aux(1:g(1)%size) = x(1:g(1)%size, 1) ! need extra space in cubic splines
-        z_aux(1:g(3)%size) = z(1:g(3)%size, 1) ! need extra space in cubic splines
+        x_aux(1:g(1)%size) = x(1:g(1)%size, 1)  ! need extra space in cubic splines
+        z_aux(1:g(3)%size) = z(1:g(3)%size, 1)  ! need extra space in cubic splines
 
         ! Creating grid
         if (flag_crop) then
@@ -416,7 +403,7 @@ program TRANSFIELDS
             call TLAB_WRITE_ASCII(lfile, 'Croping below '//trim(adjustl(str))//' for remeshing...')
             call TRANS_CROP(1, jmax, 1, subdomain, g(2)%nodes, y_aux)
 
-            y_aux(1) = y_dst(1)             ! Using min and max of new grid
+            y_aux(1) = y_dst(1)                 ! Using min and max of new grid
             y_aux(jmax_aux) = y_dst(g_dst(2)%size)
 
         else
@@ -442,7 +429,7 @@ program TRANSFIELDS
 
         end if
 
-        g(2)%scale = g_dst(2)%scale  ! watch out, overwriting grid information
+        g(2)%scale = g_dst(2)%scale     ! watch out, overwriting grid information
         g(2)%size = jmax_aux
 
     end if
@@ -514,9 +501,9 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-               + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-   + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
+                                + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
@@ -534,9 +521,9 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-               + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-   + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
+                                + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
