@@ -104,11 +104,11 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         ! coef(5) = 4.0_wp*(x(2) - x(1))
 
         ! Data to calculate p_1 in terms of p_2, p_3, p_4 and p'_1
-        c(1) = -coef(2)/coef(1) - lambda2*coef(5)/coef(1)       ! d + lambda^2h^2 e in notes, e only 1 component
+        c(1) = -(coef(2) + lambda2*coef(5))/coef(1)             ! d + lambda^2h^2 e in notes, e only 1 component
         d(1) = -coef(3)/coef(1)
         e(1) = -coef(4)/coef(1)
         pprime = 1.0_wp/coef(1)
-        coef(5) = -coef(5)/coef(1)                              ! coefficient for p''_1
+        b(1) = -coef(5)/coef(1)                                 ! coefficient e for p''_2
 
         ! Derived coefficients; see notes
         c(2) = c(2) - c(1)*f1(2)                                ! in reduced C matrix; the minus sign comes from def of f1
@@ -118,8 +118,8 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         c(3) = c(3) - d(1)*f1(3)
         d(3) = d(3) - e(1)*f1(3)
 
-        lhs(2, 2) = lhs(2, 2) + coef(5)*f1(2)                   ! in reduced A matrix; the plus sign comes from def of f1
-        lhs(3, 1) = lhs(3, 1) + coef(5)*f1(3)
+        lhs(2, 2) = lhs(2, 2) + b(1)*f1(2)                   ! in reduced A matrix; the plus sign comes from def of f1
+        lhs(3, 1) = lhs(3, 1) + b(1)*f1(3)
 
         f1(:) = pprime*f1(:)                                    ! for particular solutions
 
@@ -130,11 +130,11 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         ! coef(1:3) = coef_e1n2_biased(x, imax, backwards=.true.)
         coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
         ! Data to calculate p_n in terms of p_{n-1}, p_{n-2} and p'_n
-        c(imax) = -coef(2)/coef(1) - lambda2*coef(5)/coef(1)
+        c(imax) = -(coef(2) + lambda2*coef(5))/coef(1)
         b(imax) = -coef(3)/coef(1)
         a(imax) = -coef(4)/coef(1)
         pprime = 1.0_wp/coef(1)
-        coef(5) = -coef(5)/coef(1)                              ! coefficient for p''_n
+        e(imax) = -coef(5)/coef(1)                              ! coefficient for p''_{n-1}
 
         ! Derived coefficients; see notes
         a(imax - 1) = a(imax - 1) - a(imax)*f2(imax - 1)        ! in reduced C matrix; the minus sign comes from def of f2
@@ -144,8 +144,8 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         c(imax - 2) = c(imax - 2) - b(imax)*f2(imax - 2)
         d(imax - 2) = d(imax - 2) - c(imax)*f2(imax - 2)
 
-        lhs(imax - 1, 2) = lhs(imax - 1, 2) + coef(5)*f2(imax - 1)  ! in reduced A matrix; the plus sign comes from def of f2
-        lhs(imax - 2, 3) = lhs(imax - 2, 3) + coef(5)*f2(imax - 2)
+        lhs(imax - 1, 2) = lhs(imax - 1, 2) + e(imax)*f2(imax - 1)  ! in reduced A matrix; the plus sign comes from def of f2
+        lhs(imax - 2, 3) = lhs(imax - 2, 3) + e(imax)*f2(imax - 2)
 
         f2(:) = pprime*f2(:)                                    ! for particular solutions
 

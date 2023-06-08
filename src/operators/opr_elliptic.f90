@@ -593,19 +593,21 @@ contains
                 end if
 
                 if (ibc /= BCS_NN) then     ! use local LU factorization
-                call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
+                    call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
 
                     c_wrk1d(:, 6) = (c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7))*norm
 
                     !   Corrections to the BCS_DD to account for Neumann
                     if (any([BCS_ND, BCS_NN] == ibc_loc)) then
                         c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) &
-                                        + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                                        + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6) &
+                                        + p_wrk1d(1, 2)*c_wrk1d(2, 5)*norm
                     end if
 
                     if (any([BCS_DN, BCS_NN] == ibc_loc)) then
                         c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) &
-                                         + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6)
+                                         + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6) &
+                                         + p_wrk1d(ny, 5)*c_wrk1d(ny - 1, 5)*norm
                     end if
 
                 else                        ! use precalculated LU factorization
@@ -616,12 +618,14 @@ contains
                     !   Corrections to the BCS_DD to account for Neumann
                     if (any([BCS_ND, BCS_NN] == ibc_loc)) then
                         c_wrk1d(1, 6) = c_wrk1d(1, 6) + c(1, i, k)*c_wrk1d(2, 6) &
-                                        + d(1, i, k)*c_wrk1d(3, 6) + e(1, i, k)*c_wrk1d(4, 6)
+                                        + d(1, i, k)*c_wrk1d(3, 6) + e(1, i, k)*c_wrk1d(4, 6) &
+                                        + b(1, i, k)*c_wrk1d(2, 5)*norm
                     end if
 
                     if (any([BCS_DN, BCS_NN] == ibc_loc)) then
                         c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + c(ny, i, k)*c_wrk1d(ny - 1, 6) &
-                                         + b(ny, i, k)*c_wrk1d(ny - 2, 6) + a(ny, i, k)*c_wrk1d(ny - 3, 6)
+                                         + b(ny, i, k)*c_wrk1d(ny - 2, 6) + a(ny, i, k)*c_wrk1d(ny - 3, 6) &
+                                         + e(ny, i, k)*c_wrk1d(ny - 1, 5)*norm
                     end if
 
                 end if
