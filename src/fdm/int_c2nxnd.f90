@@ -99,55 +99,66 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         ! Coefficients in FDM p'_1= b_1 p_1 + b_2 p_2 + b_3 p_3 + b_4 p_4 + a_2 p''_2
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, 1)              ! second-order
-        coef(1:4) = coef_e1n3_biased(x, 1)              ! third-order
-        ! coef(1:4) = [-35.0_wp/6.0_wp, 11.0_wp, -33.0_wp/6.0_wp, 2.0_wp/6.0_wp]/(x(2) - x(1))
-        ! coef(5) = 4.0_wp*(x(2) - x(1))
-
+        ! coef(1:4) = coef_e1n3_biased(x, 1)              ! third-order
+        coef(1:4) = [-35.0_wp/6.0_wp, 11.0_wp, -33.0_wp/6.0_wp, 2.0_wp/6.0_wp]/(x(2) - x(1))
+        coef(5) = 4.0_wp*(x(2) - x(1))
+        ! coef(1:4) = [-85.0_wp, 108.0_wp, -27.0_wp, 4.0_wp]/66.0_wp/(x(2) - x(1))
+        ! coef(5) = -9.0_wp/33.0_wp*(x(2) - x(1))
+        ! coef(1:4) = [-1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp]/(x(2) - x(1))   ! fourth-order
+        ! coef(5) = -0.5_wp*(x(2) - x(1))
+        
         ! Data to calculate p_1 in terms of p_2, p_3, p_4 and p'_1
-        c(1) = -(coef(2) + lambda2*coef(5))/coef(1)             ! d + lambda^2h^2 e in notes, e only 1 component
+        c(1) = -(coef(2) + lambda2*coef(5))/coef(1)         ! d + lambda^2h^2 e in notes, e only 1 component
         d(1) = -coef(3)/coef(1)
         e(1) = -coef(4)/coef(1)
         pprime = 1.0_wp/coef(1)
-        b(1) = -coef(5)/coef(1)                                 ! coefficient e for p''_2
+        b(1) = -coef(5)/coef(1)                             ! coefficient e for p''_2
 
         ! Derived coefficients; see notes
-        c(2) = c(2) - c(1)*f1(2)                                ! in reduced C matrix; the minus sign comes from def of f1
+        c(2) = c(2) - c(1)*f1(2)                            ! in reduced C matrix; the minus sign comes from def of f1
         d(2) = d(2) - d(1)*f1(2)
         e(2) = e(2) - e(1)*f1(2)
         b(3) = b(3) - c(1)*f1(3)
         c(3) = c(3) - d(1)*f1(3)
         d(3) = d(3) - e(1)*f1(3)
 
-        lhs(2, 2) = lhs(2, 2) + b(1)*f1(2)                   ! in reduced A matrix; the plus sign comes from def of f1
-        lhs(3, 1) = lhs(3, 1) + b(1)*f1(3)
+        b(2) = b(1)*f1(2)                                   ! in reduced A matrix; the plus sign comes from def of f1
+        a(3) = b(1)*f1(3)
 
-        f1(:) = pprime*f1(:)                                    ! for particular solutions
+        f1(:) = pprime*f1(:)                                ! for particular solutions
 
     end if
     if (any([BCS_DN, BCS_NN] == ibc)) then
         ! Coefficients in FDM p'_n = b_1 p_n + b_2 p_{n-1} + b_3 p_{n-2} +...
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, imax, backwards=.true.)
-        coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
+        ! coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
+        coef(1:4) = [35.0_wp/6.0_wp, -11.0_wp, 33.0_wp/6.0_wp, -2.0_wp/6.0_wp]/(x(2) - x(1))
+        coef(5) = -4.0_wp*(x(2) - x(1))
+        ! coef(1:4) = [85.0_wp, -108.0_wp, 27.0_wp, -4.0_wp]/66.0_wp/(x(2) - x(1))
+        ! coef(5) = 9.0_wp/33.0_wp*(x(2) - x(1))
+        ! coef(1:4) = [1.0_wp, -1.0_wp, 0.0_wp, 0.0_wp]/(x(2) - x(1))
+        ! coef(5) = 0.5_wp*(x(2) - x(1))
+
         ! Data to calculate p_n in terms of p_{n-1}, p_{n-2} and p'_n
         c(imax) = -(coef(2) + lambda2*coef(5))/coef(1)
         b(imax) = -coef(3)/coef(1)
         a(imax) = -coef(4)/coef(1)
         pprime = 1.0_wp/coef(1)
-        e(imax) = -coef(5)/coef(1)                              ! coefficient for p''_{n-1}
+        e(imax) = -coef(5)/coef(1)                          ! coefficient for p''_{n-1}
 
         ! Derived coefficients; see notes
-        a(imax - 1) = a(imax - 1) - a(imax)*f2(imax - 1)        ! in reduced C matrix; the minus sign comes from def of f2
+        a(imax - 1) = a(imax - 1) - a(imax)*f2(imax - 1)    ! in reduced C matrix; the minus sign comes from def of f2
         b(imax - 1) = b(imax - 1) - b(imax)*f2(imax - 1)
         c(imax - 1) = c(imax - 1) - c(imax)*f2(imax - 1)
         b(imax - 2) = b(imax - 2) - a(imax)*f2(imax - 2)
         c(imax - 2) = c(imax - 2) - b(imax)*f2(imax - 2)
         d(imax - 2) = d(imax - 2) - c(imax)*f2(imax - 2)
 
-        lhs(imax - 1, 2) = lhs(imax - 1, 2) + e(imax)*f2(imax - 1)  ! in reduced A matrix; the plus sign comes from def of f2
-        lhs(imax - 2, 3) = lhs(imax - 2, 3) + e(imax)*f2(imax - 2)
+        d(imax - 1) = e(imax)*f2(imax - 1)                  ! in reduced A matrix; the plus sign comes from def of f2
+        e(imax - 2) = e(imax)*f2(imax - 2)
 
-        f2(:) = pprime*f2(:)                                    ! for particular solutions
+        f2(:) = pprime*f2(:)                                ! for particular solutions
 
     end if
 

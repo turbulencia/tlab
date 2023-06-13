@@ -148,6 +148,12 @@ program VPOISSON
         call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
+        lambda = 4.0
+        do j = 1, jmax
+            ! a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))!+pi_wp/C_4_R)
+            a(:,j,:) = exp(lambda*g(2)%nodes(j))
+        end do
+        
 
         ! -------------------------------------------------------------------
         ! DO j = 1,jmax
@@ -183,16 +189,16 @@ program VPOISSON
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
         case (BCS_DN)
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
-            bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
+            ! bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         case (BCS_ND)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
             ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
+            ! bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
         case (BCS_NN)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
             ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
-            bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
+            ! bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
+            ! bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         end select
 
         if (type_of_operator == 1) then

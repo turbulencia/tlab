@@ -39,10 +39,10 @@ SUBROUTINE PENTADFS(nmax, a,b,c,d,e)
   TINTEGER n
 
 ! #######################################################################
-  a(1) = C_1_R ! padding
-  b(1) = C_1_R ! padding
+!   a(1) = C_1_R ! padding
+!   b(1) = C_1_R ! padding
 
-  a(2) = C_1_R ! padding
+!   a(2) = C_1_R ! padding
   b(2) = b(2)                         /c(1)
   c(2) = c(2)             - b(2)*d(1)
   d(2) = d(2) - b(2)*e(1)
@@ -53,20 +53,20 @@ SUBROUTINE PENTADFS(nmax, a,b,c,d,e)
      c(n) = c(n) - b(n)*d(n-1) - a(n)*e(n-2)
      d(n) = d(n) - b(n)*e(n-1)
   ENDDO
-  e(n-1) = C_1_R ! padding
+!   e(n-1) = C_1_R ! padding
   
   a(nmax) = a(nmax)                                         /c(nmax-2)
   b(nmax) =(b(nmax)                     - a(nmax)*d(nmax-2))/c(nmax-1)
   c(nmax) = c(nmax) - b(nmax)*d(nmax-1) - a(nmax)*e(nmax-2)
-  d(nmax) = C_1_R ! padding
-  e(nmax) = C_1_R ! padding
+!   d(nmax) = C_1_R ! padding
+!   e(nmax) = C_1_R ! padding
 
 ! Final operations
-  a =-a
-  b =-b
+  a(3:) =-a(3:)
+  b(2:) =-b(2:)
   c = C_1_R/c
-  d =-d
-  e =-e
+  d(:nmax-1) =-d(:nmax-1)
+  e(:nmax-2) =-e(:nmax-2)
 
   RETURN
 END SUBROUTINE PENTADFS
