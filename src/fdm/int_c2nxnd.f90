@@ -99,9 +99,9 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         ! Coefficients in FDM p'_1= b_1 p_1 + b_2 p_2 + b_3 p_3 + b_4 p_4 + a_2 p''_2
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, 1)              ! second-order
-        ! coef(1:4) = coef_e1n3_biased(x, 1)              ! third-order
-        coef(1:4) = [-35.0_wp/6.0_wp, 11.0_wp, -33.0_wp/6.0_wp, 2.0_wp/6.0_wp]/(x(2) - x(1))
-        coef(5) = 4.0_wp*(x(2) - x(1))
+        coef(1:4) = coef_e1n3_biased(x, 1)              ! third-order
+        ! coef(1:4) = [-35.0_wp/6.0_wp, 11.0_wp, -33.0_wp/6.0_wp, 2.0_wp/6.0_wp]/(x(2) - x(1))
+        ! coef(5) = 4.0_wp*(x(2) - x(1))
         ! coef(1:4) = [-85.0_wp, 108.0_wp, -27.0_wp, 4.0_wp]/66.0_wp/(x(2) - x(1))
         ! coef(5) = -9.0_wp/33.0_wp*(x(2) - x(1))
         ! coef(1:4) = [-1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp]/(x(2) - x(1))   ! fourth-order
@@ -132,9 +132,9 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
         ! Coefficients in FDM p'_n = b_1 p_n + b_2 p_{n-1} + b_3 p_{n-2} +...
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, imax, backwards=.true.)
-        ! coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
-        coef(1:4) = [35.0_wp/6.0_wp, -11.0_wp, 33.0_wp/6.0_wp, -2.0_wp/6.0_wp]/(x(2) - x(1))
-        coef(5) = -4.0_wp*(x(2) - x(1))
+        coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
+        ! coef(1:4) = [35.0_wp/6.0_wp, -11.0_wp, 33.0_wp/6.0_wp, -2.0_wp/6.0_wp]/(x(2) - x(1))
+        ! coef(5) = -4.0_wp*(x(2) - x(1))
         ! coef(1:4) = [85.0_wp, -108.0_wp, 27.0_wp, -4.0_wp]/66.0_wp/(x(2) - x(1))
         ! coef(5) = 9.0_wp/33.0_wp*(x(2) - x(1))
         ! coef(1:4) = [1.0_wp, -1.0_wp, 0.0_wp, 0.0_wp]/(x(2) - x(1))

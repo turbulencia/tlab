@@ -25,9 +25,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
 ! -------------------------------------------------------------------
     integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
-    real(wp) r04, r28, r24, r48, r25, r60, dummy
-    real(wp) ra1, rb2, rc3, r2a, r2b
-    real(wp) sa, sb, sal
+    real(wp) dummy
+    real(wp) a1, a2, b1, b2, b3, kc
 
     integer, parameter :: i0 = 0, i1 = 1
 
@@ -206,7 +205,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
                 call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
             case (FDM_COM6_JACPENTA)
-               CALL FDM_C1N6M_LHS(nx, ibc_min,ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
+                call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
 
             case (FDM_COM8_JACOBIAN)
                 call FDM_C1N8_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
@@ -280,8 +279,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             end select
 
-! The direct mode is only implemented for bcs=(0,0); we use the remaining array
-! to save other data
+! The direct mode is only implemented for bcs=(0,0); we use the remaining array to save other data
             if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
                 if (i == 0) then
                     g%lu2(:, ip + 8:ip + 10) = g%lu2(:, ip + 1:ip + 3) ! saving the array A w/o LU decomposition
@@ -311,11 +309,11 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
         if (g%periodic) then ! Check routines TRIDPFS and TRIDPSS
-            g%lu2d(:, ip + 1) = g%lu2(:, 1)          ! matrix L; 1. subdiagonal
-            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy   ! matrix L; 1/diagonal
-            g%lu2d(:, ip + 3) = g%lu2(:, 3)          ! matrix U is the same
-            g%lu2d(:, ip + 4) = g%lu2(:, 4)*dummy   ! matrix L; Additional row/column
-            g%lu2d(:, ip + 5) = g%lu2(:, 5)          ! matrix U is the same
+            g%lu2d(:, ip + 1) = g%lu2(:, 1)             ! matrix L; 1. subdiagonal
+            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy       ! matrix L; 1/diagonal
+            g%lu2d(:, ip + 3) = g%lu2(:, 3)             ! matrix U is the same
+            g%lu2d(:, ip + 4) = g%lu2(:, 4)*dummy       ! matrix L; Additional row/column
+            g%lu2d(:, ip + 5) = g%lu2(:, 5)             ! matrix U is the same
 
             ig = ig + 5
             ip = ip + 5
@@ -324,9 +322,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! Nonperiodic case; tridiagonal, 1 single BCs
 ! -------------------------------------------------------------------
         else                   ! Check routines TRIDFS and TRIDSS
-            g%lu2d(:, ip + 1) = g%lu2(:, 1)          ! matrix L is the same
-            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy   ! matrix U; 1/diagonal
-            g%lu2d(:, ip + 3) = g%lu2(:, 3)*dummy   ! matrix U; 1. superdiagonal
+            g%lu2d(:, ip + 1) = g%lu2(:, 1)             ! matrix L is the same
+            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy       ! matrix U; 1/diagonal
+            g%lu2d(:, ip + 3) = g%lu2(:, 3)*dummy       ! matrix U; 1. superdiagonal
 
             ig = ig + 3
             ip = ip + 3
@@ -386,50 +384,49 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! First-order derivative
 ! -------------------------------------------------------------------
-        ! tridiagonal scheme
-        r04 = 2.0_wp/5.0_wp
-        r28 = 14.0_wp*2.0_wp
-        r48 = 6.0_wp*8.0_wp
-        r25 = 5.0_wp*5.0_wp/4.0_wp
-        r60 = 1.0_wp/(6.0_wp*10.0_wp)
-        ! pentadiagonal scheme
-        ra1 = C1N6M_A
-        rb2 = C1N6M_BD2
-        rc3 = C1N6M_CD3
-        r2a = C1N6M_ALPHA2
-        r2b = C1N6M_BETA2
-        ! staggered tridiagonal 6th-order scheme
-        sal = 9.0_wp/62.0_wp
-        sa = 63.0_wp/62.0_wp
-        sb = 17.0_wp/62.0_wp
-
         if (.not. stagger_on) then
 
             select case (g%mode_fdm)
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
-                g%mwn(:, 1) = (r28*sin(wrk1d(:, 1)) + sin(2.0_wp*wrk1d(:, 1))) &
-                              /(18.0_wp + 12.0_wp*cos(wrk1d(:, 1)))
+                a1 = 1.0_wp/3.0_wp
+                a2 = 0.0_wp
+                b1 = 7.0_wp/9.0_wp
+                b2 = 1.0_wp/36.0_wp
+                b3 = 0.0_wp
 
             case (FDM_COM6_JACPENTA)
-                g%mwn(:, 1) = (ra1*sin(wrk1d(:, 1)) + rb2*sin(2.0_wp*wrk1d(:, 1)) + rc3*sin(3.0_wp*wrk1d(:, 1))) &
-                              /(1.0_wp + r2a*cos(wrk1d(:, 1)) + r2b*cos(2*wrk1d(:, 1)))
+                a1 = C1N6M_ALPHA2/2.0_wp
+                a2 = C1N6M_BETA2/2.0_wp
+                b1 = C1N6M_A/2.0_wp
+                b2 = C1N6M_BD2/2.0_wp
+                b3 = C1N6M_CD3/2.0_wp
 
             case (FDM_COM8_JACOBIAN)
-                g%mwn(:, 1) = (r25*sin(wrk1d(:, 1)) + r04*sin(2.0_wp*wrk1d(:, 1)) - r60*sin(3.0_wp*wrk1d(:, 1))) &
-                              /(4.0_wp + 3.0_wp*cos(wrk1d(:, 1)))
+                a1 = 3.0_wp/8.0_wp
+                a2 = 0.0_wp
+                b1 = 25.0_wp/32.0_wp
+                b2 = 1.0_wp/20.0_wp
+                b3 = -1.0_wp/480.0_wp
 
             end select
+
+            g%mwn(:, 1) = 2.0_wp*(b1*sin(wrk1d(:, 1)) + b2*sin(2.0_wp*wrk1d(:, 1)) + b3*sin(3.0_wp*wrk1d(:, 1))) &
+                          /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)) + 2.0_wp*a2*cos(wrk1d(:, 1)))
 
         else ! staggered case has different modified wavenumbers!
 
             select case (g%mode_fdm)
 
             case DEFAULT
-                g%mwn(:, 1) = (2.0_wp*sa*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + 2.0_wp/3.0_wp*sb*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
-                              /(1.0_wp + 2.0_wp*sal*cos(wrk1d(:, 1)))
+                a1 = 9.0_wp/62.0_wp
+                b1 = 63.0_wp/62.0_wp
+                b2 = 17.0_wp/62.0_wp
 
             end select
+
+            g%mwn(:, 1) = 2.0_wp*(b1*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + b2/3.0_wp*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
+                          /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
 
         end if
 
@@ -439,22 +436,27 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
 ! Second-order derivative
 ! -------------------------------------------------------------------
-        r24 = 6.0_wp*4.0_wp
-
         select case (g%mode_fdm)
 
         case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            g%mwn(:, 2) = (r24*(1.0_wp - cos(wrk1d(:, 1))) + 1.5_wp*(1.0_wp - cos(2.0_wp*wrk1d(:, 1)))) &
-                          /(11.0_wp + 4.0_wp*cos(wrk1d(:, 1)))
+            a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
+            b1 = 12.0_wp/11.0_wp
+            b2 = 3.0_wp/44.0_wp
+            b3 = 0.0_wp
 
         case (FDM_COM6_JACOBIAN)
-            ! This is for the normal C2N6P and for C2N6P but not for C2N6HP !!!
-            g%mwn(:, 2) = (r24*(1.0_wp - cos(wrk1d(:, 1))) + 1.5_wp*(1.0_wp - cos(2.0_wp*wrk1d(:, 1)))) &
-                          /(11.0_wp + 4.0_wp*cos(wrk1d(:, 1)))
+            kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
+            a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
+            b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
+            b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
+            b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
 
         case (FDM_COM8_JACOBIAN) ! Not yet implemented
 
         end select
+
+        g%mwn(:, 2) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+                      /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
 
 ! Final calculations because it is mainly used in the Helmholtz solver like this
         g%mwn(:, 2) = g%mwn(:, 2)/(g%jac(1, 1)**2)
@@ -471,6 +473,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%anelastic = .false. ! Default; activated in FI_BACKGROUND_INITIALIZE
 
     ig = ig + 1
+    
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################

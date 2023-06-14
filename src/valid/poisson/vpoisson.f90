@@ -148,11 +148,11 @@ program VPOISSON
         call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
-        lambda = 4.0
-        do j = 1, jmax
-            ! a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))!+pi_wp/C_4_R)
-            a(:,j,:) = exp(lambda*g(2)%nodes(j))
-        end do
+        ! lambda = 4.0
+        ! do j = 1, jmax
+        !     ! a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))!+pi_wp/C_4_R)
+        !     a(:,j,:) = exp(lambda*g(2)%nodes(j))
+        ! end do
         
 
         ! -------------------------------------------------------------------
