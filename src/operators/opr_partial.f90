@@ -182,6 +182,7 @@ contains
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
         use FDM_COM_DIRECT
+        use FDM_PROCS, only: FDM_RHS_Pentad_Biased
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -273,7 +274,7 @@ contains
                 end if
 
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-                call FDM_C2NXND_RHS(g%size, nlines, g%lu2(:, 4), u, result)
+                call FDM_RHS_Pentad_Biased(g%size, nlines, g%lu2(:, 4), u, result)
 
             end select
 

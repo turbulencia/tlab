@@ -104,18 +104,11 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    if (g(2)%uniform) then          ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                        call INT_C2N6_LHS_E(g(2)%size, g(2)%jac, ibc_loc, lambda, &
-                                            a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
-
-                    else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                        call INT_C2NXND_LHS_E(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                              a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
-
-                    end if
+                    call INT_C2NX_LHS_E(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                                          a(1, i, k), b(1, i, k), c(1, i, k), d(1, i, k), e(1, i, k), f1(1, i, k), f2(1, i, k))
 
                     ! LU decomposizion
-                    ! We rely on this rourtines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
+                    ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
                     call PENTADFS(g(2)%size - 2, a(2, i, k), b(2, i, k), c(2, i, k), d(2, i, k), e(2, i, k))
 
                     ! Particular solutions
@@ -367,33 +360,20 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                        call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
+                    call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-
-                    else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                        call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-
-                    end if
 
                     ! LU factorization
                     call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
                     ! Parciular solutions
-                    call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
-                    call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
+                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
+                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
 
                 end if
 
                 ! -----------------------------------------------------------------------
-                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                    call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
-
-                else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                    call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
-
-                end if
+                call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 if (ibc /= BCS_NN) then     ! use local LU factorization
                     !   Corrections to the BCS_DD to account for Neumann
@@ -407,7 +387,7 @@ contains
                         c_wrk1d(ny - 1, 6) = c_wrk1d(ny - 1, 6) + p_wrk1d(ny - 1, 4)*c_wrk1d(ny - 1, 5)
                     end if
 
-                    call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
+                call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
 
                     c_wrk1d(:, 6) = (c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7))*norm
 
@@ -681,18 +661,10 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                if (g(2)%uniform) then          ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                    call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
+                p_wrk1d(:, 1:7) = 0.0_wp
+                call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6_RHS(ny, i2, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, 11))
-
-                else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                    p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
-
-                end if
+                call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
@@ -834,18 +806,10 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 ! if (ibc == 0) then ! Dirichlet BCs
-                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                    call INT_C2N6_LHS_E(ny, g(2)%jac, ibc, lambda, &
+                p_wrk1d(:, 1:7) = 0.0_wp
+                call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2N6_RHS(ny, i2*nfield, g(2)%jac, p_wrk1d(1, 9), p_wrk1d(1, ip_sol))
-
-                else                        ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                    p_wrk1d(:, 1:7) = 0.0_wp
-                    call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                    call INT_C2NXND_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
-
-                end if
+                call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
@@ -990,15 +954,8 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                        call INT_C2N6_LHS_E(ny, g(2)%jac, ibc_loc, lambda, &
+                    call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                             p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-
-                    else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                        call INT_C2NXND_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-
-                    end if
 
                     ! LU factorization
                     call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
@@ -1010,13 +967,7 @@ contains
                 end if
 
                 ! -----------------------------------------------------------------------
-                if (g(2)%uniform) then         ! FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA
-                    call INT_C2N6_RHS(ny, i2, g(2)%jac, r_tmp1_t(1, k, i), r_tmp2_t(1, k, i))
-
-                else                            ! FDM_COM6_DIRECT, although this is = to FDM_COM6_JACOBIAN if uniform
-                    call INT_C2NXND_RHS(ny, i2, lhs, r_tmp1_t(1, k, i), r_tmp2_t(1, k, i))
-
-                end if
+                call INT_C2NX_RHS(ny, i2, lhs, r_tmp1_t(1, k, i), r_tmp2_t(1, k, i))
 
                 if (ibc /= BCS_NN) then     ! use local LU factorization
              call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), r_tmp2_t(3, k, i))
@@ -1084,6 +1035,5 @@ contains
 
         return
     end subroutine OPR_POISSON_FXZ_D_TRANSPOSE
-
 
 end module OPR_ELLIPTIC

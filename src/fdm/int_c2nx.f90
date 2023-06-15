@@ -1,37 +1,35 @@
 !########################################################################
 !#
-!# Implementation of the second derivative finite difference with
-!# 6th order tridiagonal compact scheme for non-uniform grids from Shukla and Zhong (2005).
-!# in order to solve the BVP
+!# Initialize the solver for the BVP (Helmholtz equation)
 !#
 !#     u''_i - \lamba^2 u_i = f_i  N-2 eqns
 !#     u_1 and u_N given           2   eqns
 !#     Au'' = Bu                   N   eqns
+!#
+!# starting from the matrices A (lhs, tridiagonal) and B (rhs, pentadiagonal, with unitary central diagonal).
 !#
 !# The system of N-2 eqns:
 !#
 !#                    (B - \lambda^2 A)u = Af = g
 !#
 !# is established in this routine, giving diagonals a-e and g (see notes).
-!# See also routine fdm_c2n6nd.
-!#
-!# Solution array does not appear in this routine.
 !#
 !########################################################################
 
 !########################################################################
 !Left-hand side; pentadiagonal matrix of the linear system and f1 and f2
 !########################################################################
-subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2)
+subroutine INT_C2NX_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2)
     use TLAB_CONSTANTS
+    use FDM_PROCS
     implicit none
 
-    integer(wi), intent(in) :: imax       ! original size; here using only 2:imax-1
-    real(wp), intent(in) :: x(imax)
-    integer, intent(in) :: ibc
-    real(wp), intent(inout) :: lhs(imax, 3)
-    real(wp), intent(in) :: rhs(imax, 4)
-    real(wp) lambda2
+    integer(wi), intent(in) :: imax         ! original size; here using only 2:imax-1
+    real(wp), intent(in) :: x(imax)         ! grid nodes
+    integer, intent(in) :: ibc              ! Boundary condition, BCS_DD, BCS_DN, BCS_ND, BCS_NN
+    real(wp), intent(in) :: lhs(imax, 3)    ! matrix A, tridiagonal
+    real(wp), intent(in) :: rhs(imax, 4)    ! matrix B, with unitary central diagonal
+    real(wp) lambda2                        ! system constatn
     real(wp), intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)  ! diagonals
     real(wp), intent(out) :: f1(imax), f2(imax)      ! forcing term for the hyperbolic sine
 
@@ -163,87 +161,12 @@ subroutine INT_C2NXND_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, 
     end if
 
     return
-contains
-    ! first-order derivative, explicit, 3. order
-    function coef_e1n3_biased(x, i, backwards) result(coef)
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i
-        logical, intent(in), optional :: backwards
-        real(wp) coef(4)
-
-        integer(wi) stencil(4), k
-
-        if (present(backwards)) then
-            stencil = [i, i - 1, i - 2, i - 3]
-        else
-            stencil = [i, i + 1, i + 2, i + 3]
-        end if
-
-        do k = 1, size(stencil)
-            coef(k) = Lag_p(x, i, stencil(k), stencil(:))
-        end do
-        ! if uniform, [ -11/6 3 -3/2 1/3 ]/h
-
-        return
-    end function
-
-    ! first-order derivative, explicit, 2. order
-    function coef_e1n2_biased(x, i, backwards) result(coef)
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i
-        logical, intent(in), optional :: backwards
-        real(wp) coef(3)
-
-        integer(wi) stencil(3), k
-
-        if (present(backwards)) then
-            stencil = [i, i - 1, i - 2]
-        else
-            stencil = [i, i + 1, i + 2]
-        end if
-
-        do k = 1, size(stencil)
-            coef(k) = Lag_p(x, i, stencil(k), stencil(:))
-        end do
-        ! if uniform, [ -3/2 2 -1/2 ]/h
-
-        return
-    end function
-
-    function Lag_p(x, j, i, idx) result(f)                     ! 1. derivative of Lagrange polynomials on idx(:) around i
-        use TLAB_CONSTANTS
-        implicit none
-
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j, idx(:)
-        real(wp) f, num, den, dummy
-        integer(wi) k, m
-
-        den = 1.0_wp
-        num = 0.0_wp
-        do k = 1, size(idx)
-            if (idx(k) /= i) then
-                dummy = 1.0_wp
-                do m = 1, size(idx)
-                    if (idx(m) /= i .and. m /= k) then
-                        dummy = dummy*(x(j) - x(idx(m)))
-                    end if
-                end do
-                num = num + dummy
-                den = den*(x(i) - x(idx(k)))
-            end if
-        end do
-        f = num/den
-
-        return
-    end function
-
-end subroutine INT_C2NXND_LHS_E
+end subroutine INT_C2NX_LHS_E
 
 ! #######################################################################
 ! Right-hand side; mmax forcing terms at the same time
 ! #######################################################################
-subroutine INT_C2NXND_RHS(imax, mmax, lhs, f, g)
+subroutine INT_C2NX_RHS(imax, mmax, lhs, f, g)
     use TLAB_CONSTANTS
     implicit none
 
@@ -274,4 +197,4 @@ subroutine INT_C2NXND_RHS(imax, mmax, lhs, f, g)
     g(:, imax) = 0.0_wp ! This element is simply the solution at imax of p(0)
 
     return
-end subroutine INT_C2NXND_RHS
+end subroutine INT_C2NX_RHS

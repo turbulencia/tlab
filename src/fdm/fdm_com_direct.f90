@@ -7,61 +7,22 @@
 !#
 !# We normalize system to get a diagonal 1 in B and we only need to store 4 RHS diagonals
 !# The RHS diagonals are then O(1), the LHS diagonal O(h^2)
+!#
+!# For a uniform grid, this reduces to JCP Lele 1992, nonperiodic:
+!# Interior points 6th-order according to Eq. 2.1.7.
+!# The second point from Eq. 2.1.6 forth-order (b=0).
+!# The first point from third-order biased Eq. 4.1.3 (d=0).
+!#
 !########################################################################
 module FDM_COM_DIRECT
     use TLAB_CONSTANTS
+    use FDM_PROCS
     implicit none
     private
 
     public FDM_C2N4ND_INITIALIZE
     public FDM_C2N6ND_INITIALIZE
-    public FDM_C2NXND_RHS
-
 contains
-    ! #######################################################################
-    ! Calcualte f = B u, assuming B is penta-diagonal with center diagonal is 1
-    ! #######################################################################
-    subroutine FDM_C2NXND_RHS(nmax, mmax, rhs, u, f)
-        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
-        real(wp), intent(in) :: rhs(nmax, 4)        ! RHS diagonals (#=5-1 because of normalization)
-        real(wp), intent(in) :: u(mmax, nmax)       ! function u
-        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
-        
-        ! -------------------------------------------------------------------
-        integer(wi) n
-
-        ! -------------------------------------------------------------------
-        ! Boundary
-        n = 1 ! rhs(1,1) contains 3. superdiagonal
-        f(:, n) = &
-            +u(:, n) &
-            + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4) + u(:, n + 3)*rhs(n, 1)
-
-        n = 2
-        f(:, n) = u(:, n - 1)*rhs(n, 2) &
-                  + u(:, n) &
-                  + u(:, n + 1)*rhs(n, 3)
-
-        ! Interior points
-        do n = 3, nmax - 2
-            f(:, n) = u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) &
-                      + u(:, n) &
-                      + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4)
-        end do
-
-        ! Boundary
-        n = nmax - 1
-        f(:, n) = u(:, n - 1)*rhs(n, 2) &
-                  + u(:, n) &
-                  + u(:, n + 1)*rhs(n, 3)
-
-        n = nmax ! rhs(1,4) contains 3. subdiagonal
-        f(:, n) = u(:, n - 3)*rhs(n, 4) + u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) &
-                  + u(:, n)
-
-        return
-    end subroutine FDM_C2NXND_RHS
-
     !########################################################################
     !# 6th-order approximation to 2nd-order derivative:
     !########################################################################
@@ -543,117 +504,6 @@ contains
             + 2.0_wp*dx**2.0/(dxp*dxm)*PIp_o_PI(x(:), i + 1, i)*PIp_o_PI(x(:), i - 1, i) &
             - 2.0_wp*PIp_o_PI(x(:), i + 1, i)*dx/dxm*(1.0_wp/dxp - 1.0_wp/dxm) &
             - 2.0_wp*PIp_o_PI(x(:), i - 1, i)*dx/dxp*(1.0_wp/dxp - 1.0_wp/dxm)
-
-        return
-    end function
-
-    !########################################################################
-    ! Product functions and Lagrange polynomials over interval given by idx(:)
-    !########################################################################
-    function Pi(x, j, idx) result(f)    ! Product function defined over interval given by idx(:)
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: j, idx(:)
-        real(wp) f
-
-        integer(wi) k
-
-        f = 1.0_wp
-        do k = 1, size(idx)
-            f = f*(x(j) - x(idx(k)))
-        end do
-
-        return
-    end function
-
-    function Pi_p(x, j, idx) result(f)
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: j, idx(:)
-        real(wp) f
-
-        real(wp) dummy
-        integer(wi) k, m
-
-        f = 0.0_wp
-        do k = 1, size(idx)
-            dummy = 1.0_wp
-            do m = 1, size(idx)
-                if (m /= k) then
-                    dummy = dummy*(x(j) - x(idx(m)))
-                end if
-            end do
-            f = f + dummy
-        end do
-
-        return
-    end function
-
-    function Pi_pp_3(x, j, idx) result(f)       ! It assumes idx has only 3 points
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: j, idx(:)
-        real(wp) f
-
-        f = 2.0_wp*(x(j) - x(idx(1)) + x(j) - x(idx(2)) + x(j) - x(idx(3)))
-
-        return
-    end function
-
-    function Lag(x, j, i, idx) result(f)        ! Lagrange polynomials on idx(:) around i
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j, idx(:)
-        real(wp) f
-
-        integer(wi) k
-
-        f = 1.0_wp
-        do k = 1, size(idx)
-            if (idx(k) /= i) then
-                f = f*(x(j) - x(idx(k)))/(x(i) - x(idx(k)))
-            end if
-        end do
-
-        return
-    end function
-
-    function Lag_p(x, j, i, idx) result(f)        ! 1. derivative of Lagrange polynomials on idx(:) around i
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: i, j, idx(:)
-        real(wp) f
-
-        integer(wi) k, m
-        real(wp) den, dummy
-
-        den = 1.0_wp
-        f = 0.0_wp
-        do k = 1, size(idx)
-            if (idx(k) /= i) then
-                dummy = 1.0_wp
-                do m = 1, size(idx)
-                    if (idx(m) /= i .and. m /= k) then
-                        dummy = dummy*(x(j) - x(idx(m)))
-                    end if
-                end do
-                f = f + dummy
-                den = den*(x(i) - x(idx(k)))
-            end if
-        end do
-        f = f/den
-
-        return
-    end function
-
-    function Lag_pp_3(x, j, i, idx) result(f)    ! It assumes idx has only 3 points
-        real(wp), intent(in) :: x(:)
-        integer(wi), intent(in) :: j, i, idx(:)
-        real(wp) f
-
-        integer(wi) k
-
-        f = 2.0_wp
-        do k = 1, size(idx)
-            if (idx(k) /= i) then
-                f = f/(x(i) - x(idx(k)))
-            end if
-        end do
 
         return
     end function
