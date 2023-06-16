@@ -96,15 +96,10 @@ subroutine INT_C2NX_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2
     if (any([BCS_ND, BCS_NN] == ibc)) then
         ! Coefficients in FDM p'_1= b_1 p_1 + b_2 p_2 + b_3 p_3 + b_4 p_4 + a_2 p''_2
         coef(:) = 0.0_wp
-        ! coef(1:3) = coef_e1n2_biased(x, 1)              ! second-order
-        coef(1:4) = coef_e1n3_biased(x, 1)              ! third-order
-        ! coef(1:4) = [-35.0_wp/6.0_wp, 11.0_wp, -33.0_wp/6.0_wp, 2.0_wp/6.0_wp]/(x(2) - x(1))
-        ! coef(5) = 4.0_wp*(x(2) - x(1))
-        ! coef(1:4) = [-85.0_wp, 108.0_wp, -27.0_wp, 4.0_wp]/66.0_wp/(x(2) - x(1))
-        ! coef(5) = -9.0_wp/33.0_wp*(x(2) - x(1))
-        ! coef(1:4) = [-1.0_wp, 1.0_wp, 0.0_wp, 0.0_wp]/(x(2) - x(1))   ! fourth-order
-        ! coef(5) = -0.5_wp*(x(2) - x(1))
-        
+        ! coef(1:3) = coef_e1n2_biased(x, 1)                ! second-order
+        coef(1:4) = coef_e1n3_biased(x, 1)                ! third-order
+        ! coef(1:5) = coef_c1n4_biased(x, 1)                ! fourth-order
+
         ! Data to calculate p_1 in terms of p_2, p_3, p_4 and p'_1
         c(1) = -(coef(2) + lambda2*coef(5))/coef(1)         ! d + lambda^2h^2 e in notes, e only 1 component
         d(1) = -coef(3)/coef(1)
@@ -131,12 +126,7 @@ subroutine INT_C2NX_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, imax, backwards=.true.)
         coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
-        ! coef(1:4) = [35.0_wp/6.0_wp, -11.0_wp, 33.0_wp/6.0_wp, -2.0_wp/6.0_wp]/(x(2) - x(1))
-        ! coef(5) = -4.0_wp*(x(2) - x(1))
-        ! coef(1:4) = [85.0_wp, -108.0_wp, 27.0_wp, -4.0_wp]/66.0_wp/(x(2) - x(1))
-        ! coef(5) = 9.0_wp/33.0_wp*(x(2) - x(1))
-        ! coef(1:4) = [1.0_wp, -1.0_wp, 0.0_wp, 0.0_wp]/(x(2) - x(1))
-        ! coef(5) = 0.5_wp*(x(2) - x(1))
+        ! coef(1:5) = coef_c1n4_biased(x, imax, backwards=.true.)
 
         ! Data to calculate p_n in terms of p_{n-1}, p_{n-2} and p'_n
         c(imax) = -(coef(2) + lambda2*coef(5))/coef(1)
@@ -161,6 +151,78 @@ subroutine INT_C2NX_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2
     end if
 
     return
+contains
+    !########################################################################
+    ! 1. derivatie of interpolation polynomial between equations (15) and (16)
+    !    p'_1= b_1 p_1 + b_2 p_2 + b_3 p_3 + b_4 p_4 + a_2 p''_2
+    !
+    ! Notation in Shukla and Zhong (2005), JCP, 204, 404–429 for the interpolation:
+    !
+    !       +                    I_n: set of points where the function and derivatives are given
+    !   +---+---+---+---...
+    !   +       +   +            I_m: set of points where only the function is given.
+    !########################################################################
+    function coef_c1n4_biased(x, i, backwards) result(coef)
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        logical, intent(in), optional :: backwards
+        real(wp) coef(5)
+
+        real(wp) a2, b1, b2, b3, b4
+        real(wp) dx1, dx3, dx4
+        real(wp) D
+        integer(wi) set_m(3), i1, i2, i3, i4
+
+        i1 = i
+        if (present(backwards)) then
+            ! same as fowards, but changing the signs of the increments w.r.t. i
+            ! To understand it, e.g., define a new variable k = -j, where k is the
+            ! discrete variable moving around i
+            i2 = i - 1
+            i3 = i - 2
+            i4 = i - 3
+        else
+            i2 = i + 1
+            i3 = i + 2
+            i4 = i + 3
+        end if
+        dx1 = x(i2) - x(i1)
+        dx3 = x(i2) - x(i3)
+        dx4 = x(i2) - x(i4)
+        set_m = [i1, i3, i4]
+
+        ! -------------------------------------------------------------------
+        a2 = 0.5_wp*(Pi(x, i1, set_m) - dx1*Pi_p(x, i1, set_m))/Pi_p(x, i2, set_m)
+
+        b2 = Pi_p(x, i1, set_m)*(2.0_wp*Pi_p(x, i2, set_m) + dx1*Pi_pp_3(x, i2, set_m)) &
+             - Pi(x, i1, set_m)*Pi_pp_3(x, i2, set_m)
+        b2 = 0.5_wp*b2/Pi(x, i2, set_m)/Pi_p(x, i2, set_m)
+
+        ! -------------------------------------------------------------------
+        D = Lag(x, i2, i1, set_m) + dx1*Lag_p(x, i2, i1, set_m)
+        b1 = Lag(x, i1, i1, set_m)*(Lag(x, i2, i1, set_m) + 2*dx1*Lag_p(x, i2, i1, set_m)) &
+             - dx1*Lag_p(x, i1, i1, set_m)*(Lag(x, i2, i1, set_m) + dx1*Lag_p(x, i2, i1, set_m))
+        b1 = -b1/dx1/D
+
+        D = Lag(x, i2, i3, set_m) + dx3*Lag_p(x, i2, i3, set_m)
+        b3 = Lag(x, i1, i3, set_m)*(Lag(x, i2, i3, set_m) + 2*dx1*Lag_p(x, i2, i3, set_m)) &
+             - dx1*Lag_p(x, i1, i3, set_m)*(Lag(x, i2, i3, set_m) + dx1*Lag_p(x, i2, i3, set_m))
+        b3 = -b3/dx3/D
+
+        D = Lag(x, i2, i4, set_m) + dx4*Lag_p(x, i2, i4, set_m)
+        b4 = Lag(x, i1, i4, set_m)*(Lag(x, i2, i4, set_m) + 2*dx1*Lag_p(x, i2, i4, set_m)) &
+             - dx1*Lag_p(x, i1, i4, set_m)*(Lag(x, i2, i4, set_m) + dx1*Lag_p(x, i2, i4, set_m))
+        b4 = -b4/dx4/D
+
+        coef = [b1, b2, b3, b4, a2]
+
+        ! if uniform, we should have ( -29/6 54/6 -27/6 2/6 )/h and 3h
+        ! print*, [b1, b2, b3, b4]*(x(2)-x(1))
+        ! print*, a2/(x(2)-x(1))
+
+        return
+    end function
+
 end subroutine INT_C2NX_LHS_E
 
 ! #######################################################################
