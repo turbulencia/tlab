@@ -148,36 +148,32 @@ program VPOISSON
         call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
-        ! lambda = 4.0
-        ! do j = 1, jmax
-        !     ! a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))!+pi_wp/C_4_R)
-        !     a(:,j,:) = exp(lambda*g(2)%nodes(j))
-        ! end do
-        
+        lambda = 1.0
+        do j = 1, jmax
+            a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+            ! a(:,j,:) = exp(lambda*g(2)%nodes(j))
+        end do
+        b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0 *a
+        c = (2.0_wp*pi_wp/g(2)%scale*lambda) *cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
 
         ! -------------------------------------------------------------------
-        ! DO j = 1,jmax
-        !    mean = AVG_IK(imax,jmax,kmax, j, a, dx,dz, area)
-        !    a(:,j,:) = a(:,j,:) - mean
-        ! ENDDO
-
         ! DC level at lower boundary set to zero
         mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
         a = a - mean
 
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+        ! ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        ! ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
 
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
-        b = b + d
+        ! ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        ! ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
+        ! b = b + d
 
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
-        b = b + d
+        ! ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        ! ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
+        ! b = b + d
 
         if (type_of_operator == 2) then
             b = b + lambda*a
@@ -189,16 +185,10 @@ program VPOISSON
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
         case (BCS_DN)
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
-            ! bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         case (BCS_ND)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
-            ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            ! bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
         case (BCS_NN)
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
-            ! bcs_hb(:, :) = (-3.0_wp*a(:, 1, :)+4.0_wp*a(:, 2, :)-a(:, 3, :))/2.0_wp/g(2)%jac(1,1)
-            ! bcs_hb(:, :) = (-11.0_wp*a(:, 1, :) + 18.0_wp*a(:, 2, :) - 9.0_wp*a(:, 3, :) + 2.0_wp*a(:, 4, :))/6.0_wp/g(2)%jac(1, 1)
-            ! bcs_ht(:, :) = (11.0_wp*a(:, jmax, :)-18.0_wp*a(:, jmax-1, :)+9.0_wp*a(:, jmax-2, :)-2.0_wp*a(:, jmax-3, :))/6.0_wp/g(2)%jac(jmax,1)
         end select
 
         if (type_of_operator == 1) then

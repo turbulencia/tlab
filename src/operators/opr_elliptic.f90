@@ -12,6 +12,7 @@ module OPR_ELLIPTIC
     use OPR_FOURIER
     use OPR_FDE
     use OPR_PARTIAL
+    use FDM_PROCS
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -32,7 +33,7 @@ module OPR_ELLIPTIC
     public :: OPR_POISSON_FXZ_D         ! Using direct formulation of FDM schemes
     public :: OPR_HELMHOLTZ_FXZ
     public :: OPR_HELMHOLTZ_FXZ_D       ! Using direct formulation of FDM schemes
-    public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields
+    ! public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields; no need if we use am initilization
 
 #define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
 #define p_b(icpp,jcpp,kcpp)   lu_poisson(icpp,2,jcpp,kcpp)
@@ -41,6 +42,8 @@ module OPR_ELLIPTIC
 #define p_e(icpp,jcpp,kcpp)   lu_poisson(icpp,5,jcpp,kcpp)
 #define p_f1(icpp,jcpp,kcpp)  lu_poisson(icpp,6,jcpp,kcpp)
 #define p_f2(icpp,jcpp,kcpp)  lu_poisson(icpp,7,jcpp,kcpp)
+#define p_rhs1(icpp,jcpp,kcpp)  lu_poisson(icpp,8,jcpp,kcpp)
+#define p_rhs2(icpp,jcpp,kcpp)  lu_poisson(icpp,9,jcpp,kcpp)
 
 contains
 ! #######################################################################
@@ -71,7 +74,7 @@ contains
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
             isize_line = imax/2 + 1
 
-            call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 7, isize_line, kmax], 'lu_poisson')
+            call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
 
             do k = 1, kmax
 #ifdef USE_MPI
@@ -102,16 +105,16 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call INT_C2NX_LHS_E(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                        p_a(1, i, k), p_b(1, i, k), p_c(1, i, k), p_d(1, i, k), p_e(1, i, k), p_f1(1, i, k), p_f2(1, i, k))
+                    call INT_C2NX_INITIALIZE(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                                        lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
 
                     ! LU decomposizion
                     ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
                     call PENTADFS(g(2)%size - 2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k))
 
                     ! Particular solutions
-                    call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f1(2, i, k))
-                    call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f2(2, i, k))
+               call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f1(2, i, k))
+               call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f2(2, i, k))
 
                 end do
             end do
@@ -358,34 +361,23 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
+                    call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                                        p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
                     call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
-                    ! Parciular solutions
+                    ! Particular solutions
                  call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
                  call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
 
-                end if
+                    ! Construct rhs
+                    p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
+                    p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
+                    call FDM_RHS_Trid_Biased(ny - 2, i2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
-                ! -----------------------------------------------------------------------
-                call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
-
-                if (ibc /= BCS_NN) then     ! use local LU factorization
-                    !   Corrections to the BCS_DD to account for Neumann
-                    if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                        c_wrk1d(2, 6) = c_wrk1d(2, 6) + p_wrk1d(2, 2)*c_wrk1d(2, 5)
-                        c_wrk1d(3, 6) = c_wrk1d(3, 6) + p_wrk1d(3, 1)*c_wrk1d(2, 5)
-                    end if
-
-                    if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                        c_wrk1d(ny - 2, 6) = c_wrk1d(ny - 2, 6) + p_wrk1d(ny - 2, 5)*c_wrk1d(ny - 1, 5)
-                        c_wrk1d(ny - 1, 6) = c_wrk1d(ny - 1, 6) + p_wrk1d(ny - 1, 4)*c_wrk1d(ny - 1, 5)
-                    end if
-
-                call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
+                    ! Solve pentadiagonal linear system
+                    call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
 
                     c_wrk1d(:, 6) = (c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7))*norm
 
@@ -403,17 +395,12 @@ contains
                     end if
 
                 else                        ! use precalculated LU factorization
-                    !   Corrections to the BCS_DD to account for Neumann
-                    if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                        c_wrk1d(2, 6) = c_wrk1d(2, 6) + p_b(2, i, k)*c_wrk1d(2, 5)
-                        c_wrk1d(3, 6) = c_wrk1d(3, 6) + p_a(3, i, k)*c_wrk1d(2, 5)
-                    end if
+                    ! Construct rhs
+                    p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
+                    p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
+                    call FDM_RHS_Trid_Biased(ny - 2, i2, p_rhs1(2, i, k), p_rhs2(2, i, k), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
-                    if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                        c_wrk1d(ny - 2, 6) = c_wrk1d(ny - 2, 6) + p_e(ny - 2, i, k)*c_wrk1d(ny - 1, 5)
-                        c_wrk1d(ny - 1, 6) = c_wrk1d(ny - 1, 6) + p_d(ny - 1, i, k)*c_wrk1d(ny - 1, 5)
-                    end if
-
+                    ! Solve pentadiagonal linear system
                     call PENTADSS(ny - 2, i2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_wrk1d(3, 11))
 
                     c_wrk1d(:, 6) = (c_wrk1d(:, 6) + bcs(1)*p_f1(:, i, k) + bcs(2)*p_f2(:, i, k))*norm
@@ -639,6 +626,14 @@ contains
 #else
                 iglobal = i
 #endif
+                ! forcing term in c_wrk1d(:,5), i.e. p_wrk1d(:,9), solution will be in c_wrk1d(:,6), i.e., p_wrk1d(:,11)
+                do j = 1, ny
+                    ip = (j - 1)*isize_line + i; c_wrk1d(j, 5) = c_tmp1(ip, k)
+                end do
+
+                ! BCs
+                j = ny + 1; ip = (j - 1)*isize_line + i; bcs(1) = c_tmp1(ip, k) ! Dirichlet or Neumann
+                j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Define \lambda based on modified wavenumbers (real)
                 if (g(3)%size > 1) then
@@ -649,37 +644,39 @@ contains
 
                 lambda = lambda - alpha
 
-                ! forcing term in c_wrk1d(:,5), i.e. p_wrk1d(:,9), solution will be in c_wrk1d(:,6), i.e., p_wrk1d(:,11)
-                do j = 1, ny
-                    ip = (j - 1)*isize_line + i; c_wrk1d(j, 5) = c_tmp1(ip, k)
-                end do
-
-                ! BCs
-                j = ny + 1; ip = (j - 1)*isize_line + i; bcs(1) = c_tmp1(ip, k) ! Dirichlet or Neumann
-                j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
-
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
-                call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
+                call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+                                    p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
+                ! LU factorization
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
+                ! Particular solutions
                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
 
+                ! Construct rhs
+                p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
+                p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
+                call FDM_RHS_Trid_Biased(ny - 2, i2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+
+                ! Solve pentadiagonal linear system
                 call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
 
                 c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
 
-                !   Corrections to the BCS_DD to account for Neumann
+                    !   Corrections to the BCS_DD to account for Neumann
                 if (any([BCS_ND, BCS_NN] == ibc)) then
-             c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6)
+                    c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) &
+                                    + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6) &
+                                    + p_wrk1d(1, 2)*c_wrk1d(2, 5)
                 end if
 
                 if (any([BCS_DN, BCS_NN] == ibc)) then
-                    c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6)
+                    c_wrk1d(ny, 6) = c_wrk1d(ny, 6) + p_wrk1d(ny, 3)*c_wrk1d(ny - 1, 6) &
+                                     + p_wrk1d(ny, 2)*c_wrk1d(ny - 2, 6) + p_wrk1d(ny, 1)*c_wrk1d(ny - 3, 6) &
+                                     + p_wrk1d(ny, 5)*c_wrk1d(ny - 1, 5)
                 end if
 
                 ! Rearrange in memory and normalize
@@ -706,147 +703,147 @@ contains
         return
     end subroutine OPR_HELMHOLTZ_FXZ_D
 
-!########################################################################
-!########################################################################
-! Same, but for n fields
-! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
-    subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
-        use TLAB_TYPES, only: pointers_dt
+! !########################################################################
+! !########################################################################
+! ! Same, but for n fields
+! ! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
+!     subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+!         use TLAB_TYPES, only: pointers_dt
 
-        integer(wi), intent(in) :: nx, ny, nz, nfield
-        integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
-        !                                                   1, for Neumann   & Dirichlet
-        !                                                   2, for Dirichlet & Neumann
-        !                                                   3, for Neumann   & Neumann
-        type(grid_dt), intent(in) :: g(3)
-        real(wp), intent(in) :: alpha
-        type(pointers_dt), intent(in) :: a(nfield)                      ! Forcing term, and solution field p
-        real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz, nfield)     ! FFT of forcing term
-        real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
-        real(wp), intent(in) :: bcs_hb(nx, nz, nfield), bcs_ht(nx, nz, nfield)      ! Boundary-condition fields
+!         integer(wi), intent(in) :: nx, ny, nz, nfield
+!         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
+!         !                                                   1, for Neumann   & Dirichlet
+!         !                                                   2, for Dirichlet & Neumann
+!         !                                                   3, for Neumann   & Neumann
+!         type(grid_dt), intent(in) :: g(3)
+!         real(wp), intent(in) :: alpha
+!         type(pointers_dt), intent(in) :: a(nfield)                      ! Forcing term, and solution field p
+!         real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz, nfield)     ! FFT of forcing term
+!         real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
+!         real(wp), intent(in) :: bcs_hb(nx, nz, nfield), bcs_ht(nx, nz, nfield)      ! Boundary-condition fields
 
-        target tmp1, tmp2
+!         target tmp1, tmp2
 
-        ! -----------------------------------------------------------------------
-        integer ifield, ip_sol
-        complex(wp) :: bcs_n(nfield, 2)
-        complex(wp), pointer :: aux_n(:, :, :) => null()
-        complex(wp), pointer :: c_tmp1_n(:, :, :) => null()
+!         ! -----------------------------------------------------------------------
+!         integer ifield, ip_sol
+!         complex(wp) :: bcs_n(nfield, 2)
+!         complex(wp), pointer :: aux_n(:, :, :) => null()
+!         complex(wp), pointer :: c_tmp1_n(:, :, :) => null()
 
-        integer, parameter :: i1 = 1, i2 = 2
+!         integer, parameter :: i1 = 1, i2 = 2
 
-        ! #######################################################################
-        if (ibc /= 0) then ! So far only implemented for Dirichlet BCs
-            call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
+!         ! #######################################################################
+!         if (ibc /= 0) then ! So far only implemented for Dirichlet BCs
+!             call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
+!             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+!         end if
 
-        call c_f_pointer(c_loc(tmp1), c_tmp1_n, shape=[isize_txc_dimz/2, nz, nfield])
-        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(p_wrk1d(1, 9)), aux_n, shape=[nfield, ny, 2]) ! lines of forcing and solution
+!         call c_f_pointer(c_loc(tmp1), c_tmp1_n, shape=[isize_txc_dimz/2, nz, nfield])
+!         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+!         call c_f_pointer(c_loc(p_wrk1d(1, 9)), aux_n, shape=[nfield, ny, 2]) ! lines of forcing and solution
 
-        norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
+!         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
-        isize_line = nx/2 + 1
+!         isize_line = nx/2 + 1
 
-        ! #######################################################################
-        ! Fourier transform of forcing term; output of this section in array tmp1
-        ! #######################################################################
-        do ifield = 1, nfield
-            if (g(3)%size > 1) then
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a(ifield)%field, &
-                                          bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp2)
-                call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1_n(:, :, ifield)) ! tmp2 might be overwritten
-            else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a(ifield)%field, &
-                                          bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp1_n(:, :, ifield))
-            end if
-        end do
+!         ! #######################################################################
+!         ! Fourier transform of forcing term; output of this section in array tmp1
+!         ! #######################################################################
+!         do ifield = 1, nfield
+!             if (g(3)%size > 1) then
+!                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a(ifield)%field, &
+!                                           bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp2)
+!                 call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1_n(:, :, ifield)) ! tmp2 might be overwritten
+!             else
+!                 call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a(ifield)%field, &
+!                                           bcs_hb(1, 1, ifield), bcs_ht(1, 1, ifield), c_tmp1_n(:, :, ifield))
+!             end if
+!         end do
 
-        ! ###################################################################
-        ! Solve FDE \hat{p}''-(\lambda+lpha) \hat{p} = \hat{f}
-        ! ###################################################################
-        do k = 1, nz
-#ifdef USE_MPI
-            kglobal = k + ims_offset_k
-#else
-            kglobal = k
-#endif
+!         ! ###################################################################
+!         ! Solve FDE \hat{p}''-(\lambda+lpha) \hat{p} = \hat{f}
+!         ! ###################################################################
+!         do k = 1, nz
+! #ifdef USE_MPI
+!             kglobal = k + ims_offset_k
+! #else
+!             kglobal = k
+! #endif
 
-            do i = 1, isize_line
-#ifdef USE_MPI
-                iglobal = i + ims_offset_i/2
-#else
-                iglobal = i
-#endif
+!             do i = 1, isize_line
+! #ifdef USE_MPI
+!                 iglobal = i + ims_offset_i/2
+! #else
+!                 iglobal = i
+! #endif
 
-                ! Define \lambda based on modified wavenumbers (real)
-                if (g(3)%size > 1) then
-                    lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
-                else
-                    lambda = g(1)%mwn(iglobal, 2)
-                end if
+!                 ! Define \lambda based on modified wavenumbers (real)
+!                 if (g(3)%size > 1) then
+!                     lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+!                 else
+!                     lambda = g(1)%mwn(iglobal, 2)
+!                 end if
 
-                lambda = lambda - alpha
+!                 lambda = lambda - alpha
 
-                ! forcing term in aux_n(:,:,1), i.e. p_wrk1d(:,9), solution will be in aux_n(:,:,2)
-                do ifield = 1, nfield
-                    do j = 1, ny
-                        ip = (j - 1)*isize_line + i; aux_n(ifield, j, 1) = c_tmp1_n(ip, k, ifield)
-                    end do
+!                 ! forcing term in aux_n(:,:,1), i.e. p_wrk1d(:,9), solution will be in aux_n(:,:,2)
+!                 do ifield = 1, nfield
+!                     do j = 1, ny
+!                         ip = (j - 1)*isize_line + i; aux_n(ifield, j, 1) = c_tmp1_n(ip, k, ifield)
+!                     end do
 
-                    ! BCs
-                    j = ny + 1; ip = (j - 1)*isize_line + i; bcs_n(ifield, 1) = c_tmp1_n(ip, k, ifield) ! Dirichlet or Neumann
-                    j = ny + 2; ip = (j - 1)*isize_line + i; bcs_n(ifield, 2) = c_tmp1_n(ip, k, ifield) ! Dirichlet or Neumann
+!                     ! BCs
+!                     j = ny + 1; ip = (j - 1)*isize_line + i; bcs_n(ifield, 1) = c_tmp1_n(ip, k, ifield) ! Dirichlet or Neumann
+!                     j = ny + 2; ip = (j - 1)*isize_line + i; bcs_n(ifield, 2) = c_tmp1_n(ip, k, ifield) ! Dirichlet or Neumann
 
-                end do
-                ip_sol = 9 + nfield*2
+!                 end do
+!                 ip_sol = 9 + nfield*2
 
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                ! if (ibc == 0) then ! Dirichlet BCs
-                p_wrk1d(:, 1:7) = 0.0_wp
-                call INT_C2NX_LHS_E(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
-                            p_wrk1d(1, 1), p_wrk1d(1, 2), p_wrk1d(1, 3), p_wrk1d(1, 4), p_wrk1d(1, 5), p_wrk1d(1, 6), p_wrk1d(1, 7))
-                call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
+!                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+!                 ! if (ibc == 0) then ! Dirichlet BCs
+!                 p_wrk1d(:, 1:7) = 0.0_wp
+!                 call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+!                                     p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
+!                 call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
-                call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
+!                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
 
-                call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
-                call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
+!                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 6))
+!                 call PENTADSS(ny - 2, i1, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(2, 7))
 
-     call PENTADSS(ny - 2, i2*nfield, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, ip_sol))
+!      call PENTADSS(ny - 2, i2*nfield, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, ip_sol))
 
-                do ifield = 1, nfield
-                    ! BCa
-                    aux_n(ifield, :, 2) = aux_n(ifield, :, 2) &
-                                          + bcs_n(ifield, 1)*p_wrk1d(:, 6) + bcs_n(ifield, 2)*p_wrk1d(:, 7)
+!                 do ifield = 1, nfield
+!                     ! BCa
+!                     aux_n(ifield, :, 2) = aux_n(ifield, :, 2) &
+!                                           + bcs_n(ifield, 1)*p_wrk1d(:, 6) + bcs_n(ifield, 2)*p_wrk1d(:, 7)
 
-                    ! Rearrange in memory and normalize
-                    do j = 1, ny
-                        ip = (j - 1)*isize_line + i
-                        c_tmp1_n(ip, k, ifield) = aux_n(ifield, j, 2)*norm ! solution
-                    end do
+!                     ! Rearrange in memory and normalize
+!                     do j = 1, ny
+!                         ip = (j - 1)*isize_line + i
+!                         c_tmp1_n(ip, k, ifield) = aux_n(ifield, j, 2)*norm ! solution
+!                     end do
 
-                end do
+!                 end do
 
-            end do
-        end do
+!             end do
+!         end do
 
-        ! ###################################################################
-        ! Fourier field a (based on array tmp1)
-        ! ###################################################################
-        do ifield = 1, nfield
-            if (g(3)%size > 1) then
-                call OPR_FOURIER_B_Z_EXEC(c_tmp1_n(:, :, ifield), c_wrk3d) ! tmp1 might be overwritten
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a(ifield)%field) ! wrk3d might be overwritten
-            else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1_n(:, :, ifield), a(ifield)%field)
-            end if
-        end do
+!         ! ###################################################################
+!         ! Fourier field a (based on array tmp1)
+!         ! ###################################################################
+!         do ifield = 1, nfield
+!             if (g(3)%size > 1) then
+!                 call OPR_FOURIER_B_Z_EXEC(c_tmp1_n(:, :, ifield), c_wrk3d) ! tmp1 might be overwritten
+!                 call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, a(ifield)%field) ! wrk3d might be overwritten
+!             else
+!                 call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1_n(:, :, ifield), a(ifield)%field)
+!             end if
+!         end do
 
-        nullify (c_tmp1_n, c_tmp2, aux_n)
+!         nullify (c_tmp1_n, c_tmp2, aux_n)
 
-        return
-    end subroutine OPR_HELMHOLTZ_FXZ_D_N
+!         return
+!     end subroutine OPR_HELMHOLTZ_FXZ_D_N
 
 end module OPR_ELLIPTIC

@@ -14,82 +14,63 @@
 !#
 !# is established in this routine, giving diagonals a-e and g (see notes).
 !#
+!# The system is normalized such that the central diagonal in the new rhs is 1
+!#
 !########################################################################
-
-!########################################################################
-!Left-hand side; pentadiagonal matrix of the linear system and f1 and f2
-!########################################################################
-subroutine INT_C2NX_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2)
+subroutine INT_C2NX_INITIALIZE(imax, x, ibc, lhs, rhs, lambda2, lu, f, bvp_rhs)
     use TLAB_CONSTANTS
     use FDM_PROCS
     implicit none
 
-    integer(wi), intent(in) :: imax         ! original size; here using only 2:imax-1
-    real(wp), intent(in) :: x(imax)         ! grid nodes
-    integer, intent(in) :: ibc              ! Boundary condition, BCS_DD, BCS_DN, BCS_ND, BCS_NN
-    real(wp), intent(in) :: lhs(imax, 3)    ! matrix A, tridiagonal
-    real(wp), intent(in) :: rhs(imax, 4)    ! matrix B, with unitary central diagonal
-    real(wp) lambda2                        ! system constatn
-    real(wp), intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)  ! diagonals
-    real(wp), intent(out) :: f1(imax), f2(imax)      ! forcing term for the hyperbolic sine
+    integer(wi), intent(in) :: imax             ! original size; here using only 2:imax-1
+    real(wp), intent(in) :: x(imax)             ! grid nodes
+    integer, intent(in) :: ibc                  ! Boundary condition, BCS_DD, BCS_DN, BCS_ND, BCS_NN
+    real(wp), intent(in) :: lhs(imax, 3)        ! matrix A, tridiagonal
+    real(wp), intent(in) :: rhs(imax, 4)        ! matrix B, with unitary central diagonal
+    real(wp) lambda2                            ! system constatn
+    real(wp), intent(out) :: lu(imax, 5)        ! diagonals in new pentadiagonal lhs
+    real(wp), intent(out) :: f(imax, 2)         ! forcing terms for the hyperbolic sine
+    real(wp), intent(out) :: bvp_rhs(imax, 2)   ! new_rhs
 
 ! -------------------------------------------------------------------
     integer(wi) i
-    real(wp) dummy1, dummy2, pprime, coef(5)
+    real(wp) dummy1, dummy2, pprime, coef(5), l2_inv, l2_min, l2_max
 
 ! ###################################################################
-! -------------------------------------------------------------------
-! Define diagonals of pentadiagonal system (array C22R)
-! -------------------------------------------------------------------
-    i = 2; dummy1 = lhs(2, 1)/lhs(1, 2)
-    a(i) = 0.0_wp ! padding
-    b(i) = 0.0_wp ! padding
-    c(i) = 1.0_wp - lambda2*lhs(i, 2) - dummy1*(rhs(1, 3) - lambda2*lhs(1, 3))
-    d(i) = rhs(i, 3) - lambda2*lhs(i, 3) - dummy1*rhs(1, 4)
-    e(i) = rhs(i, 4) - dummy1*rhs(1, 1)
+    ! new prentadiagonal lhs (array C22R)
+    lu(:, 1) = rhs(:, 1)
+    lu(:, 2) = rhs(:, 2) - lambda2*lhs(:, 1)
+    lu(:, 3) = 1.0_wp - lambda2*lhs(:, 2)
+    lu(:, 4) = rhs(:, 3) - lambda2*lhs(:, 3)
+    lu(:, 5) = rhs(:, 4)
 
-    i = 3
-    a(i) = 0.0_wp ! padding
-    b(i) = rhs(i, 2) - lambda2*lhs(i, 1)
-    c(i) = 1.0_wp - lambda2*lhs(i, 2)
-    d(i) = rhs(i, 3) - lambda2*lhs(i, 3)
-    e(i) = rhs(i, 4)
+    ! new tridiagonal rhs (array A22R); new central diagonal is 1 and I only need subdiagonal and superdiagonal
+    bvp_rhs(:, 1) = lhs(:, 1)
+    bvp_rhs(:, 2) = lhs(:, 3)
 
-    do i = 4, imax - 3
-        a(i) = rhs(i, 1)
-        b(i) = rhs(i, 2) - lambda2*lhs(i, 1)
-        c(i) = 1.0_wp - lambda2*lhs(i, 2)
-        d(i) = rhs(i, 3) - lambda2*lhs(i, 3)
-        e(i) = rhs(i, 4)
-    end do
+    ! Boundary corrections
+    i = 2
+    dummy1 = lhs(2, 1)/lhs(1, 2)
+    lu(i, 3:5) = lu(i, 3:5) - dummy1*lu(i - 1, [4, 5, 1])
+    l2_min = lhs(i, 2) - dummy1*lhs(1, 3)       ! central diagonal in reduced lhs
+    bvp_rhs(i, 1) = 0.0_wp                      ! See FDM_RHS_Trid_Biased
 
-    i = imax - 2
-    a(i) = rhs(i, 1)
-    b(i) = rhs(i, 2) - lambda2*lhs(i, 1)
-    c(i) = 1.0_wp - lambda2*lhs(i, 2)
-    d(i) = rhs(i, 3) - lambda2*lhs(i, 3)
-    e(i) = 0.0_wp
+    i = imax - 1
+    dummy2 = lhs(imax - 1, 3)/lhs(imax, 2)
+    lu(i, 1:3) = lu(i, 1:3) - dummy2*lu(i + 1, [5, 1, 2])
+    l2_max = lhs(i, 2) - dummy2*lhs(imax, 1)    ! central diagonal in reduced lhs
+    bvp_rhs(i, 2) = 0.0_wp                      ! See FDM_RHS_Trid_Biased
 
-    i = imax - 1; dummy2 = lhs(imax - 1, 3)/lhs(imax, 2)
-    a(i) = rhs(i, 1) - dummy2*rhs(imax, 4)
-    b(i) = rhs(i, 2) - lambda2*lhs(i, 1) - dummy2*rhs(imax, 1)
-    c(i) = 1.0_wp - lambda2*lhs(i, 2) - dummy2*(rhs(imax, 2) - lambda2*lhs(imax, 1))
-    d(i) = 0.0_wp ! padding
-    e(i) = 0.0_wp ! padding
+    ! Setting the RHS for the hyperbolic sine; the minus sign in included here to save ops
+    f(:, :) = 0.0_wp
 
-! -------------------------------------------------------------------
-! Setting the RHS for the hyperbolic sine
-! The minus sign in included here to save ops
-! -------------------------------------------------------------------
-    f1 = 0.0_wp ! b21R
-    f1(1) = 1.0_wp    ! This element is simply the solution at imin of s(-)
-    f1(2) = -(rhs(2, 2) - dummy1)
-    f1(3) = -rhs(3, 1)
+    f(1, 1) = 1.0_wp            ! b21R; this element is simply the solution at imin of s(-)
+    f(2, 1) = -(rhs(2, 2) - dummy1)
+    f(3, 1) = -rhs(3, 1)
 
-    f2 = 0.0_wp ! b2nR
-    f2(imax - 2) = -rhs(imax - 2, 4)
-    f2(imax - 1) = -(rhs(imax - 1, 3) - dummy2)
-    f2(imax) = 1.0_wp ! This element is simply the solution at imax of s(+)
+    f(imax, 2) = 1.0_wp         ! b2nR; this element is simply the solution at imax of s(+)
+    f(imax - 1, 2) = -(rhs(imax - 1, 3) - dummy2)
+    f(imax - 2, 2) = -rhs(imax - 2, 4)
 
     ! -------------------------------------------------------------------
     ! Corrections to the BCS_DD to account for Neumann using third-order fdm for derivative at the boundary
@@ -97,58 +78,71 @@ subroutine INT_C2NX_LHS_E(imax, x, ibc, lhs, rhs, lambda2, a, b, c, d, e, f1, f2
         ! Coefficients in FDM p'_1= b_1 p_1 + b_2 p_2 + b_3 p_3 + b_4 p_4 + a_2 p''_2
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, 1)                ! second-order
-        coef(1:4) = coef_e1n3_biased(x, 1)                ! third-order
-        ! coef(1:5) = coef_c1n4_biased(x, 1)                ! fourth-order
+        ! coef(1:4) = coef_e1n3_biased(x, 1)                ! third-order
+        coef(1:5) = coef_c1n4_biased(x, 1)                ! fourth-order
 
-        ! Data to calculate p_1 in terms of p_2, p_3, p_4 and p'_1
-        c(1) = -(coef(2) + lambda2*coef(5))/coef(1)         ! d + lambda^2h^2 e in notes, e only 1 component
-        d(1) = -coef(3)/coef(1)
-        e(1) = -coef(4)/coef(1)
+        ! Data to calculate p_1 in terms of p_2, p_3, p_4 and p'_1 and p''_2
+        lu(1, 2:5) = -coef([5, 2, 3, 4])/coef(1)              ! l_12 contains coefficient for p''_2
+        lu(1, 3) = lu(1, 3) + lambda2*lu(1, 2)                ! d + lambda^2h^2 e in notes, e only 1 component
         pprime = 1.0_wp/coef(1)
-        b(1) = -coef(5)/coef(1)                             ! coefficient e for p''_2
 
         ! Derived coefficients; see notes
-        c(2) = c(2) - c(1)*f1(2)                            ! in reduced C matrix; the minus sign comes from def of f1
-        d(2) = d(2) - d(1)*f1(2)
-        e(2) = e(2) - e(1)*f1(2)
-        b(3) = b(3) - c(1)*f1(3)
-        c(3) = c(3) - d(1)*f1(3)
-        d(3) = d(3) - e(1)*f1(3)
+        lu(2, 3:5) = lu(2, 3:5) - f(2, 1)*lu(1, 3:5)          ! in reduced C matrix; the minus sign comes from def of f1
+        lu(3, 2:4) = lu(3, 2:4) - f(3, 1)*lu(1, 3:5)
 
-        b(2) = b(1)*f1(2)                                   ! in reduced A matrix; the plus sign comes from def of f1
-        a(3) = b(1)*f1(3)
+        l2_min = l2_min + lu(1, 2)*f(2, 1)                     ! in reduced A matrix; the plus sign comes from def of f1
+        bvp_rhs(3, 1) = bvp_rhs(3, 1) + lu(1, 2)*f(3, 1)
 
-        f1(:) = pprime*f1(:)                                ! for particular solutions
+        f(:, 1) = pprime*f(:, 1)                              ! for particular solutions
 
     end if
     if (any([BCS_DN, BCS_NN] == ibc)) then
         ! Coefficients in FDM p'_n = b_1 p_n + b_2 p_{n-1} + b_3 p_{n-2} +...
         coef(:) = 0.0_wp
         ! coef(1:3) = coef_e1n2_biased(x, imax, backwards=.true.)
-        coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
-        ! coef(1:5) = coef_c1n4_biased(x, imax, backwards=.true.)
+        ! coef(1:4) = coef_e1n3_biased(x, imax, backwards=.true.)
+        coef(1:5) = coef_c1n4_biased(x, imax, backwards=.true.)
 
-        ! Data to calculate p_n in terms of p_{n-1}, p_{n-2} and p'_n
-        c(imax) = -(coef(2) + lambda2*coef(5))/coef(1)
-        b(imax) = -coef(3)/coef(1)
-        a(imax) = -coef(4)/coef(1)
+        ! Data to calculate p_n in terms of p_{n-1}, p_{n-2} and p'_n and p''_{n-1}
+        lu(imax, [1, 2, 3, 5]) = -coef([4, 3, 2, 5])/coef(1)                    ! l_n5 contains coefficient for p''_{n-1}
+        lu(imax, 3) = lu(imax, 3) + lambda2*lu(imax, 5)                         ! d + lambda^2h^2 e in notes, e only 1 component
         pprime = 1.0_wp/coef(1)
-        e(imax) = -coef(5)/coef(1)                          ! coefficient for p''_{n-1}
 
         ! Derived coefficients; see notes
-        a(imax - 1) = a(imax - 1) - a(imax)*f2(imax - 1)    ! in reduced C matrix; the minus sign comes from def of f2
-        b(imax - 1) = b(imax - 1) - b(imax)*f2(imax - 1)
-        c(imax - 1) = c(imax - 1) - c(imax)*f2(imax - 1)
-        b(imax - 2) = b(imax - 2) - a(imax)*f2(imax - 2)
-        c(imax - 2) = c(imax - 2) - b(imax)*f2(imax - 2)
-        d(imax - 2) = d(imax - 2) - c(imax)*f2(imax - 2)
+        lu(imax - 1, 1:3) = lu(imax - 1, 1:3) - f(imax - 1, 2)*lu(imax, 1:3)      ! in reduced C matrix; the minus sign comes from def of f2
+        lu(imax - 2, 2:4) = lu(imax - 2, 2:4) - f(imax - 2, 2)*lu(imax, 1:3)
 
-        d(imax - 1) = e(imax)*f2(imax - 1)                  ! in reduced A matrix; the plus sign comes from def of f2
-        e(imax - 2) = e(imax)*f2(imax - 2)
+        l2_max = l2_max + lu(imax, 5)*f(imax - 1, 2)                              ! in reduced A matrix; the plus sign comes from def of f2
+        bvp_rhs(imax - 2, 2) = bvp_rhs(imax - 2, 2) + lu(imax, 5)*f(imax - 2, 2)
 
-        f2(:) = pprime*f2(:)                                ! for particular solutions
+        f(:, 2) = pprime*f(:, 2)                                                    ! for particular solutions
 
     end if
+
+    ! -------------------------------------------------------------------
+    ! normalization such that new central diagonal in rhs is 1
+    i = 2
+    l2_inv = 1.0_wp/l2_min
+
+    bvp_rhs(i, :) = bvp_rhs(i, :)*l2_inv
+    lu(i, :) = lu(i, :)*l2_inv
+    f(i, :) = f(i, :)*l2_inv
+
+    do i = 3, imax - 2
+        l2_inv = 1.0_wp/lhs(i, 2)
+
+        bvp_rhs(i, :) = bvp_rhs(i, :)*l2_inv
+        lu(i, :) = lu(i, :)*l2_inv
+        f(i, :) = f(i, :)*l2_inv
+
+    end do
+
+    i = imax - 1
+    l2_inv = 1.0_wp/l2_max
+
+    bvp_rhs(i, :) = bvp_rhs(i, :)*l2_inv
+    lu(i, :) = lu(i, :)*l2_inv
+    f(i, :) = f(i, :)*l2_inv
 
     return
 contains
@@ -223,40 +217,4 @@ contains
         return
     end function
 
-end subroutine INT_C2NX_LHS_E
-
-! #######################################################################
-! Right-hand side; mmax forcing terms at the same time
-! #######################################################################
-subroutine INT_C2NX_RHS(imax, mmax, lhs, f, g)
-    use TLAB_CONSTANTS
-    implicit none
-
-    integer(wi), intent(in) :: imax, mmax
-    real(wp), intent(in) :: lhs(imax, 3)
-    real(wp), intent(in) :: f(mmax, imax)
-    real(wp), intent(out) :: g(mmax, imax)
-
-! -------------------------------------------------------------------
-    integer(wi) i
-    real(wp) dummy
-
-! ###################################################################
-    g(:, 1) = 0.0_wp ! This element is simply the solution at imin of p(0)
-
-    i = 2
-    dummy = lhs(i, 2) - lhs(2, 1)/lhs(1, 2)*lhs(1, 3)
-    g(:, i) = f(:, i)*dummy + f(:, i + 1)*lhs(i, 3)
-
-    do i = 3, imax - 2 ! Interior points
-        g(:, i) = f(:, i - 1)*lhs(i, 1) + f(:, i)*lhs(i, 2) + f(:, i + 1)*lhs(i, 3)
-    end do
-
-    i = imax - 1
-    dummy = lhs(i, 2) - lhs(imax - 1, 3)/lhs(imax, 2)*lhs(imax, 1)
-    g(:, i) = f(:, i - 1)*lhs(i, 1) + f(:, i)*dummy
-
-    g(:, imax) = 0.0_wp ! This element is simply the solution at imax of p(0)
-
-    return
-end subroutine INT_C2NX_RHS
+end subroutine INT_C2NX_INITIALIZE

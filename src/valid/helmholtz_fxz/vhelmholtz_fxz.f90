@@ -104,9 +104,10 @@ program VHELMHOLTZ_FXZ
                 end do
 
                 call date_and_time(date, time1)
-                call OPR_HELMHOLTZ_FXZ_D_N(imax, jmax, kmax, nfield, g, 0, beta, &
-                                           data, txc(1, 1), txc(1, nfield + 1), &
-                                           bcs_hb(1, 1, 1), bcs_ht(1, 1, 1))
+                ! to be checked
+                ! call OPR_HELMHOLTZ_FXZ_D_N(imax, jmax, kmax, nfield, g, 0, beta, &
+                !                            data, txc(1, 1), txc(1, nfield + 1), &
+                !                            bcs_hb(1, 1, 1), bcs_ht(1, 1, 1))
                 call date_and_time(date, time2)
                 read (time1(1:10), '(i2,i2,i2,1x,i3)') h1, m1, s1, n1
                 read (time2(1:10), '(i2,i2,i2,1x,i3)') h2, m2, s2, n2

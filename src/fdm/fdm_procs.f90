@@ -18,8 +18,8 @@ module FDM_PROCS
     public coef_e1n2_biased  ! coefficients for the biased, 2. order approximation to 1. order derivative
     public coef_e1n3_biased  ! coefficients for the biased, 3. order approximation to 1. order derivative
 
-    public FDM_RHS_Pentad_Biased    ! Calcualte f = B u, assuming B is pentadiagonal with center diagonal is 1
-    public FDM_RHS_Trid_Biased      ! Calcualte f = B u, assuming B is tridiagonal with center diagonal is 1
+    public FDM_RHS_Pentad_Biased    ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
+    public FDM_RHS_Trid_Biased      ! Calculate f = B u, assuming B is tridiagonal with center diagonal is 1
 
 contains
     !########################################################################
@@ -231,9 +231,9 @@ contains
 
     ! -------------------------------------------------------------------
     ! Calcualte f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine FDM_RHS_Trid_Biased(nmax, mmax, rhs, u, f)
+    subroutine FDM_RHS_Trid_Biased(nmax, mmax, r1, r2, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
-        real(wp), intent(in) :: rhs(nmax, 2)        ! RHS diagonals (#=3-1 because center diagonal is 1)
+        real(wp), intent(in) :: r1(nmax), r2(nmax)  ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
         real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
 
@@ -242,24 +242,24 @@ contains
 
         ! -------------------------------------------------------------------
         ! Boundary
-        n = 1 ! rhs(1,1) contains 2. superdiagonal to allow for longer stencil at boundary
+        n = 1 ! rhs(1,1) contains 1. superdiagonal to allow for longer stencil at boundary
         f(:, n) = &
-            + u(:, n) &
-            + u(:, n + 1)*rhs(n, 2) + u(:, n + 2)*rhs(n, 1)
+            +u(:, n) &
+            + u(:, n + 1)*r2(n) + u(:, n + 2)*r1(n)
 
         ! Interior points
         do n = 2, nmax - 1
-            f(:, n) = u(:, n - 1)*rhs(n, 1) &
+            f(:, n) = u(:, n - 1)*r1(n) &
                       + u(:, n) &
-                      + u(:, n + 1)*rhs(n, 2)
+                      + u(:, n + 1)*r2(n)
         end do
 
         ! Boundary
-        n = nmax ! rhs(1,2) contains 2. subdiagonal to allow for longer stencil at boundary
-        f(:, n) = u(:, n - 2)*rhs(n, 2) + u(:, n - 1)*rhs(n, 1) &
+        n = nmax ! rhs(n,2) contains 1. subdiagonal to allow for longer stencil at boundary
+        f(:, n) = u(:, n - 2)*r2(n) + u(:, n - 1)*r1(n) &
                   + u(:, n)
 
         return
     end subroutine FDM_RHS_Trid_Biased
-    
+
 end module FDM_PROCS
