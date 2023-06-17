@@ -1,6 +1,6 @@
 !########################################################################
 !#
-!# Initialize the solver for the BVP (Helmholtz equation)
+!# Initialize the solver for the BVP
 !#
 !#     u''_i - \lamba^2 u_i = f_i  N-2 eqns
 !#     u_1 and u_N given           2   eqns

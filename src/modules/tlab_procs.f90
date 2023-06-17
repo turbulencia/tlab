@@ -171,6 +171,11 @@ contains
             allocate (a(dims(1), dims(2)), stat=ierr)
         rank (3)
             allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
+        rank (4)
+            allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
+        rank default
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Rank too large while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLAB_STOP(DNS_ERROR_ALLOC)
         end select
         if (ierr /= 0) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error while allocating memory space for '//trim(adjustl(s))//'.')

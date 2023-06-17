@@ -438,13 +438,15 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
         select case (g%mode_fdm)
 
-        case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
-            b1 = 12.0_wp/11.0_wp
-            b2 = 3.0_wp/44.0_wp
-            b3 = 0.0_wp
+        case (FDM_COM4_JACOBIAN) ! Not yet implemented
 
-        case (FDM_COM6_JACOBIAN)
+        ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+        !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
+        !     b1 = 12.0_wp/11.0_wp
+        !     b2 = 3.0_wp/44.0_wp
+        !     b3 = 0.0_wp
+            
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
             kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
             a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
             b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
