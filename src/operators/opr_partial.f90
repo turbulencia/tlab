@@ -23,6 +23,7 @@ module OPR_PARTIAL
     use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLAB_MPI_PROCS
 #endif
+    use FDM_PROCS
     implicit none
     private
 
@@ -54,7 +55,8 @@ contains
                 call FDM_C1N4P_RHS(g%size, nlines, u, result)
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)   ! Direct = Jacobian because uniform grid
-                call FDM_C1N6P_RHS(g%size, nlines, u, result)
+               call FDM_C1N6P_RHS(g%size, nlines, u, result)
+                ! call MatMul_5d_antisym(g%size, nlines, 0.357142857142857e-1_wp, u, result)
 
             case (FDM_COM6_JACPENTA)                    ! Direct = Jacobian because uniform grid
                 call FDM_C1N6MP_RHS(g%size, nlines, u, result)
@@ -182,7 +184,7 @@ contains
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
         use FDM_COM_DIRECT
-        use FDM_PROCS, only: FDM_RHS_Pentad_Biased
+        use FDM_PROCS, only: MatMul_Pentad
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -238,7 +240,8 @@ contains
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA) ! Direct = Jacobian because uniform grid
                 ! call FDM_C2N6P_RHS(g%size, nlines, u, result)
-                call FDM_C2N6HP_RHS(g%size, nlines, u, result)
+               call FDM_C2N6HP_RHS(g%size, nlines, u, result)
+                ! call MatMul_7d_sym(g%size, nlines, -0.281250399533387e+1_wp, 0.422670003525653_wp, -0.164180058587192e-1_wp, u, result)
 
             case (FDM_COM8_JACOBIAN)                  ! Not yet implemented
                 call FDM_C2N6P_RHS(g%size, nlines, u, result)
@@ -274,7 +277,7 @@ contains
                 end if
 
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-                call FDM_RHS_Pentad_Biased(g%size, nlines, g%lu2(:, 4), u, result)
+                call MatMul_Pentad(g%size, nlines, g%lu2(:, 4), u, result)
 
             end select
 

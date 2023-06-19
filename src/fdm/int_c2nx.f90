@@ -30,7 +30,7 @@ subroutine INT_C2NX_INITIALIZE(imax, x, ibc, lhs, rhs, lambda2, lu, f, bvp_rhs)
     real(wp) lambda2                            ! system constatn
     real(wp), intent(out) :: lu(imax, 5)        ! diagonals in new pentadiagonal lhs
     real(wp), intent(out) :: f(imax, 2)         ! forcing terms for the hyperbolic sine
-    real(wp), intent(out) :: bvp_rhs(imax, 2)   ! new_rhs
+    real(wp), intent(out) :: bvp_rhs(imax, 2)   ! diagonals to calculate new tridiagonalrhs
 
 ! -------------------------------------------------------------------
     integer(wi) i
@@ -53,13 +53,13 @@ subroutine INT_C2NX_INITIALIZE(imax, x, ibc, lhs, rhs, lambda2, lu, f, bvp_rhs)
     dummy1 = lhs(2, 1)/lhs(1, 2)
     lu(i, 3:5) = lu(i, 3:5) - dummy1*lu(i - 1, [4, 5, 1])
     l2_min = lhs(i, 2) - dummy1*lhs(1, 3)       ! central diagonal in reduced lhs
-    bvp_rhs(i, 1) = 0.0_wp                      ! See FDM_RHS_Trid_Biased
+    bvp_rhs(i, 1) = 0.0_wp                      ! See MatMul_Trid
 
     i = imax - 1
     dummy2 = lhs(imax - 1, 3)/lhs(imax, 2)
     lu(i, 1:3) = lu(i, 1:3) - dummy2*lu(i + 1, [5, 1, 2])
     l2_max = lhs(i, 2) - dummy2*lhs(imax, 1)    ! central diagonal in reduced lhs
-    bvp_rhs(i, 2) = 0.0_wp                      ! See FDM_RHS_Trid_Biased
+    bvp_rhs(i, 2) = 0.0_wp                      ! See MatMul_Trid
 
     ! Setting the RHS for the hyperbolic sine; the minus sign in included here to save ops
     f(:, :) = 0.0_wp

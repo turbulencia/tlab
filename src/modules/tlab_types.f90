@@ -30,7 +30,7 @@ module TLAB_TYPES
         character*8 name
         integer(wi) size, inb_grid
         integer mode_fdm                    ! finite-difference method for spatial operators
-        logical uniform, periodic, anelastic
+        logical uniform, periodic, anelastic, use_jacobian
         real(wp) scale
         real(wp), pointer :: nodes(:)
         real(wp), pointer :: jac(:, :)      ! pointer to Jacobians

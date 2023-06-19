@@ -9,7 +9,7 @@ program VPARTIAL
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, txc, x
     use FDM_COM_DIRECT
-    use FDM_PROCS, only: FDM_RHS_Pentad_Biased
+    use FDM_PROCS, only: MatMul_Pentad
     use OPR_PARTIAL
 
     implicit none
@@ -154,7 +154,7 @@ program VPARTIAL
         CALL FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
         ! CALL FDM_C2N4ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
         CALL TRIDFS(imax,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-        CALL FDM_RHS_Pentad_Biased(imax,len, wrk1d(1,4), u, du2_n2)
+        CALL MatMul_Pentad(imax,len, wrk1d(1,4), u, du2_n2)
         CALL TRIDSS(imax,len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), du2_n2)
 
 ! -------------------------------------------------------------------

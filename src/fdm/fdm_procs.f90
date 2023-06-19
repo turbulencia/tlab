@@ -18,8 +18,11 @@ module FDM_PROCS
     public coef_e1n2_biased  ! coefficients for the biased, 2. order approximation to 1. order derivative
     public coef_e1n3_biased  ! coefficients for the biased, 3. order approximation to 1. order derivative
 
-    public FDM_RHS_Pentad_Biased    ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
-    public FDM_RHS_Trid_Biased      ! Calculate f = B u, assuming B is tridiagonal with center diagonal is 1
+    public MatMul_Pentad    ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
+    public MatMul_Trid      ! Calculate f = B u, assuming B is tridiagonal with center diagonal is 1
+    public MatMul_5d_antisym
+    public MatMul_5d_sym
+    public MatMul_7d_sym
 
 contains
     !########################################################################
@@ -188,7 +191,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     ! Calcualte f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine FDM_RHS_Pentad_Biased(nmax, mmax, rhs, u, f)
+    subroutine MatMul_Pentad(nmax, mmax, rhs, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: rhs(nmax, 4)        ! RHS diagonals (#=5-1 because of normalization)
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
@@ -227,11 +230,11 @@ contains
                   + u(:, n)
 
         return
-    end subroutine FDM_RHS_Pentad_Biased
+    end subroutine MatMul_Pentad
 
     ! -------------------------------------------------------------------
     ! Calcualte f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine FDM_RHS_Trid_Biased(nmax, mmax, r1, r2, u, f)
+    subroutine MatMul_Trid(nmax, mmax, r1, r2, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: r1(nmax), r2(nmax)  ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
@@ -260,6 +263,125 @@ contains
                   + u(:, n)
 
         return
-    end subroutine FDM_RHS_Trid_Biased
+    end subroutine MatMul_Trid
+
+    ! Calcualte f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
+    subroutine MatMul_5d_antisym(nmax, mmax, r2, u, f)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r2                  ! 2. off-diagonal
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        f(:, 1) = u(:, 2) - u(:, nmax) &
+                  + r2*(u(:, 3) - u(:, nmax - 1))
+
+        f(:, 2) = u(:, 3) - u(:, 1) &
+                  + r2*(u(:, 4) - u(:, nmax))
+
+        ! Interior points
+        do n = 3, nmax - 2
+            f(:, n) = u(:, n + 1) - u(:, n - 1) &
+                      + r2*(u(:, n + 2) - u(:, n - 2))
+        end do
+
+        ! Boundary
+        f(:, nmax - 1) = u(:, nmax) - u(:, nmax - 2) &
+                         + r2*(u(:, 1) - u(:, nmax - 3))
+
+        f(:, nmax) = u(:, 1) - u(:, nmax - 1) &
+                     + r2*(u(:, 2) - u(:, nmax - 2))
+
+        return
+    end subroutine MatMul_5d_antisym
+
+    ! Calcualte f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
+    subroutine MatMul_5d_sym(nmax, mmax, r0, r2, u, f)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r0, r2              ! diagonal and 2. off-diagonal
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        n = 1
+        f(:, n) = r0*u(:, n) + u(:, n + 1) + u(:, nmax) &
+                  + r2*(u(:, n + 2) + u(:, nmax - 1))
+
+        n = 2
+        f(:, n) = r0*u(:, n) + u(:, n + 1) + u(:, n - 1) &
+                  + r2*(u(:, n + 2) + u(:, nmax))
+
+        ! Interior points
+        do n = 3, nmax - 2
+            f(:, n) = r0*u(:, n) + u(:, n + 1) + u(:, n - 1) &
+                      + r2*(u(:, n + 2) + u(:, n - 2))
+        end do
+
+        ! Boundary
+        n = nmax - 1
+        f(:, n) = r0*u(:, n) + u(:, n + 1) + u(:, n - 1) &
+                  + r2*(u(:, 1) + u(:, n - 2))
+
+        n = nmax
+        f(:, n) = r0*u(:, n) + u(:, 1) + u(:, n - 1) &
+                  + r2*(u(:, 2) + u(:, n - 2))
+
+        return
+    end subroutine MatMul_5d_sym
+
+    ! Calcualte f = B u, assuming B is antisymmetric hepta-diagonal with 1. superdiagonal equal to 1
+    subroutine MatMul_7d_sym(nmax, mmax, r0, r2, r3, u, f)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r0, r2, r3          ! diagonal and 2. off-diagonal
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        f(:, 1) = r0*u(:, 1) + u(:, 2) + u(:, nmax) &
+                  + r2*(u(:, 3) + u(:, nmax - 1)) &
+                  + r3*(u(:, 4) + u(:, nmax - 2))
+
+        f(:, 2) = r0*u(:, 2) + u(:, 3) + u(:, 1) &
+                  + r2*(u(:, 4) + u(:, nmax)) &
+                  + r3*(u(:, 5) + u(:, nmax - 1))
+
+        f(:, 3) = r0*u(:, 3) + u(:, 4) + u(:, 2) &
+                  + r2*(u(:, 5) + u(:, 1)) &
+                  + r3*(u(:, 6) + u(:, nmax))
+
+        ! Interior points
+        do n = 4, nmax - 3
+            f(:, n) = r0*u(:, n) + u(:, n + 1) + u(:, n - 1) &
+                      + r2*(u(:, n + 2) + u(:, n - 2)) &
+                      + r3*(u(:, n + 3) + u(:, n - 3))
+        end do
+
+        ! Boundary
+        f(:, nmax - 2) = r0*u(:, nmax - 2) + u(:, nmax - 1) + u(:, nmax - 3) &
+                         + r2*(u(:, nmax) + u(:, nmax - 4)) &
+                         + r3*(u(:, 1) + u(:, nmax - 5))
+
+        f(:, nmax - 1) = r0*u(:, nmax - 1) + u(:, nmax) + u(:, nmax - 2) &
+                         + r2*(u(:, 1) + u(:, nmax - 3)) &
+                         + r3*(u(:, 2) + u(:, nmax - 4))
+
+        f(:, nmax) = r0*u(:, nmax) + u(:, 1) + u(:, nmax - 1) &
+                     + r2*(u(:, 2) + u(:, nmax - 2)) &
+                     + r3*(u(:, 3) + u(:, nmax - 3))
+
+        return
+    end subroutine MatMul_7d_sym
 
 end module FDM_PROCS
