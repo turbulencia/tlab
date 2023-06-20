@@ -43,9 +43,9 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(grid_dt), intent(in)  :: g
-        real(wp),      intent(in)  :: u(nlines*g%size)
-        real(wp),      intent(out) :: result(nlines*g%size)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines*g%size)
+        real(wp), intent(out) :: result(nlines*g%size)
 
 ! ###################################################################
         if (g%periodic) then
@@ -55,8 +55,8 @@ contains
                 call FDM_C1N4P_RHS(g%size, nlines, u, result)
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)   ! Direct = Jacobian because uniform grid
-               call FDM_C1N6P_RHS(g%size, nlines, u, result)
-                ! call MatMul_5d_antisym(g%size, nlines, 0.357142857142857e-1_wp, u, result)
+                !    call FDM_C1N6P_RHS(g%size, nlines, u, result)
+                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic)
 
             case (FDM_COM6_JACPENTA)                    ! Direct = Jacobian because uniform grid
                 call FDM_C1N6MP_RHS(g%size, nlines, u, result)
@@ -81,7 +81,8 @@ contains
                 call FDM_C1N4_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
 
             case (FDM_COM6_JACOBIAN)
-                call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+               call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+                ! call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic)
 
             case (FDM_COM6_JACPENTA)
                 call FDM_C1N6M_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
@@ -114,9 +115,9 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1,*) and xmax (2,*):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(grid_dt), intent(in)  :: g
-        real(wp),      intent(in)  :: u(nlines*g%size)
-        real(wp),      intent(out) :: result(nlines*g%size)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines*g%size)
+        real(wp), intent(out) :: result(nlines*g%size)
 
         integer(wi), parameter :: is = 0    ! scalar index; if 0, then velocity
 
@@ -157,10 +158,10 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_IBM(nlines, g, u, result)
-        integer(wi),   intent(in)  :: nlines
-        type(grid_dt), intent(in)  :: g
-        real(wp),      intent(in)  :: u(nlines*g%size)
-        real(wp),      intent(out) :: result(nlines*g%size)
+        integer(wi), intent(in) :: nlines
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines*g%size)
+        real(wp), intent(out) :: result(nlines*g%size)
 
         integer(wi), parameter :: is = 0 ! scalar index; if 0, then velocity
 
@@ -184,7 +185,7 @@ contains
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
         use FDM_COM_DIRECT
-        use FDM_PROCS, only: MatMul_Pentad
+        use FDM_PROCS, only: MatMul_5d
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -194,12 +195,12 @@ contains
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines, g%size)
-        real(wp),      intent(out)   :: result(nlines, g%size)
-        real(wp),      intent(inout) :: du(nlines, g%size)  ! First derivative
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
+        real(wp), intent(inout) :: du(nlines, g%size)  ! First derivative
 
-        real(wp),      pointer       :: lu2_p(:, :)
+        real(wp), pointer :: lu2_p(:, :)
 
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
@@ -240,7 +241,7 @@ contains
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA) ! Direct = Jacobian because uniform grid
                 ! call FDM_C2N6P_RHS(g%size, nlines, u, result)
-               call FDM_C2N6HP_RHS(g%size, nlines, u, result)
+                call FDM_C2N6HP_RHS(g%size, nlines, u, result)
                 ! call MatMul_7d_sym(g%size, nlines, -0.281250399533387e+1_wp, 0.422670003525653_wp, -0.164180058587192e-1_wp, u, result)
 
             case (FDM_COM8_JACOBIAN)                  ! Not yet implemented
@@ -277,7 +278,7 @@ contains
                 end if
 
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-                call MatMul_Pentad(g%size, nlines, g%lu2(:, 4), u, result)
+                call MatMul_5d(g%size, nlines, g%lu2(:, 4), u, result)
 
             end select
 
@@ -296,13 +297,13 @@ contains
         integer(wi), intent(in) :: bcs(2, 2)     ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nlines, g%size)
-        real(wp),      intent(out)   :: result(nlines, g%size)
-        real(wp),      intent(inout) :: du(nlines, g%size)  ! First derivative
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
+        real(wp), intent(inout) :: du(nlines, g%size)  ! First derivative
 
-        real(wp),      pointer :: p_fld(:, :)
-        real(wp),      pointer :: p_fld_ibm(:)
+        real(wp), pointer :: p_fld(:, :)
+        real(wp), pointer :: p_fld_ibm(:)
 
         target u
 
@@ -359,10 +360,10 @@ contains
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
-        integer(wi),   intent(in)  :: nlines   ! number of lines to be solved
-        type(grid_dt), intent(in)  :: g
-        real(wp),      intent(in)  :: u(nlines, g%size)
-        real(wp),      intent(out) :: result(nlines, g%size)
+        integer(wi), intent(in) :: nlines   ! number of lines to be solved
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
 
 ! ###################################################################
 ! Interpolation, direction 'vp': vel. --> pre. grid
@@ -401,10 +402,10 @@ contains
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
-        integer(wi),   intent(in)  :: nlines   ! number of lines to be solved
-        type(grid_dt), intent(in)  :: g
-        real(wp),      intent(in)  :: u(nlines, g%size)
-        real(wp),      intent(out) :: result(nlines, g%size)
+        integer(wi), intent(in) :: nlines   ! number of lines to be solved
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
 
 ! ###################################################################
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
@@ -445,12 +446,12 @@ contains
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
         !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        integer(wi),   intent(in)     :: nx, ny, nz
-        integer(wi),   intent(in)     :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)     :: g
-        real(wp),      intent(in)     :: u(nx*ny*nz)
-        real(wp),      intent(out)    :: result(nx*ny*nz)
-        real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
+        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nx*ny*nz)
+        real(wp), intent(out) :: result(nx*ny*nz)
+        real(wp), intent(inout), optional :: tmp1(nx*ny*nz)
 
         target u, tmp1, result
 
@@ -582,12 +583,12 @@ contains
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
         !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        integer(wi),   intent(in)     :: nx, ny, nz
-        integer(wi),   intent(in)     :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)     :: g
-        real(wp),      intent(in)     :: u(nx*ny*nz)
-        real(wp),      intent(out)    :: result(nx*ny*nz)
-        real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
+        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nx*ny*nz)
+        real(wp), intent(out) :: result(nx*ny*nz)
+        real(wp), intent(inout), optional :: tmp1(nx*ny*nz)
 
         target u, tmp1, result
 
@@ -700,12 +701,12 @@ contains
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
         !                                   OPR_P0_INT_VP/PV interpolation              (vel.<->pre.)
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
-        integer(wi),   intent(in)     :: nx, ny, nz
-        integer(wi),   intent(in)     :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)     :: g
-        real(wp),      intent(in)     :: u(nx*ny*nz)
-        real(wp),      intent(out)    :: result(nx*ny*nz)
-        real(wp),      intent(inout), optional :: tmp1(nx*ny*nz)
+        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nx*ny*nz)
+        real(wp), intent(out) :: result(nx*ny*nz)
+        real(wp), intent(inout), optional :: tmp1(nx*ny*nz)
 
         target u, tmp1, result
 

@@ -18,8 +18,8 @@ module FDM_PROCS
     public coef_e1n2_biased  ! coefficients for the biased, 2. order approximation to 1. order derivative
     public coef_e1n3_biased  ! coefficients for the biased, 3. order approximation to 1. order derivative
 
-    public MatMul_Pentad    ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
-    public MatMul_Trid      ! Calculate f = B u, assuming B is tridiagonal with center diagonal is 1
+    public MatMul_5d    ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
+    public MatMul_3d      ! Calculate f = B u, assuming B is tridiagonal with center diagonal is 1
     public MatMul_5d_antisym
     public MatMul_5d_sym
     public MatMul_7d_sym
@@ -190,8 +190,41 @@ contains
 
 ! #######################################################################
 ! #######################################################################
-    ! Calcualte f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine MatMul_Pentad(nmax, mmax, rhs, u, f)
+    ! Calculate f = B u, assuming B is penta-diagonal with center diagonal is 1
+    subroutine MatMul_3d(nmax, mmax, r1, r2, u, f)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r1(nmax), r2(nmax)  ! RHS diagonals (#=3-1 because center diagonal is 1)
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        n = 1 ! rhs(1,1) contains 1. superdiagonal to allow for longer stencil at boundary
+        f(:, n) = &
+            +u(:, n) &
+            + u(:, n + 1)*r2(n) + u(:, n + 2)*r1(n)
+
+        ! Interior points
+        do n = 2, nmax - 1
+            f(:, n) = u(:, n - 1)*r1(n) &
+                      + u(:, n) &
+                      + u(:, n + 1)*r2(n)
+        end do
+
+        ! Boundary
+        n = nmax ! rhs(n,2) contains 1. subdiagonal to allow for longer stencil at boundary
+        f(:, n) = u(:, n - 2)*r2(n) + u(:, n - 1)*r1(n) &
+                  + u(:, n)
+
+        return
+    end subroutine MatMul_3d
+
+    ! #######################################################################
+    ! Calculate f = B u, assuming B is penta-diagonal with center diagonal is 1
+    subroutine MatMul_5d(nmax, mmax, rhs, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: rhs(nmax, 4)        ! RHS diagonals (#=5-1 because of normalization)
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
@@ -230,76 +263,66 @@ contains
                   + u(:, n)
 
         return
-    end subroutine MatMul_Pentad
+    end subroutine MatMul_5d
 
-    ! -------------------------------------------------------------------
-    ! Calcualte f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine MatMul_Trid(nmax, mmax, r1, r2, u, f)
+    ! #######################################################################
+    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
+    subroutine MatMul_5d_antisym(nmax, mmax, r1, r2, r3, r4, r5, u, f, periodic)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
-        real(wp), intent(in) :: r1(nmax), r2(nmax)  ! RHS diagonals (#=3-1 because center diagonal is 1)
+        real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax), r4(nmax), r5(nmax)  ! RHS diagonals
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
         real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+        logical, intent(in) :: periodic
 
         ! -------------------------------------------------------------------
         integer(wi) n
+        real(wp) r5_loc     ! 2. off-diagonal
 
         ! -------------------------------------------------------------------
-        ! Boundary
-        n = 1 ! rhs(1,1) contains 1. superdiagonal to allow for longer stencil at boundary
-        f(:, n) = &
-            +u(:, n) &
-            + u(:, n + 1)*r2(n) + u(:, n + 2)*r1(n)
-
-        ! Interior points
-        do n = 2, nmax - 1
-            f(:, n) = u(:, n - 1)*r1(n) &
-                      + u(:, n) &
-                      + u(:, n + 1)*r2(n)
-        end do
+        r5_loc = r5(1)
 
         ! Boundary
-        n = nmax ! rhs(n,2) contains 1. subdiagonal to allow for longer stencil at boundary
-        f(:, n) = u(:, n - 2)*r2(n) + u(:, n - 1)*r1(n) &
-                  + u(:, n)
+        if (periodic) then
+            f(:, 1) = u(:, 2) - u(:, nmax) &
+                      + r5_loc*(u(:, 3) - u(:, nmax - 1))
 
-        return
-    end subroutine MatMul_Trid
+            f(:, 2) = u(:, 3) - u(:, 1) &
+                      + r5_loc*(u(:, 4) - u(:, nmax))
 
-    ! Calcualte f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
-    subroutine MatMul_5d_antisym(nmax, mmax, r2, u, f)
-        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
-        real(wp), intent(in) :: r2                  ! 2. off-diagonal
-        real(wp), intent(in) :: u(mmax, nmax)       ! function u
-        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+        else
+            f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
+                      + u(:, 4)*r1(1)   ! r1(1) contains 3. superdiagonal to allow for longer stencil at boundary
 
-        ! -------------------------------------------------------------------
-        integer(wi) n
+            f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
 
-        ! -------------------------------------------------------------------
-        ! Boundary
-        f(:, 1) = u(:, 2) - u(:, nmax) &
-                  + r2*(u(:, 3) - u(:, nmax - 1))
-
-        f(:, 2) = u(:, 3) - u(:, 1) &
-                  + r2*(u(:, 4) - u(:, nmax))
+        end if
 
         ! Interior points
         do n = 3, nmax - 2
             f(:, n) = u(:, n + 1) - u(:, n - 1) &
-                      + r2*(u(:, n + 2) - u(:, n - 2))
+                      + r5_loc*(u(:, n + 2) - u(:, n - 2))
         end do
 
         ! Boundary
-        f(:, nmax - 1) = u(:, nmax) - u(:, nmax - 2) &
-                         + r2*(u(:, 1) - u(:, nmax - 3))
+        if (periodic) then
+            f(:, nmax - 1) = u(:, nmax) - u(:, nmax - 2) &
+                             + r5_loc*(u(:, 1) - u(:, nmax - 3))
 
-        f(:, nmax) = u(:, 1) - u(:, nmax - 1) &
-                     + r2*(u(:, 2) - u(:, nmax - 2))
+            f(:, nmax) = u(:, 1) - u(:, nmax - 1) &
+                         + r5_loc*(u(:, 2) - u(:, nmax - 2))
+
+        else
+            f(:, nmax - 1) = u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) &
+                             + u(:, nmax)*r4(nmax - 1)
+            f(:, nmax) = u(:, nmax - 3)*r5(nmax) & ! r5(nmax) contains 3. subdiagonal to allow for longer stencil at boundary
+                         + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)*r3(nmax)
+        end if
 
         return
     end subroutine MatMul_5d_antisym
 
-    ! Calcualte f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
+    ! #######################################################################
+    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
     subroutine MatMul_5d_sym(nmax, mmax, r0, r2, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: r0, r2              ! diagonal and 2. off-diagonal
@@ -337,7 +360,7 @@ contains
         return
     end subroutine MatMul_5d_sym
 
-    ! Calcualte f = B u, assuming B is antisymmetric hepta-diagonal with 1. superdiagonal equal to 1
+    ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. superdiagonal equal to 1
     subroutine MatMul_7d_sym(nmax, mmax, r0, r2, r3, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: r0, r2, r3          ! diagonal and 2. off-diagonal

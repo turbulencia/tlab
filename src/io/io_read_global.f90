@@ -681,7 +681,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
+       call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. (iadvection == EQNS_CONVECTIVE)) then
@@ -944,6 +944,9 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 ! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered
         end if
         g(is)%inb_grid = g(is)%inb_grid &
+                         + 7 &                      ! # of diagonals in RHS for 1. order
+                         + 7                        ! # of diagonals in RHS for 2. order
+        g(is)%inb_grid = g(is)%inb_grid &
                          + 1                        ! Density correction in anelastic mode
         if ((stagger_on) .and. g(is)%periodic) then
             g(is)%inb_grid = g(is)%inb_grid &
@@ -1093,7 +1096,7 @@ subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
             variable(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
         end if
     end do
-    
+
     call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'BcsJmin', trim(adjustl(default)), sRes)
     if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
     else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMin = DNS_FILTER_BCS_BIASED

@@ -26,7 +26,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
     integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
     real(wp) dummy
-    real(wp) a1, a2, b1, b2, b3, kc
+    real(wp) a1, a2, b1, b2, b3, kc, coef(5)
 
     integer, parameter :: i0 = 0, i1 = 1
 
@@ -165,13 +165,18 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! Periodic case
 ! -------------------------------------------------------------------
     if (g%periodic) then
+        ig = ig + 7
+        g%rhs1 => x(:, ig:)
+        ig = ig + 7
+
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
             call FDM_C1N4P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT) ! Direct = Jacobian because uniform grid
-            call FDM_C1N6P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
+            ! call FDM_C1N6P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
+            call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
 
         case (FDM_COM6_JACPENTA)
             call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
@@ -186,12 +191,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         else
             call PENTADPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
         end if
-        ig = ig + 7
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case (4 different BCs)
 ! -------------------------------------------------------------------
     else
+        g%rhs1 => x(:, ig + 20:)
         do i = 0, 3
             ibc_min = mod(i, 2)
             ibc_max = i/2
@@ -203,9 +208,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             case (FDM_COM6_JACOBIAN)
                 call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                ! call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
 
             case (FDM_COM6_JACPENTA)
-                call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
+              call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
 
             case (FDM_COM8_JACOBIAN)
                 call FDM_C1N8_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
@@ -222,6 +228,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             end if
             ig = ig + 5
         end do
+        ig = ig + 7
 
     end if
 
@@ -440,12 +447,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         case (FDM_COM4_JACOBIAN) ! Not yet implemented
 
-        ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-        !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
-        !     b1 = 12.0_wp/11.0_wp
-        !     b2 = 3.0_wp/44.0_wp
-        !     b3 = 0.0_wp
-            
+            ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+            !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
+            !     b1 = 12.0_wp/11.0_wp
+            !     b2 = 3.0_wp/44.0_wp
+            !     b3 = 0.0_wp
+
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
             kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
             a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
@@ -475,7 +482,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%anelastic = .false. ! Default; activated in FI_BACKGROUND_INITIALIZE
 
     ig = ig + 1
-    
+
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################

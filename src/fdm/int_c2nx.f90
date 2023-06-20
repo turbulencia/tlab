@@ -53,13 +53,13 @@ subroutine INT_C2NX_INITIALIZE(imax, x, ibc, lhs, rhs, lambda2, lu, f, bvp_rhs)
     dummy1 = lhs(2, 1)/lhs(1, 2)
     lu(i, 3:5) = lu(i, 3:5) - dummy1*lu(i - 1, [4, 5, 1])
     l2_min = lhs(i, 2) - dummy1*lhs(1, 3)       ! central diagonal in reduced lhs
-    bvp_rhs(i, 1) = 0.0_wp                      ! See MatMul_Trid
+    bvp_rhs(i, 1) = 0.0_wp                      ! See MatMul_3d
 
     i = imax - 1
     dummy2 = lhs(imax - 1, 3)/lhs(imax, 2)
     lu(i, 1:3) = lu(i, 1:3) - dummy2*lu(i + 1, [5, 1, 2])
     l2_max = lhs(i, 2) - dummy2*lhs(imax, 1)    ! central diagonal in reduced lhs
-    bvp_rhs(i, 2) = 0.0_wp                      ! See MatMul_Trid
+    bvp_rhs(i, 2) = 0.0_wp                      ! See MatMul_3d
 
     ! Setting the RHS for the hyperbolic sine; the minus sign in included here to save ops
     f(:, :) = 0.0_wp
