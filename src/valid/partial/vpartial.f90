@@ -9,7 +9,7 @@ program VPARTIAL
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, txc, x
     use FDM_COM_DIRECT
-    use FDM_PROCS, only: MatMul_5d
+    use FDM_PROCS
     use OPR_PARTIAL
 
     implicit none
@@ -23,7 +23,7 @@ program VPARTIAL
     real(wp), dimension(:, :), pointer :: du2_a, du2_n1, du2_n2, du2_n3
     real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
-    real(wp) :: lambda, error, dummy
+    real(wp) :: lambda, coef(5)
     integer(wi) :: test_type, ibc
 
     integer, parameter :: i1 = 1
@@ -38,7 +38,7 @@ program VPARTIAL
     reynolds = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
-    g%inb_grid = 57
+    g%inb_grid = 71
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
@@ -83,16 +83,14 @@ program VPARTIAL
             x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
-        ! do i = 1, imax
-        !     x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
-        ! end do
-        open (21, file='y.dat')
         do i = 1, imax
-        ! do i = imax, 1, -1
-            read (21, *) x(i, 1)
+            x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
         end do
-        close (21)
-        ! x(:,1) = x(1,1) -x(:,1)
+        ! open (21, file='y.dat')
+        ! do i = 1, imax
+        !     read (21, *) x(i, 1)
+        ! end do
+        ! close (21)
         g%scale = x(imax, 1) - x(1, 1)
     end if
 
@@ -140,24 +138,39 @@ program VPARTIAL
     end do
 
 ! ###################################################################
-
     if (test_type == 1) then
         bcs_aux = 0
+! -------------------------------------------------------------------
 ! Testing first-order derivatives
+        ! Jacobian based
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_b)
+        ! call FDM_C1N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
+        ! call FDM_C1N6_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du1_n)
+        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic)
+        call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
+        call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
 
+        ! Direct metrics
+
+        call check(u, du1_a, du1_n, 'partial.dat')
+
+! -------------------------------------------------------------------
 ! Testing second-order derivatives
         ! Jacobian based
         ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n2, du1_n)
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
-        ! Direct metrics
-        CALL FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
-        ! CALL FDM_C2N4ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
-        CALL TRIDFS(imax,     wrk1d(1,1), wrk1d(1,2), wrk1d(1,3))
-        CALL MatMul_5d(imax,len, wrk1d(1,4), u, du2_n2)
-        CALL TRIDSS(imax,len, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3), du2_n2)
 
-! -------------------------------------------------------------------
+        ! Direct metrics
+        ! call FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1, 1), wrk1d(1, 4))
+        ! ! CALL FDM_C2N4ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
+        ! call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+        ! call MatMul_5d(imax, len, wrk1d(1, 4), u, du2_n2)
+        ! call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
+
+        ! call check(u, du2_a, du2_n2, 'partial.dat')
+
+! ###################################################################
     elseif (test_type == 2) then ! Testing new BCs routines
 
         if (g%mode_fdm == FDM_COM6_JACOBIAN) then
@@ -302,33 +315,43 @@ program VPARTIAL
         end if
     end if
 
-! ###################################################################
-! IO - Error and function values
-    open (20, file='partial.dat')
-    error = 0.0_wp; dummy = 0.0_wp
-    do i = 1, imax
-        do l = 1, len
-            ! Testing first-order derivatives
-            ! write (20, 1000) g%nodes(i), u(l, i), du1_a(l, i), du1_b(l, i), du1_a(l, i) - du1_b(l, i)
-            ! du1_c(l, i) = abs(du1_a(l, i) - du1_b(l, i))
-            ! dummy = dummy + du1_a(l, i)*du1_a(l, i)
-            ! error = error + du1_c(l, i)*du1_c(l, i)
-            ! Testing second-order derivatives
-            write (20, 1000) g%nodes(i), u(l, i), du2_a(l, i), du2_n2(l, i), du2_a(l, i) - du2_n2(l, i)
-            du1_c(l, i) = abs(du2_a(l, i) - du2_n2(l, i))
-            dummy = dummy + du2_a(l, i)*du2_a(l, i)
-            error = error + du1_c(l, i)*du1_c(l, i)
-        end do
-    end do
-    close (20)
-
-    write (*, *) 'Solution L2-norm ...........:', sqrt(g%jac(1, 1)*dummy)/real(len, wp)
-    if (dummy == 0.0_wp) stop
-    write (*, *) 'Relative Error L2-norm .....:', sqrt(g%jac(1, 1)*error)/maxval(abs(du1_a))
-    write (*, *) 'Relative Error Linf-norm ...:', maxval(du1_c(1, 1:imax))/maxval(abs(du1_a))
-
     stop
 
-1000 format(5(1x, e12.5))
+    ! ###################################################################
+contains
+    subroutine check(u, du_a, du_n, name)
+        real(wp), intent(in) :: u(len, imax), du_a(len, imax), du_n(len, imax)
+        character(len=*), optional :: name
+
+        real(wp) dummy, error_l2, error_max
+
+        if (present(name)) then
+            open (20, file='partial.dat')
+        end if
+        error_l2 = 0.0_wp
+        error_max = 0.0_wp
+        dummy = 0.0_wp
+        do i = 1, imax
+            do l = 1, len
+                if (present(name)) then
+                    write (20, 1000) g%nodes(i), u(l, i), du_a(l, i), du_n(l, i), du_a(l, i) - du_n(l, i)
+                end if
+                dummy = dummy + du_a(l, i)*du_a(l, i)
+                error_l2 = error_l2 + (du_a(l, i) - du_n(l, i))**2.0_wp
+                error_max = max(error_max, abs(du_a(l, i) - du_n(l, i)))
+            end do
+        end do
+        if (present(name)) then
+            close (20)
+        end if
+
+        write (*, *) 'Solution L2-norm ...........:', sqrt(g%jac(1, 1)*dummy)/real(len, wp)
+        if (dummy == 0.0_wp) return
+        write (*, *) 'Relative Error L2-norm .....:', sqrt(g%jac(1, 1)*error_l2)/maxval(abs(du1_a))
+        write (*, *) 'Relative Error Linf-norm ...:', error_max/maxval(abs(du1_a))
+
+        return
+1000    format(5(1x, e12.5))
+    end subroutine check
 
 end program VPARTIAL

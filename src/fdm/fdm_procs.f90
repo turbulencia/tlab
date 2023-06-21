@@ -279,7 +279,7 @@ contains
         real(wp) r5_loc     ! 2. off-diagonal
 
         ! -------------------------------------------------------------------
-        r5_loc = r5(1)
+        r5_loc = r5(3)      ! The first 2 equations, last 2 equations, are normalized differently
 
         ! Boundary
         if (periodic) then

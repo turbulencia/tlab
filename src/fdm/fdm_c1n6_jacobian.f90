@@ -52,7 +52,7 @@ subroutine FDM_C1N6_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
         rhs(n, :) = [0.0_wp, -5.0_wp/9.0_wp, -0.5_wp, 1.0_wp, 1.0_wp/18.0_wp]
         ! 4. order in Eq. 2.1.6 with \alpha=1/4.
         ! lhs(n, :) = [0.25_wp, 1.0_wp, 0.25_wp]
-        ! rhs(n, :) = [0.0_wp, -0.75_wp, 0.0_wp, 0.75_wp, 10.0_wp]
+        ! rhs(n, :) = [0.0_wp, -0.75_wp, 0.0_wp, 0.75_wp, 0.0_wp]
 
         ! symmetry propertie to define values at end
         n = nmax - 1
