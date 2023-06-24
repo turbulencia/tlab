@@ -23,6 +23,7 @@ module FDM_PROCS
     public MatMul_5d_antisym
     public MatMul_5d_sym
     public MatMul_7d_sym
+    public FDM_Bcs
 
 contains
     !########################################################################
@@ -267,19 +268,27 @@ contains
 
     ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. superdiagonal equal to 1
-    subroutine MatMul_5d_antisym(nmax, mmax, r1, r2, r3, r4, r5, u, f, periodic)
+    subroutine MatMul_5d_antisym(nmax, mmax, r1, r2, r3, r4, r5, u, f, periodic, ibc)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax), r4(nmax), r5(nmax)  ! RHS diagonals
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
         real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
         logical, intent(in) :: periodic
+        integer, optional :: ibc
 
         ! -------------------------------------------------------------------
         integer(wi) n
         real(wp) r5_loc     ! 2. off-diagonal
+        integer ibc_loc
 
         ! -------------------------------------------------------------------
         r5_loc = r5(3)      ! The first 2 equations, last 2 equations, are normalized differently
+
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_DD
+        end if
 
         ! Boundary
         if (periodic) then
@@ -294,6 +303,8 @@ contains
                       + u(:, 4)*r1(1)   ! r1(1) contains 3. superdiagonal to allow for longer stencil at boundary
 
             f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
+
+            if (any([BCS_ND, BCS_NN] == ibc_loc)) f(:, 1) = 0.0_wp
 
         end if
 
@@ -316,6 +327,9 @@ contains
                              + u(:, nmax)*r4(nmax - 1)
             f(:, nmax) = u(:, nmax - 3)*r5(nmax) & ! r5(nmax) contains 3. subdiagonal to allow for longer stencil at boundary
                          + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)*r3(nmax)
+
+            if (any([BCS_DN, BCS_NN] == ibc_loc)) f(:, nmax) = 0.0_wp
+
         end if
 
         return
@@ -406,5 +420,29 @@ contains
 
         return
     end subroutine MatMul_7d_sym
+
+! #######################################################################
+! #######################################################################
+    subroutine FDM_Bcs(lhs, ibc)
+        real(wp), intent(inout) :: lhs(:, :)
+        integer, intent(in) :: ibc
+
+        integer(wi) id, nx
+
+        id = size(lhs, 2)/2 + 1     ! central diagonal
+        nx = size(lhs, 1)           ! # grid points
+
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            lhs(1, id:) = 0.0_wp
+            lhs(1, id) = 1.0_wp
+        end if
+
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            lhs(nx, :id) = 0.0_wp
+            lhs(nx, id) = 1.0_wp
+        end if
+
+        return
+    end subroutine FDM_Bcs
 
 end module FDM_PROCS

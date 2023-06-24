@@ -81,8 +81,8 @@ contains
                 call FDM_C1N4_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
 
             case (FDM_COM6_JACOBIAN)
-               call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
-                ! call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic)
+            !    call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, bcs(1) + bcs(2)*2)
 
             case (FDM_COM6_JACPENTA)
                 call FDM_C1N6M_RHS(g%size, nlines, bcs(1), bcs(2), u, result)

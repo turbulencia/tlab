@@ -13,6 +13,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_VARS, only: C1N6M_ALPHA2, C1N6M_BETA2
     use TLAB_VARS, only: C1N6M_A, C1N6M_BD2, C1N6M_CD3
     use TLAB_PROCS
+    use FDM_PROCS
     use FDM_COM_DIRECT
 
     implicit none
@@ -207,8 +208,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
                 call FDM_C1N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
             case (FDM_COM6_JACOBIAN)
-                call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
-                ! call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
+                ! call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
+                call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
 
             case (FDM_COM6_JACPENTA)
               call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))

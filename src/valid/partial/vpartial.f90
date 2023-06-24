@@ -147,7 +147,11 @@ program VPARTIAL
         ! call FDM_C1N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
         ! call FDM_C1N6_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du1_n)
         call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic)
+        call FDM_Bcs(g%lu1(:, 1:3), BCS_DD)
+       call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
+        ! do i = 1, imax
+        !     print *, du1_n(:, i)
+        ! end do
         call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
         call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
 
@@ -187,7 +191,7 @@ program VPARTIAL
                 call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du1_b)
             elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
                 call PENTADFS2(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-                call PENTADSS2(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b)
+                call PENTADSS2(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
             end if
 
         else if (ibc == 1) then
@@ -197,7 +201,7 @@ program VPARTIAL
                 wrk1d(2, 4) = wrk1d(1, 1)
                 wrk1d(3, 4) = wrk1d(2, 1)
                 call TRIDFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3))
-                call TRIDSS(imax - 1, len, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), du1_b(1, 2))
+                call TRIDSS(imax - 1, len, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), du1_b(:, 2:))
                 call TRIDSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4))
                 bcs(:, 1) = du1_b(:, 1)
                 du1_b(:, 1) = 0.0_wp
@@ -245,7 +249,7 @@ program VPARTIAL
                 wrk1d(imax - 2, 6) = wrk1d(imax - 1, 4)
                 wrk1d(imax - 1, 6) = wrk1d(imax, 4)
                 call PENTADFS2(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-                call PENTADSS2(imax - 1, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b)
+                call PENTADSS2(imax - 1, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
                 call PENTADSS2(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
                 bcs(:, 2) = du1_b(:, imax)
                 du1_b(:, imax) = 0.0_wp
@@ -267,7 +271,7 @@ program VPARTIAL
                 wrk1d(imax - 2, 5) = wrk1d(imax - 1, 3)
                 wrk1d(imax - 1, 5) = wrk1d(imax, 3)
                 call TRIDFS(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3))
-                call TRIDSS(imax - 2, len, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), du1_b(1, 2))
+                call TRIDSS(imax - 2, len, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), du1_b(:, 2:))
                 call TRIDSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4))
                 call TRIDSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 5))
                 bcs(:, 1) = du1_b(:, 1)
