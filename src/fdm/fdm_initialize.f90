@@ -15,6 +15,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_PROCS
     use FDM_PROCS
     use FDM_COM_DIRECT
+    use FDM_JACOBIAN
 
     implicit none
 

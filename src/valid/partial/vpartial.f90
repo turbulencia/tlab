@@ -10,6 +10,7 @@ program VPARTIAL
     use TLAB_ARRAYS, only: wrk1d, txc, x
     use FDM_COM_DIRECT
     use FDM_PROCS
+    use FDM_JACOBIAN
     use OPR_PARTIAL
 
     implicit none

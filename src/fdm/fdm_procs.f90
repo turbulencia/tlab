@@ -423,6 +423,7 @@ contains
 
 ! #######################################################################
 ! #######################################################################
+! TO BE IMPLEMENTED ACCORDING TO NOTES
     subroutine FDM_Bcs(lhs, ibc)
         real(wp), intent(inout) :: lhs(:, :)
         integer, intent(in) :: ibc
