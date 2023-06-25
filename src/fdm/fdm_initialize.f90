@@ -15,7 +15,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_PROCS
     use FDM_PROCS
     use FDM_COM_DIRECT
-    use FDM_JACOBIAN
+    use FDM_Com_Jacobian
 
     implicit none
 
@@ -153,16 +153,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
 ! LU factorization first-order derivative, done in routine TRID*FS
 ! ###################################################################
+    g%rhs1 => x(:, ig:)
+    ig = ig + 7
     g%lu1 => x(:, ig:)
 
 ! -------------------------------------------------------------------
 ! Periodic case
 ! -------------------------------------------------------------------
     if (g%periodic) then
-        ig = ig + 7
-        g%rhs1 => x(:, ig:)
-        ig = ig + 7
-
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
@@ -184,11 +182,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             call PENTADPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
         end if
 
+        ig = ig + 7
+
 ! -------------------------------------------------------------------
 ! Nonperiodic case (4 different BCs)
 ! -------------------------------------------------------------------
     else
-        g%rhs1 => x(:, ig + 20:)
         do i = 0, 3
             ibc_min = mod(i, 2)
             ibc_max = i/2
@@ -218,9 +217,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             else
                 call PENTADFS2(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5))
             end if
+
             ig = ig + 5
+            
         end do
-        ig = ig + 7
 
     end if
 

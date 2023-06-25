@@ -19,7 +19,7 @@
 !# System normalized s.t. 1. off-diagonal in B is 1.
 !#
 !########################################################################
-module FDM_Jacobian
+module FDM_Com_Jacobian
     use TLAB_CONSTANTS, only: wp, wi
     implicit none
     private
@@ -178,4 +178,4 @@ contains
         return
     end subroutine Create_System_1der
 
-end module FDM_Jacobian
+end module FDM_Com_Jacobian
