@@ -52,7 +52,8 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call FDM_C1N4P_RHS(g%size, nlines, u, result)
+                ! call FDM_C1N4P_RHS(g%size, nlines, u, result)
+                call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic)
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)   ! Direct = Jacobian because uniform grid
                 !    call FDM_C1N6P_RHS(g%size, nlines, u, result)
@@ -78,7 +79,8 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call FDM_C1N4_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+               call FDM_C1N4_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+                ! call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, bcs(1) + bcs(2)*2)
 
             case (FDM_COM6_JACOBIAN)
             !    call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)

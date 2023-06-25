@@ -7,7 +7,7 @@ program VPARTIAL
     use TLAB_VARS, only: reynolds, schmidt
     ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, txc, x
+    use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk3d
     use FDM_COM_DIRECT
     use FDM_PROCS
     use FDM_JACOBIAN
@@ -70,6 +70,7 @@ program VPARTIAL
     test_type = 1
 
     g%periodic = .false.
+    ! g%periodic = .true.
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     ibc = 3
     g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
@@ -147,14 +148,20 @@ program VPARTIAL
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_b)
         ! call FDM_C1N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
         ! call FDM_C1N6_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du1_n)
+        !
         call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call FDM_Bcs(g%lu1(:, 1:3), BCS_DD)
-       call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
-        ! do i = 1, imax
-        !     print *, du1_n(:, i)
+        ! call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        ! do i = 1,imax
+        !     print*,g%lu1(i, 1:3)
+        !     print*,'rhs',g%rhs1(i, 1:3)
         ! end do
+        call FDM_Bcs(g%lu1(:, 1:3), BCS_DD)
+        call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
+        ! call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, BCS_DD)
         call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
         call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
+        ! call TRIDPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
+        ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk3d)
 
         ! Direct metrics
 

@@ -174,7 +174,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
-            call FDM_C1N4P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
+            ! call FDM_C1N4P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
+            call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT) ! Direct = Jacobian because uniform grid
             ! call FDM_C1N6P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
@@ -206,7 +207,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call FDM_C1N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                ! call FDM_C1N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
+                call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
 
             case (FDM_COM6_JACOBIAN)
                 ! call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
