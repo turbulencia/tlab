@@ -109,10 +109,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
             call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
-        case (FDM_COM8_JACOBIAN)
-            call FDM_C1N8_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C1N8_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
-
         end select
 
         if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
@@ -139,10 +135,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             ! call FDM_C2N6_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
             call FDM_C2N6H_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
             call FDM_C2N6H_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
-
-        case (FDM_COM8_JACOBIAN) ! Not yet developed; default to 6. order
-            call FDM_C2N6_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C2N6_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
         end select
 
@@ -184,9 +176,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         case (FDM_COM6_JACPENTA)
             call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
 
-        case (FDM_COM8_JACOBIAN)
-            call FDM_C1N8P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
-
         end select
 
         if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
@@ -218,9 +207,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             case (FDM_COM6_JACPENTA)
               call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
-
-            case (FDM_COM8_JACOBIAN)
-                call FDM_C1N8_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
 
             case (FDM_COM6_DIRECT) ! Not yet implemented; using Jacobian version
                 call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
@@ -256,9 +242,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             ! call FDM_C2N6P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
             call FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
-        case (FDM_COM8_JACOBIAN)                   ! Not yet developed
-            call FDM_C2N6P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
-
         end select
 
         call TRIDPFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3), g%lu2(1, 4), g%lu2(1, 5))
@@ -280,9 +263,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
                 ! call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
                 call FDM_C2N6H_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
-
-            case (FDM_COM8_JACOBIAN) ! Not yet implemented
-                call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3)) ! 8th not yet developed
 
             case (FDM_COM6_DIRECT)
                 if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
@@ -415,13 +395,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
                 b2 = C1N6M_BD2/2.0_wp
                 b3 = C1N6M_CD3/2.0_wp
 
-            case (FDM_COM8_JACOBIAN)
-                a1 = 3.0_wp/8.0_wp
-                a2 = 0.0_wp
-                b1 = 25.0_wp/32.0_wp
-                b2 = 1.0_wp/20.0_wp
-                b3 = -1.0_wp/480.0_wp
-
             end select
 
             g%mwn(:, 1) = 2.0_wp*(b1*sin(wrk1d(:, 1)) + b2*sin(2.0_wp*wrk1d(:, 1)) + b3*sin(3.0_wp*wrk1d(:, 1))) &
@@ -465,8 +438,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
             b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
             b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
-
-        case (FDM_COM8_JACOBIAN) ! Not yet implemented
 
         end select
 

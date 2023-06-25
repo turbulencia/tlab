@@ -62,9 +62,6 @@ contains
             case (FDM_COM6_JACPENTA)                    ! Direct = Jacobian because uniform grid
                 call FDM_C1N6MP_RHS(g%size, nlines, u, result)
 
-            case (FDM_COM8_JACOBIAN)
-                call FDM_C1N8P_RHS(g%size, nlines, u, result)
-
             end select
 
             if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
@@ -88,9 +85,6 @@ contains
 
             case (FDM_COM6_JACPENTA)
                 call FDM_C1N6M_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
-
-            case (FDM_COM8_JACOBIAN)
-                call FDM_C1N8_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
 
             case (FDM_COM6_DIRECT) ! Not yet implemented
                 call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
@@ -212,8 +206,7 @@ contains
         else                ! needed anyhow to calculate 1. derivative
             if (.not. g%uniform) then
                 if (g%mode_fdm == FDM_COM4_JACOBIAN .or. &
-                    g%mode_fdm == FDM_COM6_JACOBIAN .or. &
-                    g%mode_fdm == FDM_COM8_JACOBIAN) then
+                    g%mode_fdm == FDM_COM6_JACOBIAN) then
                     call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
                 end if
             end if
@@ -246,9 +239,6 @@ contains
                 call FDM_C2N6HP_RHS(g%size, nlines, u, result)
                 ! call MatMul_7d_sym(g%size, nlines, -0.281250399533387e+1_wp, 0.422670003525653_wp, -0.164180058587192e-1_wp, u, result)
 
-            case (FDM_COM8_JACOBIAN)                  ! Not yet implemented
-                call FDM_C2N6P_RHS(g%size, nlines, u, result)
-
             end select
 
             call TRIDPSS(g%size, nlines, lu2_p(1, 1), lu2_p(1, 2), lu2_p(1, 3), lu2_p(1, 4), lu2_p(1, 5), result, wrk2d)
@@ -270,13 +260,6 @@ contains
                 else        ! need first derivative from above
                     ! call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                     call FDM_C2N6HNJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
-                end if
-
-            case (FDM_COM8_JACOBIAN) ! Not yet implemented; defaulting to 6. order
-                if (g%uniform) then
-                    call FDM_C2N6_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
-                else        ! Need first derivative from above
-                    call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
                 end if
 
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
@@ -426,7 +409,7 @@ contains
         else if (dir == 1) then
             if (g%periodic) then
                 select case (g%mode_fdm)
-                case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM8_JACOBIAN)
+                case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
                     call FDM_C1INTPV6P_RHS(g%size, nlines, u, result)
                 end select
                 call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)

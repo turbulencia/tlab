@@ -248,9 +248,7 @@ subroutine IO_READ_GLOBAL(inifile)
     if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm = FDM_COM4_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm = FDM_COM6_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; g(1:3)%mode_fdm = FDM_COM6_JACPENTA; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian8') then; g(1:3)%mode_fdm = FDM_COM8_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm = FDM_COM6_DIRECT; 
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Error in CompactDirect6 still unsolved')
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
