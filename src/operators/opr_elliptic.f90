@@ -92,9 +92,9 @@ contains
 
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                        lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
                     else
-                        lambda = g(1)%mwn(iglobal, 2)
+                        lambda = g(1)%mwn2(iglobal)
                     end if
 
                     ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
@@ -203,9 +203,9 @@ contains
 
                 ! Define \lambda based on modified wavenumbers (real)
                 if (g(3)%size > 1) then
-                    lambda = g(1)%mwn(iglobal, 1) + g(3)%mwn(kglobal, 1)
+                    lambda = g(1)%mwn1(iglobal) + g(3)%mwn1(kglobal)
                 else
-                    lambda = g(1)%mwn(iglobal, 1)
+                    lambda = g(1)%mwn1(iglobal)
                 end if
 
                 ! forcing term
@@ -355,9 +355,9 @@ contains
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                        lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
                     else
-                        lambda = g(1)%mwn(iglobal, 2)
+                        lambda = g(1)%mwn2(iglobal)
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
@@ -516,9 +516,9 @@ contains
 
                 ! Define \lambda based on modified wavenumbers (real)
                 if (g(3)%size > 1) then
-                    lambda = g(1)%mwn(iglobal, 1) + g(3)%mwn(kglobal, 1)
+                    lambda = g(1)%mwn1(iglobal) + g(3)%mwn1(kglobal)
                 else
-                    lambda = g(1)%mwn(iglobal, 1)
+                    lambda = g(1)%mwn1(iglobal)
                 end if
 
                 lambda = lambda - alpha
@@ -637,9 +637,9 @@ contains
 
                 ! Define \lambda based on modified wavenumbers (real)
                 if (g(3)%size > 1) then
-                    lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+                    lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
                 else
-                    lambda = g(1)%mwn(iglobal, 2)
+                    lambda = g(1)%mwn2(iglobal)
                 end if
 
                 lambda = lambda - alpha
@@ -779,9 +779,9 @@ contains
 
 !                 ! Define \lambda based on modified wavenumbers (real)
 !                 if (g(3)%size > 1) then
-!                     lambda = g(1)%mwn(iglobal, 2) + g(3)%mwn(kglobal, 2)
+!                     lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
 !                 else
-!                     lambda = g(1)%mwn(iglobal, 2)
+!                     lambda = g(1)%mwn2(iglobal)
 !                 end if
 
 !                 lambda = lambda - alpha

@@ -34,14 +34,18 @@ module TLAB_TYPES
         real(wp) scale
         real(wp), pointer :: nodes(:)
         real(wp), pointer :: jac(:, :)      ! pointer to Jacobians
+        !
         real(wp), pointer :: lu0i(:, :)     ! pointer to LU decomposition for interpolation
         real(wp), pointer :: lu1(:, :)      ! pointer to LU decomposition for 1. derivative
         real(wp), pointer :: rhs1(:, :)     ! pointer to RHS in LU decomposition for 1. derivative
         real(wp), pointer :: lu1i(:, :)     ! pointer to LU decomposition for 1. derivative inc. interp.
+        real(wp), pointer :: mwn1(:)        ! pointer to modified wavenumbers
+        !
         real(wp), pointer :: lu2(:, :)      ! pointer to LU decomposition for 2. derivative
         real(wp), pointer :: rhs2(:, :)     ! pointer to RHS in LU decomposition for 2. derivative
         real(wp), pointer :: lu2d(:, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion
-        real(wp), pointer :: mwn(:, :)      ! pointer to modified wavenumbers
+        real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
+        !
         real(wp), pointer :: rhoinv(:)      ! pointer to density correction in anelastic
     end type grid_dt
 

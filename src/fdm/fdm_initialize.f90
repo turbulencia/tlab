@@ -151,7 +151,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 4
 
 ! ###################################################################
-! LU factorization first-order derivative, done in routine TRID*FS
+! first-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
     g%rhs1 => x(:, ig:)
     ig = ig + 7
@@ -173,6 +173,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         case (FDM_COM6_JACPENTA)
             call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
+            coef = [C1N6M_ALPHA2, C1N6M_BETA2, C1N6M_A, C1N6M_BD2, C1N6M_CD3]/2.0_wp
 
         end select
 
@@ -183,6 +184,41 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         end if
 
         ig = ig + 7
+
+! -------------------------------------------------------------------
+        do i = 1, nx ! Define wavenumbers
+            if (i <= nx/2 + 1) then
+                wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
+            else
+                wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
+            end if
+        end do
+
+        g%mwn1 => x(:, ig)
+
+        if (.not. stagger_on) then
+
+            g%mwn1(:) = 2.0_wp*(coef(3)*sin(wrk1d(:, 1)) + coef(4)*sin(2.0_wp*wrk1d(:, 1)) + coef(5)*sin(3.0_wp*wrk1d(:, 1))) &
+                        /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(wrk1d(:, 1)))
+
+        else ! staggered case has different modified wavenumbers!
+
+            select case (g%mode_fdm)
+
+            case DEFAULT
+                coef = [9.0_wp/62.0_wp, 0.0_wp, 63.0_wp/62.0_wp, 17.0_wp/62.0_wp, 0.0_wp]
+
+            end select
+
+            g%mwn1(:) = 2.0_wp*(coef(3)*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + coef(4)/3.0_wp*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
+                        /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)))
+
+        end if
+
+! Final calculations because it is mainly used in the Poisson solver like this
+        g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2
+
+        ig = ig + 1
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case (4 different BCs)
@@ -219,13 +255,13 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             end if
 
             ig = ig + 5
-            
+
         end do
 
     end if
 
 ! ###################################################################
-! LU factorization second-order derivative, done in routine TRID*FS
+! second-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
     g%lu2 => x(:, ig:)
 
@@ -245,7 +281,38 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         end select
 
         call TRIDPFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3), g%lu2(1, 4), g%lu2(1, 5))
+
         ig = ig + 5
+
+! -------------------------------------------------------------------
+        g%mwn2 => x(:, ig)
+
+        select case (g%mode_fdm)
+
+        case (FDM_COM4_JACOBIAN) ! Not yet implemented
+
+            ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+            !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
+            !     b1 = 12.0_wp/11.0_wp
+            !     b2 = 3.0_wp/44.0_wp
+            !     b3 = 0.0_wp
+
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+            kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
+            a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
+            b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
+            b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
+            b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
+
+        end select
+
+        g%mwn2(:) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+                    /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
+
+! Final calculations because it is mainly used in the Helmholtz solver like this
+        g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)
+
+        ig = ig + 1
 
 ! -------------------------------------------------------------------
 ! Nonperiodic case; tridiagonal for 4 different BCs
@@ -360,96 +427,100 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         ig = ig + 5
     end if
 
-! ###################################################################
-! Modified wavenumbers in periodic case
-! ###################################################################
-    g%mwn => x(:, ig:)
+! ! ###################################################################
+! ! Modified wavenumbers in periodic case
+! ! ###################################################################
+!     if (g%periodic) then
+!         do i = 1, nx ! Define wavenumbers
+!             if (i <= nx/2 + 1) then
+!                 wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
+!             else
+!                 wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
+!             end if
+!         end do
 
-    if (g%periodic) then
-        do i = 1, nx ! Define wavenumbers
-            if (i <= nx/2 + 1) then
-                wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
-            else
-                wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
-            end if
-        end do
+! ! -------------------------------------------------------------------
+! ! First-order derivative
+! ! -------------------------------------------------------------------
+!         g%mwn1 => x(:, ig)
 
-! -------------------------------------------------------------------
-! First-order derivative
-! -------------------------------------------------------------------
-        if (.not. stagger_on) then
+!         if (.not. stagger_on) then
 
-            select case (g%mode_fdm)
+!             select case (g%mode_fdm)
 
-            case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
-                a1 = 1.0_wp/3.0_wp
-                a2 = 0.0_wp
-                b1 = 7.0_wp/9.0_wp
-                b2 = 1.0_wp/36.0_wp
-                b3 = 0.0_wp
+!             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
+!                 a1 = 1.0_wp/3.0_wp
+!                 a2 = 0.0_wp
+!                 b1 = 7.0_wp/9.0_wp
+!                 b2 = 1.0_wp/36.0_wp
+!                 b3 = 0.0_wp
 
-            case (FDM_COM6_JACPENTA)
-                a1 = C1N6M_ALPHA2/2.0_wp
-                a2 = C1N6M_BETA2/2.0_wp
-                b1 = C1N6M_A/2.0_wp
-                b2 = C1N6M_BD2/2.0_wp
-                b3 = C1N6M_CD3/2.0_wp
+!             case (FDM_COM6_JACPENTA)
+!                 a1 = C1N6M_ALPHA2/2.0_wp
+!                 a2 = C1N6M_BETA2/2.0_wp
+!                 b1 = C1N6M_A/2.0_wp
+!                 b2 = C1N6M_BD2/2.0_wp
+!                 b3 = C1N6M_CD3/2.0_wp
 
-            end select
+!             end select
 
-            g%mwn(:, 1) = 2.0_wp*(b1*sin(wrk1d(:, 1)) + b2*sin(2.0_wp*wrk1d(:, 1)) + b3*sin(3.0_wp*wrk1d(:, 1))) &
-                          /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)) + 2.0_wp*a2*cos(wrk1d(:, 1)))
+!             g%mwn1(:) = 2.0_wp*(b1*sin(wrk1d(:, 1)) + b2*sin(2.0_wp*wrk1d(:, 1)) + b3*sin(3.0_wp*wrk1d(:, 1))) &
+!                         /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)) + 2.0_wp*a2*cos(wrk1d(:, 1)))
 
-        else ! staggered case has different modified wavenumbers!
+!         else ! staggered case has different modified wavenumbers!
 
-            select case (g%mode_fdm)
+!             select case (g%mode_fdm)
 
-            case DEFAULT
-                a1 = 9.0_wp/62.0_wp
-                b1 = 63.0_wp/62.0_wp
-                b2 = 17.0_wp/62.0_wp
+!             case DEFAULT
+!                 a1 = 9.0_wp/62.0_wp
+!                 b1 = 63.0_wp/62.0_wp
+!                 b2 = 17.0_wp/62.0_wp
 
-            end select
+!             end select
 
-            g%mwn(:, 1) = 2.0_wp*(b1*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + b2/3.0_wp*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
-                          /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
+!             g%mwn1(:) = 2.0_wp*(b1*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + b2/3.0_wp*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
+!                         /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
 
-        end if
+!         end if
 
-! Final calculations because it is mainly used in the Poisson solver like this
-        g%mwn(:, 1) = (g%mwn(:, 1)/g%jac(1, 1))**2
+! ! Final calculations because it is mainly used in the Poisson solver like this
+!         g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2
 
-! -------------------------------------------------------------------
-! Second-order derivative
-! -------------------------------------------------------------------
-        select case (g%mode_fdm)
+!         ig = ig + 1
 
-        case (FDM_COM4_JACOBIAN) ! Not yet implemented
+! ! -------------------------------------------------------------------
+! ! Second-order derivative
+! ! -------------------------------------------------------------------
+!         g%mwn2 => x(:, ig)
 
-            ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
-            !     b1 = 12.0_wp/11.0_wp
-            !     b2 = 3.0_wp/44.0_wp
-            !     b3 = 0.0_wp
+!         select case (g%mode_fdm)
 
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
-            a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
-            b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
-            b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
-            b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
+!         case (FDM_COM4_JACOBIAN) ! Not yet implemented
 
-        end select
+!             ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+!             !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
+!             !     b1 = 12.0_wp/11.0_wp
+!             !     b2 = 3.0_wp/44.0_wp
+!             !     b3 = 0.0_wp
 
-        g%mwn(:, 2) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
-                      /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
+!         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+!             kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
+!             a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
+!             b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
+!             b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
+!             b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
 
-! Final calculations because it is mainly used in the Helmholtz solver like this
-        g%mwn(:, 2) = g%mwn(:, 2)/(g%jac(1, 1)**2)
+!         end select
 
-        ig = ig + 2
+!         g%mwn2(:) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+!                     /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
 
-    end if
+! ! Final calculations because it is mainly used in the Helmholtz solver like this
+!         g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)
+
+!         ig = ig + 1
+
+!     end if
 
 ! ###################################################################
 ! Density correction in anelastic mode
