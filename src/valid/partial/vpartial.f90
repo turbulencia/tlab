@@ -7,10 +7,11 @@ program VPARTIAL
     use TLAB_VARS, only: reynolds, schmidt
     ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk3d
+    use TLAB_ARRAYS, only: wrk1d, txc, x, wrk3d
     use FDM_COM_DIRECT
     use FDM_PROCS
     use FDM_Com_Jacobian
+    use FDM_Com2_Jacobian
     use OPR_PARTIAL
 
     implicit none
@@ -146,32 +147,52 @@ program VPARTIAL
 ! Testing first-order derivatives
         ! Jacobian based
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_b)
+        !
         ! call FDM_C1N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
         ! call FDM_C1N6_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du1_n)
         !
-        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        ! call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        ! do i = 1,imax
-        !     print*,g%lu1(i, 1:3)
-        !     print*,'rhs',g%rhs1(i, 1:3)
-        ! end do
-        call FDM_Bcs(g%lu1(:, 1:3), BCS_DD)
-        call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
-        ! call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, BCS_DD)
-        call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
-        call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
-        ! call TRIDPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
-        ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk3d)
+        ! call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        ! ! call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        ! ! do i = 1,imax
+        ! !     print*,g%lu1(i, 1:3)
+        ! !     print*,'rhs',g%rhs1(i, 1:3)
+        ! ! end do
+        ! call FDM_Bcs(g%lu1(:, 1:3), BCS_DD)
+        ! call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
+        ! ! call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, BCS_DD)
+        ! call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
+        ! call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
+        ! ! call TRIDPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
+        ! ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk3d)
 
         ! Direct metrics
 
-        call check(u, du1_a, du1_n, 'partial.dat')
+        ! call check(u, du1_a, du1_n, 'partial.dat')
 
 ! -------------------------------------------------------------------
 ! Testing second-order derivatives
         ! Jacobian based
         ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n2, du1_n)
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
+        !
+        ! call FDM_C2N6H_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+        ! call FDM_C2N6H_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du2_n2)
+        ! call FDM_C2N6HP_LHS(g%size, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+        ! call FDM_C2N6HP_RHS(g%size, len, u, du2_n2)
+        ! call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+        call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+        do i = 1,imax
+            print*,g%lu2(i, 1:3)/g%jac(1,1)/g%jac(1,1)
+            print*,'rhs',g%rhs2(i, 1:7)
+        end do
+        ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
+        ! call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
+        call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
+
+        call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
+        call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
+        ! call TRIDPFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), g%lu2(:, 4), g%lu2(:, 5))
+        ! call TRIDPSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), g%lu2(:, 4), g%lu2(:, 5), du2_n2, wrk3d)
 
         ! Direct metrics
         ! call FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1, 1), wrk1d(1, 4))
@@ -180,7 +201,7 @@ program VPARTIAL
         ! call MatMul_5d(imax, len, wrk1d(1, 4), u, du2_n2)
         ! call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
 
-        ! call check(u, du2_a, du2_n2, 'partial.dat')
+        call check(u, du2_a, du2_n2, 'partial.dat')
 
 ! ###################################################################
     elseif (test_type == 2) then ! Testing new BCs routines

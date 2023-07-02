@@ -42,13 +42,13 @@ contains
 
         ! #######################################################################
         ! Interior points according to Eq. 2.1.7 (\alpha=1/3), 6th order approximation
-        coef(1:2) = [0.25_wp, 0.0_wp]                       ! a_1, a_2
-        coef(3:5) = [0.75_wp, 0.0_wp, 0.0_wp]               ! b_1, b_2, b_3
+        coef(1:2) = [0.25_wp, 0.0_wp]                                   ! a_1, a_2
+        coef(3:5) = [0.75_wp, 0.0_wp, 0.0_wp]                           ! b_1, b_2, b_3
 
         if (.not. periodic) then    ! biased at the boundaries
-            ! 3. order in Eq. 4.1.3 with \alpha=2
-            coef_bc1(1:2) = [2.0_wp, 0.0_wp]                           ! a_1, a_2
-            coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]  ! b_1, b_2, b_3, b_4
+            ! 3rd order, Eq. 4.1.3 with \alpha=2
+            coef_bc1(1:2) = [2.0_wp, 0.0_wp]                            ! a_1, a_2
+            coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]   ! b_1, b_2, b_3, b_4
 
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1)
 
@@ -74,20 +74,20 @@ contains
 
         ! #######################################################################
         ! Interior points according to Eq. 2.1.7 (\alpha=1/3), 6th order approximation
-        coef(1:2) = [1.0_wp/3.0_wp, 0.0_wp]                     ! a_1, a_2
-        coef(3:5) = [7.0_wp/9.0_wp, 1.0_wp/36.0_wp, 0.0_wp]     ! b_1, b_2, b_3
+        coef(1:2) = [1.0_wp/3.0_wp, 0.0_wp]                                     ! a_1, a_2
+        coef(3:5) = [7.0_wp/9.0_wp, 1.0_wp/36.0_wp, 0.0_wp]                     ! b_1, b_2, b_3
 
         if (.not. periodic) then    ! biased at the boundaries
-            ! 3. order in Eq. 4.1.3 with \alpha=2
-            coef_bc1(1:2) = [2.0_wp, 0.0_wp]                           ! a_1, a_2
-            coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]  ! b_1, b_2, b_3, b_4
+            ! 3rd order, Eq. 4.1.3 with \alpha=2
+            coef_bc1(1:2) = [2.0_wp, 0.0_wp]                                    ! a_1, a_2
+            coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]           ! b_1, b_2, b_3, b_4
 
-            ! 5. order in Carpenter et al, JCP, 108:272-295, 1993, Eq. 93, who study the effect of boundary points on stability
-            coef_bc2(1:2) = [1.0_wp/6.0_wp, 0.5_wp]                            ! a_1, a_2
-            coef_bc2(3:6) = [-5.0_wp/9.0_wp, -0.5_wp, 1.0_wp, 1.0_wp/18.0_wp]  ! b_1, b_2, b_3, b_4
-            ! 4. order in Eq. 2.1.6 with \alpha=1/4.
-            ! coef_bc2(1:2) = [0.25_wp, 0.25_wp]                             ! a_1, a_2
-            ! coef_bc2(3:6) = [-0.75_wp, 0.0_wp, 0.75_wp, 0.0_wp]            ! b_1, b_2, b_3, b_4
+            ! 5th order in Carpenter et al, JCP, 108:272-295, 1993, Eq. 93, who study the effect of boundary points on stability
+            coef_bc2(1:2) = [1.0_wp/6.0_wp, 0.5_wp]                             ! a_1, a_2
+            coef_bc2(3:6) = [-5.0_wp/9.0_wp, -0.5_wp, 1.0_wp, 1.0_wp/18.0_wp]   ! b_1, b_2, b_3, b_4
+            ! 4th order, Eq. 2.1.6 with \alpha=1/4.
+            ! coef_bc2(1:2) = [0.25_wp, 0.25_wp]                                  ! a_1, a_2
+            ! coef_bc2(3:6) = [-0.75_wp, 0.0_wp, 0.75_wp, 0.0_wp]                 ! b_1, b_2, b_3, b_4
 
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1, coef_bc2)
 
