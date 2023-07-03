@@ -181,10 +181,10 @@ program VPARTIAL
         ! call FDM_C2N6HP_RHS(g%size, len, u, du2_n2)
         ! call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
-        do i = 1,imax
-            print*,g%lu2(i, 1:3)/g%jac(1,1)/g%jac(1,1)
-            print*,'rhs',g%rhs2(i, 1:7)
-        end do
+        ! do i = 1,imax
+        !     print*,g%lu2(i, 1:3)/g%jac(1,1)/g%jac(1,1)
+        !     print*,'rhs',g%rhs2(i, 1:7)
+        ! end do
         ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
         ! call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
         call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)

@@ -207,22 +207,21 @@ contains
 
         ! -------------------------------------------------------------------
         ! Boundary
-        n = 1 ! rhs(1,1) contains 1. superdiagonal to allow for longer stencil at boundary
-        f(:, n) = &
-            +u(:, n) &
-            + u(:, n + 1)*r2(n) + u(:, n + 2)*r1(n)
+        n = 1
+        f(:, n) = u(:, n) + u(:, n + 1)*r2(n) &
+                  + u(:, n + 2)*r1(n)   ! r11 contains 2. superdiagonal to allow for longer stencil at boundary
 
-        ! Interior points
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
         do n = 2, nmax - 1
-            f(:, n) = u(:, n - 1)*r1(n) &
-                      + u(:, n) &
-                      + u(:, n + 1)*r2(n)
+            f(:, n) = u(:, n - 1)*r1(n) + u(:, n) + u(:, n + 1)*r2(n)
         end do
 
+        ! -------------------------------------------------------------------
         ! Boundary
-        n = nmax ! rhs(n,2) contains 1. subdiagonal to allow for longer stencil at boundary
-        f(:, n) = u(:, n - 2)*r2(n) + u(:, n - 1)*r1(n) &
-                  + u(:, n)
+        n = nmax
+        f(:, n) = u(:, n - 2)*r2(n) &   ! r2(n) contains 2. subdiagonal to allow for longer stencil at boundary
+                  + u(:, n - 1)*r1(n) + u(:, n)
 
         return
     end subroutine MatMul_3d
@@ -242,13 +241,13 @@ contains
         integer ibc_loc
 
         ! -------------------------------------------------------------------
-
         if (present(ibc)) then
             ibc_loc = ibc
         else
             ibc_loc = BCS_DD
         end if
 
+        ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
             f(:, 1) = u(:, 2) - u(:, nmax)
@@ -261,11 +260,13 @@ contains
 
         end if
 
-        ! Interior points
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
         do n = 2, nmax - 1
             f(:, n) = u(:, n + 1) - u(:, n - 1)
         end do
 
+        ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
             f(:, nmax) = u(:, 1) - u(:, nmax - 1)
@@ -296,13 +297,13 @@ contains
         integer ibc_loc
 
         ! -------------------------------------------------------------------
-
         if (present(ibc)) then
             ibc_loc = ibc
         else
             ibc_loc = BCS_DD
         end if
 
+        ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
             f(:, 1) = u(:, 2) + u(:, nmax) + u(:, 1)*r2(1)
@@ -315,11 +316,13 @@ contains
 
         end if
 
-        ! Interior points
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
         do n = 2, nmax - 1
             f(:, n) = u(:, n + 1) + u(:, n - 1) + u(:, n)*r2(n)
         end do
 
+        ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
             f(:, nmax) = u(:, 1) + u(:, nmax - 1) + u(:, nmax)*r2(nmax)
@@ -348,32 +351,31 @@ contains
 
         ! -------------------------------------------------------------------
         ! Boundary
-        n = 1 ! rhs(1,1) contains 3. superdiagonal to allow for longer stencil at boundary
-        f(:, n) = &
-            +u(:, n) &
-            + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4) + u(:, n + 3)*rhs(n, 1)
+        n = 1
+        f(:, n) = u(:, n) + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4) &
+                  + u(:, n + 3)*rhs(n, 1)   ! r11 contains 3. superdiagonal to allow for longer stencil at boundary
 
         n = 2
-        f(:, n) = u(:, n - 1)*rhs(n, 2) &
-                  + u(:, n) &
-                  + u(:, n + 1)*rhs(n, 3)
+        f(:, n) = u(:, n - 1)*rhs(n, 2) + u(:, n) + u(:, n + 1)*rhs(n, 3)
 
-        ! Interior points
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
         do n = 3, nmax - 2
             f(:, n) = u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) &
                       + u(:, n) &
                       + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4)
         end do
 
+        ! -------------------------------------------------------------------
         ! Boundary
         n = nmax - 1
         f(:, n) = u(:, n - 1)*rhs(n, 2) &
                   + u(:, n) &
                   + u(:, n + 1)*rhs(n, 3)
 
-        n = nmax ! rhs(1,4) contains 3. subdiagonal to allow for longer stencil at boundary
-        f(:, n) = u(:, n - 3)*rhs(n, 4) + u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) &
-                  + u(:, n)
+        n = nmax 
+        f(:, n) = u(:, n - 3)*rhs(n, 4) &   ! rhs(1,4) contains 3. subdiagonal to allow for longer stencil at boundary
+                  + u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) + u(:, n)
 
         return
     end subroutine MatMul_5d
@@ -567,7 +569,7 @@ contains
 
             f(:, 2) = u(:, 1)*r3(2) + u(:, 2)*r4(2) + u(:, 3)*r5(2) + u(:, 4)*r6(2) + u(:, 5)*r7(2)
 
-            f(:, 3) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2) + u(:, 5)*r6(2) + u(:, 6)*r7(2)
+            f(:, 3) = u(:, 1)*r2(3) + u(:, 2)*r3(3) + u(:, 3)*r4(3) + u(:, 4)*r5(3) + u(:, 5)*r6(3) + u(:, 6)*r7(3)
 
             if (any([BCS_ND, BCS_NN] == ibc_loc)) f(:, 1) = 0.0_wp
 
@@ -594,8 +596,8 @@ contains
                          + r6_loc*(u(:, 2) + u(:, nmax - 2)) &
                          + r7_loc*(u(:, 3) + u(:, nmax - 3))
         else
-            f(:, nmax - 2) = u(:, nmax - 5)*r1(nmax - 1) + u(:, nmax - 4)*r2(nmax - 1) + u(:, nmax - 3)*r3(nmax - 1) + u(:, nmax - 2)*r4(nmax - 1) + u(:, nmax - 1)*r5(nmax - 1) &
-                             + u(:, nmax)*r6(nmax - 1)
+            f(:, nmax - 2) = u(:, nmax - 5)*r1(nmax - 2) + u(:, nmax - 4)*r2(nmax - 2) + u(:, nmax - 3)*r3(nmax - 2) + u(:, nmax - 2)*r4(nmax - 2) + u(:, nmax - 1)*r5(nmax - 2) &
+                             + u(:, nmax)*r6(nmax - 2)
 
             f(:, nmax - 1) = u(:, nmax - 4)*r1(nmax - 1) + u(:, nmax - 3)*r2(nmax - 1) + u(:, nmax - 2)*r3(nmax - 1) + u(:, nmax - 1)*r4(nmax - 1) &
                              + u(:, nmax)*r5(nmax - 1)
