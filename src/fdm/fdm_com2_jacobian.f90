@@ -36,10 +36,10 @@ contains
     ! rhs is still pentadiagonal because of the bcs
     subroutine FDM_C2N4_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
         integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 5)   ! RHS diagonals; b_2, b_3 = 0
-        real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
+        real(wp), intent(in) :: dx(nmax, 2)
+        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nmax, 5 + 3)   ! RHS diagonals; b_2, b_3 = 0
+        real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in) :: periodic
 
         ! -------------------------------------------------------------------
@@ -55,10 +55,10 @@ contains
             coef_bc1(1:2) = [11.0_wp, 0.0_wp]                       ! a_1, a_2
             coef_bc1(3:6) = [13.0_wp, -27.0_wp, 15.0_wp, -1.0_wp]   ! b_1, b_2, b_3, b_4
 
-            call Create_System_2der(dx, lhs, rhs, coef, coef_bc1)
+            call Create_System_2der(dx, lhs, rhs(:, 1:5), rhs(:, 6:8), coef, coef_bc1)
 
         else
-            call Create_System_2der(dx, lhs, rhs, coef)
+            call Create_System_2der(dx, lhs, rhs(:, 1:5), rhs(:, 6:8), coef)
 
         end if
 
@@ -68,10 +68,10 @@ contains
 !########################################################################
     subroutine FDM_C2N6_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
         integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 5)   ! RHS diagonals; b_3 = 0
-        real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
+        real(wp), intent(in) :: dx(nmax, 2)
+        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nmax, 5 + 3)   ! RHS diagonals; b_3 = 0
+        real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in) :: periodic
 
         ! -------------------------------------------------------------------
@@ -91,10 +91,10 @@ contains
             coef_bc2(1:2) = [0.1_wp, 0.1_wp]                        ! a_1, a_2
             coef_bc2(3:6) = [1.2_wp, -2.4_wp, 1.2_wp, 0.0_wp]       ! b_1, b_2, b_3, b_4
 
-            call Create_System_2der(dx, lhs, rhs, coef, coef_bc1, coef_bc2)
+            call Create_System_2der(dx, lhs, rhs(:, 1:5), rhs(:, 6:8), coef, coef_bc1, coef_bc2)
 
         else
-            call Create_System_2der(dx, lhs, rhs, coef)
+            call Create_System_2der(dx, lhs, rhs(:, 1:5), rhs(:, 6:8), coef)
 
         end if
 
@@ -104,10 +104,10 @@ contains
 !########################################################################
     subroutine FDM_C2N6_Hyper_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
         integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 7)   ! RHS diagonals; b_3 = 0
-        real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
+        real(wp), intent(in) :: dx(nmax, 2)
+        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nmax, 7 + 3)   ! RHS diagonals; b_3 = 0
+        real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in) :: periodic
 
         ! -------------------------------------------------------------------
@@ -135,12 +135,11 @@ contains
             ! 6th order, Eq. 2.2.7, 6th order approximation
             coef_bc3(1:2) = [2.0_wp/11.0_wp, 2.0_wp/11.0_wp]                ! a_1, a_2
             coef_bc3(3:8) = [3.0_wp/44.0_wp, 12.0_wp/11.0_wp, -51.0_wp/22.0_wp, 12.0_wp/11.0_wp, 3.0_wp/44.0_wp, 0.0_wp]       ! b_1, b_2, b_3, b_4, b_5, b_6
-    
-    
-            call Create_System_2der(dx, lhs, rhs, coef, coef_bc1, coef_bc2, coef_bc3)
+
+            call Create_System_2der(dx, lhs, rhs(:, 1:7), rhs(:, 8:10), coef, coef_bc1, coef_bc2, coef_bc3)
 
         else
-            call Create_System_2der(dx, lhs, rhs, coef)
+            call Create_System_2der(dx, lhs, rhs(:, 1:7), rhs(:, 8:10), coef)
 
         end if
 
@@ -148,10 +147,11 @@ contains
     end subroutine FDM_C2N6_Hyper_Jacobian
 
 !########################################################################
-    subroutine Create_System_2der(dx, lhs, rhs, coef_int, coef_bc1, coef_bc2, coef_bc3)
-        real(wp), intent(in) :: dx(:)
-        real(wp), intent(out) :: lhs(:, :)   ! LHS diagonals
-        real(wp), intent(out) :: rhs(:, :)   ! RHS diagonals
+    subroutine Create_System_2der(dx, lhs, rhs, rhs_d1, coef_int, coef_bc1, coef_bc2, coef_bc3)
+        real(wp), intent(in) :: dx(:, :)        ! 1. and 2. order Jacobians
+        real(wp), intent(out) :: lhs(:, :)      ! LHS diagonals
+        real(wp), intent(out) :: rhs(:, :)      ! RHS diagonals
+        real(wp), intent(out) :: rhs_d1(:, :)   ! RHS diagonals that multiply 1. derivative
         real(wp), intent(in) :: coef_int(5)             ! a_1, a_2b_1, b_2, b_3
         real(wp), intent(in), optional :: coef_bc1(6)   ! a_1, a_2, b_1, b_2, b_3, b_4
         real(wp), intent(in), optional :: coef_bc2(6)   ! a_1, a_2, b_1, b_2, b_3, b_4
@@ -230,16 +230,23 @@ contains
             rhs(n, :) = rhs(3, size(rhs, 2):1:-1)
         end if
 
-        ! multiply by the Jacobian
-        lhs(:, idl) = lhs(:, idl)*dx(:)*dx(:)       ! center diagonal
-        do i = 1, idl - 1                           ! off-diagonals
-            lhs(:, idl - i) = lhs(:, idl - i)*cshift(dx(:), -i)*cshift(dx(:), -i)
-            lhs(:, idl + i) = lhs(:, idl + i)*cshift(dx(:), +i)*cshift(dx(:), +i)
+        ! multiply by the Jacobians
+        rhs_d1(:, idl) = -lhs(:, idl)*dx(:, 2)          ! center diagonal
+        do i = 1, idl - 1                               ! off-diagonals
+            rhs_d1(:, idl - i) = -lhs(:, idl - i)*cshift(dx(:, 2), -i)
+            rhs_d1(:, idl + i) = -lhs(:, idl + i)*cshift(dx(:, 2), +i)
+        end do
+
+        lhs(:, idl) = lhs(:, idl)*dx(:, 1)*dx(:, 1)     ! center diagonal
+        do i = 1, idl - 1                               ! off-diagonals
+            lhs(:, idl - i) = lhs(:, idl - i)*cshift(dx(:, 1), -i)*cshift(dx(:, 1), -i)
+            lhs(:, idl + i) = lhs(:, idl + i)*cshift(dx(:, 1), +i)*cshift(dx(:, 1), +i)
         end do
 
         ! normalize such the coefficent in 1. off-diagonal of rhs is 1
         lhs(:, :) = lhs(:, :)/coef_int(3)
         rhs(:, :) = rhs(:, :)/coef_int(3)
+        rhs_d1(:, :) = rhs_d1(:, :)/coef_int(3)
 
         return
     end subroutine Create_System_2der

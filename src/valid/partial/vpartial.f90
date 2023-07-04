@@ -26,7 +26,7 @@ program VPARTIAL
     real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5)
-    integer(wi) :: test_type, ibc
+    integer(wi) :: test_type, ibc, ip
 
     integer, parameter :: i1 = 1
 
@@ -86,14 +86,14 @@ program VPARTIAL
             x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
-        do i = 1, imax
-            x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
-        end do
-        ! open (21, file='y.dat')
         ! do i = 1, imax
-        !     read (21, *) x(i, 1)
+        !     x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
         ! end do
-        ! close (21)
+        open (21, file='y.dat')
+        do i = 1, imax
+            read (21, *) x(i, 1)
+        end do
+        close (21)
         g%scale = x(imax, 1) - x(1, 1)
     end if
 
@@ -175,24 +175,45 @@ program VPARTIAL
         ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n2, du1_n)
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
         !
+
+        call FDM_C2N4_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+        ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
+        call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
+        call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5),u, du2_n2, g%periodic)
+        ip = 5
+        call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
+        call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
+        call check(u, du2_a, du2_n2, 'partial.dat')
+
+        ! call FDM_C2N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+        ! call FDM_C2N6NJ_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, u, du1_a, du2_n2)
+        call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+        ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
+        call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
+        call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
+        ip = 5
+        call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
+        call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
+        call check(u, du2_a, du2_n2, 'partial.dat')
+
         ! call FDM_C2N6H_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
         ! call FDM_C2N6H_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du2_n2)
         ! call FDM_C2N6HP_LHS(g%size, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
         ! call FDM_C2N6HP_RHS(g%size, len, u, du2_n2)
-        ! call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! do i = 1,imax
         !     print*,g%lu2(i, 1:3)/g%jac(1,1)/g%jac(1,1)
         !     print*,'rhs',g%rhs2(i, 1:7)
         ! end do
         ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
-        ! call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
-        call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
-
         call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
+        call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
+        ip = 7
+        call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
         call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
         ! call TRIDPFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), g%lu2(:, 4), g%lu2(:, 5))
         ! call TRIDPSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), g%lu2(:, 4), g%lu2(:, 5), du2_n2, wrk3d)
+        call check(u, du2_a, du2_n2, 'partial.dat')
 
         ! Direct metrics
         ! call FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1, 1), wrk1d(1, 4))
@@ -201,7 +222,6 @@ program VPARTIAL
         ! call MatMul_5d(imax, len, wrk1d(1, 4), u, du2_n2)
         ! call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
 
-        call check(u, du2_a, du2_n2, 'partial.dat')
 
 ! ###################################################################
     elseif (test_type == 2) then ! Testing new BCs routines

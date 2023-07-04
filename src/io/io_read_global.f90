@@ -943,7 +943,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
         end if
         g(is)%inb_grid = g(is)%inb_grid &
                          + 7 &                      ! # of diagonals in RHS for 1. order
-                         + 7                        ! # of diagonals in RHS for 2. order
+                         + 7 + 5                    ! # of diagonals in RHS for 2. order + LU diagonals for Jacobian case
         g(is)%inb_grid = g(is)%inb_grid &
                          + 1                        ! Density correction in anelastic mode
         if ((stagger_on) .and. g(is)%periodic) then

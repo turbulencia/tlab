@@ -264,7 +264,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! second-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
     g%rhs2 => x(:, ig:)
-    ig = ig + 7
+    ig = ig + 7 + 5
     g%lu2 => x(:, ig:)
 
 ! -------------------------------------------------------------------

@@ -20,10 +20,13 @@ module FDM_PROCS
 
     ! generic cases
     public MatMul_3d            ! Calculate f = B u, assuming B is tridiagonal with center diagonal equal to 1
-    public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
+    public MatMul_3d_add        ! Calculate f = f + B u, assuming B is tridiagonal
     ! special cases, coefficients are constant in the interior points
     public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric with 1. off-diagonal equal to 1
     public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric with 1. off-diagonal equal to 1
+    !
+    public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
+    public MatMul_5d_add        ! Calculate f = f + B u, assuming B is pentadiagonal
     public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric with 1. off-diagonal equal to 1
     public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. off-diagonal equal to 1
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
@@ -196,9 +199,9 @@ contains
 ! #######################################################################
 ! #######################################################################
     ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
-    subroutine MatMul_3d(nmax, mmax, r1, r2, u, f)
+    subroutine MatMul_3d(nmax, mmax, r1, r3, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
-        real(wp), intent(in) :: r1(nmax), r2(nmax)  ! RHS diagonals (#=3-1 because center diagonal is 1)
+        real(wp), intent(in) :: r1(nmax), r3(nmax)  ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
         real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
 
@@ -208,23 +211,53 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         n = 1
-        f(:, n) = u(:, n) + u(:, n + 1)*r2(n) &
+        f(:, n) = u(:, n) + u(:, n + 1)*r3(n) &
                   + u(:, n + 2)*r1(n)   ! r11 contains 2. superdiagonal to allow for longer stencil at boundary
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
         do n = 2, nmax - 1
-            f(:, n) = u(:, n - 1)*r1(n) + u(:, n) + u(:, n + 1)*r2(n)
+            f(:, n) = u(:, n - 1)*r1(n) + u(:, n) + u(:, n + 1)*r3(n)
         end do
 
         ! -------------------------------------------------------------------
         ! Boundary
         n = nmax
-        f(:, n) = u(:, n - 2)*r2(n) &   ! r2(n) contains 2. subdiagonal to allow for longer stencil at boundary
+        f(:, n) = u(:, n - 2)*r3(n) &   ! r3(n) contains 2. subdiagonal to allow for longer stencil at boundary
                   + u(:, n - 1)*r1(n) + u(:, n)
 
         return
     end subroutine MatMul_3d
+
+    ! #######################################################################
+    ! Calculate f = f + B u, assuming B is tri-diagonal
+    subroutine MatMul_3d_add(nmax, mmax, r1, r2, r3, u, f)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax)
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(inout) :: f(mmax, nmax)    ! RHS, f = B u
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        n = 1
+        f(:, n) = f(:, n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n)
+
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
+        do n = 2, nmax - 1
+            f(:, n) = f(:, n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n)
+        end do
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        n = nmax
+        f(:, n) = f(:, n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n)
+
+        return
+    end subroutine MatMul_3d_add
 
     ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric tri-diagonal with 1. off-diagonal equal to 1
@@ -373,12 +406,42 @@ contains
                   + u(:, n) &
                   + u(:, n + 1)*rhs(n, 3)
 
-        n = nmax 
+        n = nmax
         f(:, n) = u(:, n - 3)*rhs(n, 4) &   ! rhs(1,4) contains 3. subdiagonal to allow for longer stencil at boundary
                   + u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) + u(:, n)
 
         return
     end subroutine MatMul_5d
+
+    ! #######################################################################
+    ! Calculate f = f + B u, assuming B is pentadiagonal
+    subroutine MatMul_5d_add(nmax, mmax, r1, r2, r3, r4, r5, u, f)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax), r4(nmax), r5(nmax)
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(inout) :: f(mmax, nmax)    ! RHS, f = B u
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        f(:, 1) = f(:, 1) + u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1)
+        f(:, 2) = f(:, 2) + u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
+
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
+        do n = 3, nmax - 2
+            f(:, n) = f(:, n) + u(:, n - 2)*r1(n) + u(:, n - 1)*r2(n) + u(:, n)*r3(n) + u(:, n + 1)*r4(n) + u(:, n + 2)*r5(n)
+        end do
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        f(:, nmax - 1) = f(:, nmax - 1) + u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) + u(:, nmax)*r4(nmax-1)
+        f(:, nmax) = f(:, nmax) + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)*r3(nmax)
+
+        return
+    end subroutine MatMul_5d_add
 
     ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. off-diagonal equal to 1
