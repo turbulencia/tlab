@@ -76,8 +76,8 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-               call FDM_C1N4_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
-                ! call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, bcs(1) + bcs(2)*2)
+            !    call FDM_C1N4_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+                call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, bcs(1) + bcs(2)*2)
 
             case (FDM_COM6_JACOBIAN)
             !    call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
@@ -87,7 +87,8 @@ contains
                 call FDM_C1N6M_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
 
             case (FDM_COM6_DIRECT) ! Not yet implemented
-                call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+                ! call FDM_C1N6_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
+                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, bcs(1) + bcs(2)*2)
 
             end select
 
@@ -181,7 +182,7 @@ contains
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
         use FDM_COM_DIRECT
-        use FDM_PROCS, only: MatMul_5d
+        use FDM_Com2_Jacobian
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -232,13 +233,15 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call FDM_C2N4P_RHS(g%size, nlines, u, result)
-
+                ! call FDM_C2N4P_RHS(g%size, nlines, u, result)
+                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5),u, result, g%periodic)
+        
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA) ! Direct = Jacobian because uniform grid
                 ! call FDM_C2N6P_RHS(g%size, nlines, u, result)
-                call FDM_C2N6HP_RHS(g%size, nlines, u, result)
+                ! call FDM_C2N6HP_RHS(g%size, nlines, u, result)
                 ! call MatMul_7d_sym(g%size, nlines, -0.281250399533387e+1_wp, 0.422670003525653_wp, -0.164180058587192e-1_wp, u, result)
-
+                call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
+        
             end select
 
             call TRIDPSS(g%size, nlines, lu2_p(1, 1), lu2_p(1, 2), lu2_p(1, 3), lu2_p(1, 4), lu2_p(1, 5), result, wrk2d)
@@ -248,20 +251,26 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                if (g%uniform) then
-                    call FDM_C2N4_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
-                else ! Not yet implemented
-                end if
-
+                ! if (g%uniform) then
+                !     call FDM_C2N4_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
+                ! else ! Not yet implemented
+                ! end if
+                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5),u, result, g%periodic)
+                ip = 5
+                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
+        
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                if (g%uniform) then
-                    ! call FDM_C2N6_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
-                    call FDM_C2N6H_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
-                else        ! need first derivative from above
-                    ! call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
-                    call FDM_C2N6HNJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
-                end if
-
+                ! if (g%uniform) then
+                !     ! call FDM_C2N6_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
+                !     call FDM_C2N6H_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), u, result)
+                ! else        ! need first derivative from above
+                !     ! call FDM_C2N6NJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
+                !     call FDM_C2N6HNJ_RHS(g%size, nlines, bcs(1, 2), bcs(2, 2), g%jac, u, du, result)
+                ! end if
+                call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
+                ip = 7
+                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
+        
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
                 call MatMul_5d(g%size, nlines, g%lu2(:, 4), u, result)
 

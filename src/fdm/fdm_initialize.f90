@@ -16,6 +16,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use FDM_PROCS
     use FDM_COM_DIRECT
     use FDM_Com_Jacobian
+    use FDM_Com2_Jacobian
 
     implicit none
 
@@ -27,8 +28,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
 ! -------------------------------------------------------------------
     integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
-    real(wp) dummy
-    real(wp) a1, a2, b1, b2, b3, kc, coef(5)
+    real(wp) dummy, coef(5)
+    ! real(wp) a1, a2, b1, b2, b3, kc, coef(5)
 
     integer, parameter :: i0 = 0, i1 = 1
 
@@ -98,8 +99,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
-            call FDM_C1N4_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C1N4_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
+            ! call FDM_C1N4_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            ! call FDM_C1N4_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
             call FDM_C1N6_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
@@ -127,8 +128,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
-            call FDM_C2N4_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C2N4_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
+            ! call FDM_C2N4_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            ! call FDM_C2N4_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
             ! call FDM_C2N6_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
@@ -244,7 +245,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
               call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
 
             case (FDM_COM6_DIRECT) ! Not yet implemented; using Jacobian version
-                call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                ! call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
+                call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
 
             end select
 
@@ -274,11 +277,13 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
-            call FDM_C2N4P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+            call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+!            call FDM_C2N4P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)  ! Direct = Jacobian because uniform grid
             ! call FDM_C2N6P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
-            call FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+!            call FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+            call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
 
         end select
 
@@ -289,27 +294,30 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
         g%mwn2 => x(:, ig)
 
-        select case (g%mode_fdm)
+        ! select case (g%mode_fdm)
 
-        case (FDM_COM4_JACOBIAN) ! Not yet implemented
+        ! case (FDM_COM4_JACOBIAN) ! Not yet implemented
 
-            ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
-            !     b1 = 12.0_wp/11.0_wp
-            !     b2 = 3.0_wp/44.0_wp
-            !     b3 = 0.0_wp
+        !     ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+        !     !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
+        !     !     b1 = 12.0_wp/11.0_wp
+        !     !     b2 = 3.0_wp/44.0_wp
+        !     !     b3 = 0.0_wp
 
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
-            a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
-            b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
-            b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
-            b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
+        ! case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+        !     kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
+        !     a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
+        !     b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
+        !     b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
+        !     b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
 
-        end select
+        ! end select
 
-        g%mwn2(:) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
-                    /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
+        ! g%mwn2(:) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+        !             /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
+
+        g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+                    /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
 ! Final calculations because it is mainly used in the Helmholtz solver like this
         g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)
@@ -327,11 +335,13 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call FDM_C2N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
+                call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
+                ! call FDM_C2N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
                 ! call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
-                call FDM_C2N6H_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
+!                call FDM_C2N6H_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
+                call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
 
             case (FDM_COM6_DIRECT)
                 if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
