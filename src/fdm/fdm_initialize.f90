@@ -22,14 +22,13 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     type(grid_dt), intent(inout) :: g
     real(wp), intent(inout) :: x(g%size, g%inb_grid)
-    real(wp), intent(inout) :: wrk1d(g%size, 5)
+    real(wp), intent(inout) :: wrk1d(g%size, 10)
 
     target x
 
 ! -------------------------------------------------------------------
     integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
     real(wp) dummy, coef(5)
-    ! real(wp) a1, a2, b1, b2, b3, kc, coef(5)
 
     integer, parameter :: i0 = 0, i1 = 1
 
@@ -48,104 +47,66 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 1
 
 ! ###################################################################
-! Coefficients of pentadiagonal 6th-order scheme for 1st derivative
-    if (g%mode_fdm == FDM_COM6_JACPENTA) call FDM_C1N6M_COEFF()
-
-! ###################################################################
 ! Jacobians
 ! ###################################################################
     g%jac => x(:, ig:)
 
     if (nx == 1) then
-        g%jac(1, 1) = 1.0_wp
-        g%jac(1, 2) = 1.0_wp
-        g%jac(1, 3) = 0.0_wp
-        g%jac(1, 4) = 0.0_wp
+        g%jac(:, :) = 1.0_wp
         return
     end if
 
-! ###################################################################
-    if (g%uniform) then
-! -------------------------------------------------------------------
-! first derivative
-! -------------------------------------------------------------------
-        do i = 2, nx - 1
-            g%jac(i, 1) = (x(i + 1, 1) - x(i - 1, 1))*0.5_wp
-        end do
+    ! -------------------------------------------------------------------
+    ! first derivative
+    g%jac(:, 1) = 1.0_wp
 
-! Boundary points
-        if (g%periodic) then
-            g%jac(nx, 1) = (x(1, 1) + g%scale - x(nx - 1, 1))*0.5_wp
-            g%jac(1, 1) = (x(2, 1) - x(1, 1) + x(1, 1) + g%scale - x(nx, 1))*0.5_wp
+    select case (g%mode_fdm)
 
-        else
-            g%jac(1, 1) = g%jac(2, 1)
-            g%jac(nx, 1) = g%jac(nx - 1, 1)
+    case (FDM_COM4_JACOBIAN)
+        call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
+        call MatMul_3d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), x, g%jac(:, 1), periodic=.false.)
 
-        end if
+    case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
+        call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
+        call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
-! -------------------------------------------------------------------
-! second derivative is zero
-! -------------------------------------------------------------------
-        g%jac(:, 2) = 0.0_wp
+    case (FDM_COM6_JACPENTA)
+        call FDM_C1N6M_COEFF()
+        call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+        call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
-! ###################################################################
-    else ! derivative wrt computational grid, uniform
-! -------------------------------------------------------------------
-! first derivative
-! -------------------------------------------------------------------
-        g%jac(:, 1) = 1.0_wp
+    end select
 
-        select case (g%mode_fdm)
-
-        case (FDM_COM4_JACOBIAN)
-            ! call FDM_C1N4_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            ! call FDM_C1N4_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
-
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
-            call FDM_C1N6_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C1N6_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
-
-        case (FDM_COM6_JACPENTA)
-            call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-            call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
-
-        end select
-
-        if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
-            call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
-        else
-            call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-            call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
-        end if
-
-! -------------------------------------------------------------------
-! second derivative
-! -------------------------------------------------------------------
-        wrk1d(:, 4) = 1.0_wp; wrk1d(:, 5) = 0.0_wp
-
-        select case (g%mode_fdm)
-
-        case (FDM_COM4_JACOBIAN)
-            ! call FDM_C2N4_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            ! call FDM_C2N4_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
-
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-            ! call FDM_C2N6_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            ! call FDM_C2N6_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
-            call FDM_C2N6H_LHS(nx, i0, i0, wrk1d(1, 4), wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C2N6H_RHS(nx, i1, i0, i0, x, g%jac(1, 2))
-
-        end select
-
+    if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
         call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-        call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
-
+        call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
+    else
+        call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+        call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
     end if
 
-! ###################################################################
-! Saving operations for the time-stability constraint
+    ! -------------------------------------------------------------------
+    ! second derivative
+    g%jac(:, 2) = 1.0_wp
+
+    select case (g%mode_fdm)
+
+    case (FDM_COM4_JACOBIAN)
+        call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+       call MatMul_5d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
+
+    case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
+        ! call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+        call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+        call MatMul_7d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
+
+    end select
+
+    call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+    call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
+
+    ! -------------------------------------------------------------------
+    ! Saving operations for the time-stability constraint
     g%jac(:, 3) = 1.0_wp/g%jac(:, 1)
     g%jac(:, 4) = g%jac(:, 3)*g%jac(:, 3)
 
@@ -165,11 +126,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         select case (g%mode_fdm)
 
         case (FDM_COM4_JACOBIAN)
-            ! call FDM_C1N4P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
             call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT) ! Direct = Jacobian because uniform grid
-            ! call FDM_C1N6P_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
             call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
 
         case (FDM_COM6_JACPENTA)
@@ -232,12 +191,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                ! call FDM_C1N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
                 call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
                 call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
 
             case (FDM_COM6_JACOBIAN)
-                ! call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
                 call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
                 call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
 
@@ -245,7 +202,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
               call FDM_C1N6M_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1,ip+1),g%lu1(1,ip+2),g%lu1(1,ip+3),g%lu1(1,ip+4),g%lu1(1,ip+5))
 
             case (FDM_COM6_DIRECT) ! Not yet implemented; using Jacobian version
-                ! call FDM_C1N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
                 call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, ip + 1:), g%rhs1(:, :), coef, g%periodic)
                 call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
 
@@ -278,11 +234,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         case (FDM_COM4_JACOBIAN)
             call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
-!            call FDM_C2N4P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)  ! Direct = Jacobian because uniform grid
-            ! call FDM_C2N6P_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
-!            call FDM_C2N6HP_LHS(nx, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+            ! call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
             call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
 
         end select
@@ -293,28 +247,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
 ! -------------------------------------------------------------------
         g%mwn2 => x(:, ig)
-
-        ! select case (g%mode_fdm)
-
-        ! case (FDM_COM4_JACOBIAN) ! Not yet implemented
-
-        !     ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-        !     !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
-        !     !     b1 = 12.0_wp/11.0_wp
-        !     !     b2 = 3.0_wp/44.0_wp
-        !     !     b3 = 0.0_wp
-
-        ! case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-        !     kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
-        !     a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
-        !     b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
-        !     b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
-        !     b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
-
-        ! end select
-
-        ! g%mwn2(:) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
-        !             /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
 
         g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                     /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
@@ -336,11 +268,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             case (FDM_COM4_JACOBIAN)
                 call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
-                ! call FDM_C2N4_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
 
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                ! call FDM_C2N6_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
-!                call FDM_C2N6H_LHS(nx, ibc_min, ibc_max, g%jac, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
                 call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
 
             case (FDM_COM6_DIRECT)
@@ -438,101 +367,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
         ig = ig + 5
     end if
-
-! ! ###################################################################
-! ! Modified wavenumbers in periodic case
-! ! ###################################################################
-!     if (g%periodic) then
-!         do i = 1, nx ! Define wavenumbers
-!             if (i <= nx/2 + 1) then
-!                 wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
-!             else
-!                 wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
-!             end if
-!         end do
-
-! ! -------------------------------------------------------------------
-! ! First-order derivative
-! ! -------------------------------------------------------------------
-!         g%mwn1 => x(:, ig)
-
-!         if (.not. stagger_on) then
-
-!             select case (g%mode_fdm)
-
-!             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
-!                 a1 = 1.0_wp/3.0_wp
-!                 a2 = 0.0_wp
-!                 b1 = 7.0_wp/9.0_wp
-!                 b2 = 1.0_wp/36.0_wp
-!                 b3 = 0.0_wp
-
-!             case (FDM_COM6_JACPENTA)
-!                 a1 = C1N6M_ALPHA2/2.0_wp
-!                 a2 = C1N6M_BETA2/2.0_wp
-!                 b1 = C1N6M_A/2.0_wp
-!                 b2 = C1N6M_BD2/2.0_wp
-!                 b3 = C1N6M_CD3/2.0_wp
-
-!             end select
-
-!             g%mwn1(:) = 2.0_wp*(b1*sin(wrk1d(:, 1)) + b2*sin(2.0_wp*wrk1d(:, 1)) + b3*sin(3.0_wp*wrk1d(:, 1))) &
-!                         /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)) + 2.0_wp*a2*cos(wrk1d(:, 1)))
-
-!         else ! staggered case has different modified wavenumbers!
-
-!             select case (g%mode_fdm)
-
-!             case DEFAULT
-!                 a1 = 9.0_wp/62.0_wp
-!                 b1 = 63.0_wp/62.0_wp
-!                 b2 = 17.0_wp/62.0_wp
-
-!             end select
-
-!             g%mwn1(:) = 2.0_wp*(b1*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + b2/3.0_wp*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
-!                         /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
-
-!         end if
-
-! ! Final calculations because it is mainly used in the Poisson solver like this
-!         g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2
-
-!         ig = ig + 1
-
-! ! -------------------------------------------------------------------
-! ! Second-order derivative
-! ! -------------------------------------------------------------------
-!         g%mwn2 => x(:, ig)
-
-!         select case (g%mode_fdm)
-
-!         case (FDM_COM4_JACOBIAN) ! Not yet implemented
-
-!             ! case (FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-!             !     a1 = 2.0_wp/11.0_wp         ! Lele's standard 6th-order pentadiagonal compact
-!             !     b1 = 12.0_wp/11.0_wp
-!             !     b2 = 3.0_wp/44.0_wp
-!             !     b3 = 0.0_wp
-
-!         case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-!             kc = pi_wp**2.0_wp          ! Lambellais' 6th-order heptadiagonal compact
-!             a1 = (272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc)
-!             b1 = (48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)
-!             b2 = (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp
-!             b3 = -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp
-
-!         end select
-
-!         g%mwn2(:) = 2.0_wp*(b1*(1.0_wp - cos(wrk1d(:, 1))) + b2*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + b3*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
-!                     /(1.0_wp + 2.0_wp*a1*cos(wrk1d(:, 1)))
-
-! ! Final calculations because it is mainly used in the Helmholtz solver like this
-!         g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)
-
-!         ig = ig + 1
-
-!     end if
 
 ! ###################################################################
 ! Density correction in anelastic mode

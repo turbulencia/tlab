@@ -157,8 +157,9 @@ program CSPLINE
         call TRIDFS(imax_int, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
         call TRIDSS(imax_int, i1, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3), dydx)
         ! second derivative
-        call FDM_C2N6H_LHS(imax_int, i0, i0, g_int%jac, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
-        call FDM_C2N6H_RHS(imax_int, i1, i0, i0, y_sp, ddydx)
+        ! call FDM_C2N6H_LHS(imax_int, i0, i0, g_int%jac, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
+        ! call FDM_C2N6H_RHS(imax_int, i1, i0, i0, y_sp, ddydx)
+        print*,'to be rewritten using new FDM routines'
         call TRIDFS(imax_int, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
         call TRIDSS(imax_int, i1, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3), ddydx)
         write (*, *) '================================================================================'

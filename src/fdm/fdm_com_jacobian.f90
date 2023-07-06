@@ -27,6 +27,8 @@ module FDM_Com_Jacobian
     public :: FDM_C1N4_Jacobian     ! 1. order derivative, 4. order approximation
     public :: FDM_C1N6_Jacobian     ! 1. order derivative, 6. order approximation
 
+    logical periodic_loc
+
 contains
     !########################################################################
     subroutine FDM_C1N4_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
@@ -35,25 +37,31 @@ contains
         real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nmax, 3)   ! RHS diagonals; b_2, b_3 = 0
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
-        logical, intent(in) :: periodic
+        logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6)
+
+        if (present(periodic)) then
+            periodic_loc = periodic
+        else
+            periodic_loc = .false.
+        end if
 
         ! #######################################################################
         ! Interior points according to Eq. 2.1.7 (\alpha=1/3), 6th order approximation
         coef(1:2) = [0.25_wp, 0.0_wp]                                   ! a_1, a_2
         coef(3:5) = [0.75_wp, 0.0_wp, 0.0_wp]                           ! b_1, b_2, b_3
 
-        if (.not. periodic) then    ! biased at the boundaries
+        if (periodic_loc) then
+            call Create_System_1der(dx, lhs, rhs, coef)
+
+        else    ! biased at the boundaries
             ! 3rd order, Eq. 4.1.3 with \alpha=2
             coef_bc1(1:2) = [2.0_wp, 0.0_wp]                            ! a_1, a_2
             coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]   ! b_1, b_2, b_3, b_4
 
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1)
-
-        else
-            call Create_System_1der(dx, lhs, rhs, coef)
 
         end if
 
@@ -67,17 +75,26 @@ contains
         real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nmax, 5)   ! RHS diagonals; b_3 = 0
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
-        logical, intent(in) :: periodic
+        logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6), coef_bc2(6)
+
+        if (present(periodic)) then
+            periodic_loc = periodic
+        else
+            periodic_loc = .false.
+        end if
 
         ! #######################################################################
         ! Interior points according to Eq. 2.1.7 (\alpha=1/3), 6th order approximation
         coef(1:2) = [1.0_wp/3.0_wp, 0.0_wp]                                     ! a_1, a_2
         coef(3:5) = [7.0_wp/9.0_wp, 1.0_wp/36.0_wp, 0.0_wp]                     ! b_1, b_2, b_3
 
-        if (.not. periodic) then    ! biased at the boundaries
+        if (periodic_loc) then
+            call Create_System_1der(dx, lhs, rhs, coef)
+
+        else    ! biased at the boundaries
             ! 3rd order, Eq. 4.1.3 with \alpha=2
             coef_bc1(1:2) = [2.0_wp, 0.0_wp]                                    ! a_1, a_2
             coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]           ! b_1, b_2, b_3, b_4
@@ -90,9 +107,6 @@ contains
             ! coef_bc2(3:6) = [-0.75_wp, 0.0_wp, 0.75_wp, 0.0_wp]                 ! b_1, b_2, b_3, b_4
 
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1, coef_bc2)
-
-        else
-            call Create_System_1der(dx, lhs, rhs, coef)
 
         end if
 
