@@ -7,10 +7,10 @@ program VPARTIAL
     use TLAB_VARS, only: reynolds, schmidt
     ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, txc, x, wrk3d
-    use FDM_COM_DIRECT
+    use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk3d
+    use FDM_ComX_Direct
     use FDM_PROCS
-    use FDM_Com_Jacobian
+    use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use OPR_PARTIAL
 
@@ -176,17 +176,17 @@ program VPARTIAL
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
         !
 
+        print *, 'Jacobian 4'
         call FDM_C2N4_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
         call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
-        call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5),u, du2_n2, g%periodic)
+        call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
         ip = 5
         call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
         call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
-        ! call FDM_C2N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
-        ! call FDM_C2N6NJ_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, u, du1_a, du2_n2)
+        print *, 'Jacobian 6'
         call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
         call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
@@ -196,10 +196,7 @@ program VPARTIAL
         call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
-        ! call FDM_C2N6H_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
-        ! call FDM_C2N6H_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du2_n2)
-        ! call FDM_C2N6HP_LHS(g%size, g%jac, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
-        ! call FDM_C2N6HP_RHS(g%size, len, u, du2_n2)
+        print *, 'Jacobian 6 hype'
         call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! do i = 1,imax
         !     print*,g%lu2(i, 1:3)/g%jac(1,1)/g%jac(1,1)
@@ -216,12 +213,19 @@ program VPARTIAL
         call check(u, du2_a, du2_n2, 'partial.dat')
 
         ! Direct metrics
-        ! call FDM_C2N6ND_INITIALIZE(imax, x, wrk1d(1, 1), wrk1d(1, 4))
-        ! ! CALL FDM_C2N4ND_INITIALIZE(imax, x, wrk1d(1,1), wrk1d(1,4))
-        ! call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-        ! call MatMul_5d(imax, len, wrk1d(1, 4), u, du2_n2)
-        ! call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
+        print *, 'Direct 4'
+        call FDM_C2N4_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4))
+        call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+        call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), u, du2_n2)
+        call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
+        call check(u, du2_a, du2_n2, 'partial.dat')
 
+        print *, 'Direct 6'
+        call FDM_C2N6_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4))
+        call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+        call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), u, du2_n2)
+        call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
+        call check(u, du2_a, du2_n2, 'partial.dat')
 
 ! ###################################################################
     elseif (test_type == 2) then ! Testing new BCs routines

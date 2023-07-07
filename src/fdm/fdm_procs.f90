@@ -373,9 +373,9 @@ contains
 
     ! #######################################################################
     ! Calculate f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine MatMul_5d(nmax, mmax, rhs, u, f)
+    subroutine MatMul_5d(nmax, mmax, r1, r2, r3, r4, u, f)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
-        real(wp), intent(in) :: rhs(nmax, 4)        ! RHS diagonals (#=5-1 because of normalization)
+        real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax), r4(nmax)    ! RHS diagonals
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
         real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
 
@@ -384,31 +384,27 @@ contains
 
         ! -------------------------------------------------------------------
         ! Boundary
-        n = 1
-        f(:, n) = u(:, n) + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4) &
-                  + u(:, n + 3)*rhs(n, 1)   ! r11 contains 3. superdiagonal to allow for longer stencil at boundary
+        f(:, 1) = u(:, 1) + u(:, 2)*r3(1) + u(:, 3)*r4(1) &
+                  + u(:, 4)*r1(1)   ! r11 contains 3. superdiagonal to allow for longer stencil at boundary
 
-        n = 2
-        f(:, n) = u(:, n - 1)*rhs(n, 2) + u(:, n) + u(:, n + 1)*rhs(n, 3)
+        f(:, 2) = u(:, 1)*r2(2) + u(:, 2) + u(:, 3)*r3(2)
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
         do n = 3, nmax - 2
-            f(:, n) = u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) &
+            f(:, n) = u(:, n - 2)*r1(n) + u(:, n - 1)*r2(n) &
                       + u(:, n) &
-                      + u(:, n + 1)*rhs(n, 3) + u(:, n + 2)*rhs(n, 4)
+                      + u(:, n + 1)*r3(n) + u(:, n + 2)*r4(n)
         end do
 
         ! -------------------------------------------------------------------
         ! Boundary
-        n = nmax - 1
-        f(:, n) = u(:, n - 1)*rhs(n, 2) &
-                  + u(:, n) &
-                  + u(:, n + 1)*rhs(n, 3)
+        f(:, nmax - 1) = u(:, nmax - 2)*r2(nmax - 1) &
+                         + u(:, nmax - 1) &
+                         + u(:, nmax)*r3(nmax - 1)
 
-        n = nmax
-        f(:, n) = u(:, n - 3)*rhs(n, 4) &   ! rhs(1,4) contains 3. subdiagonal to allow for longer stencil at boundary
-                  + u(:, n - 2)*rhs(n, 1) + u(:, n - 1)*rhs(n, 2) + u(:, n)
+        f(:, nmax) = u(:, nmax - 3)*r4(nmax) &   ! rn4 contains 3. subdiagonal to allow for longer stencil at boundary
+                  + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)
 
         return
     end subroutine MatMul_5d

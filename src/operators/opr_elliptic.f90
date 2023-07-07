@@ -51,7 +51,7 @@ contains
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_ELLIPTIC_INITIALIZE()
         use TLAB_VARS, only: g, imode_elliptic
-        use FDM_COM_DIRECT
+        use FDM_ComX_Direct
 
         integer ibc_loc
         integer, parameter :: i1 = 1, i2 = 2
@@ -60,11 +60,11 @@ contains
         select case (imode_elliptic)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N4ND_INITIALIZE(g(2)%size, g(2)%nodes, lhs, rhs)
+            call FDM_C2N4_Direct(g(2)%size, g(2)%nodes, lhs, rhs)
 
         case default !(FDM_COM6_DIRECT) ! I need it for helmholtz
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N6ND_INITIALIZE(g(2)%size, g(2)%nodes, lhs, rhs)
+            call FDM_C2N6_Direct(g(2)%size, g(2)%nodes, lhs, rhs)
 
         end select
 

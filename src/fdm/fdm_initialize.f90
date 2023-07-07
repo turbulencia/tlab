@@ -14,8 +14,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_VARS, only: C1N6M_A, C1N6M_BD2, C1N6M_CD3
     use TLAB_PROCS
     use FDM_PROCS
-    use FDM_COM_DIRECT
-    use FDM_Com_Jacobian
+    use FDM_ComX_Direct
+    use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
 
     implicit none
@@ -265,10 +265,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
                 call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
 
             case (FDM_COM6_DIRECT)
-                if (i == 0) call FDM_C2N6ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
+                if (i == 0) call FDM_C2N6_Direct(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
 
             case (FDM_COM4_DIRECT)
-                if (i == 0) call FDM_C2N4ND_INITIALIZE(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
+                if (i == 0) call FDM_C2N4_Direct(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
 
             end select
 

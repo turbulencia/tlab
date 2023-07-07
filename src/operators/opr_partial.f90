@@ -176,7 +176,7 @@ contains
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
-        use FDM_COM_DIRECT
+        use FDM_ComX_Direct
         use FDM_Com2_Jacobian
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
@@ -252,7 +252,7 @@ contains
                 call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
         
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-                call MatMul_5d(g%size, nlines, g%lu2(:, 4), u, result)
+                call MatMul_5d(g%size, nlines, g%lu2(:, 4), g%lu2(:, 5), g%lu2(:, 6), g%lu2(:, 7), u, result)
 
             end select
 

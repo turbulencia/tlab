@@ -14,19 +14,19 @@
 !# The first point from third-order biased Eq. 4.1.3 (d=0).
 !#
 !########################################################################
-module FDM_COM_DIRECT
+module FDM_ComX_Direct
     use TLAB_CONSTANTS
     use FDM_PROCS
     implicit none
     private
 
-    public FDM_C2N4ND_INITIALIZE
-    public FDM_C2N6ND_INITIALIZE
+    public FDM_C2N4_Direct
+    public FDM_C2N6_Direct
 contains
     !########################################################################
     !# 6th-order approximation to 2nd-order derivative:
     !########################################################################
-    subroutine FDM_C2N6ND_INITIALIZE(nmax, x, lhs, rhs)
+    subroutine FDM_C2N6_Direct(nmax, x, lhs, rhs)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
         real(wp), intent(out) :: lhs(nmax, 3) ! LHS diagonals (#=3)
@@ -139,12 +139,12 @@ contains
         end do
 
         return
-    end subroutine FDM_C2N6ND_INITIALIZE
+    end subroutine FDM_C2N6_Direct
 
     !########################################################################
     !# 4th-order approximation to 2nd-order derivative; extracted from above
     !########################################################################
-    subroutine FDM_C2N4ND_INITIALIZE(nmax, x, lhs, rhs)
+    subroutine FDM_C2N4_Direct(nmax, x, lhs, rhs)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
         real(wp), intent(out) :: lhs(nmax, 3) ! LHS diagonals (#=3)
@@ -198,7 +198,7 @@ contains
         end do
 
         return
-    end subroutine FDM_C2N4ND_INITIALIZE
+    end subroutine FDM_C2N4_Direct
 
     !########################################################################
     ! First line in Table B.2
@@ -508,4 +508,4 @@ contains
         return
     end function
 
-end module FDM_COM_DIRECT
+end module FDM_ComX_Direct
