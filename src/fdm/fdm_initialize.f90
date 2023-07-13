@@ -122,17 +122,21 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     select case (g%mode_fdm)
 
     case (FDM_COM4_JACOBIAN)
-        call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:3), coef, g%periodic)
+        g%nb_diag_1 = [3, 3]
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:5), coef, g%periodic)
+        g%nb_diag_1 = [3, 5]
 
     case (FDM_COM6_DIRECT)      ! not yet implemented
-        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:5), coef, g%periodic)
+        g%nb_diag_1 = [3, 5]
 
     case (FDM_COM6_JACPENTA)
         call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
         coef = [C1N6M_ALPHA2, C1N6M_BETA2, C1N6M_A, C1N6M_BD2, C1N6M_CD3]/2.0_wp
+        g%nb_diag_1 = [5, 7]
 
     end select
 
@@ -140,13 +144,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ! Periodic case
     ! -------------------------------------------------------------------
     if (g%periodic) then
-        if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+        select case (g%nb_diag_1(1))
+        case (3)
             call TRIDPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
-        else
+        case (5)
             call PENTADPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
-        end if
+        end select
 
-        ig = ig + 7
+        ig = ig + g%nb_diag_1(1) + 2
 
         ! -------------------------------------------------------------------
         ! wavenumbers
@@ -186,23 +191,22 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         ig = ig + 1
 
-    ! -------------------------------------------------------------------
-    ! Biased (4 different BCs)
-    ! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
+        ! Biased (4 different BCs)
+        ! -------------------------------------------------------------------
     else
         do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
-            ibc_min = mod(i, 2)
-            ibc_max = i/2
             ip = i*5
 
-            g%lu1(:, ip + 1:ip + 3) = g%lu1(:, 1:3)     ! assuming tridiagonal; to be rewritten using nb_diag_l1
-            call FDM_Bcs(g%lu1(:, ip + 1:ip + 3), i)
+            g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lu1(:, 1:g%nb_diag_1(1))
+            call FDM_Bcs(g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), i)
 
-            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+            select case (g%nb_diag_1(1))
+            case (3)
                 call TRIDFS(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
-            else
+            case (5)
                 call PENTADFS2(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5))
-            end if
+            end select
 
             ig = ig + 5
 

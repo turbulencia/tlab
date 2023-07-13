@@ -31,8 +31,8 @@ module TLAB_TYPES
         integer(wi) size, inb_grid
         integer mode_fdm                    ! finite-difference method for spatial operators
         logical uniform, periodic, anelastic, use_jacobian
-        integer nb_diag_l1, nb_diag_r1      ! # of left diagonals 1. derivative, # of right diagonals
-        integer nb_diag_l2, nb_diag_r2      ! # of left diagonals 2. derivative, # of right diagonals
+        integer nb_diag_1(2)                ! # of left diagonals 1. derivative, # of right diagonals
+        integer nb_diag_2(2)                ! # of left diagonals 2. derivative, # of right diagonals
         real(wp) scale
         real(wp), pointer :: nodes(:)
         real(wp), pointer :: jac(:, :)      ! pointer to Jacobians

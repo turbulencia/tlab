@@ -27,7 +27,7 @@ module OPR_PARTIAL
     implicit none
     private
 
-    integer(wi) ip
+    integer(wi) ip, ibc
 
     public :: OPR_PARTIAL_X
     public :: OPR_PARTIAL_Y
@@ -48,52 +48,33 @@ contains
         real(wp), intent(out) :: result(nlines*g%size)
 
 ! ###################################################################
+        ibc = bcs(1) + bcs(2)*2
+        ip = ibc*5
+
+        select case (g%nb_diag_1(2))
+        case (3)
+            call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, ibc)
+        case (5)
+            call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, ibc)
+        end select
+
         if (g%periodic) then
-            select case (g%mode_fdm)
-
-            case (FDM_COM4_JACOBIAN)
-                call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic)
-
-            case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)   ! Direct = Jacobian because uniform grid
-                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic)
-
-            case (FDM_COM6_JACPENTA)                    ! Direct = Jacobian because uniform grid
-                call FDM_C1N6MP_RHS(g%size, nlines, u, result)
-
-            end select
-
-            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+            select case (g%nb_diag_1(1))
+            case (3)
                 call TRIDPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), result, wrk2d)
-            else
+            case (5)
                 call PENTADPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), &
                                g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7), result)
-            end if
-
-! -------------------------------------------------------------------
-        else
-            select case (g%mode_fdm)
-
-            case (FDM_COM4_JACOBIAN)
-                call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, bcs(1) + bcs(2)*2)
-
-            case (FDM_COM6_JACOBIAN)
-                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, bcs(1) + bcs(2)*2)
-
-            case (FDM_COM6_JACPENTA)
-                call FDM_C1N6M_RHS(g%size, nlines, bcs(1), bcs(2), u, result)
-
-            case (FDM_COM6_DIRECT) ! Not yet implemented
-                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, bcs(1) + bcs(2)*2)
-
             end select
 
-            ip = (bcs(1) + bcs(2)*2)*5
-            if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+        else
+            select case (g%nb_diag_1(1))
+            case (3)
                 call TRIDSS(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), result)
-            else
+            case (5)
                 call PENTADSS2(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), &
                                g%lu1(1, ip + 5), result)
-            end if
+            end select
 
         end if
 
@@ -228,11 +209,11 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
-        
+     call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
+
             case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA) ! Direct = Jacobian because uniform grid
                 call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
-        
+
             end select
 
             call TRIDPSS(g%size, nlines, lu2_p(1, 1), lu2_p(1, 2), lu2_p(1, 3), lu2_p(1, 4), lu2_p(1, 5), result, wrk2d)
@@ -242,15 +223,15 @@ contains
             select case (g%mode_fdm)
 
             case (FDM_COM4_JACOBIAN)
-                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5),u, result, g%periodic)
+     call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
                 ip = 5      ! add Jacobian correction A_2 dx2 du
                 call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
-        
+
             case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
                 call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
                 ip = 7      ! add Jacobian correction A_2 dx2 du
                 call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
-        
+
             case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
                 call MatMul_5d(g%size, nlines, g%lu2(:, 4), g%lu2(:, 5), g%lu2(:, 6), g%lu2(:, 7), u, result)
 
