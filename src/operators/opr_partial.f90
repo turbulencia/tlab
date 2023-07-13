@@ -157,8 +157,6 @@ contains
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         use TLAB_ARRAYS, only: wrk2d
-        use FDM_ComX_Direct
-        use FDM_Com2_Jacobian
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -178,15 +176,8 @@ contains
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
         ! ###################################################################
-        if (is >= 0) then   ! called from opr_burgers
+        if (is >= 0 .or. g%use_jacobian) then   ! called from opr_burgers or need for 1. order derivative
             call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
-        else                ! needed anyhow to calculate 1. derivative
-            if (.not. g%uniform) then
-                if (g%mode_fdm == FDM_COM4_JACOBIAN .or. &
-                    g%mode_fdm == FDM_COM6_JACOBIAN) then
-                    call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
-                end if
-            end if
         end if
 
         if (is >= 0) then
@@ -205,38 +196,27 @@ contains
         end if
 
         ! ###################################################################
-        if (g%periodic) then
-            select case (g%mode_fdm)
-
-            case (FDM_COM4_JACOBIAN)
-     call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
-
-            case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA) ! Direct = Jacobian because uniform grid
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+            ! so far, only pentadiagonal cases
+            call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), u, result)
+        else
+            select case (g%nb_diag_2(2))
+            case (5)
+                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
+            case (7)
                 call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
-
             end select
+            if (g%use_jacobian) then
+                ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du
+                ! so far, only tridiagonal systems
+                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
+            end if
+        end if
 
+        if (g%periodic) then    ! so far, tridiagonal
             call TRIDPSS(g%size, nlines, lu2_p(1, 1), lu2_p(1, 2), lu2_p(1, 3), lu2_p(1, 4), lu2_p(1, 5), result, wrk2d)
 
-            ! -------------------------------------------------------------------
         else
-            select case (g%mode_fdm)
-
-            case (FDM_COM4_JACOBIAN)
-     call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
-                ip = 5      ! add Jacobian correction A_2 dx2 du
-                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
-
-            case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
-                ip = 7      ! add Jacobian correction A_2 dx2 du
-                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
-
-            case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-                call MatMul_5d(g%size, nlines, g%lu2(:, 4), g%lu2(:, 5), g%lu2(:, 6), g%lu2(:, 7), u, result)
-
-            end select
-
             call TRIDSS(g%size, nlines, lu2_p(1, 1), lu2_p(1, 2), lu2_p(1, 3), result)
 
         end if

@@ -27,7 +27,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     target x
 
 ! -------------------------------------------------------------------
-    integer(wi) i, ip, is, ig, ibc_min, ibc_max, nx
+    integer(wi) i, ip, is, ig, nx
     real(wp) dummy, coef(5)
 
     integer, parameter :: i0 = 0, i1 = 1
@@ -141,8 +141,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     end select
 
     ! -------------------------------------------------------------------
-    ! Periodic case
-    ! -------------------------------------------------------------------
     if (g%periodic) then
         select case (g%nb_diag_1(1))
         case (3)
@@ -191,10 +189,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         ig = ig + 1
 
-        ! -------------------------------------------------------------------
-        ! Biased (4 different BCs)
-        ! -------------------------------------------------------------------
-    else
+    ! -------------------------------------------------------------------
+    else                            ! biased,  different BCs
         do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
             ip = i*5
 
@@ -221,23 +217,35 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 7 + 5
     g%lu2 => x(:, ig:)
 
-! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
-! -------------------------------------------------------------------
+    select case (g%mode_fdm)
+
+    case (FDM_COM4_JACOBIAN)
+        call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:5), coef, g%periodic)
+        g%nb_diag_2 = [3, 5]
+        if (.not. g%uniform) g%use_jacobian = .true.
+
+    case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
+        ! call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+        call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:7), coef, g%periodic)
+        g%nb_diag_2 = [3, 7]
+        if (.not. g%uniform) g%use_jacobian = .true.
+
+    case (FDM_COM6_DIRECT)
+        call FDM_C2N6_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4))
+        g%nb_diag_2 = [3, 5]
+
+    case (FDM_COM4_DIRECT)
+        call FDM_C2N4_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4))
+        g%nb_diag_2 = [3, 5]
+
+    end select
+
+    ! -------------------------------------------------------------------
     if (g%periodic) then
-        select case (g%mode_fdm)
-
-        case (FDM_COM4_JACOBIAN)
-            call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
-
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)  ! Direct = Jacobian because uniform grid
-            ! call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
-            call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
-
+        select case (g%nb_diag_2(1))
+        case (3)
+            call TRIDPFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3), g%lu2(1, 4), g%lu2(1, 5))
         end select
-
-        call TRIDPFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3), g%lu2(1, 4), g%lu2(1, 5))
-
         ig = ig + 5
 
         ! -------------------------------------------------------------------
@@ -247,46 +255,18 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                     /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
-!        Final calculations because it is mainly used in the Helmholtz solver like this
-        g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)
+        g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver
 
         ig = ig + 1
 
-! -------------------------------------------------------------------
-! Nonperiodic case; tridiagonal for 4 different BCs
-! -------------------------------------------------------------------
-    else
-        do i = 0, 3
-            ibc_min = mod(i, 2)
-            ibc_max = i/2
+    ! -------------------------------------------------------------------
+    else                            ! biased, 4 different BCs
+        do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
             ip = i*3
-            select case (g%mode_fdm)
 
-            case (FDM_COM4_JACOBIAN)
-                call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
-
-            case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-                call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, ip + 1:), g%rhs2(:, :), coef, g%periodic)
-
-            case (FDM_COM6_DIRECT)
-                if (i == 0) call FDM_C2N6_Direct(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
-
-            case (FDM_COM4_DIRECT)
-                if (i == 0) call FDM_C2N4_Direct(nx, x, g%lu2(:, ip + 1), g%lu2(:, ip + 4))
-
-            end select
-
-! The direct mode is only implemented for bcs=(0,0); we use the remaining array to save other data
-            if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
-                if (i == 0) then
-                    g%lu2(:, ip + 8:ip + 10) = g%lu2(:, ip + 1:ip + 3) ! saving the array A w/o LU decomposition
-                    call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
-                    ig = ig + 10
-                end if
-            else
-                call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
-                ig = ig + 3
-            end if
+            g%lu2(:, ip + 1:ip + g%nb_diag_2(1)) = g%lu2(:, 1:g%nb_diag_2(1))
+            call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
+            ig = ig + 3
 
         end do
 

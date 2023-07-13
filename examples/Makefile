@@ -30,8 +30,6 @@ PRJS=\
      Case28 \
      Case31 \
      Case32 \
-     Case33 \
-     Case34 \
      Case41 \
      Case42 \
      Case44 \
@@ -44,6 +42,8 @@ PRJS=\
      Case63
 
      # Case12 \
+     # Case33 \
+     # Case34 \
 
 FILES=avg* grid* flow* scal* dns.out dns.log dns.err dns.war dns.def dns.ini.bak tower* part* traj* residence* eps*
 

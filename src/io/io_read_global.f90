@@ -834,6 +834,11 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
     end select
 
+    do ig = 1, 3
+        if (g(ig)%periodic .and. g(ig)%mode_fdm == FDM_COM4_DIRECT) g(ig)%mode_fdm = FDM_COM4_JACOBIAN
+        if (g(ig)%periodic .and. g(ig)%mode_fdm == FDM_COM6_DIRECT) g(ig)%mode_fdm = FDM_COM6_JACOBIAN
+    end do
+
     if (any([g(1)%mode_fdm, g(2)%mode_fdm, g(3)%mode_fdm] == FDM_COM6_JACPENTA)) then ! CFL_max depends on max[g%mwn1(:)]
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
     end if
