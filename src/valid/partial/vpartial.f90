@@ -25,8 +25,9 @@ program VPARTIAL
     real(wp), dimension(:, :), pointer :: du2_a, du2_n1, du2_n2, du2_n3
     real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
-    real(wp) :: lambda, coef(5)
+    real(wp) :: lambda, coef(5), dummy
     integer(wi) :: test_type, ibc, ip
+    integer(wi) :: nmin, nmax, nsize
 
     integer, parameter :: i1 = 1
 
@@ -68,7 +69,7 @@ program VPARTIAL
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     ! Valid settings
-    test_type = 1
+    test_type = 3
 
     g%periodic = .false.
     ! g%periodic = .true.
@@ -109,13 +110,19 @@ program VPARTIAL
     do i = 1, imax
         do l = 1, len
 ! single-mode
-            u(l, i) = &
-                sin(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))!+pi_wp/C_4_R)
-            du1_a(l, i) = (2.0_wp*pi_wp/g%scale*lambda) &
-                          *cos(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))!+pi_wp/C_4_R)
-            du2_a(l, i) = -(2.0_wp*pi_wp/g%scale*lambda)**2 &
-                          *u(l, i)
-! Gaussian
+            ! u(l, i) = 1.0_wp + &
+            !           sin(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))!+pi_wp/C_4_R)
+            ! du1_a(l, i) = (2.0_wp*pi_wp/g%scale*lambda) &
+            !               *cos(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))!+pi_wp/C_4_R)
+            ! ! u(l, i) = 1.0_wp + &
+            ! !           cos(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))!+pi_wp/C_4_R)
+            ! ! du1_a(l, i) = -(2.0_wp*pi_wp/g%scale*lambda) &
+            ! !               *sin(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))!+pi_wp/C_4_R)
+
+            ! du2_a(l, i) = -(2.0_wp*pi_wp/g%scale*lambda)**2 &
+            !               *u(l, i)
+
+            ! Gaussian
             ! dummy = 1.0_wp / ( 2.0_wp*(g%scale/M_REAL(lambda*l))**2 )
             ! u(l,i)     = EXP(-dummy*(g%nodes(i)-x_0*g%scale)**2)
             ! du1_a(l,i) =-2.0_wp *dummy *(g%nodes(i)-x_0*g%scale) *u(l,i)
@@ -133,10 +140,10 @@ program VPARTIAL
             ! du1_a(l,i) = C_05_R*(1.0_wp+TANH(C_05_R*g%nodes(i)/lambda))
             ! du2_a(l,i) = C_025_R/lambda/(COSH(C_05_R*g%nodes(i)/lambda))**2
 ! Polynomial
-            ! dummy = 4.0_wp
-            ! u(l,i)     =                       ( (g%scale-g%nodes(i)) /lambda)** dummy
-            ! du1_a(l,i) = dummy                *( (g%scale-g%nodes(i)) /lambda)**(dummy-1.0_wp)
-            ! du2_a(l,i) = dummy *(dummy-1.0_wp) *( (g%scale-g%nodes(i)) /lambda)**(dummy-2.0_wp)
+            dummy = 4.0_wp
+            u(l, i) = ((g%scale - g%nodes(i))/lambda)**dummy
+            du1_a(l, i) = -dummy*((g%scale - g%nodes(i))/lambda)**(dummy - 1.0_wp)
+            du2_a(l, i) = dummy*(dummy - 1.0_wp)*((g%scale - g%nodes(i))/lambda)**(dummy - 2.0_wp)
         end do
     end do
 
@@ -145,29 +152,26 @@ program VPARTIAL
         bcs_aux = 0
 ! -------------------------------------------------------------------
 ! Testing first-order derivatives
-        ! Jacobian based
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_b)
-        !
-        ! call FDM_C1N6_LHS(g%size, bcs_aux(1, 1), bcs_aux(2, 1), g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3))
-        ! call FDM_C1N6_RHS(g%size, len, bcs_aux(1, 1), bcs_aux(2, 1), u, du1_n)
-        !
-        ! call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        ! ! call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        ! ! do i = 1,imax
-        ! !     print*,g%lu1(i, 1:3)
-        ! !     print*,'rhs',g%rhs1(i, 1:3)
-        ! ! end do
+
+        print *, '1. order, Jacobian 4'
+        call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, BCS_DD)
+        call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
+        call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
+        call check(u, du1_a, du1_n, 'partial.dat')
+
+        print *, '1. order, Jacobian 6'
+        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
         ! call FDM_Bcs(g%lu1(:, 1:3), BCS_DD)
-        ! call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
-        ! ! call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, BCS_DD)
-        ! call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
-        ! call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
-        ! ! call TRIDPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
-        ! ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk3d)
+        call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, BCS_DD)
+        call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
+        call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
+        ! call TRIDPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
+        ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk3d)
+        call check(u, du1_a, du1_n, 'partial.dat')
 
         ! Direct metrics
-
-        ! call check(u, du1_a, du1_n, 'partial.dat')
 
 ! -------------------------------------------------------------------
 ! Testing second-order derivatives
@@ -176,7 +180,7 @@ program VPARTIAL
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
         !
 
-        print *, 'Jacobian 4'
+        print *, '2. order, Jacobian 4'
         call FDM_C2N4_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
         call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
@@ -186,7 +190,7 @@ program VPARTIAL
         call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
-        print *, 'Jacobian 6'
+        print *, '2. order, Jacobian 6'
         call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! call FDM_Bcs(g%lu2(:, 1:3), BCS_DD)
         call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
@@ -196,7 +200,7 @@ program VPARTIAL
         call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
-        print *, 'Jacobian 6 hype'
+        print *, '2. order, Jacobian 6 hyper'
         call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         ! do i = 1,imax
         !     print*,g%lu2(i, 1:3)/g%jac(1,1)/g%jac(1,1)
@@ -213,19 +217,62 @@ program VPARTIAL
         call check(u, du2_a, du2_n2, 'partial.dat')
 
         ! Direct metrics
-        print *, 'Direct 4'
+        print *, '2. order, Direct 4'
         call FDM_C2N4_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4))
         call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), u, du2_n2)
         call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
-        print *, 'Direct 6'
+        print *, '2. order, Direct 6'
         call FDM_C2N6_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4))
         call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), u, du2_n2)
         call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
+
+! ###################################################################
+    elseif (test_type == 3) then ! Testing new BCs routines
+        nmin = 1
+        nmax = g%size
+
+        ibc = BCS_NN
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            nmin = nmin + 1
+        end if
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            nmax = nmax - 1
+        end if
+
+        nsize = nmax - nmin + 1
+
+        print *, '1. order, Jacobian 4'
+        call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call FDM_Bcs_Neumann(g%lu1(:, 1:3), g%rhs1(:, 1:3), ibc)
+        call MatMul_3d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
+        call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+        call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
+        call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            print *, u(:, 1), g%lu1(1, 2)*du1_a(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + du1_n(:, 1)
+        end if
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_a(:, imax) + du1_n(:, imax)
+        end if
+
+        print *, '1. order, Jacobian 6'
+        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call FDM_Bcs_Neumann(g%lu1(:, 1:3), g%rhs1(:, 1:5), ibc)
+        call MatMul_5d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
+        call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+        call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
+        call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            print *, u(:, 1), g%lu1(1, 2)*du1_a(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + du1_n(:, 1)
+        end if
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_a(:, imax) + du1_n(:, imax)
+        end if
 
 ! ###################################################################
     elseif (test_type == 2) then ! Testing new BCs routines
@@ -377,7 +424,7 @@ program VPARTIAL
     ! ###################################################################
 contains
     subroutine check(u, du_a, du_n, name)
-        real(wp), intent(in) :: u(len, imax), du_a(len, imax), du_n(len, imax)
+        real(wp), intent(in) :: u(:, :), du_a(:, :), du_n(:, :)
         character(len=*), optional :: name
 
         real(wp) dummy, error_l2, error_max
@@ -388,8 +435,8 @@ contains
         error_l2 = 0.0_wp
         error_max = 0.0_wp
         dummy = 0.0_wp
-        do i = 1, imax
-            do l = 1, len
+        do i = 1, size(u, 2)
+            do l = 1, size(u, 1)
                 if (present(name)) then
                     write (20, 1000) g%nodes(i), u(l, i), du_a(l, i), du_n(l, i), du_a(l, i) - du_n(l, i)
                 end if

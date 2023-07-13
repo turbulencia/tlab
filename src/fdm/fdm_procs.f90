@@ -23,14 +23,17 @@ module FDM_PROCS
     public MatMul_3d_add        ! Calculate f = f + B u, assuming B is tridiagonal
     ! special cases, coefficients are constant in the interior points
     public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric with 1. off-diagonal equal to 1
+    public MatMul_3d_antisym_bcs
     public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric with 1. off-diagonal equal to 1
     !
     public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
     public MatMul_5d_add        ! Calculate f = f + B u, assuming B is pentadiagonal
     public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric with 1. off-diagonal equal to 1
+    public MatMul_5d_antisym_bcs
     public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. off-diagonal equal to 1
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
     public FDM_Bcs
+    public FDM_Bcs_Neumann
 
 contains
     !########################################################################
@@ -315,6 +318,86 @@ contains
         return
     end subroutine MatMul_3d_antisym
 
+    subroutine MatMul_3d_antisym_bcs(nmax, mmax, r1, r2, r3, u, f, periodic, ibc, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nmax, mmax                   ! m linear systems or size n
+        real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax)    ! RHS diagonals
+        real(wp), intent(in) :: u(mmax, nmax)                   ! function u
+        real(wp), intent(out) :: f(mmax, nmax)                  ! RHS, f = B u
+        logical, intent(in) :: periodic
+        integer, optional :: ibc
+        real(wp), optional :: bcs_b(mmax), bcs_t(mmax)
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+        integer ibc_loc
+
+        ! -------------------------------------------------------------------
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_DD
+        end if
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        if (periodic) then
+            f(:, 1) = u(:, 2) - u(:, nmax)
+
+            f(:, 2) = u(:, 3) - u(:, 1)
+
+        else
+
+            if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+                f(:, 1) = u(:, 2)*r3(1) &
+                          + u(:, 3)*r1(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
+
+                f(:, 2) = u(:, 2)*r2(2) + u(:, 3)*r3(2) + &
+                          bcs_b(:)*r1(2)
+
+            else
+                f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) &
+                          + u(:, 3)*r1(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
+
+                f(:, 2) = u(:, 1)*r1(2) + u(:, 2)*r2(2) + u(:, 3)*r3(2)
+
+            end if
+
+        end if
+
+        ! -------------------------------------------------------------------
+        ! Interior points; accelerate
+        do n = 3, nmax - 2
+            f(:, n) = u(:, n + 1) - u(:, n - 1)
+        end do
+
+        ! -------------------------------------------------------------------
+        ! Boundary
+        if (periodic) then
+            f(:, nmax - 1) = u(:, nmax) - u(:, nmax - 2)
+
+            f(:, nmax) = u(:, 1) - u(:, nmax - 1)
+
+        else
+            if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                f(:, nmax - 1) = u(:, nmax - 2)*r1(nmax - 1) + u(:, nmax - 1)*r2(nmax - 1) + &
+                                 bcs_t(:)*r3(nmax - 1)
+
+                f(:, nmax) = u(:, nmax - 2)*r3(nmax) & ! r3(nmax) contains 2. subdiagonal to allow for longer stencil at boundary
+                             + u(:, nmax - 1)*r1(nmax)
+
+            else
+                f(:, nmax - 1) = u(:, nmax - 2)*r1(nmax - 1) + u(:, nmax - 1)*r2(nmax - 1) + u(:, nmax)*r3(nmax - 1)
+
+                f(:, nmax) = u(:, nmax - 2)*r3(nmax) & ! r3(nmax) contains 2. subdiagonal to allow for longer stencil at boundary
+                             + u(:, nmax - 1)*r1(nmax) + u(:, nmax)*r2(nmax)
+
+            end if
+
+        end if
+
+        return
+    end subroutine MatMul_3d_antisym_bcs
+
     ! #######################################################################
     ! Calculate f = B u, assuming B is symmetric tri-diagonal with 1. off-diagonal equal to 1
     subroutine MatMul_3d_sym(nmax, mmax, r1, r2, r3, u, f, periodic, ibc)
@@ -404,7 +487,7 @@ contains
                          + u(:, nmax)*r3(nmax - 1)
 
         f(:, nmax) = u(:, nmax - 3)*r4(nmax) &   ! rn4 contains 3. subdiagonal to allow for longer stencil at boundary
-                  + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)
+                     + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)
 
         return
     end subroutine MatMul_5d
@@ -508,6 +591,107 @@ contains
 
         return
     end subroutine MatMul_5d_antisym
+
+    subroutine MatMul_5d_antisym_bcs(nmax, mmax, r1, r2, r3, r4, r5, u, f, periodic, ibc, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
+        real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax), r4(nmax), r5(nmax)  ! RHS diagonals
+        real(wp), intent(in) :: u(mmax, nmax)       ! function u
+        real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
+        logical, intent(in) :: periodic
+        integer, optional :: ibc
+        real(wp), optional :: bcs_b(mmax), bcs_t(mmax)
+
+        ! -------------------------------------------------------------------
+        integer(wi) n
+        real(wp) r5_loc     ! 2. off-diagonal
+        integer ibc_loc
+
+        ! -------------------------------------------------------------------
+        r5_loc = r5(4)      ! The first 2 equations, last 2 equations, are normalized differently
+
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_DD
+        end if
+
+        ! Boundary
+        if (periodic) then
+            f(:, 1) = u(:, 2) - u(:, nmax) &
+                      + r5_loc*(u(:, 3) - u(:, nmax - 1))
+
+            f(:, 2) = u(:, 3) - u(:, 1) &
+                      + r5_loc*(u(:, 4) - u(:, nmax))
+
+            f(:, 3) = u(:, 4) - u(:, 2) &
+                      + r5_loc*(u(:, 5) - u(:, 1))
+
+        else
+            if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+                f(:, 1) = u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)     ! contribution to u_1
+
+                f(:, 2) = u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2) + &
+                          bcs_b(:)*r2(2)
+
+                f(:, 3) = u(:, 2)*r2(3) + u(:, 3)*r3(3) + u(:, 4)*r4(3) + u(:, 5)*r5(3) + &
+                          bcs_b(:)*r1(3)
+
+            else
+                f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
+                          + u(:, 4)*r1(1)   ! r1(1) contains 3. superdiagonal to allow for longer stencil at boundary
+
+                f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
+
+                f(:, 3) = u(:, 1)*r1(3) + u(:, 2)*r2(3) + u(:, 3)*r3(3) + u(:, 4)*r4(3) + u(:, 5)*r5(3)
+
+            end if
+
+        end if
+
+        ! Interior points
+        do n = 4, nmax - 3
+            f(:, n) = u(:, n + 1) - u(:, n - 1) &
+                      + r5_loc*(u(:, n + 2) - u(:, n - 2))
+        end do
+
+        ! Boundary
+        if (periodic) then
+            f(:, nmax - 2) = u(:, nmax - 1) - u(:, nmax - 3) &
+                             + r5_loc*(u(:, nmax) - u(:, nmax - 4))
+
+            f(:, nmax - 1) = u(:, nmax) - u(:, nmax - 2) &
+                             + r5_loc*(u(:, 1) - u(:, nmax - 3))
+
+            f(:, nmax) = u(:, 1) - u(:, nmax - 1) &
+                         + r5_loc*(u(:, 2) - u(:, nmax - 2))
+
+        else
+
+            if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+                f(:, nmax - 2) = u(:, nmax - 4)*r1(nmax - 2) + u(:, nmax - 3)*r2(nmax - 2) + u(:, nmax - 2)*r3(nmax - 2) &
+                                 + u(:, nmax - 1)*r4(nmax - 2) + &
+                                 bcs_t(:)*r5(nmax - 2)
+
+                f(:, nmax - 1) = u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) + &
+                                 bcs_t(:)*r4(nmax - 1)
+
+                f(:, nmax) = u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax - 3)*r5(nmax)    ! contribution to u_n
+
+            else
+                f(:, nmax - 2) = u(:, nmax - 4)*r1(nmax - 2) + u(:, nmax - 3)*r2(nmax - 2) + u(:, nmax - 2)*r3(nmax - 2) &
+                                 + u(:, nmax - 1)*r4(nmax - 2) + u(:, nmax)*r5(nmax - 2)
+
+                f(:, nmax - 1) = u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) &
+                                 + u(:, nmax)*r4(nmax - 1)
+
+                f(:, nmax) = u(:, nmax - 3)*r5(nmax) & ! r5(nmax) contains 3. subdiagonal to allow for longer stencil at boundary
+                             + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)*r3(nmax)
+            end if
+
+        end if
+
+        return
+    end subroutine MatMul_5d_antisym_bcs
 
     ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. off-diagonal equal to 1
@@ -695,5 +879,88 @@ contains
 
         return
     end subroutine FDM_Bcs
+
+! #######################################################################
+! only valid if idl > idr -1; otherise, not enough space in lhs
+! you still need to add the special cases with loger stencils at the boundary
+! #######################################################################
+    subroutine FDM_Bcs_Neumann(lhs, rhs, ibc)
+        real(wp), intent(inout) :: lhs(:, :)
+        real(wp), intent(inout) :: rhs(:, :)
+        integer, intent(in) :: ibc
+
+        integer(wi) idl, ndl, idr, ndr, ir, ic, nx
+        real(wp) dummy
+
+        ! -------------------------------------------------------------------
+        ndl = size(lhs, 2)
+        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
+        ndr = size(rhs, 2)
+        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
+
+        ! -------------------------------------------------------------------
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            dummy = 1.0_wp/rhs(1, idr)      ! normalize by r11
+
+            rhs(1, :) = -rhs(1, :)*dummy
+            do ir = 1, idr - 1              ! rows
+                do ic = idr + 1, ndr        ! columns
+                    rhs(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs(1, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = ndr + 1
+                rhs(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs(1, 1)
+            end do
+            ! rhs(2, 1) = 0.0_wp
+
+            lhs(1, :) = lhs(1, :)*dummy
+            do ir = 1, idr - 1              ! rows
+                do ic = idl + 1, ndl        ! columns
+                    lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) - rhs(1 + ir, idr - ir)*lhs(1, ic)
+                end do
+                ! term for nonzero derivative
+                rhs(1 + ir, idr - ir) = rhs(1 + ir, idr - ir)*lhs(1, idl)
+            end do
+
+            ! finalize term for nonzero derivative
+            do ir = 1, idl - 1
+                rhs(1 + ir, idr - ir) = rhs(1 + ir, idr - ir) - lhs(1 + ir, idl - ir)
+            end do
+
+        end if
+
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            nx = size(lhs, 1)               ! # grid points
+            dummy = 1.0_wp/rhs(nx, idr)     ! normalize by rnn
+
+            rhs(nx, :) = -rhs(nx, :)*dummy
+            do ir = 1, idr - 1              ! rows
+                do ic = 1, idr - 1          ! columns
+                    rhs(nx - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs(nx, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = 0
+                rhs(nx - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs(nx, ndr)
+            end do
+            ! rhs(nx - 1, ndr) = 0.0_wp
+
+            lhs(nx, :) = lhs(nx, :)*dummy
+            do ir = 1, idr - 1              ! rows
+                do ic = 1, idl - 1          ! columns
+                    lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) - rhs(nx - ir, idr + ir)*lhs(nx, ic)
+                end do
+                ! term for nonzero derivative
+                rhs(nx - ir, idr + ir) = rhs(nx - ir, idr + ir)*lhs(nx, idl)
+            end do
+
+            ! finalize term for nonzero derivative
+            do ir = 1, idl - 1
+                rhs(nx - ir, idr + ir) = rhs(nx - ir, idr + ir) - lhs(nx - ir, idl + ir)
+            end do
+
+        end if
+
+        return
+    end subroutine FDM_Bcs_Neumann
 
 end module FDM_PROCS
