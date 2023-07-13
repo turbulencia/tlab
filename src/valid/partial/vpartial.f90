@@ -233,24 +233,23 @@ program VPARTIAL
 
 ! ###################################################################
     elseif (test_type == 3) then ! Testing new BCs routines
+        ibc = BCS_NN
+
         nmin = 1
         nmax = g%size
-
-        ibc = BCS_NN
         if (any([BCS_ND, BCS_NN] == ibc)) then
             nmin = nmin + 1
         end if
         if (any([BCS_DN, BCS_NN] == ibc)) then
             nmax = nmax - 1
         end if
-
         nsize = nmax - nmin + 1
 
         print *, '1. order, Jacobian 4'
         call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
         call FDM_Bcs_Neumann(g%lu1(:, 1:3), g%rhs1(:, 1:3), ibc)
-        call MatMul_3d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
         call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+        call MatMul_3d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
         call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
         call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
         if (any([BCS_ND, BCS_NN] == ibc)) then
@@ -263,8 +262,8 @@ program VPARTIAL
         print *, '1. order, Jacobian 6'
         call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
         call FDM_Bcs_Neumann(g%lu1(:, 1:3), g%rhs1(:, 1:5), ibc)
-        call MatMul_5d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
         call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+        call MatMul_5d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
         call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
         call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
         if (any([BCS_ND, BCS_NN] == ibc)) then
@@ -278,8 +277,8 @@ program VPARTIAL
     elseif (test_type == 2) then ! Testing new BCs routines
 
         if (g%mode_fdm == FDM_COM6_JACOBIAN) then
-            call FDM_C1N6_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call FDM_C1N6_BCS_RHS(imax, len, ibc, u, du1_b)
+            ! call FDM_C1N6_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+            ! call FDM_C1N6_BCS_RHS(imax, len, ibc, u, du1_b)
         elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
             call FDM_C1N6M_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
             call FDM_C1N6M_BCS_RHS(imax, len, ibc, u, du1_b)

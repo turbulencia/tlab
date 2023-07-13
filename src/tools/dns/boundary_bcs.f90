@@ -6,6 +6,8 @@ module BOUNDARY_BCS
     use TLAB_CONSTANTS
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk3d
+    use FDM_PROCS
+    use FDM_Com1_Jacobian
     implicit none
     save
     private
@@ -24,7 +26,12 @@ module BOUNDARY_BCS
 
     logical, public :: BcsDrift
 
-    real(wp), allocatable :: luND(:, :), luDN(:, :), luNN(:, :)
+    type arrays
+        real(wp), allocatable :: lu(:, :)
+        real(wp), allocatable :: rhs(:, :)
+    end type arrays
+    type(arrays) bcs(3)
+    integer(wi) nmin, nmax, nsize
     public :: BOUNDARY_BCS_NEUMANN_Y
 
     public :: BOUNDARY_BCS_SURFACE_Y
@@ -138,7 +145,7 @@ contains
 
 ! -------------------------------------------------------------------
         integer j, is, ny
-        real(wp) prefactor
+        real(wp) prefactor, coef(5)
         type(profiles_dt) prof_loc
         integer, parameter :: i1 = 1
 
@@ -180,32 +187,21 @@ contains
             ! LU decomposition for the 3 possible neumann boudary conditions
             ny = g(2)%size
 
-            allocate(luND(ny, 5))
-            allocate(luDN(ny, 5))
-            allocate(luNN(ny, 5))
+            do is = 1, 3
+                allocate (bcs(is)%lu(ny, 5))
+                allocate (bcs(is)%rhs(ny, 7))
 
-            select case (g(2)%mode_fdm)
-            case (FDM_COM6_JACPENTA)
-                call FDM_C1N6M_BCS_LHS(ny, BCS_ND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3), luND(:, 4), luND(:, 5))
-                call PENTADFS2(ny - 1, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5))
+                call FDM_C1N6_Jacobian(ny, g(2)%jac, bcs(is)%lu(:, :), bcs(is)%rhs(:, :), coef, g(2)%periodic)
+                call FDM_Bcs_Neumann(bcs(is)%lu(:, 1:3), bcs(is)%rhs(:, 1:5), is)
 
-                call FDM_C1N6M_BCS_LHS(ny, BCS_DN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3), luDN(:, 4), luDN(:, 5))
-                call PENTADFS2(ny - 1, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5))
+                nmin = 1; nmax = ny
+                if (any([BCS_ND, BCS_NN] == is)) nmin = nmin + 1
+                if (any([BCS_DN, BCS_NN] == is)) nmax = nmax - 1
+                nsize = nmax - nmin + 1
 
-                call FDM_C1N6M_BCS_LHS(ny, BCS_NN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3), luNN(:, 4), luNN(:, 5))
-               call PENTADFS2(ny - 2, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3), luNN(2:ny - 1, 4), luNN(2:ny - 1, 5))
+                call TRIDFS(nsize, bcs(is)%lu(nmin:nmax, 1), bcs(is)%lu(nmin:nmax, 2), bcs(is)%lu(nmin:nmax, 3))
 
-            case default ! some cases still need to be developed
-                call FDM_C1N6_BCS_LHS(ny, BCS_ND, g(2)%jac, luND(:, 1), luND(:, 2), luND(:, 3))
-                call TRIDFS(ny - 1, luND(2:, 1), luND(2:, 2), luND(2:, 3))
-
-                call FDM_C1N6_BCS_LHS(ny, BCS_DN, g(2)%jac, luDN(:, 1), luDN(:, 2), luDN(:, 3))
-                call TRIDFS(ny - 1, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3))
-
-                call FDM_C1N6_BCS_LHS(ny, BCS_NN, g(2)%jac, luNN(:, 1), luNN(:, 2), luNN(:, 3))
-                call TRIDFS(ny - 2, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3))
-
-            end select
+            end do
 
         else
 ! #######################################################################
@@ -405,17 +401,17 @@ contains
         !                                                   2, for -      /Neumann
         !                                                   3, for Neumann/Neumann
         integer(wi) nx, ny, nz
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: u(nx*nz, ny)         ! they are transposed below
-        real(wp),      intent(inout) :: tmp1(nx*nz, ny)      ! they are transposed below
-        real(wp),      intent(out)   :: bcs_hb(nx*nz), bcs_ht(nx*nz)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nx*nz, ny)         ! they are transposed below
+        real(wp), intent(inout) :: tmp1(nx*nz, ny)      ! they are transposed below
+        real(wp), intent(out) :: bcs_hb(nx*nz), bcs_ht(nx*nz)
 
         target u, bcs_hb, bcs_ht, tmp1
 
         ! -------------------------------------------------------------------
         integer(wi) nxz, nxy
 
-        real(wp), pointer :: p_org(:,:), p_dst(:,:)
+        real(wp), pointer :: p_org(:, :), p_dst(:, :)
         real(wp), pointer :: p_bcs_hb(:), p_bcs_ht(:)
 
         ! ###################################################################
@@ -437,7 +433,7 @@ contains
                 call DNS_TRANSPOSE(u, nxy, nz, nxy, tmp1, nz)
 #endif
                 p_org => tmp1
-                p_dst(1:nx*nz,1:ny) => wrk3d(1:nx*ny*nz)
+                p_dst(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
                 p_bcs_hb => tmp1(:, 1)
                 p_bcs_ht => tmp1(:, 2)
             else
@@ -448,46 +444,20 @@ contains
             end if
 
             ! ###################################################################
-            select case (g%mode_fdm)
-            case (FDM_COM6_JACPENTA)
-                call FDM_C1N6M_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
+            p_bcs_hb(:) = 0.0_wp    ! homogeneous bcs
+            p_bcs_ht(:) = 0.0_wp
 
-                select case (ibc)
-                case (BCS_ND)
-                    call PENTADSS2(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), luND(2:, 4), luND(2:, 5), p_dst(:, 2))
-                    p_bcs_hb(:) = p_dst(:, 1) + luND(1,4)*p_dst(:, 2)
+            call MatMul_5d_antisym_bcs(ny, nxz, bcs(ibc)%rhs(:, 1), bcs(ibc)%rhs(:, 2), bcs(ibc)%rhs(:, 3), bcs(ibc)%rhs(:, 4), bcs(ibc)%rhs(:, 5), p_org, p_dst, g%periodic, ibc, p_bcs_hb, p_bcs_ht)
 
-                case (BCS_DN)
-                    call PENTADSS2(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), luDN(:ny - 1, 4), luDN(:ny - 1, 5), p_dst)
-                    p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 2)*p_dst(:, ny - 1)
+            nmin = 1; nmax = ny
+            if (any([BCS_ND, BCS_NN] == ibc)) nmin = nmin + 1
+            if (any([BCS_DN, BCS_NN] == ibc)) nmax = nmax - 1
+            nsize = nmax - nmin + 1
 
-                case (BCS_NN)
-                    call PENTADSS2(ny - 2, nxz,  luNN(2:ny-1,1), luNN(2:ny-1,2), luNN(2:ny-1,3), luNN(2:ny-1,4), luNN(2:ny-1,5), p_dst(:, 2))
-                    p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 4)*p_dst(:, 2)
-                    p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 2)*p_dst(:, ny - 1)
+       call TRIDSS(nsize, nxz, bcs(ibc)%lu(nmin:nmax, 1), bcs(ibc)%lu(nmin:nmax, 2), bcs(ibc)%lu(nmin:nmax, 3), p_dst(:, nmin:nmax))
 
-                end select
-
-            case default
-                call FDM_C1N6_BCS_RHS(ny, nxz, ibc, p_org, p_dst)
-
-                select case (ibc)
-                case (BCS_ND)
-                    call TRIDSS(ny - 1, nxz, luND(2:, 1), luND(2:, 2), luND(2:, 3), p_dst(:, 2))
-                    p_bcs_hb(:) = p_dst(:, 1) + luND(1, 3)*p_dst(:, 2)
-
-                case (BCS_DN)
-                    call TRIDSS(ny - 1, nxz, luDN(:ny - 1, 1), luDN(:ny - 1, 2), luDN(:ny - 1, 3), p_dst)
-                    p_bcs_ht(:) = p_dst(:, ny) + luDN(ny, 1)*p_dst(:, ny - 1)
-
-                case (BCS_NN)
-                    call TRIDSS(ny - 2, nxz, luNN(2:ny - 1, 1), luNN(2:ny - 1, 2), luNN(2:ny - 1, 3), p_dst(:, 2))
-                    p_bcs_hb(:) = p_dst(:, 1) + luNN(1, 3)*p_dst(:, 2)
-                    p_bcs_ht(:) = p_dst(:, ny) + luNN(ny, 1)*p_dst(:, ny - 1)
-
-                end select
-
-            end select
+            if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_dst(:, 1) + bcs(ibc)%lu(1, 3)*p_dst(:, 2)
+            if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_dst(:, ny) + bcs(ibc)%lu(ny, 1)*p_dst(:, ny - 1)
 
             ! ###################################################################
             ! -------------------------------------------------------------------
@@ -495,11 +465,11 @@ contains
             ! -------------------------------------------------------------------
             if (nz > 1) then
 #ifdef USE_ESSL
-                if (ibc == 1 .or. ibc == 3) call DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
-                if (ibc == 2 .or. ibc == 3) call DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
+                if (any([BCS_ND, BCS_NN] == ibc)) call DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
+                if (any([BCS_DN, BCS_NN] == ibc)) call DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
 #else
-                if (ibc == 1 .or. ibc == 3) call DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
-                if (ibc == 2 .or. ibc == 3) call DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
+                if (any([BCS_ND, BCS_NN] == ibc)) call DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
+                if (any([BCS_DN, BCS_NN] == ibc)) call DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
 #endif
             end if
 
