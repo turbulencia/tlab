@@ -781,7 +781,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         Conv_p(j, 1) = -(fU(j, 1)*dPdx(j, 1) + fV(j, 1)*dPdy(j, 1) + fW(j, 1)*dPdz(j, 1))
         Reve_p(j, 1) = -gama0*rP(j, 1)*Dil(j, 1)
         Diss_p(j, 1) = (gama0 - 1.0_wp)*phi(j, 1)
-        Tran_p(j, 1) = MA_Tkk(j)*pts*gama0/reynolds/prandtl
+        Tran_p(j, 1) = MA_Tkk(j)*pts*gama0*visc/prandtl
         Reyn_p(j, 1) = -((MA_UkPk(j) + MA_PUx(j) + MA_PVY(j) + MA_PWz(j))*pts - &
                          rP(j, 1)*Dil(j, 1) + Conv_p(j, 1))
 
@@ -800,7 +800,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
 ! dilatation-pressure terms with Reynolds average
         Reve_T(j, 1) = -MRATIO*(gama0 - 1)*rP(j, 1)*Dil(j, 1)/rR(j, 1)
         Diss_T(j, 1) = gama0*phi(j, 1)/rR(j, 1)
-        Tran_T(j, 1) = MA_Tkk(j)*pts*gama0/reynolds/prandtl/rR(j, 1)
+        Tran_T(j, 1) = MA_Tkk(j)*pts*gama0*visc/prandtl/rR(j, 1)
         Reyn_T(j, 1) = -(MRATIO*(MA_UkPk(j) + MA_PUx(j) + MA_PVY(j) + MA_PWz(j))*pts/rR(j, 1) + &
                          Conv_T(j, 1))
 
@@ -881,9 +881,9 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
             tau(j, 1) = big_wp
             lambda(j, 1) = big_wp
         else
-            eta(j, 1) = 1.0_wp/(abs(Diss(j, 1))*(reynolds*rR(j, 1))**3.0_wp)**0.25_wp
-            tau(j, 1) = 1.0_wp/sqrt(reynolds*rR(j, 1)*abs(Diss(j, 1)))
-            lambda(j, 1) = sqrt(10.0_wp*rTKE(j, 1)/(rR(j, 1)*abs(Diss(j, 1))*reynolds))
+            eta(j, 1) = ((visc/rR(j, 1))**3.0_wp/abs(Diss(j, 1)))**0.25_wp
+            tau(j, 1) = sqrt(visc/(rR(j, 1)*abs(Diss(j, 1))))
+            lambda(j, 1) = sqrt(10.0_wp*rTKE(j, 1)/(rR(j, 1)*abs(Diss(j, 1))/visc))
         end if
 
         if (rdUdxf2(j, 1) == 0.0_wp) then
@@ -1210,11 +1210,11 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         ! ENDIF
 
 ! reynolds based on half-width
-        Reynolds_d(n) = reynolds*rR(n, jmax/2)*2.0_wp*delta_05*DU
+        Reynolds_d(n) = rR(n, jmax/2)*2.0_wp*delta_05*DU/visc
 ! reynolds based on isotropic lambda
-        Reynolds_i(n) = reynolds*rR(n, jmax/2)*lambda(n, jmax/2)*sqrt(2.0_wp*fTKE(n, jmax/2)/3.0_wp)
+        Reynolds_i(n) = rR(n, jmax/2)*lambda(n, jmax/2)*sqrt(2.0_wp*fTKE(n, jmax/2)/3.0_wp)/visc
 ! reynolds based on longitudinal lambda
-        Reynolds_l(n) = reynolds*rR(n, jmax/2)*lambda_x(n, jmax/2)*sqrt(fRxx(n, jmax/2))
+        Reynolds_l(n) = rR(n, jmax/2)*lambda_x(n, jmax/2)*sqrt(fRxx(n, jmax/2))/visc
 
         do j = 1, jmax
             Vortx(n, j) = Vortx(n, j)/DU*delta_05

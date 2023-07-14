@@ -8,7 +8,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 #endif
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: inb_scal, stagger_on
-    use TLAB_VARS, only: reynolds, schmidt
+    use TLAB_VARS, only: visc, schmidt
     use TLAB_PROCS
     use FDM_PROCS
     use FDM_ComX_Direct
@@ -65,7 +65,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     case (FDM_COM6_JACOBIAN)
         call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
-        call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
+    call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6M_COEFF()
@@ -287,29 +287,31 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     ip = 0
     do is = 0, inb_scal ! case 0 for the reynolds number
-        if (is == 0) then; dummy = reynolds
-        else; dummy = reynolds*schmidt(is); end if
+        if (is == 0) then
+            dummy = visc
+        else
+            dummy = visc/schmidt(is)
+        end if
 
-! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
-! -------------------------------------------------------------------
-        if (g%periodic) then ! Check routines TRIDPFS and TRIDPSS
-            g%lu2d(:, ip + 1) = g%lu2(:, 1)             ! matrix L; 1. subdiagonal
-            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy       ! matrix L; 1/diagonal
-            g%lu2d(:, ip + 3) = g%lu2(:, 3)             ! matrix U is the same
-            g%lu2d(:, ip + 4) = g%lu2(:, 4)*dummy       ! matrix L; Additional row/column
-            g%lu2d(:, ip + 5) = g%lu2(:, 5)             ! matrix U is the same
+        if (g%nb_diag_2(1) /= 3) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
+        if (g%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
+            g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L; 1. subdiagonal
+            g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
+            g%lu2d(:, ip + 3) = g%lu2(:, 3)         ! matrix U is the same
+            g%lu2d(:, ip + 4) = g%lu2(:, 4)/dummy   ! matrix L; Additional row/column
+            g%lu2d(:, ip + 5) = g%lu2(:, 5)         ! matrix U is the same
 
             ig = ig + 5
             ip = ip + 5
 
-! -------------------------------------------------------------------
-! Nonperiodic case; tridiagonal, 1 single BCs
-! -------------------------------------------------------------------
-        else                   ! Check routines TRIDFS and TRIDSS
-            g%lu2d(:, ip + 1) = g%lu2(:, 1)             ! matrix L is the same
-            g%lu2d(:, ip + 2) = g%lu2(:, 2)/dummy       ! matrix U; 1/diagonal
-            g%lu2d(:, ip + 3) = g%lu2(:, 3)*dummy       ! matrix U; 1. superdiagonal
+        else                                        ! Check routines TRIDFS and TRIDSS
+            g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L is the same
+            g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
+            g%lu2d(:, ip + 3) = g%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
 
             ig = ig + 3
             ip = ip + 3

@@ -30,7 +30,7 @@ subroutine IO_READ_GLOBAL(inifile)
     character*64 lstr
     character*32 bakfile
     integer(wi) is, ig, idummy
-    real(wp) dummy
+    real(wp) dummy, reynolds
 
 ! ###################################################################
     bakfile = trim(adjustl(inifile))//'.bak'

@@ -4,7 +4,7 @@ program VPARTIAL
     use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk3d, inb_txc, isize_txc_field
-    use TLAB_VARS, only: reynolds, schmidt
+    use TLAB_VARS, only: visc, schmidt
     ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk3d
@@ -38,7 +38,7 @@ program VPARTIAL
     kmax = 1
     len = jmax*kmax
 
-    reynolds = 1.0_wp   ! Needed in FDM_INITIALIZE
+    visc = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
     g%inb_grid = 71

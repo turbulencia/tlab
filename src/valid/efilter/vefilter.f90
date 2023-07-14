@@ -3,7 +3,7 @@
 
 program VEFILTER
     use TLAB_TYPES, only: filter_dt, grid_dt
-    use TLAB_VARS, only: reynolds, schmidt
+    use TLAB_VARS, only: visc, schmidt
     USE OPR_FILTERS
 
     implicit none
@@ -19,7 +19,7 @@ program VEFILTER
     g%size = imax
     g%scale = 2*C_PI_R
     g%mode_fdm1 = FDM_COM6_JACOBIAN
-    reynolds = C_1_R
+    visc = C_1_R
     schmidt = C_1_R
 
     write (*, *) 'Periodic (0) or nonperiodic (1) case ?'

@@ -46,8 +46,7 @@ program VBURGERS
     b(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
     c(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 4)
 
-    reynolds = big_wp   ! inviscid
-    visc = 1.0_wp/reynolds
+    visc = 1.0_wp/big_wp    ! inviscid
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
@@ -67,7 +66,7 @@ program VBURGERS
 ! ###################################################################
     call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
 
-    visc = 1.0_wp/reynolds
+    visc = 1.0_wp/big_wp
 
 ! ###################################################################
     call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)

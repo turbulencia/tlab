@@ -33,8 +33,8 @@ module TLAB_VARS
 ! ###################################################################
 ! Iteration
 ! ###################################################################
-    integer(wi) :: itime                    ! iteration number
-    real(wp) :: rtime                       ! physical time
+    integer(wi) :: itime                ! iteration number
+    real(wp) :: rtime                   ! physical time
 
 ! ###################################################################
 ! Arrays sizes
@@ -55,8 +55,8 @@ module TLAB_VARS
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
 
 ! ###################################################################
-    type(grid_dt), dimension(3) :: g            ! Grid information along 3 directions
-    real(wp) :: area                            ! Horizontal area and volume
+    type(grid_dt), dimension(3) :: g        ! Grid information along 3 directions
+    real(wp) :: area                        ! Horizontal area and volume
 
 ! ###################################################################
     type(profiles_dt) :: qbg(3)             ! Velocity background information
@@ -70,26 +70,24 @@ module TLAB_VARS
     real(wp), allocatable :: epbackground(:)                    ! Potential energy
 
 ! ###################################################################
-    type(term_dt) :: buoyancy   ! Buoyancy parameters
-    type(term_dt) :: coriolis   ! Coriolis parameters
-    type(term_dt) :: radiation  ! Radiation parameters
-    type(term_dt) :: transport  ! Transport parameters
-    type(term_dt) :: chemistry  ! Chemistry parameters
-    type(term_dt) :: subsidence ! Large-scale parameters
-    type(term_dt) :: random     ! Random Forcing parameters
+    type(term_dt) :: buoyancy               ! Buoyancy parameters
+    type(term_dt) :: coriolis               ! Coriolis parameters
+    type(term_dt) :: radiation              ! Radiation parameters
+    type(term_dt) :: transport              ! Transport parameters
+    type(term_dt) :: chemistry              ! Chemistry parameters
+    type(term_dt) :: subsidence             ! Large-scale parameters
+    type(term_dt) :: random                 ! Random Forcing parameters
 
 ! ###################################################################
 ! Nondimensional numbers
 ! ###################################################################
-    real(wp) :: reynolds, prandtl, schmidt(MAX_NSP) ! molecular transport
+    real(wp) :: visc, prandtl, schmidt(MAX_NSP)     ! molecular transport
     real(wp) :: mach                                ! compressibility
     real(wp) :: damkohler(MAX_NSP)                  ! reaction
     real(wp) :: froude                              ! body force
     real(wp) :: rossby                              ! Coriolis force
     real(wp) :: stokes                              ! inertial effects
     real(wp) :: settling                            ! sedimentation effects
-
-    real(wp) :: visc                                ! 1/reynolds, to save computation time
 
 ! ###########################################################
 ! Filters
