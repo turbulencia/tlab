@@ -152,8 +152,8 @@ program CSPLINE
 ! compute first and second derivative at boundary points
     if ((g%mode_fdm == FDM_COM6_JACOBIAN) .and. (.not. periodic)) then
         ! first derivative
-        call FDM_C1N6_LHS(imax_int, i0, i0, g_int%jac, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
-        call FDM_C1N6_RHS(imax_int, i1, i0, i0, y_sp, dydx)
+        ! call FDM_C1N6_LHS(imax_int, i0, i0, g_int%jac, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
+        ! call FDM_C1N6_RHS(imax_int, i1, i0, i0, y_sp, dydx)
         call TRIDFS(imax_int, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
         call TRIDSS(imax_int, i1, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3), dydx)
         ! second derivative
