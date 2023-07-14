@@ -176,7 +176,7 @@ contains
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
         ! ###################################################################
-        if (is >= 0 .or. g%use_jacobian) then   ! called from opr_burgers or need for 1. order derivative
+        if (is >= 0 .or. g%need_1der) then   ! called from opr_burgers or need for 1. order derivative
             call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
         end if
 
@@ -202,11 +202,11 @@ contains
         else
             select case (g%nb_diag_2(2))
             case (5)
-     call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
+                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
             case (7)
                 call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
             end select
-            if (g%use_jacobian) then
+            if (g%need_1der) then
                 ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du
                 ! so far, only tridiagonal systems
                 call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
@@ -447,7 +447,7 @@ contains
         case (OPR_P2_P1)
             call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, p_d)
 
-            if (.not. g%use_jacobian) then  ! Check whether we need to calculate the 1. order derivative
+            if (.not. g%need_1der) then  ! Check whether we need to calculate the 1. order derivative
                 call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
             end if
 
@@ -578,7 +578,7 @@ contains
             case (OPR_P2_P1)
                 call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, p_c)
 
-                if (.not. g%use_jacobian) then  ! Check whether we need to calculate the 1. order derivative
+                if (.not. g%need_1der) then  ! Check whether we need to calculate the 1. order derivative
                     call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
                 end if
 
@@ -693,7 +693,7 @@ contains
             case (OPR_P2_P1)
                 call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, p_c)
 
-                if (.not. g%use_jacobian) then  ! Check whether we need to calculate the 1. order derivative
+                if (.not. g%need_1der) then  ! Check whether we need to calculate the 1. order derivative
                     call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
                 end if
 

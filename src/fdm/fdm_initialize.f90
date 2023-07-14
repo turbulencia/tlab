@@ -65,7 +65,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     case (FDM_COM6_JACOBIAN)
         call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
-    call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
+        call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6M_COEFF()
@@ -78,12 +78,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     end select
 
-    if (.not. (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA)) then
-        call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-        call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
-    else
+    if ( g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
         call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
         call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
+    else
+        call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+        call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
     end if
 
     ! -------------------------------------------------------------------
@@ -94,15 +94,15 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     case (FDM_COM4_JACOBIAN)
         call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
-       call MatMul_5d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
+        call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN)
         call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
-        call MatMul_7d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
+        call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
-        call MatMul_7d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
+        call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
 
     end select
 
@@ -226,17 +226,17 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     case (FDM_COM4_JACOBIAN)
         call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:5), coef, g%periodic)
         g%nb_diag_2 = [3, 5]
-        if (.not. g%uniform) g%use_jacobian = .true.
+        if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_JACOBIAN)
         call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
         g%nb_diag_2 = [3, 7]
-        if (.not. g%uniform) g%use_jacobian = .true.
+        if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_JACOBIAN_HYPER)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:7), coef, g%periodic)
         g%nb_diag_2 = [3, 7]
-        if (.not. g%uniform) g%use_jacobian = .true.
+        if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_DIRECT)
         call FDM_C2N6_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4))
@@ -260,7 +260,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         ! modified wavenumbers
         g%mwn2 => x(:, ig)
 
-        g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                     /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
         g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver

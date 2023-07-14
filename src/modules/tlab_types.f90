@@ -32,7 +32,7 @@ module TLAB_TYPES
         integer mode_fdm1                   ! finite-difference method for spatial operators 1. order derivative
         integer mode_fdm2                   ! finite-difference method for spatial operators 2. order derivative
         logical uniform, periodic, anelastic
-        logical  :: use_jacobian = .false.
+        logical  :: need_1der = .false.     ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
         integer nb_diag_1(2)                ! # of left and right diagonals 1. order derivative
         integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative
         real(wp) scale
