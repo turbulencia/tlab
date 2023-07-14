@@ -28,7 +28,7 @@
 ! #######################################################################
 SUBROUTINE FDM_C1N6MP_LHS(imax, dx, a,b,c,d,e)
 
-  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE FDM_PROCS, ONLY : C1N6M_ALPHA, C1N6M_BETA
   
   IMPLICIT NONE
 
@@ -91,7 +91,7 @@ END SUBROUTINE FDM_C1N6MP_LHS
 ! #######################################################################
 SUBROUTINE FDM_C1N6MP_RHS(imax,jkmax, u,d)
 
-  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE FDM_PROCS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
   
   IMPLICIT NONE
 

@@ -91,15 +91,6 @@ module TLAB_VARS
 
     real(wp) :: visc                                ! 1/reynolds, to save computation time
 
-! ###################################################################
-! Compact parameters (1st derivative of 6th-order pentadiagonal)
-! ###################################################################
-    real(wp) :: C1N6M_ALPHA, C1N6M_BETA
-    real(wp) :: C1N6M_ALPHA2, C1N6M_BETA2
-    real(wp) :: C1N6M_A, C1N6M_B, C1N6M_C
-    real(wp) :: C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
-    real(wp) :: C1N6M_BD2, C1N6M_CD3
-
 ! ###########################################################
 ! Filters
 ! ###########################################################

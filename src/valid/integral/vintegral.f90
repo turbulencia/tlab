@@ -3,7 +3,7 @@
 program VINTEGRAL
     use TLAB_CONSTANTS
     use TLAB_TYPES, only: grid_dt
-    use TLAB_VARS, only: C1N6M_ALPHA
+    use FDM_PROCS, only: C1N6M_ALPHA
     use OPR_PARTIAL
 
     implicit none

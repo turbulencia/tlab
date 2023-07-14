@@ -50,8 +50,8 @@
 !########################################################################
 SUBROUTINE INT_C1N6M_LHS_E(imax, ibc, dx, lambda, a,b,c,d,e,f,g, h)
 
-  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
-  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE FDM_PROCS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE FDM_PROCS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -175,7 +175,7 @@ END SUBROUTINE INT_C1N6M_LHS_E
 !########################################################################
 SUBROUTINE INT_C1N6M_LHS(imax, ibc, a,b,c,d,e,f,g)
 
-  USE TLAB_VARS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
+  USE FDM_PROCS, ONLY : C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
 
   IMPLICIT NONE
 
@@ -279,7 +279,7 @@ END SUBROUTINE INT_C1N6M_LHS
 ! #######################################################################
 SUBROUTINE INT_C1N6M_RHS(imax,jkmax, ibc, dx, h,l)
 
-  USE TLAB_VARS, ONLY : C1N6M_ALPHA, C1N6M_BETA
+  USE FDM_PROCS, ONLY : C1N6M_ALPHA, C1N6M_BETA
 
   IMPLICIT NONE
 

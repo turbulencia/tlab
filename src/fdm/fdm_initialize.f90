@@ -9,8 +9,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: inb_scal, stagger_on
     use TLAB_VARS, only: reynolds, schmidt
-    use TLAB_VARS, only: C1N6M_ALPHA2, C1N6M_BETA2
-    use TLAB_VARS, only: C1N6M_A, C1N6M_BD2, C1N6M_CD3
     use TLAB_PROCS
     use FDM_PROCS
     use FDM_ComX_Direct
