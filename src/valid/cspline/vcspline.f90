@@ -77,7 +77,7 @@ program CSPLINE
     g%size = imax
     g%scale = C_1_R
     lambda = C_1_R
-    g%mode_fdm = FDM_COM6_JACOBIAN
+    g%mode_fdm1 = FDM_COM6_JACOBIAN
 
     if (random) then
         do i = 1, imax
@@ -100,7 +100,7 @@ program CSPLINE
 
 ! create equally spaced array to evaluate spline with boundaries [xb,xe]
     g_int%periodic = g%periodic; g_int%size = imax_int; g_int%scale = g%scale
-    g_int%uniform = g%uniform; g_int%mode_fdm = g%mode_fdm
+    g_int%uniform = g%uniform; g_int%mode_fdm1 = g%mode_fdm1
     do i = 1, imax_int
         x_int(i, 1) = xb + (xe - xb)*(i - C_1_R)/(imax_int - C_1_R)
     end do
@@ -150,7 +150,7 @@ program CSPLINE
 
 ! 2. Validation
 ! compute first and second derivative at boundary points
-    if ((g%mode_fdm == FDM_COM6_JACOBIAN) .and. (.not. periodic)) then
+    if ((g%mode_fdm1 == FDM_COM6_JACOBIAN) .and. (.not. periodic)) then
         ! first derivative
         ! call FDM_C1N6_LHS(imax_int, i0, i0, g_int%jac, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
         ! call FDM_C1N6_RHS(imax_int, i1, i0, i0, y_sp, dydx)

@@ -76,7 +76,7 @@ contains
 !   obtain v^1, array wrk1d(:,6)
             call PENTADSS(imax - 1, i1, a, b, c, d, e, wrk1d(1, 6))
             wrk1d(imax, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i2, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i2, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
@@ -112,7 +112,7 @@ contains
             call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
             call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
@@ -183,7 +183,7 @@ contains
 !   obtain v^1, array wrk1d(:,6)
             call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 6))
             wrk1d(1, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(imax, 6) = dx(imax); wrk1d(imax - 1, 6) = g(imax)*dx(imax) ! for v^1
@@ -219,7 +219,7 @@ contains
             call PENTADSS(imax - 1, i1, a, b, c, d, e, wrk1d(1, 7))
             dummy = wrk1d(imax, 7); wrk1d(imax, 7) = 0.0_wp
             dummy = (dummy + a(imax)*wrk1d(imax - 2, 7) + b(imax)*wrk1d(imax - 1, 7) + c(imax)*wrk1d(imax, 7))/dx(imax) ! u^(1)'_imax
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i2, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i2, dx, tmp1, u)
             call HEPTADFS(imax - 1, a, b, c, d, e, g, h)
@@ -287,7 +287,7 @@ contains
 !   obtain v^1, array wrk1d(:,6)
             call PENTADSS(imax - 1, i1, a, b, c, d, e, wrk1d(1, 6))
             wrk1d(imax, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i2, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i2, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
@@ -319,7 +319,7 @@ contains
             call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
             call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
@@ -382,7 +382,7 @@ contains
             call INT_C1N6_RHS(imax, jkmax, i1, dx, f, tmp1)
             call PENTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
             call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, i1, a, b, c, d, e, g, h)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, f, tmp1)
             call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
@@ -400,7 +400,7 @@ contains
             call INT_C1N6_RHS(imax, jkmax, i1, dx, tmp1, u)
 !   same l.h.s. as before
             call PENTADSS(imax - 1, jkmax, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
 !   same l.h.s. as before
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
 !   same l.h.s. as before
@@ -462,7 +462,7 @@ contains
 !   obtain v^(1), array wrk1d(:,6)
             call PENTADSS(imax - 1, i1, a, b, c, d, e, wrk1d(1, 6))
             wrk1d(imax, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS_E(imax, i2, dx, dummy, a, b, c, d, e, g, h, ep)
             call INT_C1N6M_RHS(imax, jkmax, i2, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
@@ -516,7 +516,7 @@ contains
             call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS_E(imax, i1, dx, dummy, a, b, c, d, e, g, h, em)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
             call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
@@ -626,7 +626,7 @@ contains
 !   obtain v^(1), array wrk1d(:,6)
             call PENTADSS(imax - 1, i1, a, b, c, d, e, wrk1d(1, 6))
             wrk1d(imax, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS_E(imax, i2, dx, dummy, a, b, c, d, e, g, h, ep)
             call INT_C1N6M_RHS(imax, jkmax, i2, dx, f, tmp1)
             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
@@ -673,7 +673,7 @@ contains
             call PENTADSS(imax - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACPENTA) then
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS_E(imax, i1, dx, dummy, a, b, c, d, e, g, h, em)
             call INT_C1N6M_RHS(imax, jkmax, i1, dx, tmp1, u)
             call HEPTADFS(imax - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))

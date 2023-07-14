@@ -221,19 +221,19 @@ contains
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call FDE_BVP_SINGULAR_NN(g(2)%mode_fdm, ny, 2, &
+                        call FDE_BVP_SINGULAR_NN(g(2)%mode_fdm1, ny, 2, &
                                                  g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     else
-                        call FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny, 2, lambda, &
+                        call FDE_BVP_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
                                                 g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call FDE_BVP_SINGULAR_DD(g(2)%mode_fdm, ny, 2, &
+                        call FDE_BVP_SINGULAR_DD(g(2)%mode_fdm1, ny, 2, &
                                             g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     else
-                        call FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny, 2, lambda, &
+                        call FDE_BVP_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
                                                 g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
@@ -535,11 +535,11 @@ contains
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
-                    call FDE_BVP_REGULAR_NN(g(2)%mode_fdm, ny, 2, lambda, &
+                    call FDE_BVP_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
                                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                 case (0) ! Dirichlet & Dirichlet BCs
-                    call FDE_BVP_REGULAR_DD(g(2)%mode_fdm, ny, 2, lambda, &
+                    call FDE_BVP_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
                                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                 end select

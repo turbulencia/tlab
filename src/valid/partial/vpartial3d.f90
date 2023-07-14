@@ -61,14 +61,14 @@ program VPARTIAL3D
 
 ! ###################################################################
     case (2)
-        g(2)%mode_fdm = FDM_COM6_JACOBIAN
+        g(2)%mode_fdm1 = FDM_COM6_JACOBIAN
         call FDM_INITIALIZE(y, g(2), wrk1d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
         call IO_WRITE_FIELDS('field.out1', IO_SCAL, imax, jmax, kmax, 1, a)
 
-        g(2)%mode_fdm = FDM_COM4_DIRECT
+        g(2)%mode_fdm1 = FDM_COM4_DIRECT
         call FDM_INITIALIZE(y, g(2), wrk1d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)

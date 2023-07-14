@@ -18,7 +18,7 @@ program VEFILTER
 ! ###################################################################
     g%size = imax
     g%scale = 2*C_PI_R
-    g%mode_fdm = FDM_COM6_JACOBIAN
+    g%mode_fdm1 = FDM_COM6_JACOBIAN
     reynolds = C_1_R
     schmidt = C_1_R
 

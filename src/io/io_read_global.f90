@@ -245,14 +245,17 @@ subroutine IO_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm = FDM_COM4_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm = FDM_COM6_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; g(1:3)%mode_fdm = FDM_COM6_JACPENTA; 
-    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm = FDM_COM6_DIRECT; 
+    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm1 = FDM_COM4_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian6hyper') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_HYPER; 
+    elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_PENTA; 
+    elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%mode_fdm1 = FDM_COM4_DIRECT; 
+    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm1 = FDM_COM6_DIRECT; 
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
+    g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
 
     call SCANINICHAR(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
     if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
@@ -324,7 +327,7 @@ subroutine IO_READ_GLOBAL(inifile)
           call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
-        if (any([g(1)%mode_fdm, g(2)%mode_fdm, g(3)%mode_fdm] /= FDM_COM6_JACOBIAN)) then
+        if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] /= FDM_COM6_JACOBIAN)) then
 call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
@@ -835,11 +838,16 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
     end select
 
     do ig = 1, 3
-        if (g(ig)%periodic .and. g(ig)%mode_fdm == FDM_COM4_DIRECT) g(ig)%mode_fdm = FDM_COM4_JACOBIAN
-        if (g(ig)%periodic .and. g(ig)%mode_fdm == FDM_COM6_DIRECT) g(ig)%mode_fdm = FDM_COM6_JACOBIAN
+        if (g(ig)%periodic .and. g(ig)%mode_fdm1 == FDM_COM4_DIRECT) g(ig)%mode_fdm1 = FDM_COM4_JACOBIAN
+        if (g(ig)%periodic .and. g(ig)%mode_fdm1 == FDM_COM6_DIRECT) g(ig)%mode_fdm1 = FDM_COM6_JACOBIAN
+        if (g(ig)%periodic .and. g(ig)%mode_fdm2 == FDM_COM4_DIRECT) g(ig)%mode_fdm2 = FDM_COM4_JACOBIAN
+        if (g(ig)%periodic .and. g(ig)%mode_fdm2 == FDM_COM6_DIRECT) g(ig)%mode_fdm2 = FDM_COM6_JACOBIAN
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g(ig)%mode_fdm1)) g(ig)%mode_fdm1 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
+        if (any([FDM_COM6_JACOBIAN_PENTA] == g(ig)%mode_fdm2)) g(ig)%mode_fdm2 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
+        if (g(ig)%mode_fdm2 == FDM_COM6_JACOBIAN) g(ig)%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER ! default
     end do
 
-    if (any([g(1)%mode_fdm, g(2)%mode_fdm, g(3)%mode_fdm] == FDM_COM6_JACPENTA)) then ! CFL_max depends on max[g%mwn1(:)]
+    if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] == FDM_COM6_JACOBIAN_PENTA)) then ! CFL_max depends on max[g%mwn1(:)]
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
     end if
 

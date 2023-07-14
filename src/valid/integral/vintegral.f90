@@ -35,9 +35,9 @@ program VINTEGRAL
     g%periodic = .true.
     wk = 1 ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
-    g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
+    g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
 
-    if (g%mode_fdm == FDM_COM6_JACPENTA) C1N6M_ALPHA = 0.56
+    if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) C1N6M_ALPHA = 0.56
 
     test_type = 2
 
@@ -96,31 +96,31 @@ program VINTEGRAL
 
         ibc = 2
 
-        if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+        if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
             call INT_C1N6_LHS(imax, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
             call INT_C1N6_RHS(imax, i1, ibc, g%jac, f, w_n)
-        elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+        elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS(imax, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
             call INT_C1N6M_RHS(imax, i1, ibc, g%jac, f, w_n)
         end if
 
         if (ibc == 1) then ! at the bottom
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 call PENTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), w_n(2))
                 w_n(1) = 0.0_wp; w_n = w_n + u(1)    ! BCs
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 call HEPTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7))
       call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), w_n(2))
                 w_n(1) = 0.0_wp; w_n = w_n + u(1)    ! BCs
             end if
 
         else if (ibc == 2) then ! at the top
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 call PENTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), w_n(1))
                 w_n(imax) = 0.0_wp; w_n = w_n + u(imax) ! BCs
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 call HEPTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
       call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), w_n(1))
                 w_n(imax) = 0.0_wp; w_n = w_n + u(imax) ! BCs
@@ -136,23 +136,23 @@ program VINTEGRAL
 
         ibc = 2
 
-        if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+        if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
          call INT_C1N6_LHS_E(imax, ibc, g%jac, lambda, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
             call INT_C1N6_RHS(imax, i1, ibc, g%jac, f, w_n)
-        elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+        elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
             call INT_C1N6M_LHS_E(imax,    ibc, g%jac, lambda, wrk1d(1,1),wrk1d(1,2),wrk1d(1,3),wrk1d(1,4),wrk1d(1,5),wrk1d(1,6),wrk1d(1,7), wrk1d(1,8))
             call INT_C1N6M_RHS(imax, i1, ibc, g%jac, f, w_n)
         end if
 
         if (ibc == 1) then
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 call PENTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), w_n(2))
                 call PENTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
                 dummy = w_n(1); w_n(1) = 0.0_wp
                 w_n = w_n + u(1)*wrk1d(1:imax, 6) ! BCs
                 dummy = (dummy + wrk1d(1, 3)*w_n(1) + wrk1d(1, 4)*w_n(2) + wrk1d(1, 5)*w_n(3))/g%jac(1, 1)
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 call HEPTADFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7))
       call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), w_n(2))
  call HEPTADSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6), wrk1d(2, 7), wrk1d(2, 8))
@@ -162,14 +162,14 @@ program VINTEGRAL
             end if
 
         else if (ibc == 2) then
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 call PENTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
                 call PENTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), w_n(1))
                 call PENTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
                 dummy = w_n(imax); w_n(imax) = 0.0_wp
                 w_n = w_n + u(imax)*wrk1d(1:imax, 6) ! BCs
              dummy = (dummy + wrk1d(imax, 1)*w_n(imax - 2) + wrk1d(imax, 2)*w_n(imax - 1) + wrk1d(imax, 3)*w_n(imax))/g%jac(imax, 1)
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 call HEPTADFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
       call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), w_n(1))
  call HEPTADSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7), wrk1d(1, 8))

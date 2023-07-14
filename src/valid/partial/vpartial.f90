@@ -75,10 +75,10 @@ program VPARTIAL
     ! g%periodic = .true.
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     ibc = 3
-    g%mode_fdm = FDM_COM6_JACOBIAN ! FDM_COM6_JACPENTA
-    ! g%mode_fdm = FDM_COM6_DIRECT
+    g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
+    ! g%mode_fdm1 = FDM_COM6_DIRECT
 
-    ! if (g%mode_fdm == FDM_COM6_JACOBIAN) C1N6M_ALPHA = 0.56_wp
+    ! if (g%mode_fdm1 == FDM_COM6_JACOBIAN) C1N6M_ALPHA = 0.56_wp
 
 !  ###################################################################
 
@@ -276,25 +276,25 @@ program VPARTIAL
 ! ###################################################################
     elseif (test_type == 2) then ! Testing new BCs routines
 
-        if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+        if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
             ! call FDM_C1N6_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
             ! call FDM_C1N6_BCS_RHS(imax, len, ibc, u, du1_b)
-        elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+        elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
             call FDM_C1N6M_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
             call FDM_C1N6M_BCS_RHS(imax, len, ibc, u, du1_b)
         end if
 
         if (ibc == 0) then
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
                 call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du1_b)
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 call PENTADFS2(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
                 call PENTADSS2(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
             end if
 
         else if (ibc == 1) then
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 wrk1d(:, 4) = 0.0_wp
                 wrk1d(1, 4) = 1.0_wp
                 wrk1d(2, 4) = wrk1d(1, 1)
@@ -309,7 +309,7 @@ program VPARTIAL
                 end do
                 bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 2)*du1_b(:, 1) + wrk1d(1, 3)*du1_b(:, 2))
                 write (*, *) bcs(:, 1), u(:, 1)
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 wrk1d(:, 6) = 0.0_wp
                 wrk1d(1, 6) = 1.0_wp
                 wrk1d(2, 6) = wrk1d(1, 2)
@@ -327,7 +327,7 @@ program VPARTIAL
             end if
 
         else if (ibc == 2) then
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 wrk1d(:, 5) = 0.0_wp
                 wrk1d(imax, 5) = 1.0_wp
                 wrk1d(imax - 2, 5) = wrk1d(imax - 1, 3)
@@ -342,7 +342,7 @@ program VPARTIAL
                 end do
                 bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 1)*du1_b(:, imax - 1) + wrk1d(imax, 2)*du1_b(:, imax))
                 write (*, *) bcs(:, 2), u(:, imax)
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 wrk1d(:, 6) = 0.0_wp
                 wrk1d(imax, 6) = 1.0_wp
                 wrk1d(imax - 2, 6) = wrk1d(imax - 1, 4)
@@ -360,7 +360,7 @@ program VPARTIAL
             end if
 
         else if (ibc == 3) then
-            if (g%mode_fdm == FDM_COM6_JACOBIAN) then
+            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
                 wrk1d(:, 4) = 0.0_wp
                 wrk1d(1, 4) = 1.0_wp
                 wrk1d(2, 4) = wrk1d(1, 1)
@@ -387,7 +387,7 @@ program VPARTIAL
                 end do
                 bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 1)*du1_b(:, imax - 1) + wrk1d(imax, 2)*du1_b(:, imax))
                 write (*, *) bcs(:, 2), u(:, imax)
-            elseif (g%mode_fdm == FDM_COM6_JACPENTA) then
+            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
                 wrk1d(:, 6) = 0.0_wp
                 wrk1d(1, 6) = 1.0_wp
                 wrk1d(2, 6) = wrk1d(1, 2)

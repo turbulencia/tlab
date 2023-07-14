@@ -196,13 +196,13 @@ contains
         end if
 
         ! ###################################################################
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
             ! so far, only pentadiagonal cases
             call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), u, result)
         else
             select case (g%nb_diag_2(2))
             case (5)
-                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
+     call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
             case (7)
                 call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
             end select
@@ -304,7 +304,7 @@ contains
 ! Interpolation, direction 'vp': vel. --> pre. grid
         if (dir == 0) then
             if (g%periodic) then
-                select case (g%mode_fdm)
+                select case (g%mode_fdm1)
                 case DEFAULT
                     call FDM_C0INTVP6P_RHS(g%size, nlines, u, result)
                 end select
@@ -316,7 +316,7 @@ contains
 ! Interpolation, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
             if (g%periodic) then
-                select case (g%mode_fdm)
+                select case (g%mode_fdm1)
                 case DEFAULT
                     call FDM_C0INTPV6P_RHS(g%size, nlines, u, result)
                 end select
@@ -346,7 +346,7 @@ contains
 ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
         if (dir == 0) then
             if (g%periodic) then
-                select case (g%mode_fdm)
+                select case (g%mode_fdm1)
                 case (FDM_COM6_JACOBIAN)
                     call FDM_C1INTVP6P_RHS(g%size, nlines, u, result)
                 end select
@@ -358,7 +358,7 @@ contains
 ! 1st interpolatory derivative, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
             if (g%periodic) then
-                select case (g%mode_fdm)
+                select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
                     call FDM_C1INTPV6P_RHS(g%size, nlines, u, result)
                 end select
@@ -448,7 +448,7 @@ contains
             call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, p_d)
 
 ! Check whether we need to calculate the 1. order derivative
-            if (g%uniform .or. g%mode_fdm == FDM_COM6_DIRECT) then
+            if (g%uniform .or. any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
                 call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
             end if
 
@@ -580,7 +580,7 @@ contains
                 call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, p_c)
 
 ! Check whether we need to calculate the 1. order derivative
-                if (g%uniform .or. g%mode_fdm == FDM_COM6_DIRECT) then
+                if (g%uniform .or. any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
                     call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
                 end if
 
@@ -696,7 +696,7 @@ contains
                 call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, p_c)
 
 ! Check whether we need to calculate the 1. order derivative
-                if (g%uniform .or. g%mode_fdm == FDM_COM6_DIRECT) then
+                if (g%uniform .or. any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
                     call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
                 end if
 

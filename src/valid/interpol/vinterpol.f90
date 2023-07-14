@@ -49,7 +49,7 @@ program INTERPOL
     g%uniform = .true.
     jmax = 1
     kmax = 1
-    g%mode_fdm = FDM_COM6_JACOBIAN
+    g%mode_fdm1 = FDM_COM6_JACOBIAN
     lambda = 1
 
 ! Input
@@ -112,7 +112,7 @@ program INTERPOL
 ! (here: periodic case implies the usage of uniform grids!)
     do i = 1, imaxp; x_pre(i, 1) = x_int(i); end do
     g_pre%size = imaxp; g_pre%scale = x_int(imaxp); g_pre%uniform = g%uniform
-    g_pre%mode_fdm = g%mode_fdm; g_pre%periodic = .false.
+    g_pre%mode_fdm1 = g%mode_fdm1; g_pre%periodic = .false.
     call FDM_INITIALIZE(x_pre, g_pre, wrk1d)
 
 ! Define the function + deriv. on both grids

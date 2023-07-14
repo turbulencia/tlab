@@ -1,9 +1,8 @@
 #include "dns_const.h"
-
-!# Compute dx/di and create LU factorization for first- and second-order derivatives
+#include "dns_error.h"
 
 subroutine FDM_INITIALIZE(x, g, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
@@ -60,24 +59,28 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ! first derivative
     g%jac(:, 1) = 1.0_wp
 
-    select case (g%mode_fdm)
+    select case (g%mode_fdm1)
 
     case (FDM_COM4_JACOBIAN)
         call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
         call MatMul_3d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), x, g%jac(:, 1), periodic=.false.)
 
-    case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
+    case (FDM_COM6_JACOBIAN)
         call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
-    call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
+        call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
-    case (FDM_COM6_JACPENTA)
+    case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6M_COEFF()
         call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
         call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+
     end select
 
-    if (.not. (g%mode_fdm == FDM_COM6_JACPENTA)) then
+    if (.not. (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA)) then
         call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
     else
@@ -89,14 +92,17 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ! second derivative
     g%jac(:, 2) = 1.0_wp
 
-    select case (g%mode_fdm)
+    select case (g%mode_fdm2)
 
     case (FDM_COM4_JACOBIAN)
         call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
        call MatMul_5d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
 
-    case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACPENTA)
-        ! call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+    case (FDM_COM6_JACOBIAN)
+        call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+        call MatMul_7d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
+
+    case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
         call MatMul_7d_sym(nx, i1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
 
@@ -119,7 +125,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 7
     g%lu1 => x(:, ig:)
 
-    select case (g%mode_fdm)
+    select case (g%mode_fdm1)
 
     case (FDM_COM4_JACOBIAN)
         call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:3), coef, g%periodic)
@@ -129,14 +135,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:5), coef, g%periodic)
         g%nb_diag_1 = [3, 5]
 
-    case (FDM_COM6_DIRECT)      ! not yet implemented
-        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:5), coef, g%periodic)
-        g%nb_diag_1 = [3, 5]
-
-    case (FDM_COM6_JACPENTA)
+    case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
         coef = [C1N6M_ALPHA2, C1N6M_BETA2, C1N6M_A, C1N6M_BD2, C1N6M_CD3]/2.0_wp
         g%nb_diag_1 = [5, 7]
+
+    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
 
     end select
 
@@ -172,7 +178,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         else ! staggered case has different modified wavenumbers!
 
-            select case (g%mode_fdm)
+            select case (g%mode_fdm1)
 
             case DEFAULT
                 coef = [9.0_wp/62.0_wp, 0.0_wp, 63.0_wp/62.0_wp, 17.0_wp/62.0_wp, 0.0_wp]
@@ -189,7 +195,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         ig = ig + 1
 
-    ! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
     else                            ! biased,  different BCs
         do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
             ip = i*5
@@ -217,15 +223,19 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 7 + 5
     g%lu2 => x(:, ig:)
 
-    select case (g%mode_fdm)
+    select case (g%mode_fdm2)
 
     case (FDM_COM4_JACOBIAN)
         call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:5), coef, g%periodic)
         g%nb_diag_2 = [3, 5]
         if (.not. g%uniform) g%use_jacobian = .true.
 
-    case (FDM_COM6_JACOBIAN, FDM_COM6_JACPENTA)
-        ! call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+    case (FDM_COM6_JACOBIAN)
+        call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
+        g%nb_diag_2 = [3, 7]
+        if (.not. g%uniform) g%use_jacobian = .true.
+
+    case (FDM_COM6_JACOBIAN_HYPER)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:7), coef, g%periodic)
         g%nb_diag_2 = [3, 7]
         if (.not. g%uniform) g%use_jacobian = .true.
@@ -259,7 +269,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         ig = ig + 1
 
-    ! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
     else                            ! biased, 4 different BCs
         do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
             ip = i*3
@@ -319,7 +329,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     if ((stagger_on) .and. g%periodic) then
         g%lu0i => x(:, ig:)
 
-        select case (g%mode_fdm)
+        select case (g%mode_fdm1)
         case DEFAULT
             call FDM_C0INT6P_LHS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3))
         end select
@@ -336,7 +346,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     if ((stagger_on) .and. g%periodic) then
         g%lu1i => x(:, ig:)
 
-        select case (g%mode_fdm)
+        select case (g%mode_fdm1)
         case DEFAULT
             call FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3))
         end select

@@ -20,7 +20,7 @@ program VHELMHOLTZ_FDE
 
     g%size = imax
     g%scale = C_2_R*C_PI_R
-    g%mode_fdm = FDM_COM6_JACOBIAN
+    g%mode_fdm1 = FDM_COM6_JACOBIAN
     g%uniform = .true.
     g%periodic = .false.
 
