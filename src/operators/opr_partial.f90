@@ -447,8 +447,7 @@ contains
         case (OPR_P2_P1)
             call OPR_PARTIAL2(is, nyz, bcs, g, p_b, p_c, p_d)
 
-! Check whether we need to calculate the 1. order derivative
-            if (g%uniform .or. any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
+            if (.not. g%use_jacobian) then  ! Check whether we need to calculate the 1. order derivative
                 call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
             end if
 
@@ -579,8 +578,7 @@ contains
             case (OPR_P2_P1)
                 call OPR_PARTIAL2(is, nxy, bcs, g, p_a, p_b, p_c)
 
-! Check whether we need to calculate the 1. order derivative
-                if (g%uniform .or. any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
+                if (.not. g%use_jacobian) then  ! Check whether we need to calculate the 1. order derivative
                     call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
                 end if
 
@@ -695,8 +693,7 @@ contains
             case (OPR_P2_P1)
                 call OPR_PARTIAL2(is, nxz, bcs, g, p_a, p_b, p_c)
 
-! Check whether we need to calculate the 1. order derivative
-                if (g%uniform .or. any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
+                if (.not. g%use_jacobian) then  ! Check whether we need to calculate the 1. order derivative
                     call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
                 end if
 
