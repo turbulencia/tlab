@@ -78,7 +78,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     end select
 
-    if ( g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
+    if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
         call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
         call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
     else

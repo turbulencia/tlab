@@ -32,6 +32,7 @@ module BOUNDARY_BCS
     end type arrays
     type(arrays) bcs(3)
     integer(wi) nmin, nmax, nsize
+    real(wp) rhs1_b(4, 7), rhs1_t(4, 7)
     public :: BOUNDARY_BCS_NEUMANN_Y
 
     public :: BOUNDARY_BCS_SURFACE_Y
@@ -67,7 +68,7 @@ contains
                 call TLAB_STOP(DNS_ERROR_JBC)
             end if
 
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
+            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
             if (sRes == 'static') then
                 var%SfcType(is) = DNS_SFC_STATIC
             elseif (sRes == 'linear') then
@@ -77,7 +78,7 @@ contains
                 call TLAB_STOP(DNS_ERROR_JBC)
             end if
 
-   call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
+            call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
 
         end do
 
@@ -192,7 +193,7 @@ contains
                 allocate (bcs(is)%rhs(ny, 7))
 
                 call FDM_C1N6_Jacobian(ny, g(2)%jac, bcs(is)%lu(:, :), bcs(is)%rhs(:, :), coef, g(2)%periodic)
-                call FDM_Bcs_Neumann(bcs(is)%lu(:, 1:3), bcs(is)%rhs(:, 1:5), is)
+                call FDM_Bcs_Neumann(is, bcs(is)%lu(:, 1:3), bcs(is)%rhs(:, 1:5), rhs1_b, rhs1_t)
 
                 nmin = 1; nmax = ny
                 if (any([BCS_ND, BCS_NN] == is)) nmin = nmin + 1
@@ -447,14 +448,14 @@ contains
             p_bcs_hb(:) = 0.0_wp    ! homogeneous bcs
             p_bcs_ht(:) = 0.0_wp
 
-            call MatMul_5d_antisym_bcs(ny, nxz, bcs(ibc)%rhs(:, 1), bcs(ibc)%rhs(:, 2), bcs(ibc)%rhs(:, 3), bcs(ibc)%rhs(:, 4), bcs(ibc)%rhs(:, 5), p_org, p_dst, g%periodic, ibc, p_bcs_hb, p_bcs_ht)
+            call MatMul_5d_antisym_bcs(ny, nxz, bcs(ibc)%rhs(:, 1), bcs(ibc)%rhs(:, 2), bcs(ibc)%rhs(:, 3), bcs(ibc)%rhs(:, 4), bcs(ibc)%rhs(:, 5), p_org, p_dst, g%periodic, ibc, rhs1_b, rhs1_t, p_bcs_hb, p_bcs_ht)
 
             nmin = 1; nmax = ny
             if (any([BCS_ND, BCS_NN] == ibc)) nmin = nmin + 1
             if (any([BCS_DN, BCS_NN] == ibc)) nmax = nmax - 1
             nsize = nmax - nmin + 1
 
-       call TRIDSS(nsize, nxz, bcs(ibc)%lu(nmin:nmax, 1), bcs(ibc)%lu(nmin:nmax, 2), bcs(ibc)%lu(nmin:nmax, 3), p_dst(:, nmin:nmax))
+            call TRIDSS(nsize, nxz, bcs(ibc)%lu(nmin:nmax, 1), bcs(ibc)%lu(nmin:nmax, 2), bcs(ibc)%lu(nmin:nmax, 3), p_dst(:, nmin:nmax))
 
             if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_dst(:, 1) + bcs(ibc)%lu(1, 3)*p_dst(:, 2)
             if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_dst(:, ny) + bcs(ibc)%lu(ny, 1)*p_dst(:, ny - 1)

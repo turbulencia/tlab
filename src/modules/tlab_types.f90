@@ -36,6 +36,7 @@ module TLAB_TYPES
         integer nb_diag_1(2)                ! # of left and right diagonals 1. order derivative
         integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative
         real(wp) scale
+        real(wp) :: rhs1_b(4,7), rhs1_t(4,7)! RHS data for Neumann boundary conditions; max. # of diagonals is 7, # rows is 7/2+1 
         real(wp), pointer :: nodes(:)
         real(wp), pointer :: jac(:, :)      ! pointer to Jacobians
         !

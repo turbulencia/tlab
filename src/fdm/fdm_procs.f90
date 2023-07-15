@@ -1,10 +1,13 @@
+#include "dns_error.h"
+
 !########################################################################
-! Building blocks to construct various FDM methods
-! Based on Lagrange polynomial for non-uniform grids, works of course as well when uniform grids
+! Building blocks to construct FDMs
+! Based on Lagrange polynomial for non-uniform grids
 ! Calculation of RHS for different stencil lengths and bcs (periodic|biased)
 !########################################################################
 module FDM_PROCS
     use TLAB_CONSTANTS
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private
 
@@ -43,7 +46,6 @@ module FDM_PROCS
     real(wp), public :: C1N6M_A, C1N6M_B, C1N6M_C
     real(wp), public :: C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
     real(wp), public :: C1N6M_BD2, C1N6M_CD3
-
 
 contains
     !########################################################################
@@ -328,13 +330,14 @@ contains
         return
     end subroutine MatMul_3d_antisym
 
-    subroutine MatMul_3d_antisym_bcs(nmax, mmax, r1, r2, r3, u, f, periodic, ibc, bcs_b, bcs_t)
+    subroutine MatMul_3d_antisym_bcs(nmax, mmax, r1, r2, r3, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
         integer(wi), intent(in) :: nmax, mmax                   ! m linear systems or size n
         real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax)    ! RHS diagonals
         real(wp), intent(in) :: u(mmax, nmax)                   ! function u
         real(wp), intent(out) :: f(mmax, nmax)                  ! RHS, f = B u
         logical, intent(in) :: periodic
         integer, optional :: ibc
+        real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
         real(wp), optional :: bcs_b(mmax), bcs_t(mmax)
 
         ! -------------------------------------------------------------------
@@ -348,6 +351,14 @@ contains
             ibc_loc = BCS_DD
         end if
 
+#define r1_b(j) rhs_b(j,1)
+#define r2_b(j) rhs_b(j,2)
+#define r3_b(j) rhs_b(j,3)
+
+#define r1_t(j) rhs_t(j,1)
+#define r2_t(j) rhs_t(j,2)
+#define r3_t(j) rhs_t(j,3)
+
         ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
@@ -358,11 +369,11 @@ contains
         else
 
             if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                f(:, 1) = u(:, 2)*r3(1) &
-                          + u(:, 3)*r1(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
+                f(:, 1) = u(:, 2)*r3_b(1) &
+                          + u(:, 3)*r1_b(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
 
-                f(:, 2) = u(:, 2)*r2(2) + u(:, 3)*r3(2) + &
-                          bcs_b(:)*r1(2)
+                f(:, 2) = u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2) + &
+                          bcs_b(:)*r1_b(2)
 
             else
                 f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) &
@@ -389,11 +400,11 @@ contains
 
         else
             if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                f(:, nmax - 1) = u(:, nmax - 2)*r1(nmax - 1) + u(:, nmax - 1)*r2(nmax - 1) + &
-                                 bcs_t(:)*r3(nmax - 1)
+                f(:, nmax - 1) = u(:, nmax - 2)*r1_t(1) + u(:, nmax - 1)*r2_t(1) + &
+                                 bcs_t(:)*r3_t(1)
 
-                f(:, nmax) = u(:, nmax - 2)*r3(nmax) & ! r3(nmax) contains 2. subdiagonal to allow for longer stencil at boundary
-                             + u(:, nmax - 1)*r1(nmax)
+                f(:, nmax) = u(:, nmax - 2)*r3_t(2) & ! r3(nmax) contains 2. subdiagonal to allow for longer stencil at boundary
+                             + u(:, nmax - 1)*r1_t(2)
 
             else
                 f(:, nmax - 1) = u(:, nmax - 2)*r1(nmax - 1) + u(:, nmax - 1)*r2(nmax - 1) + u(:, nmax)*r3(nmax - 1)
@@ -404,6 +415,14 @@ contains
             end if
 
         end if
+
+#undef r1_b
+#undef r2_b
+#undef r3_b
+
+#undef r1_t
+#undef r2_t
+#undef r3_t
 
         return
     end subroutine MatMul_3d_antisym_bcs
@@ -526,7 +545,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! Boundary
-        f(:, nmax - 1) = f(:, nmax - 1) + u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) + u(:, nmax)*r4(nmax-1)
+   f(:, nmax - 1) = f(:, nmax - 1) + u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) + u(:, nmax)*r4(nmax - 1)
         f(:, nmax) = f(:, nmax) + u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax)*r3(nmax)
 
         return
@@ -602,13 +621,14 @@ contains
         return
     end subroutine MatMul_5d_antisym
 
-    subroutine MatMul_5d_antisym_bcs(nmax, mmax, r1, r2, r3, r4, r5, u, f, periodic, ibc, bcs_b, bcs_t)
+    subroutine MatMul_5d_antisym_bcs(nmax, mmax, r1, r2, r3, r4, r5, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
         integer(wi), intent(in) :: nmax, mmax       ! m linear systems or size n
         real(wp), intent(in) :: r1(nmax), r2(nmax), r3(nmax), r4(nmax), r5(nmax)  ! RHS diagonals
         real(wp), intent(in) :: u(mmax, nmax)       ! function u
         real(wp), intent(out) :: f(mmax, nmax)      ! RHS, f = B u
         logical, intent(in) :: periodic
         integer, optional :: ibc
+        real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
         real(wp), optional :: bcs_b(mmax), bcs_t(mmax)
 
         ! -------------------------------------------------------------------
@@ -625,6 +645,19 @@ contains
             ibc_loc = BCS_DD
         end if
 
+#define r1_b(j) rhs_b(j,1)
+#define r2_b(j) rhs_b(j,2)
+#define r3_b(j) rhs_b(j,3)
+#define r4_b(j) rhs_b(j,4)
+#define r5_b(j) rhs_b(j,5)
+
+#define r1_t(j) rhs_t(j,1)
+#define r2_t(j) rhs_t(j,2)
+#define r3_t(j) rhs_t(j,3)
+#define r4_t(j) rhs_t(j,4)
+#define r5_t(j) rhs_t(j,5)
+
+        ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
             f(:, 1) = u(:, 2) - u(:, nmax) &
@@ -638,13 +671,13 @@ contains
 
         else
             if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                f(:, 1) = u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)     ! contribution to u_1
+                f(:, 1) = u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1)     ! contribution to u_1
 
-                f(:, 2) = u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2) + &
-                          bcs_b(:)*r2(2)
+                f(:, 2) = u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2) + &
+                          bcs_b(:)*r2_b(2)
 
-                f(:, 3) = u(:, 2)*r2(3) + u(:, 3)*r3(3) + u(:, 4)*r4(3) + u(:, 5)*r5(3) + &
-                          bcs_b(:)*r1(3)
+                f(:, 3) = u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3) + &
+                          bcs_b(:)*r1_b(3)
 
             else
                 f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
@@ -678,14 +711,13 @@ contains
         else
 
             if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                f(:, nmax - 2) = u(:, nmax - 4)*r1(nmax - 2) + u(:, nmax - 3)*r2(nmax - 2) + u(:, nmax - 2)*r3(nmax - 2) &
-                                 + u(:, nmax - 1)*r4(nmax - 2) + &
-                                 bcs_t(:)*r5(nmax - 2)
+                f(:, nmax - 2) = u(:, nmax - 4)*r1_t(1) + u(:, nmax - 3)*r2_t(1) + u(:, nmax - 2)*r3_t(1) + u(:, nmax - 1)*r4_t(1) + &
+                                 bcs_t(:)*r5_t(1)
 
-                f(:, nmax - 1) = u(:, nmax - 3)*r1(nmax - 1) + u(:, nmax - 2)*r2(nmax - 1) + u(:, nmax - 1)*r3(nmax - 1) + &
-                                 bcs_t(:)*r4(nmax - 1)
+                f(:, nmax - 1) = u(:, nmax - 3)*r1_t(2) + u(:, nmax - 2)*r2_t(2) + u(:, nmax - 1)*r3_t(2) + &
+                                 bcs_t(:)*r4_t(2)
 
-                f(:, nmax) = u(:, nmax - 2)*r1(nmax) + u(:, nmax - 1)*r2(nmax) + u(:, nmax - 3)*r5(nmax)    ! contribution to u_n
+                f(:, nmax) = u(:, nmax - 2)*r1_t(3) + u(:, nmax - 1)*r2_t(3) + u(:, nmax - 3)*r5_t(3)    ! contribution to u_n
 
             else
                 f(:, nmax - 2) = u(:, nmax - 4)*r1(nmax - 2) + u(:, nmax - 3)*r2(nmax - 2) + u(:, nmax - 2)*r3(nmax - 2) &
@@ -699,6 +731,18 @@ contains
             end if
 
         end if
+
+#undef r1_b
+#undef r2_b
+#undef r3_b
+#undef r4_b
+#undef r5_b
+
+#undef r1_t
+#undef r2_t
+#undef r3_t
+#undef r4_t
+#undef r5_t
 
         return
     end subroutine MatMul_5d_antisym_bcs
@@ -891,13 +935,12 @@ contains
     end subroutine FDM_Bcs
 
 ! #######################################################################
-! only valid if idl > idr -1; otherise, not enough space in lhs
-! you still need to add the special cases with loger stencils at the boundary
 ! #######################################################################
-    subroutine FDM_Bcs_Neumann(lhs, rhs, ibc)
-        real(wp), intent(inout) :: lhs(:, :)
-        real(wp), intent(inout) :: rhs(:, :)
+    subroutine FDM_Bcs_Neumann(ibc, lhs, rhs, rhs_b, rhs_t)
         integer, intent(in) :: ibc
+        real(wp), intent(inout) :: lhs(:, :)
+        real(wp), intent(in) :: rhs(:, :)
+        real(wp), intent(inout) :: rhs_b(:, :), rhs_t(:, :)
 
         integer(wi) idl, ndl, idr, ndr, ir, ic, nx
         real(wp) dummy
@@ -908,20 +951,26 @@ contains
         ndr = size(rhs, 2)
         idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
 
+        if (idl < idr - 1) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. LHS is too small for Neumann BCs.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
         ! -------------------------------------------------------------------
         if (any([BCS_ND, BCS_NN] == ibc)) then
+            rhs_b(1:idr, 1:ndr) = rhs(1:idr, 1:ndr)
+
             dummy = 1.0_wp/rhs(1, idr)      ! normalize by r11
 
-            rhs(1, :) = -rhs(1, :)*dummy
+            rhs_b(1, 1:ndr) = -rhs(1, 1:ndr)*dummy
             do ir = 1, idr - 1              ! rows
                 do ic = idr + 1, ndr        ! columns
-                    rhs(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs(1, ic)
+                    rhs_b(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs_b(1, ic)
                 end do
                 ! longer stencil at the boundary
                 ic = ndr + 1
-                rhs(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs(1, 1)
+                rhs_b(1 + ir, ic - ir) = rhs_b(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs_b(1, 1)
             end do
-            ! rhs(2, 1) = 0.0_wp
 
             lhs(1, :) = lhs(1, :)*dummy
             do ir = 1, idr - 1              ! rows
@@ -929,30 +978,31 @@ contains
                     lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) - rhs(1 + ir, idr - ir)*lhs(1, ic)
                 end do
                 ! term for nonzero derivative
-                rhs(1 + ir, idr - ir) = rhs(1 + ir, idr - ir)*lhs(1, idl)
+                rhs_b(1 + ir, idr - ir) = rhs_b(1 + ir, idr - ir)*lhs(1, idl)
             end do
 
             ! finalize term for nonzero derivative
             do ir = 1, idl - 1
-                rhs(1 + ir, idr - ir) = rhs(1 + ir, idr - ir) - lhs(1 + ir, idl - ir)
+                rhs_b(1 + ir, idr - ir) = rhs_b(1 + ir, idr - ir) - lhs(1 + ir, idl - ir)
             end do
 
         end if
 
         if (any([BCS_DN, BCS_NN] == ibc)) then
             nx = size(lhs, 1)               ! # grid points
+            rhs_t(1:idr, 1:ndr) = rhs(nx - idr + 1:nx, 1:ndr)
+
             dummy = 1.0_wp/rhs(nx, idr)     ! normalize by rnn
 
-            rhs(nx, :) = -rhs(nx, :)*dummy
+            rhs_t(idr, :) = -rhs(nx, :)*dummy
             do ir = 1, idr - 1              ! rows
                 do ic = 1, idr - 1          ! columns
-                    rhs(nx - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs(nx, ic)
+                    rhs_t(idr - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ic)
                 end do
                 ! longer stencil at the boundary
                 ic = 0
-                rhs(nx - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs(nx, ndr)
+                rhs_t(idr - ir, ic + ir) = rhs_t(idr - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ndr)
             end do
-            ! rhs(nx - 1, ndr) = 0.0_wp
 
             lhs(nx, :) = lhs(nx, :)*dummy
             do ir = 1, idr - 1              ! rows
@@ -960,12 +1010,12 @@ contains
                     lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) - rhs(nx - ir, idr + ir)*lhs(nx, ic)
                 end do
                 ! term for nonzero derivative
-                rhs(nx - ir, idr + ir) = rhs(nx - ir, idr + ir)*lhs(nx, idl)
+                rhs_t(idr - ir, idr + ir) = rhs_t(idr - ir, idr + ir)*lhs(nx, idl)
             end do
 
             ! finalize term for nonzero derivative
             do ir = 1, idl - 1
-                rhs(nx - ir, idr + ir) = rhs(nx - ir, idr + ir) - lhs(nx - ir, idl + ir)
+                rhs_t(idr - ir, idr + ir) = rhs_t(idr - ir, idr + ir) - lhs(nx - ir, idl + ir)
             end do
 
         end if

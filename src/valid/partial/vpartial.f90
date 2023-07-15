@@ -77,6 +77,7 @@ program VPARTIAL
     ibc = 3
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     ! g%mode_fdm1 = FDM_COM6_DIRECT
+    g%mode_fdm2 = g%mode_fdm1
 
     ! if (g%mode_fdm1 == FDM_COM6_JACOBIAN) C1N6M_ALPHA = 0.56_wp
 
@@ -247,9 +248,9 @@ program VPARTIAL
 
         print *, '1. order, Jacobian 4'
         call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call FDM_Bcs_Neumann(g%lu1(:, 1:3), g%rhs1(:, 1:3), ibc)
+        call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:3), g%rhs1_b, g%rhs1_t)
         call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
-        call MatMul_3d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
+        call MatMul_3d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, ibc, g%rhs1_b, g%rhs1_t, du1_a(:,1), du1_a(:,imax))
         call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
         call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
         if (any([BCS_ND, BCS_NN] == ibc)) then
@@ -261,9 +262,9 @@ program VPARTIAL
 
         print *, '1. order, Jacobian 6'
         call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call FDM_Bcs_Neumann(g%lu1(:, 1:3), g%rhs1(:, 1:5), ibc)
+        call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:5), g%rhs1_b, g%rhs1_t)
         call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
-        call MatMul_5d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, ibc, du1_a(:,1), du1_a(:,imax))
+        call MatMul_5d_antisym_bcs(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, ibc, g%rhs1_b, g%rhs1_t, du1_a(:,1), du1_a(:,imax))
         call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
         call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
         if (any([BCS_ND, BCS_NN] == ibc)) then
