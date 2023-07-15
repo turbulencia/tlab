@@ -31,11 +31,11 @@ module FDM_Com1_Jacobian
 
 contains
     !########################################################################
-    subroutine FDM_C1N4_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
-        integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 3)   ! RHS diagonals; b_2, b_3 = 0
+    subroutine FDM_C1N4_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx)
+        real(wp), intent(out) :: lhs(nx, 3)     ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 3)     ! RHS diagonals; b_2, b_3 = 0
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
@@ -69,11 +69,11 @@ contains
     end subroutine FDM_C1N4_Jacobian
 
 !########################################################################
-    subroutine FDM_C1N6_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
-        integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 5)   ! RHS diagonals; b_3 = 0
+    subroutine FDM_C1N6_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx)
+        real(wp), intent(out) :: lhs(nx, 3)     ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 5)     ! RHS diagonals; b_3 = 0
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
@@ -103,8 +103,8 @@ contains
             coef_bc2(1:2) = [1.0_wp/6.0_wp, 0.5_wp]                             ! a_1, a_2
             coef_bc2(3:6) = [-5.0_wp/9.0_wp, -0.5_wp, 1.0_wp, 1.0_wp/18.0_wp]   ! b_1, b_2, b_3, b_4
             ! 4th order, Eq. 2.1.6 with \alpha=1/4.
-            ! coef_bc2(1:2) = [0.25_wp, 0.25_wp]                                  ! a_1, a_2
-            ! coef_bc2(3:6) = [-0.75_wp, 0.0_wp, 0.75_wp, 0.0_wp]                 ! b_1, b_2, b_3, b_4
+            ! coef_bc2(1:2) = [0.25_wp, 0.25_wp]                                ! a_1, a_2
+            ! coef_bc2(3:6) = [-0.75_wp, 0.0_wp, 0.75_wp, 0.0_wp]               ! b_1, b_2, b_3, b_4
 
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1, coef_bc2)
 
@@ -123,12 +123,12 @@ contains
         real(wp), intent(in), optional :: coef_bc2(6)   ! a_1, a_2, b_1, b_2, b_3, b_4
 
         ! -------------------------------------------------------------------
-        integer(wi) n, nmax, idl, idr, i, imax
+        integer(wi) n, nx, idl, idr, i, imax
 
         ! #######################################################################
         idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
         idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
-        nmax = size(lhs, 1)             ! # grid points
+        nx = size(lhs, 1)             ! # grid points
 
         ! lhs diagonals
         lhs(:, idl) = 1.0_wp                ! center diagonal
@@ -157,7 +157,7 @@ contains
             rhs(n, idr:idr + imax - 1) = coef_bc1(3:3 + imax - 1)   ! rhs center and off-diagonals
             rhs(n, 1) = coef_bc1(3 + imax)                          ! extended rhs stencil
 
-            n = nmax        ! symmetry property to define values at end
+            n = nx                                                  ! symmetry property to define values at end
             lhs(n, :) = lhs(1, size(lhs, 2):1:-1)
             rhs(n, :) = -rhs(1, size(rhs, 2):1:-1)
         end if
@@ -173,7 +173,7 @@ contains
             imax = min(idr + 1, 4)                                      ! max of 4 point stencil
             rhs(n, idr - 1:idr + imax - 2) = coef_bc2(3:3 + imax - 1)   ! rhs center and off-diagonals
 
-            n = nmax - 1    ! symmetry property to define values at end
+            n = nx - 1                                                  ! symmetry property to define values at end
             lhs(n, :) = lhs(2, size(lhs, 2):1:-1)
             rhs(n, :) = -rhs(2, size(rhs, 2):1:-1)
         end if

@@ -36,11 +36,11 @@ module FDM_Com2_Jacobian
 contains
     !########################################################################
     ! rhs is still pentadiagonal because of the bcs
-    subroutine FDM_C2N4_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
-        integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax, 2)
-        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 5 + 3)   ! RHS diagonals; b_2, b_3 = 0
+    subroutine FDM_C2N4_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx, 2)
+        real(wp), intent(out) :: lhs(nx, 3)         ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 5 + 3)     ! RHS diagonals; b_2, b_3 = 0
         real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
@@ -74,11 +74,11 @@ contains
     end subroutine FDM_C2N4_Jacobian
 
 !########################################################################
-    subroutine FDM_C2N6_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
-        integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax, 2)
-        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 5 + 3)   ! RHS diagonals; b_3 = 0
+    subroutine FDM_C2N6_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx, 2)
+        real(wp), intent(out) :: lhs(nx, 3)         ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 5 + 3)     ! RHS diagonals; b_3 = 0
         real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
@@ -116,11 +116,11 @@ contains
     end subroutine FDM_C2N6_Jacobian
 
 !########################################################################
-    subroutine FDM_C2N6_Hyper_Jacobian(nmax, dx, lhs, rhs, coef, periodic)
-        integer(wi), intent(in) :: nmax
-        real(wp), intent(in) :: dx(nmax, 2)
-        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals; a_2 = 0
-        real(wp), intent(out) :: rhs(nmax, 7 + 3)   ! RHS diagonals; b_3 = 0
+    subroutine FDM_C2N6_Hyper_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx, 2)
+        real(wp), intent(out) :: lhs(nx, 3)         ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 7 + 3)     ! RHS diagonals; b_3 = 0
         real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
@@ -138,7 +138,7 @@ contains
         ! One more diagonal in rhs to better match the transfer function (hyper- instead of hypodiffusive)
         kc = pi_wp**2.0_wp
         coef(1:2) = [(272.0_wp - 45.0_wp*kc)/(416.0_wp - 90.0_wp*kc), &
-                     0.0_wp]                                                             ! a_1, a_2
+                     0.0_wp]                                                        ! a_1, a_2
         coef(3:5) = [(48.0_wp - 135.0_wp*kc)/(1664.0_wp - 360.0_wp*kc), &
                      (528.0_wp - 81.0_wp*kc)/(208.0_wp - 45.0_wp*kc)/4.0_wp, &
                      -(432.0_wp - 63.0_wp*kc)/(1664.0_wp - 360.0_wp*kc)/9.0_wp]     ! b_1, b_2, b_3
@@ -178,22 +178,22 @@ contains
         real(wp), intent(in), optional :: coef_bc3(8)   ! a_1, a_2, b_1, b_2, b_3, b_4, b_5, b_6
 
         ! -------------------------------------------------------------------
-        integer(wi) n, nmax, idl, idr, i, imax
+        integer(wi) n, nx, idl, idr, i, imax
 
         ! #######################################################################
-        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
-        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
-        nmax = size(lhs, 1)             ! # grid points
+        idl = size(lhs, 2)/2 + 1            ! center diagonal in lhs
+        idr = size(rhs, 2)/2 + 1            ! center diagonal in rhs
+        nx = size(lhs, 1)                   ! # grid points
 
         ! lhs diagonals
-        lhs(:, idl) = 1.0_wp                ! center diagonal
-        do i = 1, idl - 1                   ! off-diagonals
+        lhs(:, idl) = 1.0_wp                                    ! center diagonal
+        do i = 1, idl - 1                                       ! off-diagonals
             lhs(:, idl - i) = coef_int(i)
             lhs(:, idl + i) = coef_int(i)
         end do
 
-        ! lhs diagonals
-        rhs(:, idr) = 0.0_wp                ! initialize center diagonal
+        ! rhs diagonals
+        rhs(:, idr) = 0.0_wp                                    ! initialize center diagonal
         do i = 1, idr - 1
             rhs(:, idr) = rhs(:, idr) - 2.0_wp*coef_int(i + 2)  ! center diagonal
             rhs(:, idr - i) = coef_int(i + 2)                   ! off-diagonals
@@ -203,17 +203,17 @@ contains
         ! boundaries
         if (present(coef_bc1)) then
             n = 1
-            lhs(n, idl) = 1.0_wp                                    ! lhs center diagonal
+            lhs(n, idl) = 1.0_wp                                        ! lhs center diagonal
             if (idl > 1) then
-                imax = min(idl - 1, 2)                              ! max of 3 point stencil, the first one set to 1
-                lhs(n, idl + 1:idl + imax) = coef_bc1(1:imax)       ! lhs off-diagonals
+                imax = min(idl - 1, 2)                                  ! max of 3 point stencil, the first one set to 1
+                lhs(n, idl + 1:idl + imax) = coef_bc1(1:imax)           ! lhs off-diagonals
             end if
             rhs(n, :) = 0.0_wp
-            imax = min(idr, 4)                                      ! max of 4 point stencil
-            rhs(n, idr:idr + imax - 1) = coef_bc1(3:3 + imax - 1)   ! rhs center and off-diagonals
-            rhs(n, 1) = coef_bc1(3 + imax)                          ! extended rhs stencil
+            imax = min(idr, 4)                                          ! max of 4 point stencil
+            rhs(n, idr:idr + imax - 1) = coef_bc1(3:3 + imax - 1)       ! rhs center and off-diagonals
+            rhs(n, 1) = coef_bc1(3 + imax)                              ! extended rhs stencil
 
-            n = nmax        ! symmetry property to define values at end
+            n = nx                                                      ! symmetry property to define values at end
             lhs(n, :) = lhs(1, size(lhs, 2):1:-1)
             rhs(n, :) = rhs(1, size(rhs, 2):1:-1)
         end if
@@ -229,7 +229,7 @@ contains
             imax = min(idr + 1, 4)                                      ! max of 4 point stencil
             rhs(n, idr - 1:idr + imax - 2) = coef_bc2(3:3 + imax - 1)   ! rhs center and off-diagonals
 
-            n = nmax - 1    ! symmetry property to define values at end
+            n = nx - 1                                                  ! symmetry property to define values at end
             lhs(n, :) = lhs(2, size(lhs, 2):1:-1)
             rhs(n, :) = rhs(2, size(rhs, 2):1:-1)
         end if
@@ -245,7 +245,7 @@ contains
             imax = min(idr + 2, 6)                                      ! max of 6 point stencil
             rhs(n, idr - 2:idr + imax - 3) = coef_bc3(3:3 + imax - 1)   ! rhs center and off-diagonals
 
-            n = nmax - 2    ! symmetry property to define values at end
+            n = nx - 2                                                  ! symmetry property to define values at end
             lhs(n, :) = lhs(3, size(lhs, 2):1:-1)
             rhs(n, :) = rhs(3, size(rhs, 2):1:-1)
         end if
