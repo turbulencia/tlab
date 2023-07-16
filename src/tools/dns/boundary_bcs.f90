@@ -445,8 +445,8 @@ contains
             end if
 
             ! ###################################################################
-            p_bcs_hb(:) = 0.0_wp    ! homogeneous bcs
-            p_bcs_ht(:) = 0.0_wp
+            p_dst(:, 1) = 0.0_wp    ! homogeneous bcs
+            p_dst(:, ny) = 0.0_wp
 
             call MatMul_5d_antisym_bcs(ny, nxz, bcs(ibc)%rhs(:, 1), bcs(ibc)%rhs(:, 2), bcs(ibc)%rhs(:, 3), bcs(ibc)%rhs(:, 4), bcs(ibc)%rhs(:, 5), p_org, p_dst, g%periodic, ibc, rhs1_b, rhs1_t, p_bcs_hb, p_bcs_ht)
 
@@ -457,8 +457,8 @@ contains
 
             call TRIDSS(nsize, nxz, bcs(ibc)%lu(nmin:nmax, 1), bcs(ibc)%lu(nmin:nmax, 2), bcs(ibc)%lu(nmin:nmax, 3), p_dst(:, nmin:nmax))
 
-            if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_dst(:, 1) + bcs(ibc)%lu(1, 3)*p_dst(:, 2)
-            if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_dst(:, ny) + bcs(ibc)%lu(ny, 1)*p_dst(:, ny - 1)
+            if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_bcs_hb(:) + bcs(ibc)%lu(1, 3)*p_dst(:, 2)
+            if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_bcs_ht(:) + bcs(ibc)%lu(ny, 1)*p_dst(:, ny - 1)
 
             ! ###################################################################
             ! -------------------------------------------------------------------

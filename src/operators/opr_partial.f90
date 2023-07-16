@@ -5,7 +5,7 @@
 #endif
 
 module OPR_PARTIAL
-    use TLAB_CONSTANTS, only: efile, WP, WI
+    use TLAB_CONSTANTS, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
     use TLAB_TYPES, only: grid_dt
     use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
     use IBM_VARS, only: ibm_partial
@@ -44,18 +44,33 @@ contains
         !                                   0 biased, non-zero
         !                                   1 forced to zero
         type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: u(nlines*g%size)
-        real(wp), intent(out) :: result(nlines*g%size)
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
+
+        integer(wi) nmin, nmax, nsize
 
 ! ###################################################################
         ibc = bcs(1) + bcs(2)*2
         ip = ibc*5
 
+        nmin = 1; nmax = g%size
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            result(:, 1) = 0.0_wp      ! homogeneous bcs
+            nmin = nmin + 1
+        end if
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            result(:, g%size) = 0.0_wp
+            nmax = nmax - 1
+        end if
+        nsize = nmax - nmin + 1
+
         select case (g%nb_diag_1(2))
         case (3)
             call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, ibc)
+            ! call MatMul_3d_antisym_bcs(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
         case (5)
             call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, ibc)
+            ! call MatMul_5d_antisym_bcs(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
         end select
 
         if (g%periodic) then
@@ -72,9 +87,14 @@ contains
             case (3)
                 call TRIDSS(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), result)
             case (5)
-                call PENTADSS2(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), &
-                               g%lu1(1, ip + 5), result)
+                call PENTADSS2(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5), result)
             end select
+            ! select case (g%nb_diag_1(1))
+            ! case (3)
+            !     call TRIDSS(nsize, nlines, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), result(:, nmin:nmax))
+            ! case (5)
+            !   call PENTADSS2(nsize, nlines, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5), result(:, nmin:nmax))
+            ! end select
 
         end if
 

@@ -334,7 +334,7 @@ contains
         integer(wi), intent(in) :: nx, len                   ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)    ! RHS diagonals
         real(wp), intent(in) :: u(len, nx)                   ! function u
-        real(wp), intent(out) :: f(len, nx)                  ! RHS, f = B u
+        real(wp), intent(inout) :: f(len, nx)                  ! RHS, f = B u
         logical, intent(in) :: periodic
         integer, optional :: ibc
         real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
@@ -369,11 +369,12 @@ contains
         else
 
             if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                f(:, 1) = u(:, 2)*r3_b(1) &
-                          + u(:, 3)*r1_b(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
+                if (present(bcs_b)) bcs_b(:) = u(:, 2)*r3_b(1) &
+                                               + u(:, 3)*r1_b(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
 
                 f(:, 2) = u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2) + &
-                          bcs_b(:)*r1_b(2)
+                          f(:, 1)*r1_b(2)                           ! f(1) contains the boundary condition
+                ! bcs_b(:)*r1_b(2)
 
             else
                 f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) &
@@ -401,10 +402,10 @@ contains
         else
             if (any([BCS_DN, BCS_NN] == ibc_loc)) then
                 f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + &
-                               bcs_t(:)*r3_t(1)
+                               f(:, nx)*r3_t(1)
 
-                f(:, nx) = u(:, nx - 2)*r3_t(2) & ! r3(nx) contains 2. subdiagonal to allow for longer stencil at boundary
-                           + u(:, nx - 1)*r1_t(2)
+                if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) & ! r3(nx) contains 2. subdiagonal to allow for longer stencil at boundary
+                                               + u(:, nx - 1)*r1_t(2)
 
             else
                 f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1)*r2(nx - 1) + u(:, nx)*r3(nx - 1)
@@ -622,10 +623,10 @@ contains
     end subroutine MatMul_5d_antisym
 
     subroutine MatMul_5d_antisym_bcs(nx, len, r1, r2, r3, r4, r5, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len       ! m linear systems or size n
+        integer(wi), intent(in) :: nx, len          ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
+        real(wp), intent(in) :: u(len, nx)          ! function u
+        real(wp), intent(inout) :: f(len, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
         logical, intent(in) :: periodic
         integer, optional :: ibc
         real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
@@ -671,13 +672,13 @@ contains
 
         else
             if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                f(:, 1) = u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1)     ! contribution to u_1
+                if (present(bcs_b)) bcs_b(:) = u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1)     ! contribution to u_1
 
                 f(:, 2) = u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2) + &
-                          bcs_b(:)*r2_b(2)
+                          f(:, 1)*r2_b(2)       ! f(1) contains u'_1
 
                 f(:, 3) = u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3) + &
-                          bcs_b(:)*r1_b(3)
+                          f(:, 1)*r1_b(3)       ! f(1) contains u'_1
 
             else
                 f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
@@ -712,12 +713,12 @@ contains
 
             if (any([BCS_DN, BCS_NN] == ibc_loc)) then
                 f(:, nx - 2) = u(:, nx - 4)*r1_t(1) + u(:, nx - 3)*r2_t(1) + u(:, nx - 2)*r3_t(1) + u(:, nx - 1)*r4_t(1) + &
-                               bcs_t(:)*r5_t(1)
+                               f(:, nx)*r5_t(1)     ! f(n) contains u'_n
 
                 f(:, nx - 1) = u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + &
-                               bcs_t(:)*r4_t(2)
+                               f(:, nx)*r4_t(2)     ! f(n) contains u'_n
 
-                f(:, nx) = u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + u(:, nx - 3)*r5_t(3)    ! contribution to u_n
+                if (present(bcs_b)) bcs_t(:) = u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + u(:, nx - 3)*r5_t(3)    ! contribution to u_n
 
             else
                 f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2)*r3(nx - 2) &
