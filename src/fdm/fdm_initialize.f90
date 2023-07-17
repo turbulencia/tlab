@@ -201,29 +201,22 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lu1(:, 1:g%nb_diag_1(1))
 
-            ! to be removed
-            call FDM_Bcs(g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), i)
+            ! call FDM_Bcs(g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), i)
+            call FDM_Bcs_Neumann(i, g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
+
+            nmin = 1; nmax = nx
+            if (any([BCS_ND, BCS_NN] == i)) nmin = nmin + 1
+            if (any([BCS_DN, BCS_NN] == i)) nmax = nmax - 1
+            nsize = nmax - nmin + 1
 
             select case (g%nb_diag_1(1))
             case (3)
-                call TRIDFS(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+            !     call TRIDFS(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
+                call TRIDFS(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3))
             case (5)
-                call PENTADFS2(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5))
+            !     call PENTADFS2(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5))
+                call PENTADFS2(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5))
             end select
-
-            ! call FDM_Bcs_Neumann(i, g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
-
-            ! nmin = 1; nmax = nx
-            ! if (any([BCS_ND, BCS_NN] == i)) nmin = nmin + 1
-            ! if (any([BCS_DN, BCS_NN] == i)) nmax = nmax - 1
-            ! nsize = nmax - nmin + 1
-
-            ! select case (g%nb_diag_1(1))
-            ! case (3)
-            !     call TRIDFS(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3))
-            ! case (5)
-            !     call PENTADFS2(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5))
-            ! end select
 
             ig = ig + 5
 

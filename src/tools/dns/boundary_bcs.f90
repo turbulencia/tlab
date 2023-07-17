@@ -26,13 +26,13 @@ module BOUNDARY_BCS
 
     logical, public :: BcsDrift
 
-    type arrays
-        real(wp), allocatable :: lu(:, :)
-        real(wp), allocatable :: rhs(:, :)
-    end type arrays
-    type(arrays) bcs(3)
+    ! type arrays
+    !     real(wp), allocatable :: lu(:, :)
+    !     real(wp), allocatable :: rhs(:, :)
+    ! end type arrays
+    ! type(arrays) bcs(3)
     integer(wi) nmin, nmax, nsize
-    real(wp) rhs1_b(4, 7), rhs1_t(4, 7)
+    ! real(wp) rhs1_b(4, 7), rhs1_t(4, 7)
     public :: BOUNDARY_BCS_NEUMANN_Y
 
     public :: BOUNDARY_BCS_SURFACE_Y
@@ -145,8 +145,8 @@ contains
 #endif
 
 ! -------------------------------------------------------------------
-        integer j, is, ny
-        real(wp) prefactor, coef(5)
+        integer j, is !, ny
+        real(wp) prefactor !, coef(5)
         type(profiles_dt) prof_loc
         integer, parameter :: i1 = 1
 
@@ -186,23 +186,23 @@ contains
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
 
             ! LU decomposition for the 3 possible neumann boudary conditions
-            ny = g(2)%size
+            ! ny = g(2)%size
 
-            do is = 1, 3
-                allocate (bcs(is)%lu(ny, 5))
-                allocate (bcs(is)%rhs(ny, 7))
+            ! do is = 1, 3
+            !     allocate (bcs(is)%lu(ny, 5))
+            !     allocate (bcs(is)%rhs(ny, 7))
 
-                call FDM_C1N6_Jacobian(ny, g(2)%jac, bcs(is)%lu(:, :), bcs(is)%rhs(:, :), coef, g(2)%periodic)
-                call FDM_Bcs_Neumann(is, bcs(is)%lu(:, 1:3), bcs(is)%rhs(:, 1:5), rhs1_b, rhs1_t)
+            !     call FDM_C1N6_Jacobian(ny, g(2)%jac, bcs(is)%lu(:, :), bcs(is)%rhs(:, :), coef, g(2)%periodic)
+            !     call FDM_Bcs_Neumann(is, bcs(is)%lu(:, 1:3), bcs(is)%rhs(:, 1:5), rhs1_b, rhs1_t)
 
-                nmin = 1; nmax = ny
-                if (any([BCS_ND, BCS_NN] == is)) nmin = nmin + 1
-                if (any([BCS_DN, BCS_NN] == is)) nmax = nmax - 1
-                nsize = nmax - nmin + 1
+            !     nmin = 1; nmax = ny
+            !     if (any([BCS_ND, BCS_NN] == is)) nmin = nmin + 1
+            !     if (any([BCS_DN, BCS_NN] == is)) nmax = nmax - 1
+            !     nsize = nmax - nmin + 1
 
-                call TRIDFS(nsize, bcs(is)%lu(nmin:nmax, 1), bcs(is)%lu(nmin:nmax, 2), bcs(is)%lu(nmin:nmax, 3))
+            !     call TRIDFS(nsize, bcs(is)%lu(nmin:nmax, 1), bcs(is)%lu(nmin:nmax, 2), bcs(is)%lu(nmin:nmax, 3))
 
-            end do
+            ! end do
 
         else
 ! #######################################################################
@@ -410,7 +410,7 @@ contains
         target u, bcs_hb, bcs_ht, tmp1
 
         ! -------------------------------------------------------------------
-        integer(wi) nxz, nxy
+        integer(wi) nxz, nxy, ip
 
         real(wp), pointer :: p_org(:, :), p_dst(:, :)
         real(wp), pointer :: p_bcs_hb(:), p_bcs_ht(:)
@@ -445,20 +445,47 @@ contains
             end if
 
             ! ###################################################################
-            p_dst(:, 1) = 0.0_wp    ! homogeneous bcs
-            p_dst(:, ny) = 0.0_wp
+            ! p_dst(:, 1) = 0.0_wp    ! homogeneous bcs
+            ! p_dst(:, ny) = 0.0_wp
 
-            call MatMul_5d_antisym_bcs(ny, nxz, bcs(ibc)%rhs(:, 1), bcs(ibc)%rhs(:, 2), bcs(ibc)%rhs(:, 3), bcs(ibc)%rhs(:, 4), bcs(ibc)%rhs(:, 5), p_org, p_dst, g%periodic, ibc, rhs1_b, rhs1_t, p_bcs_hb, p_bcs_ht)
+            ip = ibc*5
 
-            nmin = 1; nmax = ny
-            if (any([BCS_ND, BCS_NN] == ibc)) nmin = nmin + 1
-            if (any([BCS_DN, BCS_NN] == ibc)) nmax = nmax - 1
+            nmin = 1; nmax = g%size
+            if (any([BCS_ND, BCS_NN] == ibc)) then
+                p_dst(:, 1) = 0.0_wp      ! homogeneous bcs
+                nmin = nmin + 1
+            end if
+            if (any([BCS_DN, BCS_NN] == ibc)) then
+                p_dst(:, ny) = 0.0_wp
+                nmax = nmax - 1
+            end if
             nsize = nmax - nmin + 1
 
-            call TRIDSS(nsize, nxz, bcs(ibc)%lu(nmin:nmax, 1), bcs(ibc)%lu(nmin:nmax, 2), bcs(ibc)%lu(nmin:nmax, 3), p_dst(:, nmin:nmax))
+            ! call MatMul_5d_antisym(ny, nxz, bcs(ibc)%rhs(:, 1), bcs(ibc)%rhs(:, 2), bcs(ibc)%rhs(:, 3), bcs(ibc)%rhs(:, 4), bcs(ibc)%rhs(:, 5), p_org, p_dst, g%periodic, ibc, rhs1_b, rhs1_t, p_bcs_hb, p_bcs_ht)
+            select case (g%nb_diag_1(2))
+            case (3)
+                call MatMul_3d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t, p_bcs_hb, p_bcs_ht)
+            case (5)
+                call MatMul_5d_antisym(g%size,  nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
+            end select
 
-            if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_bcs_hb(:) + bcs(ibc)%lu(1, 3)*p_dst(:, 2)
-            if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_bcs_ht(:) + bcs(ibc)%lu(ny, 1)*p_dst(:, ny - 1)
+            ! nmin = 1; nmax = ny
+            ! if (any([BCS_ND, BCS_NN] == ibc)) nmin = nmin + 1
+            ! if (any([BCS_DN, BCS_NN] == ibc)) nmax = nmax - 1
+            ! nsize = nmax - nmin + 1
+
+            select case (g%nb_diag_1(1))
+            case (3)
+                call TRIDSS(nsize, nxz, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), p_dst(:, nmin:nmax))
+            case (5)
+                call PENTADSS2(nsize, nxz, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5), p_dst(:, nmin:nmax))
+            end select
+            ! call TRIDSS(nsize, nxz, bcs(ibc)%lu(nmin:nmax, 1), bcs(ibc)%lu(nmin:nmax, 2), bcs(ibc)%lu(nmin:nmax, 3), p_dst(:, nmin:nmax))
+
+            ! if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_bcs_hb(:) + bcs(ibc)%lu(1, 3)*p_dst(:, 2)
+            ! if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_bcs_ht(:) + bcs(ibc)%lu(ny, 1)*p_dst(:, ny - 1)
+            if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_bcs_hb(:) + g%lu1(1, ip + 3)*p_dst(:, 2)
+            if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_bcs_ht(:) + g%lu1(ny, ip + 1)*p_dst(:, ny - 1)
 
             ! ###################################################################
             ! -------------------------------------------------------------------
