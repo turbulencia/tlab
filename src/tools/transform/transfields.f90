@@ -98,10 +98,11 @@ program TRANSFIELDS
         write (*, '(A)') '3. Remesh fields'
         write (*, '(A)') '4. Linear combination of fields'
         write (*, '(A)') '5. Filter fields'
-        write (*, '(A)') '6. Transform scalar fields'
+        write (*, '(A)') '6. Mapping of scalar fields'
         write (*, '(A)') '7. Blend fields'
         write (*, '(A)') '8. Add mean profiles'
         write (*, '(A)') '9. Extrude fields in Oz'
+        write (*, '(A)') '10. Change to single precision'
         read (*, *) opt_main
 #endif
     else
@@ -255,15 +256,16 @@ program TRANSFIELDS
     ! #######################################################################
     inb_txc = 0
     inb_scal_dst = inb_scal
-    if (opt_main == 3) then ! Remesh
+    select case (opt_main)
+    case (3)            ! Remesh
         isize_txc_field = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
         inb_txc = 5
-    else if (opt_main == 5) then ! Filter
+    case (5)            ! Filter
         inb_txc = 4
-    else if (opt_main == 6) then
+    case (6)            ! Scalar field mapping
         inb_txc = 5
         inb_scal_dst = 1
-    end if
+    end select
     isize_wrk3d = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
     if (fourier_on) inb_txc = max(inb_txc, 1)
 
@@ -453,10 +455,11 @@ program TRANSFIELDS
             call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
-        ! ###################################################################
-        ! Cropping
-        ! ###################################################################
-        if (opt_main == 1) then
+        select case (opt_main)
+            ! ###################################################################
+            ! Cropping
+            ! ###################################################################
+        case (1)
             if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
@@ -474,7 +477,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Extension
             ! ###################################################################
-        else if (opt_main == 2) then
+        case (2)
             if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
@@ -492,7 +495,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Change grid
             ! ###################################################################
-        else if (opt_main == 3) then
+        case (3)
 
             if (flow_on) then
                 do iq = 1, inb_flow
@@ -501,16 +504,16 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                 + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-                                + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
+    + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
                                          g, x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
-                                         txc_aux, q_dst(:, iq), txc(:,2))
+                                         txc_aux, q_dst(:, iq), txc(:, 2))
                 end do
             end if
 
@@ -521,23 +524,23 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                 + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-                                + (y_aux(jmax_aux)-y(subdomain(4)-1,1)) *(txc_aux(:,jmax_aux,k)-txc_aux(:,jmax_aux-1,k)) /(y(subdomain(4),1)-y(subdomain(4)-1,1))
+    + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
                                          g, x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
-                                         txc_aux, s_dst(:, is), txc(:,2))
+                                         txc_aux, s_dst(:, is), txc(:, 2))
                 end do
             end if
 
             ! ###################################################################
             ! Linear combination of fields
             ! ###################################################################
-        else if (opt_main == 4) then
+        case (4)
             if (flow_on) then
                 q_dst = q_dst + q*opt_vec(it + 1)
             end if
@@ -549,7 +552,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Filter
             ! ###################################################################
-        else if (opt_main == 5) then
+        case (5)
             if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Filtering...')
@@ -573,7 +576,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Transformation
             ! ###################################################################
-        else if (opt_main == 6) then
+        case (6)
             if (opt_function == 1) then
                 call TRANS_FUNCTION(imax, jmax, kmax, s, s_dst, txc)
 
@@ -588,7 +591,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Blend
             ! ###################################################################
-        else if (opt_main == 7) then
+        case (7)
             if (it == 1) opt_vec(2) = y(1, 1) + opt_vec(2)*g(2)%scale
             write (sRes, *) opt_vec(2), opt_vec(3); sRes = 'Blending with '//trim(adjustl(sRes))
             call TLAB_WRITE_ASCII(lfile, sRes)
@@ -610,7 +613,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Adding mean profiles
             ! ###################################################################
-        else if (opt_main == 8) then
+        case (8)
             if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Adding mean flow profiles...')
@@ -628,7 +631,7 @@ program TRANSFIELDS
             ! ###################################################################
             ! Extrude
             ! ###################################################################
-        else if (opt_main == 9) then
+        case (9)
             if (flow_on) then
                 do iq = 1, inb_flow
                     call TLAB_WRITE_ASCII(lfile, 'Extruding along Oz...')
@@ -643,7 +646,17 @@ program TRANSFIELDS
                 end do
             end if
 
-        end if
+            ! ###################################################################
+            ! Change to single precision
+            ! ###################################################################
+        case (10)
+            q_dst(:, 1:inb_flow) = q(:, 1:inb_flow)
+            s_dst(:, 1:inb_scal) = s(:, 1:inb_scal)
+
+            idummy = imode_precision_files
+            imode_precision_files = IO_TYPE_SINGLE
+
+        end select
 
         ! ###################################################################
         ! Writing transform fields
@@ -657,6 +670,10 @@ program TRANSFIELDS
                 scal_file = trim(adjustl(scal_file))//'.trn'
                 call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
             end if
+        end if
+
+        if (opt_main == 10) then
+            imode_precision_files = idummy
         end if
 
     end do
@@ -706,7 +723,7 @@ contains
 
         integer(wi) nx, ny, nz, subdomain(6)
         real(wp), intent(IN) :: a(nx, ny, nz)
-       real(wp), intent(OUT) :: b(subdomain(2) - subdomain(1) + 1, subdomain(4) - subdomain(3) + 1, subdomain(6) - subdomain(5) + 1)
+        real(wp), intent(OUT) :: b(subdomain(2) - subdomain(1) + 1, subdomain(4) - subdomain(3) + 1, subdomain(6) - subdomain(5) + 1)
 
         ! #######################################################################
         do k = 1, subdomain(6) - subdomain(5) + 1
@@ -755,8 +772,6 @@ contains
     end subroutine TRANS_EXTEND
 
     !########################################################################
-    !# DESCRIPTION
-    !#
     !########################################################################
     subroutine TRANS_ADD_MEAN(flag_mode, is, nx, ny, nz, y, a, b)
 
@@ -797,10 +812,7 @@ contains
     end subroutine TRANS_ADD_MEAN
 
     !########################################################################
-    !# DESCRIPTION
-    !#
     !# Calculate b = f(a)
-    !#
     !########################################################################
     subroutine TRANS_FUNCTION(nx, ny, nz, a, b, txc)
 
@@ -851,10 +863,7 @@ contains
     end subroutine TRANS_FUNCTION
 
     !########################################################################
-    !# DESCRIPTION
-    !#
     !# b <- b + f(y)*a
-    !#
     !########################################################################
     subroutine TRANS_BLEND(nx, ny, nz, params, y, a, b)
 
