@@ -29,7 +29,7 @@ program VPARTIAL
     integer(wi) :: test_type, ibc, ip
     integer(wi) :: nmin, nmax, nsize
 
-    integer, parameter :: i1 = 1
+    integer, parameter :: i1 = 1, cases(4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
 
 ! ###################################################################
 ! Initialize
@@ -235,193 +235,199 @@ call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:
 
 ! ###################################################################
     elseif (test_type == 3) then ! Testing new BCs routines
-        ibc = BCS_NN
+        do ip = 1, size(cases)
+            ibc = cases(ip)
+            print *, new_line('a'), 'Case ', ibc
 
-        nmin = 1
-        nmax = g%size
-        if (any([BCS_ND, BCS_NN] == ibc)) then
-            nmin = nmin + 1
-        end if
-        if (any([BCS_DN, BCS_NN] == ibc)) then
-            nmax = nmax - 1
-        end if
-        nsize = nmax - nmin + 1
+            nmin = 1
+            nmax = g%size
+            if (any([BCS_ND, BCS_NN] == ibc)) then
+                nmin = nmin + 1
+            end if
+            if (any([BCS_DN, BCS_NN] == ibc)) then
+                nmax = nmax - 1
+            end if
+            nsize = nmax - nmin + 1
 
-        du1_n(:, 1) = du1_a(:, 1)
-        du1_n(:, imax) = du1_a(:, imax)
+            du1_n(:, 1) = du1_a(:, 1)
+            du1_n(:, imax) = du1_a(:, imax)
 
-        print *, '1. order, Jacobian 4'
-        call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:3), g%rhs1_b, g%rhs1_t)
-        call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+            print *, '1. order, Jacobian 4'
+            call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+            call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:3), g%rhs1_b, g%rhs1_t)
+            call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
         call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, ibc, g%rhs1_b, g%rhs1_t, wrk2d(:,1), wrk2d(:,2))
-        call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
-        call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
-        if (any([BCS_ND, BCS_NN] == ibc)) then
-            print *, u(:, 1), g%lu1(1, 2)*du1_n(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + wrk2d(1:len, 1)
-        end if
-        if (any([BCS_DN, BCS_NN] == ibc)) then
-            print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_n(:, imax) + wrk2d(1:len, 2)
-        end if
+            call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
+            call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
+            if (any([BCS_ND, BCS_NN] == ibc)) then
+                print *, u(:, 1), g%lu1(1, 2)*du1_n(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + wrk2d(1:len, 1)
+            end if
+            if (any([BCS_DN, BCS_NN] == ibc)) then
+                print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_n(:, imax) + wrk2d(1:len, 2)
+            end if
 
-        print *, '1. order, Jacobian 6'
-        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:5), g%rhs1_b, g%rhs1_t)
-        call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+            print *, '1. order, Jacobian 6'
+            call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+            call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:5), g%rhs1_b, g%rhs1_t)
+            call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
         call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, ibc, g%rhs1_b, g%rhs1_t, wrk2d(:,1), wrk2d(:,2))
-        call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
-        call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
-        if (any([BCS_ND, BCS_NN] == ibc)) then
-            print *, u(:, 1), g%lu1(1, 2)*du1_a(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + wrk2d(1:len, 1)
-        end if
-        if (any([BCS_DN, BCS_NN] == ibc)) then
-            print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_a(:, imax) + wrk2d(1:len, 2)
-        end if
-
-! ###################################################################
-    elseif (test_type == 2) then ! Testing new BCs routines
-
-        if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
-            ! call FDM_C1N6_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            ! call FDM_C1N6_BCS_RHS(imax, len, ibc, u, du1_b)
-        elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
-            call FDM_C1N6M_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-            call FDM_C1N6M_BCS_RHS(imax, len, ibc, u, du1_b)
-        end if
-
-        if (ibc == 0) then
-            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
-                call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-                call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du1_b)
-            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
-                call PENTADFS2(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-                call PENTADSS2(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
+            call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
+            call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
+            if (any([BCS_ND, BCS_NN] == ibc)) then
+                print *, u(:, 1), g%lu1(1, 2)*du1_a(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + wrk2d(1:len, 1)
+            end if
+            if (any([BCS_DN, BCS_NN] == ibc)) then
+                print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_a(:, imax) + wrk2d(1:len, 2)
             end if
 
-        else if (ibc == 1) then
-            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
-                wrk1d(:, 4) = 0.0_wp
-                wrk1d(1, 4) = 1.0_wp
-                wrk1d(2, 4) = wrk1d(1, 1)
-                wrk1d(3, 4) = wrk1d(2, 1)
-                call TRIDFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3))
-                call TRIDSS(imax - 1, len, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), du1_b(:, 2:))
-                call TRIDSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4))
-                bcs(:, 1) = du1_b(:, 1)
-                du1_b(:, 1) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 4) ! BCs
-                end do
-                bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 2)*du1_b(:, 1) + wrk1d(1, 3)*du1_b(:, 2))
-                write (*, *) bcs(:, 1), u(:, 1)
-            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
-                wrk1d(:, 6) = 0.0_wp
-                wrk1d(1, 6) = 1.0_wp
-                wrk1d(2, 6) = wrk1d(1, 2)
-                wrk1d(3, 6) = wrk1d(2, 2)
-                call PENTADFS2(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
-                call PENTADSS2(imax - 1, len, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), du1_b(1, 2))
-                call PENTADSS2(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
-                bcs(:, 1) = du1_b(:, 1)
-                du1_b(:, 1) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 6) ! BCs
-                end do
-                bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 3)*du1_b(:, 1) + wrk1d(1, 4)*du1_b(:, 2))
-                write (*, *) bcs(:, 1), u(:, 1)
-            end if
+        end do
 
-        else if (ibc == 2) then
-            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
-                wrk1d(:, 5) = 0.0_wp
-                wrk1d(imax, 5) = 1.0_wp
-                wrk1d(imax - 2, 5) = wrk1d(imax - 1, 3)
-                wrk1d(imax - 1, 5) = wrk1d(imax, 3)
-                call TRIDFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-                call TRIDSS(imax - 1, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du1_b)
-                call TRIDSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 5))
-                bcs(:, 2) = du1_b(:, imax)
-                du1_b(:, imax) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 5) ! BCs
-                end do
-                bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 1)*du1_b(:, imax - 1) + wrk1d(imax, 2)*du1_b(:, imax))
-                write (*, *) bcs(:, 2), u(:, imax)
-            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
-                wrk1d(:, 6) = 0.0_wp
-                wrk1d(imax, 6) = 1.0_wp
-                wrk1d(imax - 2, 6) = wrk1d(imax - 1, 4)
-                wrk1d(imax - 1, 6) = wrk1d(imax, 4)
-                call PENTADFS2(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-                call PENTADSS2(imax - 1, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
-                call PENTADSS2(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
-                bcs(:, 2) = du1_b(:, imax)
-                du1_b(:, imax) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 6) ! BCs
-                end do
-                bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 2)*du1_b(:, imax - 1) + wrk1d(imax, 3)*du1_b(:, imax))
-                write (*, *) bcs(:, 2), u(:, imax)
-            end if
-
-        else if (ibc == 3) then
-            if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
-                wrk1d(:, 4) = 0.0_wp
-                wrk1d(1, 4) = 1.0_wp
-                wrk1d(2, 4) = wrk1d(1, 1)
-                wrk1d(3, 4) = wrk1d(2, 1)
-                wrk1d(:, 5) = 0.0_wp
-                wrk1d(imax, 5) = 1.0_wp
-                wrk1d(imax - 2, 5) = wrk1d(imax - 1, 3)
-                wrk1d(imax - 1, 5) = wrk1d(imax, 3)
-                call TRIDFS(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3))
-                call TRIDSS(imax - 2, len, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), du1_b(:, 2:))
-                call TRIDSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4))
-                call TRIDSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 5))
-                bcs(:, 1) = du1_b(:, 1)
-                du1_b(:, 1) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 4) ! BCs
-                end do
-                bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 2)*du1_b(:, 1) + wrk1d(1, 3)*du1_b(:, 2))
-                write (*, *) bcs(:, 1), u(:, 1)
-                bcs(:, 2) = du1_b(:, imax)
-                du1_b(:, imax) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 5) ! BCs
-                end do
-                bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 1)*du1_b(:, imax - 1) + wrk1d(imax, 2)*du1_b(:, imax))
-                write (*, *) bcs(:, 2), u(:, imax)
-            elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
-                wrk1d(:, 6) = 0.0_wp
-                wrk1d(1, 6) = 1.0_wp
-                wrk1d(2, 6) = wrk1d(1, 2)
-                wrk1d(3, 6) = wrk1d(2, 2)
-                wrk1d(:, 7) = 0.0_wp
-                wrk1d(imax, 7) = 1.0_wp
-                wrk1d(imax - 2, 7) = wrk1d(imax - 1, 4)
-                wrk1d(imax - 1, 7) = wrk1d(imax, 4)
-                call PENTADFS2(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
-                call PENTADSS2(imax - 2, len, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), du1_b(1, 2))
-                call PENTADSS2(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
-                call PENTADSS2(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 7))
-                bcs(:, 1) = du1_b(:, 1)
-                du1_b(:, 1) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 6) ! BCs
-                end do
-                bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 3)*du1_b(:, 1) + wrk1d(1, 4)*du1_b(:, 2))
-                write (*, *) bcs(:, 1), u(:, 1)
-                bcs(:, 2) = du1_b(:, imax)
-                du1_b(:, imax) = 0.0_wp
-                do i = 1, imax
-                    du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 7) ! BCs
-                end do
-                bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 2)*du1_b(:, imax - 1) + wrk1d(imax, 3)*du1_b(:, imax))
-                write (*, *) bcs(:, 2), u(:, imax)
-            end if
-        end if
     end if
+
+! ! ###################################################################
+!     elseif (test_type == 2) then ! Testing new BCs routines
+
+!         if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
+!             ! call FDM_C1N6_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+!             ! call FDM_C1N6_BCS_RHS(imax, len, ibc, u, du1_b)
+!         elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
+!             call FDM_C1N6M_BCS_LHS(imax, ibc, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+!             call FDM_C1N6M_BCS_RHS(imax, len, ibc, u, du1_b)
+!         end if
+
+!         if (ibc == 0) then
+!             if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
+!                 call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+!                 call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du1_b)
+!             elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
+!                 call PENTADFS2(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+!                 call PENTADSS2(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
+!             end if
+
+!         else if (ibc == 1) then
+!             if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
+!                 wrk1d(:, 4) = 0.0_wp
+!                 wrk1d(1, 4) = 1.0_wp
+!                 wrk1d(2, 4) = wrk1d(1, 1)
+!                 wrk1d(3, 4) = wrk1d(2, 1)
+!                 call TRIDFS(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3))
+!                 call TRIDSS(imax - 1, len, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), du1_b(:, 2:))
+!                 call TRIDSS(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4))
+!                 bcs(:, 1) = du1_b(:, 1)
+!                 du1_b(:, 1) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 4) ! BCs
+!                 end do
+!                 bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 2)*du1_b(:, 1) + wrk1d(1, 3)*du1_b(:, 2))
+!                 write (*, *) bcs(:, 1), u(:, 1)
+!             elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
+!                 wrk1d(:, 6) = 0.0_wp
+!                 wrk1d(1, 6) = 1.0_wp
+!                 wrk1d(2, 6) = wrk1d(1, 2)
+!                 wrk1d(3, 6) = wrk1d(2, 2)
+!                 call PENTADFS2(imax - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
+!                 call PENTADSS2(imax - 1, len, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), du1_b(1, 2))
+!                 call PENTADSS2(imax - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
+!                 bcs(:, 1) = du1_b(:, 1)
+!                 du1_b(:, 1) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 6) ! BCs
+!                 end do
+!                 bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 3)*du1_b(:, 1) + wrk1d(1, 4)*du1_b(:, 2))
+!                 write (*, *) bcs(:, 1), u(:, 1)
+!             end if
+
+!         else if (ibc == 2) then
+!             if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
+!                 wrk1d(:, 5) = 0.0_wp
+!                 wrk1d(imax, 5) = 1.0_wp
+!                 wrk1d(imax - 2, 5) = wrk1d(imax - 1, 3)
+!                 wrk1d(imax - 1, 5) = wrk1d(imax, 3)
+!                 call TRIDFS(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+!                 call TRIDSS(imax - 1, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du1_b)
+!                 call TRIDSS(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 5))
+!                 bcs(:, 2) = du1_b(:, imax)
+!                 du1_b(:, imax) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 5) ! BCs
+!                 end do
+!                 bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 1)*du1_b(:, imax - 1) + wrk1d(imax, 2)*du1_b(:, imax))
+!                 write (*, *) bcs(:, 2), u(:, imax)
+!             elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
+!                 wrk1d(:, 6) = 0.0_wp
+!                 wrk1d(imax, 6) = 1.0_wp
+!                 wrk1d(imax - 2, 6) = wrk1d(imax - 1, 4)
+!                 wrk1d(imax - 1, 6) = wrk1d(imax, 4)
+!                 call PENTADFS2(imax - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+!                 call PENTADSS2(imax - 1, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), du1_b(1, 1))
+!                 call PENTADSS2(imax - 1, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6))
+!                 bcs(:, 2) = du1_b(:, imax)
+!                 du1_b(:, imax) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 6) ! BCs
+!                 end do
+!                 bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 2)*du1_b(:, imax - 1) + wrk1d(imax, 3)*du1_b(:, imax))
+!                 write (*, *) bcs(:, 2), u(:, imax)
+!             end if
+
+!         else if (ibc == 3) then
+!             if (g%mode_fdm1 == FDM_COM6_JACOBIAN) then
+!                 wrk1d(:, 4) = 0.0_wp
+!                 wrk1d(1, 4) = 1.0_wp
+!                 wrk1d(2, 4) = wrk1d(1, 1)
+!                 wrk1d(3, 4) = wrk1d(2, 1)
+!                 wrk1d(:, 5) = 0.0_wp
+!                 wrk1d(imax, 5) = 1.0_wp
+!                 wrk1d(imax - 2, 5) = wrk1d(imax - 1, 3)
+!                 wrk1d(imax - 1, 5) = wrk1d(imax, 3)
+!                 call TRIDFS(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3))
+!                 call TRIDSS(imax - 2, len, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), du1_b(:, 2:))
+!                 call TRIDSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4))
+!                 call TRIDSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 5))
+!                 bcs(:, 1) = du1_b(:, 1)
+!                 du1_b(:, 1) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 4) ! BCs
+!                 end do
+!                 bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 2)*du1_b(:, 1) + wrk1d(1, 3)*du1_b(:, 2))
+!                 write (*, *) bcs(:, 1), u(:, 1)
+!                 bcs(:, 2) = du1_b(:, imax)
+!                 du1_b(:, imax) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 5) ! BCs
+!                 end do
+!                 bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 1)*du1_b(:, imax - 1) + wrk1d(imax, 2)*du1_b(:, imax))
+!                 write (*, *) bcs(:, 2), u(:, imax)
+!             elseif (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
+!                 wrk1d(:, 6) = 0.0_wp
+!                 wrk1d(1, 6) = 1.0_wp
+!                 wrk1d(2, 6) = wrk1d(1, 2)
+!                 wrk1d(3, 6) = wrk1d(2, 2)
+!                 wrk1d(:, 7) = 0.0_wp
+!                 wrk1d(imax, 7) = 1.0_wp
+!                 wrk1d(imax - 2, 7) = wrk1d(imax - 1, 4)
+!                 wrk1d(imax - 1, 7) = wrk1d(imax, 4)
+!                 call PENTADFS2(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
+!                 call PENTADSS2(imax - 2, len, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), du1_b(1, 2))
+!                 call PENTADSS2(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
+!                 call PENTADSS2(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 7))
+!                 bcs(:, 1) = du1_b(:, 1)
+!                 du1_b(:, 1) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, 1)*wrk1d(i, 6) ! BCs
+!                 end do
+!                 bcs(:, 1) = bcs(:, 1) + (wrk1d(1, 3)*du1_b(:, 1) + wrk1d(1, 4)*du1_b(:, 2))
+!                 write (*, *) bcs(:, 1), u(:, 1)
+!                 bcs(:, 2) = du1_b(:, imax)
+!                 du1_b(:, imax) = 0.0_wp
+!                 do i = 1, imax
+!                     du1_b(:, i) = du1_b(:, i) + du1_a(:, imax)*wrk1d(i, 7) ! BCs
+!                 end do
+!                 bcs(:, 2) = bcs(:, 2) + (wrk1d(imax, 2)*du1_b(:, imax - 1) + wrk1d(imax, 3)*du1_b(:, imax))
+!                 write (*, *) bcs(:, 2), u(:, imax)
+!             end if
+!         end if
+!     end if
 
     stop
 
