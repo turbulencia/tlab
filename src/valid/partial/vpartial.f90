@@ -5,7 +5,6 @@ program VPARTIAL
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
-    ! use TLAB_VARS, only: C1N6M_ALPHA
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, wrk2d, txc, x!, wrk3d
     use FDM_ComX_Direct
@@ -76,7 +75,6 @@ program VPARTIAL
     g%periodic = .false.
     ! g%periodic = .true.
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
-    ibc = 3
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     ! g%mode_fdm1 = FDM_COM6_DIRECT
     g%mode_fdm2 = g%mode_fdm1
@@ -440,7 +438,7 @@ contains
         real(wp) dummy, error_l2, error_max
 
         if (present(name)) then
-            open (20, file='partial.dat')
+            open (20, file=name)
         end if
         error_l2 = 0.0_wp
         error_max = 0.0_wp
