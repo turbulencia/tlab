@@ -61,11 +61,13 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   if ( ibm_restart ) then
     flag_epsp = .false.
     call IBM_IO_READ(wrk3d, flag_epsp)
-  else if ( xbars_geo%name == 'xbars' ) then
-    call IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   else
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
-    call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+    if (xbars_geo%name == 'xbars') then
+      call IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
+    else 
+      call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
+      call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+    end if 
   end if
 
   ! transpose eps (epsi, epsj, epsk)
@@ -77,20 +79,23 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   ! verify geometry
   call IBM_VERIFY_GEOMETRY()
 
-  ! generate epsp on pressure mesh
+  ! epsp field (read/create)
   if ( stagger_on ) then
     if ( ibm_restart ) then
       flag_epsp = .true.
       call IBM_IO_READ(wrk3d, flag_epsp)
-    else if (.not. (xbars_geo%name == 'xbars') ) then
-      call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
-      call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+    else
+      if (xbars_geo%name == 'xbars') then
+        continue
+      else
+        call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
+        call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+      end if
     end if
   end if
-
-  ! compute gammas for conditional averages 
-  CALL IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
-  tmp1(:) = 0.0_wp
+  
+  ! compute gamma_0/1 based on eps-field (volume approach for conditional averages!) 
+  call IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
 
   ! check idle procs
 #ifdef USE_MPI
@@ -109,7 +114,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 
   ! switch to true in routines where the IBM is needed
   ibm_burgers = .false.; ibm_partial = .false.
-  
+
   ! disassociate pointers
   nullify(epsi, epsj, epsk)
   nullify(tmp1, tmp2)

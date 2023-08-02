@@ -45,7 +45,7 @@
 
 subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
 
-    use TLAB_VARS, only: imax, jmax, kmax, g, area
+    use TLAB_VARS, only: imax, jmax, kmax, g, area, isize_field
     use TLAB_CONSTANTS, only: wp
     use AVGS, only: AVG_IK_V
 
@@ -53,21 +53,16 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
 
     real(wp), dimension(jmax), intent(out) :: gamma_0, gamma_1
     real(wp), dimension(imax, jmax, kmax), intent(in) :: eps
-    real(wp), dimension(imax, jmax, kmax), intent(inout) :: tmp1
-
-    real(wp), dimension(:), pointer :: wrk1d
+    real(wp), dimension(isize_field), intent(inout) :: tmp1
 
     ! ================================================================== !
     ! horizontal average - compute gamma_1
-    call AVG_IK_V(imax, jmax, kmax, jmax, eps, g(1)%jac, g(3)%jac, gamma_1, wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, eps, g(1)%jac, g(3)%jac, gamma_1, tmp1(1:jmax), area)
 
-    ! horizontal average - compute gamma_0
-    tmp1(:, :, :) = (1.0_wp - eps(:, :, :))
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, gamma_0, wrk1d, area)
+    gamma_0(:) = 1.0_wp - gamma_1(:) 
 
     return
 end subroutine IBM_AVG_GAMMA
-
 !########################################################################
 
 subroutine IBM_AVG_SCAL_BCS(is, scalv_bcs)
