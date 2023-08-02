@@ -27,7 +27,7 @@
 !#
 !########################################################################
 
-subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
+subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
   
   use IBM_VARS
   use IO_FIELDS
@@ -46,7 +46,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3, wrk3d)
   implicit none
   
   real(wp), dimension(isize_field), intent(in   ) :: epsi, epsj, epsk
-  real(wp), dimension(isize_field), intent(inout) :: tmp1, tmp2, tmp3, wrk3d
+  real(wp), dimension(isize_field), intent(inout) :: tmp1, tmp2, tmp3
   
 #ifdef USE_MPI 
   integer(wi), parameter                          :: idi = TLAB_MPI_I_PARTIAL 

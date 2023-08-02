@@ -45,7 +45,7 @@ module IBM_VARS
 
   ! gammas for conditional averages & scalar boundary values applied in solids
   real(wp),    dimension(:),   allocatable       :: dy, facu, facl
-  real(wp),    dimension(:),   allocatable       :: gamma_0, gamma_1, gamma_f, gamma_s
+  real(wp),    dimension(:),   allocatable       :: gamma_0, gamma_1
   real(wp),    dimension(:,:), allocatable       :: scal_bcs
 
   ! flag (decides which fdm calls are with modified fields)
@@ -69,8 +69,10 @@ module IBM_VARS
   type(ibm_geo_dt)             :: xbars_geo                   ! create new geometry here
 
   ! name of io eps
-  character(len=32), parameter :: eps_name      = 'eps0.1'
-  character(len=32), parameter :: eps_name_real = eps_name(1:4)
+  character(len=32), parameter :: eps_name       = 'eps0.1'
+  character(len=32), parameter :: epsp_name      = 'epsp0.1'
+  character(len=32), parameter :: eps_name_real  = eps_name(1:4)
+  character(len=32), parameter :: epsp_name_real = epsp_name(1:5)
 
   ! io types
   integer(wi),       parameter :: IBM_IO_REAL  = 1

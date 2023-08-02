@@ -21,24 +21,33 @@
 !# 
 !########################################################################
 
-subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d)
+subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
   
   use TLAB_CONSTANTS,              only : wp, wi
   use TLAB_VARS,                   only : imax,jmax,kmax, isize_field
-  use IBM_VARS,                    only : eps, eps_name
+  use IBM_VARS,                    only : epsp, eps, eps_name,epsp_name
   use IO_FIELDS
   use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
 
   implicit none
 
-  real(wp), dimension(isize_field), target, intent(inout) ::  wrk3d
+  real(wp), dimension(isize_field), target, intent(inout) :: wrk3d
+  logical,                                  intent(in)    :: stag
 
   integer(1),                       pointer               :: int_wrk(:) => null()
   integer(wi),                      parameter             :: params_size = 1
   real(wp)                                                :: params(params_size)
   integer(wi)                                             :: isize
+  character(len=32)                                       :: name
+
   ! ================================================================== !
-  
+
+  if (stag) then
+    name = epsp_name
+  else
+    name = eps_name
+  end if
+
   ! pass memory address from double precision array to int1 array
   call c_f_pointer(c_loc(wrk3d), int_wrk, shape=[imax*jmax*kmax])
   int_wrk(:) = int(wrk3d(:), 1)
@@ -47,19 +56,25 @@ subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d)
   isize = 0 
 
   ! read eps field as int(1)
-  call IO_READ_FIELD_INT1(eps_name, 1, imax,jmax,kmax, 0, isize, params, int_wrk)
+  call IO_READ_FIELD_INT1(name, 1, imax,jmax,kmax, 0, isize, params, int_wrk)
 
   ! type casting
-  eps(:) = real(int_wrk(:), wp)
+  if (stag) then
+    epsp(:) = real(int_wrk(:), wp)
+  else
+    eps(:) = real(int_wrk(:), wp)
+  end if
+
+  nullify(int_wrk)
 
   return
 end subroutine IBM_IO_READ_INT_GEOMETRY
 
 !########################################################################
 
-subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
+subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
   
-  use IBM_VARS,       only : eps, eps_name
+  use IBM_VARS,       only : epsp, eps, eps_name, epsp_name
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS, only : wp, wi
   use IO_FIELDS
@@ -67,29 +82,40 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
   implicit none
 
   integer(1),  dimension(isize_field), intent(inout) :: wrk3d
+  logical,                             intent(in)    :: stag
+
 
   integer(wi), parameter                             :: param_size = 1
   integer(wi)                                        :: isize
   real(wp)                                           :: params(param_size)
-  ! ================================================================== !
+  character(len=32)                                  :: name
 
+  ! ================================================================== !
+  
+  
   ! wp to int1
-  wrk3d(:) = int(eps(:), 1) 
+  if (stag) then
+    name = epsp_name
+    wrk3d(:) = int(epsp(:), 1) 
+  else
+    name = eps_name
+    wrk3d(:) = int(eps(:), 1) 
+  end if
  
   ! header (offset, nx, ny, nz, nt == 20 byte)
   isize = 0 ! header without params
   
   ! write eps field as int(1) 
-  call IO_WRITE_FIELD_INT1(eps_name, 1, imax,jmax,kmax, 0, isize, params, wrk3d)
+  call IO_WRITE_FIELD_INT1(name, 1, imax,jmax,kmax, 0, isize, params, wrk3d)
 
   return
 end subroutine IBM_IO_WRITE_INT_GEOMETRY
 
 !########################################################################
 
-subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
+subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
   
-  use IBM_VARS,       only : eps, eps_name
+  use IBM_VARS,       only : epsp, eps, eps_name, epsp_name
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS, only : wp, wi
   use IO_FIELDS
@@ -97,14 +123,17 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
   implicit none
 
   integer(1), dimension(isize_field), target, intent(inout) :: wrk3d
+  logical,                                    intent(in)    :: stag
 
   integer(1), dimension(:),           pointer               :: eps_bit 
 
   integer(wi), parameter                                    :: param_size = 1
   integer(wi)                                               :: isize, bsize_field, imax_bit
   real(wp)                                                  :: params(param_size)
+  character(len=32)                                         :: name
+
   ! ================================================================== !
-  
+
   ! size of bit-array
   bsize_field = isize_field / 8 
   imax_bit    = imax / 8 ! already checked in IBM_READ_CONSISTENCY_CHECK if possible
@@ -113,22 +142,30 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
   eps_bit => wrk3d(1:bsize_field)
   
   ! wp real to bitwise int1
-  call IBM_IO_R2B(isize_field, bsize_field, eps, eps_bit)
+  if (stag) then
+    name = epsp_name
+    call IBM_IO_R2B(isize_field, bsize_field, epsp, eps_bit)
+  else
+    name = eps_name
+    call IBM_IO_R2B(isize_field, bsize_field, eps, eps_bit)
+  end if
  
   ! header (offset, nx, ny, nz, nt == 20 byte)
   isize = 0 ! header without params
 
   ! write bitwise eps_bit field as int(1) 
-  call IO_WRITE_FIELD_INT1(eps_name, 1, imax_bit,jmax,kmax, 0, isize, params, eps_bit)
+  call IO_WRITE_FIELD_INT1(name, 1, imax_bit,jmax,kmax, 0, isize, params, eps_bit)
+
+  nullify(eps_bit)
 
   return
 end subroutine IBM_IO_WRITE_BIT_GEOMETRY
 
 !########################################################################
 
-subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d)
+subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
   
-  use IBM_VARS,                    only : eps, eps_name
+  use IBM_VARS,                    only : epsp, eps, eps_name, epsp_name
   use TLAB_VARS,                   only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS,              only : wp, wi
   use IO_FIELDS
@@ -137,13 +174,21 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d)
   implicit none
 
   real(wp), dimension(isize_field), target, intent(inout) ::  wrk3d
+  logical,                                  intent(in)    :: stag
 
   integer(1),    pointer                                  :: int_wrk(:) => null()
   integer(wi),   parameter                                :: params_size = 1
   integer(wi)                                             :: isize, bsize_field, imax_bit
   real(wp)                                                :: params(params_size)
+  character(len=32)                                       :: name
   ! ================================================================== !
-  
+
+  if (stag) then
+    name = epsp_name
+  else
+    name = eps_name
+  end if
+
   ! size of bit-array
   bsize_field = isize_field / 8 
   imax_bit    = imax / 8 ! already checked in IBM_READ_CONSISTENCY_CHECK if possible
@@ -156,13 +201,19 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d)
   isize = 0 
 
   ! read eps field as int(1)
-  call IO_READ_FIELD_INT1(eps_name, 1, imax_bit,jmax,kmax, 0, isize, params, int_wrk)
+  call IO_READ_FIELD_INT1(name, 1, imax_bit,jmax,kmax, 0, isize, params, int_wrk)
 
   ! wp real to bitwise int1
-  call IBM_IO_B2R(bsize_field, isize_field, int_wrk, eps)
+  if (stag) then
+    call IBM_IO_B2R(bsize_field, isize_field, int_wrk, epsp)
+  else
+    call IBM_IO_B2R(bsize_field, isize_field, int_wrk, eps)
+  end if
 
   ! type casting
   ! eps(:) = real(int_wrk(:), dp)
+ 
+  nullify(int_wrk)
 
   return
 end subroutine IBM_IO_READ_BIT_GEOMETRY

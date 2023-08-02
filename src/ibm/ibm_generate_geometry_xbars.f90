@@ -34,6 +34,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field
   use IO_FIELDS
   use TLAB_CONSTANTS, only : wi, wp
+  use TLAB_VARS,      only : stagger_on
 #ifdef USE_MPI 
   use MPI
   use TLAB_MPI_VARS,  only : ims_offset_i, ims_offset_j, ims_offset_k
@@ -137,17 +138,45 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 
   ! reshape 3D-field into 1D-field
   eps          = reshape(wrk3d,(/isize_field/))
+  call IBM_IO_WRITE(wrk3d, .false.)
   wrk3d(:,:,:) = 0.0_wp
 
-  ! io of eps
-  select case( ibm_io )
-  case ( IBM_IO_REAL )
-    call IO_WRITE_FIELDS(eps_name_real, IO_FLOW, imax,jmax,kmax, 1, eps)
-  case ( IBM_IO_INT  )
-    call IBM_IO_WRITE_INT_GEOMETRY(wrk3d)
-  case ( IBM_IO_BIT  )
-    call IBM_IO_WRITE_BIT_GEOMETRY(wrk3d)
-  end select 
+  ! ================================================================== !
+  if (stagger_on) then
+    ! create epsp field
+    do l = 1, nbars
+      zend_bar(l)   = zend_bar(l) - 1_wi
+    end do
+    do j = 1, hbar   
+      do k = 1, kmax 
+        do l = 1, nbars 
+          if( ((k+kstart)>zstart_bar(l)) .and. ((k+kstart)<=zend_bar(l)) ) then 
+            do i = 1, imax
+              wrk3d(i,j,k) = 1.0_wp
+            end do
+          end if
+        end do 
+      end do
+    end do
+    if (xbars_geo%mirrored) then
+      do j = jmax-hbar+1, jmax   
+        do k = 1, kmax 
+          do l = 1, nbars 
+            if( ((k+kstart)>zstart_bar(l)) .and. ((k+kstart)<=zend_bar(l)) ) then 
+              do i = 1, imax
+                wrk3d(i,j,k) = 1.0_wp
+              end do
+            end if
+          end do 
+        end do
+      end do
+    end if
+
+    ! reshape 3D-field into 1D-field
+    epsp         = reshape(wrk3d,(/isize_field/))
+    call IBM_IO_WRITE(wrk3d, .true.)
+    wrk3d(:,:,:) = 0.0_wp
+  end if
   
   return
 end subroutine IBM_GENERATE_GEOMETRY_XBARS

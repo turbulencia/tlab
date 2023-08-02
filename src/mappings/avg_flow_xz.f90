@@ -25,7 +25,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use THERMO_VARS, only: rd_ov_rv, Cd, Rv, Cvl, Lvl, Ldl, Rd, PREF_1000
     use THERMO_ANELASTIC
     use THERMO_CALORIC
-    use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s
+    use IBM_VARS, only: gamma_0, gamma_1
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
@@ -104,12 +104,10 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     varname(ng) = 'rR rU rV rW rP rT re rh rs rB fU fV fW fT fe fh fs'
 
     if (imode_ibm == 1) then
-        varname(ng) = trim(adjustl(varname(ng)))//' eps_0 eps_1 eps_f eps_s'
-        sg(ng) = sg(ng) + 4
+        varname(ng) = trim(adjustl(varname(ng)))//' eps_0 eps_1'
+        sg(ng) = sg(ng) + 2
 #define ep_0(j)   mean2d(j,ig(1)+17)
 #define ep_1(j)   mean2d(j,ig(1)+18)
-#define ep_f(j)   mean2d(j,ig(1)+19)
-#define ep_s(j)   mean2d(j,ig(1)+20)
     end if
 
     ! -----------------------------------------------------------------------
@@ -448,7 +446,6 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Asign gammas for conditional averages (c.f. Pope, p.170 [5.305])
     if (imode_ibm == 1) then
         ep_0(:) = gamma_0; ep_1(:) = gamma_1
-        ep_f(:) = gamma_f; ep_s(:) = gamma_s
     end if
 
     ! ###################################################################
