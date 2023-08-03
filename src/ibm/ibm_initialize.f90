@@ -120,17 +120,6 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   nullify(tmp1, tmp2)
   wrk3d(:) = 0.0_wp
 
-  if (stagger_on)  then
-    write(*,*)'sum,min,max of eps  :', sum(eps), minval(eps), maxval(eps)
-    write(*,*)'sum,min,max of epsp :', sum(epsp), minval(epsp), maxval(epsp)
-    call IBM_STAGGER_GEOMETRY(eps, wrk3d)
-    write(*,*) '##########################################'
-    write(*,*) 'difference sum(eps  -epsp   ):', sum(eps-epsp)
-    write(*,*) 'difference sum(eps  -routine):', sum(eps-wrk3d)
-    write(*,*) 'difference sum(epsp -routine):', sum(epsp-wrk3d)
-    wrk3d(:) = 0.0_wp
-  end if
-
   return
 end subroutine IBM_INITIALIZE_GEOMETRY
 
@@ -205,49 +194,3 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
   
   return
 end subroutine IBM_IO_WRITE
-
-!########################################################################
-
-subroutine IBM_STAGGER_GEOMETRY(eps, epsp)
-
-  use TLAB_VARS,      only : imax, jmax, kmax
-  use TLAB_CONSTANTS, only : wp, wi
-
-  implicit none
-
-  real(wp), dimension(imax,jmax,kmax), intent(in ) :: eps
-  real(wp), dimension(imax,jmax,kmax), intent(out) :: epsp
-
-  integer(wi)                                      :: i,j,k
-
-  ! ================================================================== !
-   
-  ! horizontal staggering - move right interfaces one step to the left,
-  ! don't touch vertical direction since no staggering is applied here
- 
-  epsp(:,:,:) = eps(:,:,:)
-  
-  do k = 1, kmax   
-    do j = 1, jmax 
-      do i = 2, imax
-        if ( eps(i,j,k) == 0 .and. eps(i-1,j,k) == 1 ) then
-          epsp(i-1,j,k) = 0.0_wp 
-        end if
-      end do 
-    end do
-  end do
-  
-  do i = 1, imax   
-    do j = 1, jmax 
-      do k = 2, kmax
-        if ( eps(i,j,k) == 0 .and. eps(i,j,k-1) == 1 ) then
-          epsp(i,j,k-1) = 0.0_wp 
-        end if
-      end do 
-    end do
-  end do
-
-  return
-end subroutine IBM_STAGGER_GEOMETRY
-
-!########################################################################
