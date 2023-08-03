@@ -137,7 +137,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   end if
 
   ! reshape 3D-field into 1D-field
-  eps          = reshape(wrk3d,(/isize_field/))
+  eps = reshape(wrk3d,(/isize_field/))
   call IBM_IO_WRITE(wrk3d, .false.)
   wrk3d(:,:,:) = 0.0_wp
 
@@ -145,7 +145,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   if (stagger_on) then
     ! create epsp field
     do l = 1, nbars
-      zend_bar(l)   = zend_bar(l) - 1_wi
+      zend_bar(l) = zend_bar(l) - 1_wi
     end do
     do j = 1, hbar   
       do k = 1, kmax 
@@ -173,7 +173,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
     end if
 
     ! reshape 3D-field into 1D-field
-    epsp         = reshape(wrk3d,(/isize_field/))
+    epsp = reshape(wrk3d,(/isize_field/))
     call IBM_IO_WRITE(wrk3d, .true.)
     wrk3d(:,:,:) = 0.0_wp
   end if

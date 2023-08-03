@@ -51,7 +51,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 #ifdef IBM_DEBUG
   real(wp), dimension(:), pointer                         :: tmp3
 #endif
-  logical :: flag_epsp
+  logical                                                 :: flag_epsp
   ! ================================================================== !
   ! assigning pointer to scratch
   txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
