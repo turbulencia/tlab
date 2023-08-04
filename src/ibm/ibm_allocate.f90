@@ -123,8 +123,6 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, facl,     [jmax-2], 'facl' )
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_0,  [jmax],   'eps_0')
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_1,  [jmax],   'eps_1')
-  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_f,  [jmax],   'eps_f')
-  call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_s,  [jmax],   'eps_s')
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, scal_bcs, [jmax, inb_scal], 'scal_bcs')
 
   return

@@ -10,6 +10,7 @@ examples/Case*/grid
 examples/Case*/grid.sts
 examples/Case*/dns.err
 examples/Case*/dns.war
+examples/Case*/dns.trc
 examples/Case*/eps*
 build_BIG/*
 build_LITTLE/* 

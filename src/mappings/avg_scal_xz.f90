@@ -23,7 +23,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use THERMO_VARS, only: imixture, thermo_param
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
-    use IBM_VARS, only: gamma_0, gamma_1, gamma_f, gamma_s, scal_bcs
+    use IBM_VARS, only: gamma_0, gamma_1, scal_bcs
     use AVGS, only: AVG_IK_V
 #ifdef USE_MPI
     use TLAB_MPI_VARS
@@ -92,13 +92,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     groupname(ng) = 'Mean'
     varname(ng) = 'rS fS rS_y fS_y rQ fQ'
     if (imode_ibm == 1) then
-        varname(ng) = trim(adjustl(varname(ng)))//' eps_0 eps_1 eps_f eps_s Sbcs'
+        varname(ng) = trim(adjustl(varname(ng)))//' eps_0 eps_1 Sbcs'
 #define ep_0(j)   mean2d(j,ig(1)+6)
 #define ep_1(j)   mean2d(j,ig(1)+7)
-#define ep_f(j)   mean2d(j,ig(1)+8)
-#define ep_s(j)   mean2d(j,ig(1)+9)
-#define Sbcs(j)   mean2d(j,ig(1)+10)
-        sg(ng) = sg(ng) + 5
+#define Sbcs(j)   mean2d(j,ig(1)+8)
+        sg(ng) = sg(ng) + 3
     end if
     if (radiation%active(is)) then
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR ) then
@@ -300,9 +298,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     im = 5
     if (imode_ibm == 1) then
         ep_0(:) = gamma_0; ep_1(:) = gamma_1
-        ep_f(:) = gamma_f; ep_s(:) = gamma_s
         Sbcs(:) = scal_bcs(:, is)
-        im = im + 5
+        im = im + 3
     end if
 
     ! #######################################################################
