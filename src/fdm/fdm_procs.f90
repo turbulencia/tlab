@@ -34,6 +34,7 @@ module FDM_PROCS
     public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. off-diagonal equal to 1
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
     public FDM_Bcs_Neumann
+    public INT_C1NX_INITIALIZE
 
 ! ###################################################################
 ! Compact parameters (1st derivative of 6th-order pentadiagonal); to be removed
@@ -1020,5 +1021,133 @@ contains
 
         return
     end subroutine FDM_Bcs_Neumann
+
+    !########################################################################
+!#
+!# Initialize the solver for the BVP
+!#
+!#     u'_i + \lamba u_i = f_i  N-1 eqns
+!#     u_1 or u_N given         1   eqn
+!#     Au' = Bu                 N   eqns
+!#
+!# The system of N-1 eqns:
+!#
+!#                    (B + \lambda A)u = Af
+!#
+!# is established in this routine (see notes).
+!#
+!# The system is normalized such that the central diagonal in the new rhs is 1
+!#
+!########################################################################
+    subroutine INT_C1NX_INITIALIZE(ibc, lhs, rhs, lambda, lu, bvp_rhs)
+        use TLAB_CONSTANTS
+        implicit none
+
+        integer, intent(in) :: ibc              ! Boundary condition, BCS_DN, BCS_ND
+        real(wp), intent(in) :: lhs(:, :)       ! diagonals in lhs, or matrix A
+        real(wp), intent(in) :: rhs(:, :)       ! diagonals in rhs, or matrix B
+        real(wp) lambda                         ! system constant
+        real(wp), intent(out) :: lu(:, :)       ! diagonals in new lhs
+        real(wp), intent(out) :: bvp_rhs(:, :)  ! diagonals in new rhs
+
+! -------------------------------------------------------------------
+        integer(wi) i
+        integer(wi) idl, ndl, idr, ndr, ir, ic, nx
+        real(wp) dummy
+
+        ! -------------------------------------------------------------------
+        ndl = size(lhs, 2)
+        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
+        ndr = size(rhs, 2)
+        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
+        nx = size(lhs, 1)               ! # grid points
+
+! ###################################################################
+        ! check sizes
+        if (size(lu, 2) /= ndr) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array size.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (size(bvp_rhs, 2) /= ndl) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array size.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        ! new lhs diagonals (array C22R)
+        lu(:, :) = rhs(:, :)
+
+        lu(:, idr) = lu(:, idr) + lambda*lhs(:, idl)               ! center diagonal
+        do i = 1, idl - 1                       ! off-diagonals
+            lu(:, idr - i) = lu(:, idl - i) + lambda*lhs(:, idl - i)
+            lu(:, idr + i) = lu(:, idl + i) + lambda*lhs(:, idl + i)
+        end do
+
+        ! new rhs diagonals (array A22R)
+        bvp_rhs(:, :) = lhs(:, :)
+
+        ! Boundary corrections
+        if (ibc == BCS_DN) then
+            dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
+
+            lu(1, 1:ndr) = -lu(1, 1:ndr)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = idr + 1, ndr        ! columns
+                    lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idr - ir)*lu(1, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = ndr + 1
+                lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idr - ir)*lu(1, 1)
+                ! term for nonzero bc
+                ic = 1
+                lu(1 + ir, ic - ir) = -rhs(1 + ir, ic - ir) + lhs(1 + ir, idr - ir)*rhs(1, ic)*dummy
+            end do
+
+            bvp_rhs(1, :) = bvp_rhs(1, :)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = idl + 1, ndl        ! columns
+                    bvp_rhs(1 + ir, ic - ir) = bvp_rhs(1 + ir, ic - ir) - lhs(1 + ir, idr - ir)*bvp_rhs(1, ic)
+                end do
+                ! longer stencil at the boundary
+                bvp_rhs(2, 1) = 0.0_wp
+            end do
+
+        end if
+
+        ! if (ibc == BCS_ND) then
+        !     dummy = 1.0_wp/rhs(nx, idr)     ! normalize by rnn
+
+        !     rhs_t(idr, :) = -rhs(nx, :)*dummy
+        !     do ir = 1, idr - 1              ! rows
+        !         do ic = 1, idr - 1          ! columns
+        !             rhs_t(idr - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ic)
+        !         end do
+        !         ! longer stencil at the boundary
+        !         ic = 0
+        !         rhs_t(idr - ir, ic + ir) = rhs_t(idr - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ndr)
+        !     end do
+
+        !     lhs(nx, :) = lhs(nx, :)*dummy
+        !     do ir = 1, idr - 1              ! rows
+        !         do ic = 1, idl - 1          ! columns
+        !             lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) - rhs(nx - ir, idr + ir)*lhs(nx, ic)
+        !         end do
+        !         ! term for nonzero derivative
+        !         rhs_t(idr - ir, idr + ir) = rhs_t(idr - ir, idr + ir)*lhs(nx, idl)
+        !     end do
+
+        ! end if
+
+        ! -------------------------------------------------------------------
+        ! normalization such that new central diagonal in rhs is 1
+        do ir = 1, nx
+            dummy = 1.0_wp/bvp_rhs(ir, idl)
+
+            bvp_rhs(ir, :) = bvp_rhs(ir, :)*dummy
+            lu(ir, :) = lu(ir, :)*dummy
+
+        end do
+
+        return
+    end subroutine INT_C1NX_INITIALIZE
 
 end module FDM_PROCS

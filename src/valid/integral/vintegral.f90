@@ -23,11 +23,12 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
     real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
-    real(wp) :: lambda, dummy, wk, x_0!, coef(5)
+    real(wp) :: lambda, coef(5), dummy, wk, x_0
     integer(wi) :: test_type, ibc, ip
     integer(wi) :: nmin, nmax, nsize
 
     integer, parameter :: i1 = 1, cases(2) = [1, 2]
+    real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
 ! ###################################################################
 ! Initialize
@@ -65,6 +66,8 @@ program VINTEGRAL
 
     allocate (bcs(len, 2))
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
+
+    allocate (lhs_int(imax, 9), rhs_int(imax, 7))
 
 ! Valid stettings
     test_type = 0
@@ -190,6 +193,23 @@ program VINTEGRAL
             call check(u, w_n, 'integral.dat')
 
         end do
+
+        print *, new_line('a'), '1. order, Jacobian 6'
+        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        call INT_C1NX_INITIALIZE(BCS_DN, g%lu1(1:imax, 1:3), g%rhs1(1:imax, 1:5), 0.0_wp, lhs_int(1:imax, 1:5), rhs_int(1:imax, 1:3))
+        call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
+        call MatMul_3d(imax, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
+        call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
+        select case (ibc)
+        case (BCS_DN)                    ! BCs at the bottom
+            w_n(:, 1) = 0.0_wp
+        case (BCS_ND)                    ! BCs at the top
+            w_n(:, imax) = 0.0_wp
+        end select
+        do i = 1, imax
+            w_n(:, i) = w_n(:, i) + bcs(:, 1)
+        end do
+        call check(u, w_n, 'integral.dat')
 
 ! ! ###################################################################
 ! ! First order equation
