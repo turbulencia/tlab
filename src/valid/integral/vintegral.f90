@@ -27,7 +27,7 @@ program VINTEGRAL
     integer(wi) :: test_type, ibc, ip
     integer(wi) :: nmin, nmax, nsize
 
-    integer, parameter :: i1 = 1, cases(2) = [1, 2]
+    integer, parameter :: i1 = 1, cases(2) = [1, 2], cases_new(2) = [BCS_DN, BCS_ND]
     real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
 ! ###################################################################
@@ -194,22 +194,73 @@ program VINTEGRAL
 
         end do
 
-        print *, new_line('a'), '1. order, Jacobian 6'
-        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        call INT_C1NX_INITIALIZE(BCS_DN, g%lu1(1:imax, 1:3), g%rhs1(1:imax, 1:5), 0.0_wp, lhs_int(1:imax, 1:5), rhs_int(1:imax, 1:3))
-        call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
-        call MatMul_3d(imax, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
-        call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
-        select case (ibc)
-        case (BCS_DN)                    ! BCs at the bottom
-            w_n(:, 1) = 0.0_wp
-        case (BCS_ND)                    ! BCs at the top
-            w_n(:, imax) = 0.0_wp
-        end select
-        do i = 1, imax
-            w_n(:, i) = w_n(:, i) + bcs(:, 1)
+        ! new formulation
+        print *, '1. order, Jacobian 4'
+        call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        g%nb_diag_1 = [3, 3]
+        g%rhs1(:, 5) = 0.0_wp
+        g%rhs1(:, 4) = g%rhs1(:, 3)
+        g%rhs1(:, 3) = g%rhs1(:, 2)
+        g%rhs1(:, 2) = g%rhs1(:, 1)
+        g%rhs1(:, 1) = 0.0_wp
+        g%rhs1(1, 5) = g%rhs1(1, 2); g%rhs1(1, 2) = 0.0_wp
+        g%rhs1(imax, 1) = g%rhs1(imax, 4); g%rhs1(imax, 4) = 0.0_wp
+        g%nb_diag_1 = [3, 5]
+
+        ! print *, new_line('a'), '1. order, Jacobian 6'
+        ! call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        ! g%nb_diag_1 = [3, 5]
+
+        do ip = 1, size(cases_new)
+            ibc = cases_new(ip)
+            print *, new_line('a'), 'Case ', ibc
+
+            nmin = 1
+            nmax = imax
+            select case (ibc)
+            case (BCS_DN)
+                nmin = nmin + 1
+                bcs(:, 1) = u(:, 1)
+            case (BCS_ND)
+                nmax = nmax - 1
+                bcs(:, 1) = u(:, imax)
+            end select
+            nsize = nmax - nmin + 1
+
+            call INT_C1NX_INITIALIZE(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), 0.0_wp, lhs_int, rhs_int)
+            do i = nmin, nmax
+                print *, rhs_int(i, 1:g%nb_diag_1(1))
+            end do
+
+            select case (g%nb_diag_1(1))
+            case (3)
+                call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
+            case (5)
+
+            end select
+
+            select case (g%nb_diag_1(2))
+            case (3)
+                call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
+                call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
+            case (5)
+               call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
+                call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
+            end select
+
+            select case (ibc)
+            case (BCS_DN)                    ! BCs at the bottom
+                w_n(:, 1) = 0.0_wp
+            case (BCS_ND)                    ! BCs at the top
+                w_n(:, imax) = 0.0_wp
+            end select
+            do i = 1, imax
+                w_n(:, i) = w_n(:, i) + bcs(:, 1)
+            end do
+
+            call check(u, w_n, 'integral.dat')
+
         end do
-        call check(u, w_n, 'integral.dat')
 
 ! ! ###################################################################
 ! ! First order equation

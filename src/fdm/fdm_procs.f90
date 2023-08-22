@@ -1039,7 +1039,7 @@ contains
 !# The system is normalized such that the central diagonal in the new rhs is 1
 !#
 !########################################################################
-    subroutine INT_C1NX_INITIALIZE(ibc, lhs, rhs, lambda, lu, bvp_rhs)
+    subroutine INT_C1NX_INITIALIZE(ibc, lhs, rhs, lambda, lu, rhs_int)
         use TLAB_CONSTANTS
         implicit none
 
@@ -1048,7 +1048,7 @@ contains
         real(wp), intent(in) :: rhs(:, :)       ! diagonals in rhs, or matrix B
         real(wp) lambda                         ! system constant
         real(wp), intent(out) :: lu(:, :)       ! diagonals in new lhs
-        real(wp), intent(out) :: bvp_rhs(:, :)  ! diagonals in new rhs
+        real(wp), intent(out) :: rhs_int(:, :)  ! diagonals in new rhs
 
 ! -------------------------------------------------------------------
         integer(wi) i
@@ -1064,86 +1064,90 @@ contains
 
 ! ###################################################################
         ! check sizes
-        if (size(lu, 2) /= ndr) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array size.')
+        if (size(lu, 2) < ndr) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array lu size.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
-        if (size(bvp_rhs, 2) /= ndl) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array size.')
+        if (size(rhs_int, 2) < ndl) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array rhs_int size.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
 
         ! new lhs diagonals (array C22R)
-        lu(:, :) = rhs(:, :)
+        lu(:, 1:ndr) = rhs(:, 1:ndr)
 
         lu(:, idr) = lu(:, idr) + lambda*lhs(:, idl)               ! center diagonal
         do i = 1, idl - 1                       ! off-diagonals
-            lu(:, idr - i) = lu(:, idl - i) + lambda*lhs(:, idl - i)
-            lu(:, idr + i) = lu(:, idl + i) + lambda*lhs(:, idl + i)
+            lu(:, idr - i) = lu(:, idr - i) + lambda*lhs(:, idl - i)
+            lu(:, idr + i) = lu(:, idr + i) + lambda*lhs(:, idl + i)
         end do
 
         ! new rhs diagonals (array A22R)
-        bvp_rhs(:, :) = lhs(:, :)
+        rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
+        rhs_int(1, 1) = 0.0_wp      ! longer stencils at the boundaries
+        rhs_int(nx, ndl) = 0.0_wp
 
         ! Boundary corrections
-        if (ibc == BCS_DN) then
+        select case (ibc)
+        case (BCS_DN)
             dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
 
             lu(1, 1:ndr) = -lu(1, 1:ndr)*dummy
             do ir = 1, idl - 1              ! rows
                 do ic = idr + 1, ndr        ! columns
-                    lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idr - ir)*lu(1, ic)
+                    lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lu(1, ic)
                 end do
                 ! longer stencil at the boundary
                 ic = ndr + 1
-                lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idr - ir)*lu(1, 1)
-                ! term for nonzero bc
-                ic = 1
-                lu(1 + ir, ic - ir) = -rhs(1 + ir, ic - ir) + lhs(1 + ir, idr - ir)*rhs(1, ic)*dummy
+                lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lu(1, 1)
+                ! ! term for nonzero bc
+                ! ic = 1
+                ! lu(1 + ir, ic - ir) = -rhs(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*rhs(1, idr)*dummy
             end do
 
-            bvp_rhs(1, :) = bvp_rhs(1, :)*dummy
+            rhs_int(1, 1:ndl) = rhs_int(1, 1:ndl)*dummy
             do ir = 1, idl - 1              ! rows
                 do ic = idl + 1, ndl        ! columns
-                    bvp_rhs(1 + ir, ic - ir) = bvp_rhs(1 + ir, ic - ir) - lhs(1 + ir, idr - ir)*bvp_rhs(1, ic)
+                    rhs_int(1 + ir, ic - ir) = rhs_int(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)*rhs_int(1, ic)
+                end do
+            end do
+            ! longer stencil at the boundary
+            rhs_int(2, 1) = 0.0_wp
+
+        case (BCS_ND)
+            dummy = 1.0_wp/lhs(nx, idl)     ! normalize by lnn
+
+            lu(nx, 1:ndr) = -lu(nx, 1:ndr)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = 1, idr - 1          ! columns
+                    lu(nx - ir, ic + ir) = lu(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lu(nx, ic)
                 end do
                 ! longer stencil at the boundary
-                bvp_rhs(2, 1) = 0.0_wp
+                ic = 0
+                lu(nx - ir, ic + ir) = lu(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lu(nx, ndr)
+                ! ! term for nonzero derivative
+                ! ic = idr
+                ! lu(nx - ir, ic + ir) = -rhs(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*rhs(nx, idr)*dummy
             end do
 
-        end if
+            rhs_int(nx, 1:ndl) = rhs_int(nx, 1:ndl)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = 1, idl - 1          ! columns
+                    rhs_int(nx - ir, ic + ir) = rhs_int(nx - ir, ic + ir) - lhs(nx - ir, idl + ir)*rhs_int(nx, ic)
+                end do
+            end do
+            ! longer stencil at the boundary
+            rhs_int(nx - 1, ndl) = 0.0_wp
 
-        ! if (ibc == BCS_ND) then
-        !     dummy = 1.0_wp/rhs(nx, idr)     ! normalize by rnn
-
-        !     rhs_t(idr, :) = -rhs(nx, :)*dummy
-        !     do ir = 1, idr - 1              ! rows
-        !         do ic = 1, idr - 1          ! columns
-        !             rhs_t(idr - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ic)
-        !         end do
-        !         ! longer stencil at the boundary
-        !         ic = 0
-        !         rhs_t(idr - ir, ic + ir) = rhs_t(idr - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ndr)
-        !     end do
-
-        !     lhs(nx, :) = lhs(nx, :)*dummy
-        !     do ir = 1, idr - 1              ! rows
-        !         do ic = 1, idl - 1          ! columns
-        !             lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) - rhs(nx - ir, idr + ir)*lhs(nx, ic)
-        !         end do
-        !         ! term for nonzero derivative
-        !         rhs_t(idr - ir, idr + ir) = rhs_t(idr - ir, idr + ir)*lhs(nx, idl)
-        !     end do
-
-        ! end if
+        end select
 
         ! -------------------------------------------------------------------
         ! normalization such that new central diagonal in rhs is 1
         do ir = 1, nx
-            dummy = 1.0_wp/bvp_rhs(ir, idl)
+            dummy = 1.0_wp/rhs_int(ir, idl)
 
-            bvp_rhs(ir, :) = bvp_rhs(ir, :)*dummy
-            lu(ir, :) = lu(ir, :)*dummy
+            rhs_int(ir, 1:ndl) = rhs_int(ir, 1:ndl)*dummy
+            lu(ir, 1:ndr) = lu(ir, 1:ndr)*dummy
 
         end do
 
