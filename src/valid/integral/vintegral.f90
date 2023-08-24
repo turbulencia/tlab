@@ -73,11 +73,13 @@ program VINTEGRAL
     test_type = 0
 
     g%periodic = .false.
-    wk = 1 ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
-    lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) C1N6M_ALPHA = 0.56
     g%mode_fdm2 = g%mode_fdm1
+
+    wk = 1 ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
+    write (*, *) 'Eigenvalue ?'
+    read (*, *) lambda
 
     ! ###################################################################
 
@@ -195,21 +197,25 @@ program VINTEGRAL
         end do
 
         ! new formulation
-        print *, '1. order, Jacobian 4'
-        call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        g%nb_diag_1 = [3, 3]
-        g%rhs1(:, 5) = 0.0_wp
-        g%rhs1(:, 4) = g%rhs1(:, 3)
-        g%rhs1(:, 3) = g%rhs1(:, 2)
-        g%rhs1(:, 2) = g%rhs1(:, 1)
-        g%rhs1(:, 1) = 0.0_wp
-        g%rhs1(1, 5) = g%rhs1(1, 2); g%rhs1(1, 2) = 0.0_wp
-        g%rhs1(imax, 1) = g%rhs1(imax, 4); g%rhs1(imax, 4) = 0.0_wp
-        g%nb_diag_1 = [3, 5]
+        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
+        f = du1_a + lambda*u
 
-        ! print *, new_line('a'), '1. order, Jacobian 6'
-        ! call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        ! print *, '1. order, Jacobian 4'
+        ! call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        ! g%nb_diag_1 = [3, 3]
+        ! g%rhs1(:, 5) = 0.0_wp
+        ! g%rhs1(:, 4) = g%rhs1(:, 3)
+        ! g%rhs1(:, 3) = g%rhs1(:, 2)
+        ! g%rhs1(:, 2) = g%rhs1(:, 1)
+        ! g%rhs1(:, 1) = 0.0_wp
+        ! g%rhs1(1, 5) = g%rhs1(1, 2); g%rhs1(1, 2) = 0.0_wp
+        ! g%rhs1(imax, 1) = g%rhs1(imax, 4); g%rhs1(imax, 4) = 0.0_wp
         ! g%nb_diag_1 = [3, 5]
+
+        ! In FDM_Initialize, we do LU decomposition and I need to call this again
+        print *, new_line('a'), '1. order, Jacobian 6'
+        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+        g%nb_diag_1 = [3, 5]
 
         do ip = 1, size(cases_new)
             ibc = cases_new(ip)
@@ -227,10 +233,10 @@ program VINTEGRAL
             end select
             nsize = nmax - nmin + 1
 
-            call INT_C1NX_INITIALIZE(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), 0.0_wp, lhs_int, rhs_int)
-            do i = nmin, nmax
-                print *, rhs_int(i, 1:g%nb_diag_1(1))
-            end do
+            call INT_C1NX_INITIALIZE(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
+            ! do i = 1, imax !nmin, nmax
+            !     print *, lhs_int(i, 1:g%nb_diag_1(2))
+            ! end do
 
             select case (g%nb_diag_1(1))
             case (3)
