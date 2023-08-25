@@ -12,6 +12,7 @@ module OPR_ELLIPTIC
     use OPR_FOURIER
     use OPR_FDE
     use OPR_PARTIAL
+    use FDM_Integrate
     use FDM_PROCS
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
@@ -105,7 +106,7 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call INT_C2NX_INITIALIZE(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                    call FDM_Int2_Initialize(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                                         lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
 
                     ! LU decomposizion
@@ -361,7 +362,7 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                    call FDM_Int2_Initialize(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                                         p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
@@ -646,7 +647,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
-                call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+                call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
                                     p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                 ! LU factorization
@@ -802,7 +803,7 @@ contains
 !                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 !                 ! if (ibc == 0) then ! Dirichlet BCs
 !                 p_wrk1d(:, 1:7) = 0.0_wp
-!                 call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+!                 call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
 !                                     p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 !                 call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
