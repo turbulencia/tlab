@@ -22,7 +22,7 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: u, w_n, f
     real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
     real(wp), dimension(:, :), pointer :: bcs
-    integer(wi) bcs_aux(2, 2)
+    integer(wi) bcs_aux(2, 2), idr
     real(wp) :: lambda, coef(5), dummy, wk, x_0
     integer(wi) :: test_type, ibc, ip
     integer(wi) :: nmin, nmax, nsize
@@ -109,30 +109,25 @@ program VINTEGRAL
 
     do i = 1, imax
 ! single-mode
-        u(:, i) = sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i)) ! + pi_wp/4.0_wp)
-        du1_a(:, i) = (2.0_wp*pi_wp/g%scale*wk) &
-                      *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))! + pi_wp/4.0_wp)
+        ! u(:, i) = 1.0_wp + sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i)) ! + pi_wp/4.0_wp)
+        ! du1_a(:, i) = (2.0_wp*pi_wp/g%scale*wk) &
+        !               *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))! + pi_wp/4.0_wp)
 ! Gaussian
-        ! u(i)     = EXP(-(g%nodes(i)-x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
-        ! du1_a(i) =-(g%nodes(i)-x_0*g%scale)/(g%scale/wk)**2*u(i)
-        ! v(i)     = EXP(-(g%nodes(i)-x_0*C_05_R*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
-        ! dv1_a(i) =-(g%nodes(i)-x_0*C_05_R*g%scale)/(g%scale/wk)**2*v(i)
+        u(:, i) = exp(-(g%nodes(i) - x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
+        du1_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*u(:, i)
 ! exponential
-        ! u(i) = EXP(-g%nodes(i)*lambda)
-        ! du1_a(i) = -lambda*u(i)
-        ! du2_a(i) =  lambda*lambda*u(i)
-        ! v(i) = EXP(g%nodes(i)*x_0/g%scale)
-        ! dv1_a(i) = x_0/g%scale*v(i)
+        ! u(:, i) = exp(-g%nodes(i)*wk)
+        ! du1_a(:, i) = -wk*u(:, i)
 ! step
-        ! u(i) = MAX(0.0_wp,(g%nodes(i)-g%nodes(imax/2))*x_0)
-        ! du1_a(i) = (1.0_wp+SIGN(1.0_wp,g%nodes(i)-g%nodes(imax/2)))*C_05_R*x_0
+        ! u(:, i) = max(0.0_wp, (g%nodes(i) - g%nodes(imax/2))*x_0)
+        ! du1_a(:, i) = (1.0_wp + sign(1.0_wp, g%nodes(i) - g%nodes(imax/2)))*0.5_wp*x_0
 ! tanh
-        ! u(i) = x_0 * LOG( 1.0_wp + EXP( (g%nodes(i)-g%nodes(imax/2))/x_0 ) )
-        ! du1_a(i) = C_05_R*( 1.0_wp + TANH( C_05_R*(g%nodes(i)-g%nodes(imax/2))/x_0 ) )
+        ! u(:, i) = x_0*log(1.0_wp + exp((g%nodes(i) - g%nodes(imax/2))/x_0))
+        ! du1_a(:, i) = 0.5_wp*(1.0_wp + tanh(0.5_wp*(g%nodes(i) - g%nodes(imax/2))/x_0))
 ! Polynomial
         ! dummy = 4.0_wp
-        ! u(l, i) = ((g%scale - g%nodes(i))/lambda)**dummy
-        ! du1_a(l, i) = -dummy*((g%scale - g%nodes(i))/lambda)**(dummy - 1.0_wp)
+        ! u(:, i) = ((g%scale - g%nodes(i))/wk)**dummy
+        ! du1_a(:, i) = -dummy*((g%scale - g%nodes(i))/wk)**(dummy - 1.0_wp)
 ! zero
         ! u(i) = 0.0_wp
         ! du1_a(i) = 0.0_wp
@@ -221,23 +216,29 @@ program VINTEGRAL
             ibc = cases_new(ip)
             print *, new_line('a'), 'Case ', ibc
 
+            call INT_C1NX_INITIALIZE(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
+
             nmin = 1
             nmax = imax
             select case (ibc)
             case (BCS_DN)
                 nmin = nmin + 1
-                bcs(:, 1) = u(:, 1)
+                w_n(:, 1) = u(:, 1)
             case (BCS_ND)
                 nmax = nmax - 1
-                bcs(:, 1) = u(:, imax)
+                w_n(:, imax) = u(:, imax)
             end select
             nsize = nmax - nmin + 1
 
-            call INT_C1NX_INITIALIZE(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
-            ! do i = 1, imax !nmin, nmax
-            !     print *, lhs_int(i, 1:g%nb_diag_1(2))
-            ! end do
+            ! LU decomposition
+            select case (g%nb_diag_1(2))
+            case (3)
+                call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
+            case (5)
+               call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
+            end select
 
+            ! Particular solution
             select case (g%nb_diag_1(1))
             case (3)
                 call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
@@ -245,24 +246,25 @@ program VINTEGRAL
 
             end select
 
-            select case (g%nb_diag_1(2))
-            case (3)
-                call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
-                call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
-            case (5)
-               call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
-                call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
-            end select
-
+            ! BC corrections; should it be inside MatMul_3d? pass lhs_int as optional at the end of the argument list?
+            idr = g%nb_diag_1(2)/2 + 1
             select case (ibc)
             case (BCS_DN)                    ! BCs at the bottom
-                w_n(:, 1) = 0.0_wp
+                do i = 1, idr - 1
+                    w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
+                end do
             case (BCS_ND)                    ! BCs at the top
-                w_n(:, imax) = 0.0_wp
+                do i = 1, idr - 1
+                    w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
+                end do
             end select
-            do i = 1, imax
-                w_n(:, i) = w_n(:, i) + bcs(:, 1)
-            end do
+
+            select case (g%nb_diag_1(2))
+            case (3)
+                call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
+            case (5)
+                call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
+            end select
 
             call check(u, w_n, 'integral.dat')
 
