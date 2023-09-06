@@ -43,9 +43,9 @@ contains
         real(wp), intent(out) :: lu(:, :)       ! diagonals in new lhs
         real(wp), intent(out) :: rhs_int(:, :)  ! diagonals in new rhs
 
-! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
         integer(wi) i
-        integer(wi) idl, ndl, idr, ndr, ir, ic, nx
+        integer(wi) idl, ndl, idr, ndr, ir, ic, nx, nmin, nmax
         real(wp) dummy
 
         ! -------------------------------------------------------------------
@@ -70,86 +70,40 @@ contains
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
 
-        ! new lhs diagonals (array C22R)
+        ! new rhs diagonals (array A)
+        rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
+
+        ! new lhs diagonals (array C = B + h \lambda A)
         lu(:, 1:ndr) = rhs(:, 1:ndr)
 
-        lu(:, idr) = lu(:, idr) + lambda*lhs(:, idl)    ! center diagonal
-        do i = 1, idl - 1                               ! off-diagonals
-            lu(1 + i:nx, idr - i) = lu(1 + i:nx, idr - i) + lambda*lhs(1 + i:nx, idl - i)      ! skip the top-left corner
-            lu(1:nx - i, idr + i) = lu(1:nx - i, idr + i) + lambda*lhs(1:nx - i, idl + i)      ! skip the bottom-right corner
+        nmin = 1
+        nmax = nx
+        select case (ibc)
+        case (BCS_MIN)
+            nmin = nmin + 1
+        case (BCS_MAX)
+            nmax = nmax - 1
+        end select
+        lu(nmin:nmax, idr) = lu(nmin:nmax, idr) + lambda*lhs(nmin:nmax, idl)                        ! center diagonal
+        do i = 1, idl - 1                                                                           ! off-diagonals
+            lu(nmin + i:nx, idr - i) = lu(nmin + i:nx, idr - i) + lambda*lhs(nmin + i:nx, idl - i)      ! skip the top-left corner
+            lu(1:nmax - i, idr + i) = lu(1:nmax - i, idr + i) + lambda*lhs(1:nmax - i, idl + i)         ! skip the bottom-right corner
         end do
 
-        ! new rhs diagonals (array A22R)
-        rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
-        rhs_int(1, 1) = 0.0_wp              ! longer stencils at the boundaries
-        rhs_int(nx, ndl) = 0.0_wp
+        ! The first row in C is different from B, but I do not calculate p'_1 or p'_n in the integral operator
+        call FDM_Bcs_Reduce_In_Place(ibc, rhs_int(:, 1:ndl), lu(:, 1:ndr))
 
-        ! Boundary corrections
         select case (ibc)
-        case (BCS_DN)
-            dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
-
-            ! term for nonzero bc
-            do ir = 1, idr - 1
-                lu(1 + ir, idr - ir) = -rhs(1 + ir, idr - ir)
+        case (BCS_MIN)
+            rhs_int(2, 1) = 0.0_wp          ! longer stencil at the boundary; because I am using old version of matmul_3d.... to be removed
+            do ir = 1, idr - 1              ! change sign in term for nonzero bc
+                lu(1 + ir, idr - ir) = -lu(1 + ir, idr - ir)
             end do
-
-            ! reduced array C22R
-            lu(1, 1:ndr) = -lu(1, 1:ndr)*dummy
-            do ir = 1, idl - 1              ! rows
-                do ic = idr + 1, ndr        ! columns
-                    lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lu(1, ic)
-                end do
-                ! longer stencil at the boundary
-                ic = ndr + 1
-                lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lu(1, 1)
-                ! term for nonzero bc
-                ic = idr
-                lu(1 + ir, ic - ir) = lu(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*rhs(1, idr)*dummy
+        case (BCS_MAX)
+            rhs_int(nx - 1, ndl) = 0.0_wp   ! longer stencil at the boundary
+            do ir = 1, idr - 1              ! change sign in term for nonzero bc
+                lu(nx - ir, idr + ir) = -lu(nx - ir, idr + ir)
             end do
-
-            ! reduced array A22R
-            rhs_int(1, 1:ndl) = rhs_int(1, 1:ndl)*dummy
-            do ir = 1, idl - 1              ! rows
-                do ic = idl + 1, ndl        ! columns
-                    rhs_int(1 + ir, ic - ir) = rhs_int(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)*rhs_int(1, ic)
-                end do
-            end do
-            ! longer stencil at the boundary
-            rhs_int(2, 1) = 0.0_wp
-
-        case (BCS_ND)
-            dummy = 1.0_wp/lhs(nx, idl)     ! normalize by lnn
-
-            ! term for nonzero bc
-            do ir = 1, idr - 1
-                lu(nx - ir, idr + ir) = -rhs(nx - ir, idr + ir)
-            end do
-
-            ! reduced array C22R
-            lu(nx, 1:ndr) = -lu(nx, 1:ndr)*dummy
-            do ir = 1, idl - 1              ! rows
-                do ic = 1, idr - 1          ! columns
-                    lu(nx - ir, ic + ir) = lu(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lu(nx, ic)
-                end do
-                ! longer stencil at the boundary
-                ic = 0
-                lu(nx - ir, ic + ir) = lu(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lu(nx, ndr)
-                ! term for nonzero bc
-                ic = idr
-                lu(nx - ir, ic + ir) = lu(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*rhs(nx, idr)*dummy
-            end do
-
-            ! reduced array A22R
-            rhs_int(nx, 1:ndl) = rhs_int(nx, 1:ndl)*dummy
-            do ir = 1, idl - 1              ! rows
-                do ic = 1, idl - 1          ! columns
-                    rhs_int(nx - ir, ic + ir) = rhs_int(nx - ir, ic + ir) - lhs(nx - ir, idl + ir)*rhs_int(nx, ic)
-                end do
-            end do
-            ! longer stencil at the boundary
-            rhs_int(nx - 1, ndl) = 0.0_wp
-
         end select
 
         ! -------------------------------------------------------------------

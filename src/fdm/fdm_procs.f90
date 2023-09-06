@@ -37,6 +37,7 @@ module FDM_PROCS
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
 
     public FDM_Bcs_Neumann      ! Initialize arrays to impose Neumann Bcs
+    public FDM_Bcs_Reduce_In_Place
 
 ! ###################################################################
 ! Compact parameters (1st derivative of 6th-order pentadiagonal); to be removed
@@ -368,7 +369,7 @@ contains
 
         else
 
-            if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+            if (any([BCS_ND, BCS_NN, BCS_MIN, BCS_BOTH] == ibc_loc)) then
                 if (present(bcs_b)) bcs_b(:) = u(:, 2)*r3_b(1) &
                                                + u(:, 3)*r1_b(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
 
@@ -400,7 +401,7 @@ contains
             f(:, nx) = u(:, 1) - u(:, nx - 1)
 
         else
-            if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+            if (any([BCS_DN, BCS_NN, BCS_MAX, BCS_BOTH] == ibc_loc)) then
                 f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + &
                                f(:, nx)*r3_t(1)
 
@@ -671,7 +672,7 @@ contains
                       + r5_loc*(u(:, 5) - u(:, 1))
 
         else
-            if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+            if (any([BCS_ND, BCS_NN, BCS_MIN, BCS_BOTH] == ibc_loc)) then
                 if (present(bcs_b)) bcs_b(:) = u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1)     ! contribution to u_1
 
                 f(:, 2) = u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2) + &
@@ -711,7 +712,7 @@ contains
 
         else
 
-            if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+            if (any([BCS_DN, BCS_NN, BCS_MAX, BCS_BOTH] == ibc_loc)) then
                 f(:, nx - 2) = u(:, nx - 4)*r1_t(1) + u(:, nx - 3)*r2_t(1) + u(:, nx - 2)*r3_t(1) + u(:, nx - 1)*r4_t(1) + &
                                f(:, nx)*r5_t(1)     ! f(n) contains u'_n
 
@@ -998,5 +999,79 @@ contains
 
         return
     end subroutine FDM_Bcs_Neumann
+
+! #######################################################################
+! #######################################################################
+    subroutine FDM_Bcs_Reduce_In_Place(ibc, lhs, rhs)
+        integer, intent(in) :: ibc
+        real(wp), intent(inout) :: lhs(:, :), rhs(:, :)
+
+        integer(wi) idl, ndl, idr, ndr, ir, ic, nx
+        real(wp) dummy
+
+        ! -------------------------------------------------------------------
+        ndl = size(lhs, 2)
+        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
+        ndr = size(rhs, 2)
+        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
+        nx = size(lhs, 1)               ! # grid points
+
+        ! -------------------------------------------------------------------
+        if (any([BCS_MIN, BCS_BOTH] == ibc)) then
+            dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
+
+            ! reduced array A^R_{22}
+            lhs(1, 1:ndl) = -lhs(1, 1:ndl)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = idl + 1, ndl        ! columns
+                    lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lhs(1, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = ndl + 1
+                lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lhs(1, 1)
+            end do
+
+            ! reduced array B^R_{22}
+            rhs(1, 1:ndr) = rhs(1, 1:ndr)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = idr, ndr            ! columns; ic = idr corresponds to vector b^R_{21}
+                    rhs(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)*rhs(1, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = ndr + 1
+                rhs(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)*rhs(1, 1)
+            end do
+
+        end if
+
+        if (any([BCS_MAX, BCS_BOTH] == ibc)) then
+            dummy = 1.0_wp/lhs(nx, idl)     ! normalize by lnn
+
+            ! reduced array A^R_{11}
+            lhs(nx, 1:ndl) = -lhs(nx, 1:ndl)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = 1, idl - 1          ! columns
+                    lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lhs(nx, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = 0
+                lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lhs(nx, ndl)
+            end do
+
+            ! reduced array B^R_{11}
+            rhs(nx, 1:ndr) = rhs(nx, 1:ndr)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = 1, idr              ! columns; ic = idr corresponds to vector b^R_{1n}
+                    rhs(nx - ir, ic + ir) = rhs(nx - ir, ic + ir) - lhs(nx - ir, idl + ir)*rhs(nx, ic)
+                end do
+                ! longer stencil at the boundary
+                ic = 0
+                rhs(nx - ir, ic + ir) = rhs(nx - ir, ic + ir) - lhs(nx - ir, idl + ir)*rhs(nx, ndr)
+            end do
+
+        end if
+
+        return
+    end subroutine FDM_Bcs_Reduce_In_Place
 
 end module FDM_PROCS

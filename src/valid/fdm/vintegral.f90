@@ -28,7 +28,7 @@ program VINTEGRAL
     integer(wi) :: test_type, ibc, ip
     integer(wi) :: nmin, nmax, nsize
 
-    integer, parameter :: i1 = 1, cases(2) = [1, 2], cases_new(2) = [BCS_DN, BCS_ND]
+    integer, parameter :: i1 = 1, cases(2) = [1, 2], cases_new(2) = [BCS_MIN, BCS_MAX]
     real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
 ! ###################################################################
@@ -160,17 +160,17 @@ program VINTEGRAL
 
         do ip = 1, size(cases_new)
             ibc = cases_new(ip)
-            print *, new_line('a'), 'Case ', ibc
+            print *, new_line('a'), 'Bcs case ', ibc
 
             call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
 
             nmin = 1
             nmax = imax
             select case (ibc)
-            case (BCS_DN)
+            case (BCS_MIN)
                 nmin = nmin + 1
                 w_n(:, 1) = u(:, 1)
-            case (BCS_ND)
+            case (BCS_MAX)
                 nmax = nmax - 1
                 w_n(:, imax) = u(:, imax)
             end select
@@ -192,14 +192,14 @@ program VINTEGRAL
 
             end select
 
-            ! BC corrections
+            ! BC corrections; to be put inside of new version of matmul_3d
             idr = g%nb_diag_1(2)/2 + 1
             select case (ibc)
-            case (BCS_DN)                    ! BCs at the bottom
+            case (BCS_MIN)                    ! BCs at the bottom
                 do i = 1, idr - 1
                     w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
                 end do
-            case (BCS_ND)                    ! BCs at the top
+            case (BCS_MAX)                    ! BCs at the top
                 do i = 1, idr - 1
                     w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
                 end do
