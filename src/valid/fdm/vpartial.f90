@@ -78,6 +78,7 @@ program VPARTIAL
     ! g%periodic = .true.
     wk = 1.0_wp ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) wk
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
+    ! g%mode_fdm1 = FDM_COM6_JACOBIAN_PENTA
     ! g%mode_fdm1 = FDM_COM6_DIRECT
     g%mode_fdm2 = g%mode_fdm1
 
@@ -117,10 +118,10 @@ program VPARTIAL
             !           sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
             ! du1_a(l, i) = (2.0_wp*pi_wp/g%scale*wk) &
             !               *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
-            u(l, i) = 1.0_wp + &
-                      cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
-            du1_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk) &
-                          *sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
+            ! u(l, i) = 1.0_wp + &
+            !           cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
+            ! du1_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk) &
+            !               *sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
 
             ! du2_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk)**2 &
             !               *u(l, i)
@@ -143,9 +144,9 @@ program VPARTIAL
             ! du1_a(l,i) = C_05_R*(1.0_wp+TANH(C_05_R*g%nodes(i)/wk))
             ! du2_a(l,i) = C_025_R/wk/(COSH(C_05_R*g%nodes(i)/wk))**2
 ! Polynomial
-            ! dummy = 4.0_wp
-            ! u(l, i) = ((g%scale - g%nodes(i))/wk)**dummy
-            ! du1_a(l, i) = -dummy*((g%scale - g%nodes(i))/wk)**(dummy - 1.0_wp)
+            dummy = 4.0_wp
+            u(l, i) = ((g%scale - g%nodes(i))/wk)**dummy
+            du1_a(l, i) = -dummy/wk*((g%scale - g%nodes(i))/wk)**(dummy - 1.0_wp)
             ! du2_a(l, i) = dummy*(dummy - 1.0_wp)*((g%scale - g%nodes(i))/wk)**(dummy - 2.0_wp)
         end do
     end do
@@ -177,7 +178,7 @@ program VPARTIAL
         ! Direct metrics
 
         ! -------------------------------------------------------------------
-        !   Testing the reducution routines
+        !   Testing the reduction routines
         fdm_cases(1:2) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN]
         fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
         bcs_cases(1:3) = [BCS_MIN, BCS_MAX, BCS_BOTH]
@@ -199,9 +200,6 @@ program VPARTIAL
                 g%mode_fdm1 = fdm_cases(im)
                 print *, fdm_names(im)
 
-                du1_n(:, 1) = u(:, 1)
-                du1_n(:, imax) = u(:, imax)
-
                 select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN)
                     call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
@@ -221,6 +219,8 @@ program VPARTIAL
                 case (5)
                 end select
 
+                du1_n(:, 1) = u(:, 1)           ! boundary condition
+                du1_n(:, imax) = u(:, imax)
                 select case (g%nb_diag_1(2))
                 case (3)
                     call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
@@ -237,15 +237,13 @@ program VPARTIAL
                 end select
 
                 if (any([BCS_MIN, BCS_BOTH] == ibc)) then
-                    du1_n(:, 1) = wrk2d(:, 1) + g%rhs1(1, idr)*u(:, 1)
                     do ic = 1, idl - 1
-                        du1_n(:, 1) = du1_n(:, 1) + g%lu1(1, idl + ic)*du1_n(:, 1 + ic)
+                        du1_n(:, 1) = wrk2d(:, 1) + g%lu1(1, idl + ic)*du1_n(:, 1 + ic)
                     end do
                 end if
                 if (any([BCS_MAX, BCS_BOTH] == ibc)) then
-                    du1_n(:, imax) = wrk2d(:, 2) + g%rhs1(imax, idr)*u(:, imax)
                     do ic = 1, idl - 1
-                        du1_n(:, imax) = du1_n(:, imax) + g%lu1(imax, idl - ic)*du1_n(:, imax - ic)
+                        du1_n(:, imax) = wrk2d(:, 2) + g%lu1(imax, idl - ic)*du1_n(:, imax - ic)
                     end do
                 end if
                 call check(u, du1_a, du1_n, 'partial.dat')
@@ -258,10 +256,12 @@ program VPARTIAL
 ! Boundary conditions
 ! ###################################################################
     case (2)
+        fdm_cases(1:2) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
         bcs_cases(1:4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
         do ip = 1, 4
             ibc = bcs_cases(ip)
-            print *, new_line('a'), 'Case ', ibc
+            print *, new_line('a'), 'Bcs case ', ibc
 
             nmin = 1
             nmax = g%size
@@ -276,35 +276,59 @@ program VPARTIAL
             du1_n(:, 1) = du1_a(:, 1)
             du1_n(:, imax) = du1_a(:, imax)
 
-            print *, '1. order, Jacobian 4'
-            call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-            call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:3), g%rhs1_b, g%rhs1_t)
-            call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
-            call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u(:, :), du1_n(:, :), g%periodic, &
-                                   ibc, g%rhs1_b, g%rhs1_t, wrk2d(:, 1), wrk2d(:, 2))
-            call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
-            call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
-            if (any([BCS_ND, BCS_NN] == ibc)) then
-                print *, u(:, 1), g%lu1(1, 2)*du1_n(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + wrk2d(1:len, 1)
-            end if
-            if (any([BCS_DN, BCS_NN] == ibc)) then
-                print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_n(:, imax) + wrk2d(1:len, 2)
-            end if
+            do im = 1, 2
+                g%mode_fdm1 = fdm_cases(im)
+                print *, fdm_names(im)
 
-            print *, '1. order, Jacobian 6'
-            call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-            call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:3), g%rhs1(:, 1:5), g%rhs1_b, g%rhs1_t)
-            call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
-           call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u(:, :), du1_n(:, :), g%periodic, &
-                                   ibc, g%rhs1_b, g%rhs1_t, wrk2d(:, 1), wrk2d(:, 2))
-            call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
-            call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
-            if (any([BCS_ND, BCS_NN] == ibc)) then
-                print *, u(:, 1), g%lu1(1, 2)*du1_a(:, 1) + g%lu1(1, 3)*du1_n(:, 2) + wrk2d(1:len, 1)
-            end if
-            if (any([BCS_DN, BCS_NN] == ibc)) then
-                print *, u(:, imax), g%lu1(imax, 1)*du1_n(:, imax - 1) + g%lu1(imax, 2)*du1_a(:, imax) + wrk2d(1:len, 2)
-            end if
+                select case (g%mode_fdm1)
+                case (FDM_COM4_JACOBIAN)
+                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+                    g%nb_diag_1 = [3, 3]
+                case (FDM_COM6_JACOBIAN)
+                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+                    g%nb_diag_1 = [3, 5]
+                end select
+                idl = g%nb_diag_1(1)/2 + 1
+                idr = g%nb_diag_1(2)/2 + 1
+
+                call FDM_Bcs_Neumann(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
+
+                select case (g%nb_diag_1(1))
+                case (3)
+                    call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
+                case (5)
+                end select
+
+                select case (g%nb_diag_1(2))
+                case (3)
+                    call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
+                                           ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
+                case (5)
+                    call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
+                                           ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
+                end select
+
+                select case (g%nb_diag_1(1))
+                case (3)
+                    call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
+                case (5)
+                end select
+
+                call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
+                if (any([BCS_ND, BCS_NN] == ibc)) then
+                    do ic = 1, idl - 1
+                        wrk2d(1:len, 1) = wrk2d(1:len, 1) + g%lu1(1, idl + ic)*du1_n(:, 1 + ic)
+                    end do
+                    print *, u(:, 1), wrk2d(1:len, 1)
+                end if
+                if (any([BCS_DN, BCS_NN] == ibc)) then
+                    do ic = 1, idl - 1
+                        wrk2d(1:len, 2) = wrk2d(1:len, 2) + g%lu1(imax, idl - ic)*du1_n(:, imax - ic)
+                    end do
+                    print *, u(:, imax), wrk2d(1:len, 2)
+                end if
+
+            end do
 
         end do
 

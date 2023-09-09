@@ -65,10 +65,6 @@ contains
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array rhs_int size.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
-        if (idr < idl) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. New LHS is too small for integral operator.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
 
         ! new rhs diagonals (array A)
         rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
