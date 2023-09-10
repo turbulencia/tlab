@@ -23,12 +23,14 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: u, w_n, f
     real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
     real(wp), dimension(:, :), pointer :: bcs
-    integer(wi) bcs_aux(2, 2), idr
+    integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5), dummy, wk, x_0
-    integer(wi) :: test_type, ibc, ip
+    integer(wi) :: test_type, ibc, ip, idr, im
     integer(wi) :: nmin, nmax, nsize
 
-    integer, parameter :: i1 = 1, cases(2) = [1, 2], cases_new(2) = [BCS_MIN, BCS_MAX]
+    integer, parameter :: i1 = 1
+    integer :: bcs_cases(4), fdm_cases(3)
+    character(len=32) :: fdm_names(3)
     real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
 ! ###################################################################
@@ -138,81 +140,90 @@ program VINTEGRAL
 ! ###################################################################
     select case (test_type)
     case (1)
+        fdm_cases(1:2) = [FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
+        bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
         f = du1_a + lambda*u
 
-        ! print *, '1. order, Jacobian 4'
-        ! call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        ! g%nb_diag_1 = [3, 3]
-        ! g%rhs1(:, 5) = 0.0_wp
-        ! g%rhs1(:, 4) = g%rhs1(:, 3)
-        ! g%rhs1(:, 3) = g%rhs1(:, 2)
-        ! g%rhs1(:, 2) = g%rhs1(:, 1)
-        ! g%rhs1(:, 1) = 0.0_wp
-        ! g%rhs1(1, 5) = g%rhs1(1, 2); g%rhs1(1, 2) = 0.0_wp
-        ! g%rhs1(imax, 1) = g%rhs1(imax, 4); g%rhs1(imax, 4) = 0.0_wp
-        ! g%nb_diag_1 = [3, 5]
-
-        ! In FDM_Initialize, we do LU decomposition and I need to call this again
-        print *, new_line('a'), '1. order, Jacobian 6'
-        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-        g%nb_diag_1 = [3, 5]
-
-        do ip = 1, size(cases_new)
-            ibc = cases_new(ip)
+        do ip = 1, 2
+            ibc = bcs_cases(ip)
             print *, new_line('a'), 'Bcs case ', ibc
 
-            call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
+            do im = 1, 2
+                g%mode_fdm1 = fdm_cases(im)
+                print *, fdm_names(im)
 
-            nmin = 1
-            nmax = imax
-            select case (ibc)
-            case (BCS_MIN)
-                nmin = nmin + 1
-                w_n(:, 1) = u(:, 1)
-            case (BCS_MAX)
-                nmax = nmax - 1
-                w_n(:, imax) = u(:, imax)
-            end select
-            nsize = nmax - nmin + 1
+                select case (g%mode_fdm1)
+                case (FDM_COM4_JACOBIAN)
+                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+                    g%nb_diag_1 = [3, 3]
+                case (FDM_COM6_JACOBIAN)
+                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
+                    g%nb_diag_1 = [3, 5]
+                end select
+                ! idl = g%nb_diag_1(1)/2 + 1
+                idr = g%nb_diag_1(2)/2 + 1
 
-            ! LU decomposition
-            select case (g%nb_diag_1(2))
-            case (3)
-                call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
-            case (5)
+                call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
+
+                nmin = 1
+                nmax = imax
+                select case (ibc)
+                case (BCS_MIN)
+                    nmin = nmin + 1
+                    w_n(:, 1) = u(:, 1)
+                    ! call FDM_Bcs_Reduce_In_Place(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
+                case (BCS_MAX)
+                    nmax = nmax - 1
+                    w_n(:, imax) = u(:, imax)
+                    ! call FDM_Bcs_Reduce_In_Place(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
+                end select
+                ! nmin = 2
+                ! nmax = imax - 1
+                nsize = nmax - nmin + 1
+
+                ! LU decomposition
+                select case (g%nb_diag_1(2))
+                case (3)
+                    call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
+                case (5)
                call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
-            end select
+                end select
 
-            ! Particular solution
-            select case (g%nb_diag_1(1))
-            case (3)
-                call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
-            case (5)
+                ! Particular solution
+                select case (g%nb_diag_1(1))
+                case (3)
+                    call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
+                case (5)
 
-            end select
+                end select
 
-            ! BC corrections; to be put inside of new version of matmul_3d
-            idr = g%nb_diag_1(2)/2 + 1
-            select case (ibc)
-            case (BCS_MIN)                    ! BCs at the bottom
-                do i = 1, idr - 1
-                    w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
-                end do
-            case (BCS_MAX)                    ! BCs at the top
-                do i = 1, idr - 1
-                    w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
-                end do
-            end select
+                ! BC corrections; to be put inside of new version of matmul_3d
+                idr = g%nb_diag_1(2)/2 + 1
+                select case (ibc)
+                case (BCS_MIN)                    ! BCs at the bottom
+                    do i = 1, idr - 1
+                        w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
+                    end do
+                case (BCS_MAX)                    ! BCs at the top
+                    do i = 1, idr - 1
+                        w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
+                    end do
+                end select
 
-            select case (g%nb_diag_1(2))
-            case (3)
-                call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
-            case (5)
+                select case (g%nb_diag_1(2))
+                case (3)
+                    call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
+                case (5)
                 call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
-            end select
+                end select
 
-            call check(u, w_n, 'integral.dat')
+                ! call check(u(:, nmin:nmax), w_n(:, nmin:nmax), 'integral.dat')
+                call check(u, w_n, 'integral.dat')
+
+            end do
 
         end do
 
