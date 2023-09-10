@@ -157,11 +157,11 @@ program VINTEGRAL
 
                 select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN)
-                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-                    g%nb_diag_1 = [3, 3]
+                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
+
                 case (FDM_COM6_JACOBIAN)
-                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), coef, g%periodic)
-                    g%nb_diag_1 = [3, 5]
+                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
+
                 end select
                 ! idl = g%nb_diag_1(1)/2 + 1
                 idr = g%nb_diag_1(2)/2 + 1

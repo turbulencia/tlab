@@ -31,16 +31,19 @@ module FDM_Com1_Jacobian
 
 contains
     !########################################################################
-    subroutine FDM_C1N4_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C1N4_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx)
         real(wp), intent(out) :: lhs(nx, 3)     ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 3)     ! RHS diagonals; b_2, b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6)
+
+        nb_diag = [3, 3]
 
         if (present(periodic)) then
             periodic_loc = periodic
@@ -69,16 +72,19 @@ contains
     end subroutine FDM_C1N4_Jacobian
 
 !########################################################################
-    subroutine FDM_C1N6_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C1N6_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx)
         real(wp), intent(out) :: lhs(nx, 3)     ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 5)     ! RHS diagonals; b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6), coef_bc2(6)
+
+        nb_diag = [3, 5]
 
         if (present(periodic)) then
             periodic_loc = periodic
@@ -112,6 +118,45 @@ contains
 
         return
     end subroutine FDM_C1N6_Jacobian
+
+!########################################################################
+    subroutine FDM_C1N6_Jacobian_Penta(nx, dx, lhs, rhs, nb_diag, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx)
+        real(wp), intent(out) :: lhs(nx, 5)     ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 7)     ! RHS diagonals; b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
+        real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
+        logical, intent(in), optional :: periodic
+
+        ! -------------------------------------------------------------------
+        real(wp) coef_bc1(6), coef_bc2(6)
+
+        nb_diag = [5, 7]
+
+        if (present(periodic)) then
+            periodic_loc = periodic
+        else
+            periodic_loc = .false.
+        end if
+
+        ! ! #######################################################################
+        ! ! Interior points according to ...
+        ! coef(1:2) = ...                                     ! a_1, a_2
+        ! coef(3:5) = ...                     ! b_1, b_2, b_3
+
+        ! if (periodic_loc) then
+        !     call Create_System_1der(dx, lhs, rhs, coef)
+
+        ! else    ! biased at the boundaries
+
+        !     ...
+        !     call Create_System_1der(dx, lhs, rhs, coef, coef_bc1, coef_bc2)
+
+        ! end if
+
+        return
+    end subroutine FDM_C1N6_Jacobian_Penta
 
 !########################################################################
     subroutine Create_System_1der(dx, lhs, rhs, coef_int, coef_bc1, coef_bc2)

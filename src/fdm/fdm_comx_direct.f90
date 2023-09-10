@@ -26,11 +26,12 @@ contains
     !########################################################################
     !# 6th-order approximation to 2nd-order derivative:
     !########################################################################
-    subroutine FDM_C2N6_Direct(nmax, x, lhs, rhs)
+    subroutine FDM_C2N6_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3) ! LHS diagonals (#=3)
-        real(wp), intent(out) :: rhs(nmax, 4) ! RHS diagonals (#=5-1 because of normalization)
+        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals (#=3)
+        real(wp), intent(out) :: rhs(nmax, 4)   ! RHS diagonals (#=5-1 because of normalization)
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
 
         ! -------------------------------------------------------------------
         real(wp) am1, a, ap1                ! Left-hand side; for clarity below
@@ -40,6 +41,8 @@ contains
         real(wp) dummy
         real(wp) coef(6)
         integer(wi) n, idx(2)
+
+        nb_diag = [3, 5]
 
         ! #######################################################################
         ! Equations (16) for the first/last points.
@@ -144,15 +147,18 @@ contains
     !########################################################################
     !# 4th-order approximation to 2nd-order derivative; extracted from above
     !########################################################################
-    subroutine FDM_C2N4_Direct(nmax, x, lhs, rhs)
+    subroutine FDM_C2N4_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3) ! LHS diagonals (#=3)
-        real(wp), intent(out) :: rhs(nmax, 4) ! RHS diagonals (#=5-1 because of normalization)
+        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals (#=3)
+        real(wp), intent(out) :: rhs(nmax, 4)   ! RHS diagonals (#=5-1 because of normalization)
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
 
         real(wp) dummy
         real(wp) coef(6)
         integer(wi) n
+
+        nb_diag = [3, 5]
 
         ! #######################################################################
         ! Equations (16) for the first/last points.

@@ -61,11 +61,11 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     select case (g%mode_fdm1)
 
     case (FDM_COM4_JACOBIAN)
-        call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
+        call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_3d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), x, g%jac(:, 1), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), coef)
+        call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN_PENTA)
@@ -94,15 +94,15 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     select case (g%mode_fdm2)
 
     case (FDM_COM4_JACOBIAN)
-        call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+        call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+        call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
-        call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), coef)
+        call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
 
     end select
@@ -127,12 +127,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     select case (g%mode_fdm1)
 
     case (FDM_COM4_JACOBIAN)
-        call FDM_C1N4_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:3), coef, g%periodic)
-        g%nb_diag_1 = [3, 3]
+        call FDM_C1N4_Jacobian(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1(:, 1:3), g%rhs1(:, 1:5), coef, g%periodic)
-        g%nb_diag_1 = [3, 5]
+        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
@@ -201,7 +199,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lu1(:, 1:g%nb_diag_1(1))
 
-            ! call FDM_Bcs(g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), i)
             call FDM_Bcs_Neumann(i, g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
 
             nmin = 1; nmax = nx
@@ -211,10 +208,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
             select case (g%nb_diag_1(1))
             case (3)
-            !     call TRIDFS(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3))
                 call TRIDFS(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3))
             case (5)
-            !     call PENTADFS2(nx, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5))
                 call PENTADFS2(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5))
             end select
 
@@ -234,27 +229,22 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     select case (g%mode_fdm2)
 
     case (FDM_COM4_JACOBIAN)
-        call FDM_C2N4_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:5), coef, g%periodic)
-        g%nb_diag_2 = [3, 5]
+        call FDM_C2N4_Jacobian(nx, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C2N6_Jacobian(nx, g%jac, g%lu2(:, :), g%rhs2(:, :), coef, g%periodic)
-        g%nb_diag_2 = [3, 7]
+        call FDM_C2N6_Jacobian(nx, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_JACOBIAN_HYPER)
-        call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2(:, 1:3), g%rhs2(:, 1:7), coef, g%periodic)
-        g%nb_diag_2 = [3, 7]
+        call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_DIRECT)
-        call FDM_C2N6_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4))
-        g%nb_diag_2 = [3, 5]
+        call FDM_C2N6_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
 
     case (FDM_COM4_DIRECT)
-        call FDM_C2N4_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4))
-        g%nb_diag_2 = [3, 5]
+        call FDM_C2N4_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
 
     end select
 

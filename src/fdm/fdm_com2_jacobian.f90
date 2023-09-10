@@ -36,16 +36,19 @@ module FDM_Com2_Jacobian
 contains
     !########################################################################
     ! rhs is still pentadiagonal because of the bcs
-    subroutine FDM_C2N4_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C2N4_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx, 2)
         real(wp), intent(out) :: lhs(nx, 3)         ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 5 + 3)     ! RHS diagonals; b_2, b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)      ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6)
+
+        nb_diag = [3, 5]
 
         if (present(periodic)) then
             periodic_loc = periodic
@@ -74,16 +77,19 @@ contains
     end subroutine FDM_C2N4_Jacobian
 
 !########################################################################
-    subroutine FDM_C2N6_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C2N6_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx, 2)
         real(wp), intent(out) :: lhs(nx, 3)         ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 5 + 3)     ! RHS diagonals; b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)      ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6), coef_bc2(6)
+
+        nb_diag = [3, 5]
 
         if (present(periodic)) then
             periodic_loc = periodic
@@ -116,16 +122,19 @@ contains
     end subroutine FDM_C2N6_Jacobian
 
 !########################################################################
-    subroutine FDM_C2N6_Hyper_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C2N6_Hyper_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx, 2)
         real(wp), intent(out) :: lhs(nx, 3)         ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 7 + 3)     ! RHS diagonals; b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)      ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)            ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6), coef_bc2(6), coef_bc3(8), kc
+
+        nb_diag = [3, 7]
 
         if (present(periodic)) then
             periodic_loc = periodic

@@ -54,18 +54,18 @@ contains
         use TLAB_VARS, only: g, imode_elliptic
         use FDM_ComX_Direct
 
-        integer ibc_loc
+        integer ibc_loc, nb_diag(2)
         integer, parameter :: i1 = 1, i2 = 2
 
         ! -----------------------------------------------------------------------
         select case (imode_elliptic)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N4_Direct(g(2)%size, g(2)%nodes, lhs, rhs)
+            call FDM_C2N4_Direct(g(2)%size, g(2)%nodes, lhs, rhs, nb_diag)
 
         case default !(FDM_COM6_DIRECT) ! I need it for helmholtz
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N6_Direct(g(2)%size, g(2)%nodes, lhs, rhs)
+            call FDM_C2N6_Direct(g(2)%size, g(2)%nodes, lhs, rhs, nb_diag)
 
         end select
 
