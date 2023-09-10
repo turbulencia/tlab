@@ -24,8 +24,9 @@ module FDM_Com1_Jacobian
     implicit none
     private
 
-    public :: FDM_C1N4_Jacobian     ! 1. order derivative, 4. order approximation
-    public :: FDM_C1N6_Jacobian     ! 1. order derivative, 6. order approximation
+    public :: FDM_C1N4_Jacobian         ! 1. order derivative, 4. order approximation
+    public :: FDM_C1N6_Jacobian         ! 1. order derivative, 6. order approximation
+    public :: FDM_C1N6_Jacobian_Penta   ! 1. order derivative, 6. order approximation, better spectral properties
 
     logical periodic_loc
 

@@ -68,9 +68,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
-    case (FDM_COM6_JACOBIAN_PENTA)
+    case (FDM_COM6_JACOBIAN_PENTA)      ! to be updated
         call FDM_C1N6M_COEFF()
         call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+        g%nb_diag_1 = [5, 7]
         call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
 
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
@@ -79,13 +80,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     end select
 
-    if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then
-        call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-        call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
-    else
+    select case (g%nb_diag_1(1))
+    case (3)
         call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
-    end if
+    case (5)
+        call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+        call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
+    end select
 
     ! -------------------------------------------------------------------
     ! second derivative
@@ -107,8 +109,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     end select
 
-    call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-    call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
+    select case (g%nb_diag_1(1))
+    case (3)
+        call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
+        call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
+    case (5)
+        call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
+        call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 2))
+    end select
 
     ! -------------------------------------------------------------------
     ! Saving operations for the time-stability constraint
@@ -132,7 +140,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     case (FDM_COM6_JACOBIAN)
         call FDM_C1N6_Jacobian(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
-    case (FDM_COM6_JACOBIAN_PENTA)
+    case (FDM_COM6_JACOBIAN_PENTA)      ! to be updated
         call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
         coef = [C1N6M_ALPHA2, C1N6M_BETA2, C1N6M_A, C1N6M_BD2, C1N6M_CD3]/2.0_wp
         g%nb_diag_1 = [5, 7]
