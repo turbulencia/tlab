@@ -114,13 +114,13 @@ program VPARTIAL
             !           sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
             ! du1_a(l, i) = (2.0_wp*pi_wp/g%scale*wk) &
             !               *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
-            ! u(l, i) = 1.0_wp + &
-            !           cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
-            ! du1_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk) &
-            !               *sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
+            u(l, i) = 1.0_wp + &
+                      cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
+            du1_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk) &
+                          *sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
 
-            ! du2_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk)**2 &
-            !               *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
+            du2_a(l, i) = -(2.0_wp*pi_wp/g%scale*wk)**2 &
+                          *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))!+pi_wp/C_4_R)
 
 ! Gaussian
             ! dummy = 1.0_wp / ( 2.0_wp*(g%scale/M_REAL(wk*l))**2 )
@@ -140,10 +140,10 @@ program VPARTIAL
             ! du1_a(l,i) = C_05_R*(1.0_wp+TANH(C_05_R*g%nodes(i)/wk))
             ! du2_a(l,i) = C_025_R/wk/(COSH(C_05_R*g%nodes(i)/wk))**2
 ! Polynomial
-            dummy = 4.0_wp
-            u(l, i) = ((g%scale - g%nodes(i))/wk)**dummy
-            du1_a(l, i) = -dummy/wk*((g%scale - g%nodes(i))/wk)**(dummy - 1.0_wp)
-            du2_a(l, i) = dummy*(dummy - 1.0_wp)*((g%scale - g%nodes(i))/wk)**(dummy - 2.0_wp)
+            ! dummy = 4.0_wp
+            ! u(l, i) = ((g%scale - g%nodes(i))/wk)**dummy
+            ! du1_a(l, i) = -dummy/wk*((g%scale - g%nodes(i))/wk)**(dummy - 1.0_wp)
+            ! du2_a(l, i) = dummy*(dummy - 1.0_wp)*((g%scale - g%nodes(i))/wk)**(dummy - 2.0_wp)
         end do
     end do
 
@@ -336,34 +336,47 @@ program VPARTIAL
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n1)
 
         ! Jacobian based
-        print *, '2. order, Jacobian 4'
-        call FDM_C2N4_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), g%nb_diag_2, coef, g%periodic)
-        call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
-        call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
-        ip = 5
-        call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
-        call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
-        call check(u, du2_a, du2_n2, 'partial.dat')
+        fdm_cases(1:3) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_HYPER]
+        fdm_names(1:2) = ['2. order, Jacobian 4', '2. order, Jacobian 6']
+        fdm_names(3) = '2. order, Jacobian 6 hyper'     ! funny, cannot be in previous line because different length of character string
 
-        print *, '2. order, Jacobian 6'
-        call FDM_C2N6_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), g%nb_diag_2, coef, g%periodic)
-        call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
-        call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
-        ip = 5
-        call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
-        call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
-        call check(u, du2_a, du2_n2, 'partial.dat')
+        do im = 1, 3
+            g%mode_fdm2 = fdm_cases(im)
+            print *, fdm_names(im)
 
-        print *, '2. order, Jacobian 6 hyper'
-        call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2(:, :), g%rhs2(:, :), g%nb_diag_2, coef, g%periodic)
-        call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
-call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
-        ip = 7
-        call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
-        call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
-        ! call TRIDPFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), g%lu2(:, 4), g%lu2(:, 5))
-        ! call TRIDPSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), g%lu2(:, 4), g%lu2(:, 5), du2_n2, wrk3d)
-        call check(u, du2_a, du2_n2, 'partial.dat')
+            select case (g%mode_fdm2)
+            case (FDM_COM4_JACOBIAN)
+                call FDM_C2N4_Jacobian(imax, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
+
+            case (FDM_COM6_JACOBIAN)
+                call FDM_C2N6_Jacobian(imax, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
+
+            case (FDM_COM6_JACOBIAN_HYPER)
+                call FDM_C2N6_Hyper_Jacobian(imax, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
+
+            end select
+
+            call TRIDFS(g%size, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
+
+            select case (g%nb_diag_2(2))
+            case (3)
+                call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
+                                       ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
+            case (5)
+                call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
+
+            case (7)
+                call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
+
+            end select
+
+            ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du
+            call MatMul_3d_add(imax, len, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du1_a, du2_n2)
+
+            call TRIDSS(g%size, len, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3), du2_n2)
+            call check(u, du2_a, du2_n2, 'partial.dat')
+
+        end do
 
         ! Direct metrics
         print *, '2. order, Direct 4'
