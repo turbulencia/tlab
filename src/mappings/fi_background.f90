@@ -50,7 +50,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
             dummy = rbg%delta/rbg%mean
             tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             tbg%delta = -tbg%mean*dummy
-            
+
         end if
     end if
 
@@ -208,7 +208,7 @@ end subroutine FI_BACKGROUND_INITIALIZE
 ! Compute hydrostatic equilibrium from profiles s=(h,q_t).
 !########################################################################
 subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, BCS_MIN
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
@@ -216,6 +216,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL
+    use FDM_Integrate
+    use FDM_Procs
+    use FDM_Com1_Jacobian
 
     implicit none
 
@@ -226,8 +229,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     real(wp), dimension(g%size, *), intent(INOUT) :: wrk1d
 
     ! -------------------------------------------------------------------
-    integer(wi) iter, niter, ibc, j, jcenter
-    real(wp) dummy
+    integer(wi) iter, niter, ibc, j, jcenter, ip!, nb_diag(2), ndl, ndr
+    real(wp) dummy!, coef(5)
+!    real(wp), allocatable :: lhs(:, :), rhs(:, :)
     integer, parameter :: i1 = 1
 
     ! ###################################################################
@@ -240,13 +244,27 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
         end if
     end do
 
-    ! Setting the pressure entry to 1 to get 1/RT
-    wrk1d(:, 6) = 1.0_wp
-
     ! Prepare the pentadiagonal system
     ibc = 1                     ! Boundary condition at the bottom for integral calulation
     call INT_C1N6_LHS(g%size, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
     call PENTADFS(g%size - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
+    ip = 5
+
+    ! allocate (lhs(g%size, 3), rhs(g%size, 5))
+    ! call FDM_C1N6_Jacobian(g%size, g%jac, lhs, rhs, nb_diag, coef)
+    ! ndl = g%nb_diag_1(1)
+    ! ndr = g%nb_diag_1(2)
+    ! call FDM_Int1_Initialize(BCS_MIN, lhs(:, 1:ndl), rhs(:, 1:ndr), 0.0_wp, wrk1d(:, 1:ndr), wrk1d(:, 1 + ndr:ndl + ndr))
+    ! select case (g%nb_diag_1(2))
+    ! case (3)
+    !     call TRIDFS(g%size - 1, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3))
+    ! case (5)
+    !     call PENTADFS(g%size - 1, wrk1d(2:, 1), wrk1d(2:, 2), wrk1d(2:, 3), wrk1d(2:, 4), wrk1d(2:, 5))
+    ! end select
+    ! ip = g%nb_diag_1(1) + g%nb_diag_1(2)
+
+    ! Setting the pressure entry to 1 to get 1/RT
+    wrk1d(:, ip + 1) = 1.0_wp
 
     niter = 10
 
@@ -256,19 +274,33 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     end if
     do iter = 1, niter           ! iterate
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, e, wrk1d(1, 6), wrk1d(1, 7))   ! Get 1/RT
+            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, e, wrk1d(1, ip + 1), wrk1d(1, ip + 2))   ! Get 1/RT
             dummy = -1.0_wp/sign(scaleheight, buoyancy%vector(2))
         else
             call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
-            call THERMO_THERMAL_DENSITY(g%size, s(:, 2), wrk1d(:, 6), T, wrk1d(:, 7)) ! Get 1/RT
+            call THERMO_THERMAL_DENSITY(g%size, s(:, 2), wrk1d(:, ip + 1), T, wrk1d(:, ip + 2)) ! Get 1/RT
             dummy = buoyancy%vector(2)
         end if
-        wrk1d(:, 7) = dummy*wrk1d(:, 7)
+        wrk1d(:, ip + 2) = dummy*wrk1d(:, ip + 2)
 
         ! Calculate integral
-        call INT_C1N6_RHS(g%size, i1, ibc, g%jac, wrk1d(1, 7), p)
+        call INT_C1N6_RHS(g%size, i1, ibc, g%jac, wrk1d(1, ip + 2), p)
         call PENTADSS(g%size - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), p(2))
         p(1) = 0.0_wp
+
+        ! select case (g%nb_diag_1(1))
+        ! case (3)
+        !     call MatMul_3d(g%size - 1, 1, wrk1d(2:, 1 + ndr), wrk1d(2:, 3 + ndr), wrk1d(2:, ip + 2), p(2:))
+        ! case (5)
+        ! end select
+
+        ! select case (g%nb_diag_1(2))
+        ! case (3)
+        !     call TRIDSS(g%size - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), p(2:))
+        ! case (5)
+        !     call PENTADSS(g%size - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), p(2:))
+        ! end select
+        ! p(1) = 0.0_wp
 
         ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
         p(:) = exp(p(:))
