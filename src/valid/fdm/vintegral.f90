@@ -140,7 +140,7 @@ program VINTEGRAL
 ! ###################################################################
     select case (test_type)
     case (1)
-        fdm_cases(1:2) = [FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN]
+        fdm_cases(1:2) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN]
         fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
@@ -158,6 +158,7 @@ program VINTEGRAL
                 select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN)
                     call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
+                    print*,'Undeveloped: Need to reduce arrays because of long stencil.'
 
                 case (FDM_COM6_JACOBIAN)
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
