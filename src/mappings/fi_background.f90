@@ -10,7 +10,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
-    use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
+    use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground, sbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
@@ -28,7 +28,6 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! -----------------------------------------------------------------------
     real(wp) dummy
     integer(wi) is, j, ip, nlines, offset
-    integer, parameter :: i1 = 1
 
 ! #######################################################################
 ! mean_rho and delta_rho need to be defined, because of old version.
@@ -66,16 +65,18 @@ subroutine FI_BACKGROUND_INITIALIZE()
     end do
 
 ! #######################################################################
+!   I need to check how much of this applies to only any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)
+    allocate (bbackground(g(2)%size))   ! I think I need this one in compressible more, but not the others....
+
     allocate (pbackground(g(2)%size))
     allocate (rbackground(g(2)%size))
     allocate (ribackground(g(2)%size))
-    allocate (bbackground(g(2)%size))
     allocate (tbackground(g(2)%size))
     allocate (epbackground(g(2)%size))
+    allocate (sbackground(g(2)%size, inb_scal_array))
 
-! #######################################################################
+! -----------------------------------------------------------------------
 ! Thermodynamic background profiles
-! #######################################################################
     rbackground = 1.0_wp ! defaults
     ribackground = 1.0_wp
     pbackground = 1.0_wp
@@ -85,44 +86,43 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! Construct given thermodynamic profiles
     do is = 1, inb_scal
         do j = 1, g(2)%size
-            p_wrk1d(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+            sbackground(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
         end do
-!     wrk1d(:,is) = sbg(is)%reference
     end do
 
-    if (scaleheight > 0.0_wp) then
 ! Calculate derived thermodynamic profiles
+    if (scaleheight > 0.0_wp) then
         epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
 
         if (buoyancy%active(2)) then
-!        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, p_wrk1d, epbackground, tbackground, pbackground, p_wrk1d(1,4))
-            call FI_HYDROSTATIC_H(g(2), p_wrk1d, epbackground, tbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
+            call FI_HYDROSTATIC_H(g(2), sbackground, epbackground, tbackground, pbackground, p_wrk1d(:, 1))
         end if
 
     end if
 
-    if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-        call THERMO_ANELASTIC_PH(1, g(2)%size, 1, p_wrk1d(:, 2), p_wrk1d(:, 1), epbackground, pbackground)
-    else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        call THERMO_AIRWATER_LINEAR(g(2)%size, p_wrk1d, p_wrk1d(:, inb_scal_array))
-    end if
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
+            call THERMO_ANELASTIC_PH(1, g(2)%size, 1, sbackground(:, 2), sbackground(:, 1), epbackground, pbackground)
+        else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            call THERMO_AIRWATER_LINEAR(g(2)%size, sbackground, sbackground(:, inb_scal_array))
+        end if
 
-    if (scaleheight > 0.0_wp) then
-        call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, rbackground)
-        ribackground = 1.0_wp/rbackground
+        if (scaleheight > 0.0_wp) then
+            call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, epbackground, pbackground, rbackground)
+            ribackground = 1.0_wp/rbackground
+        end if
     end if
 
 ! Calculate buoyancy profile
     if (buoyancy%type == EQNS_EXPLICIT) then
-        call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, rbackground, bbackground)
+        call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, epbackground, pbackground, rbackground, bbackground)
     else
-        p_wrk1d(:, inb_scal_array + 1) = 0.0_wp
-        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, p_wrk1d(:, 1), bbackground, p_wrk1d(:, inb_scal_array + 1))
+        p_wrk1d(:, 1) = 0.0_wp
+        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), bbackground, p_wrk1d)
     end if
 
-! #######################################################################
+! -----------------------------------------------------------------------
 ! Add diagnostic fields to reference profile data, if any
-! #######################################################################
     do is = inb_scal + 1, inb_scal_array ! Add diagnostic fields, if any
         sbg(is) = sbg(1)
         schmidt(is) = schmidt(1)
@@ -135,16 +135,15 @@ subroutine FI_BACKGROUND_INITIALIZE()
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         is = is + 1
-        call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
+        call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, sbackground, epbackground, pbackground, p_wrk1d)
         sbg(is) = sbg(1)
-        sbg(is)%mean = (p_wrk1d(1, inb_scal_array + 1) + p_wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
-        sbg(is)%delta = abs(p_wrk1d(1, inb_scal_array + 1) - p_wrk1d(g(2)%size, inb_scal_array + 1))
+        sbg(is)%mean = (p_wrk1d(1, 1) + p_wrk1d(g(2)%size, 1))*0.5_wp
+        sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(g(2)%size, 1))
         schmidt(is) = schmidt(1)
     end if
 
-! #######################################################################
+! -----------------------------------------------------------------------
 ! Anelastic density correction term in burgers operator
-! #######################################################################
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
         call TLAB_WRITE_ASCII(lfile, 'Initialize anelastic density correction in burgers operator.')
 
