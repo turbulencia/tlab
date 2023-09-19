@@ -57,11 +57,13 @@ if ( NOT CMAKE_BUILD_TYPE )
   set(CMAKE_BUILD_TYPE RELEASE)  
 endif() 
 
+add_definitions(-DNO_ASSUMED_RANKS)
 add_definitions(-DUSE_FFTW -DHLRS_HAWK -DUSE_NETCDF) # -DUSE_BLAS -DUSE_MKL) 
 set(FFTW_LIB   "-lfftw3")
 set(MKL_LIB    "")
-set(NCDF_LIB   "-lnetcdff") 
+set(NCDF_LIB   "-lnetcdff")
 
+include_directories("/trinity/shared/easybuild/arch/x86_64/amd/zen3/software/netCDF-Fortran/4.6.0-gompi-2022a/include")
 set(LIBS             "${NCDF_LIB} ${FFTW_LIB} ${MKL_LIB} -l:libamdlibm.a -lm")
 
 set(GNU_SED "gsed")
