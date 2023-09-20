@@ -903,13 +903,6 @@ contains
         nx = size(lhs, 1)               ! # grid points
         nx_t = idr                      ! # grid points affected by bcs; for clarity
 
-        ! For B_22, we need idr >= idl -1
-        ! For b_21, we need idr >= idl; this is more strict
-        if (idr < idl) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. RHS array is too small.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-
         ! -------------------------------------------------------------------
         if (any([BCS_MIN, BCS_BOTH] == ibc)) then
             dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
@@ -926,6 +919,11 @@ contains
 
             ! reduced array B^R_{22}
             if (present(rhs_b)) then
+                if (size(rhs_b, 1) < max(idl, idr) .or. size(rhs_b, 2) < max(ndl, ndr)) then
+                    call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_b array is too small.')
+                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                end if
+
                 rhs_b(1:idr, 1:ndr) = rhs(1:idr, 1:ndr)
 
                 rhs_b(1, 1:ndr) = rhs(1, 1:ndr)*dummy
@@ -955,6 +953,11 @@ contains
 
             ! reduced array B^R_{11}
             if (present(rhs_t)) then
+                if (size(rhs_t, 1) < max(idl, idr) .or. size(rhs_t, 2) < max(ndl, ndr)) then
+                    call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_t array is too small.')
+                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                end if
+
                 rhs_t(1:nx_t, 1:ndr) = rhs(nx - idr + 1:nx, 1:ndr)
 
                 rhs_t(nx_t, 1:ndr) = rhs(nx, 1:ndr)*dummy
