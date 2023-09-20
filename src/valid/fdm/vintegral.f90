@@ -173,11 +173,13 @@ program VINTEGRAL
                 nmax = imax
                 select case (ibc)
                 case (BCS_MIN)
+                    w_n(:, 1) = u(:, 1)
                     nmin = nmin + 1
-                    ! call FDM_Bcs_Reduce_In_Place(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
+                    ! call FDM_Bcs_Reduce(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
                 case (BCS_MAX)
+                    w_n(:, imax) = u(:, imax)
                     nmax = nmax - 1
-                    ! call FDM_Bcs_Reduce_In_Place(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
+                    ! call FDM_Bcs_Reduce(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
                 end select
                 ! nmin = 2
                 ! nmax = imax - 1
@@ -203,12 +205,12 @@ program VINTEGRAL
                 idr = g%nb_diag_1(2)/2 + 1
                 select case (ibc)
                 case (BCS_MIN)                    ! BCs at the bottom
-                    w_n(:, 1) = u(:, 1)
+                    ! w_n(:, 1) = u(:, 1)
                     do i = 1, idr - 1
                         w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
                     end do
                 case (BCS_MAX)                    ! BCs at the top
-                    w_n(:, imax) = u(:, imax)
+                    ! w_n(:, imax) = u(:, imax)
                     do i = 1, idr - 1
                         w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
                     end do

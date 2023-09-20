@@ -375,7 +375,7 @@ contains
                     ! Construct rhs
                     p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
                     p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
-                    call MatMul_3d(ny - 2, i2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+                    call MatMul_3d(ny - 2, 2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
                     ! Solve pentadiagonal linear system
                     call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
@@ -399,7 +399,7 @@ contains
                     ! Construct rhs
                     p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
                     p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
-                    call MatMul_3d(ny - 2, i2, p_rhs1(2, i, k), p_rhs2(2, i, k), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+                    call MatMul_3d(ny - 2, 2, p_rhs1(2, i, k), p_rhs2(2, i, k), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
                     ! Solve pentadiagonal linear system
                     call PENTADSS(ny - 2, i2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_wrk1d(3, 11))
@@ -660,7 +660,7 @@ contains
                 ! Construct rhs
                 p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
                 p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
-                call MatMul_3d(ny - 2, i2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+                call MatMul_3d(ny - 2, 2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
                 ! Solve pentadiagonal linear system
                 call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))

@@ -35,17 +35,17 @@ contains
 !# The system is normalized such that the central diagonal in the new rhs is 1
 !#
 !########################################################################
-    subroutine FDM_Int1_Initialize(ibc, lhs, rhs, lambda, lu, rhs_int)
-        integer, intent(in) :: ibc              ! Boundary condition, BCS_DN, BCS_ND
+    subroutine FDM_Int1_Initialize(ibc, lhs, rhs, lambda, lhs_int, rhs_int)
+        integer, intent(in) :: ibc              ! Boundary condition
         real(wp), intent(in) :: lhs(:, :)       ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)       ! diagonals in rhs, or matrix B
         real(wp), intent(in) :: lambda          ! system constant
-        real(wp), intent(out) :: lu(:, :)       ! diagonals in new lhs
+        real(wp), intent(out) :: lhs_int(:, :)  ! diagonals in new lhs
         real(wp), intent(out) :: rhs_int(:, :)  ! diagonals in new rhs
 
         ! -------------------------------------------------------------------
         integer(wi) i
-        integer(wi) idl, ndl, idr, ndr, ir, ic, nx, nmin, nmax
+        integer(wi) idl, ndl, idr, ndr, ir, nx, nmin, nmax
         real(wp) dummy
 
         ! -------------------------------------------------------------------
@@ -57,8 +57,8 @@ contains
 
 ! ###################################################################
         ! check sizes
-        if (size(lu, 2) < ndr) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array lu size.')
+        if (size(lhs_int, 2) < ndr) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array lhs_int size.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (size(rhs_int, 2) < ndl) then
@@ -70,7 +70,7 @@ contains
         rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
 
         ! new lhs diagonals (array C = B + h \lambda A)
-        lu(:, 1:ndr) = rhs(:, 1:ndr)
+        lhs_int(:, 1:ndr) = rhs(:, 1:ndr)
 
         nmin = 1
         nmax = nx
@@ -80,25 +80,25 @@ contains
         case (BCS_MAX)
             nmax = nmax - 1
         end select
-        lu(nmin:nmax, idr) = lu(nmin:nmax, idr) + lambda*lhs(nmin:nmax, idl)                        ! center diagonal
-        do i = 1, idl - 1                                                                           ! off-diagonals
-            lu(nmin + i:nx, idr - i) = lu(nmin + i:nx, idr - i) + lambda*lhs(nmin + i:nx, idl - i)      ! skip the top-left corner
-            lu(1:nmax - i, idr + i) = lu(1:nmax - i, idr + i) + lambda*lhs(1:nmax - i, idl + i)         ! skip the bottom-right corner
+        lhs_int(nmin:nmax, idr) = lhs_int(nmin:nmax, idr) + lambda*lhs(nmin:nmax, idl)                          ! center diagonal
+        do i = 1, idl - 1                                                                                       ! off-diagonals
+            lhs_int(nmin + i:nx, idr - i) = lhs_int(nmin + i:nx, idr - i) + lambda*lhs(nmin + i:nx, idl - i)    ! skip the top-left corner
+            lhs_int(1:nmax - i, idr + i) = lhs_int(1:nmax - i, idr + i) + lambda*lhs(1:nmax - i, idl + i)       ! skip the bottom-right corner
         end do
 
         ! The first row in C is different from B, but I do not calculate p'_1 or p'_n in the integral operator
-        call FDM_Bcs_Reduce_In_Place(ibc, rhs_int(:, 1:ndl), lu(:, 1:ndr))
+        call FDM_Bcs_Reduce(ibc, rhs_int(:, 1:ndl), lhs_int(:, 1:ndr), lhs_int(1:idr, 1:ndr), lhs_int(nx - idr + 1:nx, 1:ndr))
 
         select case (ibc)
         case (BCS_MIN)
             rhs_int(2, 1) = 0.0_wp          ! longer stencil at the boundary; because I am using old version of matmul_3d.... to be removed
             do ir = 1, idr - 1              ! change sign in term for nonzero bc
-                lu(1 + ir, idr - ir) = -lu(1 + ir, idr - ir)
+                lhs_int(1 + ir, idr - ir) = -lhs_int(1 + ir, idr - ir)
             end do
         case (BCS_MAX)
             rhs_int(nx - 1, ndl) = 0.0_wp   ! longer stencil at the boundary
             do ir = 1, idr - 1              ! change sign in term for nonzero bc
-                lu(nx - ir, idr + ir) = -lu(nx - ir, idr + ir)
+                lhs_int(nx - ir, idr + ir) = -lhs_int(nx - ir, idr + ir)
             end do
         end select
 
@@ -108,7 +108,7 @@ contains
             dummy = 1.0_wp/rhs_int(ir, idl)
 
             rhs_int(ir, 1:ndl) = rhs_int(ir, 1:ndl)*dummy
-            lu(ir, 1:ndr) = lu(ir, 1:ndr)*dummy
+            lhs_int(ir, 1:ndr) = lhs_int(ir, 1:ndr)*dummy
 
         end do
 

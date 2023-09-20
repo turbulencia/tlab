@@ -24,7 +24,7 @@ program VPARTIAL
     real(wp), dimension(:, :), pointer :: du2_a, du2_n1, du2_n2, du2_n3
     integer(wi) bcs_aux(2, 2)
     real(wp) :: wk, coef(5), dummy
-    integer(wi) :: test_type, ibc, ip, ic, idr, idl, im
+    integer(wi) :: test_type, ibc, ip, ic, ndr, idr, ndl, idl, im
     integer(wi) :: nmin, nmax, nsize
 
     integer, parameter :: i1 = 1
@@ -70,7 +70,7 @@ program VPARTIAL
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     ! Valid settings
-    test_type = 3
+    test_type = 1
 
     g%periodic = .false.
     ! g%periodic = .true.
@@ -204,10 +204,12 @@ program VPARTIAL
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 end select
+                ndl = g%nb_diag_1(1)
                 idl = g%nb_diag_1(1)/2 + 1
+                ndr = g%nb_diag_1(2)
                 idr = g%nb_diag_1(2)/2 + 1
 
-                call FDM_Bcs_Reduce_In_Place(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)))
+                call FDM_Bcs_Reduce(ibc, g%lu1(:, 1:ndl), g%rhs1(:, 1:ndr), g%rhs1(:, 1:ndr), g%rhs1(g%size - idr + 1:, 1:ndr))
 
                 select case (g%nb_diag_1(1))
                 case (3)
@@ -366,7 +368,7 @@ program VPARTIAL
                 call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
 
             case (7)
-                call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
+call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
 
             end select
 
