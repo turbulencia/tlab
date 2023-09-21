@@ -215,16 +215,18 @@ contains
 ! #######################################################################
 ! #######################################################################
     ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
+    ! Boundary conditions restricted to (3/2+1)+1=3 points (projecttion from pentadiagonal system)
     subroutine MatMul_3d(nx, len, r1, r3, u, f, rhs_b, rhs_t)
         integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
         real(wp), intent(in) :: r1(nx), r3(nx)   ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(len, nx)       ! function u
         real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
-        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)  ! Special bcs at bottom and top
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)  ! Special bcs at bottom and top
 
         ! -------------------------------------------------------------------
         integer(wi) n
 
+#define r0_b(j) rhs_b(j,0)
 #define r1_b(j) rhs_b(j,1)
 #define r2_b(j) rhs_b(j,2)
 #define r3_b(j) rhs_b(j,3)
@@ -232,20 +234,23 @@ contains
 #define r1_t(j) rhs_t(j,1)
 #define r2_t(j) rhs_t(j,2)
 #define r3_t(j) rhs_t(j,3)
+#define r4_t(j) rhs_t(j,4)
 
         ! -------------------------------------------------------------------
         ! Boundary; the first 3/2+1=2 rows might be different
         if (present(rhs_b)) then
             ! f(1) contains the boundary condition
             f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
+            f(:, 3) = f(:, 1)*r0_b(3) + u(:, 2)*r1_b(3) + u(:, 3)*r2_b(3) + u(:, 4)*r3_b(3)
         else
             f(:, 1) = u(:, 1) + u(:, 2)*r3(1) + u(:, 3)*r1(1)   ! r1(1) contains extended stencil
             f(:, 2) = u(:, 1)*r1(2) + u(:, 2) + u(:, 3)*r3(2)
+            f(:, 3) = u(:, 2)*r1(3) + u(:, 3) + u(:, 4)*r3(3)
         end if
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
-        do n = 3, nx - 2
+        do n = 4, nx - 3
             f(:, n) = u(:, n - 1)*r1(n) + u(:, n) + u(:, n + 1)*r3(n)
         end do
 
@@ -253,8 +258,10 @@ contains
         ! Boundary; the last 3/2+1=2 rows might be different
         if (present(rhs_t)) then
             ! f(nx) contains the boundary condition
+            f(:, nx - 2) = u(:, nx - 3)*r1_t(0) + u(:, nx - 2)*r2_t(0) + f(:, nx - 1)*r3_t(0) + f(:, nx)*r4_t(0)
             f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
         else
+            f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r3(nx - 2)
             f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1) + u(:, nx)*r3(nx - 1)
             f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx) ! r3(nx) contains extended stencil
         end if

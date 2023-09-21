@@ -209,7 +209,9 @@ program VPARTIAL
                 ndr = g%nb_diag_1(2)
                 idr = g%nb_diag_1(2)/2 + 1
 
-                call FDM_Bcs_Reduce(ibc, g%lu1(:, 1:ndl), g%rhs1(:, 1:ndr), g%rhs1(:, 1:ndr), g%rhs1(g%size - idr + 1:, 1:ndr))
+                g%rhsr_b = 0.0_wp
+                g%rhsr_t = 0.0_wp
+                call FDM_Bcs_Reduce(ibc, g%lu1(:, 1:ndl), g%rhs1(:, 1:ndr), g%rhsr_b, g%rhsr_t)
 
                 select case (g%nb_diag_1(1))
                 case (3)
@@ -222,10 +224,10 @@ program VPARTIAL
                 select case (g%nb_diag_1(2))
                 case (3)
                     call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
-                                           ibc, rhs_b=g%rhs1, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1(imax - 1:, 1:3), bcs_t=wrk2d(:, 2))
+                    ibc, rhs_b=g%rhsr_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t, bcs_t=wrk2d(:, 2))
                 case (5)
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
-                                           ibc, rhs_b=g%rhs1, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1(imax - 2:, 1:5), bcs_t=wrk2d(:, 2))
+                    ibc, rhs_b=g%rhsr_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t, bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(1))

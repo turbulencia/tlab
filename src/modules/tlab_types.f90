@@ -32,11 +32,12 @@ module TLAB_TYPES
         integer mode_fdm1                   ! finite-difference method for spatial operators 1. order derivative
         integer mode_fdm2                   ! finite-difference method for spatial operators 2. order derivative
         logical uniform, periodic, anelastic
-        logical  :: need_1der = .false.     ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
+        logical :: need_1der = .false.      ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
         integer nb_diag_1(2)                ! # of left and right diagonals 1. order derivative
         integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative
         real(wp) scale
-        real(wp) :: rhs1_b(4,7), rhs1_t(4,7)! RHS data for Neumann boundary conditions; max. # of diagonals is 7, # rows is 7/2+1 
+        real(wp) :: rhs1_b(4, 7), rhs1_t(4, 7)              ! RHS data for Neumann boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
+        real(wp) :: rhsr_b(4 + 1, 0:7), rhsr_t(0:4, 7 + 1)  ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
         real(wp), pointer :: nodes(:)
         real(wp), pointer :: jac(:, :)      ! pointer to Jacobians
         !
@@ -71,7 +72,7 @@ module TLAB_TYPES
         integer BcsMin, BcsMax                  ! boundary conditions
         integer repeat
         integer mpitype
-        real(wp), allocatable :: coeffs(:,:)    ! filted coefficients
+        real(wp), allocatable :: coeffs(:, :)    ! filted coefficients
     end type filter_dt
 
     type discrete_dt
