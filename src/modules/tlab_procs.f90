@@ -208,7 +208,7 @@ contains
         integer id
 
         !#####################################################################
-        call TLAB_ALLOCATE_LOG(lfile,dims)
+        call TLAB_ALLOCATE_LOG(lfile,dims,s)
         select rank (a)
         rank (1)
             allocate (a(dims(1)), stat=ierr)
