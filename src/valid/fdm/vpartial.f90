@@ -224,10 +224,10 @@ program VPARTIAL
                 select case (g%nb_diag_1(2))
                 case (3)
                     call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
-                    ibc, rhs_b=g%rhsr_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t, bcs_t=wrk2d(:, 2))
+                    ibc, rhs_b=g%rhsr_b(:,1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:,:), bcs_t=wrk2d(:, 2))
                 case (5)
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
-                    ibc, rhs_b=g%rhsr_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t, bcs_t=wrk2d(:, 2))
+                    ibc, rhs_b=g%rhsr_b(:,1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:,:), bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(1))

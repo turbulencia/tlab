@@ -33,6 +33,8 @@ program VINTEGRAL
     character(len=32) :: fdm_names(3)
     real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
+    real(wp) :: rhsr_b(4 + 1, 0:7), rhsr_t(0:4, 7 + 1)  ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
+
 ! ###################################################################
 ! Initialize
     imax = 129
@@ -158,7 +160,7 @@ program VINTEGRAL
                 select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN)
                     call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
-                    print*,'Undeveloped: Need to reduce arrays because of long stencil.'
+                    print *, 'Undeveloped: Need to reduce arrays because of long stencil.'
 
                 case (FDM_COM6_JACOBIAN)
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
@@ -167,7 +169,7 @@ program VINTEGRAL
                 ! idl = g%nb_diag_1(1)/2 + 1
                 idr = g%nb_diag_1(2)/2 + 1
 
-                call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int)
+                call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsr_b, rhsr_t)
 
                 nmin = 1
                 nmax = imax
@@ -196,25 +198,25 @@ program VINTEGRAL
                 ! Particular solution
                 select case (g%nb_diag_1(1))
                 case (3)
-                    call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
+                    call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, ibc, rhs_b=rhsr_b(1:3, 0:3), rhs_t=rhsr_t(0:2, 1:4))
+                    ! call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
                 case (5)
-
                 end select
 
                 ! BC corrections; to be put inside of new version of matmul_3d?
-                idr = g%nb_diag_1(2)/2 + 1
-                select case (ibc)
-                case (BCS_MIN)                    ! BCs at the bottom
-                    ! w_n(:, 1) = u(:, 1)
-                    do i = 1, idr - 1
-                        w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
-                    end do
-                case (BCS_MAX)                    ! BCs at the top
-                    ! w_n(:, imax) = u(:, imax)
-                    do i = 1, idr - 1
-                        w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
-                    end do
-                end select
+                ! idr = g%nb_diag_1(2)/2 + 1
+                ! select case (ibc)
+                ! case (BCS_MIN)                    ! BCs at the bottom
+                !     ! w_n(:, 1) = u(:, 1)
+                !     do i = 1, idr - 1
+                !         w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
+                !     end do
+                ! case (BCS_MAX)                    ! BCs at the top
+                !     ! w_n(:, imax) = u(:, imax)
+                !     do i = 1, idr - 1
+                !         w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
+                !     end do
+                ! end select
 
                 select case (g%nb_diag_1(2))
                 case (3)
@@ -223,7 +225,6 @@ program VINTEGRAL
                 call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
                 end select
 
-                ! call check(u(:, nmin:nmax), w_n(:, nmin:nmax), 'integral.dat')
                 call check(u, w_n, 'integral.dat')
 
             end do
