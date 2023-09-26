@@ -25,7 +25,7 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5), dummy, wk, x_0
-    integer(wi) :: test_type, ibc, ip, idr, im
+    integer(wi) :: test_type, ibc, ip, im
     integer(wi) :: nmin, nmax, nsize
 
     integer, parameter :: i1 = 1
@@ -33,7 +33,7 @@ program VINTEGRAL
     character(len=32) :: fdm_names(3)
     real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
-    real(wp) :: rhsr_b(4 + 1, 0:7), rhsr_t(0:4, 7 + 1)  ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
+    real(wp) :: rhsi_b(4 + 1, 0:7), rhsi_t(0:4, 7 + 1)
 
 ! ###################################################################
 ! Initialize
@@ -166,10 +166,8 @@ program VINTEGRAL
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
 
                 end select
-                ! idl = g%nb_diag_1(1)/2 + 1
-                idr = g%nb_diag_1(2)/2 + 1
 
-                call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsr_b, rhsr_t)
+                call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsi_b, rhsi_t)
 
                 nmin = 1
                 nmax = imax
@@ -198,25 +196,9 @@ program VINTEGRAL
                 ! Particular solution
                 select case (g%nb_diag_1(1))
                 case (3)
-                    call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, ibc, rhs_b=rhsr_b(1:3, 0:3), rhs_t=rhsr_t(0:2, 1:4))
-                    ! call MatMul_3d(nsize, len, rhs_int(nmin:nmax, 1), rhs_int(nmin:nmax, 3), f(:, nmin:nmax), w_n(:, nmin:nmax))
+                    call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, ibc, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4))
                 case (5)
                 end select
-
-                ! BC corrections; to be put inside of new version of matmul_3d?
-                ! idr = g%nb_diag_1(2)/2 + 1
-                ! select case (ibc)
-                ! case (BCS_MIN)                    ! BCs at the bottom
-                !     ! w_n(:, 1) = u(:, 1)
-                !     do i = 1, idr - 1
-                !         w_n(:, 1 + i) = w_n(:, 1 + i) + lhs_int(1 + i, idr - i)*w_n(:, 1)
-                !     end do
-                ! case (BCS_MAX)                    ! BCs at the top
-                !     ! w_n(:, imax) = u(:, imax)
-                !     do i = 1, idr - 1
-                !         w_n(:, imax - i) = w_n(:, imax - i) + lhs_int(imax - i, idr + i)*w_n(:, imax)
-                !     end do
-                ! end select
 
                 select case (g%nb_diag_1(2))
                 case (3)
