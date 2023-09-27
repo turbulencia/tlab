@@ -47,7 +47,7 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) i
         integer(wi) idl, ndl, idr, ndr, ir, nx!, nmin, nmax
-        real(wp) dummy, rhs_b_aux(5, 0:7), rhs_t_aux(0:4, 8)
+        real(wp) dummy, rhsr_b(5, 0:7), rhsr_t(0:4, 8)
 
         ! -------------------------------------------------------------------
         ndl = size(lhs, 2)
@@ -71,21 +71,21 @@ contains
         ! new rhs diagonals (array A), independent of lambda; this could be moved to fdm_initialize
         rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
 
-        rhs_b_aux = 0.0_wp
-        rhs_t_aux = 0.0_wp
-        call FDM_Bcs_Reduce(ibc, rhs_int(:, 1:ndl), rhs(:, 1:ndr), rhs_b_aux, rhs_t_aux)
+        rhsr_b = 0.0_wp
+        rhsr_t = 0.0_wp
+        call FDM_Bcs_Reduce(ibc, rhs_int(:, 1:ndl), rhs(:, 1:ndr), rhsr_b, rhsr_t)
 
         select case (ibc)
         case (BCS_MIN)
             rhsi_b(1:idr, 1:ndl) = rhs_int(1:idr, 1:ndl)
             do ir = 1, idr - 1              ! change sign in term for nonzero bc
-                rhsi_b(1 + ir, idl - ir) = -rhs_b_aux(1 + ir, idr - ir)
+                rhsi_b(1 + ir, idl - ir) = -rhsr_b(1 + ir, idr - ir)
             end do
 
         case (BCS_MAX)
             rhsi_t(idl - idr + 1:idl, 1:ndl) = rhs_int(nx - idr + 1:nx, 1:ndl)
             do ir = 1, idr - 1              ! change sign in term for nonzero bc
-                rhsi_t(idl - ir, idl + ir) = -rhs_t_aux(idr - ir, idr + ir)
+                rhsi_t(idl - ir, idl + ir) = -rhsr_t(idr - ir, idr + ir)
             end do
 
         end select
@@ -94,22 +94,27 @@ contains
         ! new lhs diagonals (array C = B + h \lambda A), dependent on lambda
         lhs_int(:, 1:ndr) = rhs(:, 1:ndr)
 
-        lhs_int(:, idr) = rhs(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
+        ! lhs_int(:, idr) = rhs(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
+        lhs_int(:, idr) = lhs_int(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
         do i = 1, idl - 1                                                       ! off-diagonals
-            lhs_int(:, idr - i) = rhs(:, idr - i) + lambda*lhs(:, idl - i)
-            lhs_int(:, idr + i) = rhs(:, idr + i) + lambda*lhs(:, idl + i)
+            ! lhs_int(:, idr - i) = rhs(:, idr - i) + lambda*lhs(:, idl - i)
+            ! lhs_int(:, idr + i) = rhs(:, idr + i) + lambda*lhs(:, idl + i)
+            lhs_int(:, idr - i) = lhs_int(:, idr - i) + lambda*lhs(:, idl - i)
+            lhs_int(:, idr + i) = lhs_int(:, idr + i) + lambda*lhs(:, idl + i)
         end do
 
         select case (ibc)
         case (BCS_MIN)
-            lhs_int(2:idr, 1:ndr) = rhs_b_aux(2:idr, 1:ndr)
+            lhs_int(2:idr, 1:ndr) = rhsr_b(2:idr, 1:ndr)
             do ir = 1, idr - 1
-                lhs_int(1 + ir, idr - idl + 1:idr + idl - 1) = rhs_b_aux(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_b(1 + ir, 1:ndl)
+                ! lhs_int(1 + ir, idr - idl + 1:idr + idl - 1) = rhsr_b(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_b(1 + ir, 1:ndl)
+                lhs_int(1 + ir, idr - idl + 1:idr + idl - 1) = lhs_int(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_b(1 + ir, 1:ndl)
             end do
         case (BCS_MAX)
-            lhs_int(nx - idr + 1:nx - 1, 1:ndr) = rhs_t_aux(1:idr - 1, 1:ndr)
+            lhs_int(nx - idr + 1:nx - 1, 1:ndr) = rhsr_t(1:idr - 1, 1:ndr)
             do ir = 1, idr - 1
-                lhs_int(nx - ir, idr - idl + 1:idr + idl - 1) = rhs_t_aux(idr - ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_t(idl - ir, 1:ndl)
+                ! lhs_int(nx - ir, idr - idl + 1:idr + idl - 1) = rhsr_t(idr - ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_t(idl - ir, 1:ndl)
+                lhs_int(nx - ir, idr - idl + 1:idr + idl - 1) = lhs_int(nx - ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_t(idl - ir, 1:ndl)
             end do
         end select
 

@@ -33,7 +33,7 @@ program VINTEGRAL
     character(len=32) :: fdm_names(3)
     real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
-    real(wp) :: rhsi_b(4 + 1, 0:7), rhsi_t(0:4, 7 + 1)
+    real(wp) :: rhsi_b(5, 0:7), rhsi_t(0:4, 8)
 
 ! ###################################################################
 ! Initialize
@@ -175,11 +175,11 @@ program VINTEGRAL
                 case (BCS_MIN)
                     w_n(:, 1) = u(:, 1)
                     nmin = nmin + 1
-                    ! call FDM_Bcs_Reduce(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
+                    ! call FDM_Bcs_Reduce(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)), rhsi_b, rhsi_t)
                 case (BCS_MAX)
                     w_n(:, imax) = u(:, imax)
                     nmax = nmax - 1
-                    ! call FDM_Bcs_Reduce(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)))
+                    ! call FDM_Bcs_Reduce(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)), rhsi_b, rhsi_t)
                 end select
                 ! nmin = 2
                 ! nmax = imax - 1
@@ -207,6 +207,7 @@ program VINTEGRAL
                 call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
                 end select
 
+                ! call check(u(:,nmin:nmax), w_n(:,nmin:nmax), 'integral.dat')
                 call check(u, w_n, 'integral.dat')
 
             end do
