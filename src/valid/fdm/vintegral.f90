@@ -24,8 +24,8 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
     real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
-    real(wp) :: lambda, coef(5), dummy, wk, x_0
-    integer(wi) :: test_type, ibc, ip, im
+    real(wp) :: lambda, coef(5), wk, x_0!, dummy
+    integer(wi) :: test_type, ibc, ip, im!, idl, ndl, idr!, ndr, ir
     integer(wi) :: nmin, nmax, nsize
 
     integer, parameter :: i1 = 1
@@ -153,19 +153,21 @@ program VINTEGRAL
             ibc = bcs_cases(ip)
             print *, new_line('a'), 'Bcs case ', ibc
 
-            do im = 1, 2
+            do im = 2,2
                 g%mode_fdm1 = fdm_cases(im)
                 print *, fdm_names(im)
 
                 select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN)
-                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
-                    print *, 'Undeveloped: Need to reduce arrays because of long stencil.'
+                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 case (FDM_COM6_JACOBIAN)
-                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1(:, :), g%rhs1(:, :), g%nb_diag_1, coef, g%periodic)
+                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 end select
+                ! idl = g%nb_diag_1(1)/2 + 1
+                ! idr = g%nb_diag_1(2)/2 + 1
+                ! ndl = g%nb_diag_1(1)
 
                 call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsi_b, rhsi_t)
 
@@ -174,15 +176,19 @@ program VINTEGRAL
                 select case (ibc)
                 case (BCS_MIN)
                     w_n(:, 1) = u(:, 1)
+                    w_n(:, imax) = f(:, imax)
                     nmin = nmin + 1
-                    ! call FDM_Bcs_Reduce(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)), rhsi_b, rhsi_t)
+                    rhsi_t = 0.0_wp
+                    call FDM_Bcs_Reduce(BCS_MAX, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)), rhs_b=rhsi_b, rhs_t=rhsi_t)
                 case (BCS_MAX)
+                    w_n(:, 1) = f(:, 1)
                     w_n(:, imax) = u(:, imax)
                     nmax = nmax - 1
-                    ! call FDM_Bcs_Reduce(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)), rhsi_b, rhsi_t)
+                    rhsi_b = 0.0_wp
+                    call FDM_Bcs_Reduce(BCS_MIN, lhs_int(:, 1:g%nb_diag_1(2)), rhs_int(:, 1:g%nb_diag_1(1)), rhs_b=rhsi_b, rhs_t=rhsi_t)
                 end select
-                ! nmin = 2
-                ! nmax = imax - 1
+                nmin = 2
+                nmax = imax - 1
                 nsize = nmax - nmin + 1
 
                 ! LU decomposition
@@ -190,13 +196,14 @@ program VINTEGRAL
                 case (3)
                     call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
                 case (5)
-               call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
+                    call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
                 end select
 
                 ! Particular solution
                 select case (g%nb_diag_1(1))
                 case (3)
-                    call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, ibc, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4))
+                    ! call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, ibc, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4))
+                    call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, BCS_BOTH, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4))
                 case (5)
                 end select
 
@@ -204,11 +211,21 @@ program VINTEGRAL
                 case (3)
                     call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
                 case (5)
-                call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
+                    call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
                 end select
 
-                ! call check(u(:,nmin:nmax), w_n(:,nmin:nmax), 'integral.dat')
-                call check(u, w_n, 'integral.dat')
+                ! if (any([BCS_MIN, BCS_BOTH] == ibc)) then
+                !     do ic = 1, idl - 1
+                !         w_n(:, 1) = wrk2d(:, 1) + lhs_int(1, idl + ic)*w_n(:, 1 + ic)
+                !     end do
+                ! end if
+                ! if (any([BCS_MAX, BCS_BOTH] == ibc)) then
+                !     do ic = 1, idl - 1
+                !         w_n(:, imax) = wrk2d(:, 2) + lhs_int(imax, idl - ic)*w_n(:, imax - ic)
+                !     end do
+                ! end if
+                call check(u(:, nmin:nmax), w_n(:, nmin:nmax), 'integral.dat')
+                ! call check(u, w_n, 'integral.dat')
 
             end do
 

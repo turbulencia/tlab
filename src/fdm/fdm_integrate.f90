@@ -78,13 +78,13 @@ contains
         select case (ibc)
         case (BCS_MIN)
             rhsi_b(1:idr, 1:ndl) = rhs_int(1:idr, 1:ndl)
-            do ir = 1, idr - 1              ! change sign in term for nonzero bc
+            do ir = 1, idr - 1              ! change sign in b^R_{21} for nonzero bc
                 rhsi_b(1 + ir, idl - ir) = -rhsr_b(1 + ir, idr - ir)
             end do
 
         case (BCS_MAX)
             rhsi_t(idl - idr + 1:idl, 1:ndl) = rhs_int(nx - idr + 1:nx, 1:ndl)
-            do ir = 1, idr - 1              ! change sign in term for nonzero bc
+            do ir = 1, idr - 1              ! change sign in b^R_{21} for nonzero bc
                 rhsi_t(idl - ir, idl + ir) = -rhsr_t(idr - ir, idr + ir)
             end do
 
@@ -99,8 +99,10 @@ contains
         do i = 1, idl - 1                                                       ! off-diagonals
             ! lhs_int(:, idr - i) = rhs(:, idr - i) + lambda*lhs(:, idl - i)
             ! lhs_int(:, idr + i) = rhs(:, idr + i) + lambda*lhs(:, idl + i)
-            lhs_int(:, idr - i) = lhs_int(:, idr - i) + lambda*lhs(:, idl - i)
-            lhs_int(:, idr + i) = lhs_int(:, idr + i) + lambda*lhs(:, idl + i)
+            ! lhs_int(:, idr - i) = lhs_int(:, idr - i) + lambda*lhs(:, idl - i)
+            ! lhs_int(:, idr + i) = lhs_int(:, idr + i) + lambda*lhs(:, idl + i)
+            lhs_int(1 + i:nx, idr - i) = lhs_int(1 + i:nx, idr - i) + lambda*lhs(1 + i:nx, idl - i)
+            lhs_int(1:nx - i, idr + i) = lhs_int(1:nx - i, idr + i) + lambda*lhs(1:nx - i, idl + i)
         end do
 
         select case (ibc)

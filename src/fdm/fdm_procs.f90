@@ -221,12 +221,12 @@ contains
     ! #######################################################################
     ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
     ! Special boundary conditions restricted to 3 points:
-    ! r_11 r_12 r_13 
+    ! r_11 r_12 r_13
     !      r_21 r_22 r_23
     !      r_30 r_31 r_32 r_33
     !                r_41  1.  r_43         <- interior points start here
     !                     ...  ...  ...
-        subroutine MatMul_3d(nx, len, r1, r3, u, f, ibc, rhs_b, rhs_t)
+    subroutine MatMul_3d(nx, len, r1, r3, u, f, ibc, rhs_b, rhs_t)
         integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
         real(wp), intent(in) :: r1(nx), r3(nx)   ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(len, nx)       ! function u
@@ -916,9 +916,9 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FDM_Bcs_Reduce(ibc, lhs, rhs, rhs_b, rhs_t)
-        integer,  intent(in)     :: ibc
-        real(wp), intent(inout)  :: lhs(:, :)
-        real(wp), intent(in),    optional :: rhs(:, :)
+        integer, intent(in) :: ibc
+        real(wp), intent(inout) :: lhs(:, :)
+        real(wp), intent(in), optional :: rhs(:, :)
         real(wp), intent(inout), optional :: rhs_b(:, 0:), rhs_t(0:, :)
 
         integer(wi) idl, ndl, idr, ndr, ir, ic, nx, nx_t
@@ -953,7 +953,7 @@ contains
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 end if
 
-                rhs_b(1:idr, 1:ndr) = rhs(1:idr, 1:ndr)
+                rhs_b(max(idl, idr), 1:ndr) = rhs(max(idl, idr), 1:ndr)
 
                 rhs_b(1, 1:ndr) = rhs(1, 1:ndr)*dummy
                 do ir = 1, idl - 1              ! rows
@@ -987,7 +987,7 @@ contains
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 end if
 
-                rhs_t(1:nx_t, 1:ndr) = rhs(nx - idr + 1:nx, 1:ndr)
+                rhs_t(nx_t - max(idl, idr) + 1:nx_t, 1:ndr) = rhs(nx - max(idl, idr) + 1:nx, 1:ndr)
 
                 rhs_t(nx_t, 1:ndr) = rhs(nx, 1:ndr)*dummy
                 do ir = 1, idl - 1              ! rows
