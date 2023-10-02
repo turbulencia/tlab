@@ -12,6 +12,7 @@ module OPR_ELLIPTIC
     use OPR_FOURIER
     use OPR_FDE
     use OPR_PARTIAL
+    use FDM_Integrate
     use FDM_PROCS
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
@@ -53,18 +54,18 @@ contains
         use TLAB_VARS, only: g, imode_elliptic
         use FDM_ComX_Direct
 
-        integer ibc_loc
+        integer ibc_loc, nb_diag(2)
         integer, parameter :: i1 = 1, i2 = 2
 
         ! -----------------------------------------------------------------------
         select case (imode_elliptic)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N4_Direct(g(2)%size, g(2)%nodes, lhs, rhs)
+            call FDM_C2N4_Direct(g(2)%size, g(2)%nodes, lhs, rhs, nb_diag)
 
         case default !(FDM_COM6_DIRECT) ! I need it for helmholtz
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N6_Direct(g(2)%size, g(2)%nodes, lhs, rhs)
+            call FDM_C2N6_Direct(g(2)%size, g(2)%nodes, lhs, rhs, nb_diag)
 
         end select
 
@@ -105,7 +106,7 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call INT_C2NX_INITIALIZE(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                    call FDM_Int2_Initialize(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                                         lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
 
                     ! LU decomposizion
@@ -361,7 +362,7 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                    call FDM_Int2_Initialize(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
                                         p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
@@ -374,7 +375,7 @@ contains
                     ! Construct rhs
                     p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
                     p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
-                    call MatMul_3d(ny - 2, i2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+                    call MatMul_3d(ny - 2, 2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
                     ! Solve pentadiagonal linear system
                     call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
@@ -398,7 +399,7 @@ contains
                     ! Construct rhs
                     p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
                     p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
-                    call MatMul_3d(ny - 2, i2, p_rhs1(2, i, k), p_rhs2(2, i, k), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+                    call MatMul_3d(ny - 2, 2, p_rhs1(2, i, k), p_rhs2(2, i, k), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
                     ! Solve pentadiagonal linear system
                     call PENTADSS(ny - 2, i2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_wrk1d(3, 11))
@@ -646,7 +647,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
-                call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+                call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
                                     p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                 ! LU factorization
@@ -659,7 +660,7 @@ contains
                 ! Construct rhs
                 p_wrk1d(1:2, 11) = 0.0_wp       ! This element is simply the solution at imin of p(0)
                 p_wrk1d(ny - 1:ny, 12) = 0.0_wp ! This element is simply the solution at imax of p(0)
-                call MatMul_3d(ny - 2, i2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
+                call MatMul_3d(ny - 2, 2, p_wrk1d(2:, 13), p_wrk1d(2:, 14), p_wrk1d(3:, 9), p_wrk1d(3:, 11))
 
                 ! Solve pentadiagonal linear system
                 call PENTADSS(ny - 2, i2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5), p_wrk1d(3, 11))
@@ -802,7 +803,7 @@ contains
 !                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 !                 ! if (ibc == 0) then ! Dirichlet BCs
 !                 p_wrk1d(:, 1:7) = 0.0_wp
-!                 call INT_C2NX_INITIALIZE(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+!                 call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
 !                                     p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 !                 call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 

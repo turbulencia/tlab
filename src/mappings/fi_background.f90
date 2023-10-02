@@ -10,7 +10,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
-    use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground
+    use TLAB_VARS, only: rbackground, ribackground, bbackground, pbackground, tbackground, epbackground, sbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
@@ -28,7 +28,6 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! -----------------------------------------------------------------------
     real(wp) dummy
     integer(wi) is, j, ip, nlines, offset
-    integer, parameter :: i1 = 1
 
 ! #######################################################################
 ! mean_rho and delta_rho need to be defined, because of old version.
@@ -50,7 +49,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
             dummy = rbg%delta/rbg%mean
             tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
             tbg%delta = -tbg%mean*dummy
-            
+
         end if
     end if
 
@@ -66,16 +65,18 @@ subroutine FI_BACKGROUND_INITIALIZE()
     end do
 
 ! #######################################################################
+!   I need to check how much of this applies to only any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)
+    allocate (bbackground(g(2)%size))   ! I think I need this one in compressible more, but not the others....
+
     allocate (pbackground(g(2)%size))
     allocate (rbackground(g(2)%size))
     allocate (ribackground(g(2)%size))
-    allocate (bbackground(g(2)%size))
     allocate (tbackground(g(2)%size))
     allocate (epbackground(g(2)%size))
+    allocate (sbackground(g(2)%size, inb_scal_array))
 
-! #######################################################################
+! -----------------------------------------------------------------------
 ! Thermodynamic background profiles
-! #######################################################################
     rbackground = 1.0_wp ! defaults
     ribackground = 1.0_wp
     pbackground = 1.0_wp
@@ -85,44 +86,43 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! Construct given thermodynamic profiles
     do is = 1, inb_scal
         do j = 1, g(2)%size
-            p_wrk1d(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+            sbackground(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
         end do
-!     wrk1d(:,is) = sbg(is)%reference
     end do
 
-    if (scaleheight > 0.0_wp) then
 ! Calculate derived thermodynamic profiles
+    if (scaleheight > 0.0_wp) then
         epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
 
         if (buoyancy%active(2)) then
-!        CALL FI_HYDROSTATIC_H_OLD(g(2)%size, g(2)%nodes, p_wrk1d, epbackground, tbackground, pbackground, p_wrk1d(1,4))
-            call FI_HYDROSTATIC_H(g(2), p_wrk1d, epbackground, tbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
+            call FI_HYDROSTATIC_H(g(2), sbackground, epbackground, tbackground, pbackground, p_wrk1d(:, 1))
         end if
 
     end if
 
-    if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-        call THERMO_ANELASTIC_PH(1, g(2)%size, 1, p_wrk1d(:, 2), p_wrk1d(:, 1), epbackground, pbackground)
-    else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        call THERMO_AIRWATER_LINEAR(g(2)%size, p_wrk1d, p_wrk1d(:, inb_scal_array))
-    end if
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
+            call THERMO_ANELASTIC_PH(1, g(2)%size, 1, sbackground(:, 2), sbackground(:, 1), epbackground, pbackground)
+        else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            call THERMO_AIRWATER_LINEAR(g(2)%size, sbackground, sbackground(:, inb_scal_array))
+        end if
 
-    if (scaleheight > 0.0_wp) then
-        call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, rbackground)
-        ribackground = 1.0_wp/rbackground
+        if (scaleheight > 0.0_wp) then
+            call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, epbackground, pbackground, rbackground)
+            ribackground = 1.0_wp/rbackground
+        end if
     end if
 
 ! Calculate buoyancy profile
     if (buoyancy%type == EQNS_EXPLICIT) then
-        call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, rbackground, bbackground)
+        call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, epbackground, pbackground, rbackground, bbackground)
     else
-        p_wrk1d(:, inb_scal_array + 1) = 0.0_wp
-        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, p_wrk1d(:, 1), bbackground, p_wrk1d(:, inb_scal_array + 1))
+        p_wrk1d(:, 1) = 0.0_wp
+        call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), bbackground, p_wrk1d)
     end if
 
-! #######################################################################
+! -----------------------------------------------------------------------
 ! Add diagnostic fields to reference profile data, if any
-! #######################################################################
     do is = inb_scal + 1, inb_scal_array ! Add diagnostic fields, if any
         sbg(is) = sbg(1)
         schmidt(is) = schmidt(1)
@@ -135,16 +135,15 @@ subroutine FI_BACKGROUND_INITIALIZE()
 
     if (imixture == MIXT_TYPE_AIRWATER) then
         is = is + 1
-        call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, p_wrk1d, epbackground, pbackground, p_wrk1d(:, inb_scal_array + 1))
+        call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, sbackground, epbackground, pbackground, p_wrk1d)
         sbg(is) = sbg(1)
-        sbg(is)%mean = (p_wrk1d(1, inb_scal_array + 1) + p_wrk1d(g(2)%size, inb_scal_array + 1))*0.5_wp
-        sbg(is)%delta = abs(p_wrk1d(1, inb_scal_array + 1) - p_wrk1d(g(2)%size, inb_scal_array + 1))
+        sbg(is)%mean = (p_wrk1d(1, 1) + p_wrk1d(g(2)%size, 1))*0.5_wp
+        sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(g(2)%size, 1))
         schmidt(is) = schmidt(1)
     end if
 
-! #######################################################################
+! -----------------------------------------------------------------------
 ! Anelastic density correction term in burgers operator
-! #######################################################################
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
         call TLAB_WRITE_ASCII(lfile, 'Initialize anelastic density correction in burgers operator.')
 
@@ -201,14 +200,11 @@ subroutine FI_BACKGROUND_INITIALIZE()
 end subroutine FI_BACKGROUND_INITIALIZE
 
 !########################################################################
-!# Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale height in the system
-!########################################################################
-
-!########################################################################
 ! Compute hydrostatic equilibrium from profiles s=(h,q_t).
+! Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale height in the system
 !########################################################################
 subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, BCS_MIN
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
@@ -216,6 +212,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL
+    use FDM_Integrate
+    use FDM_Procs
+    use FDM_Com1_Jacobian
 
     implicit none
 
@@ -226,8 +225,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     real(wp), dimension(g%size, *), intent(INOUT) :: wrk1d
 
     ! -------------------------------------------------------------------
-    integer(wi) iter, niter, ibc, j, jcenter
-    real(wp) dummy
+    integer(wi) iter, niter, j, jcenter, nb_diag(2)
+    real(wp) dummy, coef(5)
+    real(wp), allocatable :: lhs(:, :), rhs(:, :), lhs_int(:, :), rhs_int(:, :)
     integer, parameter :: i1 = 1
 
     ! ###################################################################
@@ -240,13 +240,16 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
         end if
     end do
 
-    ! Setting the pressure entry to 1 to get 1/RT
-    wrk1d(:, 6) = 1.0_wp
+#define p_aux(i)        wrk1d(i,1)
+#define r_aux(i)        wrk1d(i,2)
 
-    ! Prepare the pentadiagonal system
-    ibc = 1                     ! Boundary condition at the bottom for integral calulation
-    call INT_C1N6_LHS(g%size, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-    call PENTADFS(g%size - 1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
+    allocate (lhs(g%size, 3), rhs(g%size, 5), lhs_int(g%size, 5), rhs_int(g%size, 3))
+    call FDM_C1N6_Jacobian(g%size, g%jac, lhs, rhs, nb_diag, coef)
+    call FDM_Int1_Initialize(BCS_MIN, lhs, rhs, 0.0_wp, lhs_int, rhs_int)
+    call PENTADFS(g%size - 1, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
+
+    ! Setting the pressure entry to 1 to get 1/RT
+    p_aux(:) = 1.0_wp
 
     niter = 10
 
@@ -256,18 +259,17 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     end if
     do iter = 1, niter           ! iterate
         if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, e, wrk1d(1, 6), wrk1d(1, 7))   ! Get 1/RT
+            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, e, p_aux(:), r_aux(:))   ! Get r_aus=1/RT
             dummy = -1.0_wp/sign(scaleheight, buoyancy%vector(2))
         else
             call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
-            call THERMO_THERMAL_DENSITY(g%size, s(:, 2), wrk1d(:, 6), T, wrk1d(:, 7)) ! Get 1/RT
+            call THERMO_THERMAL_DENSITY(g%size, s(:, 2), p_aux(:), T, r_aux(:)) ! Get r_aux=1/RT
             dummy = buoyancy%vector(2)
         end if
-        wrk1d(:, 7) = dummy*wrk1d(:, 7)
+        r_aux(:) = dummy*r_aux(:)
 
-        ! Calculate integral
-        call INT_C1N6_RHS(g%size, i1, ibc, g%jac, wrk1d(1, 7), p)
-        call PENTADSS(g%size - 1, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), p(2))
+        call MatMul_3d(g%size - 1, 1, rhs_int(2:, 1), rhs_int(2:, 3), r_aux(2:), p(2:))
+        call PENTADSS(g%size - 1, i1, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), p(2:))
         p(1) = 0.0_wp
 
         ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
@@ -291,6 +293,11 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
     end do
 
+#undef p_aux
+#undef r_aux
+
+    deallocate (lhs, rhs, lhs_int, rhs_int)
+
     ! compute equilibrium values of T
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, e, T)
@@ -300,7 +307,6 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 end subroutine FI_HYDROSTATIC_H
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Calculate the fields rho(x,y), u(x,y) and v(x,y) s.t. the axial momentum flux
 !# is conserved and the continuity equation is satisfied.

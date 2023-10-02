@@ -24,23 +24,27 @@ module FDM_Com1_Jacobian
     implicit none
     private
 
-    public :: FDM_C1N4_Jacobian     ! 1. order derivative, 4. order approximation
-    public :: FDM_C1N6_Jacobian     ! 1. order derivative, 6. order approximation
+    public :: FDM_C1N4_Jacobian         ! 1. order derivative, 4. order approximation
+    public :: FDM_C1N6_Jacobian         ! 1. order derivative, 6. order approximation
+    public :: FDM_C1N6_Jacobian_Penta   ! 1. order derivative, 6. order approximation, better spectral properties
 
     logical periodic_loc
 
 contains
     !########################################################################
-    subroutine FDM_C1N4_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C1N4_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx)
         real(wp), intent(out) :: lhs(nx, 3)     ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 3)     ! RHS diagonals; b_2, b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6)
+
+        nb_diag = [3, 3]
 
         if (present(periodic)) then
             periodic_loc = periodic
@@ -69,16 +73,19 @@ contains
     end subroutine FDM_C1N4_Jacobian
 
 !########################################################################
-    subroutine FDM_C1N6_Jacobian(nx, dx, lhs, rhs, coef, periodic)
+    subroutine FDM_C1N6_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx)
         real(wp), intent(out) :: lhs(nx, 3)     ! LHS diagonals; a_2 = 0
         real(wp), intent(out) :: rhs(nx, 5)     ! RHS diagonals; b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
         real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
         logical, intent(in), optional :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6), coef_bc2(6)
+
+        nb_diag = [3, 5]
 
         if (present(periodic)) then
             periodic_loc = periodic
@@ -114,6 +121,45 @@ contains
     end subroutine FDM_C1N6_Jacobian
 
 !########################################################################
+    subroutine FDM_C1N6_Jacobian_Penta(nx, dx, lhs, rhs, nb_diag, coef, periodic)
+        integer(wi), intent(in) :: nx
+        real(wp), intent(in) :: dx(nx)
+        real(wp), intent(out) :: lhs(nx, 5)     ! LHS diagonals; a_2 = 0
+        real(wp), intent(out) :: rhs(nx, 7)     ! RHS diagonals; b_3 = 0
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
+        real(wp), intent(out) :: coef(5)        ! a_1, a_2, b_1, b_2, b_3
+        logical, intent(in), optional :: periodic
+
+        ! -------------------------------------------------------------------
+        real(wp) coef_bc1(6), coef_bc2(6)
+
+        nb_diag = [5, 7]
+
+        if (present(periodic)) then
+            periodic_loc = periodic
+        else
+            periodic_loc = .false.
+        end if
+
+        ! ! #######################################################################
+        ! ! Interior points according to ...
+        ! coef(1:2) = ...                                     ! a_1, a_2
+        ! coef(3:5) = ...                     ! b_1, b_2, b_3
+
+        ! if (periodic_loc) then
+        !     call Create_System_1der(dx, lhs, rhs, coef)
+
+        ! else    ! biased at the boundaries
+
+        !     ...
+        !     call Create_System_1der(dx, lhs, rhs, coef, coef_bc1, coef_bc2)
+
+        ! end if
+
+        return
+    end subroutine FDM_C1N6_Jacobian_Penta
+
+!########################################################################
     subroutine Create_System_1der(dx, lhs, rhs, coef_int, coef_bc1, coef_bc2)
         real(wp), intent(in) :: dx(:)
         real(wp), intent(out) :: lhs(:, :)   ! LHS diagonals
@@ -123,39 +169,40 @@ contains
         real(wp), intent(in), optional :: coef_bc2(6)   ! a_1, a_2, b_1, b_2, b_3, b_4
 
         ! -------------------------------------------------------------------
-        integer(wi) n, nx, idl, idr, i, imax
+        integer(wi) n, nx, idl, idr, ic, icmax
 
         ! #######################################################################
         idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
         idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
-        nx = size(lhs, 1)             ! # grid points
+        nx = size(lhs, 1)               ! # grid points
 
         ! lhs diagonals
         lhs(:, idl) = 1.0_wp                ! center diagonal
-        do i = 1, idl - 1                   ! off-diagonals
-            lhs(:, idl - i) = coef_int(i)
-            lhs(:, idl + i) = coef_int(i)
+        do ic = 1, idl - 1                  ! off-diagonals
+            lhs(:, idl - ic) = coef_int(ic)
+            lhs(:, idl + ic) = coef_int(ic)
         end do
 
-        ! lhs diagonals
+        ! rhs diagonals
         rhs(:, idr) = 0.0_wp                ! center diagonal
-        do i = 1, idr - 1                   ! off-diagonals
-            rhs(:, idr - i) = -coef_int(i + 2)
-            rhs(:, idr + i) = coef_int(i + 2)
+        do ic = 1, idr - 1                  ! off-diagonals
+            rhs(:, idr - ic) = -coef_int(ic + 2)
+            rhs(:, idr + ic) = coef_int(ic + 2)
         end do
 
         ! boundaries
         if (present(coef_bc1)) then
             n = 1
+            lhs(n, :) = 0.0_wp
             lhs(n, idl) = 1.0_wp                                    ! lhs center diagonal
             if (idl > 1) then
-                imax = min(idl - 1, 2)                              ! max of 3 point stencil, the first one set to 1
-                lhs(n, idl + 1:idl + imax) = coef_bc1(1:imax)       ! lhs off-diagonals
+                icmax = min(idl - 1, 2)                             ! max of 3 point stencil, the first one set to 1
+                lhs(n, idl + 1:idl + icmax) = coef_bc1(1:icmax)     ! lhs off-diagonals
             end if
             rhs(n, :) = 0.0_wp
-            imax = min(idr, 4)                                      ! max of 4 point stencil
-            rhs(n, idr:idr + imax - 1) = coef_bc1(3:3 + imax - 1)   ! rhs center and off-diagonals
-            rhs(n, 1) = coef_bc1(3 + imax)                          ! extended rhs stencil
+            icmax = min(idr, 4)                                     ! max of 4 point stencil
+            rhs(n, idr:idr + icmax - 1) = coef_bc1(3:3 + icmax - 1) ! rhs center and off-diagonals
+            rhs(n, 1) = coef_bc1(3 + icmax)                         ! extended rhs stencil
 
             n = nx                                                  ! symmetry property to define values at end
             lhs(n, :) = lhs(1, size(lhs, 2):1:-1)
@@ -170,8 +217,8 @@ contains
                 lhs(n, :) = [1.0_wp]
             end if
             rhs(n, :) = 0.0_wp
-            imax = min(idr + 1, 4)                                      ! max of 4 point stencil
-            rhs(n, idr - 1:idr + imax - 2) = coef_bc2(3:3 + imax - 1)   ! rhs center and off-diagonals
+            icmax = min(idr + 1, 4)                                      ! max of 4 point stencil
+            rhs(n, idr - 1:idr + icmax - 2) = coef_bc2(3:3 + icmax - 1)   ! rhs center and off-diagonals
 
             n = nx - 1                                                  ! symmetry property to define values at end
             lhs(n, :) = lhs(2, size(lhs, 2):1:-1)
@@ -180,9 +227,9 @@ contains
 
         ! multiply by the Jacobian
         lhs(:, idl) = lhs(:, idl)*dx(:)     ! center diagonal
-        do i = 1, idl - 1                   ! off-diagonals
-            lhs(:, idl - i) = lhs(:, idl - i)*cshift(dx(:), -i)
-            lhs(:, idl + i) = lhs(:, idl + i)*cshift(dx(:), +i)
+        do ic = 1, idl - 1                   ! off-diagonals
+            lhs(:, idl - ic) = lhs(:, idl - ic)*cshift(dx(:), -ic)
+            lhs(:, idl + ic) = lhs(:, idl + ic)*cshift(dx(:), +ic)
         end do
 
         ! normalize such the coefficent in 1. off-diagonal of rhs is 1

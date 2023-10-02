@@ -27,13 +27,17 @@ module FDM_PROCS
     ! special cases, coefficients are constant in the interior points
     public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric with 1. off-diagonal equal to 1
     public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric with 1. off-diagonal equal to 1
-    !
+
+    ! generic cases
     public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
     public MatMul_5d_add        ! Calculate f = f + B u, assuming B is pentadiagonal
+    ! special cases, coefficients are constant in the interior points
     public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric with 1. off-diagonal equal to 1
     public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. off-diagonal equal to 1
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
-    public FDM_Bcs_Neumann
+
+    public FDM_Bcs_Neumann      ! Initialize arrays to impose Neumann Bcs
+    public FDM_Bcs_Reduce
 
 ! ###################################################################
 ! Compact parameters (1st derivative of 6th-order pentadiagonal); to be removed
@@ -211,32 +215,64 @@ contains
 ! #######################################################################
 ! #######################################################################
     ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
-    subroutine MatMul_3d(nx, len, r1, r3, u, f)
-        integer(wi), intent(in) :: nx, len       ! m linear systems or size n
-        real(wp), intent(in) :: r1(nx), r3(nx)  ! RHS diagonals (#=3-1 because center diagonal is 1)
+    ! Boundary conditions restricted to (3/2+1)+1=3 points (projecttion from pentadiagonal system)
+    subroutine MatMul_3d(nx, len, r1, r3, u, f, rhs_b, rhs_t)
+        integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
+        real(wp), intent(in) :: r1(nx), r3(nx)   ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(len, nx)       ! function u
         real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)  ! Special bcs at bottom and top
 
         ! -------------------------------------------------------------------
         integer(wi) n
 
+#define r0_b(j) rhs_b(j,0)
+#define r1_b(j) rhs_b(j,1)
+#define r2_b(j) rhs_b(j,2)
+#define r3_b(j) rhs_b(j,3)
+
+#define r1_t(j) rhs_t(j,1)
+#define r2_t(j) rhs_t(j,2)
+#define r3_t(j) rhs_t(j,3)
+#define r4_t(j) rhs_t(j,4)
+
         ! -------------------------------------------------------------------
-        ! Boundary
-        n = 1
-        f(:, n) = u(:, n) + u(:, n + 1)*r3(n) &
-                  + u(:, n + 2)*r1(n)   ! r11 contains 2. superdiagonal to allow for longer stencil at boundary
+        ! Boundary; the first 3/2+1=2 rows might be different
+        if (present(rhs_b)) then
+            ! f(1) contains the boundary condition
+            f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
+            f(:, 3) = f(:, 1)*r0_b(3) + u(:, 2)*r1_b(3) + u(:, 3)*r2_b(3) + u(:, 4)*r3_b(3)
+        else
+            f(:, 1) = u(:, 1) + u(:, 2)*r3(1) + u(:, 3)*r1(1)   ! r1(1) contains extended stencil
+            f(:, 2) = u(:, 1)*r1(2) + u(:, 2) + u(:, 3)*r3(2)
+            f(:, 3) = u(:, 2)*r1(3) + u(:, 3) + u(:, 4)*r3(3)
+        end if
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
-        do n = 2, nx - 1
+        do n = 4, nx - 3
             f(:, n) = u(:, n - 1)*r1(n) + u(:, n) + u(:, n + 1)*r3(n)
         end do
 
         ! -------------------------------------------------------------------
-        ! Boundary
-        n = nx
-        f(:, n) = u(:, n - 2)*r3(n) &   ! r3(n) contains 2. subdiagonal to allow for longer stencil at boundary
-                  + u(:, n - 1)*r1(n) + u(:, n)
+        ! Boundary; the last 3/2+1=2 rows might be different
+        if (present(rhs_t)) then
+            ! f(nx) contains the boundary condition
+            f(:, nx - 2) = u(:, nx - 3)*r1_t(0) + u(:, nx - 2)*r2_t(0) + f(:, nx - 1)*r3_t(0) + f(:, nx)*r4_t(0)
+            f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
+        else
+            f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r3(nx - 2)
+            f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1) + u(:, nx)*r3(nx - 1)
+            f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx) ! r3(nx) contains extended stencil
+        end if
+
+#undef r1_b
+#undef r2_b
+#undef r3_b
+
+#undef r1_t
+#undef r2_t
+#undef r3_t
 
         return
     end subroutine MatMul_3d
@@ -272,70 +308,15 @@ contains
     end subroutine MatMul_3d_add
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric tri-diagonal with 1. off-diagonal equal to 1
-    ! subroutine MatMul_3d_antisym(nx, len, r1, r2, r3, u, f, periodic, ibc)
-    !     integer(wi), intent(in) :: nx, len                   ! m linear systems or size n
-    !     real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)    ! RHS diagonals
-    !     real(wp), intent(in) :: u(len, nx)                   ! function u
-    !     real(wp), intent(out) :: f(len, nx)                  ! RHS, f = B u
-    !     logical, intent(in) :: periodic
-    !     integer, optional :: ibc
-
-    !     ! -------------------------------------------------------------------
-    !     integer(wi) n
-    !     integer ibc_loc
-
-    !     ! -------------------------------------------------------------------
-    !     if (present(ibc)) then
-    !         ibc_loc = ibc
-    !     else
-    !         ibc_loc = BCS_DD
-    !     end if
-
-    !     ! -------------------------------------------------------------------
-    !     ! Boundary
-    !     if (periodic) then
-    !         f(:, 1) = u(:, 2) - u(:, nx)
-
-    !     else
-    !         f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) &
-    !                   + u(:, 3)*r1(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
-
-    !         if (any([BCS_ND, BCS_NN] == ibc_loc)) f(:, 1) = 0.0_wp
-
-    !     end if
-
-    !     ! -------------------------------------------------------------------
-    !     ! Interior points; accelerate
-    !     do n = 2, nx - 1
-    !         f(:, n) = u(:, n + 1) - u(:, n - 1)
-    !     end do
-
-    !     ! -------------------------------------------------------------------
-    !     ! Boundary
-    !     if (periodic) then
-    !         f(:, nx) = u(:, 1) - u(:, nx - 1)
-
-    !     else
-    !         f(:, nx) = u(:, nx - 2)*r3(nx) & ! r3(nx) contains 2. subdiagonal to allow for longer stencil at boundary
-    !                    + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx)
-
-    !         if (any([BCS_DN, BCS_NN] == ibc_loc)) f(:, nx) = 0.0_wp
-
-    !     end if
-
-    !     return
-    ! end subroutine MatMul_3d_antisym
-
     subroutine MatMul_3d_antisym(nx, len, r1, r2, r3, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len                   ! m linear systems or size n
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)    ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)                   ! function u
-        real(wp), intent(inout) :: f(len, nx)                  ! RHS, f = B u
+        integer(wi), intent(in) :: nx, len                      ! m linear systems or size n
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)          ! RHS diagonals
+        real(wp), intent(in) :: u(len, nx)                      ! function u
+        real(wp), intent(inout) :: f(len, nx)                   ! RHS, f = B u
         logical, intent(in) :: periodic
         integer, optional :: ibc
-        real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
-        real(wp), optional :: bcs_b(len), bcs_t(len)
+        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(inout), optional :: bcs_b(len), bcs_t(len)
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -360,23 +341,16 @@ contains
         ! Boundary
         if (periodic) then
             f(:, 1) = u(:, 2) - u(:, nx)
-
             f(:, 2) = u(:, 3) - u(:, 1)
 
         else
-
-            if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                if (present(bcs_b)) bcs_b(:) = u(:, 2)*r3_b(1) &
-                                               + u(:, 3)*r1_b(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
-
-                f(:, 2) = u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2) + &
-                          f(:, 1)*r1_b(2)                           ! f(1) contains the boundary condition
-                ! bcs_b(:)*r1_b(2)
+            if (any([BCS_ND, BCS_NN, BCS_MIN, BCS_BOTH] == ibc_loc)) then
+                ! f(1) contains the boundary condition
+                if (present(bcs_b)) bcs_b(:) = f(:, 1)*r2_b(1) + u(:, 2)*r3_b(1) + u(:, 3)*r1_b(1) ! r1(1) contains extended stencil
+                f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
 
             else
-                f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) &
-                          + u(:, 3)*r1(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
-
+                f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) + u(:, 3)*r1(1) ! r1(1) contains extended stencil
                 f(:, 2) = u(:, 1)*r1(2) + u(:, 2)*r2(2) + u(:, 3)*r3(2)
 
             end if
@@ -393,22 +367,17 @@ contains
         ! Boundary
         if (periodic) then
             f(:, nx - 1) = u(:, nx) - u(:, nx - 2)
-
             f(:, nx) = u(:, 1) - u(:, nx - 1)
 
         else
-            if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + &
-                               f(:, nx)*r3_t(1)
-
-                if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) & ! r3(nx) contains 2. subdiagonal to allow for longer stencil at boundary
-                                               + u(:, nx - 1)*r1_t(2)
+            if (any([BCS_DN, BCS_NN, BCS_MAX, BCS_BOTH] == ibc_loc)) then
+                ! f(nx) contains the boundary condition
+                f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
+                if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) + u(:, nx - 1)*r1_t(2) + f(:, nx)*r2_t(2) ! r3(nx) contains extended stencil
 
             else
                 f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1)*r2(nx - 1) + u(:, nx)*r3(nx - 1)
-
-                f(:, nx) = u(:, nx - 2)*r3(nx) & ! r3(nx) contains 2. subdiagonal to allow for longer stencil at boundary
-                           + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx)
+                f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx)  ! r3(nx) contains extended stencil
 
             end if
 
@@ -552,73 +521,6 @@ contains
     ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. off-diagonal equal to 1
     ! It also assumes equal coefficients in the 2. off-diagonal for the interior points
-    ! subroutine MatMul_5d_antisym(nx, len, r1, r2, r3, r4, r5, u, f, periodic, ibc)
-    !     integer(wi), intent(in) :: nx, len       ! m linear systems or size n
-    !     real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
-    !     real(wp), intent(in) :: u(len, nx)       ! function u
-    !     real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
-    !     logical, intent(in) :: periodic
-    !     integer, optional :: ibc
-
-    !     ! -------------------------------------------------------------------
-    !     integer(wi) n
-    !     real(wp) r5_loc     ! 2. off-diagonal
-    !     integer ibc_loc
-
-    !     ! -------------------------------------------------------------------
-    !     r5_loc = r5(3)      ! The first 2 equations, last 2 equations, are normalized differently
-
-    !     if (present(ibc)) then
-    !         ibc_loc = ibc
-    !     else
-    !         ibc_loc = BCS_DD
-    !     end if
-
-    !     ! Boundary
-    !     if (periodic) then
-    !         f(:, 1) = u(:, 2) - u(:, nx) &
-    !                   + r5_loc*(u(:, 3) - u(:, nx - 1))
-
-    !         f(:, 2) = u(:, 3) - u(:, 1) &
-    !                   + r5_loc*(u(:, 4) - u(:, nx))
-
-    !     else
-    !         f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
-    !                   + u(:, 4)*r1(1)   ! r1(1) contains 3. superdiagonal to allow for longer stencil at boundary
-
-    !         f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
-
-    !         if (any([BCS_ND, BCS_NN] == ibc_loc)) f(:, 1) = 0.0_wp
-
-    !     end if
-
-    !     ! Interior points
-    !     do n = 3, nx - 2
-    !         f(:, n) = u(:, n + 1) - u(:, n - 1) &
-    !                   + r5_loc*(u(:, n + 2) - u(:, n - 2))
-    !     end do
-
-    !     ! Boundary
-    !     if (periodic) then
-    !         f(:, nx - 1) = u(:, nx) - u(:, nx - 2) &
-    !                        + r5_loc*(u(:, 1) - u(:, nx - 3))
-
-    !         f(:, nx) = u(:, 1) - u(:, nx - 1) &
-    !                    + r5_loc*(u(:, 2) - u(:, nx - 2))
-
-    !     else
-    !         f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) &
-    !                        + u(:, nx)*r4(nx - 1)
-    !         f(:, nx) = u(:, nx - 3)*r5(nx) & ! r5(nx) contains 3. subdiagonal to allow for longer stencil at boundary
-    !                    + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx)
-
-    !         if (any([BCS_DN, BCS_NN] == ibc_loc)) f(:, nx) = 0.0_wp
-
-    !     end if
-
-    !     return
-    ! end subroutine MatMul_5d_antisym
-
     subroutine MatMul_5d_antisym(nx, len, r1, r2, r3, r4, r5, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
         integer(wi), intent(in) :: nx, len          ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
@@ -658,31 +560,20 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
-            f(:, 1) = u(:, 2) - u(:, nx) &
-                      + r5_loc*(u(:, 3) - u(:, nx - 1))
-
-            f(:, 2) = u(:, 3) - u(:, 1) &
-                      + r5_loc*(u(:, 4) - u(:, nx))
-
-            f(:, 3) = u(:, 4) - u(:, 2) &
-                      + r5_loc*(u(:, 5) - u(:, 1))
+            f(:, 1) = u(:, 2) - u(:, nx) + r5_loc*(u(:, 3) - u(:, nx - 1))
+            f(:, 2) = u(:, 3) - u(:, 1) + r5_loc*(u(:, 4) - u(:, nx))
+            f(:, 3) = u(:, 4) - u(:, 2) + r5_loc*(u(:, 5) - u(:, 1))
 
         else
-            if (any([BCS_ND, BCS_NN] == ibc_loc)) then
-                if (present(bcs_b)) bcs_b(:) = u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1)     ! contribution to u_1
-
-                f(:, 2) = u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2) + &
-                          f(:, 1)*r2_b(2)       ! f(1) contains u'_1
-
-                f(:, 3) = u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3) + &
-                          f(:, 1)*r1_b(3)       ! f(1) contains u'_1
+            if (any([BCS_ND, BCS_NN, BCS_MIN, BCS_BOTH] == ibc_loc)) then
+                ! f(1) contains boundary condition
+                if (present(bcs_b)) bcs_b(:) = f(:, 1)*r3_b(1) + u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1) ! r1(1) with extended stencil
+                f(:, 2) = f(:, 1)*r2_b(2) + u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2)
+                f(:, 3) = f(:, 1)*r1_b(3) + u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3)
 
             else
-                f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
-                          + u(:, 4)*r1(1)   ! r1(1) contains 3. superdiagonal to allow for longer stencil at boundary
-
+                f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)   ! r1(1) with extended stencil
                 f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
-
                 f(:, 3) = u(:, 1)*r1(3) + u(:, 2)*r2(3) + u(:, 3)*r3(3) + u(:, 4)*r4(3) + u(:, 5)*r5(3)
 
             end if
@@ -691,41 +582,26 @@ contains
 
         ! Interior points
         do n = 4, nx - 3
-            f(:, n) = u(:, n + 1) - u(:, n - 1) &
-                      + r5_loc*(u(:, n + 2) - u(:, n - 2))
+            f(:, n) = u(:, n + 1) - u(:, n - 1) + r5_loc*(u(:, n + 2) - u(:, n - 2))
         end do
 
         ! Boundary
         if (periodic) then
-            f(:, nx - 2) = u(:, nx - 1) - u(:, nx - 3) &
-                           + r5_loc*(u(:, nx) - u(:, nx - 4))
-
-            f(:, nx - 1) = u(:, nx) - u(:, nx - 2) &
-                           + r5_loc*(u(:, 1) - u(:, nx - 3))
-
-            f(:, nx) = u(:, 1) - u(:, nx - 1) &
-                       + r5_loc*(u(:, 2) - u(:, nx - 2))
+            f(:, nx - 2) = u(:, nx - 1) - u(:, nx - 3) + r5_loc*(u(:, nx) - u(:, nx - 4))
+            f(:, nx - 1) = u(:, nx) - u(:, nx - 2) + r5_loc*(u(:, 1) - u(:, nx - 3))
+            f(:, nx) = u(:, 1) - u(:, nx - 1) + r5_loc*(u(:, 2) - u(:, nx - 2))
 
         else
-
-            if (any([BCS_DN, BCS_NN] == ibc_loc)) then
-                f(:, nx - 2) = u(:, nx - 4)*r1_t(1) + u(:, nx - 3)*r2_t(1) + u(:, nx - 2)*r3_t(1) + u(:, nx - 1)*r4_t(1) + &
-                               f(:, nx)*r5_t(1)     ! f(n) contains u'_n
-
-                f(:, nx - 1) = u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + &
-                               f(:, nx)*r4_t(2)     ! f(n) contains u'_n
-
-                if (present(bcs_b)) bcs_t(:) = u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + u(:, nx - 3)*r5_t(3)    ! contribution to u_n
+            if (any([BCS_DN, BCS_NN, BCS_MAX, BCS_BOTH] == ibc_loc)) then
+                ! f(n) contains boundary condition
+                f(:, nx - 2) = u(:, nx - 4)*r1_t(1) + u(:, nx - 3)*r2_t(1) + u(:, nx - 2)*r3_t(1) + u(:, nx - 1)*r4_t(1) + f(:, nx)*r5_t(1)
+                f(:, nx - 1) = u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + f(:, nx)*r4_t(2)
+                if (present(bcs_b)) bcs_t(:) = u(:, nx - 3)*r5_t(3) + u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + f(:, nx)*r3_t(3) ! r5(nx) with extended stencil
 
             else
-                f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2)*r3(nx - 2) &
-                               + u(:, nx - 1)*r4(nx - 2) + u(:, nx)*r5(nx - 2)
-
-                f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) &
-                               + u(:, nx)*r4(nx - 1)
-
-                f(:, nx) = u(:, nx - 3)*r5(nx) & ! r5(nx) contains 3. subdiagonal to allow for longer stencil at boundary
-                           + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx)
+            f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2)*r3(nx - 2) + u(:, nx - 1)*r4(nx - 2) + u(:, nx)*r5(nx - 2)
+                f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) + u(:, nx)*r4(nx - 1)
+                f(:, nx) = u(:, nx - 3)*r5(nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx)! r5(nx) with extended stencil
             end if
 
         end if
@@ -907,31 +783,6 @@ contains
         return
     end subroutine MatMul_7d_sym
 
-! ! #######################################################################
-! ! #######################################################################
-! ! TO BE IMPLEMENTED ACCORDING TO NOTES
-!     subroutine FDM_Bcs(lhs, ibc)
-!         real(wp), intent(inout) :: lhs(:, :)
-!         integer, intent(in) :: ibc
-
-!         integer(wi) id, nx
-
-!         id = size(lhs, 2)/2 + 1     ! central diagonal
-!         nx = size(lhs, 1)           ! # grid points
-
-!         if (any([BCS_ND, BCS_NN] == ibc)) then
-!             lhs(1, id:) = 0.0_wp
-!             lhs(1, id) = 1.0_wp
-!         end if
-
-!         if (any([BCS_DN, BCS_NN] == ibc)) then
-!             lhs(nx, :id) = 0.0_wp
-!             lhs(nx, id) = 1.0_wp
-!         end if
-
-!         return
-!     end subroutine FDM_Bcs
-
 ! #######################################################################
 ! #######################################################################
     subroutine FDM_Bcs_Neumann(ibc, lhs, rhs, rhs_b, rhs_t)
@@ -948,9 +799,16 @@ contains
         idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
         ndr = size(rhs, 2)
         idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
+        nx = size(lhs, 1)               ! # grid points
 
+        ! For A_22, we need idl >= idr -1
         if (idl < idr - 1) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. LHS is too small for Neumann BCs.')
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. LHS array is too small.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        ! For b_21, we need idr >= idl
+        if (idr < idl) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. RHS array is too small.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
 
@@ -960,39 +818,46 @@ contains
 
             dummy = 1.0_wp/rhs(1, idr)      ! normalize by r11
 
-            rhs_b(1, 1:ndr) = -rhs(1, 1:ndr)*dummy
+            ! reduced array B^R_{22}
+            rhs_b(1, 1:ndr) = -rhs_b(1, 1:ndr)*dummy
             do ir = 1, idr - 1              ! rows
                 do ic = idr + 1, ndr        ! columns
-                    rhs_b(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs_b(1, ic)
+                    rhs_b(1 + ir, ic - ir) = rhs_b(1 + ir, ic - ir) + rhs_b(1 + ir, idr - ir)*rhs_b(1, ic)
                 end do
                 ! longer stencil at the boundary
                 ic = ndr + 1
-                rhs_b(1 + ir, ic - ir) = rhs_b(1 + ir, ic - ir) + rhs(1 + ir, idr - ir)*rhs_b(1, 1)
+                rhs_b(1 + ir, ic - ir) = rhs_b(1 + ir, ic - ir) + rhs_b(1 + ir, idr - ir)*rhs_b(1, 1)
             end do
 
-            lhs(1, :) = lhs(1, :)*dummy
+            ! reduced array A^R_{22}
+            lhs(1, 1:ndl) = lhs(1, 1:ndl)*dummy
             do ir = 1, idr - 1              ! rows
                 do ic = idl + 1, ndl        ! columns
-                    lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) - rhs(1 + ir, idr - ir)*lhs(1, ic)
+                    lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) - rhs_b(1 + ir, idr - ir)*lhs(1, ic)
                 end do
-                ! term for nonzero derivative
-                rhs_b(1 + ir, idr - ir) = rhs_b(1 + ir, idr - ir)*lhs(1, idl)
+                ! vector a^R_{21} stored in rhs
+                ic = idr
+                rhs_b(1 + ir, ic - ir) = rhs_b(1 + ir, ic - ir)*lhs(1, idl)
             end do
 
-            ! finalize term for nonzero derivative
+            ! finalize vector a^R_{21}
             do ir = 1, idl - 1
-                rhs_b(1 + ir, idr - ir) = rhs_b(1 + ir, idr - ir) - lhs(1 + ir, idl - ir)
+                ic = idr
+                rhs_b(1 + ir, ic - ir) = rhs_b(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)
             end do
+
+            ! store a_11/b_11 in rhs
+            rhs_b(1, idr) = lhs(1, idl)
 
         end if
 
         if (any([BCS_DN, BCS_NN] == ibc)) then
-            nx = size(lhs, 1)               ! # grid points
             rhs_t(1:idr, 1:ndr) = rhs(nx - idr + 1:nx, 1:ndr)
 
             dummy = 1.0_wp/rhs(nx, idr)     ! normalize by rnn
 
-            rhs_t(idr, :) = -rhs(nx, :)*dummy
+            ! reduced array B^R_{11}
+            rhs_t(idr, 1:ndr) = -rhs_t(idr, 1:ndr)*dummy
             do ir = 1, idr - 1              ! rows
                 do ic = 1, idr - 1          ! columns
                     rhs_t(idr - ir, ic + ir) = rhs(nx - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ic)
@@ -1002,23 +867,119 @@ contains
                 rhs_t(idr - ir, ic + ir) = rhs_t(idr - ir, ic + ir) + rhs(nx - ir, idr + ir)*rhs_t(idr, ndr)
             end do
 
-            lhs(nx, :) = lhs(nx, :)*dummy
+            ! reduced array A^R_{11}
+            lhs(nx, 1:ndl) = lhs(nx, 1:ndl)*dummy
             do ir = 1, idr - 1              ! rows
                 do ic = 1, idl - 1          ! columns
                     lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) - rhs(nx - ir, idr + ir)*lhs(nx, ic)
                 end do
-                ! term for nonzero derivative
-                rhs_t(idr - ir, idr + ir) = rhs_t(idr - ir, idr + ir)*lhs(nx, idl)
+                ! vector a^R_{1n} stored in rhs
+                ic = idr
+                rhs_t(idr - ir, ic + ir) = rhs_t(idr - ir, ic + ir)*lhs(nx, idl)
             end do
 
-            ! finalize term for nonzero derivative
+            ! finalize vector a^R_{1n}
             do ir = 1, idl - 1
-                rhs_t(idr - ir, idr + ir) = rhs_t(idr - ir, idr + ir) - lhs(nx - ir, idl + ir)
+                ic = idr
+                rhs_t(idr - ir, ic + ir) = rhs_t(idr - ir, ic + ir) - lhs(nx - ir, idl + ir)
             end do
+
+            ! store a_nn/b_nn in rhs
+            rhs_t(idr, idr) = lhs(nx, idl)
 
         end if
 
         return
     end subroutine FDM_Bcs_Neumann
+
+! #######################################################################
+! #######################################################################
+    subroutine FDM_Bcs_Reduce(ibc, lhs, rhs, rhs_b, rhs_t)
+        integer, intent(in) :: ibc
+        real(wp), intent(inout) :: lhs(:, :)
+        real(wp), intent(inout), optional :: rhs(:, :), rhs_b(:, :), rhs_t(:, :)
+
+        integer(wi) idl, ndl, idr, ndr, ir, ic, nx, nx_t
+        real(wp) dummy
+
+        ! -------------------------------------------------------------------
+        ndl = size(lhs, 2)
+        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
+        ndr = size(rhs, 2)
+        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
+        nx = size(lhs, 1)               ! # grid points
+        nx_t = idr                      ! # grid points affected by bcs; for clarity
+
+        ! -------------------------------------------------------------------
+        if (any([BCS_MIN, BCS_BOTH] == ibc)) then
+            dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
+
+            ! reduced array A^R_{22}
+            lhs(1, 1:ndl) = -lhs(1, 1:ndl)*dummy
+            do ir = 1, idl - 1              ! rows
+                do ic = idl + 1, ndl        ! columns
+                    lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lhs(1, ic)
+                end do
+                ic = ndl + 1                ! longer stencil at the boundary
+                lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lhs(1, 1)
+            end do
+
+            ! reduced array B^R_{22}
+            if (present(rhs_b)) then
+                if (size(rhs_b, 1) < max(idl, idr) .or. size(rhs_b, 2) < max(ndl, ndr)) then
+                    call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_b array is too small.')
+                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                end if
+
+                rhs_b(1:idr, 1:ndr) = rhs(1:idr, 1:ndr)
+
+                rhs_b(1, 1:ndr) = rhs(1, 1:ndr)*dummy
+                do ir = 1, idl - 1              ! rows
+                    do ic = idr, ndr            ! columns; ic = idr corresponds to vector b^R_{21}
+                        rhs_b(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)*rhs_b(1, ic)
+                    end do
+                    ic = ndr + 1                ! longer stencil at the boundary
+                    rhs_b(1 + ir, ic - ir) = rhs(1 + ir, ic - ir) - lhs(1 + ir, idl - ir)*rhs_b(1, 1)
+                end do
+            end if
+
+        end if
+
+        if (any([BCS_MAX, BCS_BOTH] == ibc)) then
+            dummy = 1.0_wp/lhs(nx, idl)     ! normalize by lnn
+
+            ! reduced array A^R_{11}
+            lhs(nx, 1:ndl) = -lhs(nx, 1:ndl)*dummy
+            do ir = 1, idl - 1              ! rows
+                ic = 0                      ! longer stencil at the boundary
+                lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lhs(nx, ndl)
+                do ic = 1, idl - 1          ! columns
+                    lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lhs(nx, ic)
+                end do
+            end do
+
+            ! reduced array B^R_{11}
+            if (present(rhs_t)) then
+                if (size(rhs_t, 1) < max(idl, idr) .or. size(rhs_t, 2) < max(ndl, ndr)) then
+                    call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_t array is too small.')
+                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                end if
+
+                rhs_t(1:nx_t, 1:ndr) = rhs(nx - idr + 1:nx, 1:ndr)
+
+                rhs_t(nx_t, 1:ndr) = rhs(nx, 1:ndr)*dummy
+                do ir = 1, idl - 1              ! rows
+                    ic = 0                      ! columns; ic = 0 corresponds to longer stencil at the boundary
+                    rhs_t(nx_t - ir, ic + ir) = rhs(nx - ir, ic + ir) - lhs(nx - ir, idl + ir)*rhs_t(nx_t, ndr)
+                    do ic = 1, idr              ! ic = idr corresponds to vector b^R_{1n}
+                        rhs_t(nx_t - ir, ic + ir) = rhs(nx - ir, ic + ir) - lhs(nx - ir, idl + ir)*rhs_t(nx_t, ic)
+                    end do
+                end do
+            end if
+
+        end if
+
+        return
+    end subroutine FDM_Bcs_Reduce
 
 end module FDM_PROCS

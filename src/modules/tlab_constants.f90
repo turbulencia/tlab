@@ -2,24 +2,24 @@ module TLAB_CONSTANTS
     implicit none
     save
 
-    integer, parameter :: MajorVersion      = 7
-    integer, parameter :: MinorVersion      = 0
+    integer, parameter :: MajorVersion = 7
+    integer, parameter :: MinorVersion = 0
 
-    integer, parameter :: MAX_PARS          = 10
-    integer, parameter :: MAX_VARS          = 20
-    integer, parameter :: MAX_MODES         = 20
-    integer, parameter :: MAX_PROF          = 10
-    integer, parameter :: MAX_JETS          = 5
-    integer, parameter :: MAX_NSP           = 10  ! Species in the mixture
-    integer, parameter :: MAX_AVG_TEMPORAL  = 235
+    integer, parameter :: MAX_PARS = 10
+    integer, parameter :: MAX_VARS = 20
+    integer, parameter :: MAX_MODES = 20
+    integer, parameter :: MAX_PROF = 10
+    integer, parameter :: MAX_JETS = 5
+    integer, parameter :: MAX_NSP = 10  ! Species in the mixture
+    integer, parameter :: MAX_AVG_TEMPORAL = 235
     integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
 
-    character(len=*), parameter :: gfile    = 'grid'
-    character(len=*), parameter :: ifile    = 'dns.ini'
-    character(len=*), parameter :: lfile    = 'dns.log'
-    character(len=*), parameter :: efile    = 'dns.err'
-    character(len=*), parameter :: wfile    = 'dns.war'
-    character(len=*), parameter :: tfile    = 'dns.trc'
+    character(len=*), parameter :: gfile = 'grid'
+    character(len=*), parameter :: ifile = 'dns.ini'
+    character(len=*), parameter :: lfile = 'dns.log'
+    character(len=*), parameter :: efile = 'dns.err'
+    character(len=*), parameter :: wfile = 'dns.war'
+    character(len=*), parameter :: tfile = 'dns.trc'
 
     character(len=*), parameter :: tag_flow = 'flow.'
     character(len=*), parameter :: tag_scal = 'scal.'
@@ -57,9 +57,15 @@ module TLAB_CONSTANTS
     real(wp), parameter :: small_wp = 1.0e-20_wp
     real(wp), parameter :: big_wp = 1.0e20_wp
 
+    integer, parameter :: BCS_PERIODIC = -1
     integer, parameter :: BCS_DD = 0     ! Dirichlet/Dirichlet
     integer, parameter :: BCS_ND = 1     ! Neumann/Dirichlet
     integer, parameter :: BCS_DN = 2     ! Dirichlet/Neumann
     integer, parameter :: BCS_NN = 3     ! Neumann/Neumann
+
+    integer, parameter :: BCS_NONE = 0   ! No special treatment of boundaries
+    integer, parameter :: BCS_MIN = 1    ! Special treatment at the lower interval limit
+    integer, parameter :: BCS_MAX = 2    ! Special treatment at the upper interval limit
+    integer, parameter :: BCS_BOTH = 3
 
 end module TLAB_CONSTANTS

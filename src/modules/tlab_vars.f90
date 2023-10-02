@@ -19,8 +19,8 @@ module TLAB_VARS
     integer :: imode_precision_files    ! whether restart files in single or double precision
     integer :: imode_verbosity = 1      ! level of verbosity used in log files
     integer :: imode_eqns               ! set of equations to be solved
-    integer :: iadvection, iviscous, idiffusion,  itransport ! formulation
-    
+    integer :: iadvection, iviscous, idiffusion, itransport ! formulation
+
     integer :: imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
 
     logical :: flow_on = .true.         ! calculate flow parts of the code
@@ -68,6 +68,7 @@ module TLAB_VARS
     real(wp), allocatable :: rbackground(:), ribackground(:)    ! Density and its inverse
     real(wp), allocatable :: bbackground(:)                     ! Buoyancy
     real(wp), allocatable :: epbackground(:)                    ! Potential energy
+    real(wp), allocatable :: sbackground(:, :)                  ! scalars, e.g., static energy and water content
 
 ! ###################################################################
     type(term_dt) :: buoyancy               ! Buoyancy parameters
