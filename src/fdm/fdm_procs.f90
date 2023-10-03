@@ -226,13 +226,14 @@ contains
     !      r_30 r_31 r_32 r_33
     !                r_41  1.  r_43         <- interior points start here
     !                     ...  ...  ...
-    subroutine MatMul_3d(nx, len, r1, r3, u, f, ibc, rhs_b, rhs_t)
+    subroutine MatMul_3d(nx, len, r1, r3, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
         integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
         real(wp), intent(in) :: r1(nx), r3(nx)   ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(len, nx)       ! function u
         real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
         integer, optional :: ibc
         real(wp), intent(in), optional :: rhs_b(1:3, 0:3), rhs_t(0:2, 1:4)  ! Special bcs at bottom and top
+        real(wp), optional :: bcs_b(len), bcs_t(len)
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -258,6 +259,7 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary; the first 3/2+1+1=3 rows might be different
         if (any([BCS_MIN, BCS_BOTH] == ibc_loc)) then
+            if (present(bcs_b)) bcs_b(:) = f(:, 1)*r2_b(1) + u(:, 2)*r3_b(1) + u(:, 3)*r1_b(1) ! r1(1) contains extended stencil
             ! f(1) contains the boundary condition
             f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
             f(:, 3) = f(:, 1)*r0_b(3) + u(:, 2)*r1_b(3) + u(:, 3)*r2_b(3) + u(:, 4)*r3_b(3)
@@ -279,6 +281,7 @@ contains
             ! f(nx) contains the boundary condition
             f(:, nx - 2) = u(:, nx - 3)*r1_t(0) + u(:, nx - 2)*r2_t(0) + u(:, nx - 1)*r3_t(0) + f(:, nx)*r4_t(0)
             f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
+            if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) + u(:, nx - 1)*r1_t(2) + f(:, nx)*r2_t(2) ! r3(nx) contains extended stencil
         else
             f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r3(nx - 2)
             f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1) + u(:, nx)*r3(nx - 1)
@@ -948,12 +951,12 @@ contains
 
             ! reduced array B^R_{22}
             if (present(rhs_b)) then
-                if (size(rhs_b, 1) < max(idl, idr) .or. size(rhs_b, 2) < max(ndl, ndr)) then
+                if (size(rhs_b, 1) < max(idl, idr + 1) .or. size(rhs_b, 2) < max(ndl, ndr)) then
                     call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_b array is too small.')
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 end if
 
-                rhs_b(max(idl, idr), 1:ndr) = rhs(max(idl, idr), 1:ndr)
+                rhs_b(1:max(idl, idr + 1), 1:ndr) = rhs(1:max(idl, idr + 1), 1:ndr)
 
                 rhs_b(1, 1:ndr) = rhs(1, 1:ndr)*dummy
                 do ir = 1, idl - 1              ! rows
@@ -982,12 +985,12 @@ contains
 
             ! reduced array B^R_{11}
             if (present(rhs_t)) then
-                if (size(rhs_t, 1) < max(idl, idr) .or. size(rhs_t, 2) < max(ndl, ndr)) then
+                if (size(rhs_t, 1) < max(idl, idr + 1) .or. size(rhs_t, 2) < max(ndl, ndr)) then
                     call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_t array is too small.')
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 end if
 
-                rhs_t(nx_t - max(idl, idr) + 1:nx_t, 1:ndr) = rhs(nx - max(idl, idr) + 1:nx, 1:ndr)
+                rhs_t(nx_t - max(idl, idr + 1) + 1:nx_t, 1:ndr) = rhs(nx - max(idl, idr + 1) + 1:nx, 1:ndr)
 
                 rhs_t(nx_t, 1:ndr) = rhs(nx, 1:ndr)*dummy
                 do ir = 1, idl - 1              ! rows
