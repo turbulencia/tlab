@@ -320,15 +320,15 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Consistency check
     if (stagger_on) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
- call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
-          call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] /= FDM_COM6_JACOBIAN)) then
-call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
     end if
@@ -682,7 +682,7 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
 
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
-       call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. (iadvection == EQNS_CONVECTIVE)) then
@@ -941,22 +941,24 @@ call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Horizontal pressure staggering only 
                          + 2 &                      ! Jacobians of first- and second-order derivatives
                          + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
 
+        g(is)%inb_grid = g(is)%inb_grid &
+                         + 5 &                      ! max # of diagonals in LHS for 1. order
+                         + 7 &                      ! max # of diagonals in RHS for 1. order
+                         + 5 &                      ! max # of diagonals in LHS for 2. order
+                         + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
         if (g(is)%periodic) then
             g(is)%inb_grid = g(is)%inb_grid &
-                             + 7 &                  ! LU decomposition 1. order
-                             + 5 &                  ! LU decomposition 2. order
-                             + 5*(1 + inb_scal) &   ! LU decomposition 2. order with diffusivities
-                             + 2                    ! modified wavenumbers
+                             + 5 + 2 &                      ! LU decomposition 1. order
+                             + 5 + 2 &                      ! LU decomposition 2. order
+                             + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
+                             + 2                            ! modified wavenumbers
         else
             g(is)%inb_grid = g(is)%inb_grid &
                              + 5*4 &                ! LU decomposition 1. order, 4 bcs
-                             + 3*4 &                ! LU decomposition 2. order, 4 bcs
-                             + 3*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
+                             + 5 &                  ! LU decomposition 2. order, 1bcs
+                             + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
 ! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered
         end if
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 7 &                      ! # of diagonals in RHS for 1. order
-                         + 7 + 5                    ! # of diagonals in RHS for 2. order + LU diagonals for Jacobian case
         g(is)%inb_grid = g(is)%inb_grid &
                          + 1                        ! Density correction in anelastic mode
         if ((stagger_on) .and. g(is)%periodic) then

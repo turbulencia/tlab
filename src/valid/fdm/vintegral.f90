@@ -26,13 +26,12 @@ program VINTEGRAL
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5), wk, x_0!, dummy
     integer(wi) :: test_type, ibc, ip, im, idr, ndr, ic
-    integer(wi) :: nmin, nmax, nsize
 
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(3)
     character(len=32) :: fdm_names(3)
-    real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
 
+    real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
     real(wp) :: rhsi_b(5, 0:7), rhsi_t(0:4, 8)
 
 ! ###################################################################
@@ -72,7 +71,7 @@ program VINTEGRAL
     allocate (bcs(len, 2))
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
 
-    allocate (lhs_int(imax, 9), rhs_int(imax, 7))
+    allocate (lhs_int(imax, 7), rhs_int(imax, 5))
 
     g%periodic = .false.
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
@@ -159,10 +158,10 @@ program VINTEGRAL
 
                 select case (g%mode_fdm1)
                 case (FDM_COM4_JACOBIAN)
-                    call FDM_C1N4_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+                    call FDM_C1N4_Jacobian(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 case (FDM_COM6_JACOBIAN)
-                    call FDM_C1N6_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+                    call FDM_C1N6_Jacobian(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 end select
                 ! idl = g%nb_diag_1(1)/2 + 1
@@ -170,18 +169,14 @@ program VINTEGRAL
                 ndr = g%nb_diag_1(2)
                 ! ndl = g%nb_diag_1(1)
 
-                call FDM_Int1_Initialize(ibc, g%lu1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsi_b, rhsi_t)
-
-                nmin = 2
-                nmax = imax - 1
-                nsize = nmax - nmin + 1
+                call FDM_Int1_Initialize(ibc, g%lhs1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsi_b, rhsi_t)
 
                 ! LU decomposition
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call TRIDFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3))
+                    call TRIDFS(imax-2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3))
                 case (5)
-                    call PENTADFS(nsize, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5))
+                    call PENTADFS(imax-2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
                 end select
 
                 ! Particular solution
@@ -202,9 +197,9 @@ program VINTEGRAL
 
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call TRIDSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), w_n(:, nmin:nmax))
+                    call TRIDSS(imax-2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), w_n(:, 2:))
                 case (5)
-                    call PENTADSS(nsize, len, lhs_int(nmin:nmax, 1), lhs_int(nmin:nmax, 2), lhs_int(nmin:nmax, 3), lhs_int(nmin:nmax, 4), lhs_int(nmin:nmax, 5), w_n(:, nmin:nmax))
+                    call PENTADSS(imax-2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), w_n(:, 2:))
                 end select
 
                 if (any([BCS_MAX] == ibc)) then

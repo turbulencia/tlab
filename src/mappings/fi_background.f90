@@ -225,11 +225,12 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     real(wp), dimension(g%size, *), intent(INOUT) :: wrk1d
 
     ! -------------------------------------------------------------------
-    integer(wi) iter, niter, j, jcenter, nb_diag(2), ic, idr, ndr
-    real(wp) dummy, coef(5), pmax(1)
-    real(wp), allocatable :: lhs(:, :), rhs(:, :), lhs_int(:, :), rhs_int(:, :)
+    integer(wi) iter, niter, j, jcenter, ic, idr, ndr
+    real(wp) dummy, pmax(1)
     integer, parameter :: i1 = 1
-    real(wp) :: rhsi_b(4 + 1, 0:7), rhsi_t(0:4, 7 + 1)
+
+    real(wp), allocatable :: lhs_int(:, :), rhs_int(:, :)
+    real(wp) :: rhsi_b(5, 0:7), rhsi_t(0:4, 8)
 
     ! ###################################################################
     ! Get the center
@@ -244,11 +245,10 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 #define p_aux(i)        wrk1d(i,1)
 #define r_aux(i)        wrk1d(i,2)
 
-    allocate (lhs(g%size, 3), rhs(g%size, 5), lhs_int(g%size, 5), rhs_int(g%size, 3))
-    call FDM_C1N6_Jacobian(g%size, g%jac, lhs, rhs, nb_diag, coef)
-    call FDM_Int1_Initialize(BCS_MIN, lhs, rhs, 0.0_wp, lhs_int, rhs_int, rhsi_b, rhsi_t)
+    allocate (lhs_int(g%size, 5), rhs_int(g%size, 3))
+    call FDM_Int1_Initialize(BCS_MIN, g%lhs1(:,1:g%nb_diag_1(1)), g%rhs1(:,1:g%nb_diag_1(2)), 0.0_wp, lhs_int, rhs_int, rhsi_b, rhsi_t)
     call PENTADFS(g%size - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
-    
+
     ! Setting the pressure entry to 1 to get 1/RT
     p_aux(:) = 1.0_wp
 
@@ -271,11 +271,11 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
         p(1) = 0.0_wp
         p(g%size) = r_aux(g%size)
-        call MatMul_3d(g%size, 1, rhs_int(:, 1), rhs_int(:, 3), r_aux(:), p(:), BCS_BOTH, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4), bcs_t=pmax(:))
+      call MatMul_3d(g%size, 1, rhs_int(:, 1), rhs_int(:, 3), r_aux(:), p(:), BCS_BOTH, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4), bcs_t=pmax(:))
         call PENTADSS(g%size - 2, i1, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), p(2:))
 
-        ndr = nb_diag(2)
-        idr = nb_diag(2)/2 + 1
+        ndr = g%nb_diag_1(2)
+        idr = g%nb_diag_1(2)/2 + 1
         p(g%size) = pmax(1)
         do ic = 1, idr - 1
             p(g%size) = p(g%size) + lhs_int(g%size, idr - ic)*p(g%size - ic)
@@ -306,7 +306,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 #undef p_aux
 #undef r_aux
 
-    deallocate (lhs, rhs, lhs_int, rhs_int)
+    deallocate (lhs_int, rhs_int)
 
     ! compute equilibrium values of T
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
