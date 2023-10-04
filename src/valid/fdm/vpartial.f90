@@ -209,8 +209,8 @@ program VPARTIAL
                 ndr = g%nb_diag_1(2)
                 idr = g%nb_diag_1(2)/2 + 1
 
-                g%rhsr_b = 0.0_wp
-                g%rhsr_t = 0.0_wp
+                ! g%rhsr_b = 0.0_wp
+                ! g%rhsr_t = 0.0_wp
                 call FDM_Bcs_Reduce(ibc, g%lu1(:, 1:ndl), g%rhs1(:, 1:ndr), g%rhsr_b, g%rhsr_t)
 
                 select case (g%nb_diag_1(1))
@@ -224,10 +224,10 @@ program VPARTIAL
                 select case (g%nb_diag_1(2))
                 case (3)
                     call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
-                    ibc, rhs_b=g%rhsr_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t, bcs_t=wrk2d(:, 2))
+                                           ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 case (5)
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
-                    ibc, rhs_b=g%rhsr_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t, bcs_t=wrk2d(:, 2))
+                                           ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(1))
@@ -237,14 +237,18 @@ program VPARTIAL
                 end select
 
                 if (any([BCS_MIN, BCS_BOTH] == ibc)) then
+                    du1_n(:, 1) = wrk2d(:, 1)
                     do ic = 1, idl - 1
-                        du1_n(:, 1) = wrk2d(:, 1) + g%lu1(1, idl + ic)*du1_n(:, 1 + ic)
+                        du1_n(:, 1) = du1_n(:, 1) + g%lu1(1, idl + ic)*du1_n(:, 1 + ic)
                     end do
+                    du1_n(:, 1) = du1_n(:, 1) + g%lu1(1, 1)*du1_n(:, 1 + ic)
                 end if
                 if (any([BCS_MAX, BCS_BOTH] == ibc)) then
+                    du1_n(:, imax) = wrk2d(:, 2)
                     do ic = 1, idl - 1
-                        du1_n(:, imax) = wrk2d(:, 2) + g%lu1(imax, idl - ic)*du1_n(:, imax - ic)
+                        du1_n(:, imax) = du1_n(:, imax) + g%lu1(imax, idl - ic)*du1_n(:, imax - ic)
                     end do
+                    du1_n(:, imax) = du1_n(:, imax) + g%lu1(imax, ndl)*du1_n(:, imax - ic)
                 end if
                 call check(u, du1_a, du1_n, 'partial.dat')
 

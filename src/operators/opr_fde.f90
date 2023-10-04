@@ -36,6 +36,76 @@ module OPR_FDE
 
 contains
 !########################################################################
+!# Solving finite difference equations of the form
+!#     u'_i + \lamba u_i = f_i  N-1 eqns
+!#     u_1 or u_N given         1   eqn
+!#     Au' = Bu                 N   eqns
+!# See FDM_Int1_Initialize
+!########################################################################
+! TO BE FINISHED
+    subroutine OPR_Integrate1(g, f, result, ibc) !, bcs)
+        use TLAB_CONSTANTS, only: BCS_MIN, BCS_MAX, BCS_BOTH
+        use TLAB_TYPES, only: grid_dt
+        use TLAB_ARRAYS, only: wrk2d
+        use FDM_PROCS
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: f(:, :)
+        real(wp), intent(out) :: result(:, :)   ! contains bcs
+        integer, intent(in) :: ibc
+!        real(wp), intent(in) :: bcs(:)
+
+        integer(wi) :: idr, ndr, ic, len
+        real(wp), pointer :: lu_p(:, :) => null()
+
+        ! ###################################################################
+        len = size(f, 1)
+
+        select case (ibc)
+        case (BCS_MIN)
+            ! result(:, 1) = bcs(:)
+            result(:, g%size) = f(:, g%size)
+            lu_p => g%lhsi(:, 1:)
+        case (BCS_MAX)
+            result(:, 1) = f(:, 1)
+            ! result(:, g%size) = bcs(:)
+            lu_p => g%lhsi(:, 1 + g%nb_diag_1(2):)
+        end select
+
+        select case (g%nb_diag_1(1))
+        case (3)
+            call MatMul_3d(g%size, len, g%rhsi(:, 1), g%rhsi(:, 3), f, result, BCS_BOTH, rhs_b=g%rhsi_b(1:3, 0:3), rhs_t=g%rhsi_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
+        case (5)
+        end select
+
+        select case (g%nb_diag_1(2))
+        case (3)
+            call TRIDSS(g%size - 2, len, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), result(:, 2:))
+        case (5)
+            call PENTADSS(g%size - 2, len, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), lu_p(2:, 4), lu_p(2:, 5), result(:, 2:))
+        end select
+
+        idr = g%nb_diag_1(2)/2 + 1
+        ndr = g%nb_diag_1(2)
+
+        if (any([BCS_MAX] == ibc)) then
+            result(:, 1) = wrk2d(:, 1)
+            do ic = 1, idr - 1
+                result(:, 1) = result(:, 1) + lu_p(1, idr + ic)*result(:, 1 + ic)
+            end do
+            result(:, 1) = result(:, 1) + lu_p(1, 1)*result(:, 1 + ic)
+        end if
+        if (any([BCS_MIN] == ibc)) then
+            result(:, g%size) = wrk2d(:, 2)
+            do ic = 1, idr - 1
+                result(:, g%size) = result(:, g%size) + lu_p(g%size, idr - ic)*result(:, g%size - ic)
+            end do
+            result(:, g%size) = result(:, g%size) + lu_p(g%size, ndr)*result(:, g%size - ic)
+        end if
+
+        return
+    end subroutine OPR_Integrate1
+
+!########################################################################
 !Dirichlet/Neumann boundary conditions at imin/imax
 !########################################################################
     subroutine FDE_BVP_SINGULAR_DN(imode_fdm, imax, jkmax, dx, u, f, bcs, tmp1, wrk1d)
@@ -438,7 +508,7 @@ contains
         ep => wrk1d(:, 9)
         em => wrk1d(:, 10)
 
-        lambda = SQRT(cst)
+        lambda = sqrt(cst)
 
 ! #######################################################################
 ! -----------------------------------------------------------------------
@@ -602,7 +672,7 @@ contains
         ep => wrk1d(:, 9)
         em => wrk1d(:, 10)
 
-        lambda = SQRT(cst)
+        lambda = sqrt(cst)
 
 ! #######################################################################
 ! -----------------------------------------------------------------------

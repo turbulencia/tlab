@@ -126,17 +126,17 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
 ! first-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
+    g%lhs1 => x(:, ig:)
+    ig = ig + 5
     g%rhs1 => x(:, ig:)
     ig = ig + 7
-    g%lu1 => x(:, ig:)
 
     select case (g%mode_fdm1)
-
     case (FDM_COM4_JACOBIAN)
-        call FDM_C1N4_Jacobian(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+        call FDM_C1N4_Jacobian(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C1N6_Jacobian(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+        call FDM_C1N6_Jacobian(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6_Jacobian_Penta(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
@@ -148,6 +148,10 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     end select
 
     ! -------------------------------------------------------------------
+    ! LU decomposition and wave numbers
+    g%lu1 => x(:, ig:)
+
+    g%lu1(:, 1:g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
     if (g%periodic) then
         select case (g%nb_diag_1(1))
         case (3)
@@ -226,39 +230,44 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
+    g%lhs2 => x(:, ig:)
+    ig = ig + 5
     g%rhs2 => x(:, ig:)
     ig = ig + 7 + 5
-    g%lu2 => x(:, ig:)
 
     select case (g%mode_fdm2)
 
     case (FDM_COM4_JACOBIAN)
-        call FDM_C2N4_Jacobian(nx, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
+        call FDM_C2N4_Jacobian(nx, g%jac, g%lhs2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_JACOBIAN)
-        call FDM_C2N6_Jacobian(nx, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
+        call FDM_C2N6_Jacobian(nx, g%jac, g%lhs2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_JACOBIAN_HYPER)
-        call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lu2, g%rhs2, g%nb_diag_2, coef, g%periodic)
+        call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lhs2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
     case (FDM_COM6_DIRECT)
-        call FDM_C2N6_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
+        call FDM_C2N6_Direct(nx, x, g%lhs2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
 
     case (FDM_COM4_DIRECT)
-        call FDM_C2N4_Direct(nx, x, g%lu2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
+        call FDM_C2N4_Direct(nx, x, g%lhs2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
 
     end select
 
     ! -------------------------------------------------------------------
+    ! LU decomposition and wave numbers
+    g%lu2 => x(:, ig:)
+
+    g%lu2(:, 1:g%nb_diag_2(1)) = g%lhs2(:, 1:g%nb_diag_2(1))   
     if (g%periodic) then
         select case (g%nb_diag_2(1))
         case (3)
             call TRIDPFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3), g%lu2(1, 4), g%lu2(1, 5))
         end select
-        ig = ig + 5
+        ig = ig + g%nb_diag_2(1) + 2
 
         ! -------------------------------------------------------------------
         ! modified wavenumbers
@@ -272,15 +281,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         ig = ig + 1
 
         ! -------------------------------------------------------------------
-    else                            ! biased, 4 different BCs
-        do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
-            ip = i*3
-
-            g%lu2(:, ip + 1:ip + g%nb_diag_2(1)) = g%lu2(:, 1:g%nb_diag_2(1))
-            call TRIDFS(nx, g%lu2(1, ip + 1), g%lu2(1, ip + 2), g%lu2(1, ip + 3))
-            ig = ig + 3
-
-        end do
+    else
+        select case (g%nb_diag_2(1))
+        case (3)
+            call TRIDFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+        end select
+        ig = ig + g%nb_diag_2(1)
 
     end if
 

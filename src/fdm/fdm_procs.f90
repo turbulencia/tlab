@@ -214,17 +214,37 @@ contains
 
 ! #######################################################################
 ! #######################################################################
+! Matrix multiplication of n-diagonal matrix with a vector with special boundary conditions.
+! The boundary conditions can extend over n/2+2 points
+! This allows use to handle systems A y = B x in which A amd B differ by up to 2 diagonals (see notes)
+
+    ! #######################################################################
     ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
-    ! Boundary conditions restricted to (3/2+1)+1=3 points (projecttion from pentadiagonal system)
-    subroutine MatMul_3d(nx, len, r1, r3, u, f, rhs_b, rhs_t)
+    ! Special boundary conditions restricted to 3 points:
+    ! r_11 r_12 r_13
+    !      r_21 r_22 r_23
+    !      r_30 r_31 r_32 r_33
+    !                r_41  1.  r_43         <- interior points start here
+    !                     ...  ...  ...
+    subroutine MatMul_3d(nx, len, r1, r3, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
         integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
         real(wp), intent(in) :: r1(nx), r3(nx)   ! RHS diagonals (#=3-1 because center diagonal is 1)
         real(wp), intent(in) :: u(len, nx)       ! function u
         real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
-        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)  ! Special bcs at bottom and top
+        integer, optional :: ibc
+        real(wp), intent(in), optional :: rhs_b(1:3, 0:3), rhs_t(0:2, 1:4)  ! Special bcs at bottom and top
+        real(wp), optional :: bcs_b(len), bcs_t(len)
 
         ! -------------------------------------------------------------------
         integer(wi) n
+        integer ibc_loc
+
+        ! -------------------------------------------------------------------
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_NONE
+        end if
 
 #define r0_b(j) rhs_b(j,0)
 #define r1_b(j) rhs_b(j,1)
@@ -237,8 +257,9 @@ contains
 #define r4_t(j) rhs_t(j,4)
 
         ! -------------------------------------------------------------------
-        ! Boundary; the first 3/2+1=2 rows might be different
-        if (present(rhs_b)) then
+        ! Boundary; the first 3/2+1+1=3 rows might be different
+        if (any([BCS_MIN, BCS_BOTH] == ibc_loc)) then
+            if (present(bcs_b)) bcs_b(:) = f(:, 1)*r2_b(1) + u(:, 2)*r3_b(1) + u(:, 3)*r1_b(1) ! r1(1) contains extended stencil
             ! f(1) contains the boundary condition
             f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
             f(:, 3) = f(:, 1)*r0_b(3) + u(:, 2)*r1_b(3) + u(:, 3)*r2_b(3) + u(:, 4)*r3_b(3)
@@ -255,17 +276,19 @@ contains
         end do
 
         ! -------------------------------------------------------------------
-        ! Boundary; the last 3/2+1=2 rows might be different
-        if (present(rhs_t)) then
+        ! Boundary; the last 3/2+1+1=3 rows might be different
+        if (any([BCS_MAX, BCS_BOTH] == ibc_loc)) then
             ! f(nx) contains the boundary condition
-            f(:, nx - 2) = u(:, nx - 3)*r1_t(0) + u(:, nx - 2)*r2_t(0) + f(:, nx - 1)*r3_t(0) + f(:, nx)*r4_t(0)
+            f(:, nx - 2) = u(:, nx - 3)*r1_t(0) + u(:, nx - 2)*r2_t(0) + u(:, nx - 1)*r3_t(0) + f(:, nx)*r4_t(0)
             f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
+            if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) + u(:, nx - 1)*r1_t(2) + f(:, nx)*r2_t(2) ! r3(nx) contains extended stencil
         else
             f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r3(nx - 2)
             f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1) + u(:, nx)*r3(nx - 1)
             f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx) ! r3(nx) contains extended stencil
         end if
 
+#undef r0_b
 #undef r1_b
 #undef r2_b
 #undef r3_b
@@ -273,6 +296,7 @@ contains
 #undef r1_t
 #undef r2_t
 #undef r3_t
+#undef r4_t
 
         return
     end subroutine MatMul_3d
@@ -897,7 +921,8 @@ contains
     subroutine FDM_Bcs_Reduce(ibc, lhs, rhs, rhs_b, rhs_t)
         integer, intent(in) :: ibc
         real(wp), intent(inout) :: lhs(:, :)
-        real(wp), intent(inout), optional :: rhs(:, :), rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(in), optional :: rhs(:, :)
+        real(wp), intent(inout), optional :: rhs_b(:, 0:), rhs_t(0:, :)
 
         integer(wi) idl, ndl, idr, ndr, ir, ic, nx, nx_t
         real(wp) dummy
@@ -926,12 +951,12 @@ contains
 
             ! reduced array B^R_{22}
             if (present(rhs_b)) then
-                if (size(rhs_b, 1) < max(idl, idr) .or. size(rhs_b, 2) < max(ndl, ndr)) then
+                if (size(rhs_b, 1) < max(idl, idr + 1) .or. size(rhs_b, 2) < max(ndl, ndr)) then
                     call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_b array is too small.')
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 end if
 
-                rhs_b(1:idr, 1:ndr) = rhs(1:idr, 1:ndr)
+                rhs_b(1:max(idl, idr + 1), 1:ndr) = rhs(1:max(idl, idr + 1), 1:ndr)
 
                 rhs_b(1, 1:ndr) = rhs(1, 1:ndr)*dummy
                 do ir = 1, idl - 1              ! rows
@@ -960,12 +985,12 @@ contains
 
             ! reduced array B^R_{11}
             if (present(rhs_t)) then
-                if (size(rhs_t, 1) < max(idl, idr) .or. size(rhs_t, 2) < max(ndl, ndr)) then
+                if (size(rhs_t, 1) < max(idl, idr + 1) .or. size(rhs_t, 2) < max(ndl, ndr)) then
                     call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_t array is too small.')
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 end if
 
-                rhs_t(1:nx_t, 1:ndr) = rhs(nx - idr + 1:nx, 1:ndr)
+                rhs_t(nx_t - max(idl, idr + 1) + 1:nx_t, 1:ndr) = rhs(nx - max(idl, idr + 1) + 1:nx, 1:ndr)
 
                 rhs_t(nx_t, 1:ndr) = rhs(nx, 1:ndr)*dummy
                 do ir = 1, idl - 1              ! rows

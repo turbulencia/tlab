@@ -174,8 +174,6 @@ contains
         integer(wi), intent(in) :: dims(:)
         character(len=*), intent(in) :: s
 
-        integer id
-
         !#####################################################################
         if (any(dims <= 0)) return
         call TLAB_ALLOCATE_LOG(lfile,dims,s)
@@ -205,8 +203,6 @@ contains
         integer(wi), intent(in) :: dims(:)
         character(len=*), intent(in) :: s
 
-        integer id
-
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile,dims,s)
         select rank (a)
@@ -229,8 +225,6 @@ contains
         integer(wi), intent(in) :: dims(:)
         character(len=*), intent(in) :: s
 
-        integer id
-
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile,dims,s) 
         select rank (a)
@@ -252,8 +246,6 @@ contains
         integer(longi), allocatable, intent(inout) :: a(..)
         integer(wi), intent(in) :: dims(:)
         character(len=*), intent(in) :: s
-
-        integer id
 
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile,dims,s)

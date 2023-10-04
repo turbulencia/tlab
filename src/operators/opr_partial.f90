@@ -172,6 +172,7 @@ contains
 ! ###################################################################################
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
+        ! bcs(*, 2) are not used, need to be updated
         use TLAB_ARRAYS, only: wrk2d
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
@@ -203,12 +204,7 @@ contains
                 lu2_p => g%lu2d(:, is*3 + 1:)       ! non-periodic; including diffusivity/viscosity
             end if
         else
-            if (g%periodic) then
-                lu2_p => g%lu2(:, 1:)               ! periodic;     plain derivative
-            else
-                ip = (bcs(1, 2) + bcs(2, 2)*2)*3    ! non-periodic; plain derivative
-                lu2_p => g%lu2(:, ip + 1:)
-            end if
+            lu2_p => g%lu2(:, 1:)
         end if
 
         ! ###################################################################
