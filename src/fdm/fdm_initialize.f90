@@ -19,7 +19,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     type(grid_dt), intent(inout) :: g
     real(wp), intent(inout) :: x(g%size, g%inb_grid)
-    real(wp), intent(inout) :: wrk1d(g%size, 10)
+    real(wp), intent(inout) :: wrk1d(g%size, 12)
 
     target x
 
@@ -68,11 +68,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
-    case (FDM_COM6_JACOBIAN_PENTA)      ! to be updated
-        call FDM_C1N6M_COEFF()
-        call FDM_C1N6M_LHS(nx, i0, i0, g%jac, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-        g%nb_diag_1 = [5, 7]
-        call FDM_C1N6M_RHS(nx, i1, i0, i0, x, g%jac(1, 1))
+    case (FDM_COM6_JACOBIAN_PENTA)
+        call FDM_C1N6_Jacobian_Penta(nx, g%jac, wrk1d(:, 1), wrk1d(:, 6), g%nb_diag_1, coef)
+        ! call MatMul_7d_antisym(nx, 1, wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), wrk1d(:, 11), wrk1d(:, 12), x, g%jac(:, 1), periodic=.false.) ! missing
 
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
@@ -140,10 +138,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     case (FDM_COM6_JACOBIAN)
         call FDM_C1N6_Jacobian(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
-    case (FDM_COM6_JACOBIAN_PENTA)      ! to be updated
-        call FDM_C1N6MP_LHS(nx, g%jac, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
-        coef = [C1N6M_ALPHA2, C1N6M_BETA2, C1N6M_A, C1N6M_BD2, C1N6M_CD3]/2.0_wp
-        g%nb_diag_1 = [5, 7]
+    case (FDM_COM6_JACOBIAN_PENTA)
+        call FDM_C1N6_Jacobian_Penta(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
@@ -195,7 +191,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         end if
 
-        ! Final calculations because it is mainly used iSn the Poisson solver like this
+        ! final calculations because it is mainly used in the Poisson solver like this
         g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2
 
         ig = ig + 1

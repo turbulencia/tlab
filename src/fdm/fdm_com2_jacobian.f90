@@ -15,7 +15,7 @@
 !#   = b_1 f_1 + b_2 f_2 + b_3 f_3 + b_4 f_4
 !#
 !# a_1 f''_2 + f''_3 + a_2 f''_4 =
-!#   = b_1 f_1 + b_2 f_2 + b_3 f_3 + b_4 f_4+  b_5 f_5 + b_6 f_6
+!#   = b_1 f_1 + b_2 f_2 + b_3 f_3 + b_4 f_4 + b_5 f_5 + b_6 f_6
 !#
 !# The stencil in the rhs at the boundary can have 1 more point, which is stored in r11
 !#
