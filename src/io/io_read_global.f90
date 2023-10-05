@@ -848,7 +848,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end do
 
     if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] == FDM_COM6_JACOBIAN_PENTA)) then ! CFL_max depends on max[g%mwn1(:)]
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on C1N6M_ALPHA, C1N6M_BETA values.')
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
     if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then

@@ -150,30 +150,13 @@ contains
         ! (JCP Lele 1992, Eq. 2.1.7 with alpha=1/3). Value of beta is derived 
         ! with table 1 (2.1.7 = 2.1.10). Largest stable value with alpha=0.56. 
         ! (Simulations are unstable for larger alpha values!)
+        ! (values of alpha and beta can be changed, according to Lele...)
         ! -------------------------------------------------------------------
         coef(1) = 0.56_wp                                                                        ! a_1 
         coef(2) = (2.0_wp/5.0_wp)*(-1.0_wp/3.0_wp + coef(1))                                     ! a_2
         coef(3) = (1.0_wp/2.0_wp)*(1.0_wp/6.0_wp )*( 9.0_wp +         coef(1) - 20.0_wp*coef(2)) ! b_1
         coef(4) = (1.0_wp/4.0_wp)*(1.0_wp/15.0_wp)*(-9.0_wp + 32.0_wp*coef(1) + 62.0_wp*coef(2)) ! b_2
         coef(5) = (1.0_wp/6.0_wp)*(1.0_wp/10.0_wp)*( 1.0_wp - 3.0_wp *coef(1) + 12.0_wp*coef(2)) ! b_3
-
-        ! -------------------------------------------------------------------
-        ! 10th-order scheme (not stable in current implementation)
-        ! -------------------------------------------------------------------
-        ! coef(1) = 1.0_wp/2.0_wp
-        ! coef(2) = 1.0_wp/20.0_wp 
-        ! coef(3) = (1.0_wp/2.0_wp)*(17.0_wp/12.0_wp)
-        ! coef(4) = (1.0_wp/4.0_wp)*(101.0_wp/150.0_wp)
-        ! coef(5) = (1.0_wp/6.0_wp)*(1.0_wp/100.0_wp)
-
-        ! -------------------------------------------------------------------
-        ! Insert here own values for alpha, beta, a,b,c
-        ! -------------------------------------------------------------------
-        ! coef(1) = 
-        ! coef(2) =  
-        ! coef(3) =  
-        ! coef(4) = 
-        ! coef(5) = 
 
         if (periodic_loc) then
             call Create_System_1der(dx, lhs, rhs, coef)

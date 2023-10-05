@@ -273,7 +273,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         ! modified wavenumbers
         g%mwn2 => x(:, ig)
 
-  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+        g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                     /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
         g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver

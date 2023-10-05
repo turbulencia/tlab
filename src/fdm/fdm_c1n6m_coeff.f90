@@ -11,7 +11,7 @@
 !# DESCRIPTION
 !# 
 !# Coefficients of pentadiagonal 6th-order scheme for 1st derivative.
-!# Define own values of alpha, beta, a,b,c here (c.f. Lele 1992).
+!# WARNING: duplicated code, cf. coeff in FDM_C1N6_Jacobian_Penta!
 !# 
 !########################################################################
 !# ARGUMENTS 
@@ -33,9 +33,10 @@ SUBROUTINE FDM_C1N6M_COEFF()
 ! -------------------------------------------------------------------
 ! Pentadiagonal 6th-order scheme (JCP Lele 1992, Eq. 2.1.10) with 
 ! similar truncation error as 6th-order tridiagonal scheme
-! (JCP Lele 1992, Eq. 2.1.7) with alpha=1/3. Here, largest possible 
-! alpha-value with alpha=0.56. 
+! (JCP Lele 1992, Eq. 2.1.7 with alpha=1/3). Value of beta is derived 
+! with table 1 (2.1.7 = 2.1.10). Largest stable value with alpha=0.56. 
 ! (Simulations are unstable for larger alpha values!)
+! (values of alpha and beta can be changed, according to Lele...)
 ! -------------------------------------------------------------------
   C1N6M_ALPHA  = C_56_R/C_100_R
   C1N6M_BETA   = (C_2_R/C_5_R )*(-C_1_R/C_3_R +        C1N6M_ALPHA                    )
@@ -43,26 +44,7 @@ SUBROUTINE FDM_C1N6M_COEFF()
   C1N6M_B      = (C_1_R/C_15_R)*(-C_9_R       + C_32_R*C1N6M_ALPHA + C_62_R*C1N6M_BETA)
   C1N6M_C      = (C_1_R/C_10_R)*( C_1_R       - C_3_R *C1N6M_ALPHA + C_12_R*C1N6M_BETA)
 
-! -------------------------------------------------------------------
-! 10th-order scheme (not stable in current implementation)
-! -------------------------------------------------------------------
-  ! C1N6M_ALPHA  = C_1_R/C_2_R
-  ! C1N6M_BETA   = C_1_R   / C_20_R 
-  ! C1N6M_A      = C_17_R  / C_12_R 
-  ! C1N6M_B      = C_101_R / C_150_R
-  ! C1N6M_C      = C_1_R   / C_100_R
-
-! -------------------------------------------------------------------
-! Insert here own values for alpha, beta, a,b,c
-! -------------------------------------------------------------------
-  ! C1N6M_ALPHA  = 
-  ! C1N6M_BETA   = 
-  ! C1N6M_A      = 
-  ! C1N6M_B      = 
-  ! C1N6M_C      = 
-
 ! #######################################################################
-
   C1N6M_AD2    = C1N6M_A / C_2_R 
   C1N6M_BD4    = C1N6M_B / C_4_R
   C1N6M_CD6    = C1N6M_C / C_6_R
