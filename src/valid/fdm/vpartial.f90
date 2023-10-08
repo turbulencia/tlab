@@ -80,8 +80,6 @@ program VPARTIAL
     ! g%mode_fdm1 = FDM_COM6_DIRECT
     g%mode_fdm2 = g%mode_fdm1
 
-    ! if (g%mode_fdm1 == FDM_COM6_JACOBIAN) C1N6M_ALPHA = 0.56_wp
-
 !  ###################################################################
 
     if (g%periodic) then
@@ -156,27 +154,36 @@ program VPARTIAL
 
         ! Jacobian based
         print *, '1. order, Jacobian 4'
-        call FDM_C1N4_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+        call FDM_C1N4_Jacobian(g%size, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
         call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
-        call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic)
+        call MatMul_3d_antisym(g%size, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic)
         call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
         call check(u, du1_a, du1_n, 'partial.dat')
 
         print *, '1. order, Jacobian 6'
-        call FDM_C1N6_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+        call FDM_C1N6_Jacobian(g%size, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
         call TRIDFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3))
-        call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic)
+        call MatMul_5d_antisym(g%size, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic)
         call TRIDSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), du1_n)
         ! call TRIDPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
-        ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk3d)
+        ! call TRIDPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n, wrk2d)
+        call check(u, du1_a, du1_n, 'partial.dat')
+
+        print *, '1. order, Jacobian 6 Penta'
+        call FDM_C1N6_Jacobian_Penta(g%size, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+        call PENTADFS2(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5))
+     call MatMul_7d_antisym(g%size, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic)
+        call PENTADSS2(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), du1_n)
+        ! call PENTADPFS(g%size, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), g%lu1(:, 6), g%lu1(:, 7))
+        ! call PENTADPSS(g%size, len, g%lu1(:, 1), g%lu1(:, 2), g%lu1(:, 3), g%lu1(:, 4), g%lu1(:, 5), g%lu1(:, 6), g%lu1(:, 7), du1_n)
         call check(u, du1_a, du1_n, 'partial.dat')
 
         ! Direct metrics
 
         ! -------------------------------------------------------------------
         !   Testing the reduction routines
-        fdm_cases(1:2) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN]
-        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
+        fdm_cases(1:3) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']; fdm_names(3) = '1. order, Jacobian 6 Penta'
         bcs_cases(1:3) = [BCS_MIN, BCS_MAX, BCS_BOTH]
         do ip = 1, 3
             ibc = bcs_cases(ip)
@@ -192,7 +199,7 @@ program VPARTIAL
             end if
             nsize = nmax - nmin + 1
 
-            do im = 1, 2
+            do im = 1, 3
                 g%mode_fdm1 = fdm_cases(im)
                 print *, fdm_names(im)
 
@@ -202,6 +209,9 @@ program VPARTIAL
 
                 case (FDM_COM6_JACOBIAN)
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+
+                case (FDM_COM6_JACOBIAN_PENTA)
+                    call FDM_C1N6_Jacobian_Penta(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 end select
                 ndl = g%nb_diag_1(1)
@@ -217,6 +227,7 @@ program VPARTIAL
                 case (3)
                     call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
                 case (5)
+                    call PENTADFS2(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5))
                 end select
 
                 du1_n(:, 1) = u(:, 1)           ! boundary condition
@@ -228,12 +239,16 @@ program VPARTIAL
                 case (5)
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
+                case (7)
+                    call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
+                                           ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(1))
                 case (3)
                     call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
                 case (5)
+                    call PENTADSS2(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5), du1_n(:, nmin:nmax))
                 end select
 
                 if (any([BCS_MIN, BCS_BOTH] == ibc)) then
@@ -260,8 +275,8 @@ program VPARTIAL
 ! Boundary conditions
 ! ###################################################################
     case (2)
-        fdm_cases(1:2) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN]
-        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
+        fdm_cases(1:3) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']; fdm_names(3) = '1. order, Jacobian 6 Penta'
         bcs_cases(1:4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
         do ip = 1, 4
             ibc = bcs_cases(ip)
@@ -280,7 +295,7 @@ program VPARTIAL
             du1_n(:, 1) = du1_a(:, 1)
             du1_n(:, imax) = du1_a(:, imax)
 
-            do im = 1, 2
+            do im = 1, 3
                 g%mode_fdm1 = fdm_cases(im)
                 print *, fdm_names(im)
 
@@ -290,6 +305,9 @@ program VPARTIAL
 
                 case (FDM_COM6_JACOBIAN)
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+
+                case (FDM_COM6_JACOBIAN_PENTA)
+                    call FDM_C1N6_Jacobian_Penta(imax, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 end select
                 idl = g%nb_diag_1(1)/2 + 1
@@ -301,6 +319,7 @@ program VPARTIAL
                 case (3)
                     call TRIDFS(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3))
                 case (5)
+                    call PENTADFS2(nsize, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5))
                 end select
 
                 select case (g%nb_diag_1(2))
@@ -310,12 +329,16 @@ program VPARTIAL
                 case (5)
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
+                case (7)
+                    call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
+                                           ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(1))
                 case (3)
                     call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
                 case (5)
+                    call PENTADSS2(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5), du1_n(:, nmin:nmax))
                 end select
 
                 call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
@@ -374,7 +397,7 @@ program VPARTIAL
                 call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
 
             case (7)
-call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
+          call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
 
             end select
 

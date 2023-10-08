@@ -66,11 +66,14 @@ contains
 
         select case (g%nb_diag_1(2))
         case (3)
-            ! call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, ibc)
-            call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+            call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, &
+                                   g%periodic, ibc, g%rhs1_b, g%rhs1_t)
         case (5)
-            ! call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, ibc)
-            call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+            call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, &
+                                   g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+        case (7)
+            call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, result, &
+                                   g%periodic, ibc, g%rhs1_b, g%rhs1_t)
         end select
 
         if (g%periodic) then
@@ -78,18 +81,15 @@ contains
             case (3)
                 call TRIDPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), result, wrk2d)
             case (5)
-                call PENTADPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), &
-                               g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7), result)
+                call PENTADPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7), result)
             end select
 
         else
             select case (g%nb_diag_1(1))
             case (3)
-                ! call TRIDSS(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), result)
-                call TRIDSS(nsize, nlines, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), result(:, nmin:nmax))
+                call TRIDSS(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), result(:, nmin:))
             case (5)
-                ! call PENTADSS2(g%size, nlines, g%lu1(1, ip + 1), g%lu1(1, ip + 2), g%lu1(1, ip + 3), g%lu1(1, ip + 4), g%lu1(1, ip + 5), result)
-              call PENTADSS2(nsize, nlines, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5), result(:, nmin:nmax))
+                call PENTADSS2(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5), result(:, nmin:))
             end select
 
         end if
@@ -216,7 +216,7 @@ contains
             case (5)
                 call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
             case (7)
-                call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
+     call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
             end select
             if (g%need_1der) then
                 ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du

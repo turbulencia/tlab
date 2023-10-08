@@ -141,8 +141,8 @@ program VINTEGRAL
 ! ###################################################################
     select case (test_type)
     case (1)
-        fdm_cases(1:2) = [FDM_COM6_JACOBIAN, FDM_COM4_JACOBIAN]
-        fdm_names(1:2) = ['1. order, Jacobian 6', '1. order, Jacobian 4']
+        fdm_cases(1:3) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']; fdm_names(3) = '1. order, Jacobian 6 Penta'
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
@@ -152,7 +152,7 @@ program VINTEGRAL
             ibc = bcs_cases(ip)
             print *, new_line('a'), 'Bcs case ', ibc
 
-            do im = 1, 2
+            do im = 1, 3
                 g%mode_fdm1 = fdm_cases(im)
                 print *, fdm_names(im)
 
@@ -162,6 +162,9 @@ program VINTEGRAL
 
                 case (FDM_COM6_JACOBIAN)
                     call FDM_C1N6_Jacobian(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+
+                case (FDM_COM6_JACOBIAN_PENTA)
+                    call FDM_C1N6_Jacobian_Penta(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
                 end select
                 ! idl = g%nb_diag_1(1)/2 + 1
@@ -174,9 +177,11 @@ program VINTEGRAL
                 ! LU decomposition
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call TRIDFS(imax-2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3))
+                    call TRIDFS(imax - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3))
                 case (5)
-                    call PENTADFS(imax-2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
+                    call PENTADFS(imax - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
+                case (7)
+                    call HEPTADFS(imax - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), lhs_int(2:, 6), lhs_int(2:, 7))
                 end select
 
                 ! Particular solution
@@ -193,13 +198,16 @@ program VINTEGRAL
                 case (3)
                     call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, BCS_BOTH, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
                 case (5)
+                    call MatMul_5d(imax, len, rhs_int(:, 1), rhs_int(:, 2), rhs_int(:, 4), rhs_int(:, 5), f, w_n, BCS_BOTH, rhs_b=rhsi_b(1:4, 0:5), rhs_t=rhsi_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call TRIDSS(imax-2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), w_n(:, 2:))
+                    call TRIDSS(imax - 2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), w_n(:, 2:))
                 case (5)
-                    call PENTADSS(imax-2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), w_n(:, 2:))
+                    call PENTADSS(imax - 2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), w_n(:, 2:))
+                case (7)
+                    call HEPTADSS(imax - 2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), lhs_int(2:, 6), lhs_int(2:, 7), w_n(:, 2:))
                 end select
 
                 if (any([BCS_MAX] == ibc)) then

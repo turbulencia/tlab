@@ -43,18 +43,18 @@ SUBROUTINE HEPTADFS(nmax, a,b,c,d,e,f,g)
   f(1) = f(1)/d(1)
   e(1) = e(1)/d(1)
   c(1) = C_1_R/d(1) ! padding, and used in heptadss to normalize 1st eqn.
-  b(1) = C_1_R      ! padding
-  a(1) = C_1_R      ! padding
+!   b(1) = C_1_R      ! padding
+!   a(1) = C_1_R      ! padding
   d(1) = C_1_R
 
-  a(2) = C_1_R ! padding
-  b(2) = C_1_R ! padding
+!   a(2) = C_1_R ! padding
+!   b(2) = C_1_R ! padding
   c(2) = c(2)/d(1)
   d(2) = d(2) - c(2)*e(1)
   e(2) = e(2) - c(2)*f(1)
   f(2) = f(2) - c(2)*g(1)
 
-  a(3) = C_1_R ! padding
+!   a(3) = C_1_R ! padding
   b(3) = b(3)                         /d(1)
   c(3) =(c(3)             - b(3)*e(1))/d(2)
   d(3) = d(3) - c(3)*e(2) - b(3)*f(1)
@@ -69,7 +69,7 @@ SUBROUTINE HEPTADFS(nmax, a,b,c,d,e,f,g)
      e(n) = e(n) - c(n)*f(n-1) - b(n)*g(n-2)
      f(n) = f(n) - c(n)*g(n-1)
   ENDDO
-  g(n-1) = C_1_R ! padding
+!   g(n-1) = C_1_R ! padding
 
   n = nmax-1
   a(n) = a(n)                                           /d(n-3)
@@ -77,17 +77,17 @@ SUBROUTINE HEPTADFS(nmax, a,b,c,d,e,f,g)
   c(n) =(c(n)               - b(n)*e(n-2) - a(n)*f(n-3))/d(n-1)
   d(n) = d(n) - c(n)*e(n-1) - b(n)*f(n-2) - a(n)*g(n-3)
   e(n) = e(n) - c(n)*f(n-1) - b(n)*g(n-2)
-  f(n) = C_1_R ! padding
-  g(n) = C_1_R ! padding
+!   f(n) = C_1_R ! padding
+!   g(n) = C_1_R ! padding
 
   n = nmax
   a(n) = a(n)                                           /d(n-3)
   b(n) =(b(n)                             - a(n)*e(n-3))/d(n-2)
   c(n) =(c(n)               - b(n)*e(n-2) - a(n)*f(n-3))/d(n-1)
   d(n) = d(n) - c(n)*e(n-1) - b(n)*f(n-2) - a(n)*g(n-3)
-  e(n) = C_1_R ! padding
-  f(n) = C_1_R ! padding
-  g(n) = C_1_R ! padding
+!   e(n) = C_1_R ! padding
+!   f(n) = C_1_R ! padding
+!   g(n) = C_1_R ! padding
 
   RETURN
 END SUBROUTINE HEPTADFS

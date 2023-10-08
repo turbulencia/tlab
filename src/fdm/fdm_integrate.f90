@@ -96,6 +96,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! new lhs diagonals (array C = B + h \lambda A), dependent on lambda
+        lhs_int(:,:) = 0.0_wp
         lhs_int(:, 1:ndr) = rhs(:, 1:ndr)
 
         lhs_int(:, idr) = lhs_int(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
