@@ -107,7 +107,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     end select
 
-    select case (g%nb_diag_1(1))
+    select case (g%nb_diag_2(1))
     case (3)
         call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
@@ -139,7 +139,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call FDM_C1N6_Jacobian(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM6_JACOBIAN_PENTA)
-        call FDM_C1N6_Jacobian_Penta(nx, g%jac, g%lu1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+        call FDM_C1N6_Jacobian_Penta(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
