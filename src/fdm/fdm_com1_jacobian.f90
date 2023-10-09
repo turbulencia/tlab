@@ -153,11 +153,11 @@ contains
         ! (Simulations are unstable for larger alpha values!)
         ! (values of alpha and beta can be changed, according to Lele...)
         ! -------------------------------------------------------------------
-        coef(1) = 0.56_wp                                                                           ! a_1
-        coef(2) = (2.0_wp/5.0_wp)*(-1.0_wp/3.0_wp + coef(1))                                        ! a_2
-        coef(3) = (1.0_wp/2.0_wp)*(1.0_wp/6.0_wp)*(9.0_wp + coef(1) - 20.0_wp*coef(2))              ! b_1
-        coef(4) = (1.0_wp/4.0_wp)*(1.0_wp/15.0_wp)*(-9.0_wp + 32.0_wp*coef(1) + 62.0_wp*coef(2))    ! b_2
-        coef(5) = (1.0_wp/6.0_wp)*(1.0_wp/10.0_wp)*(1.0_wp - 3.0_wp*coef(1) + 12.0_wp*coef(2))      ! b_3
+        coef(1) = 0.56_wp                                                                      ! a_1
+        coef(2) = 0.4_wp*(-1.0_wp/3.0_wp + coef(1))                                            ! a_2
+        coef(3) = 0.5_wp*(1.0_wp/6.0_wp)*(9.0_wp + coef(1) - 20.0_wp*coef(2))                  ! b_1
+        coef(4) = 0.25_wp*(1.0_wp/15.0_wp)*(-9.0_wp + 32.0_wp*coef(1) + 62.0_wp*coef(2))       ! b_2
+        coef(5) = (1.0_wp/6.0_wp)*(1.0_wp/10.0_wp)*(1.0_wp - 3.0_wp*coef(1) + 12.0_wp*coef(2)) ! b_3
 
         if (periodic_loc) then
             call Create_System_1der(dx, lhs, rhs, coef)
