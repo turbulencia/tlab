@@ -76,7 +76,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
     call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
     call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacpenta6/CompactDirect6>')
+    call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
@@ -248,7 +248,7 @@ subroutine IO_READ_GLOBAL(inifile)
     if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm1 = FDM_COM4_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6hyper') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_HYPER; 
-    elseif (trim(adjustl(sRes)) == 'compactjacpenta6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_PENTA; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian6penta') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_PENTA; 
     elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%mode_fdm1 = FDM_COM4_DIRECT; 
     elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm1 = FDM_COM6_DIRECT; 
     else
@@ -848,7 +848,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end do
 
     if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] == FDM_COM6_JACOBIAN_PENTA)) then ! CFL_max depends on max[g%mwn1(:)]
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacpenta6 requires adjusted CFL-number depending on alpha and beta values.')
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
     if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
