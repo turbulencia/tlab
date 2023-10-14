@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 subroutine FDM_INITIALIZE(x, g, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, BCS_DN, BCS_ND, BCS_NN
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
@@ -14,6 +14,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
+    use FDM_Integrate
 
     implicit none
 
@@ -24,14 +25,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     target x
 
 ! -------------------------------------------------------------------
-    integer(wi) i, ip, is, ig, nx
-    integer(wi) nmin, nmax, nsize
+    integer(wi) i, ib, ip, is, ig, nx, ndl, ndr
+    integer(wi) nmin, nmax, nsize, bcs_cases(4)
     real(wp) dummy, coef(5)
 
     integer, parameter :: i0 = 0, i1 = 1
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'Entering SUBROUTINE FDM_INITIALIZE')
+    call TLAB_WRITE_ASCII(tfile, 'Entering '//__FILE__)
 #endif
 
 ! ###################################################################
@@ -59,7 +60,6 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%jac(:, 1) = 1.0_wp
 
     select case (g%mode_fdm1)
-
     case (FDM_COM4_JACOBIAN)
         call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_3d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), x, g%jac(:, 1), periodic=.false.)
@@ -70,7 +70,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6_Jacobian_Penta(nx, g%jac, wrk1d(:, 1), wrk1d(:, 6), g%nb_diag_1, coef)
-        call MatMul_7d_antisym(nx, 1, wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), wrk1d(:, 11), wrk1d(:, 12), x, g%jac(:, 1), periodic=.false.)
+   call MatMul_7d_antisym(nx, 1, wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), wrk1d(:, 11), wrk1d(:, 12), x, g%jac(:, 1), periodic=.false.)
 
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
@@ -92,19 +92,15 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%jac(:, 2) = 1.0_wp
 
     select case (g%mode_fdm2)
-
     case (FDM_COM4_JACOBIAN)
         call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
-
     case (FDM_COM6_JACOBIAN)
         call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
-
     case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
-
     end select
 
     select case (g%nb_diag_2(1))
@@ -124,7 +120,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 4
 
 ! ###################################################################
-! first-order derivative: LU factorization done in routine TRID*FS
+! first-order derivative
 ! ###################################################################
     g%lhs1 => x(:, ig:)
     ig = ig + 5
@@ -146,6 +142,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call TLAB_STOP(DNS_ERROR_OPTION)
 
     end select
+    ndl = g%nb_diag_1(1)    ! for readability
+    ndr = g%nb_diag_1(2)
 
     ! -------------------------------------------------------------------
     ! LU decomposition and wave numbers
@@ -202,23 +200,24 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
         ! -------------------------------------------------------------------
     else                            ! biased,  different BCs
-        do i = 3, 0, -1             ! not to overwrite the lu data with bcs corrections
-            ip = i*5
+        bcs_cases(1:4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
+        do ib = 1, 4
+            ip = (ib - 1)*5
 
-            g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lu1(:, 1:g%nb_diag_1(1))
+            g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
 
-            call FDM_Bcs_Neumann(i, g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
+            call FDM_Bcs_Neumann(bcs_cases(ib), g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
 
             nmin = 1; nmax = nx
-            if (any([BCS_ND, BCS_NN] == i)) nmin = nmin + 1
-            if (any([BCS_DN, BCS_NN] == i)) nmax = nmax - 1
+            if (any([BCS_ND, BCS_NN] == bcs_cases(ib))) nmin = nmin + 1
+            if (any([BCS_DN, BCS_NN] == bcs_cases(ib))) nmax = nmax - 1
             nsize = nmax - nmin + 1
 
             select case (g%nb_diag_1(1))
             case (3)
-                call TRIDFS(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3))
+                call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
             case (5)
-                call PENTADFS2(nsize, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5))
+                call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
             end select
 
             ig = ig + 5
@@ -226,6 +225,35 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         end do
 
     end if
+
+! ###################################################################
+! first-order integrals (cases lambda = 0.0_wp)
+! ###################################################################
+    g%lhsi => x(:, ig:)
+    ig = ig + 7*2
+    g%rhsi => x(:, ig:)
+    ig = ig + 5*2
+
+    bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+    do ib = 1, 2
+        ip = (ib - 1)*g%nb_diag_1(2)
+
+        call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
+                                 g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
+                                 g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
+        ! LU decomposition
+        select case (g%nb_diag_1(2))
+        case (3)
+            call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
+        case (5)
+            call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                          g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
+        case (7)
+            call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                          g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
+        end select
+
+    end do
 
 ! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS
@@ -261,7 +289,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ! LU decomposition and wave numbers
     g%lu2 => x(:, ig:)
 
-    g%lu2(:, 1:g%nb_diag_2(1)) = g%lhs2(:, 1:g%nb_diag_2(1))   
+    g%lu2(:, 1:g%nb_diag_2(1)) = g%lhs2(:, 1:g%nb_diag_2(1))
     if (g%periodic) then
         select case (g%nb_diag_2(1))
         case (3)
@@ -376,13 +404,13 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################
-    ! IF ( ig .NE. g%inb_grid ) THEN
-    !    CALL TLAB_WRITE_ASCII(efile, 'FDM_INITIALIZE. Grid size incorrect.')
-    !    CALL TLAB_STOP(DNS_ERROR_DIMGRID)
-    ! ENDIF
+    if (ig >= g%inb_grid) then
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Grid size incorrect.')
+        call TLAB_STOP(DNS_ERROR_DIMGRID)
+    end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'Leaving SUBOURINTE FDM_INITIALIZE')
+    call TLAB_WRITE_ASCII(tfile, 'Leaving '//__FILE__)
 #endif
 
     return

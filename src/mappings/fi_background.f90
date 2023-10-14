@@ -212,9 +212,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL
-    use FDM_Integrate
-    use FDM_Procs
-    use FDM_Com1_Jacobian
+    use OPR_FDE
 
     implicit none
 
@@ -225,12 +223,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     real(wp), dimension(g%size, *), intent(INOUT) :: wrk1d
 
     ! -------------------------------------------------------------------
-    integer(wi) iter, niter, j, jcenter, ic, idr, ndr
-    real(wp) dummy, pmax(1)
+    integer(wi) iter, niter, j, jcenter
+    real(wp) dummy
     integer, parameter :: i1 = 1
-
-    real(wp), allocatable :: lhs_int(:, :), rhs_int(:, :)
-    real(wp) :: rhsi_b(5, 0:7), rhsi_t(0:4, 8)
 
     ! ###################################################################
     ! Get the center
@@ -244,10 +239,6 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
 #define p_aux(i)        wrk1d(i,1)
 #define r_aux(i)        wrk1d(i,2)
-
-    allocate (lhs_int(g%size, 5), rhs_int(g%size, 3))
-    call FDM_Int1_Initialize(BCS_MIN, g%lhs1(:,1:g%nb_diag_1(1)), g%rhs1(:,1:g%nb_diag_1(2)), 0.0_wp, lhs_int, rhs_int, rhsi_b, rhsi_t)
-    call PENTADFS(g%size - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
 
     ! Setting the pressure entry to 1 to get 1/RT
     p_aux(:) = 1.0_wp
@@ -270,17 +261,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
         r_aux(:) = dummy*r_aux(:)
 
         p(1) = 0.0_wp
-        p(g%size) = r_aux(g%size)
-      call MatMul_3d(g%size, 1, rhs_int(:, 1), rhs_int(:, 3), r_aux(:), p(:), BCS_BOTH, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4), bcs_t=pmax(:))
-        call PENTADSS(g%size - 2, i1, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), p(2:))
-
-        ndr = g%nb_diag_1(2)
-        idr = g%nb_diag_1(2)/2 + 1
-        p(g%size) = pmax(1)
-        do ic = 1, idr - 1
-            p(g%size) = p(g%size) + lhs_int(g%size, idr - ic)*p(g%size - ic)
-        end do
-        p(g%size) = p(g%size) + lhs_int(g%size, ndr)*p(g%size - ic)
+        call OPR_Integral1(1, g, r_aux(:), p, BCS_MIN)
 
         ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
         p(:) = exp(p(:))
@@ -305,8 +286,6 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
 #undef p_aux
 #undef r_aux
-
-    deallocate (lhs_int, rhs_int)
 
     ! compute equilibrium values of T
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then

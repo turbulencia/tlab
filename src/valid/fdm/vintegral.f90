@@ -6,13 +6,14 @@ program VINTEGRAL
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, txc, x, wrk2d!, wrk3d
+    use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk2d!, wrk3d
     use FDM_ComX_Direct
     use FDM_Integrate
     use FDM_PROCS
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use OPR_PARTIAL
+    use OPR_FDE
 
     implicit none
 
@@ -22,17 +23,13 @@ program VINTEGRAL
 
     real(wp), dimension(:, :), pointer :: u, w_n, f
     real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
-    real(wp), dimension(:, :), pointer :: bcs
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5), wk, x_0!, dummy
-    integer(wi) :: test_type, ibc, ip, im, idr, ndr, ic
+    integer(wi) :: test_type, ibc, ib, ip, im, idr, ndr, ndl!, ic
 
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(3)
     character(len=32) :: fdm_names(3)
-
-    real(wp), dimension(:, :), allocatable :: lhs_int, rhs_int
-    real(wp) :: rhsi_b(5, 0:7), rhsi_t(0:4, 8)
 
 ! ###################################################################
 ! Initialize
@@ -44,7 +41,7 @@ program VINTEGRAL
     visc = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
-    g%inb_grid = 71
+    g%inb_grid = 99
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
@@ -68,15 +65,9 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
-    allocate (bcs(len, 2))
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
 
-    allocate (lhs_int(imax, 7), rhs_int(imax, 5))
-
     g%periodic = .false.
-    g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
-    if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) C1N6M_ALPHA = 0.56
-    g%mode_fdm2 = g%mode_fdm1
 
     wk = 1.0_wp ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
     write (*, *) 'Eigenvalue ?'
@@ -102,6 +93,9 @@ program VINTEGRAL
         g%scale = x(imax, 1) - x(1, 1)
     end if
 
+    ! to calculate the Jacobians
+    g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
+    g%mode_fdm2 = g%mode_fdm1
     call FDM_INITIALIZE(x, g, wrk1d)
 
     bcs_aux = 0
@@ -148,8 +142,8 @@ program VINTEGRAL
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
         f = du1_a + lambda*u
 
-        do ip = 1, 2
-            ibc = bcs_cases(ip)
+        do ib = 1, 2
+            ibc = bcs_cases(ib)
             print *, new_line('a'), 'Bcs case ', ibc
 
             do im = 1, 3
@@ -170,60 +164,34 @@ program VINTEGRAL
                 ! idl = g%nb_diag_1(1)/2 + 1
                 idr = g%nb_diag_1(2)/2 + 1
                 ndr = g%nb_diag_1(2)
-                ! ndl = g%nb_diag_1(1)
+                ndl = g%nb_diag_1(1)
 
-                call FDM_Int1_Initialize(ibc, g%lhs1(:, 1:g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), lambda, lhs_int, rhs_int, rhsi_b, rhsi_t)
+                ip = (ib - 1)*g%nb_diag_1(2)
 
+                call FDM_Int1_Initialize(ibc, g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, &
+                                         g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
+                                         g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
                 ! LU decomposition
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call TRIDFS(imax - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3))
+                    call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
                 case (5)
-                    call PENTADFS(imax - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5))
+                    call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                                  g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
                 case (7)
-                    call HEPTADFS(imax - 2, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), lhs_int(2:, 6), lhs_int(2:, 7))
+                    call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                                  g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
                 end select
 
-                ! Particular solution
+                ! bcs
                 select case (ibc)
                 case (BCS_MIN)
                     w_n(:, 1) = u(:, 1)
-                    w_n(:, imax) = f(:, imax)
                 case (BCS_MAX)
-                    w_n(:, 1) = f(:, 1)
                     w_n(:, imax) = u(:, imax)
                 end select
 
-                select case (g%nb_diag_1(1))
-                case (3)
-                    call MatMul_3d(imax, len, rhs_int(:, 1), rhs_int(:, 3), f, w_n, BCS_BOTH, rhs_b=rhsi_b(1:3, 0:3), rhs_t=rhsi_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
-                case (5)
-                    call MatMul_5d(imax, len, rhs_int(:, 1), rhs_int(:, 2), rhs_int(:, 4), rhs_int(:, 5), f, w_n, BCS_BOTH, rhs_b=rhsi_b(1:4, 0:5), rhs_t=rhsi_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
-                end select
-
-                select case (g%nb_diag_1(2))
-                case (3)
-                    call TRIDSS(imax - 2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), w_n(:, 2:))
-                case (5)
-                    call PENTADSS(imax - 2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), w_n(:, 2:))
-                case (7)
-                    call HEPTADSS(imax - 2, len, lhs_int(2:, 1), lhs_int(2:, 2), lhs_int(2:, 3), lhs_int(2:, 4), lhs_int(2:, 5), lhs_int(2:, 6), lhs_int(2:, 7), w_n(:, 2:))
-                end select
-
-                if (any([BCS_MAX] == ibc)) then
-                    w_n(:, 1) = wrk2d(:, 1)
-                    do ic = 1, idr - 1
-                        w_n(:, 1) = w_n(:, 1) + lhs_int(1, idr + ic)*w_n(:, 1 + ic)
-                    end do
-                    w_n(:, 1) = w_n(:, 1) + lhs_int(1, 1)*w_n(:, 1 + ic)
-                end if
-                if (any([BCS_MIN] == ibc)) then
-                    w_n(:, imax) = wrk2d(:, 2)
-                    do ic = 1, idr - 1
-                        w_n(:, imax) = w_n(:, imax) + lhs_int(imax, idr - ic)*w_n(:, imax - ic)
-                    end do
-                    w_n(:, imax) = w_n(:, imax) + lhs_int(imax, ndr)*w_n(:, imax - ic)
-                end if
+                call OPR_Integral1(len, g, f, w_n, ibc)
 
                 call check(u, w_n, 'integral.dat')
 

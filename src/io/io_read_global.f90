@@ -942,10 +942,13 @@ subroutine IO_READ_GLOBAL(inifile)
                          + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
 
         g(is)%inb_grid = g(is)%inb_grid &
-                         + 5 &                      ! max # of diagonals in LHS for 1. order
-                         + 7 &                      ! max # of diagonals in RHS for 1. order
-                         + 5 &                      ! max # of diagonals in LHS for 2. order
+                         + 5 &                      ! max # of diagonals in LHS for 1. order derivative
+                         + 7 &                      ! max # of diagonals in RHS for 1. order derivative
+                         + 5 &                      ! max # of diagonals in LHS for 2. order derivative
                          + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
+        g(is)%inb_grid = g(is)%inb_grid &
+                         + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
+                         + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
         if (g(is)%periodic) then
             g(is)%inb_grid = g(is)%inb_grid &
                              + 5 + 2 &                      ! LU decomposition 1. order
@@ -957,7 +960,6 @@ subroutine IO_READ_GLOBAL(inifile)
                              + 5*4 &                ! LU decomposition 1. order, 4 bcs
                              + 5 &                  ! LU decomposition 2. order, 1bcs
                              + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
-! In Direct mode, we only need 10 instead of 3*4 because only 1 bcs is considered
         end if
         g(is)%inb_grid = g(is)%inb_grid &
                          + 1                        ! Density correction in anelastic mode
@@ -966,6 +968,7 @@ subroutine IO_READ_GLOBAL(inifile)
                              + 5 &                  ! LU decomposition interpolation
                              + 5                    ! LU decomposition 1. order interpolatory
         end if
+
     end do
 
 ! auxiliar array txc
