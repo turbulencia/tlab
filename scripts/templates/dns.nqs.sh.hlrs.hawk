@@ -22,6 +22,15 @@ TRASHDIR=$JOBDIR-transfered
 # Create Working Directories
 mkdir -p $LOCALDIR
 
+#####################################################################
+# USE CUSTOM LFS STRIPING TO OVERRIDE THE UNFORTUNATE DEFAULT VALUES  
+#    --stripe_count -1: use all available OSF's 
+#    --stripe_size 32M: use striping across I/O devices every 32MB 
+lfs setstripe --stripe-count -1 --stripe-size 32M $LOCALDIR
+#
+# FORCE USE OF THE UFS PROTOCOL FOR [PARALLEL] I/O 
+export ROMIO_FSTYPE_FORCE="ufs:" 
+
 cd $LOCALDIR
 
 dns.pre $LOCALDIR $STEP
