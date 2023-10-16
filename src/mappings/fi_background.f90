@@ -212,7 +212,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL
-    use OPR_FDE
+    use OPR_ODES
 
     implicit none
 

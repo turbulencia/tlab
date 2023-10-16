@@ -13,7 +13,7 @@ program VINTEGRAL
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use OPR_PARTIAL
-    use OPR_FDE
+    use OPR_ODES
 
     implicit none
 

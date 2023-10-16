@@ -474,8 +474,6 @@ contains
                 call PENTADSS2(nsize, nxz, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5), p_dst(:, nmin:nmax))
             end select
 
-            ! if (any([BCS_ND, BCS_NN] == ibc)) p_bcs_hb(:) = p_bcs_hb(:) + g%lu1(1, ip + 3)*p_dst(:, 2)
-            ! if (any([BCS_DN, BCS_NN] == ibc)) p_bcs_ht(:) = p_bcs_ht(:) + g%lu1(ny, ip + 1)*p_dst(:, ny - 1)
             idl = g%nb_diag_1(1)/2 + 1
             if (any([BCS_ND, BCS_NN] == ibc)) then
                 do ic = 1, idl - 1
