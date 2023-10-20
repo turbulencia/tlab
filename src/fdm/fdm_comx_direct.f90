@@ -5,13 +5,7 @@
 !#                         A up = B u
 !# in this routine. The matrix A is tridiagonal, and B is at most pentadiagonal.
 !#
-!# We normalize system to get a diagonal 1 in B and we only need to store 4 RHS diagonals
-!# The RHS diagonals are then O(1), the LHS diagonal O(h^2)
-!#
-!# For a uniform grid, this reduces to JCP Lele 1992, nonperiodic:
-!# Interior points 6th-order according to Eq. 2.1.7.
-!# The second point from Eq. 2.1.6 forth-order (b=0).
-!# The first point from third-order biased Eq. 4.1.3 (d=0).
+!# We normalize system s.t.RHS diagonals are then O(1), the LHS diagonal O(h^2) (see below)
 !#
 !########################################################################
 module FDM_ComX_Direct
@@ -20,11 +14,293 @@ module FDM_ComX_Direct
     implicit none
     private
 
+    public FDM_C1N4_Direct
+    public FDM_C1N6_Direct
     public FDM_C2N4_Direct
     public FDM_C2N6_Direct
+
 contains
     !########################################################################
+    !# 4th-order approximation to 1st-order derivative
+    !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
+    !########################################################################
+    subroutine FDM_C1N4_Direct(nmax, x, lhs, rhs, nb_diag)
+        integer(wi), intent(in) :: nmax
+        real(wp), intent(in) :: x(nmax)
+        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals (#=3)
+        real(wp), intent(out) :: rhs(nmax, 3)   ! RHS diagonals (#=3-1 because of normalization)
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
+
+        real(wp) dummy
+        real(wp) coef(6)
+        integer(wi) n
+
+        nb_diag = [3, 3]
+
+        ! #######################################################################
+        ! Interior points according to Equations (14)
+        do n = 2, nmax - 1
+            coef = coef_c1n4(x, n)                  ! if uniform, we should have ( 1/4 1 1/4 ) and ( -3/4 0 3/4 )/h
+            ! print *, n, coef(1:3)
+            ! print *, n, coef(4:6)*(x(2) - x(1))
+
+            dummy = 1.0_wp/coef(6)                  ! normalize s.t. 1. upper-diagonal is 1
+            lhs(n, 1:3) = coef(1:3)*dummy           ! am1, a, ap1
+            rhs(n, 1:3) = coef(4:6)*dummy           ! bm1, b, bp1
+
+        end do
+
+        ! #######################################################################
+        ! Boundary points according to notes
+        n = 1
+        coef(1:5) = coef_c1n3_biased(x, n)          ! if uniform, we should have ( 1 2 ) and ( -2.5 2 0.5 )/h
+        ! print *, n, coef(1:2)
+        ! print *, n, coef(3:5)*(x(2) - x(1))
+
+        dummy = 1.0_wp/coef(3)
+        lhs(n, 2:3) = coef(1:2)*dummy               ! a, ap1
+        rhs(n, [2, 3, 1]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(1)
+
+        n = nmax
+        coef(1:5) = coef_c1n3_biased(x, n, backwards=.true.)
+        ! print *, n, coef(1:2)
+        ! print *, n, coef(3:5)*(x(2) - x(1))
+
+        dummy = 1.0_wp/coef(3)
+        lhs(n, [2, 1]) = coef(1:2)*dummy            ! am1, a
+        rhs(n, [2, 1, 3]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(3)
+
+        ! do n = 1, nmax
+        !     print *, n, lhs(n, :)
+        !     print *, n, rhs(n, :)
+        ! end do
+
+        return
+    end subroutine FDM_C1N4_Direct
+
+    !########################################################################
+    !# 6th-order approximation to 1st-order derivative
+    !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
+    !########################################################################
+    subroutine FDM_C1N6_Direct(nmax, x, lhs, rhs, nb_diag)
+        integer(wi), intent(in) :: nmax
+        real(wp), intent(in) :: x(nmax)
+        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals
+        real(wp), intent(out) :: rhs(nmax, 5)   ! RHS diagonals
+        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
+
+        real(wp) dummy
+        real(wp) coef(8)
+        integer(wi) n
+
+        nb_diag = [3, 5]
+
+        lhs = 0.0_wp
+        rhs = 0.0_wp
+
+        ! #######################################################################
+        ! Interior points according to Equations (14)
+        do n = 3, nmax - 2
+            coef = coef_c1n6(x, n)                  ! if uniform, we should have ( 1/3 1 1/3 ) and ( -1/36 -7/9 0 7/9 1/36 )/h
+            ! print *, n, coef(1:3)
+            ! print *, n, coef(4:8)*(x(2) - x(1))
+
+            dummy = 1.0_wp/coef(7)                  ! normalize s.t. 1. upper-diagonal is 1
+            lhs(n, 1:3) = coef(1:3)*dummy           ! am1, a, ap1
+            rhs(n, 1:5) = coef(4:8)*dummy           ! bm2, bm1, b, bp1, bp2
+
+        end do
+
+        ! #######################################################################
+        ! Second/second-to-last points, tridiagonal 4th order (see above)
+        n = 2
+        coef(1:6) = coef_c1n4(x, n)                 ! if uniform, we should have ( 1/4 1 1/4 ) and ( -3/4 0 3/4 )/h
+
+        dummy = 1.0_wp/coef(6)                      ! normalize s.t. 1. upper-diagonal is 1
+        lhs(n, 1:3) = coef(1:3)*dummy               ! am1, a, ap1
+        rhs(n, 2:4) = coef(4:6)*dummy               ! bm1, b, bp1
+
+        n = nmax - 1
+        coef(1:6) = coef_c1n4(x, n)                 ! if uniform, we should have ( 1/4 1 1/4 ) and ( -3/4 0 3/4 )/h
+
+        dummy = 1.0_wp/coef(6)                      ! normalize s.t. 1. upper-diagonal is 1
+        lhs(n, 1:3) = coef(1:3)*dummy               ! am1, a, ap1
+        rhs(n, 2:4) = coef(4:6)*dummy               ! bm1, b, bp1
+
+        ! #######################################################################
+        ! Boundary points according to notes
+        n = 1
+        coef(1:5) = coef_c1n3_biased(x, n)          ! if uniform, we should have ( 1 2 ) and ( -2.5 2 0.5 )/h
+        ! print *, n, coef(1:2)
+        ! print *, n, coef(3:5)*(x(2) - x(1))
+
+        dummy = 1.0_wp/coef(3)
+        lhs(n, 2:3) = coef(1:2)*dummy               ! a, ap1
+        rhs(n, [2, 3, 1]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(1)
+
+        n = nmax
+        coef(1:5) = coef_c1n3_biased(x, n, backwards=.true.)
+        ! print *, n, coef(1:2)
+        ! print *, n, coef(3:5)*(x(2) - x(1))
+
+        dummy = 1.0_wp/coef(3)
+        lhs(n, [2, 1]) = coef(1:2)*dummy            ! am1, a
+        rhs(n, [2, 1, 3]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(3)
+
+        ! do n = 1, nmax
+        !     print *, n, lhs(n, :)
+        !     print *, n, rhs(n, :)
+        ! end do
+
+        return
+    end subroutine FDM_C1N6_Direct
+
+    !########################################################################
+    ! am1 u'_i-1 + u'_i +ap1 u'_i+1 = bm1 u_i-1 +b u_i + bp1 u_i+1
+    !
+    !         +       +         I_n = { i-1, i+1 }: set of points where the function and derivatives are given
+    !   ...---+---+---+---...
+    !             +             I_m = { i }: set of points where only the function is given.
+    !             i
+    !
+    ! Equation (14)
+    !########################################################################
+    function coef_c1n4(x, i) result(coef)           ! Interval around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        real(wp) coef(6)
+
+        real(wp) am1, a, ap1                ! Left-hand side; for clarity below
+        real(wp) bm1, b, bp1                ! Right-hand side
+        integer(wi) set_n(2), set_m(1)      ! intervals
+        real(wp) dummy
+        integer(wi) j
+
+        set_n = [i - 1, i + 1]
+        set_m = [i]
+
+        a = 1.0_wp
+        b = 2.0_wp*Pi_p(x, i, set_n)/Pi(x, i, set_n)
+
+        j = i - 1
+        dummy = Lag(x, i, j, set_n)**2.0_wp*Pi_p(x, i, set_m)/Pi(x, j, set_m)
+        am1 = dummy*(x(j) - x(i))
+        bm1 = dummy*(1.0_wp + (x(j) - x(i))*(2.0*Lag_p(x, j, j, set_n) + Pi_p(x, j, set_m)/Pi(x, j, set_m)))
+
+        j = i + 1
+        dummy = Lag(x, i, j, set_n)**2.0_wp*Pi_p(x, i, set_m)/Pi(x, j, set_m)
+        ap1 = dummy*(x(j) - x(i))
+        bp1 = dummy*(1.0_wp + (x(j) - x(i))*(2.0*Lag_p(x, j, j, set_n) + Pi_p(x, j, set_m)/Pi(x, j, set_m)))
+
+        coef = [am1, a, ap1, bm1, b, bp1]
+
+        return
+    end function
+
+    !########################################################################
+    ! u'_1 +a2 u'_2 = b1 u_1 +b2 u_2 +b3 u_3
+    !
+    !             +         I_n = { i+1 }: set of points where the function and derivatives are given
+    !   ...---+---+---+...
+    !         +       +     I_m = { i, i+2 }: set of points where only the function is given.
+    !         i
+    !
+    ! See notes
+    !########################################################################
+    function coef_c1n3_biased(x, i, backwards) result(coef)           ! Interval around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        logical, intent(in), optional :: backwards
+        real(wp) coef(5)
+
+        real(wp) a1, a2                     ! Left-hand side; for clarity below
+        real(wp) b1, b2, b3                 ! Right-hand side
+        integer(wi) set_n(1), set_m(2)      ! intervals
+        real(wp) dummy
+        integer(wi) j
+
+        if (present(backwards)) then
+            ! same as fowards, but changing the signs of the increments w.r.t. i
+            ! To understand it, e.g., define a new variable k = -j, where k is the
+            ! discrete variable moving around i
+            set_n = [i - 1]
+            set_m = [i, i - 2]
+        else
+            set_n = [i + 1]
+            set_m = [i, i + 2]
+        end if
+
+        a1 = 1.0_wp
+        b1 = 2.0_wp/(x(i) - x(set_n(1))) + Lag_p(x, i, i, set_m)
+
+        j = set_n(1)
+        dummy = Pi_p(x, i, set_m)/Pi(x, j, set_m)
+        a2 = dummy*(x(j) - x(i))
+        b2 = dummy*(1.0_wp + Pi_p(x, j, set_m)/Pi(x, j, set_m)*(x(j) - x(i)))
+
+        j = set_m(2)
+        b3 = ((x(i) - x(set_n(1)))/(x(j) - x(set_n(1))))**2.0_wp*Lag_p(x, i, j, set_m)
+
+        coef = [a1, a2, b1, b2, b3]
+
+        return
+    end function
+
+    !########################################################################
+    ! am1 u'_i-1 + u'_i +ap1 u'_i+1 = bm2 u_i-2 +bm1 u_i-1 +b u_i +bp1 u_i+1 +bp2 u_i+2
+    !
+    !             +       +             I_n = { i-1, i+1 }: set of points where the function and derivatives are given
+    !   ...---+---+---+---+---+---...
+    !         +       +       +         I_m = { i-2, i, i+2}: set of points where only the function is given.
+    !                 i
+    !
+    ! Equation (14)
+    !########################################################################
+    function coef_c1n6(x, i) result(coef)           ! Interval around i
+        real(wp), intent(in) :: x(:)
+        integer(wi), intent(in) :: i
+        real(wp) coef(8)
+
+        real(wp) am1, a, ap1                ! Left-hand side; for clarity below
+        real(wp) bm2, bm1, b, bp1, bp2      ! Right-hand side
+        integer(wi) set_n(2), set_m(3)      ! intervals
+        real(wp) dummy
+        integer(wi) j
+
+        set_n = [i - 1, i + 1]
+        set_m = [i - 2, i, i + 2]
+
+        a = 1.0_wp
+        b = 2.0_wp*Pi_p(x, i, set_n)/Pi(x, i, set_n) + Lag_p(x, i, i, set_m)
+
+        j = i - 1
+        dummy = Lag(x, i, j, set_n)**2.0_wp*Pi_p(x, i, set_m)/Pi(x, j, set_m)
+        am1 = dummy*(x(j) - x(i))
+        bm1 = dummy*(1.0_wp + (x(j) - x(i))*(2.0*Lag_p(x, j, j, set_n) + Pi_p(x, j, set_m)/Pi(x, j, set_m)))
+
+        j = i + 1
+        dummy = Lag(x, i, j, set_n)**2.0_wp*Pi_p(x, i, set_m)/Pi(x, j, set_m)
+        ap1 = dummy*(x(j) - x(i))
+        bp1 = dummy*(1.0_wp + (x(j) - x(i))*(2.0*Lag_p(x, j, j, set_n) + Pi_p(x, j, set_m)/Pi(x, j, set_m)))
+
+        j = i - 2
+        bm2 = (Pi(x, i, set_n)/Pi(x, j, set_n))**2.0_wp*Lag_p(x, i, j, set_m)
+
+        j = i + 2
+        bp2 = (Pi(x, i, set_n)/Pi(x, j, set_n))**2.0_wp*Lag_p(x, i, j, set_m)
+
+        coef = [am1, a, ap1, bm2, bm1, b, bp1, bp2]
+
+        return
+    end function
+
+    !########################################################################
     !# 6th-order approximation to 2nd-order derivative:
+    !# System normalized s.t. diagonal in B is 1
+    !# For a uniform grid, this reduces to JCP Lele 1992, nonperiodic:
+    !# Interior points 6th-order according to Eq. 2.1.7.
+    !# The second point from Eq. 2.1.6 forth-order (b=0).
+    !# The first point from third-order biased Eq. 4.1.3 (d=0).
     !########################################################################
     subroutine FDM_C2N6_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
@@ -146,6 +422,7 @@ contains
 
     !########################################################################
     !# 4th-order approximation to 2nd-order derivative; extracted from above
+    !# System normalized s.t. diagonal in B is 1
     !########################################################################
     subroutine FDM_C2N4_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
@@ -393,7 +670,7 @@ contains
         real(wp) f
 
         f = x(j) - x(i + 2) + x(j) - x(i - 2) + x(j) - x(i)
-        f = 2.0_wp*f/Pi(x, j, [i - 2, i, i + 2]) 
+        f = 2.0_wp*f/Pi(x, j, [i - 2, i, i + 2])
 
         return
     end function

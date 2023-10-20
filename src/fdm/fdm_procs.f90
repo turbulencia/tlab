@@ -56,7 +56,7 @@ module FDM_PROCS
 contains
     !########################################################################
     !########################################################################
-    function Pi(x, j, idx) result(f)    ! Product function defined over interval given by idx(:)
+    function Pi(x, j, idx) result(f)    ! Product function on interval idx(:) evaluated at x_j
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: j, idx(:)
         real(wp) f
@@ -107,7 +107,7 @@ contains
 
 !########################################################################
 !########################################################################
-    function Lag(x, j, i, idx) result(f)        ! Lagrange polynomials on idx(:) around i
+    function Lag(x, j, i, idx) result(f)        ! Lagrange polynomials on idx(:) around i evaluated at x_j
         real(wp), intent(in) :: x(:)
         integer(wi), intent(in) :: i, j, idx(:)
         real(wp) f

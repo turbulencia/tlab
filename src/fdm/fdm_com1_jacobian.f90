@@ -19,7 +19,7 @@
 !#
 !# The stencil in the rhs at the boundary can have 1 more point, which is stored in r11
 !#
-!# System normalized s.t. 1. off-diagonal in B is 1.
+!# System normalized s.t. 1. upper-diagonal in B is 1.
 !#
 !########################################################################
 module FDM_Com1_Jacobian
@@ -65,8 +65,9 @@ contains
 
         else    ! biased at the boundaries
             ! 3rd order, Eq. 4.1.3 with \alpha=2
+            ! Eq. 31 in Carpenter et al, JCP, 108:272-295, 1993, who study the effect of boundary points on stability
             coef_bc1(1:2) = [2.0_wp, 0.0_wp]                            ! a_1, a_2
-            coef_bc1(3:6) = [-15.0_wp/6.0_wp, 2.0_wp, 0.5_wp, 0.0_wp]   ! b_1, b_2, b_3, b_4
+            coef_bc1(3:6) = [-2.5_wp, 2.0_wp, 0.5_wp, 0.0_wp]           ! b_1, b_2, b_3, b_4
 
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1)
 

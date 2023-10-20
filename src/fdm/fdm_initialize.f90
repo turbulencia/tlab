@@ -46,7 +46,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     ig = ig + 1
 
 ! ###################################################################
-! Jacobians
+! Jacobians: computational grid is uniform
 ! ###################################################################
     g%jac => x(:, ig:)
 
@@ -60,21 +60,17 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%jac(:, 1) = 1.0_wp
 
     select case (g%mode_fdm1)
-    case (FDM_COM4_JACOBIAN)
+    case (FDM_COM4_JACOBIAN, FDM_COM4_DIRECT)
         call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_3d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), x, g%jac(:, 1), periodic=.false.)
 
-    case (FDM_COM6_JACOBIAN)
+    case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
         call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
         call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
 
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6_Jacobian_Penta(nx, g%jac, wrk1d(:, 1), wrk1d(:, 6), g%nb_diag_1, coef)
    call MatMul_7d_antisym(nx, 1, wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), wrk1d(:, 11), wrk1d(:, 12), x, g%jac(:, 1), periodic=.false.)
-
-    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
 
     end select
 
@@ -95,12 +91,15 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     case (FDM_COM4_JACOBIAN)
         call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
+
     case (FDM_COM6_JACOBIAN)
         call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
+
     case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
         call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
+
     end select
 
     select case (g%nb_diag_2(1))
@@ -137,12 +136,14 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     case (FDM_COM6_JACOBIAN_PENTA)
         call FDM_C1N6_Jacobian_Penta(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
-    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped FDM type for 1. order derivative.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+    case (FDM_COM4_DIRECT)
+        call FDM_C1N4_Direct(nx, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
+
+    case (FDM_COM6_DIRECT)
+        call FDM_C1N6_Direct(nx, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
 
     end select
-    ndl = g%nb_diag_1(1)    ! for readability
+    ndl = g%nb_diag_1(1)    ! for readability of the source code
     ndr = g%nb_diag_1(2)
 
     ! -------------------------------------------------------------------
@@ -277,11 +278,11 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         call FDM_C2N6_Hyper_Jacobian(nx, g%jac, g%lhs2, g%rhs2, g%nb_diag_2, coef, g%periodic)
         if (.not. g%uniform) g%need_1der = .true.
 
-    case (FDM_COM6_DIRECT)
-        call FDM_C2N6_Direct(nx, x, g%lhs2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
-
     case (FDM_COM4_DIRECT)
-        call FDM_C2N4_Direct(nx, x, g%lhs2(:, 1:3), g%rhs2(:, 1:4), g%nb_diag_2)
+        call FDM_C2N4_Direct(nx, g%nodes, g%lhs2, g%rhs2, g%nb_diag_2)
+
+    case (FDM_COM6_DIRECT)
+        call FDM_C2N6_Direct(nx, g%nodes, g%lhs2, g%rhs2, g%nb_diag_2)
 
     end select
 

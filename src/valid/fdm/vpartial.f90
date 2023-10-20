@@ -41,7 +41,7 @@ program VPARTIAL
     visc = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
-    g%inb_grid = 71
+    g%inb_grid = 99
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
@@ -87,15 +87,15 @@ program VPARTIAL
             x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
-        ! do i = 1, imax
-        !     x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
-        ! end do
-        open (21, file='y.dat')
         do i = 1, imax
-            read (21, *) x(i, 1)
+            x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
         end do
-        close (21)
-        g%scale = x(imax, 1) - x(1, 1)
+        ! open (21, file='y.dat')
+        ! do i = 1, imax
+        !     read (21, *) x(i, 1)
+        ! end do
+        ! close (21)
+        ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
     call FDM_INITIALIZE(x, g, wrk1d)
@@ -179,6 +179,9 @@ program VPARTIAL
         call check(u, du1_a, du1_n, 'partial.dat')
 
         ! Direct metrics
+        call FDM_C1N4_Direct(g%size, x, g%lu1, g%rhs1, g%nb_diag_1)
+
+        call FDM_C1N6_Direct(g%size, x, g%lu1, g%rhs1, g%nb_diag_1)
 
         ! -------------------------------------------------------------------
         !   Testing the reduction routines
