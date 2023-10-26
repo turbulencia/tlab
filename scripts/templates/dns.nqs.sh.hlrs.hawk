@@ -72,7 +72,7 @@ stat -t core* >/dev/null 2>&1 && ABORT="yes"
 if [ -f dns.ini ]; then
     cp dns.ini dns.ini-$TIMESTAMP
 fi
-LOGFILES="dns.ini.bak dns.log dns.out dns.les partinfos.txt mapping.txt"
+LOGFILES="dns.ini.bak dns.log dns.out dns.obs dns.les partinfos.txt mapping.txt"
 for FILE in $LOGFILES; do
     if [ -f $FILE ]; then
         mv $FILE $FILE-$TIMESTAMP

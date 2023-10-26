@@ -2,6 +2,7 @@ examples/Case*/flow.*
 examples/Case*/scal.*
 examples/Case*/dns.out
 examples/Case*/dns.log
+examples/Case*/dns.obs
 examples/Case*/dns.ini.bak
 examples/Case*/rand.*
 examples/Case*/avg*

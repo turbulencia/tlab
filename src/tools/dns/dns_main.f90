@@ -178,8 +178,9 @@ program DNS
     if (bound_r%min < 0.0_wp) bound_r%min = rbg%mean*1.0e-6_wp
     if (bound_r%max < 0.0_wp) bound_r%max = rbg%mean*1.0e6_wp
 
-    logs_data(1) = 0 ! Status
+    logs_data(1) = 0; obs_data(1) = 0 ! Status
     call DNS_BOUNDS_CONTROL()
+    call DNS_OBS_CONTROL()
     call DNS_BOUNDS_LIMIT()
 
     ! ###################################################################
@@ -189,10 +190,14 @@ program DNS
     call TIME_COURANT()
 
     ! ###################################################################
-    ! Check-pointing: Initialize logfiles
+    ! Check-pointing: Initialize logfiles, write header & first line
     ! ###################################################################
-    call DNS_LOGS_INITIALIZE() ! headers
-    call DNS_LOGS() ! first line
+    call DNS_LOGS_INITIALIZE()
+    call DNS_LOGS()            
+    if (dns_obs_log /= OBS_TYPE_NONE) then
+        call DNS_OBS_INITIALIZE() 
+        call DNS_OBS() 
+    end if
 
     ! ###################################################################
     ! Do simulation: Integrate equations
@@ -233,8 +238,12 @@ program DNS
         ! The rest: Logging, postprocessing and check-pointing
         ! -------------------------------------------------------------------
         call DNS_BOUNDS_CONTROL()
+        call DNS_OBS_CONTROL()
         if (mod(itime - nitera_first, nitera_log) == 0 .or. int(logs_data(1)) /= 0) then
             call DNS_LOGS()
+            if (dns_obs_log /= OBS_TYPE_NONE) then
+                call DNS_OBS()
+            end if
         end if
 
         if (use_tower) then
@@ -405,5 +414,72 @@ contains
         call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
 
     end subroutine DNS_LOGS
+
+!########################################################################
+!# Create headers or dns.obs file
+!########################################################################
+    subroutine DNS_OBS_INITIALIZE()
+
+        implicit none
+
+        integer(wi)        :: ip, is
+        character(len=256) :: line1, line
+
+        line1 = '#'; ip = 1
+        line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
+        line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
+
+        select case (dns_obs_log)
+        case (OBS_TYPE_EKMAN)
+            line1 = line1(1:ip)//' '//' u_bulk';    ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' w_bulk';    ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' u_y(1)';    ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' w_y(1)';    ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' alpha(ny)'; ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' alpha(1)';  ip = ip + 1 + 10
+            if (scal_on) then
+                do is = 1, inb_scal
+                    write(str,*) is
+                    line1 = line1(1:ip)//' '//' s'//trim(adjustl(str))//'_y(1)';  ip = ip + 1 + 10
+                end do
+            end if
+        end select
+
+        line1 = line1(1:ip - 1)//'#'
+        call TLAB_WRITE_ASCII(vfile, repeat('#', len_trim(line1)))
+        call TLAB_WRITE_ASCII(vfile, trim(adjustl(line1)))
+        call TLAB_WRITE_ASCII(vfile, repeat('#', len_trim(line1)))
+
+    end subroutine DNS_OBS_INITIALIZE
+
+!########################################################################
+
+    subroutine DNS_OBS()
+
+        implicit none
+
+        integer(wi)        :: ip, is
+        character(len=256) :: line1, line2
+
+        write (line1, 100) int(obs_data(1)), itime, rtime
+100     format((1x, I1), (1x, I7), (1x, E13.6))
+
+        select case (dns_obs_log)
+        case (OBS_TYPE_EKMAN)
+            write (line2, 200) (obs_data(ip), ip=2, 7)
+200         format(6(1x, E10.3))
+            line1 = trim(line1)//trim(line2)
+            if (scal_on) then
+                do is = 1, inb_scal
+                    write (line2, 300) obs_data(7+is)
+300                 format(1x, E10.3)
+                    line1 = trim(line1)//trim(line2)
+                end do
+            end if
+        end select
+
+        call TLAB_WRITE_ASCII(vfile, trim(adjustl(line1)))
+
+    end subroutine DNS_OBS  
 
 end program DNS

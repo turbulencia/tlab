@@ -102,6 +102,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Saveplanes=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#RunAvera=<yes/no>')
     call TLAB_WRITE_ASCII(bakfile, '#Runtime=<seconds>')
+    call TLAB_WRITE_ASCII(bakfile, '#ObsLog=<None/Ekman>')
 
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Start', '0', nitera_first)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'End', '0', nitera_last)
@@ -117,6 +118,16 @@ subroutine DNS_READ_LOCAL(inifile)
 ! Domain Filter (Should we move it to Iteration?)
     call SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
     if (nitera_filter == 0) FilterDomain(:)%type = DNS_FILTER_NONE
+
+
+    call SCANINICHAR(bakfile, inifile, 'Iteration', 'ObsLog', 'none', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; dns_obs_log = OBS_TYPE_NONE
+    else if (trim(adjustl(sRes)) == 'ekman') then; dns_obs_log = OBS_TYPE_EKMAN
+    else
+        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. ObsLog.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
 
 ! ###################################################################
 ! Control Limits

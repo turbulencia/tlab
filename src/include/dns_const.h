@@ -182,4 +182,8 @@
 #define CS_BCS_NATURAL  3
 #define CS_BCS_FIXED_2  4
 
+! Obs log-file type
+#define OBS_TYPE_NONE  0
+#define OBS_TYPE_EKMAN 1
+
 #endif
