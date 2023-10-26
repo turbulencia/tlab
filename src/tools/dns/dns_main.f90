@@ -467,12 +467,12 @@ contains
         select case (dns_obs_log)
         case (OBS_TYPE_EKMAN)
             write (line2, 200) (obs_data(ip), ip=2, 7)
-200         format(6(1x, E13.3))
+200         format(6(1x, E13.6))
             line1 = trim(line1)//trim(line2)
             if (scal_on) then
                 do is = 1, inb_scal
                     write (line2, 300) obs_data(7+is)
-300                 format(1x, E13.3)
+300                 format(1x, E13.6)
                     line1 = trim(line1)//trim(line2)
                 end do
             end if
