@@ -431,16 +431,16 @@ contains
 
         select case (dns_obs_log)
         case (OBS_TYPE_EKMAN)
-            line1 = line1(1:ip)//' '//' u_bulk';    ip = ip + 1 + 10
-            line1 = line1(1:ip)//' '//' w_bulk';    ip = ip + 1 + 10
-            line1 = line1(1:ip)//' '//' u_y(1)';    ip = ip + 1 + 10
-            line1 = line1(1:ip)//' '//' w_y(1)';    ip = ip + 1 + 10
-            line1 = line1(1:ip)//' '//' alpha(ny)'; ip = ip + 1 + 10
-            line1 = line1(1:ip)//' '//' alpha(1)';  ip = ip + 1 + 10
+            line1 = line1(1:ip)//' '//' u_bulk';    ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' w_bulk';    ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' u_y(1)';    ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' w_y(1)';    ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' alpha(1)';  ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' alpha(ny)'; ip = ip + 1 + 13
             if (scal_on) then
                 do is = 1, inb_scal
                     write(str,*) is
-                    line1 = line1(1:ip)//' '//' s'//trim(adjustl(str))//'_y(1)';  ip = ip + 1 + 10
+                    line1 = line1(1:ip)//' '//' s'//trim(adjustl(str))//'_y(1)';  ip = ip + 1 + 13
                 end do
             end if
         end select
@@ -467,12 +467,12 @@ contains
         select case (dns_obs_log)
         case (OBS_TYPE_EKMAN)
             write (line2, 200) (obs_data(ip), ip=2, 7)
-200         format(6(1x, E10.3))
+200         format(6(1x, E13.3))
             line1 = trim(line1)//trim(line2)
             if (scal_on) then
                 do is = 1, inb_scal
                     write (line2, 300) obs_data(7+is)
-300                 format(1x, E10.3)
+300                 format(1x, E13.3)
                     line1 = trim(line1)//trim(line2)
                 end do
             end if

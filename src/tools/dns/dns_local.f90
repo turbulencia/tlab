@@ -246,8 +246,8 @@ contains
 #define wbulk    obs_data(3)
 #define uy1      obs_data(4)
 #define wy1      obs_data(5)
-#define alpha_ny obs_data(6)
-#define alpha_1  obs_data(7)
+#define alpha_1  obs_data(6)
+#define alpha_ny obs_data(7)
         
         ip = 7
         
