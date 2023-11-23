@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 import scipy.interpolate as interp
 
 ''' define iterations to be merged '''
-it_1 = '3500'								# first index 
-it_2 = '6500'								# second index
-it_3 = '10100'								# third index
-number_scalars = 4							# maximum 5
+it_1 = '0'	    							# first index 
+it_2 = '34000'								# second index
+it_3 = '159000'								# third index
+number_scalars = 5							# maximum 5
 
 '''-----------------------------------------------------------------------------------------------------------------------'''
 '''-----------------------------------------------------------------------------------------------------------------------'''
@@ -35,10 +35,10 @@ list_1 = [avg1s_1, avg2s_1, avg3s_1, avg4s_1, avg5s_1]
 list_2 = [avg1s_2, avg2s_2, avg3s_2, avg4s_2, avg5s_2]
 for idx in range(number_scalars):
 	path_1 = './' + list_scalars[idx] +  it_1 + '-' + it_2 + '.nc'
-	list_1[idx] = nc.Dataset(path_avg_1, 'r')
+	list_1[idx] = nc.Dataset(path_1, 'r')
 
 	path_2 = './' + list_scalars[idx] +  it_2 + '-' + it_3 + '.nc'
-	list_2[idx] = nc.Dataset(path_avg_2, 'r')
+	list_2[idx] = nc.Dataset(path_2, 'r')
 	print( 'interpolate and concatenate ', path_1, 'with ', path_2 )
 
 
@@ -50,7 +50,7 @@ list_12 = [avg1s_12, avg2s_12, avg3s_12, avg4s_12, avg5s_12]
 for idx in range(number_scalars):
 	list_12[idx] = list_scalars[idx] +  it_1 + '-' + it_3 + '.nc' 
 
-#print('list of variables', avg_1.variables.keys())
+print('list of variables', avg_1.variables.keys())
 
 '''-----------------------------------------------------------------------------------------------------------------------'''
 '''-----------------------------------------------------------------------------------------------------------------------'''
@@ -172,4 +172,3 @@ writeNC(dict_avg,avg_12)
 for idx in range(number_scalars):
 	dictonary = interpolate(list_1[idx], list_2[idx], list_scalars[idx] )
 	writeNC(dictonary, list_12[idx])
-
