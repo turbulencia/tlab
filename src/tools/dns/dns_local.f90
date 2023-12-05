@@ -232,6 +232,7 @@ contains
 
         use TLAB_VARS, only: imax, jmax, kmax, g, area
         use TLAB_VARS, only: scal_on, inb_scal
+        use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLAB_ARRAYS
         use AVGS
     
@@ -248,8 +249,9 @@ contains
 #define wy1      obs_data(5)
 #define alpha_1  obs_data(6)
 #define alpha_ny obs_data(7)
+#define int_ent  obs_data(8)
         
-        ip = 7
+        ip = 8
         
         select case (dns_obs_log)
             
@@ -267,6 +269,12 @@ contains
             ! turning angles (in degrees)
             alpha_1  = ATAN2D(wy1, uy1)
             alpha_ny = ATAN2D(wrk1d(g(2)%size,3), wrk1d(g(2)%size,1))
+
+            ! integrated entstrophy
+            call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
+            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1,1), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
+            write(*,*)  sum(wrk1d(:,1))
+            int_ent = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,1), g(2)%nodes)
 
             if (scal_on) then
                 do is = 1, inb_scal
