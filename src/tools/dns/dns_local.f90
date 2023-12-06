@@ -273,7 +273,6 @@ contains
             ! integrated entstrophy
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
             call AVG_IK_V(imax, jmax, kmax, jmax, txc(1,1), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
-            write(*,*)  sum(wrk1d(:,1))
             int_ent = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,1), g(2)%nodes)
 
             if (scal_on) then
