@@ -125,6 +125,11 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, gamma_1,  [jmax],   'eps_1')
   call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, scal_bcs, [jmax, inb_scal], 'scal_bcs')
 
+  ! IBM case
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, IBM_case_x, [isize_nobi_be], 'IBM_case_x')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, IBM_case_y, [isize_nobj_be], 'IBM_case_y')
+  call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, IBM_case_z, [isize_nobk_be], 'IBM_case_z')
+
   return
 end subroutine IBM_ALLOCATE
 

@@ -121,5 +121,6 @@
 #define DNS_ERROR_IBM_MISS_GEO      402
 #define DNS_ERROR_IBM_GAMMA         403
 #define DNS_ERROR_IBM_SHEAR         404
+#define DNS_ERROR_IBM_INITIALIZE    405
 
 #endif

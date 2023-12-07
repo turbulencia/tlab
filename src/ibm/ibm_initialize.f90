@@ -1,11 +1,14 @@
 #include "dns_error.h"
-
+#ifdef USE_MPI 
+#include "dns_const_mpi.h"
+#endif
 !########################################################################
 !# HISTORY / AUTHORS
 !#
 !# 2022/04/01 - J. Kostelecky
 !#              Created
-!#
+!# 2023/10/27 - S. Deshpande
+!#              Modified
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
 !#
@@ -35,9 +38,20 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use IBM_VARS
   use TLAB_VARS,      only : isize_field, inb_txc
   use TLAB_VARS,      only : stagger_on
+  use TLAB_VARS,      only : g, isize_field, imax, jmax, kmax
   use TLAB_CONSTANTS, only : efile, wp
+  use TLAB_TYPES,     only : grid_dt
   use IO_FIELDS
   use TLAB_PROCS
+#ifdef USE_MPI
+  use MPI
+  use TLAB_MPI_PROCS
+  use TLAB_MPI_VARS,  only : ims_pro
+  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k    
+  use TLAB_MPI_VARS,  only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i   
+  use TLAB_MPI_VARS,  only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k   
+  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k , ims_err      
+#endif
 
   implicit none
 
@@ -51,19 +65,57 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 #ifdef IBM_DEBUG
   real(wp), dimension(:), pointer                         :: tmp3
 #endif
+#ifdef USE_MPI 
+  integer(wi), parameter                                  :: idi = TLAB_MPI_I_PARTIAL 
+  integer(wi), parameter                                  :: idk = TLAB_MPI_K_PARTIAL 
+#endif
   logical                                                 :: flag_epsp
+  integer(wi)                                             :: nyz, nxz, nxy
+
+  ! ================================================================== !
+  ! npages
+#ifdef USE_MPI
+  if ( ims_npro_i > 1 ) then
+    nyz = ims_size_i(idi)
+  else
+#endif
+  nyz = jmax * kmax 
+#ifdef USE_MPI
+  end if
+#endif
+
+  nxz = imax * kmax     
+
+#ifdef USE_MPI
+  if ( ims_npro_k > 1 ) then
+    nxy = ims_size_k(idk)
+  else
+#endif
+  nxy = imax * jmax
+#ifdef USE_MPI
+  end if
+#endif
   ! ================================================================== !
   ! assigning pointer to scratch
   txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
   tmp1 => txc(:,4); tmp2 => txc(:,5)
 
+  ! Initilize cases
+  IBM_case_x(:) = 0; IBM_case_y(:) = 0; IBM_case_z(:) = 0
+  
   ! eps field (read/create)
   if ( ibm_restart ) then
     flag_epsp = .false.
     call IBM_IO_READ(wrk3d, flag_epsp)
   else
-    if (xbars_geo%name == 'xbars') then
+    if (ibm_geo%name == 'xbars') then
       call IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
+    else if (ibm_geo%name == 'hill') then
+      call IBM_GENERATE_GEOMETRY_HILL(wrk3d)
+    else if (ibm_geo%name == 'valley') then
+      call IBM_GENERATE_GEOMETRY_VALLEY(wrk3d)
+    else if (ibm_geo%name == 'box') then
+      call IBM_GENERATE_GEOMETRY_BOX(wrk3d)
     else 
       call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
       call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
@@ -85,13 +137,36 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
       flag_epsp = .true.
       call IBM_IO_READ(wrk3d, flag_epsp)
     else
-      if (xbars_geo%name == 'xbars') then
+      if (ibm_geo%name == 'xbars') then
+        continue
+      else if (ibm_geo%name == 'hill') then
+        continue
+      else if (ibm_geo%name == 'valley') then
+        continue
+      else if (ibm_geo%name == 'box') then
         continue
       else
         call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
         call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
       end if
     end if
+  end if
+
+  ! genereate array for all cases
+  ! initilize in X
+  if (IBM_ini_case_x .eqv. .FALSE.) then
+    call IBM_INITIALIZE_CASES(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, IBM_case_x)
+    IBM_ini_case_x = .TRUE.
+  end if
+  ! initilize in Y
+  if (IBM_ini_case_y .eqv. .FALSE.) then
+    call IBM_INITIALIZE_CASES(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, IBM_case_y)
+    IBM_ini_case_y = .TRUE.
+  end if
+  ! initilize in Z
+  if (IBM_ini_case_z .eqv. .FALSE.) then
+    call IBM_INITIALIZE_CASES(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, IBM_case_z)
+    IBM_ini_case_z = .TRUE.
   end if
   
   ! compute gamma_0/1 based on eps-field (volume approach for conditional averages!) 
