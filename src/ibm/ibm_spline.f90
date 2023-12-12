@@ -10,7 +10,8 @@
 !#
 !# 2022/04/01 - J. Kostelecky
 !#              Created
-!#
+!# 2023/12/07 - Shreyas Deshpande
+!#              Modified
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
 !#   cubic spline reconstruction in solid regions
@@ -26,12 +27,12 @@
 !# 
 !########################################################################
 
-subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
+subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
 
   use IBM_VARS,       only : xa, xb, ya, yb, nflu, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_ARRAYS,    only: wrk1d
+  use TLAB_ARRAYS,    only : wrk1d
   use TLAB_TYPES,     only : grid_dt
   use TLAB_PROCS
 
@@ -44,13 +45,14 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   integer(wi),                          intent(in   ) :: nlines, isize_nob, isize_nob_be
   integer(wi), dimension(isize_nob),    intent(in   ) :: nob
   integer(wi), dimension(isize_nob_be), intent(in   ) :: nob_b, nob_e
+  integer(wi), dimension(isize_nob_be), intent(in   ) :: IBM_case
 
-  integer(wi)                                         :: l, ii, ip, ia, ib, iob, iu_il
+  integer(wi)                                         :: l, ii, ip, ia, ib, iob, iu_il, iu_ir, n
   logical                                             :: splines
   integer(wi), dimension(2)                           :: bc      
   real(wp),    dimension(2)                           :: bcval 
   real(wp)                                            :: m1, m2
-
+  integer(wi)                                         :: i, j
   ! ================================================================== !
   ! index convention on contiguous lines
   ! ||...-ip_fl-x-(fluid points)-x-ip_il||---(solid points)---||ip_ir-x-(fluid points)-x-ip_fr-...||
@@ -63,48 +65,8 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
     if ( nob(ii) /= 0 ) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = 0
       do iob = 1, nob(ii)    ! loop over immersed object(s)
-        ! select different cases of immersed objects
-        if ( nob_b(ip+ii ) == 1) then
-        ! ================================================================== !
-          if ( nob_e(ip+ii) == g%size ) then
-            ! 1. case: object over full extend of line
-            splines = .false. ! do nothing
-            ! .............................................................. !
-          else if ( ( nob_e(ip+ii) <= (g%size - nflu) ) .and. ( g%periodic .eqv. .true. ) ) then
-            ! 2. case: object is semi-immersed - periodic case
-            call IBM_SPLINE_VECTOR(is, 2, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-            ! .............................................................. !
-          else if ( ( nob_e(ip+ii) <= (g%size - nflu) ) .and. ( g%periodic .neqv. .true. ) ) then ! e.g. in vertical direction
-            ! 3. case: object is semi-immersed - non-periodic case - lower boundary
-            call IBM_SPLINE_VECTOR(is, 3, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-            ! .............................................................. !
-          else
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE. Not enough fluid points right of the right interface.')
-            call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
-          end if
-        ! ================================================================== !
-        else if ( nob_b(ip+ii) >= (nflu+1) ) then
-          if ( nob_e(ip+ii) <= (g%size - nflu) ) then 
-            ! 4. case: object is fully immersed
-            call IBM_SPLINE_VECTOR(is, 4, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-            ! .............................................................. !
-          else if ( (nob_e(ip+ii) == g%size) .eqv. g%periodic ) then
-            ! 5. case: object is semi-immersed - periodic case
-            call IBM_SPLINE_VECTOR(is, 5, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-            ! .............................................................. !
-          else if ( (nob_e(ip+ii) == g%size) .neqv. g%periodic ) then  ! e.g. in vertical direction
-            ! 6. case: object is semi-immersed - non-periodic case - upper boundary
-            call IBM_SPLINE_VECTOR(is, 6, fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii) 
-            ! .............................................................. !
-          else
-            call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE. Not enough fluid points left of the left interface.')
-            call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
-          end if
-          ! .............................................................. !
-        else
-          call TLAB_WRITE_ASCII(efile, 'IBM_SPLINE. This case is not implemented yet.')
-          call TLAB_STOP(DNS_ERROR_NOTIMPL)
-        end if
+        call IBM_SPLINE_VECTOR(is, IBM_case(ip + ii), fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii)
+        if (IBM_case(ip + ii) == 1) splines = .false.
         ! ================================================================== !
         ! spline interpolation and fill gap in fld_ibm
         if ( splines ) then
@@ -123,10 +85,34 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
           end if
           ! fld index of left interface
           iu_il = (nob_b(ip+ii) - 1) * nlines + ii     
+          iu_ir = (nob_e(ip+ii) - 1) * nlines + ii
+          n = 0
           ! replace splines in solid gaps
-          do l = 1, ib
-            fld_mod(iu_il + (l - 1) * nlines) = yb(l)
-          end do
+          if (((nob_e(ip+ii)) < (nob_b(ip+ii)) ) .and. (g%periodic .eqv. .true.)) then ! condition for case 7 
+            do l = 1, ib
+              if ((iu_il + (l - 1) * nlines) <= (g%size * nlines)) then
+                n = n + 1
+                fld_mod(iu_il + (l - 1) * nlines) = yb(l)
+              else if ((iu_il + (l - 1) * nlines) >= (g%size * nlines)) then
+                fld_mod(ii + (l - n - 1) * nlines) = yb(l)
+              else
+                call TLAB_WRITE_ASCII(efile, 'IBM SPLINE. Error in replacing spline in the solid.')
+                call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+              end if
+            end do
+          else if (((nob_e(ip+ii)) == 1 + (nob_b(ip+ii )) ) .and. (g%periodic .eqv. .false.)) then ! condition for case 8 
+            do l = 1, (nob_e(ip+ii))
+              fld_mod((l-1) * nlines + ii) = yb(l + 1)
+            end do
+          else if (((nob_e(ip+ii)) == (nob_b(ip+ii)) ) .and. (g%periodic .eqv. .false.)) then ! condition for case 9 
+            do l = 1, (nob_e(ip+ii))
+              fld_mod((l-1) * nlines + ii) = yb(l + 2)
+            end do
+          else ! default execution
+            do l = 1, ib
+              fld_mod(iu_il + (l - 1) * nlines) = yb(l)
+            end do
+          end if
         end if
         ip = ip + nlines
       end do
@@ -158,7 +144,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   integer(wi),                             intent(out) :: ib
   integer(wi),                             intent(in ) :: ip_il, ip_ir, nlines, plane
 
-  integer(wi)                                          :: kflu, gap
+  integer(wi)                                          :: kflu, gap, ip_sol
   integer(wi)                                          :: ip_fl, iu_fl, iu_ir
 
   ! ================================================================== !
@@ -195,32 +181,59 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
     ! mirror nflu points on the ground + zeros at left interface
     do kflu  = 1, nflu
       ia     = ia + 1
-      xa(ia) = - g%nodes((nflu + 2) - kflu) 
+      xa(ia) = - g%nodes((nflu + 2) - kflu)
       if ( is /= 0 ) then
         ya(ia) = ibmscaljmin(is)
       else
         ya(ia) = 0.0_wp
       endif
     end do
-  case(4, 5, 6) 
+  case(4, 5, 6, 7)  ! Default case
     do kflu  = 1, nflu
       ia     = ia + 1
       xa(ia) = g%nodes(ip_fl + (kflu - 1))
       ya(ia) =     fld(iu_fl + (kflu - 1) * nlines)
+    end do
+  case(8) ! Single solid point on non periodic boundary
+    ! Construct 1 solid points and mirror 3 fluid points
+    do kflu  = 1, nflu
+      ia     = ia + 1
+      xa(ia) = - g%nodes((nflu + 3) - kflu)
+      if ( is /= 0 ) then
+        ya(ia) = ibmscaljmin(is)
+      else
+        ya(ia) = 0.0_wp
+        ya(ia) =  fld(plane + (ip_ir + nflu - kflu) * nlines)
+      endif
+    end do
+  case(9) ! Single solid point on non periodic boundary
+    ! Construct 2 solid points and mirror 3 fluid points
+    do kflu  = 1, nflu + 1
+      ia     = ia + 1
+      xa(ia) = - g%nodes((nflu + 4) - kflu)
+      if ( is /= 0 ) then
+        ya(ia) = ibmscaljmin(is)
+      else
+        ya(ia) = 0.0_wp
+      endif
     end do
   end select
   ! -----------------------------------------------------------------
   ! set interfaces (left and right)
   ia     = ia + 1
   xa(ia) = g%nodes(ip_il)  
+  if (case == 9) xa(ia) = - g%nodes(nflu)
+  if (case == 8) xa(ia) = - g%nodes(nflu - 1)
   if ( is /= 0 ) then
     ya(ia) = ibmscaljmin(is)
   else
     ya(ia) = 0.0_wp
+    if (case == 8) ya(ia) = fld((ip_il-1) + plane)
   endif 
   !
   ia     = ia + 1
   xa(ia) = g%nodes(ip_ir) 
+  if (case .eq. 7) xa(ia) = xa(ia) + g%scale
   if ( is /= 0 ) then
     ya(ia) = ibmscaljmin(is)
   else
@@ -229,7 +242,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   ! -----------------------------------------------------------------
   ! build right half of xa, ya
   select case (case)
-  case(2,3, 4)
+  case(2, 3, 4, 8)
     do kflu  = 1, nflu
       ia     = ia + 1
       xa(ia) = g%nodes(ip_ir + kflu)
@@ -253,13 +266,44 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
         ya(ia) = 0.0_wp
       endif 
     end do
+  case(7)
+    do kflu  = 1, nflu
+      ia     = ia + 1
+      xa(ia) = g%nodes(ip_ir + kflu) + g%scale
+      ya(ia) =     fld(iu_ir + kflu * nlines)
+    end do
   end select
   ! -----------------------------------------------------------------
   ! build gap vector where splines are evaluated (here: with interface points)
-  do gap = ip_il, ip_ir
-    ib      = ib + 1
-    xb(ib)  = g%nodes(gap)
-  end do
+  select case (case)
+  case(7)
+    ip_sol = (g%size - ip_il + 1) + ip_ir
+    do gap = 1, ip_sol
+      ib      = ib + 1
+      if ((ip_il + gap - 1) <= g%size) then
+        xb(ib)  = g%nodes(ip_il + gap - 1) 
+      else if ((ip_il + gap) >= g%size) then
+        xb(ib)  = g%nodes(gap - ip_ir) + g%scale + (g%scale-g%nodes(g%size)) ! g%scale Warning!!
+      else 
+        write(*,*) 'Check gap vector. Add error to the dns.err file' 
+      end if
+    end do
+  case(8)
+      xb(1) = - g%nodes(2)
+      xb(2) =   g%nodes(1)
+      xb(3) =   g%nodes(2)
+      ib = 3
+  case(9)
+      xb(1) = - g%nodes(3)
+      xb(2) = - g%nodes(2)
+      xb(3) =   g%nodes(1)
+      ib = 3
+  case default
+    do gap = ip_il, ip_ir
+      ib      = ib + 1
+      xb(ib)  = g%nodes(gap)
+    end do
+  end select
 
   return
 end subroutine IBM_SPLINE_VECTOR

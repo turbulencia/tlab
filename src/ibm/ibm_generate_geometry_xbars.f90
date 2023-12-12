@@ -56,7 +56,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 #endif
   integer(wi)                                          :: nbars, hbar, wbar
   real(wp)                                             :: zcenter_bar
-  integer(wi), dimension(xbars_geo%number)             :: zstart_bar, zend_bar
+  integer(wi), dimension(ibm_geo%number)               :: zstart_bar, zend_bar
   integer(wi)                                          :: istart, iend, jstart, jend, kstart, kend
   integer(wi)                                          :: i,j,k,l
 
@@ -85,7 +85,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 #endif
 
   ! geometry
-  nbars=xbars_geo%number; hbar=xbars_geo%height; wbar=xbars_geo%width  
+  nbars=ibm_geo%number; hbar=ibm_geo%height; wbar=ibm_geo%width  
   wrk3d(:,:,:) = 0.0_wp
 
   ! global z-positions of bars, equally distributed on gridpoints with equal spacing
@@ -98,7 +98,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
 #ifdef IBM_DEBUG
   if ( ims_pro == 0 ) then
     write(*,*) '======== Z - Positions of streamwise aligned bars ======='
-    if (xbars_geo%mirrored) write(*,*) 'Bars are mirrored on upper wall!'
+    if (ibm_geo%mirrored) write(*,*) 'Bars are mirrored on upper wall!'
     do l = 1, nbars
       write(*,*)'bar nr.', l, ' start:', zstart_bar(l) + 1, ' end:', zend_bar(l)
     end do
@@ -122,7 +122,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   end do
   
   ! geometries on upper boundary
-  if (xbars_geo%mirrored) then
+  if (ibm_geo%mirrored) then
     do j = jmax-hbar+1, jmax   
       do k = 1, kmax 
         do l = 1, nbars 
@@ -158,7 +158,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
         end do 
       end do
     end do
-    if (xbars_geo%mirrored) then
+    if (ibm_geo%mirrored) then
       do j = jmax-hbar+1, jmax   
         do k = 1, kmax 
           do l = 1, nbars 

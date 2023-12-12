@@ -25,6 +25,7 @@ module FI_SOURCES
     public :: FI_SOURCES_FLOW
     public :: FI_SOURCES_SCAL
     public :: FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    public :: FI_CORIOLIS
     public :: FI_TRANSPORT, FI_TRANSPORT_FLUX
     public :: FI_FORCING_0, FI_FORCING_1
 
@@ -48,31 +49,8 @@ contains
         ! -----------------------------------------------------------------------
         ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
         ! -----------------------------------------------------------------------
-        select case (coriolis%type)
-        case (EQNS_EXPLICIT)
-            do ij = 1, isize_field
-                hq(ij, 1) = hq(ij, 1) + coriolis%vector(3)*q(ij, 2) - coriolis%vector(2)*q(ij, 3)
-                hq(ij, 2) = hq(ij, 2) + coriolis%vector(1)*q(ij, 3) - coriolis%vector(3)*q(ij, 1)
-                hq(ij, 3) = hq(ij, 3) + coriolis%vector(2)*q(ij, 1) - coriolis%vector(1)*q(ij, 2)
-            end do
-
-        case (EQNS_COR_NORMALIZED) ! So far, rotation only in the Oy direction.
-            u_geo = cos(coriolis%parameters(1))*coriolis%parameters(2)
-            w_geo = -sin(coriolis%parameters(1))*coriolis%parameters(2)
-
-!$omp parallel default( shared ) &
-!$omp private( ij, dummy,srt,end,siz )
-            call DNS_OMP_PARTITION(isize_field, srt, end, siz)
-
-            dummy = coriolis%vector(2)
-            dtr3 = 0.0_wp; dtr1 = 0.0_wp
-            do ij = srt, end
-                hq(ij, 1) = hq(ij, 1) + dummy*(w_geo - q(ij, 3))
-                hq(ij, 3) = hq(ij, 3) + dummy*(q(ij, 1) - u_geo)
-            end do
-!$omp end parallel
-
-        end select
+        
+        call FI_CORIOLIS(coriolis, imax, jmax, kmax, hq, q)
 
         ! -----------------------------------------------------------------------
         do iq = 1, 3
@@ -245,6 +223,49 @@ contains
 
         return
     end subroutine FI_SOURCES_SCAL
+
+!########################################################################
+!# Calculating the coriolis term
+!######################################FI_CORIOLIS#######################
+    subroutine FI_CORIOLIS(coriolis, nx, ny, nz, r, vec)
+        type(term_dt), intent(in) :: coriolis
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: vec(nx*ny*nz,*)
+        real(wp), intent(inout) :: r(nx*ny*nz,*)
+
+        ! -----------------------------------------------------------------------
+        integer(wi) ii, field_sz
+        real(wp) dummy, dtr3, dtr1, geo_u, geo_w
+        field_sz = nx*ny*nz
+        ! -----------------------------------------------------------------------
+        ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
+        ! -----------------------------------------------------------------------
+        select case (coriolis%type)
+        case (EQNS_EXPLICIT)
+            do  ii = 1, field_sz
+                r(ii, 1) = r(ii, 1) + coriolis%vector(3)*vec(ii, 2) - coriolis%vector(2)*vec(ii, 3)
+                r(ii, 2) = r(ii, 2) + coriolis%vector(1)*vec(ii, 3) - coriolis%vector(3)*vec(ii, 1)
+                r(ii, 3) = r(ii, 3) + coriolis%vector(2)*vec(ii, 1) - coriolis%vector(1)*vec(ii, 2)
+            end do
+
+        case (EQNS_COR_NORMALIZED)
+            geo_u = cos(coriolis%parameters(1))*coriolis%parameters(2)
+            geo_w = -sin(coriolis%parameters(1))*coriolis%parameters(2)
+
+    !$omp parallel default( shared ) &
+    !$omp private( ij, dummy,srt,end,siz )
+            call DNS_OMP_PARTITION(field_sz, srt, end, siz)
+
+            dummy = coriolis%vector(2)
+            dtr3 = 0.0_wp; dtr1 = 0.0_wp
+            do ii = Srt, end
+                r(ii, 1) = r(ii, 1) + dummy*(geo_w - vec(ii, 3))
+                r(ii, 3) = r(ii, 3) + dummy*(vec(ii, 1) - geo_u)
+            end do
+    !$omp end parallel
+        end select
+    
+    end subroutine FI_CORIOLIS
 
 !########################################################################
 !# Determine the buoyancy term (density difference \rho-\rho_0)

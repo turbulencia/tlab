@@ -10,8 +10,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
-    use TLAB_VARS, only: rbackground
+    use TLAB_VARS, only: bbackground, pbackground, rbackground, ribackground, epbackground
     use TLAB_VARS, only: PressureFilter, stagger_on
+    use TLAB_VARS, only: buoyancy, coriolis
+    use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
     use IBM_VARS, only: ibm_burgers
@@ -20,6 +22,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use OPR_ELLIPTIC
     use FI_SOURCES
     use OPR_FILTERS
+    use THERMO_ANELASTIC
 
     implicit none
 
@@ -27,27 +30,46 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     real(wp), intent(in) :: s(isize_field, *)
     real(wp), intent(out) :: p(isize_field)
     real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
-    real(wp), intent(inout) :: tmp(isize_field, 3)
+    real(wp), intent(inout) :: tmp(isize_field, 6)
+    real(wp) dummy
+    real(wp) dummy2(isize_field, 1)
 
-    target q, tmp
+    target q, tmp, s
 ! -----------------------------------------------------------------------
     integer(wi) bcs(2, 2)
+    integer(wi) iq
+    integer(wi) siz, srt, end
+    integer(wi) :: i, iostat, Id_Case
+! -----------------------------------------------------------------------
+#ifdef USE_BLAS
+    integer ILEN
+#endif
+! -----------------------------------------------------------------------
 
 ! Pointers to existing allocated space
     real(wp), dimension(:), pointer :: u, v, w
-    real(wp), dimension(:), pointer :: tmp3, tmp4, tmp5
+    real(wp), dimension(:), pointer :: tmp3, tmp4, tmp5, tmp6, tmp7, tmp8
     real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
-
+    dummy2 = 0.0_wp
     p = 0.0_wp
     tmp = 0.0_wp
-
+    Id_Case = 0 ! Manually change
 ! Define pointers
     u => q(:, 1)
     v => q(:, 2)
     w => q(:, 3)
+
+! Definition of the cases
+
+    ! Case 0: Pressure with accumulation of all terms
+    ! Case 1: Advection diffusion together
+    ! Case 2: Only Advection
+    ! Case 3: Only Diffusion
+    ! Case 4: Coriolis fores
+    ! Case 5: Buoyancy force
 
 ! #######################################################################
 ! Sources
@@ -56,31 +78,129 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     tmp3 => tmp(:, 1)
     tmp4 => tmp(:, 2)
     tmp5 => tmp(:, 3)
+    tmp6 => tmp(:, 4)
+    tmp7 => tmp(:, 5)
+    tmp8 => tmp(:, 6)
 
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
 
-! Advection and diffusion terms
-    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
-    tmp3 = tmp3 + p
-    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
-    tmp4 = tmp4 + p
-    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, p, tmp2, tmp1) ! tmp1 contains u transposed
-    tmp5 = tmp5 + p
+    if (Id_Case == 1 .OR. Id_Case == 0) then
+        !  Advection and diffusion terms
+        if (Id_Case == 1) then
+            tmp3 = 0.0_wp
+            tmp4 = 0.0_wp
+            tmp5 = 0.0_wp
+        end if
+        call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
+        tmp3 = tmp3 + p
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
+        tmp4 = tmp4 + p
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, p, tmp2, tmp1) ! tmp1 contains u transposed
+        tmp5 = tmp5 + p
 
-    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, p, tmp1) ! store v transposed in tmp1
-    tmp4 = tmp4 + p
-    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, p, tmp2, tmp1) ! tmp1 contains v transposed
-    tmp3 = tmp3 + p
-    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
-    tmp5 = tmp5 + p
+        call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, p, tmp1) ! store v transposed in tmp1
+        tmp4 = tmp4 + p
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, p, tmp2, tmp1) ! tmp1 contains v transposed
+        tmp3 = tmp3 + p
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
+        tmp5 = tmp5 + p
 
-    call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
-    tmp5 = tmp5 + p
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
-    tmp4 = tmp4 + p
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
-    tmp3 = tmp3 + p
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
+        tmp5 = tmp5 + p
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
+        tmp4 = tmp4 + p
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
+        tmp3 = tmp3 + p
+
+    end if
+
+    if (Id_Case == 2 .OR. Id_Case == 3) then
+        if (Id_Case == 2 .OR. Id_Case == 3) then
+            tmp3 = 0.0_wp
+            tmp4 = 0.0_wp
+            tmp5 = 0.0_wp
+        end if
+        ! Sepereating Diffusion
+        ! NSE X-Comp
+        call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, dummy2, p, tmp1)
+        tmp6 = tmp6 + p   ! Diffusion d2u/dx2
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, dummy2, p, tmp2, tmp1)
+        tmp7 = tmp7 + p
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, dummy2, p, tmp2, tmp1)
+        tmp8 = tmp8 + p
+
+        ! NSE Y-Comp
+        call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, dummy2, p, tmp1)
+        tmp7 = tmp7 + p ! Diffusion d2u/dx2 + d2u/dy2
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, dummy2, p, tmp2, tmp1)
+        tmp6 = tmp6 + p
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, dummy2, p, tmp2, tmp1)
+        tmp8 = tmp8 + p
+
+        ! NSE Z-Comp
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, dummy2, p, tmp1)
+        tmp8 = tmp8 + p  ! Diffusion d2u/dx2 + d2u/dy2 + d2u/dz2
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, dummy2, p, tmp2, tmp1)
+        tmp7 = tmp7 + p
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, dummy2, p, tmp2, tmp1)
+        tmp6 = tmp6 + p
+
+    end if
+
+    if (Id_Case == 2) then
+        tmp3 = tmp3 - tmp6
+        tmp4 = tmp4 - tmp7
+        tmp5 = tmp5 - tmp8
+
+    else if (Id_Case == 3) then
+        tmp3 = tmp6
+        tmp4 = tmp7
+        tmp5 = tmp8
+
+    end if
+
+    ! Coriolis Forcing term
+    if (Id_Case == 4) then
+        ! call FI_CORIOLIS(coriolis,imax, jmax, kmax, tmp, q)
+        tmp3        => tmp(:, 1)
+        tmp4        => tmp(:, 2)
+        tmp5        => tmp(:, 3)
+    end if
+
+    if (Id_Case == 5) then
+        do iq = 1, 3
+            if (buoyancy%type == EQNS_EXPLICIT) then
+                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, tmp1)
+            else
+                if (buoyancy%active(iq)) then
+                    if (iq == 2) then
+                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
+                    else
+                        wrk1d(:, 1) = 0.0_wp
+                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
+                    end if
+
+                    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                    dummy = buoyancy%vector(iq)
+#ifdef USE_BLAS
+                    ILEN = isize_field
+                    call DAXPY(ILEN, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
+#else
+                    do i = srt, end
+                            tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
+                    end do
+#endif
+                end if
+            end if
+        end do
+
+        tmp3        => tmp(:, 1)
+        tmp4        => tmp(:, 2)
+        tmp5        => tmp(:, 3)
+
+    end if
+
 
 ! If IBM, set flag back to false
     if (imode_ibm == 1) ibm_burgers = .false.
