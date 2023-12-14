@@ -43,15 +43,15 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
 
 #ifdef USE_MPI
 #else
-  integer(wi), parameter                               :: ims_offset_i=0, ims_offset_j=0, ims_offset_k=0
+  integer(wi), parameter                             :: ims_offset_i=0, ims_offset_j=0, ims_offset_k=0
 #ifdef IBM_DEBUG
-  integer(wi), parameter                               :: ims_pro=0, ims_npro_i=1, ims_npro_k=1, ims_npro=0 
+  integer(wi), parameter                             :: ims_pro=0, ims_npro_i=1, ims_npro_k=1, ims_npro=0 
 #endif
 #endif
-  integer(wi)                                          :: ncrest, hhill, whill, hill_slope
-  integer(wi)                                          :: istart, iend, jstart, jend, kstart, kend
-  integer(wi)                                          :: i, j, k
-  real(wp)                                             :: dx
+  integer(wi)                                        :: ncrest, hhill, whill, hill_slope
+  integer(wi)                                        :: istart, iend, jstart, jend, kstart, kend
+  integer(wi)                                        :: i, j, k
+  real(wp)                                           :: dx
   ! ================================================================== !
   ! Decleration of variables
   dx = (2*pi_wp/(g(1)%size))                ! Unit cell width of hill base
@@ -109,10 +109,11 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
 
     ! reshape 3D-field into 1D-field
     epsp = reshape(wrk3d,(/isize_field/))
+    
+    ! export geometry to confirm the shape and size
     call IBM_IO_WRITE(wrk3d, .true.)
     wrk3d(:,:,:) = 0.0_wp
   end if
-  ! Export geometry to confirm the shape and size
 
   return
 end subroutine IBM_GENERATE_GEOMETRY_VALLEY

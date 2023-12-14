@@ -47,10 +47,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use MPI
   use TLAB_MPI_PROCS
   use TLAB_MPI_VARS,  only : ims_pro
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k    
-  use TLAB_MPI_VARS,  only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i   
-  use TLAB_MPI_VARS,  only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k   
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k , ims_err      
+  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k
+  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k      
 #endif
 
   implicit none
@@ -100,7 +98,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
   tmp1 => txc(:,4); tmp2 => txc(:,5)
 
-  ! Initilize cases
+  ! initialize cases
   IBM_case_x(:) = 0; IBM_case_y(:) = 0; IBM_case_z(:) = 0
   
   ! eps field (read/create)
@@ -153,20 +151,20 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   end if
 
   ! genereate array for all cases
-  ! initilize in X
-  if (IBM_ini_case_x .eqv. .FALSE.) then
+  ! initialize in X
+  if (IBM_ini_case_x .eqv. .false.) then
     call IBM_INITIALIZE_CASES(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, IBM_case_x)
-    IBM_ini_case_x = .TRUE.
+    IBM_ini_case_x = .true.
   end if
-  ! initilize in Y
-  if (IBM_ini_case_y .eqv. .FALSE.) then
+  ! initialize in Y
+  if (IBM_ini_case_y .eqv. .false.) then
     call IBM_INITIALIZE_CASES(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, IBM_case_y)
-    IBM_ini_case_y = .TRUE.
+    IBM_ini_case_y = .true.
   end if
-  ! initilize in Z
-  if (IBM_ini_case_z .eqv. .FALSE.) then
+  ! initialize in Z
+  if (IBM_ini_case_z .eqv. .false.) then
     call IBM_INITIALIZE_CASES(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, IBM_case_z)
-    IBM_ini_case_z = .TRUE.
+    IBM_ini_case_z = .true.
   end if
   
   ! compute gamma_0/1 based on eps-field (volume approach for conditional averages!) 

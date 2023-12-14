@@ -30,7 +30,6 @@
 subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
   use IBM_VARS
-  use IO_FIELDS
   use TLAB_VARS,      only : g, isize_field, imax, jmax, kmax
   use TLAB_CONSTANTS, only : wi, wp
 #ifdef USE_MPI
@@ -94,7 +93,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
   ! ================================================================== !
   ! number, beginning and end of objects in x-direction
-  do jk = 1, nyz            ! pages of   i-linesz
+  do jk = 1, nyz            ! pages of   i-lines
     ip = 1
     do i = 1, g(1)%size - 1     ! contiguous i-lines
       if((ip == 1) .and. (epsi(jk) == 1.0_wp)) then ! exception: check first plane for objects

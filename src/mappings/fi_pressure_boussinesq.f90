@@ -10,7 +10,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
-    use TLAB_VARS, only: bbackground, pbackground, rbackground, ribackground, epbackground
+    use TLAB_VARS, only: bbackground, pbackground, rbackground, epbackground
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_VARS, only: buoyancy, coriolis
     use TLAB_ARRAYS, only: wrk1d
@@ -26,20 +26,20 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     implicit none
 
-    real(wp), intent(in) :: q(isize_field, 3)
-    real(wp), intent(in) :: s(isize_field, *)
-    real(wp), intent(out) :: p(isize_field)
+    real(wp), intent(in)    :: q(isize_field, 3)
+    real(wp), intent(in)    :: s(isize_field, *)
+    real(wp), intent(out)   :: p(isize_field)
     real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
     real(wp), intent(inout) :: tmp(isize_field, 6)
-    real(wp) dummy
-    real(wp) dummy2(isize_field, 1)
-
-    target q, tmp, s
-! -----------------------------------------------------------------------
-    integer(wi) bcs(2, 2)
-    integer(wi) iq
-    integer(wi) siz, srt, end
-    integer(wi) :: i, iostat, Id_Case
+    
+    target      :: q, tmp, s
+    ! -----------------------------------------------------------------------
+    real(wp)    :: dummy
+    real(wp)    :: dummy2(isize_field, 1)
+    integer(wi) :: bcs(2, 2)
+    integer(wi) :: iq
+    integer(wi) :: siz, srt, end
+    integer(wi) :: i, Id_Case
 ! -----------------------------------------------------------------------
 #ifdef USE_BLAS
     integer ILEN
@@ -47,8 +47,8 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! -----------------------------------------------------------------------
 
 ! Pointers to existing allocated space
-    real(wp), dimension(:), pointer :: u, v, w
-    real(wp), dimension(:), pointer :: tmp3, tmp4, tmp5, tmp6, tmp7, tmp8
+    real(wp), dimension(:),       pointer :: u, v, w
+    real(wp), dimension(:),       pointer :: tmp3, tmp4, tmp5, tmp6, tmp7, tmp8
     real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
@@ -85,13 +85,15 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
 
-    if (Id_Case == 1 .OR. Id_Case == 0) then
+    if (Id_Case == 1 .or. Id_Case == 0) then
+
         !  Advection and diffusion terms
         if (Id_Case == 1) then
             tmp3 = 0.0_wp
             tmp4 = 0.0_wp
             tmp5 = 0.0_wp
         end if
+        
         call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
         tmp3 = tmp3 + p
         call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
@@ -115,13 +117,14 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    if (Id_Case == 2 .OR. Id_Case == 3) then
-        if (Id_Case == 2 .OR. Id_Case == 3) then
+    if (Id_Case == 2 .or. Id_Case == 3) then
+        if (Id_Case == 2 .or. Id_Case == 3) then
             tmp3 = 0.0_wp
             tmp4 = 0.0_wp
             tmp5 = 0.0_wp
         end if
-        ! Sepereating Diffusion
+
+        ! Separating Diffusion
         ! NSE X-Comp
         call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, dummy2, p, tmp1)
         tmp6 = tmp6 + p   ! Diffusion d2u/dx2
@@ -160,12 +163,12 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    ! Coriolis Forcing term
+    ! Coriolis forcing term
     if (Id_Case == 4) then
-        ! call FI_CORIOLIS(coriolis,imax, jmax, kmax, tmp, q)
-        tmp3        => tmp(:, 1)
-        tmp4        => tmp(:, 2)
-        tmp5        => tmp(:, 3)
+        call FI_CORIOLIS(coriolis,imax, jmax, kmax, q, tmp)
+        tmp3 => tmp(:, 1)
+        tmp4 => tmp(:, 2)
+        tmp5 => tmp(:, 3)
     end if
 
     if (Id_Case == 5) then
@@ -188,16 +191,16 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
                     call DAXPY(ILEN, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
 #else
                     do i = srt, end
-                            tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
+                        tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
                     end do
 #endif
                 end if
             end if
         end do
 
-        tmp3        => tmp(:, 1)
-        tmp4        => tmp(:, 2)
-        tmp5        => tmp(:, 3)
+        tmp3 => tmp(:, 1)
+        tmp4 => tmp(:, 2)
+        tmp5 => tmp(:, 3)
 
     end if
 

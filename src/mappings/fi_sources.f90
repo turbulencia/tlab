@@ -39,7 +39,7 @@ contains
         real(wp), intent(inout) :: tmp1(isize_field)
 
         ! -----------------------------------------------------------------------
-        real(wp) dummy, u_geo, w_geo, dtr1, dtr3
+        real(wp) dummy
 
         ! #######################################################################
 #ifdef USE_BLAS
@@ -50,7 +50,7 @@ contains
         ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
         ! -----------------------------------------------------------------------
         
-        call FI_CORIOLIS(coriolis, imax, jmax, kmax, hq, q)
+        call FI_CORIOLIS(coriolis, imax, jmax, kmax, q, hq)
 
         ! -----------------------------------------------------------------------
         do iq = 1, 3
@@ -226,12 +226,12 @@ contains
 
 !########################################################################
 !# Calculating the coriolis term
-!######################################FI_CORIOLIS#######################
-    subroutine FI_CORIOLIS(coriolis, nx, ny, nz, r, vec)
+!########################################################################
+    subroutine FI_CORIOLIS(coriolis, nx, ny, nz, u, r)
         type(term_dt), intent(in) :: coriolis
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: vec(nx*ny*nz,*)
-        real(wp), intent(inout) :: r(nx*ny*nz,*)
+        integer(wi), intent(in)   :: nx, ny, nz
+        real(wp), intent(in)      :: u(nx*ny*nz,*)
+        real(wp), intent(out)     :: r(nx*ny*nz,*)
 
         ! -----------------------------------------------------------------------
         integer(wi) ii, field_sz
@@ -243,26 +243,26 @@ contains
         select case (coriolis%type)
         case (EQNS_EXPLICIT)
             do  ii = 1, field_sz
-                r(ii, 1) = r(ii, 1) + coriolis%vector(3)*vec(ii, 2) - coriolis%vector(2)*vec(ii, 3)
-                r(ii, 2) = r(ii, 2) + coriolis%vector(1)*vec(ii, 3) - coriolis%vector(3)*vec(ii, 1)
-                r(ii, 3) = r(ii, 3) + coriolis%vector(2)*vec(ii, 1) - coriolis%vector(1)*vec(ii, 2)
+                r(ii, 1) = r(ii, 1) + coriolis%vector(3)*u(ii, 2) - coriolis%vector(2)*u(ii, 3)
+                r(ii, 2) = r(ii, 2) + coriolis%vector(1)*u(ii, 3) - coriolis%vector(3)*u(ii, 1)
+                r(ii, 3) = r(ii, 3) + coriolis%vector(2)*u(ii, 1) - coriolis%vector(1)*u(ii, 2)
             end do
 
         case (EQNS_COR_NORMALIZED)
             geo_u = cos(coriolis%parameters(1))*coriolis%parameters(2)
             geo_w = -sin(coriolis%parameters(1))*coriolis%parameters(2)
 
-    !$omp parallel default( shared ) &
-    !$omp private( ij, dummy,srt,end,siz )
+!$omp parallel default( shared ) &
+!$omp private( ij, dummy,srt,end,siz )
             call DNS_OMP_PARTITION(field_sz, srt, end, siz)
 
             dummy = coriolis%vector(2)
             dtr3 = 0.0_wp; dtr1 = 0.0_wp
-            do ii = Srt, end
-                r(ii, 1) = r(ii, 1) + dummy*(geo_w - vec(ii, 3))
-                r(ii, 3) = r(ii, 3) + dummy*(vec(ii, 1) - geo_u)
+            do ii = srt, end
+                r(ii, 1) = r(ii, 1) + dummy*(geo_w - u(ii, 3))
+                r(ii, 3) = r(ii, 3) + dummy*(u(ii, 1) - geo_u)
             end do
-    !$omp end parallel
+!$omp end parallel
         end select
     
     end subroutine FI_CORIOLIS

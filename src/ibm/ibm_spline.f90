@@ -29,7 +29,7 @@
 
 subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
 
-  use IBM_VARS,       only : xa, xb, ya, yb, nflu, ibmscaljmin
+  use IBM_VARS,       only : xa, xb, ya, yb, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLAB_CONSTANTS, only : efile, wp, wi
   use TLAB_ARRAYS,    only : wrk1d
@@ -52,7 +52,6 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   integer(wi), dimension(2)                           :: bc      
   real(wp),    dimension(2)                           :: bcval 
   real(wp)                                            :: m1, m2
-  integer(wi)                                         :: i, j
   ! ================================================================== !
   ! index convention on contiguous lines
   ! ||...-ip_fl-x-(fluid points)-x-ip_il||---(solid points)---||ip_ir-x-(fluid points)-x-ip_fr-...||
@@ -233,7 +232,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   !
   ia     = ia + 1
   xa(ia) = g%nodes(ip_ir) 
-  if (case .eq. 7) xa(ia) = xa(ia) + g%scale
+  if (case == 7) xa(ia) = xa(ia) + g%scale
   if ( is /= 0 ) then
     ya(ia) = ibmscaljmin(is)
   else

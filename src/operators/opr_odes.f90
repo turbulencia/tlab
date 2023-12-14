@@ -14,7 +14,7 @@ module OPR_ODES
 
     ! First-order ODEs
     public :: OPR_Integral1             ! Using derived type grid_dp to pass information, typicall initialized for lambda = 0
-    ! public :: OPR_ODE1                ! Passing lu and rhs directly, which could be initilized for lambda /= 0
+    ! public :: OPR_ODE1                ! Passing lu and rhs directly, which could be initialized for lambda /= 0
 
     ! Second-order ODEs
     ! public :: OPR_ODE2

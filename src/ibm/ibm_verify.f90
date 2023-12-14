@@ -185,14 +185,14 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
           call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Memory error, check array generation')
           call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
         end if
-        if (g%periodic .eqv. .TRUE.) sp_ob = abs(nob_e(ip+ii) - nob_b(ip+ii) + 1)
-        if (g%periodic .eqv. .FALSE.) sp_ob = nob_e(ip+ii) - nob_b(ip+ii) + 1
+        if (g%periodic .eqv. .true.) sp_ob = abs(nob_e(ip+ii) - nob_b(ip+ii) + 1)
+        if (g%periodic .eqv. .false.) sp_ob = nob_e(ip+ii) - nob_b(ip+ii) + 1
         if ((nob_b(ip+ii) /= 1) .and. (nob_e(ip+ii) /= g%size)) then
           if ( sp_ob < sp_min )then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
           end if
-        else if (((nob_b(ip+ii) == 1) .or. (nob_e(ip+ii) == g%size)) .and. (g%periodic .eqv. .TRUE.)) then
+        else if (((nob_b(ip+ii) == 1) .or. (nob_e(ip+ii) == g%size)) .and. (g%periodic .eqv. .true.)) then
           if ( sp_ob < sp_min )then
             call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in dns.ini.')
             call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
