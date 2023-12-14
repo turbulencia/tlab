@@ -35,14 +35,14 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     target      :: q, tmp, s
     ! -----------------------------------------------------------------------
     real(wp)    :: dummy
-    real(wp)    :: dummy2(isize_field, 1)
+    real(wp)    :: dummy3d(isize_field, 1) ! only needed for pressure decomposition
     integer(wi) :: bcs(2, 2)
     integer(wi) :: iq
     integer(wi) :: siz, srt, end
-    integer(wi) :: i, Id_Case
+    integer(wi) :: i, id_case
 ! -----------------------------------------------------------------------
 #ifdef USE_BLAS
-    integer ILEN
+    integer ilen
 #endif
 ! -----------------------------------------------------------------------
 
@@ -52,18 +52,20 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     real(wp), dimension(:, :, :), pointer :: p_bcs
 
 ! #######################################################################
-    bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
-    dummy2 = 0.0_wp
-    p = 0.0_wp
-    tmp = 0.0_wp
-    Id_Case = 0 ! Manually change
+    bcs     = 0 ! Boundary conditions for derivative operator set to biased, non-zero
+    p       = 0.0_wp
+    tmp     = 0.0_wp
+    dummy3d = 0.0_wp
+
 ! Define pointers
     u => q(:, 1)
     v => q(:, 2)
     w => q(:, 3)
 
-! Definition of the cases
+! Chose case manually here
+    id_case = 0 
 
+! Definition of the cases
     ! Case 0: Pressure with accumulation of all terms
     ! Case 1: Advection diffusion together
     ! Case 2: Only Advection
@@ -85,10 +87,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
 
-    if (Id_Case == 1 .or. Id_Case == 0) then
+    if (id_case == 1 .or. id_case == 0) then
 
         !  Advection and diffusion terms
-        if (Id_Case == 1) then
+        if (id_case == 1) then
             tmp3 = 0.0_wp
             tmp4 = 0.0_wp
             tmp5 = 0.0_wp
@@ -117,8 +119,8 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    if (Id_Case == 2 .or. Id_Case == 3) then
-        if (Id_Case == 2 .or. Id_Case == 3) then
+    if (id_case == 2 .or. id_case == 3) then
+        if (id_case == 2 .or. id_case == 3) then
             tmp3 = 0.0_wp
             tmp4 = 0.0_wp
             tmp5 = 0.0_wp
@@ -126,37 +128,37 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
         ! Separating Diffusion
         ! NSE X-Comp
-        call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, dummy2, p, tmp1)
+        call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, dummy3d, p, tmp1)
         tmp6 = tmp6 + p   ! Diffusion d2u/dx2
-        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, dummy2, p, tmp2, tmp1)
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, dummy3d, p, tmp2, tmp1)
         tmp7 = tmp7 + p
-        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, dummy2, p, tmp2, tmp1)
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, dummy3d, p, tmp2, tmp1)
         tmp8 = tmp8 + p
 
         ! NSE Y-Comp
-        call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, dummy2, p, tmp1)
+        call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, dummy3d, p, tmp1)
         tmp7 = tmp7 + p ! Diffusion d2u/dx2 + d2u/dy2
-        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, dummy2, p, tmp2, tmp1)
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, dummy3d, p, tmp2, tmp1)
         tmp6 = tmp6 + p
-        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, dummy2, p, tmp2, tmp1)
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, dummy3d, p, tmp2, tmp1)
         tmp8 = tmp8 + p
 
         ! NSE Z-Comp
-        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, dummy2, p, tmp1)
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, dummy3d, p, tmp1)
         tmp8 = tmp8 + p  ! Diffusion d2u/dx2 + d2u/dy2 + d2u/dz2
-        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, dummy2, p, tmp2, tmp1)
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, dummy3d, p, tmp2, tmp1)
         tmp7 = tmp7 + p
-        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, dummy2, p, tmp2, tmp1)
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, dummy3d, p, tmp2, tmp1)
         tmp6 = tmp6 + p
 
     end if
 
-    if (Id_Case == 2) then
+    if (id_case == 2) then
         tmp3 = tmp3 - tmp6
         tmp4 = tmp4 - tmp7
         tmp5 = tmp5 - tmp8
 
-    else if (Id_Case == 3) then
+    else if (id_case == 3) then
         tmp3 = tmp6
         tmp4 = tmp7
         tmp5 = tmp8
@@ -164,14 +166,14 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     end if
 
     ! Coriolis forcing term
-    if (Id_Case == 4) then
+    if (id_case == 4) then
         call FI_CORIOLIS(coriolis,imax, jmax, kmax, q, tmp)
         tmp3 => tmp(:, 1)
         tmp4 => tmp(:, 2)
         tmp5 => tmp(:, 3)
     end if
 
-    if (Id_Case == 5) then
+    if (id_case == 5) then
         do iq = 1, 3
             if (buoyancy%type == EQNS_EXPLICIT) then
                 call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, tmp1)
@@ -187,8 +189,8 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
                     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
                     dummy = buoyancy%vector(iq)
 #ifdef USE_BLAS
-                    ILEN = isize_field
-                    call DAXPY(ILEN, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
+                    ilen = isize_field
+                    call DAXPY(ilen, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
 #else
                     do i = srt, end
                         tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
@@ -279,7 +281,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     ! filter pressure p
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
-        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, tmp4)
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, p, tmp(:,4))
     end if
 
 ! Stagger pressure field p back on velocity grid

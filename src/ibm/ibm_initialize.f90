@@ -99,7 +99,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   tmp1 => txc(:,4); tmp2 => txc(:,5)
 
   ! initialize cases
-  IBM_case_x(:) = 0; IBM_case_y(:) = 0; IBM_case_z(:) = 0
+  ibm_case_x(:) = 0; ibm_case_y(:) = 0; ibm_case_z(:) = 0
   
   ! eps field (read/create)
   if ( ibm_restart ) then
@@ -153,17 +153,17 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   ! genereate array for all cases
   ! initialize in X
   if (IBM_ini_case_x .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, IBM_case_x)
+    call IBM_INITIALIZE_CASES(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
     IBM_ini_case_x = .true.
   end if
   ! initialize in Y
   if (IBM_ini_case_y .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, IBM_case_y)
+    call IBM_INITIALIZE_CASES(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
     IBM_ini_case_y = .true.
   end if
   ! initialize in Z
   if (IBM_ini_case_z .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, IBM_case_z)
+    call IBM_INITIALIZE_CASES(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
     IBM_ini_case_z = .true.
   end if
   

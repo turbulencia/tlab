@@ -33,7 +33,7 @@ module IBM_VARS
   integer(wi), dimension(:), allocatable         :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
   integer(wi)                                    :: nobi_max, nobj_max, nobk_max, nob_max
   real(wp)                                       :: max_height_objlo, max_height_objup
-  integer(wi), dimension(:), allocatable         :: IBM_case_x, IBM_case_y, IBM_case_z  ! Store IBM case (won't be valid for moving objects)
+  integer(wi), dimension(:), allocatable         :: ibm_case_x, ibm_case_y, ibm_case_z  ! Store IBM case (won't be valid for moving objects)
   logical                                        :: IBM_ini_case_x, IBM_ini_case_y, IBM_ini_case_z
 
   ! modified field

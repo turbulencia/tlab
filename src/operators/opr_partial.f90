@@ -16,7 +16,7 @@ module OPR_PARTIAL
     use IBM_VARS, only: isize_nobi, isize_nobj, isize_nobk
     use IBM_VARS, only: isize_nobi_be, isize_nobj_be, isize_nobk_be
     use IBM_VARS, only: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
-    use IBM_VARS, only: IBM_case_x, IBM_case_y, IBM_case_z
+    use IBM_VARS, only: ibm_case_x, ibm_case_y, ibm_case_z
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro_i
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
@@ -119,7 +119,7 @@ contains
 
         case ('x')
             if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, IBM_case_x)
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
                 call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
             else ! idle IBM-Tasks
                 call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
@@ -127,7 +127,7 @@ contains
 
         case ('y')
             if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, IBM_case_y)
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
                 call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
             else ! idle IBM-Tasks
                 call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
@@ -135,7 +135,7 @@ contains
 
         case ('z')
             if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, IBM_case_z)
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
                 call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
             else ! idle IBM-Tasks
                 call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
@@ -161,11 +161,11 @@ contains
 
         select case (g%name)
         case ('x')
-            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, IBM_case_x)
+            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
         case ('y')
-            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, IBM_case_y)
+            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
         case ('z')
-            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, IBM_case_z)
+            call IBM_SPLINE_XYZ(is, u, result, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
         end select
 
         return
@@ -268,7 +268,7 @@ contains
 
         case ('x')
             if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, IBM_case_x)
+                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
                 p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
                 call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, du)  ! now with modified u fields
             else ! idle IBM-Tasks
@@ -277,7 +277,7 @@ contains
 
         case ('y')
             if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, IBM_case_y)
+                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
                 p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
                 call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, du)  ! now with modified u fields
             else ! idle IBM-Tasks
@@ -286,7 +286,7 @@ contains
 
         case ('z')
             if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, IBM_case_z)
+                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, nlines, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
                 p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
                 call OPR_PARTIAL2(is, nlines, bcs, g, p_fld_ibm, result, du)  ! now with modified u fields
             else ! idle IBM-Tasks
