@@ -6,14 +6,14 @@
 
 subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
-    use TLAB_TYPES,     only: pointers_dt, pointers3d_dt, wp, wi, longi
+    use TLAB_TYPES, only: pointers_dt, pointers3d_dt, wp, wi, longi
     use TLAB_CONSTANTS
     use TLAB_VARS
     use PARTICLE_TYPES, only: particle_dt
     use PARTICLE_VARS
     use PARTICLE_ARRAYS, only: l_g ! but this is also varying, like l_q...
     use PARTICLE_INTERPOLATE
-    use THERMO_VARS,    only: imixture
+    use THERMO_VARS, only: imixture
     use THERMO_AIRWATER
 #ifdef USE_MPI
     use MPI
@@ -47,14 +47,14 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
 !########################################################################
 #ifdef USE_MPI
-    l_g%np = INT(isize_part_total/INT(ims_npro, KIND=8))
-    if (ims_pro < INT(MOD(isize_part_total, INT(ims_npro, KIND=8)))) then
+    l_g%np = int(isize_part_total/int(ims_npro, KIND=8))
+    if (ims_pro < int(mod(isize_part_total, int(ims_npro, KIND=8)))) then
         l_g%np = l_g%np + 1
     end if
     call MPI_ALLGATHER(l_g%np, 1, MPI_INTEGER4, ims_np_all, 1, MPI_INTEGER4, MPI_COMM_WORLD, ims_err)
 
 #else
-    l_g%np = INT(isize_part_total)
+    l_g%np = int(isize_part_total)
 
 #endif
 
@@ -62,28 +62,28 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
     count = 0
 #ifdef USE_MPI
     do i = 1, ims_pro
-        count = count + INT(ims_np_all(i), KIND=8)
+        count = count + int(ims_np_all(i), KIND=8)
     end do
 #endif
     do i = 1, l_g%np
-        l_g%tags(i) = INT(i, KIND=8) + count
+        l_g%tags(i) = int(i, KIND=8) + count
     end do
 
 ! Generate seed - different seed for each processor
-    call RANDOM_SEED(SIZE=size_seed)
+    call random_seed(SIZE=size_seed)
     allocate (x_seed(size_seed))
 #ifdef USE_MPI
     x_seed = [(i, i=1 + ims_pro, size_seed + ims_pro)]
 #else
     x_seed = [(i, i=1, size_seed)]
 #endif
-    call RANDOM_SEED(PUT=x_seed)
+    call random_seed(PUT=x_seed)
 
 #ifdef USE_MPI
     xref = g(1)%nodes(ims_offset_i + 1)
-    xscale = g(1)%scale/real(ims_npro_i,wp)
+    xscale = g(1)%scale/real(ims_npro_i, wp)
     zref = g(3)%nodes(ims_offset_k + 1)
-    zscale = g(3)%scale/real(ims_npro_k,wp)
+    zscale = g(3)%scale/real(ims_npro_k, wp)
 #else
     xref = g(1)%nodes(1)
     xscale = g(1)%scale
@@ -92,21 +92,28 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 #endif
     if (g(3)%size == 1) zscale = 0.0_wp ! 2D case
 
-    ! ########################################################################
+!########################################################################
+! Particle position
+!########################################################################
     select case (IniP%type)
 
     case default
 
-        call random_number(l_q(1:l_g%np,1))
-        l_q(1:l_g%np, 1) = xref + l_q(1:l_g%np,1)*xscale
+        call random_number(l_q(1:l_g%np, 1))
+        l_q(1:l_g%np, 1) = xref + l_q(1:l_g%np, 1)*xscale
 
-        call random_number(l_q(1:l_g%np,3))
-        l_q(1:l_g%np, 3) = zref + l_q(1:l_g%np,3)*zscale
+        call random_number(l_q(1:l_g%np, 3))
+        l_q(1:l_g%np, 3) = zref + l_q(1:l_g%np, 3)*zscale
 
-        call random_number(l_q(1:l_g%np,2))
-        l_q(1:l_g%np, 2) = IniP%ymean + (l_q(1:l_g%np,2)-0.5_wp)*IniP%diam
+        call random_number(l_q(1:l_g%np, 2))
+        l_q(1:l_g%np, 2) = IniP%ymean + (l_q(1:l_g%np, 2) - 0.5_wp)*IniP%diam
 
-    case (PART_INITYPE_SCALAR) ! Use the scalar field to create the particle distribution
+    case (PART_INITYPE_HARDCODED)       ! For testing
+        l_q(1:l_g%np, 1) = 0.0_wp
+        l_q(1:l_g%np, 2) = IniP%ymean
+        l_q(1:l_g%np, 3) = 0.0_wp
+
+    case (PART_INITYPE_SCALAR)          ! Use the scalar field to create the particle distribution
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
         is = 1 ! Reference scalar
 
@@ -117,7 +124,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
         i = 1
         do while (i <= l_g%np)
-            call RANDOM_NUMBER(rnd_number(1:3))
+            call random_number(rnd_number(1:3))
 
             rnd_scal(1) = 1 + floor(rnd_number(1)*imax)
             rnd_scal(3) = 1 + floor(rnd_number(3)*kmax)
@@ -128,7 +135,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
             dummy = (txc(rnd_scal(1), rnd_scal(2), rnd_scal(3), is) - sbg(is)%mean)/sbg(is)%delta
             dummy = abs(dummy + 0.5_wp)
 
-            call RANDOM_NUMBER(rnd_number_second)
+            call random_number(rnd_number_second)
 
             if (rnd_number_second <= dummy) then
 
@@ -148,11 +155,14 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
     call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
 
 !########################################################################
-! Remaining scalar properties of the lagrangian field
+! Remaining particle properties
 !########################################################################
+    select case (part%type)
 
-    if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
+    case (PART_TYPE_INERTIA)                            ! velocity
+        l_q(:, 4:6) = 0.0_wp
 
+    case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4) ! scalar fields
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
 
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
@@ -169,7 +179,9 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
 
         end if
 
-    end if
+    ! case (PART_TYPE_NEW_CASES)
+
+    end select
 
     return
 end subroutine PARTICLE_RANDOM_POSITION

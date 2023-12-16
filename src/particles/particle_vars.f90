@@ -9,14 +9,15 @@ module PARTICLE_VARS
     integer, parameter :: PART_TYPE_NONE = 0
     integer, parameter :: PART_TYPE_TRACER = 1
     integer, parameter :: PART_TYPE_INERTIA = 2
-    integer, parameter :: PART_TYPE_SIMPLE_SETT = 3
     integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 4
     integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 5
+    ! integer, parameter :: PART_TYPE_NEW_CASES = 6
 
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
-    integer, parameter :: TRAJ_TYPE_BASIC = 1
-    integer, parameter :: TRAJ_TYPE_VORTICITY = 2
+    integer, parameter :: TRAJ_TYPE_BASIC = 1           ! save particle prognostic properties
+    integer, parameter :: TRAJ_TYPE_EULERIAN = 2        ! add the Eulerian prognostic properties
+    integer, parameter :: TRAJ_TYPE_VORTICITY = 3       ! add the Eulerian vorticity
 
     type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
 
@@ -30,8 +31,9 @@ module PARTICLE_VARS
     integer(wi)       :: inb_part_interp              ! # of interpolated fields into lagrangian framework
 
     ! Initialization
-    type(profiles_dt) :: IniP                         ! Information about the initialization 
-    integer, parameter :: PART_INITYPE_SCALAR = 101   ! Special type of particle initialization not included in default profile data
+    type(profiles_dt) :: IniP                           ! Information about the initialization 
+    integer, parameter :: PART_INITYPE_HARDCODED = 101  ! Special type of particle initialization for testing
+    integer, parameter :: PART_INITYPE_SCALAR = 102     ! Special type of particle initialization not included in default profile data
 
     ! Trajectory
     integer(wi)   :: imode_traj = TRAJ_TYPE_NONE      ! Type of trajectory information that is saved

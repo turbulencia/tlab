@@ -9,8 +9,8 @@ import matplotlib.colors as colors
 from matplotlib import rc
 
 np = 0   # total number of particles in the files; if 0, then search dns.ini
-varnames=['x-coordinate','y-coordinate','z-coordinate',
-          'scalar']
+varnames=['x-coordinate','y-coordinate','z-coordinate']
+#          'x-velocity','y-velocity','z-velocity','scalar']
 #          'x-vorticity','y-vorticity','z-vorticity']
     
 # do not edit

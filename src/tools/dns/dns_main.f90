@@ -423,7 +423,7 @@ contains
         implicit none
 
         integer(wi)        :: ip, is
-        character(len=256) :: line1, line
+        character(len=256) :: line1
 
         line1 = '#'; ip = 1
         line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
