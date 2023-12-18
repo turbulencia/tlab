@@ -20,21 +20,27 @@
 !# 
 !########################################################################
 
-subroutine IBM_INITIALIZE_CASES(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
+subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
+  
   use IBM_VARS,       only : nflu
   use TLAB_CONSTANTS, only : efile, wp, wi
   use TLAB_TYPES,     only : grid_dt
   use TLAB_PROCS
 
   implicit none
+  
   type(grid_dt),                        intent(in   ) :: g
-  integer(wi),                          intent(in   ) :: nlines, isize_nob, isize_nob_be
+  integer(wi),                          intent(in   ) :: isize_nob, isize_nob_be
   integer(wi), dimension(isize_nob),    intent(in   ) :: nob
   integer(wi), dimension(isize_nob_be), intent(in   ) :: nob_b, nob_e
   integer(wi), dimension(isize_nob_be), intent(  out) :: IBM_case
-  integer(wi)                                         :: ii, ip, iob
+  
+  integer(wi)                                         :: ii, ip, iob, nlines
 
   ! ================================================================== !
+  ! cf. ibm_allocate.f90
+  nlines = isize_nob 
+
   ! index convention on contiguous lines
   ! ||...-ip_fl-x-(fluid points)-x-ip_il||---(solid points)---||ip_ir-x-(fluid points)-x-ip_fr-...||
 
@@ -134,12 +140,16 @@ subroutine IBM_INITIALIZE_CASES(g, nlines, isize_nob, isize_nob_be, nob, nob_b, 
   return
 end subroutine IBM_INITIALIZE_CASES
 
-subroutine GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob, IBM_case, ii, ip)
+!########################################################################
+
+subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, IBM_case, ii, ip)
+
   use TLAB_TYPES,     only : grid_dt
   use TLAB_CONSTANTS, only : efile, wp, wi
   use TLAB_PROCS
 
   implicit none
+
   type(grid_dt),                        intent(in) :: g
   integer(wi), dimension(isize_nob_be), intent(in) :: nob_b, nob_e
   integer(wi),                          intent(in) :: IBM_case

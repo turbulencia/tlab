@@ -27,7 +27,7 @@
 !# 
 !########################################################################
 
-subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
+subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
 
   use IBM_VARS,       only : xa, xb, ya, yb, ibmscaljmin
   use TLAB_VARS,      only : isize_field
@@ -42,17 +42,20 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, nlines, isize_nob, isize_nob_be, 
   real(wp),    dimension(isize_field),  intent(in   ) :: fld 
   real(wp),    dimension(isize_field),  intent(  out) :: fld_mod 
   type(grid_dt),                        intent(in   ) :: g
-  integer(wi),                          intent(in   ) :: nlines, isize_nob, isize_nob_be
+  integer(wi),                          intent(in   ) :: isize_nob, isize_nob_be
   integer(wi), dimension(isize_nob),    intent(in   ) :: nob
   integer(wi), dimension(isize_nob_be), intent(in   ) :: nob_b, nob_e
   integer(wi), dimension(isize_nob_be), intent(in   ) :: IBM_case
 
-  integer(wi)                                         :: l, ii, ip, ia, ib, iob, iu_il, iu_ir, n
+  integer(wi)                                         :: l, ii, ip, ia, ib, iob, iu_il, iu_ir, n, nlines
   logical                                             :: splines
   integer(wi), dimension(2)                           :: bc      
   real(wp),    dimension(2)                           :: bcval 
   real(wp)                                            :: m1, m2
   ! ================================================================== !
+  ! cf. ibm_allocate.f90
+  nlines = isize_nob 
+
   ! index convention on contiguous lines
   ! ||...-ip_fl-x-(fluid points)-x-ip_il||---(solid points)---||ip_ir-x-(fluid points)-x-ip_fr-...||
 

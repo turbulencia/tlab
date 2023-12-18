@@ -1,7 +1,4 @@
 #include "dns_error.h"
-#ifdef USE_MPI 
-#include "dns_const_mpi.h"
-#endif
 !########################################################################
 !# HISTORY / AUTHORS
 !#
@@ -38,18 +35,10 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use IBM_VARS
   use TLAB_VARS,      only : isize_field, inb_txc
   use TLAB_VARS,      only : stagger_on
-  use TLAB_VARS,      only : g, isize_field, imax, jmax, kmax
+  use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile, wp
-  use TLAB_TYPES,     only : grid_dt
   use IO_FIELDS
   use TLAB_PROCS
-#ifdef USE_MPI
-  use MPI
-  use TLAB_MPI_PROCS
-  use TLAB_MPI_VARS,  only : ims_pro
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k      
-#endif
 
   implicit none
 
@@ -63,36 +52,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
 #ifdef IBM_DEBUG
   real(wp), dimension(:), pointer                         :: tmp3
 #endif
-#ifdef USE_MPI 
-  integer(wi), parameter                                  :: idi = TLAB_MPI_I_PARTIAL 
-  integer(wi), parameter                                  :: idk = TLAB_MPI_K_PARTIAL 
-#endif
   logical                                                 :: flag_epsp
-  integer(wi)                                             :: nyz, nxz, nxy
 
-  ! ================================================================== !
-  ! npages
-#ifdef USE_MPI
-  if ( ims_npro_i > 1 ) then
-    nyz = ims_size_i(idi)
-  else
-#endif
-  nyz = jmax * kmax 
-#ifdef USE_MPI
-  end if
-#endif
-
-  nxz = imax * kmax     
-
-#ifdef USE_MPI
-  if ( ims_npro_k > 1 ) then
-    nxy = ims_size_k(idk)
-  else
-#endif
-  nxy = imax * jmax
-#ifdef USE_MPI
-  end if
-#endif
   ! ================================================================== !
   ! assigning pointer to scratch
   txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
@@ -153,20 +114,20 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   ! genereate array for all cases
   ! initialize in X
   if (IBM_ini_case_x .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(1), nyz, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
+    call IBM_INITIALIZE_CASES(g(1), isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
     IBM_ini_case_x = .true.
   end if
   ! initialize in Y
   if (IBM_ini_case_y .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(2), nxz, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
+    call IBM_INITIALIZE_CASES(g(2), isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
     IBM_ini_case_y = .true.
   end if
   ! initialize in Z
   if (IBM_ini_case_z .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(3), nxy, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
+    call IBM_INITIALIZE_CASES(g(3), isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
     IBM_ini_case_z = .true.
   end if
-  
+
   ! compute gamma_0/1 based on eps-field (volume approach for conditional averages!) 
   call IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
 

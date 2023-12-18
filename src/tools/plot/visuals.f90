@@ -194,9 +194,9 @@ program VISUALS
         if (opt_vec(iv) == 3) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
         if (opt_vec(iv) == 4) then; iread_flow = .true.; inb_txc = max(inb_txc, 3); end if
         if (opt_vec(iv) == 5) then; iread_flow = .true.; inb_txc = max(inb_txc, 1); end if
-        if (opt_vec(iv) == 6) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 2 ); end if
-        if (opt_vec(iv) == 7) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3 ); end if
-        if (opt_vec(iv) == 8) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
+        if (opt_vec(iv) == 6) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == 7) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
+        if (opt_vec(iv) == 8) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
         if (opt_vec(iv) == 9) then; iread_scal = .true.; inb_txc = max(inb_txc, 1); end if
         if (opt_vec(iv) > 9 .and. opt_vec(iv) <= iscal_offset) then
             iread_scal = .true.; inb_txc = max(inb_txc, 4); end if

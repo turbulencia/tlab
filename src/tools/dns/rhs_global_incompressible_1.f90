@@ -288,8 +288,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     ! filter pressure p and its vertical gradient dpdy
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
-        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, tmp4)
-        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp3, tmp4)
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, txc(1:isize_field,4:6))
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp3, txc(1:isize_field,4:6))
     end if
 
     ! Saving pressure for towers to tmp array

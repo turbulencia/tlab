@@ -82,7 +82,7 @@ real(wp), dimension(imax, jmax, kmax), intent(inout) ::  wrk3d
     do k = 1,kmax
       do j = 1,(hill_height)
         if (((i+istart) <= 2 ) .or. ((i+istart) > (g(1)%size-2))) then
-            wrk3d(i,j,k) = 1.0_wp
+          wrk3d(i,j,k) = 1.0_wp
         else
           wrk3d(i,j,k) = 0.0_wp
         end if 
