@@ -65,9 +65,7 @@ module IBM_VARS
   integer(wi)                  :: isize_wrk1d_ibm
 
   ! check IBM procs (active/idle)
-  logical                      :: ims_pro_ibm_x = .false.
-  logical                      :: ims_pro_ibm_y = .false.
-  logical                      :: ims_pro_ibm_z = .false.
+  logical                      :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
   
   ! ibm_dt geometry type 
   type(ibm_geo_dt)             :: ibm_geo                   ! create new geometry here

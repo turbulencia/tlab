@@ -144,10 +144,10 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
           nobi_e(inum+jk) = g(1)%size
         else if((epsi(jk) /= 1.0_wp) .and. (g(1)%periodic .eqv. .true.)) then ! check for objects in 1st plane
           nobi_e(inum+jk) = g(1)%size
-        else if ((nobi(jk) == 1.0_wp) .and. (nobi_e(jk) == 0.0_wp) .and. &
+        else if ((nobi(jk) == 1) .and. (nobi_e(jk) == 0) .and. &
           (g(1)%periodic .eqv. .true.)) then ! Number of object found == 1 and its end is not detected yet
           nobi_e(inum+jk) = g(1)%size
-        else if ((nobi(jk) == 1.0_wp) .and. (nobi_e(jk) /= 0.0_wp) .and. &
+        else if ((nobi(jk) == 1) .and. (nobi_e(jk) /= 0) .and. &
           (g(1)%periodic .eqv. .true.)) then ! Object extends across the borders of domain
           ! Do nothing. This is not the end of the object
         end if
@@ -187,7 +187,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
       end if
       if((epsj(ip+ik-1) == 0.0_wp) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then     ! nobj_b check for interface 
         inum = 0
-        do while (nobj_b(inum+ik) /= 0.0_wp)
+        do while (nobj_b(inum+ik) /= 0)
           inum = inum + nxz            
         end do 
         if (nobj_b(ik) /= (j + 1)) then
@@ -195,24 +195,24 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
         end if
       elseif((epsj(ip+ik-1) == 1.0_wp) .and. (epsj(ip+ik-1+nxz) == 0.0_wp)) then ! nobj_e check for interface 
         inum = 0
-        do while (nobj_e(inum+ik) /= 0.0_wp)
+        do while (nobj_e(inum+ik) /= 0)
           inum = inum + nxz            
         end do 
         nobj_e(inum+ik) = j        
       end if
       if((j == (g(2)%size - 1)) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then ! exception: check last plane for interface
         inum = 0
-        do while (nobj_e(inum+ik) /= 0.0_wp)
+        do while (nobj_e(inum+ik) /= 0)
           inum = inum + nxz           
         end do
         if (g(2)%periodic .eqv. .false.) then
           nobj_e(inum+ik) = g(2)%size
         else if((epsj(ik) /= 1.0_wp) .and. (g(2)%periodic .eqv. .true.)) then
           nobj_e(inum+ik) = g(2)%size
-        else if((nobj(ik) == 1.0_wp) .and. (nobj_e(ik) == 0) .and. &
+        else if((nobj(ik) == 1) .and. (nobj_e(ik) == 0) .and. &
           (g(2)%periodic .eqv. .true.)) then
           nobj_e(inum+ik) = g(2)%size
-        else if ((nobj(ik) == 1.0_wp) .and. (nobj_e(ik) /= 0) .and. &
+        else if ((nobj(ik) == 1) .and. (nobj_e(ik) /= 0) .and. &
           (g(2)%periodic .eqv. .true.)) then ! Object extends across the borders of domain
           ! Do nothing. This is not the end of the object
         end if
@@ -252,7 +252,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
       end if
       if((epsk(ip+ij-1) == 0.0_wp) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then     ! nobk_b check for interface 
         inum = 0
-        do while (nobk_b(inum+ij) /= 0.0_wp)
+        do while (nobk_b(inum+ij) /= 0)
           inum = inum + nxy            
         end do
         if (nobk_b(ij) /= (k + 1)) then
@@ -260,24 +260,24 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
         end if
       elseif((epsk(ip+ij-1) == 1.0_wp) .and. (epsk(ip+ij-1+nxy) == 0.0_wp)) then ! nobk_e check for interface 
         inum = 0
-        do while (nobk_e(inum+ij) /= 0.0_wp)
+        do while (nobk_e(inum+ij) /= 0)
           inum = inum + nxy            
         end do 
         nobk_e(inum+ij) = k        
       end if
       if((k == (g(3)%size - 1)) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then ! exception: check last plane for interface
         inum = 0
-        do while (nobk_e(inum+ij) /= 0.0_wp)
+        do while (nobk_e(inum+ij) /= 0)
           inum = inum + nxy           
         end do 
         if (g(1)%periodic .eqv. .false.) then
          nobk_e(inum+ij) = g(3)%size
         else if((epsk(ij) /= 1.0_wp) .and. (g(3)%periodic .eqv. .true.)) then ! check for objects in 1st plane
           nobk_e(inum+ij) = g(3)%size
-        else if ((nobk(ij) == 1.0_wp) .and. (nobk_e(ij) == 0.0_wp) .and. &
+        else if ((nobk(ij) == 1) .and. (nobk_e(ij) == 0) .and. &
           (g(3)%periodic .eqv. .true.)) then ! Number of object found == 1 and its end is not detected yet
           nobk_e(inum+ij) = g(3)%size
-        else if ((nobi(jk) == 1.0_wp) .and. (nobi_e(jk) /= 0.0_wp) .and. &
+        else if ((nobi(jk) == 1) .and. (nobi_e(jk) /= 0) .and. &
           (g(1)%periodic .eqv. .true.)) then ! Object extends across the borders of domain
           ! Do nothing. This is not the end of the object
         end if    
