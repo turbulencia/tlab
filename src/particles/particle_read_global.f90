@@ -3,7 +3,7 @@
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
-    use TLAB_VARS, only: inb_scal_array
+    use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use PARTICLE_VARS
     use TLAB_PROCS
     use PROFILES
@@ -38,7 +38,6 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     if (trim(adjustl(sRes)) == 'none') then; part%type = PART_TYPE_NONE
     else if (trim(adjustl(sRes)) == 'tracer') then; part%type = PART_TYPE_TRACER
     else if (trim(adjustl(sRes)) == 'inertia') then; part%type = PART_TYPE_INERTIA
-    else if (trim(adjustl(sRes)) == 'simplesettling') then; part%type = PART_TYPE_SIMPLE_SETT
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; part%type = PART_TYPE_BIL_CLOUD_3
     else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; part%type = PART_TYPE_BIL_CLOUD_4
     else
@@ -47,7 +46,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     end if
 
     isize_part = 0
-    
+
     if (part%type /= PART_TYPE_NONE) then
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS
@@ -59,6 +58,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
         call PROFILES_READBLOCK(bakfile, inifile, block, 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
         call SCANINICHAR(bakfile, inifile, block, 'ProfileIniP', 'None', sRes)
         if (trim(adjustl(sRes)) == 'scalar') IniP%type = PART_INITYPE_SCALAR
+        if (trim(adjustl(sRes)) == 'hardcoded') IniP%type = PART_INITYPE_HARDCODED
 
 ! -------------------------------------------------------------------
         particle_pdf_calc = .false.
@@ -82,6 +82,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
         call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
         if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
+        elseif (trim(adjustl(sRes)) == 'eulerian') then; imode_traj = TRAJ_TYPE_EULERIAN
         elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
@@ -130,6 +131,8 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             part_spname(2) = 'droplet_nodiff_3'
             part_spname(3) = 'residence_part'
 
+    ! case (PART_TYPE_NEW_CASES)
+
         end select
 
 #ifdef USE_MPI
@@ -144,18 +147,19 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 #endif
 
 ! -------------------------------------------------------------------
-        inb_traj = inb_part             ! # of particle properties tracked in trajectories; at least, the prognostic properties
+        inb_traj = inb_part             ! save particle prognostic properties
 
         select case (imode_traj)
-        
-        case(TRAJ_TYPE_BASIC)
-            inb_traj = inb_traj + inb_scal_array     ! space for the scalar fields
-        
-        case(TRAJ_TYPE_VORTICITY)
-            inb_traj = inb_traj + 3     ! space for vorticity
-        
+        case (TRAJ_TYPE_BASIC)          ! save particle prognostic properties
+            
+        case (TRAJ_TYPE_EULERIAN)       ! add the Eulerian prognostic properties
+            inb_traj = inb_traj + inb_flow_array + inb_scal_array
+
+        case (TRAJ_TYPE_VORTICITY)      ! add the Eulerian vorticity  
+            inb_traj = inb_traj + 3
+
         end select
-        
+
         if (imode_traj /= TRAJ_TYPE_NONE) then
             inb_part_txc = max(inb_part_txc, inb_traj)
             inb_part_interp = max(inb_part_interp, inb_traj)

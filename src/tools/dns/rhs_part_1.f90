@@ -7,7 +7,7 @@ subroutine RHS_PART_1()
     use TLAB_TYPES, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: visc, radiation, stokes
+    use TLAB_VARS, only: visc, radiation, settling, stokes
     use TLAB_ARRAYS
     use DNS_ARRAYS
     use PARTICLE_VARS
@@ -42,7 +42,7 @@ subroutine RHS_PART_1()
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 1); data_out(nvar)%field => l_hq(:, 1)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 2); data_out(nvar)%field => l_hq(:, 2)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 3); data_out(nvar)%field => l_hq(:, 3)
-    
+
     case (PART_TYPE_INERTIA)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 1); data_out(nvar)%field => l_txc(:, 1)
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => q(:, 2); data_out(nvar)%field => l_txc(:, 2)
@@ -89,6 +89,8 @@ subroutine RHS_PART_1()
         nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => txc(:, 4); data_out(nvar)%field => l_txc(:, 4)
         l_txc(:, 1:4) = 0.0_wp
 
+        ! case (PART_TYPE_NEW_CASES)
+
     end select
 
 ! -------------------------------------------------------------------
@@ -107,11 +109,14 @@ subroutine RHS_PART_1()
         ! equation dx_p/dt = v_p = v(x_p) already calculated via interpolation step
 
     case (PART_TYPE_INERTIA)
-        dummy = 1.0_wp /stokes
-        ! equation dx_p/dt = v_p 
-        l_hq(1:l_g%np,1:3) = l_hq(1:l_g%np,1:3) + l_q(1:l_g%np,1:3)
-        ! equation dv_p/dt = (v(x_p)-v_p)/stokes
-        l_hq(1:l_g%np,4:6) = l_hq(1:l_g%np,4:6) + dummy*(l_txc(1:l_g%np,1:3)-l_q(1:l_g%np,4:6))
+        dummy = 1.0_wp/stokes
+        dummy2 = settling/stokes
+        ! equation dx_p/dt = v_p
+        l_hq(1:l_g%np, 1:3) = l_hq(1:l_g%np, 1:3) + l_q(1:l_g%np, 4:6)
+        ! equation dv_p/dt = (v(x_p)-v_p-settling)/stokes
+        l_hq(1:l_g%np, 4) = l_hq(1:l_g%np, 4) + dummy*(l_txc(1:l_g%np, 1) - l_q(1:l_g%np, 4))
+        l_hq(1:l_g%np, 5) = l_hq(1:l_g%np, 5) + dummy*(l_txc(1:l_g%np, 2) - l_q(1:l_g%np, 5)) - dummy2
+        l_hq(1:l_g%np, 6) = l_hq(1:l_g%np, 6) + dummy*(l_txc(1:l_g%np, 3) - l_q(1:l_g%np, 6))
 
     case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4)
 ! l_txc(1) = equation without ds/dxi
@@ -130,8 +135,7 @@ subroutine RHS_PART_1()
                          - l_txc(i, 3)*delta_inv4/(cosh(l_txc(i, 2)*delta_inv2)**2)
         end do
 
-    case (PART_TYPE_SIMPLE_SETT)
-        l_hq(1:l_g%np, 2) = l_hq(1:l_g%np, 2) - part%parameters(1)
+    ! case (PART_TYPE_NEW_CASES)
 
     end select
 
