@@ -81,7 +81,7 @@ subroutine IBM_READ_INI(inifile)
   ! read geometry parameters
   call TLAB_WRITE_ASCII(bakfile, '#')
   call TLAB_WRITE_ASCII(bakfile, '#[IBMGeometry]')
-  call TLAB_WRITE_ASCII(bakfile, '#Type=<none,XBars>')       
+  call TLAB_WRITE_ASCII(bakfile, '#Type=<none,XBars,Hill,Valley,Box>')       
   call TLAB_WRITE_ASCII(bakfile, '#Mirrored=<yes/no>')       
   call TLAB_WRITE_ASCII(bakfile, '#Number=<value>') ! max number of elements in one spatial direction
   call TLAB_WRITE_ASCII(bakfile, '#Height=<value>')
@@ -96,14 +96,17 @@ subroutine IBM_READ_INI(inifile)
     end if
     continue
   else if ( TRIM(ADJUSTL(sRes)) == 'xbars' ) then; ibm_geo%name = 'xbars'
-  else if ( TRIM(ADJUSTL(sRes)) == 'hill' )  then; ibm_geo%name = 'hill' 
+  else if ( TRIM(ADJUSTL(sRes)) == 'hill'  ) then; ibm_geo%name = 'hill' 
   else if ( TRIM(ADJUSTL(sRes)) == 'valley') then; ibm_geo%name = 'valley'
-  else if ( TRIM(ADJUSTL(sRes)) == 'box' )   then; ibm_geo%name = 'box'
+  else if ( TRIM(ADJUSTL(sRes)) == 'box'   ) then; ibm_geo%name = 'box'
   else
     call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. Wrong IBMGeometryType option.')
     call TLAB_STOP(DNS_ERROR_OPTION)
   end if
 
+  call SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
+  if      ( TRIM(ADJUSTL(sRes)) == 'yes' ) then; ibm_geo%mirrored = .true.
+  else if ( TRIM(ADJUSTL(sRes)) == 'no'  ) then; ibm_geo%mirrored = .false.; end if
   call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Number', '0', ibm_geo%number)
   call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Height', '0', ibm_geo%height)
   call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Width',  '0', ibm_geo%width)

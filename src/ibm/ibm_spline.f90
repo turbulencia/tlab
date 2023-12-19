@@ -27,7 +27,7 @@
 !# 
 !########################################################################
 
-subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
+subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob_b, nob_e, ibm_case)
 
   use IBM_VARS,       only : xa, xb, ya, yb, ibmscaljmin
   use TLAB_VARS,      only : isize_field
@@ -45,7 +45,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
   integer(wi),                          intent(in   ) :: isize_nob, isize_nob_be
   integer(wi), dimension(isize_nob),    intent(in   ) :: nob
   integer(wi), dimension(isize_nob_be), intent(in   ) :: nob_b, nob_e
-  integer(wi), dimension(isize_nob_be), intent(in   ) :: IBM_case
+  integer(wi), dimension(isize_nob_be), intent(in   ) :: ibm_case
 
   integer(wi)                                         :: l, ii, ip, ia, ib, iob, iu_il, iu_ir, n, nlines
   logical                                             :: splines
@@ -67,8 +67,8 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
     if ( nob(ii) /= 0 ) then ! if line contains immersed object(s) --yes-->  spline interpolation
       ip = 0
       do iob = 1, nob(ii)    ! loop over immersed object(s)
-        call IBM_SPLINE_VECTOR(is, IBM_case(ip + ii), fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii)
-        if (IBM_case(ip + ii) == 1) splines = .false.
+        call IBM_SPLINE_VECTOR(is, ibm_case(ip + ii), fld, g, xa, ya, xb, ia, ib, nob_b(ip+ii), nob_e(ip+ii), nlines, ii)
+        if (ibm_case(ip + ii) == 1) splines = .false.
         ! ================================================================== !
         ! spline interpolation and fill gap in fld_ibm
         if ( splines ) then
