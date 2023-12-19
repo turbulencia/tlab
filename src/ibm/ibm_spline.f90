@@ -131,7 +131,8 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
   use IBM_VARS,       only : nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLAB_TYPES,     only : grid_dt
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLAB_CONSTANTS, only : wp, wi, efile
+  use TLAB_PROCS
    
   implicit none
   
@@ -286,8 +287,9 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
         xb(ib)  = g%nodes(ip_il + gap - 1) 
       else if ((ip_il + gap) >= g%size) then
         xb(ib)  = g%nodes(gap - ip_ir) + g%scale + (g%scale-g%nodes(g%size)) ! g%scale Warning!!
-      else 
-        write(*,*) 'Check gap vector. Add error to the dns.err file' 
+      else
+        call TLAB_WRITE_ASCII(efile, 'IBM SPLINE_VECTOR. Check gap vector.')
+        call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE) 
       end if
     end do
   case(8)

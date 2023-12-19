@@ -34,7 +34,6 @@ module IBM_VARS
   integer(wi)                                    :: nobi_max, nobj_max, nobk_max, nob_max
   real(wp)                                       :: max_height_objlo, max_height_objup
   integer(wi), dimension(:), allocatable         :: ibm_case_x, ibm_case_y, ibm_case_z  ! Store IBM case (won't be valid for moving objects)
-  logical                                        :: IBM_ini_case_x, IBM_ini_case_y, IBM_ini_case_z
 
   ! modified field
   real(wp),    dimension(:), allocatable, target :: fld_ibm                     ! with splines in solid regions

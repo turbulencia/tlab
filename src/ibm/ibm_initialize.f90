@@ -58,9 +58,6 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   ! assigning pointer to scratch
   txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
   tmp1 => txc(:,4); tmp2 => txc(:,5)
-
-  ! initialize cases
-  ibm_case_x(:) = 0; ibm_case_y(:) = 0; ibm_case_z(:) = 0
   
   ! eps field (read/create)
   if ( ibm_restart ) then
@@ -96,14 +93,10 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
       flag_epsp = .true.
       call IBM_IO_READ(wrk3d, flag_epsp)
     else
-      if (ibm_geo%name == 'xbars') then
-        continue
-      else if (ibm_geo%name == 'hill') then
-        continue
-      else if (ibm_geo%name == 'valley') then
-        continue
-      else if (ibm_geo%name == 'box') then
-        continue
+      if      (ibm_geo%name == 'xbars')  then; continue
+      else if (ibm_geo%name == 'hill')   then; continue
+      else if (ibm_geo%name == 'valley') then; continue
+      else if (ibm_geo%name == 'box')    then; continue
       else
         call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
         call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
@@ -111,22 +104,10 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     end if
   end if
 
-  ! genereate array for all cases
-  ! initialize in X
-  if (IBM_ini_case_x .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(1), isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
-    IBM_ini_case_x = .true.
-  end if
-  ! initialize in Y
-  if (IBM_ini_case_y .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(2), isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
-    IBM_ini_case_y = .true.
-  end if
-  ! initialize in Z
-  if (IBM_ini_case_z .eqv. .false.) then
-    call IBM_INITIALIZE_CASES(g(3), isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
-    IBM_ini_case_z = .true.
-  end if
+  ! genereate ibm_case_xyz - fields
+  call IBM_INITIALIZE_CASES(g(1), isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
+  call IBM_INITIALIZE_CASES(g(2), isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
+  call IBM_INITIALIZE_CASES(g(3), isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
 
   ! compute gamma_0/1 based on eps-field (volume approach for conditional averages!) 
   call IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)

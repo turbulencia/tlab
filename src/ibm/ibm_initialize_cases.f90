@@ -20,7 +20,7 @@
 !# 
 !########################################################################
 
-subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, IBM_case)
+subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, ibm_case)
   
   use IBM_VARS,       only : nflu
   use TLAB_CONSTANTS, only : efile, wp, wi
@@ -33,11 +33,14 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, I
   integer(wi),                          intent(in   ) :: isize_nob, isize_nob_be
   integer(wi), dimension(isize_nob),    intent(in   ) :: nob
   integer(wi), dimension(isize_nob_be), intent(in   ) :: nob_b, nob_e
-  integer(wi), dimension(isize_nob_be), intent(  out) :: IBM_case
+  integer(wi), dimension(isize_nob_be), intent(  out) :: ibm_case
   
   integer(wi)                                         :: ii, ip, iob, nlines
 
   ! ================================================================== !
+  ! initialize ibm_case
+  ibm_case(:) = 0
+
   ! cf. ibm_allocate.f90
   nlines = isize_nob 
 
@@ -54,32 +57,32 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, I
         ! ================================================================== !
           if ( nob_e(ip+ii) == g%size ) then
             ! 1. case: object over full extend of line
-            IBM_case((iob-1)*nlines + ii) = 1
+            ibm_case((iob-1)*nlines + ii) = 1
             ! .............................................................. !
           
           else if ( ( nob_e(ip+ii) <= (g%size - nflu) ) .and. ( g%periodic .eqv. .true. ) ) then
             ! 2. case: object is semi-immersed - periodic case
-            IBM_case((iob-1)*nlines + ii) = 2
+            ibm_case((iob-1)*nlines + ii) = 2
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), ibm_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( ( nob_e(ip+ii) <= (g%size - nflu) ) .and. ( g%periodic .eqv. .false. ) &
             .and. ((nob_e(ip+ii) /= 1 + nob_b(ip+ii)) .and. (nob_e(ip+ii) /= nob_b(ip+ii)))) then ! e.g. in vertical direction
             ! 3. case: object is semi-immersed - non-periodic case - lower boundary
-            IBM_case((iob-1)*nlines + ii) = 3
+            ibm_case((iob-1)*nlines + ii) = 3
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), ibm_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
             
           else if ( (nob_e(ip+ii) == 1 + nob_b(ip+ii)) .and. (g%periodic .eqv. .false.) ) then
             ! 8. case: Two solid point at lower boundary
-            IBM_case((iob-1)*nlines + ii) = 8
+            ibm_case((iob-1)*nlines + ii) = 8
             ! .............................................................. !
 
           else if ( (nob_e(ip+ii) == nob_b(ip+ii)) .and. (g%periodic .eqv. .false.) ) then
             ! 9. case: single solid point at lower boundary
-            IBM_case((iob-1)*nlines + ii) = 9
+            ibm_case((iob-1)*nlines + ii) = 9
             ! .............................................................. !
 
           else
@@ -90,28 +93,28 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, I
         else if ( nob_b(ip+ii) >= (nflu+1) )  then
             if ( ( nob_e(ip+ii) <= (g%size - nflu) ) .and. (nob_b(ip+ii) < nob_e(ip+ii) ) ) then 
             ! 4. case: object is fully immersed
-            IBM_case((iob-1)*nlines + ii) = 4
+            ibm_case((iob-1)*nlines + ii) = 4
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), ibm_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( (nob_e(ip+ii) == g%size) .and. (g%periodic .eqv. .true.) ) then
             ! 5. case: object is semi-immersed - periodic case
-            IBM_case((iob-1)*nlines + ii) = 5
+            ibm_case((iob-1)*nlines + ii) = 5
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), ibm_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( (nob_e(ip+ii) == g%size) .and. (g%periodic .eqv. .false.) ) then  ! e.g. in vertical direction
             ! 6. case: object is semi-immersed - non-periodic case - upper boundary
-            IBM_case((iob-1)*nlines + ii) = 6
+            ibm_case((iob-1)*nlines + ii) = 6
             ! .........................SANITY CHECK......................... !
-            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), IBM_case((iob-1)*nlines + ii), ii, ip)
+            call GEOMETRY_CHK(g ,nob_e, nob_b, isize_nob_be, nlines, iob, nob(ii), ibm_case((iob-1)*nlines + ii), ii, ip)
             ! .............................................................. !
 
           else if ( ( (nob_e(ip+ii)) < (nob_b(ip+ii)) ) .and. (g%periodic .eqv. .true.) ) then
             ! 7. case: object is semi-immersed at both the domain boundaries - periodic case
-            IBM_case((iob-1)*nlines + ii) = 7
+            ibm_case((iob-1)*nlines + ii) = 7
             ! .............................................................. !
 
           else
@@ -121,14 +124,14 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, I
             ! .............................................................. !
 
         else
-          call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Invalid case number check IBM_case.')
+          call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Invalid case number check ibm_case.')
           call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
         end if
-        if ((IBM_case((iob-1)*nlines + ii) < 1) .or. (IBM_case((iob-1)*nlines + ii) > 9)) then
+        if ((ibm_case((iob-1)*nlines + ii) < 1) .or. (ibm_case((iob-1)*nlines + ii) > 9)) then
           call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Case number not between 2 to 8. Array overwritten')
           call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
         end if
-        if (IBM_case((iob-1)*nlines + ii) == 0) then
+        if (ibm_case((iob-1)*nlines + ii) == 0) then
           call TLAB_WRITE_ASCII(efile, 'The object should not exist. Incorrect assignment of IBM_Cases')
           call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
         end if
@@ -142,7 +145,7 @@ end subroutine IBM_INITIALIZE_CASES
 
 !########################################################################
 
-subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, IBM_case, ii, ip)
+subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, ibm_case, ii, ip)
 
   use TLAB_TYPES,     only : grid_dt
   use TLAB_CONSTANTS, only : efile, wp, wi
@@ -152,34 +155,40 @@ subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, IBM_cas
 
   type(grid_dt),                        intent(in) :: g
   integer(wi), dimension(isize_nob_be), intent(in) :: nob_b, nob_e
-  integer(wi),                          intent(in) :: IBM_case
+  integer(wi),                          intent(in) :: ibm_case
   integer(wi),                          intent(in) :: nlines, nob, iob, ii, ip, isize_nob_be
-  
+
+  character(len=128)                               :: line
+
   ! ================================================================== !
   ! Check length of the gap vector before code execution
-  if (IBM_case < 8) then
+  if (ibm_case < 8) then
     if (abs(nob_e(ip+ii) - nob_b(ip+ii)+1) < 3) then
-      WRITE (*,*) 'IBM_CASE:', IBM_case
-      call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Less than 3 solid points. Check geometry.')
+      write(line,*) ibm_case 
+      line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. Less than 3 solid points. Check geometry.'
+      call TLAB_WRITE_ASCII(efile, line)
       call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
     end if
     if (abs(nob_e(ip+ii) - nob_b(ip+ii)) > (g%size-3)) then
-      WRITE (*,*) 'IBM_CASE:', IBM_case
-      call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. There must be atleast 3 fluid points. Check geometry.')
+      write(line,*) ibm_case 
+      line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. There must be at least 3 fluid points. Check geometry.'
+      call TLAB_WRITE_ASCII(efile, line)
       call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
     end if
     if ((iob + 1) <= nob) then
       if (nob_b(ip + nlines + ii) - (nob_e(ip + ii)) < 3) then
-        WRITE (*,*) 'IBM_CASE:', IBM_case
-        call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Insufficient gap between 2 solid objects. Check geometry.')
+        write(line,*) ibm_case 
+        line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. Insufficient gap between 2 solid objects. Check geometry.'
+        call TLAB_WRITE_ASCII(efile, line)
         call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
       end if
     end if
-  else if (IBM_case == 8) then
+  else if (ibm_case == 8) then
     if ((iob + 1) <= nob) then
       if ((nob_e(ip + ii) - nob_b(ip + nlines + ii)) < 3) then
-        WRITE (*,*) 'IBM_CASE:', IBM_case
-        call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Insufficient gap bewtween 2 solid objects. Check geometry.')
+        write(line,*) ibm_case 
+        line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. Insufficient gap bewtween 2 solid objects. Check geometry.'
+        call TLAB_WRITE_ASCII(efile, line)
         call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
       end if
     end if
