@@ -1,11 +1,11 @@
 #include "dns_error.h"
-
 !########################################################################
 !# HISTORY / AUTHORS
 !#
 !# 2022/04/01 - J. Kostelecky
 !#              Created
-!#
+!# 2023/10/27 - S. Deshpande
+!#              Modified
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
 !#
@@ -35,6 +35,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use IBM_VARS
   use TLAB_VARS,      only : isize_field, inb_txc
   use TLAB_VARS,      only : stagger_on
+  use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile, wp
   use IO_FIELDS
   use TLAB_PROCS
@@ -52,18 +53,25 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   real(wp), dimension(:), pointer                         :: tmp3
 #endif
   logical                                                 :: flag_epsp
+
   ! ================================================================== !
   ! assigning pointer to scratch
   txc = 0.0_wp; epsi => txc(:,1); epsj => txc(:,2); epsk => txc(:,3)
   tmp1 => txc(:,4); tmp2 => txc(:,5)
-
+  
   ! eps field (read/create)
   if ( ibm_restart ) then
     flag_epsp = .false.
     call IBM_IO_READ(wrk3d, flag_epsp)
   else
-    if (xbars_geo%name == 'xbars') then
+    if (ibm_geo%name == 'xbars') then
       call IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
+    else if (ibm_geo%name == 'hill') then
+      call IBM_GENERATE_GEOMETRY_HILL(wrk3d)
+    else if (ibm_geo%name == 'valley') then
+      call IBM_GENERATE_GEOMETRY_VALLEY(wrk3d)
+    else if (ibm_geo%name == 'box') then
+      call IBM_GENERATE_GEOMETRY_BOX(wrk3d)
     else 
       call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
       call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
@@ -85,15 +93,22 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
       flag_epsp = .true.
       call IBM_IO_READ(wrk3d, flag_epsp)
     else
-      if (xbars_geo%name == 'xbars') then
-        continue
+      if      (ibm_geo%name == 'xbars')  then; continue
+      else if (ibm_geo%name == 'hill')   then; continue
+      else if (ibm_geo%name == 'valley') then; continue
+      else if (ibm_geo%name == 'box')    then; continue
       else
         call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
         call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
       end if
     end if
   end if
-  
+
+  ! genereate ibm_case_xyz - fields
+  call IBM_INITIALIZE_CASES(g(1), isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
+  call IBM_INITIALIZE_CASES(g(2), isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
+  call IBM_INITIALIZE_CASES(g(3), isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
+
   ! compute gamma_0/1 based on eps-field (volume approach for conditional averages!) 
   call IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
 

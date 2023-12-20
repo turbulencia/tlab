@@ -800,8 +800,8 @@ contains
             ! Total energy formulation
             ! -------------------------------------------------------------------
             if (imode_eqns == DNS_EQNS_TOTAL) then
-                !$omp parallel default( shared ) private( i, is, rho_ratio, dt_rho_ratio )
-                !$omp do
+!$omp parallel default( shared ) private( i, is, rho_ratio, dt_rho_ratio )
+!$omp do
                 do i = 1, isize_field
                     rho_ratio = rho(i)
                     rho(i) = rho(i) + dte*hq(i, 5)
@@ -821,15 +821,15 @@ contains
                         s(i, is) = rho_ratio*s(i, is) + dt_rho_ratio*hs(i, is)
                     end do
                 end do
-                !$omp end do
-                !$omp end parallel
+!$omp end do
+!$omp end parallel
 
                 ! -------------------------------------------------------------------
                 ! Internal energy formulation
                 ! -------------------------------------------------------------------
             else if (imode_eqns == DNS_EQNS_INTERNAL) then
-                !$omp parallel default( shared ) private( i, is, rho_ratio, dt_rho_ratio )
-                !$omp do
+!$omp parallel default( shared ) private( i, is, rho_ratio, dt_rho_ratio )
+!$omp do
                 do i = 1, isize_field
                     rho_ratio = rho(i)
                     rho(i) = rho(i) + dte*hq(i, 5)
@@ -845,22 +845,22 @@ contains
                         s(i, is) = rho_ratio*s(i, is) + dt_rho_ratio*hs(i, is)
                     end do
                 end do
-                !$omp end do
-                !$omp end parallel
+!$omp end do
+!$omp end parallel
 
             end if
 
         else
             if (scal_on) then
                 do is = 1, inb_scal
-                    !$omp parallel default( shared ) private( i, dt_rho_ratio )
-                    !$omp do
+!$omp parallel default( shared ) private( i, dt_rho_ratio )
+!$omp do
                     do i = 1, isize_field
                         dt_rho_ratio = dte/rho(i)
                         s(i, is) = rho_ratio*s(i, is) + dt_rho_ratio*hs(i, is)
                     end do
-                    !$omp end do
-                    !$omp end parallel
+!$omp end do
+!$omp end parallel
                 end do
             end if
         end if

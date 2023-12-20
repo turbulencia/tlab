@@ -175,11 +175,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     if (remove_divergence) then ! remove residual divergence
 
 #ifdef USE_ESSL
-        !$omp parallel default( shared )&
-        !$omp private( ilen, dummy, srt,end,siz )
+!$omp parallel default( shared )&
+!$omp private( ilen, dummy, srt,end,siz )
 #else
-        !$omp parallel default( shared )&
-        !$omp private( ij,   dummy, srt,end,siz )
+!$omp parallel default( shared )&
+!$omp private( ij,   dummy, srt,end,siz )
 #endif
 
         call DNS_OMP_PARTITION(isize_field, srt, end, siz)
@@ -199,7 +199,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         end do
 
 #endif
-        !$omp end parallel
+!$omp end parallel
 
         if (imode_ibm == 1) then
             call IBM_BCS_FIELD(tmp2)
@@ -250,12 +250,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
     ! -----------------------------------------------------------------------
-    !$omp parallel default( shared ) private( ij,srt,end,siz )
+!$omp parallel default( shared ) private( ij,srt,end,siz )
     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         tmp1(ij) = tmp1(ij) + tmp2(ij) + tmp3(ij) ! forcing term in tmp1
     end do
-    !$omp end parallel
+!$omp end parallel
 
     ! -----------------------------------------------------------------------
     ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
@@ -288,8 +288,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     ! filter pressure p and its vertical gradient dpdy
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
-        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, tmp4)
-        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp3, tmp4)
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp1, txc(1:isize_field,4:6))
+        call OPR_FILTER(imax, jmax, kmax, PressureFilter, tmp3, txc(1:isize_field,4:6))
     end if
 
     ! Saving pressure for towers to tmp array
@@ -323,11 +323,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     else
 #ifdef USE_ESSL
-        !$omp parallel default( shared ) &
-        !$omp private( ilen, srt,end,siz,dummy )
+!$omp parallel default( shared ) &
+!$omp private( ilen, srt,end,siz,dummy )
 #else
-        !$omp parallel default( shared ) &
-        !$omp private( ij,   srt,end,siz,dummy )
+!$omp parallel default( shared ) &
+!$omp private( ij,   srt,end,siz,dummy )
 #endif
         call DNS_OMP_PARTITION(isize_field, srt, end, siz)
 
@@ -344,7 +344,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             hq(ij, 3) = hq(ij, 3) - tmp4(ij)
         end do
 #endif
-        !$omp end parallel
+!$omp end parallel
     end if
 
     ! #######################################################################

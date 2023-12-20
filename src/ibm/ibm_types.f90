@@ -22,7 +22,7 @@ module IBM_TYPES
   type ibm_geo_dt
       sequence
       character(32) :: name
-      integer(wi)   :: number, height, width
+      integer(wi)   :: number, height, width, hill_slope
       logical       :: mirrored
   end type ibm_geo_dt
 

@@ -7,7 +7,8 @@
 !#
 !# 2022/04/01 - J. Kostelecky
 !#              Created
-!#
+!# 2023/12/07 - S. Deshpande
+!#              Modified
 !########################################################################
 !# DESCRIPTION OF SUBROUTINES
 !#   generates relevant geometry fields for IBM routines
@@ -49,7 +50,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   integer(wi), parameter                       :: idi = TLAB_MPI_I_PARTIAL 
   integer(wi), parameter                       :: idk = TLAB_MPI_K_PARTIAL 
 #endif
-  integer(wi)                                  :: i, j, k, ij, ik, jk, ip, inum
+  integer(wi)                                  :: i, j, k, ij, ik, jk, ip, inum, rse
   integer(wi)                                  :: nyz, nxz, nxy
 
 #ifdef USE_MPI 
@@ -92,24 +93,41 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
   ! ================================================================== !
   ! number, beginning and end of objects in x-direction
-  ip = 1
-  do i = 1, g(1)%size - 1     ! contiguous i-lines
-    do jk = 1, nyz            ! pages of   i-lines
+  do jk = 1, nyz            ! pages of   i-lines
+    ip = 1
+    do i = 1, g(1)%size - 1     ! contiguous i-lines
       if((ip == 1) .and. (epsi(jk) == 1.0_wp)) then ! exception: check first plane for objects
-        nobi(jk) = 1
-      end if 
-      if((epsi(ip+jk-1) == 0.0_wp) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then ! check for interface 
-        nobi(jk) = nobi(jk) + 1
+          nobi(jk) = 1
+      end if
+      if((epsi(ip+jk-1) == 0.0_wp) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then ! check for interface
+        if(nobi_b(jk) /= i + 1) then ! check if the object is new
+          nobi(jk) = nobi(jk) + 1
+        end if
       end if
       if((i == 1) .and. (epsi(jk) == 1.0_wp)) then ! exception: check first plane for interface
-        nobi_b(jk) = i ! nobi_b
+        if(g(1)%periodic .eqv. .false.) then 
+          nobi_b(jk) = 1 ! nobi_b
+        else if((g(1)%periodic .eqv. .true.) .and. ((epsi(nyz*(g(1)%size - 1) + jk) == 0.0_wp))) then ! check if object is not at the end of boundary 
+          nobi_b(jk) = 1 ! nobi_b
+        else if((g(1)%periodic .eqv. .true.) .and. ((epsi(nyz*(g(1)%size - 1) + jk) == 1.0_wp))) then ! check if object spans across boundary
+          inum = 0
+          rse = 0
+          ! reverse loop to check the start of object on the boundary
+          do while ((epsi(nyz*(g(1)%size - 1) + jk - inum) /= 0) .and. ((nyz*(g(1)%size - 1) + jk - inum) >= jk ))
+            inum = inum + nyz
+            rse = rse + 1
+          end do
+          nobi_b(jk) = g(1)%size - rse + 1
+        end if
       end if
       if((epsi(ip+jk-1) == 0.0_wp) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then     ! nobi_b check for interface 
         inum = 0
         do while (nobi_b(inum+jk) /= 0)
           inum = inum + nyz            
-        end do 
-        nobi_b(inum+jk) = i + 1
+        end do
+        if (nobi_b(jk) /= (i + 1)) then
+          nobi_b(inum+jk) = i + 1
+        end if
       elseif((epsi(ip+jk-1) == 1.0_wp) .and. (epsi(ip+jk-1+nyz) == 0.0_wp)) then ! nobi_e check for interface 
         inum = 0
         do while (nobi_e(inum+jk) /= 0)
@@ -120,34 +138,61 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
       if((i == (g(1)%size - 1)) .and. (epsi(ip+jk-1+nyz) == 1.0_wp)) then ! exception: check last plane for interface
         inum = 0
         do while (nobi_e(inum+jk) /= 0)
-          inum = inum + nyz            
-        end do 
-        nobi_e(inum+jk) = g(1)%size    
+          inum = inum + nyz
+        end do
+        if (g(1)%periodic .eqv. .false.) then
+          nobi_e(inum+jk) = g(1)%size
+        else if((epsi(jk) /= 1.0_wp) .and. (g(1)%periodic .eqv. .true.)) then ! check for objects in 1st plane
+          nobi_e(inum+jk) = g(1)%size
+        else if ((nobi(jk) == 1) .and. (nobi_e(jk) == 0) .and. &
+          (g(1)%periodic .eqv. .true.)) then ! Number of object found == 1 and its end is not detected yet
+          nobi_e(inum+jk) = g(1)%size
+        else if ((nobi(jk) == 1) .and. (nobi_e(jk) /= 0) .and. &
+          (g(1)%periodic .eqv. .true.)) then ! Object extends across the borders of domain
+          ! Do nothing. This is not the end of the object
+        end if
       end if
+      ip = ip + nyz
     end do
-    ip = ip + nyz
   end do
 
   ! ================================================================== !
   ! number, begin and end of objects in y-direction
-  ip = 1
-  do j = 1, g(2)%size - 1     ! contiguous j-lines
-    do ik = 1, nxz            ! pages of   j-lines
+  do ik = 1, nxz            ! pages of   j-lines
+    ip = 1
+    do j = 1, g(2)%size - 1     ! contiguous j-lines
       if((ip == 1) .and. (epsj(ik) == 1.0_wp)) then ! exception: check first plane for objects
         nobj(ik) = 1
       end if 
       if((epsj(ip+ik-1) == 0.0_wp) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then ! check for interface 
-        nobj(ik) = nobj(ik) + 1
+        if(nobj_b(ik) /= j + 1) then  ! check if the object is new
+          nobj(ik) = nobj(ik) + 1
+        end if
       end if
       if((j == 1) .and. (epsj(ik) == 1.0_wp)) then ! exception: check first plane for interface
-        nobj_b(ik) = j ! nobj_b
+        if(g(2)%periodic .eqv. .false.) then
+          nobj_b(ik) = j ! nobj_b
+        else if((g(2)%periodic .eqv. .true.) .and. ((epsj(nxz*(g(2)%size - 1) + ik) == 0.0_wp))) then
+          nobj_b(ik) = j ! nobj_b
+        else if((g(2)%periodic .eqv. .true.) .and. ((epsj(nxz*(g(2)%size - 1) + ik) == 1.0_wp))) then
+          inum = 0
+          rse = 0
+          ! reverse loop to check the start of object on the boundary
+          do while ((epsj(nxz*(g(2)%size - 1) + ik - inum) /= 0.0_wp) .and. ((nxz*(g(2)%size - 1) + ik - inum) >= ik ))
+            inum = inum + nxz
+            rse = rse + 1
+          end do
+          nobj_b(ik) = g(1)%size - rse + 1
+        end if
       end if
       if((epsj(ip+ik-1) == 0.0_wp) .and. (epsj(ip+ik-1+nxz) == 1.0_wp)) then     ! nobj_b check for interface 
         inum = 0
         do while (nobj_b(inum+ik) /= 0)
           inum = inum + nxz            
         end do 
-        nobj_b(inum+ik) = j + 1
+        if (nobj_b(ik) /= (j + 1)) then
+          nobj_b(inum+ik) = j + 1
+        end if
       elseif((epsj(ip+ik-1) == 1.0_wp) .and. (epsj(ip+ik-1+nxz) == 0.0_wp)) then ! nobj_e check for interface 
         inum = 0
         do while (nobj_e(inum+ik) /= 0)
@@ -159,33 +204,60 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
         inum = 0
         do while (nobj_e(inum+ik) /= 0)
           inum = inum + nxz           
-        end do 
-        nobj_e(inum+ik) = g(2)%size    
+        end do
+        if (g(2)%periodic .eqv. .false.) then
+          nobj_e(inum+ik) = g(2)%size
+        else if((epsj(ik) /= 1.0_wp) .and. (g(2)%periodic .eqv. .true.)) then
+          nobj_e(inum+ik) = g(2)%size
+        else if((nobj(ik) == 1) .and. (nobj_e(ik) == 0) .and. &
+          (g(2)%periodic .eqv. .true.)) then
+          nobj_e(inum+ik) = g(2)%size
+        else if ((nobj(ik) == 1) .and. (nobj_e(ik) /= 0) .and. &
+          (g(2)%periodic .eqv. .true.)) then ! Object extends across the borders of domain
+          ! Do nothing. This is not the end of the object
+        end if
       end if
+      ip = ip + nxz
     end do
-    ip = ip + nxz
   end do
 
   ! ================================================================== !
   ! number, begin and end of objects in z-direction
-  ip = 1
-  do k = 1, g(3)%size - 1     ! contiguous k-lines
-    do ij = 1, nxy            ! pages of   k-lines
+  do ij = 1, nxy            ! pages of   k-lines
+    ip = 1
+    do k = 1, g(3)%size - 1     ! contiguous k-lines
       if((ip == 1) .and. (epsk(ij) == 1.0_wp)) then ! exception: check first plane for objects
         nobk(ij) = 1
       end if 
       if((epsk(ip+ij-1) == 0.0_wp) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then ! check for interface 
-        nobk(ij) = nobk(ij) + 1
+        if(nobk_b(ij) /= k) then  ! check if the object is new
+          nobk(ij) = nobk(ij) + 1
+        end if
       end if
       if((k == 1) .and. (epsk(ij) == 1.0_wp)) then ! exception: check first plane for interface
-        nobk_b(ij) = k ! nobj_b
+        if(g(2)%periodic .eqv. .false.) then
+          nobk_b(ij) = k ! nobj_b
+        else if((g(2)%periodic .eqv. .true.) .and. ((epsk(nxy*(g(3)%size - 1) + ij) == 0.0_wp))) then
+          nobk_b(ij) = k
+        else if((g(3)%periodic .eqv. .true.) .and. ((epsk(nxy*(g(3)%size - 1) + ij) == 1.0_wp))) then ! check if object spans across boundary
+          inum = 0
+          rse = 0
+          ! reverse loop to check the start of object on the boundary
+          do while ((epsk(nxy*(g(3)%size - 1) + ij - inum) /= 0.0_wp) .and. ((nxy*(g(3)%size - 1) + ij - inum) >= ij))
+            inum = inum + nxy
+            rse = rse + 1
+          end do
+          nobk_b(ij) = g(3)%size - rse + 1
+        end if
       end if
       if((epsk(ip+ij-1) == 0.0_wp) .and. (epsk(ip+ij-1+nxy) == 1.0_wp)) then     ! nobk_b check for interface 
         inum = 0
         do while (nobk_b(inum+ij) /= 0)
           inum = inum + nxy            
-        end do 
-        nobk_b(inum+ij) = k + 1
+        end do
+        if (nobk_b(ij) /= (k + 1)) then
+          nobk_b(inum+ij) = k + 1
+        end if
       elseif((epsk(ip+ij-1) == 1.0_wp) .and. (epsk(ip+ij-1+nxy) == 0.0_wp)) then ! nobk_e check for interface 
         inum = 0
         do while (nobk_e(inum+ij) /= 0)
@@ -198,10 +270,20 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
         do while (nobk_e(inum+ij) /= 0)
           inum = inum + nxy           
         end do 
-        nobk_e(inum+ij) = g(3)%size    
+        if (g(1)%periodic .eqv. .false.) then
+         nobk_e(inum+ij) = g(3)%size
+        else if((epsk(ij) /= 1.0_wp) .and. (g(3)%periodic .eqv. .true.)) then ! check for objects in 1st plane
+          nobk_e(inum+ij) = g(3)%size
+        else if ((nobk(ij) == 1) .and. (nobk_e(ij) == 0) .and. &
+          (g(3)%periodic .eqv. .true.)) then ! Number of object found == 1 and its end is not detected yet
+          nobk_e(inum+ij) = g(3)%size
+        else if ((nobi(jk) == 1) .and. (nobi_e(jk) /= 0) .and. &
+          (g(1)%periodic .eqv. .true.)) then ! Object extends across the borders of domain
+          ! Do nothing. This is not the end of the object
+        end if    
       end if
+      ip = ip + nxy    
     end do
-    ip = ip + nxy
   end do
 
   ! ================================================================== !

@@ -33,6 +33,7 @@ module IBM_VARS
   integer(wi), dimension(:), allocatable         :: nobi_e,  nobj_e, nobk_e     ! end    of objects in i/j/k
   integer(wi)                                    :: nobi_max, nobj_max, nobk_max, nob_max
   real(wp)                                       :: max_height_objlo, max_height_objup
+  integer(wi), dimension(:), allocatable         :: ibm_case_x, ibm_case_y, ibm_case_z  ! Store IBM case (won't be valid for moving objects)
 
   ! modified field
   real(wp),    dimension(:), allocatable, target :: fld_ibm                     ! with splines in solid regions
@@ -64,9 +65,9 @@ module IBM_VARS
 
   ! check IBM procs (active/idle)
   logical                      :: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
-
+  
   ! ibm_dt geometry type 
-  type(ibm_geo_dt)             :: xbars_geo                   ! create new geometry here
+  type(ibm_geo_dt)             :: ibm_geo                   ! create new geometry here
 
   ! name of io eps
   character(len=32), parameter :: eps_name       = 'eps0.1'
