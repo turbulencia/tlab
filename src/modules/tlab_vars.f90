@@ -1,7 +1,7 @@
 module TLAB_VARS
     use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt
     use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP, wp, wi, sp
-    use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
+    use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL, MAX_PATH_LENGTH
     implicit none
     save
 
@@ -11,6 +11,12 @@ module TLAB_VARS
     integer :: dns_omp_numThreads
     integer :: dns_omp_error
 
+! ###################################################################
+! FILE NAMES
+! ###################################################################
+    character(len=MAX_PATH_LENGTH) :: logger_path
+    character(len=MAX_PATH_LENGTH) :: lfile
+    
 ! ###################################################################
 ! General options
 ! ###################################################################

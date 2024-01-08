@@ -2,7 +2,8 @@
 #include "dns_error.h"
 
 module PLANES
-    use TLAB_CONSTANTS, only: lfile, efile, wp, wi, fmt_r, small_wp
+    use TLAB_CONSTANTS, only: efile, wp, wi, fmt_r, small_wp
+    use TLAB_VARS, only: lfile
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
     use TLAB_VARS, only: rbackground, g, imode_ibm, scal_on
     use TLAB_VARS, only: itime, rtime

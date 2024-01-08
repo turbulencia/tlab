@@ -5,7 +5,8 @@
 
 module PARTICLE_TRAJECTORIES
 
-    use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi, sizeofint
+    use TLAB_CONSTANTS, only: efile, wp, sp, wi, longi, sizeofint
+    use TLAB_VARS, only: lfile
     use PARTICLE_VARS
     use TLAB_PROCS
     use DNS_LOCAL, only: nitera_save

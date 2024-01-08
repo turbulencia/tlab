@@ -2,7 +2,8 @@
 #include "dns_const.h"
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
-    use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
+    use TLAB_CONSTANTS, only: wp, wi, longi, efile
+    use TLAB_VARS, only: lfile
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use PARTICLE_VARS
     use TLAB_PROCS

@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module TLAB_PROCS
-    use TLAB_CONSTANTS, only: sp, wp, wi, longi, lfile, efile
+    use TLAB_CONSTANTS, only: sp, wp, wi, longi, lfile_base, efile
     use TLAB_VARS
 #ifdef USE_OPENMP
     use OMP_LIB
@@ -265,8 +265,26 @@ contains
     ! ###################################################################
     subroutine TLAB_START()
 
-        character*10 clock(2)
+      character*10 clock(2)
+      integer env_status, path_len
+      CALL GET_ENVIRONMENT_VARIABLE("DNS_LOGGER_PATH",logger_path,path_len,env_status,.TRUE. )
 
+      SELECT CASE(env_status)
+      CASE(-1)
+         call TLAB_WRITE_ASCII(efile, "DNS_START. The environment variable $DNS_LOGGER_PATH is too long and cannot be handled in the foreseen array.")
+      CASE(0)
+         if ( .NOT. logger_path(path_len:path_len) .EQ. '/' ) THEN
+            logger_path = TRIM(ADJUSTL(logger_path)) // '/'
+         ENDIF
+      CASE(1:)
+         logger_path = TRIM(ADJUSTL(''))
+      END SELECT
+
+      lfile = TRIM(ADJUSTL(logger_path)) // TRIM(ADJUSTL(lfile_base))
+      lfile=TRIM(ADJUSTL(lfile))
+
+      IF ( env_status .EQ. -1 ) CALL TLAB_STOP(DNS_ERROR_OPTION)
+      
         !#####################################################################
         ! Inititalize MPI parallel mode
 #ifdef USE_MPI

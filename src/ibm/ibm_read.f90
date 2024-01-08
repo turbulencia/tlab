@@ -25,7 +25,8 @@
 
 subroutine IBM_READ_INI(inifile)
 
-  use TLAB_CONSTANTS, only : efile, lfile
+  use TLAB_CONSTANTS, only : efile
+  USE TLAB_VARS,      only : lfile 
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS
   

@@ -5,7 +5,8 @@
 !# Initialize data of reference thermodynamic profiles
 !########################################################################
 subroutine FI_BACKGROUND_INITIALIZE()
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: lfile
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg

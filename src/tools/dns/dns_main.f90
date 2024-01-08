@@ -340,6 +340,9 @@ contains
         integer ip
         character(len=256) line1
 
+        ofile = TRIM(ADJUSTL(logger_path)) // TRIM(ADJUSTL(ofile_base))
+        ofile = TRIM(ADJUSTL(ofile))
+        
         line1 = '#'; ip = 1
         line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
         line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
@@ -425,6 +428,9 @@ contains
         integer(wi)        :: ip, is
         character(len=256) :: line1
 
+        vfile = TRIM(ADJUSTL(logger_path)) // TRIM(ADJUSTL(vfile_base))
+        vfile = TRIM(ADJUSTL(vfile))
+        
         line1 = '#'; ip = 1
         line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
         line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
