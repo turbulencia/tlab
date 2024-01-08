@@ -247,7 +247,7 @@ CONTAINS
        ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1
 
        CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_pm(ip:ipm),wrk1d(6*jmax))
-    ! HANDLE FLOW FIELDS
+    ! HANDLY FLOW FIELDS
     ELSE IF ( index .EQ. 1 ) THEN
        DO kk=1,tower_kmax
           DO ii=1,tower_imax
@@ -305,10 +305,6 @@ CONTAINS
     USE MPI
     USE TLAB_MPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
 #endif
-
-#ifdef USE_H5
-    USE HDF5
-#endif
     IMPLICIT NONE
 
 #ifdef USE_MPI
@@ -324,22 +320,10 @@ CONTAINS
 
     TINTEGER, POINTER :: tip
     TINTEGER :: itower,ktower,ip_skp,ip_srt,ip_end,tower_count,op_srt,op_end
-#ifdef USE_H5
-    INTEGER                                            :: h5_err
-    INTEGER(HID_T)                                     :: h5_avgFileID, h5_Space1ID, h5_Space2ID, h5_avgDsetID,h5_avgTsetID,h5_avgIsetID
-    INTEGER(HID_T)                                     :: h5_dID_loc
-    INTEGER(HID_T), DIMENSION(tower_imax,tower_kmax)   :: h5_fileID
-    INTEGER(HSIZE_T), DIMENSION(2)                     :: h5_varDim
-    CHARACTER(LEN=64),DIMENSION(5)                     :: vname
-    CHARACTER(LEN=64),DIMENSION(2)                     :: vname1d
-    CHARACTER(LEN=128) :: vname_loc
-#endif
-    TINTEGER :: i,include_global
-
     tip => tower_isize_plane
 
     IF ( tip .LT. 1 ) THEN
-       ! NOTHING TO DO FOR THIS TASK
+       ! DO NOTHING
     ELSE
 
        IF  ( itime .NE. INT(tower_it(nitera_save)+1)  )  THEN
@@ -348,124 +332,77 @@ CONTAINS
           !                          (But it should if the code is set-up properly)
        ENDIF
 
-#ifdef USE_H5
-       h5_varDim = (/tower_jmax,nitera_save/)
-       vname  = (/'u','v','w','p','s'/)
-       vname1d= (/'time','iter'/)
-
-       CALL h5open_f(h5_err)
-       CALL h5screate_simple_f(2_4,h5_vardim(1:2),h5_Space2ID,h5_err)
-       CALL h5screate_simple_f(1_4,h5_vardim(2:), h5_Space1ID,h5_err)
-
-       WRITE(cdummy,993) INT(tower_it(1))+1,itime
-993    FORMAT('tower.mean','.',I6.6,'-',I6.6,'.h5')
-       CALL h5fcreate_f(cdummy,H5F_ACC_TRUNC_F, h5_avgFileID, h5_err)
-       CALL h5dcreate_f(h5_avgFileID,vname1D(1), H5T_NATIVE_DOUBLE,  h5_Space1ID,h5_dID_loc,h5_err)
-       CALL h5dwrite_f (h5_dID_loc,H5T_NATIVE_DOUBLE, tower_t (1:nitera_save),h5_vardim(2:),h5_err)
-       CALL h5dcreate_f(h5_avgFileID,vname1D(2), H5T_NATIVE_INTEGER, h5_Space1ID,h5_dID_loc,h5_err)
-       CALL h5dwrite_f (h5_dID_loc,H5T_NATIVE_INTEGER,INT(tower_it(1:nitera_save)),h5_vardim(2:),h5_err)
-
-       DO itower=1,tower_imax
-          DO ktower=1,tower_kmax
-                WRITE(cdummy,994) &
-                     ims_offset_i+tower_ipos(itower), &
-                     ims_offset_k+tower_kpos(ktower),&
-                     INT(tower_it(1))+1,itime
-994             FORMAT('tower.',I6.6,'x',I6.6,'.',I6.6,'-',I6.6,'.h5')
-                CALL h5fcreate_f(cdummy,H5F_ACC_TRUNC_F, h5_fileID(itower,ktower), h5_err)
-          ENDDO
-       ENDDO
-#endif
        DO ivar=1,tower_varcount
           tower_count = 0
 #ifdef USE_MPI
           if ( ims_pro .EQ. 0 ) THEN
 #endif
-#ifdef USE_H5
-             include_global=0
-#else
-             include_global=2
-#endif
-             op_srt=1; op_end=tower_jmax+include_global;
+             op_srt=1; op_end=tower_jmax+2;
              ip_skp = tower_jmax*1;
              ip_srt = 1;
              ip_end = ip_srt + tower_jmax - 1;
 
              DO it=1,nitera_save
-#ifndef USE_H5
                 wrk3d(op_srt) =  tower_t(it)
                 wrk3d(op_srt+1)= tower_it(it)
-#endif
                 SELECT CASE(ivar)
                 CASE(1)
-                   wrk3d(op_srt+include_global:op_end) = tower_um(ip_srt:ip_end)
+                   wrk3d(op_srt+2:op_end) = tower_um(ip_srt:ip_end)
                 CASE(2)
-                   wrk3d(op_srt+include_global:op_end) = tower_vm(ip_srt:ip_end)
+                   wrk3d(op_srt+2:op_end) = tower_vm(ip_srt:ip_end)
                 CASE(3)
-                   wrk3d(op_srt+include_global:op_end) = tower_wm(ip_srt:ip_end)
+                   wrk3d(op_srt+2:op_end) = tower_wm(ip_srt:ip_end)
                 CASE(4)
-                   wrk3d(op_srt+include_global:op_end) = tower_pm(ip_srt:ip_end)
+                   wrk3d(op_srt+2:op_end) = tower_pm(ip_srt:ip_end)
                 CASE(5)
-                   wrk3d(op_srt+include_global:op_end) = tower_sm(ip_srt:ip_end)
+                   wrk3d(op_srt+2:op_end) = tower_sm(ip_srt:ip_end)
                 CASE DEFAULT
                    ! ISSUE WARNING - NO MORE THAN ONE SCALAR
                 END SELECT
-                ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax+include_global
-                ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax+include_global
+                ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax+2
+                ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax+2
              ENDDO
-#ifdef USE_H5
-             ! IMPLICIT Type casting -- saving the variable as real, but passing double values (see below)
-             CALL h5dcreate_f(h5_avgFileID,vname(ivar),H5T_NATIVE_REAL,h5_space2ID,h5_avgDsetID,h5_err)
-             CALL h5dwrite_f(h5_avgDsetID,             H5T_NATIVE_DOUBLE,wrk3d(1:tower_jmax*nitera_save),h5_vardim,h5_err)
-#else
+
              WRITE(cdummy,995) &
                   INT(tower_it(1))+1,itime,ivar
 995          FORMAT('tower.mean','.',I6.6,'-',I6.6,'.',I1)
              OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')
              WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2))
              CLOSE(73)
-#endif
+
 #ifdef USE_MPI
           ENDIF
 #endif
 
-          DO itower=1, tower_imax
-             DO ktower=1, tower_kmax
-#ifdef USE_H5
-                include_global=0
-#else
-                include_global=2
-#endif
+          DO itower=1,tower_imax
+             DO ktower=1,tower_kmax
                 ip_skp = tower_jmax*tip;
                 ip_srt = tower_count*tower_jmax + 1;
                 ip_end = ip_srt + tower_jmax - 1;
-                op_srt=1; op_end=tower_jmax+include_global;
+                op_srt=1; op_end=tower_jmax+2;
+
                 DO it=1,nitera_save
-#ifndef USE_H5
                    wrk3d(op_srt) =  tower_t(it)
                    wrk3d(op_srt+1)= tower_it(it)
-#endif
                    SELECT CASE(ivar)
                    CASE(1)
-                      wrk3d(op_srt+include_global:op_end) = tower_u(ip_srt:ip_end)
+                      wrk3d(op_srt+2:op_end) = tower_u(ip_srt:ip_end)
                    CASE(2)
-                      wrk3d(op_srt+include_global:op_end) = tower_v(ip_srt:ip_end)
+                      wrk3d(op_srt+2:op_end) = tower_v(ip_srt:ip_end)
                    CASE(3)
-                      wrk3d(op_srt+include_global:op_end) = tower_w(ip_srt:ip_end)
+                      wrk3d(op_srt+2:op_end) = tower_w(ip_srt:ip_end)
                    CASE(4)
-                      wrk3d(op_srt+include_global:op_end) = tower_p(ip_srt:ip_end)
+                      wrk3d(op_srt+2:op_end) = tower_p(ip_srt:ip_end)
                    CASE(5)
-                      wrk3d(op_srt+include_global:op_end) = tower_s(ip_srt:ip_end)
+                      wrk3d(op_srt+2:op_end) = tower_s(ip_srt:ip_end)
                    CASE DEFAULT
-                      ! COULD ISSUE WARNING SOMEWHERE - NO MORE THAN ONE SCALAR FOR TOWERS
+                      ! ISSUE WARNING - NO MORE THAN ONE SCALAR
                    END SELECT
-                   ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax+include_global
-                   ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax+include_global
+                   ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax+2
+                   ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax+2
                 ENDDO
-#ifdef USE_H5
-                CALL h5dcreate_f(h5_fileID(itower,ktower),vname(ivar),H5T_NATIVE_REAL,h5_Space2ID,h5_dID_loc,h5_err)
-                CALL h5dwrite_f(h5_dID_loc,H5T_NATIVE_DOUBLE,wrk3d(1:tower_jmax*nitera_save),h5_vardim,h5_err)
-#else
+                tower_count = tower_count + 1
+
                 WRITE(cdummy,997) &
                      ims_offset_i+tower_ipos(itower), &
                      ims_offset_k+tower_kpos(ktower),&
@@ -474,25 +411,15 @@ CONTAINS
                 OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')
                 WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2))
                 CLOSE(73)
-#endif
-                tower_count = tower_count + 1
              ENDDO
           ENDDO
        ENDDO
-
-#ifdef USE_H5
-       CALL h5fclose_f(h5_avgFileID,h5_err)
-       DO itower=1,tower_imax
-          DO ktower=1,tower_kmax
-             CALL h5fclose_f(h5_fileID(itower,ktower), h5_err)
-          ENDDO
-       ENDDO
-       CALL h5close_f(h5_err)
-#endif
     ENDIF
     tower_accumulation = 1
 
   END SUBROUTINE DNS_TOWER_WRITE
+
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
