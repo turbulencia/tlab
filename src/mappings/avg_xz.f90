@@ -8,7 +8,8 @@
 !#
 !########################################################################
 subroutine AVG_N_XZ(fname, itime, rtime, nx, ny, nz, nv, nm, vars, igate, gate, y, avg)
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
+    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_VARS,  only: lfile
     use TLAB_TYPES, only: pointers_dt
     use TLAB_PROCS
     use AVGS, only: AVG1V2d, AVG1V2D1G
@@ -107,7 +108,8 @@ end subroutine RAW_TO_CENTRAL
 !#
 !########################################################################
 subroutine INTER_N_XZ(fname, itime, rtime, nx, ny, nz, np, parname, gate, y, inter)
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
+    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_VARS, only: lfile
     use TLAB_PROCS
     use AVGS, only: INTER1V2D
 

@@ -12,7 +12,8 @@
 #define LOC_STATUS 'old'
 
 subroutine IO_READ_PARTICLE(fname, l_g, l_q)
-    use TLAB_CONSTANTS, only: wp, wi, longi, lfile, efile, sizeofint, sizeofreal, sizeoflongint
+    use TLAB_CONSTANTS, only: wp, wi, longi, efile, sizeofint, sizeofreal, sizeoflongint
+    use TLAB_VARS, only: lfile
     use TLAB_VARS, only: g
     use TLAB_PROCS
     use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
@@ -153,8 +154,9 @@ end subroutine IO_READ_PARTICLE
 
 subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
-    use TLAB_CONSTANTS, only: wp, wi, longi, lfile, sizeofint, sizeoflongint
-    use PARTICLE_VARS, only: isize_part, inb_part_array
+    use TLAB_CONSTANTS, only: wp, wi, longi, sizeofint, sizeoflongint
+    use TLAB_VARS,      only: lfile
+    use PARTICLE_VARS,  only: isize_part, inb_part_array
     use TLAB_PROCS
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI

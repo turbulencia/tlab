@@ -7,7 +7,8 @@
 !#
 !########################################################################
 subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, groupnames, avg)
-    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
+    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_VARS, only: lfile
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI

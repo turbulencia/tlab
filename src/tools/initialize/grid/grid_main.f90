@@ -5,7 +5,8 @@
 
 program INIGRID
     use TLAB_TYPES, only: grid_dt, wp
-    use TLAB_CONSTANTS, only: gfile, ifile, lfile, efile
+    use TLAB_CONSTANTS, only: gfile, ifile, efile
+    use TLAB_VARS, only: lfile
     use TLAB_PROCS
     use GRID_LOCAL
 #ifdef USE_MPI

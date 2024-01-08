@@ -122,10 +122,11 @@ contains
 ! ###################################################################
     subroutine BOUNDARY_BCS_INITIALIZE()
         use TLAB_TYPES, only: profiles_dt
-        use TLAB_CONSTANTS, only: tag_flow, tag_scal, lfile, efile
+        use TLAB_CONSTANTS, only: tag_flow, tag_scal, efile
 #ifdef TRACE_ON
         use TLAB_CONSTANTS, only: tfile
 #endif
+        use TLAB_VARS, only: lfile
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use TLAB_VARS, only: g
@@ -513,7 +514,7 @@ contains
         use TLAB_CONSTANTS, only: tfile
         use TLAB_PROCS, only: TLAB_WRITE_ASCII
 #endif
-        use TLAB_CONSTANTS, only: lfile
+        use TLAB_VARS, only: lfile
         use TLAB_VARS, only: imax, jmax, kmax, g
         use TLAB_VARS, only: isize_field
         use TLAB_VARS, only: visc, schmidt

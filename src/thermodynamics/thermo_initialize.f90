@@ -25,7 +25,8 @@
 !#
 !########################################################################
 subroutine THERMO_INITIALIZE()
-    use TLAB_CONSTANTS, only: efile, lfile, wi, wp
+    use TLAB_CONSTANTS, only: efile, wi, wp
+    use TLAB_VARS, only: lfile
     use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns, mach
     use TLAB_VARS, only: damkohler, transport, radiation
     use TLAB_PROCS

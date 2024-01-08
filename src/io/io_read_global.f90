@@ -12,7 +12,7 @@
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)
 
-    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, wfile, MajorVersion, MinorVersion
+    use TLAB_CONSTANTS, only: wp, wi, efile, wfile, MajorVersion, MinorVersion
     use TLAB_VARS
     use TLAB_PROCS
     use THERMO_VARS
