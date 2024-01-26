@@ -1,4 +1,5 @@
 #include "dns_error.h"
+#include "dns_const.h"
 !########################################################################
 !# HISTORY / AUTHORS
 !#
@@ -143,7 +144,7 @@ end subroutine IBM_INITIALIZE_GEOMETRY
 subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
   use IBM_VARS
-  use TLAB_VARS,      only : imax,jmax,kmax, isize_field
+  use TLAB_VARS,      only : imax,jmax,kmax, isize_field, imode_files
   use TLAB_CONSTANTS, only : wp, wi
   use IO_FIELDS
   
@@ -156,19 +157,29 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
   
     ! ================================================================== !
   wrk3d(:) = 0.0_wp
-  select case( ibm_io )
-    case ( IBM_IO_REAL )
-      if (flag_epsp) then
-        name = epsp_name_real
-        call IO_READ_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, 0, epsp)
-      else
-        name = eps_name_real
-        call IO_READ_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, 0, eps)
-      end if
-    case ( IBM_IO_INT  )
-      call IBM_IO_READ_INT_GEOMETRY(wrk3d, flag_epsp)
-    case ( IBM_IO_BIT  )
-      call IBM_IO_READ_BIT_GEOMETRY(wrk3d, flag_epsp)
+  select case( imode_files )
+  case ( IO_NOFILE ) ! no IO
+    if (flag_epsp) then
+      epsp = 0.0_wp
+    else
+      eps  = 0.0_wp
+    end if
+  case ( IO_NETCDF ) ! not implemented
+  case default       ! mpiio - file with header
+    select case( ibm_io )
+      case ( IBM_IO_REAL )
+        if (flag_epsp) then
+          name = epsp_name_real
+          call IO_READ_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, 0, epsp)
+        else
+          name = eps_name_real
+          call IO_READ_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, 0, eps)
+        end if
+      case ( IBM_IO_INT  )
+        call IBM_IO_READ_INT_GEOMETRY(wrk3d, flag_epsp)
+      case ( IBM_IO_BIT  )
+        call IBM_IO_READ_BIT_GEOMETRY(wrk3d, flag_epsp)
+    end select 
   end select 
   
   return
@@ -179,7 +190,7 @@ end subroutine IBM_IO_READ
 subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
   use IBM_VARS
-  use TLAB_VARS,      only : imax,jmax,kmax, isize_field
+  use TLAB_VARS,      only : imax,jmax,kmax, isize_field, imode_files
   use TLAB_CONSTANTS, only : wp, wi
   use IO_FIELDS
   
@@ -192,19 +203,24 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
   
     ! ================================================================== !
   wrk3d(:) = 0.0_wp
-  select case( ibm_io )
-    case ( IBM_IO_REAL )
-      if (flag_epsp) then
-        name = epsp_name_real
-        call IO_WRITE_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, epsp)
-      else
-        name = eps_name_real
-        call IO_WRITE_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, eps)
-      end if
-    case ( IBM_IO_INT  )
-      call IBM_IO_WRITE_INT_GEOMETRY(wrk3d, flag_epsp)
-    case ( IBM_IO_BIT  )
-      call IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, flag_epsp)
+  select case( imode_files )
+  case ( IO_NOFILE ) ! no IO
+  case ( IO_NETCDF ) ! not implemented
+  case default       ! mpiio - file with header
+    select case( ibm_io )
+      case ( IBM_IO_REAL )
+        if (flag_epsp) then
+          name = epsp_name_real
+          call IO_WRITE_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, epsp)
+        else
+          name = eps_name_real
+          call IO_WRITE_FIELDS(name, IO_FLOW, imax,jmax,kmax, 1, eps)
+        end if
+      case ( IBM_IO_INT  )
+        call IBM_IO_WRITE_INT_GEOMETRY(wrk3d, flag_epsp)
+      case ( IBM_IO_BIT  )
+        call IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, flag_epsp)
+    end select 
   end select 
   
   return
