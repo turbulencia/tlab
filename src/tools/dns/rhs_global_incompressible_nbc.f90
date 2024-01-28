@@ -17,8 +17,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     use OMP_LIB, only: omp_get_thread_num
 
-    use TLAB_CONSTANTS, only: lfile, wfile, efile, tfile
+    use TLAB_CONSTANTS, only: wfile, efile, tfile
     !
+    use TLAB_VARS, only: lfile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: inb_flow, inb_scal, inb_scal_array
