@@ -288,7 +288,7 @@ contains
 
         ! #######################################################################
         CALL AVG1V2D_V(nx,ny,nz,1,s(:,:,:,1),ref(:),b) ! (mis)using b as work space
-        
+
         select case (buoyancy%type)
 
         case (EQNS_BOD_HOMOGENEOUS)
