@@ -272,10 +272,9 @@ contains
 !# when it is a function of a scalar
 !########################################################################
     subroutine FI_BUOYANCY(buoyancy, nx, ny, nz, s, b, ref)
-
-        use TLAB_VARS,   only: g, area
+        use TLAB_VARS,   only: g
         use TLAB_ARRAYS, only: wrk1d
-        use AVGS,        only: AVG_IK_V
+        use AVGS,        only: AVG1V2D_V
 
         type(term_dt), intent(in) :: buoyancy
         integer(wi), intent(in) :: nx, ny, nz
@@ -288,7 +287,7 @@ contains
         real(wp) c0_loc, c1_loc, c2_loc, c3_loc, dummy
 
         ! #######################################################################
-        call AVG_IK_V(nx, ny, nz, ny, s(:,:,:,1), g(1)%jac, g(3)%jac, ref(:), wrk1d(:,1), area) ! ref = mean state of the buoyancy
+        CALL AVG1V2D_V(nx,ny,nz,1,s(:,:,:,1),ref(:),b) ! (mis)using b as work space
 
         select case (buoyancy%type)
 
@@ -359,6 +358,9 @@ contains
                 end do
             end do
 
+         case DEFAULT
+            b=0.0_wp
+            
         end select
 
         return
