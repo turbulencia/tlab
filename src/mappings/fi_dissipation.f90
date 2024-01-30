@@ -131,8 +131,9 @@ end subroutine FI_DISSIPATION
 subroutine FI_RTKE(nx, ny, nz, q, ke)
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imode_eqns, inb_flow
-    use TLAB_VARS, only: g, area, rbackground
+    use TLAB_VARS, only: g, area
     use TLAB_ARRAYS, only: wrk1d
+    use THERMO_ANELASTIC, only : rbackground
     use AVGS, only: AVG_IK_V
 
     implicit none

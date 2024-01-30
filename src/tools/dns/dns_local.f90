@@ -91,7 +91,6 @@ contains
         use TLAB_CONSTANTS, only: efile, lfile
         use TLAB_VARS, only: imode_eqns, imode_ibm, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
-        use TLAB_VARS, only: rbackground
         use TLAB_ARRAYS
         use TLAB_PROCS
         use THERMO_ANELASTIC

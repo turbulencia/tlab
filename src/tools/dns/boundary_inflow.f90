@@ -15,7 +15,7 @@ module BOUNDARY_INFLOW
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
     use TLAB_VARS, only: imode_eqns, itransport
-    use TLAB_VARS, only: g, qbg, epbackground, pbackground
+    use TLAB_VARS, only: g, qbg
     use TLAB_VARS, only: rtime, itime
     use TLAB_VARS, only: visc, damkohler
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
@@ -566,7 +566,7 @@ contains
 
         ! #######################################################################
         ! recalculation of diagnostic variables
-        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
             if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
                 call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1), epbackground, pbackground)
 

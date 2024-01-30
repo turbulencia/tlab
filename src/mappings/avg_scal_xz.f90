@@ -309,7 +309,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call AVG_IK_V(imax, jmax, kmax, jmax, v, g(1)%jac, g(3)%jac, rV(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, w, g(1)%jac, g(3)%jac, rW(1), wrk1d, area)
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         rR(:) = 1.0_wp
 
         fU(:) = rU(:)
@@ -357,7 +357,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     call AVG_IK_V(imax, jmax, kmax, jmax, s_local, g(1)%jac, g(3)%jac, rS(1), wrk1d, area)
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         fS(:) = rS(:)
     else
         p_wrk3d = rho*s_local
@@ -380,7 +380,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     tmp1 = p_wrk3d*tmp1
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS4(1), wrk1d, area)
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         fS2(:) = rS2(:)
         fS3(:) = rS3(:)
         fS4(:) = rS4(:)
@@ -762,7 +762,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Source terms in transport equations
     ! #######################################################################
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         if (buoyancy%type == EQNS_EXPLICIT) then
             call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, p_wrk3d)
         else

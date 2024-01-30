@@ -816,9 +816,9 @@ contains
     !########################################################################
     subroutine TRANS_FUNCTION(nx, ny, nz, a, b, txc)
 
-        use TLAB_VARS, only: inb_scal, epbackground
         use THERMO_VARS, only: imixture!, MRATIO, GRATIO, dsmooth
         use THERMO_VARS, only: rd_ov_rv, Lvl
+        use THERMO_ANELASTIC, only: epbackground
 
         implicit none
 
@@ -853,7 +853,7 @@ contains
         txc(:, 1) = 1.0_wp/(txc(:, 4)/txc(:, 1) - 1.0_wp)*rd_ov_rv
         txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 
-        ! Calculate parameter eta (assuming c_p = c_p,d)
+        ! Calculate parameter eta (assuming c_p = c_p,d)
         txc(:, 3) = rd_ov_rv*Lvl*Lvl/(txc(:, 5)*txc(:, 5))
 
         ! Calculate s

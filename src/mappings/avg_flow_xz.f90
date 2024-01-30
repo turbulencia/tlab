@@ -383,7 +383,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     sg(ng) = 14
 
     groupname(ng) = 'Stratification'
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         varname(ng) = 'Pot rRref rTref BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq ' &
                       //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
     else
@@ -517,7 +517,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         dwdz(:, j, :) = w(:, j, :) - fW(j)
     end do
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         dvdx = dwdx*dwdx
         dvdy = dwdy*dwdy
         dvdz = dwdz*dwdz
@@ -533,7 +533,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     Ryy(:) = Ryy(:)/rR(:)
     Rzz(:) = Rzz(:)/rR(:)
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         dvdx = dwdx*dwdy
         dvdy = dwdx*dwdz
         dvdz = dwdy*dwdz
@@ -913,7 +913,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #undef GAMMA_LOC
 #undef T_LOC
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         pref(:) = pbackground(:)
         tref(:) = tbackground(:)
         rref(:) = rbackground(:)
@@ -929,7 +929,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! dudx = buoyancy
     !
     ! ###################################################################
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
 
         if (buoyancy%type /= EQNS_NONE) then
             if (buoyancy%type == EQNS_EXPLICIT) then
@@ -1362,7 +1362,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     Tke_t(:) = Buo(:) + Con(:) + Prd(:) - Eps(:) + (-Ty_y(:) + Pi(:) - Gkin(:) + Dkin(:))/rR(:)
 
     ! Potential energy equation
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         Pot(:) = -rB(:)*(g(2)%nodes(:) - sbg(inb_scal)%ymean)
 
     else

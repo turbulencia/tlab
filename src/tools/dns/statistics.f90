@@ -49,7 +49,6 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
         use TLAB_VARS, only: buoyancy, imode_eqns, scal_on
         use TLAB_VARS, only: froude
-        use TLAB_VARS, only: epbackground, pbackground, rbackground
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: schmidt
         use TLAB_ARRAYS
@@ -60,7 +59,7 @@ contains
         use PARTICLE_ARRAYS
         use FI_SOURCES, only: FI_BUOYANCY
         use FI_VORTICITY_EQN
-        
+
         ! -------------------------------------------------------------------
         real(wp) dummy, amin(16), amax(16)
         integer is, idummy, nbins, ibc(16), nfield
@@ -87,7 +86,7 @@ contains
         end if
 
         ! Calculate pressure
-        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
             call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 1), txc(1, 2), txc(1, 4))
         end if
 
@@ -122,7 +121,7 @@ contains
             nfield = nfield + 1; vars(nfield)%field => q(:, 1); vars(nfield)%tag = 'u'
             nfield = nfield + 1; vars(nfield)%field => q(:, 2); vars(nfield)%tag = 'v'
             nfield = nfield + 1; vars(nfield)%field => q(:, 3); vars(nfield)%tag = 'w'
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 nfield = nfield + 1; vars(nfield)%field => txc(:, 3); vars(nfield)%tag = 'p'
             else
                 nfield = nfield + 1; vars(nfield)%field => q(:, 6); vars(nfield)%tag = 'p'
@@ -156,7 +155,7 @@ contains
                                      txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean)
                 end do
 
-                if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                     ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
                     if (stats_buoyancy) then
                         if (buoyancy%type == EQNS_EXPLICIT) then
@@ -205,7 +204,7 @@ contains
                 end do
             end if
 
-            if (part%type /= PART_TYPE_NONE .and. particle_pdf_calc ) then                ! Save particle pathlines for particle_pdf
+            if (part%type /= PART_TYPE_NONE .and. particle_pdf_calc) then                ! Save particle pathlines for particle_pdf
                 write (fname, *) itime; fname = "particle_pdf."//trim(adjustl(fname))
                 call PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
             end if

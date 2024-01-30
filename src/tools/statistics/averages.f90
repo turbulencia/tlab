@@ -198,7 +198,7 @@ program AVERAGES
     case (4)
         nfield = 6 + inb_scal
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3)
-        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) inb_txc = max(inb_txc, 6)
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) inb_txc = max(inb_txc, 6)
     case (5) ! enstrophy
         nfield = 7
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 8)
@@ -418,7 +418,7 @@ program AVERAGES
             ! Conventional statistics
             ! ###################################################################
         case (1)
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
             end if
 
@@ -447,7 +447,7 @@ program AVERAGES
 
                 end if
 
-                if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
                         call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, epbackground, pbackground, txc(1, 7))
@@ -577,7 +577,7 @@ program AVERAGES
             ifield = ifield + 1; vars(ifield)%field => v(:); vars(ifield)%tag = 'V'
             ifield = ifield + 1; vars(ifield)%field => w(:); vars(ifield)%tag = 'W'
 
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
             else
@@ -601,7 +601,7 @@ program AVERAGES
             ifield = 0
 
             ! result vector in txc4, txc5, txc6
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 if (buoyancy%type == EQNS_NONE) then
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
@@ -659,7 +659,7 @@ program AVERAGES
             call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))

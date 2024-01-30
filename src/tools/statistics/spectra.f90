@@ -216,7 +216,7 @@ program SPECTRA
 
     flag_buoyancy = 0 ! default
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
 ! in case we need the buoyancy statistics
         if (buoyancy%type == EQNS_BOD_QUADRATIC .or. &
             buoyancy%type == EQNS_BOD_BILINEAR .or. &
@@ -349,7 +349,7 @@ program SPECTRA
         end if
     end if
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         write (str, *) isize_txc_field; line = 'Allocating array p_aux of size '//trim(adjustl(str))
         call TLAB_WRITE_ASCII(lfile, line)
         allocate (p_aux(isize_txc_field), stat=ierr)
@@ -542,7 +542,7 @@ program SPECTRA
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
 ! Calculate additional diagnostic quantities to be processed
-        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
             call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3))
             if (flag_buoyancy == 1) then
                 if (buoyancy%type == EQNS_EXPLICIT) then

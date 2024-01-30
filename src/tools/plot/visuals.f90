@@ -470,7 +470,7 @@ program VISUALS
             ! ###################################################################
             ! Thermodynamic state
             ! ###################################################################
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
                     if (buoyancy%type == EQNS_EXPLICIT) then
@@ -723,7 +723,7 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 9) then ! StrainEquation (I need the pressure)
                 call TLAB_WRITE_ASCII(lfile, 'Computing strain pressure...')
                 plot_file = 'StrainPressure'//time_str(1:MaskSize)
-                if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                     call TLAB_WRITE_ASCII(efile, 'VISUALS. Strain eqn for incompressible undeveloped.')
                     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
                 else

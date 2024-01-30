@@ -157,7 +157,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity', '-1.0', bound_r%max)
 
     bound_d%active = .false.
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         bound_d%active = .true.
         bound_d%max = big_wp ! default
         call SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)

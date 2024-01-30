@@ -183,7 +183,7 @@ contains
 ! #######################################################################
 ! Incompressible mode
 ! #######################################################################
-        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
 
             ! LU decomposition for the 3 possible neumann boudary conditions
             ! ny = g(2)%size

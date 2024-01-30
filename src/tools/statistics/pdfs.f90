@@ -158,7 +158,7 @@ program PDFS
     ! -------------------------------------------------------------------
     iread_flow = .false.
     iread_scal = .false.
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then; inb_txc = 6; 
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then; inb_txc = 6; 
     else; inb_txc = 1
     end if
     if (fourier_on) inb_txc = max(inb_txc, 1)
@@ -330,7 +330,7 @@ program PDFS
             ifield = ifield + 1; vars(ifield)%field => q(:, 1); vars(ifield)%tag = 'u'
             ifield = ifield + 1; vars(ifield)%field => q(:, 2); vars(ifield)%tag = 'v'
             ifield = ifield + 1; vars(ifield)%field => q(:, 3); vars(ifield)%tag = 'w'
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'p'
             else
@@ -375,7 +375,7 @@ program PDFS
         case (3)
             call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy equation...')
 
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 if (buoyancy%type == EQNS_NONE) then
                     txc(:, 4) = C_0_R; txc(:, 5) = C_0_R; txc(:, 6) = C_0_R
                 else
@@ -430,7 +430,7 @@ program PDFS
         case (4)
             call TLAB_WRITE_ASCII(lfile, 'Computing strain equation...')
 
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
