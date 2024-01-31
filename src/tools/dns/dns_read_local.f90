@@ -448,7 +448,6 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#[Statsitics]')
     call TLAB_WRITE_ASCII(bakfile, '#Averages=<yes/no>')
     call TLAB_WRITE_ASCII(bakfile, '#Pdfs=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ConditionalAverages=<yes/no>')
     call TLAB_WRITE_ASCII(bakfile, '#Intermittency=<yes/no>')
 
     call SCANINICHAR(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)

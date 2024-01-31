@@ -259,7 +259,7 @@ if [ $# -eq 0 ]; then
    echo "Is this correct (yes/no)"
    read answer
    if [ -z "$answer" ]; then
-      echo "You must answer yer or no"
+      echo "You must answer yes or no"
       exit 1
    fi
 
