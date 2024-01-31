@@ -474,7 +474,7 @@ program VISUALS
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, epbackground, pbackground, txc(1, 1))
+                        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, txc(1, 1))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
@@ -485,13 +485,13 @@ program VISUALS
 
                 else if (opt_vec(iv) == 7 .and. imixture == MIXT_TYPE_AIRWATER) then ! temperature
                     plot_file = 'Temperature'//time_str(1:MaskSize)
-                    call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, epbackground, txc(1, 1))
+                    call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, txc(1, 1))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     if (damkohler(1) > 0.0_wp) then ! Supersaturated liquid; this is wrong
                         plot_file = 'Supsat'//time_str(1:MaskSize)
                         txc(1:isize_field, 1:2) = s(1:isize_field, 1:2)
-                        call THERMO_ANELASTIC_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1), epbackground, pbackground)
+                        call THERMO_ANELASTIC_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1))
                         txc(1:isize_field, 3) = (s(1:isize_field, 3) - txc(1:isize_field, 3))/s(1, 3)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
                     end if
@@ -668,7 +668,7 @@ program VISUALS
 
                 plot_file = 'LnPotentialEnstrophy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, txc(1, 4))
+                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 4))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 4), wrk1d)
@@ -781,7 +781,7 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 12) then
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, txc(1, 1))
+                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
@@ -877,7 +877,7 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 17) then
                 plot_file = 'RelativeHumidity'//time_str(1:MaskSize)
-                call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, epbackground, pbackground, wrk3d, txc(1, 1))
+                call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, wrk3d, txc(1, 1))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
             end if
 
@@ -936,7 +936,7 @@ program VISUALS
 
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, txc(1, 1))
+                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
@@ -1049,9 +1049,9 @@ end subroutine VISUALS_ACCUMULATE_FIELDS
         epbackground = 0.0_wp                                    ! potential energy
         pbackground = p                                        ! pressure
 
-        call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s(1, 1), epbackground, txc(1, 1))
-        call THERMO_ANELASTIC_DENSITY(nx, ny, nz, s(1, 1), epbackground, pbackground, txc(1, 2))
+        call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1))
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s(1, 1), txc(1, 1))
+        call THERMO_ANELASTIC_DENSITY(nx, ny, nz, s(1, 1), txc(1, 2))
 
         return
     end subroutine VISUALS_FUNCTION1

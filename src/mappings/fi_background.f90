@@ -99,13 +99,13 @@ subroutine FI_BACKGROUND_INITIALIZE()
         end if
 
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-            call THERMO_ANELASTIC_PH(1, g(2)%size, 1, sbackground(:, 2), sbackground(:, 1), epbackground, pbackground)
+            call THERMO_ANELASTIC_PH(1, g(2)%size, 1, sbackground(:, 2), sbackground(:, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(g(2)%size, sbackground, sbackground(:, inb_scal_array))
         end if
 
         if (scaleheight > 0.0_wp) then
-            call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, epbackground, pbackground, rbackground)
+            call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, rbackground)
             ribackground = 1.0_wp/rbackground
         end if
 
@@ -113,7 +113,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         ! Construct reference buoyancy profile
         allocate (bbackground(g(2)%size))
         if (buoyancy%type == EQNS_EXPLICIT) then
-            call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, epbackground, pbackground, rbackground, bbackground)
+            call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, bbackground)
         else
             p_wrk1d(:, 1) = 0.0_wp
             call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), bbackground, p_wrk1d)
@@ -134,7 +134,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         ! theta_l as next scalar
         if (imixture == MIXT_TYPE_AIRWATER) then
             is = is + 1
-            call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, sbackground, epbackground, pbackground, p_wrk1d)
+            call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, sbackground, p_wrk1d)
             sbg(is) = sbg(1)
             sbg(is)%mean = (p_wrk1d(1, 1) + p_wrk1d(g(2)%size, 1))*0.5_wp
             sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(g(2)%size, 1))
@@ -252,7 +252,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     end if
     do iter = 1, niter           ! iterate
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, e, p_aux(:), r_aux(:))   ! Get r_aus=1/RT
+            epbackground(:) = e(:)
+            pbackground(:) = p_aux(:)
+            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:))   ! Get r_aus=1/RT
             dummy = -1.0_wp/sign(scaleheight, buoyancy%vector(2))
         else
             call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
@@ -277,7 +279,9 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Get ql, if necessary
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                call THERMO_ANELASTIC_PH(1, g%size, 1, s(1, 2), s(1, 1), e, p)
+                epbackground(:) = e(:)
+                pbackground(:) = p(:)
+                call THERMO_ANELASTIC_PH(1, g%size, 1, s(1, 2), s(1, 1))
             else
                 call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
             end if
@@ -290,7 +294,8 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
     ! compute equilibrium values of T
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-        call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, e, T)
+        epbackground(:) = e(:)
+        call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, T)
     end if
 
     return

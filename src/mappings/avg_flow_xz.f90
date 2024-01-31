@@ -475,7 +475,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
     else if (imode_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, epbackground, pbackground, dwdx)
+        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, dwdx)
         call AVG_IK_V(imax, jmax, kmax, jmax, dwdx, g(1)%jac, g(3)%jac, rR(1), wrk1d, area)
 
         fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
@@ -559,7 +559,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Density
     if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, epbackground, pbackground, p_wrk3d)
+            call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, p_wrk3d)
             do j = 1, jmax
                 p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - rR(j)
             end do
@@ -719,7 +719,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         rT(:) = tbackground(:)
 
     else if (imode_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, epbackground, T_LOC(1, 1, 1))
+        call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, T_LOC(1, 1, 1))
         call AVG_IK_V(imax, jmax, kmax, jmax, T_LOC(1, 1, 1), g(1)%jac, g(3)%jac, rT(1), wrk1d, area)
 
         do j = 1, jmax
@@ -730,24 +730,24 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call THERMO_POLYNOMIAL_PSAT(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, psat(1), wrk1d, area)
 
-        call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, epbackground, pbackground, T_LOC(1, 1, 1), p_wrk3d)
+        call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, T_LOC(1, 1, 1), p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, relhum(1), wrk1d, area)
 
-        call THERMO_ANELASTIC_THETA(imax, jmax, kmax, s, epbackground, pbackground, p_wrk3d)
+        call THERMO_ANELASTIC_THETA(imax, jmax, kmax, s, p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, potem_fr(1), wrk1d, area)
-        call THERMO_ANELASTIC_THETA_V(imax, jmax, kmax, s, epbackground, pbackground, p_wrk3d)
+        call THERMO_ANELASTIC_THETA_V(imax, jmax, kmax, s, p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, potem_eq(1), wrk1d, area)
 
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T_LOC(1, 1, 1), dudz)
         if (imixture == MIXT_TYPE_AIRWATER) &
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 3), dudy)
 
- call THERMO_ANELASTIC_LAPSE_EQU(imax, jmax, kmax, s, dudz, dudy, epbackground, pbackground, rbackground, GAMMA_LOC(1, 1, 1), p_wrk3d)
+ call THERMO_ANELASTIC_LAPSE_EQU(imax, jmax, kmax, s, dudz, dudy, GAMMA_LOC(1, 1, 1), p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), g(1)%jac, g(3)%jac, lapse_eq(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, bfreq_eq(1), wrk1d, area)
         bfreq_eq(:) = bfreq_eq(:)*buoyancy%vector(2)
 
-        call THERMO_ANELASTIC_LAPSE_FR(imax, jmax, kmax, s, dudz, epbackground, GAMMA_LOC(1, 1, 1), p_wrk3d)
+        call THERMO_ANELASTIC_LAPSE_FR(imax, jmax, kmax, s, dudz, GAMMA_LOC(1, 1, 1), p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), g(1)%jac, g(3)%jac, lapse_fr(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, bfreq_fr(1), wrk1d, area)
         ! dummy = 1.0_wp /( scaleheight *gama0 )
@@ -755,7 +755,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         bfreq_fr(:) = bfreq_fr(:)*buoyancy%vector(2)
 
         ! GAMMA_LOC(1,1,1) should contains lapse_fr, since lapse_dew = lapse_fr when saturated
-        call THERMO_ANELASTIC_DEWPOINT(imax, jmax, kmax, s, epbackground, pbackground, rbackground, p_wrk3d, GAMMA_LOC(1, 1, 1))
+        call THERMO_ANELASTIC_DEWPOINT(imax, jmax, kmax, s, p_wrk3d, GAMMA_LOC(1, 1, 1))
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, dewpoint(1), wrk1d, area)
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), g(1)%jac, g(3)%jac, lapse_dew(1), wrk1d, area)
 
@@ -933,7 +933,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
         if (buoyancy%type /= EQNS_NONE) then
             if (buoyancy%type == EQNS_EXPLICIT) then
-                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, dudx)
+                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, dudx)
             else
                 call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, dudx, bbackground)
             end if

@@ -27,7 +27,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     select case (imode_eqns)
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-            call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1), epbackground, pbackground)
+            call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1))
 
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(nx*ny*nz, s, s(1, inb_scal_array))

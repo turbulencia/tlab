@@ -85,7 +85,7 @@ program INISCAL
 
     if (imixture == MIXT_TYPE_AIRWATER) then ! Initial liquid in equilibrium; overwrite previous values
         if (damkohler(3) > 0.0_wp .and. flag_mixture == 1) then
-            call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1), epbackground, pbackground)
+            call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         end if
     end if
 
@@ -97,7 +97,7 @@ program INISCAL
         end if
         radiation%parameters(1) = norm_ini_radiation
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
-            call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1), epbackground, pbackground)
+            call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, inb_scal_array))
         end if

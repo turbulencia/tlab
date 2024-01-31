@@ -54,6 +54,11 @@ program SMOOTH
     write (*, *) 'Smoothing factor ?'
     read (*, *) dsmooth
 
+    allocate (pbackground(1), epbackground(1), rbackground(1))
+    epbackground(1) = ep(1)
+    pbackground(1) = p(1)
+    rbackground(1) = rho(1)
+
 ! ###################################################################
     open (21, file='vapor.dat')
     write (21, *) '# qt, ql, qv, qs(T), r, T, p, e, h'
@@ -77,9 +82,9 @@ program SMOOTH
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 3) then
-            call THERMO_ANELASTIC_PH(1, 1, 1, z1, h, ep, p)
+            call THERMO_ANELASTIC_PH(1, 1, 1, z1, h)
             s(1) = h(1); s(2:3) = z1(1:2)
-            call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, ep, T)
+            call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, T)
 !        CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
             call THERMO_POLYNOMIAL_PSAT(1, T, qs)
             qs = 1.0_wp/(p/qs - 1.0_wp)*rd_ov_rv

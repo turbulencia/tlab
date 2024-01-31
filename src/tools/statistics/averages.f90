@@ -433,7 +433,7 @@ program AVERAGES
                 if (buoyancy%type == EQNS_BOD_QUADRATIC .or. buoyancy%type == EQNS_BOD_BILINEAR .or. &
                     imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, txc(1, 7))
+                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 7))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 7), wrk1d)
@@ -450,8 +450,8 @@ program AVERAGES
                 if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
-                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, epbackground, pbackground, txc(1, 7))
-                        !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
+                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, txc(1, 7))
+                        !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
@@ -606,7 +606,7 @@ program AVERAGES
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, wrk3d)
+                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)

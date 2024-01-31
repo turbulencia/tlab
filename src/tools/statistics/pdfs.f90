@@ -380,7 +380,7 @@ program PDFS
                     txc(:, 4) = C_0_R; txc(:, 5) = C_0_R; txc(:, 6) = C_0_R
                 else
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, wrk3d)
+                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = C_0_R
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
@@ -677,7 +677,7 @@ program PDFS
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'b'; ibc(ifield) = 1
             if (buoyancy%type == EQNS_EXPLICIT) then
-                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, txc(1, 1))
+                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
             else
                 wrk1d(1:jmax, 1) = C_0_R
                 call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)

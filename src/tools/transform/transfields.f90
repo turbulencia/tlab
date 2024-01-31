@@ -818,7 +818,7 @@ contains
 
         use THERMO_VARS, only: imixture!, MRATIO, GRATIO, dsmooth
         use THERMO_VARS, only: rd_ov_rv, Lvl
-        use THERMO_ANELASTIC, only: epbackground
+        use THERMO_ANELASTIC, only: pbackground
 
         implicit none
 
@@ -845,8 +845,9 @@ contains
         txc(:, 3) = 0.0_wp
         txc(:, 4) = p                               ! pressure
 
-        call THERMO_ANELASTIC_PH(nx, ny, nz, txc(1, 2), txc(1, 1), epbackground, p)        ! Calculate q_l
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, txc(1, 1), epbackground, txc(1, 5))
+        pbackground = p
+        call THERMO_ANELASTIC_PH(nx, ny, nz, txc(1, 2), txc(1, 1))        ! Calculate q_l
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, txc(1, 1), txc(1, 5))
 
         ! Calculate saturation specific humidity
         call THERMO_POLYNOMIAL_PSAT(nx*ny*nz, txc(1, 5), txc(1, 1))

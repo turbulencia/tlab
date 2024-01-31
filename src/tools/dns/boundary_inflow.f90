@@ -568,7 +568,7 @@ contains
         ! recalculation of diagnostic variables
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
             if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
-                call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1), epbackground, pbackground)
+                call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1))
 
             else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                 call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, 1, 1, inb_scal_array))

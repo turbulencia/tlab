@@ -286,10 +286,10 @@ contains
                 offset = offset + jplanes%n
             end do
             if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and integral of total water
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, s(:, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
+                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), s(:, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), rbackground, s(:, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
+                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), s(:, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
             end if

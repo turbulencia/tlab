@@ -764,7 +764,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         if (buoyancy%type == EQNS_EXPLICIT) then
-            call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, p_wrk3d)
+            call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, p_wrk3d)
         else
             wrk1d(1:jmax, 1) = 0.0_wp
             call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, p_wrk3d, wrk1d)

@@ -61,7 +61,7 @@ contains
             if (buoyancy%active(iq)) then
 
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, tmp1)
+                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
 
                 else
                     if (iq == 2) then
@@ -477,7 +477,7 @@ contains
                 end if
 
             case default        ! energy variables
-                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, epbackground, tmp(:, 1))
+                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, tmp(:, 1))
                 if (exponent > 0.0_wp) then
                     tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*(s(:, is_ref)**dummy)
                 else
@@ -527,7 +527,7 @@ contains
                 end if
 
             case default        ! energy variables
-                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, epbackground, trans(:, 1))
+                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, trans(:, 1))
                 if (exponent > 0.0_wp) then
                     trans(:, 1) = -transport%parameters(is)*trans(:, 1)*(s(:, is_ref)**dummy)
                 else

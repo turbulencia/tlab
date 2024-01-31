@@ -56,10 +56,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, e, T)
+    subroutine THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*)
         real(wp), intent(out) :: T(nx*ny*nz)
 
 ! ###################################################################
@@ -68,7 +67,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -81,7 +80,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -94,7 +93,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -111,10 +110,9 @@ contains
 !########################################################################
 ! Calculating h_l - h; very similar to the temperature routine
 !########################################################################
-    subroutine THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, e, result)
+    subroutine THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, result)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*)
         real(wp), intent(out) :: result(nx*ny*nz)
 
 ! ###################################################################
@@ -122,7 +120,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -136,7 +134,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -150,7 +148,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -166,10 +164,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_DENSITY(nx, ny, nz, s, e, p, rho)
+    subroutine THERMO_ANELASTIC_DENSITY(nx, ny, nz, s, rho)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: rho(nx*ny*nz)
 
 ! ###################################################################
@@ -177,8 +174,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
-                E_LOC = e(is)
+                P_LOC = MRATIO*pbackground(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -192,8 +189,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -208,8 +205,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -226,10 +223,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_BUOYANCY(nx, ny, nz, s, e, p, r, b)
+    subroutine THERMO_ANELASTIC_BUOYANCY(nx, ny, nz, s, b)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*), r(*)
         real(wp), intent(out) :: b(nx*ny*nz)
 
 ! ###################################################################
@@ -237,9 +233,9 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*p(is)
-                E_LOC = e(is)
-                R_LOC = r(is)
+                P_LOC = MRATIO*pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
                 R_LOC_INV = 1.0_wp/R_LOC
 
                 do i = 1, nx
@@ -254,9 +250,9 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
-                R_LOC = r(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
                 R_LOC_INV = 1.0_wp/R_LOC
 
                 do i = 1, nx
@@ -272,9 +268,9 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
-                R_LOC = r(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
                 R_LOC_INV = 1.0_wp/R_LOC
 
                 do i = 1, nx
@@ -292,10 +288,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_QVEQU(nx, ny, nz, s, e, p, T, qvequ)
+    subroutine THERMO_ANELASTIC_QVEQU(nx, ny, nz, s, T, qvequ)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: T(nx*ny*nz), qvequ(nx*ny*nz)
 
 ! ###################################################################
@@ -303,8 +298,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -324,10 +319,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY(nx, ny, nz, s, e, p, T, rh)
+    subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY(nx, ny, nz, s, T, rh)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: T(nx*ny*nz), rh(nx*ny*nz)
 
 ! ###################################################################
@@ -335,8 +329,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -361,10 +355,9 @@ contains
 !########################################################################
 ! Dry potential temperature
 !########################################################################
-    subroutine THERMO_ANELASTIC_THETA(nx, ny, nz, s, e, p, theta)
+    subroutine THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: theta(nx*ny*nz)
 
         real(wp) PI_LOC
@@ -374,8 +367,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/p(is))**rd_ov_cd
-                E_LOC = e(is)
+                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -389,8 +382,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/p(is))**rd_ov_cd
-                E_LOC = e(is)
+                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -404,8 +397,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/p(is))**rd_ov_cd
-                E_LOC = e(is)
+                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -422,10 +415,9 @@ contains
 !########################################################################
 ! Virtual Potential temperature
 !########################################################################
-    subroutine THERMO_ANELASTIC_THETA_V(nx, ny, nz, s, e, p, theta)
+    subroutine THERMO_ANELASTIC_THETA_V(nx, ny, nz, s, theta)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: theta(nx*ny*nz)
 
         real(wp) PI_LOC
@@ -435,8 +427,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/p(is))**rd_ov_cd 
-                E_LOC = e(is)
+                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd 
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -450,8 +442,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/p(is))**rd_ov_cd
-                E_LOC = e(is)
+                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -465,8 +457,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/p(is))**rd_ov_cd 
-                E_LOC = e(is)
+                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd 
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -483,10 +475,9 @@ contains
 !########################################################################
 ! Liquid water potential temperature
 !########################################################################
-    subroutine THERMO_ANELASTIC_THETA_L(nx, ny, nz, s, e, p, theta)
+    subroutine THERMO_ANELASTIC_THETA_L(nx, ny, nz, s, theta)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: theta(nx*ny*nz)
 
         real(wp) kappa, Cp_loc, Lv
@@ -496,8 +487,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)/PREF_1000
-                E_LOC = e(is)
+                P_LOC = pbackground(is)/PREF_1000
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -511,8 +502,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)/PREF_1000
-                E_LOC = e(is)
+                P_LOC = pbackground(is)/PREF_1000
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -527,8 +518,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)/PREF_1000
-                E_LOC = e(is)
+                P_LOC = pbackground(is)/PREF_1000
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -550,10 +541,9 @@ contains
 !########################################################################
 ! Equivalent potential temperature
 !########################################################################
-    subroutine THERMO_ANELASTIC_THETA_E(nx, ny, nz, s, e, p, theta)
+    subroutine THERMO_ANELASTIC_THETA_E(nx, ny, nz, s, theta)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*)
         real(wp), intent(out) :: theta(nx*ny*nz)
 
         real(wp) kappa, Cp_loc, Lv
@@ -563,8 +553,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)/PREF_1000
-                E_LOC = e(is)
+                P_LOC = pbackground(is)/PREF_1000
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -578,8 +568,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)/PREF_1000
-                E_LOC = e(is)
+                P_LOC = pbackground(is)/PREF_1000
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -598,8 +588,8 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)/PREF_1000
-                E_LOC = e(is)
+                P_LOC = pbackground(is)/PREF_1000
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -620,10 +610,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, e, lapse, frequency)
+    subroutine THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz)
-        real(wp), intent(in) :: e(*)
         real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
 
 ! ###################################################################
@@ -633,7 +622,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -649,7 +638,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -665,7 +654,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -682,10 +671,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_LAPSE_EQU(nx, ny, nz, s, dTdy, dqldy, e, p, r, lapse, frequency)
+    subroutine THERMO_ANELASTIC_LAPSE_EQU(nx, ny, nz, s, dTdy, dqldy, lapse, frequency)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz), dqldy(nx*ny*nz)
-        real(wp), intent(in) :: e(*), p(*), r(*)
         real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
 
 ! -------------------------------------------------------------------
@@ -702,7 +690,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -718,7 +706,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -732,9 +720,9 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
-                R_LOC = r(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
 
                 RT_INV = R_LOC/(MRATIO*P_LOC)/scaleheight
 
@@ -784,10 +772,9 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_DEWPOINT(nx, ny, nz, s, e, p, r, Td, Lapse)
+    subroutine THERMO_ANELASTIC_DEWPOINT(nx, ny, nz, s, Td, Lapse)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*), p(*), r(*)
         real(wp), intent(out) :: lapse(nx*ny*nz), Td(nx*ny*nz)
 
         ! -------------------------------------------------------------------
@@ -808,9 +795,9 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
-                R_LOC = r(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -839,9 +826,9 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = p(is)
-                E_LOC = e(is)
-                R_LOC = r(is)
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -965,12 +952,11 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, r, ql, lwp, wrk1d, wrk3d)
+    subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
         use TLAB_TYPES, only: grid_dt
 
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: r(*)
         real(wp), intent(in) :: ql(nx*nz, ny)
         real(wp), intent(out) :: lwp(nx, nz)
         real(wp), intent(INOUT) :: wrk1d(ny)
@@ -981,7 +967,7 @@ contains
         real(wp) SIMPSON_NU
 
 ! ###################################################################
-        call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, r, ql, wrk3d)
+        call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
 
         do k = 1, nz
             do i = 1, nx
@@ -998,10 +984,9 @@ contains
 !########################################################################
 !########################################################################
 ! Just to check what the effect of using a wrong cp would be
-    subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP(nx, ny, nz, s, e, result)
+    subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP(nx, ny, nz, s, result)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(in) :: e(*)
         real(wp), intent(out) :: result(nx*ny*nz)
 
         real(wp) Lv
@@ -1014,7 +999,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -1030,7 +1015,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                E_LOC = e(is)
+                E_LOC = epbackground(is)
 
                 do i = 1, nx
                     ij = ij + 1
@@ -1060,13 +1045,12 @@ contains
     !# s2 is liquid water specific humidity
     !#
     !########################################################################
-    subroutine THERMO_ANELASTIC_PH(nx, ny, nz, s, h, e, p)
+    subroutine THERMO_ANELASTIC_PH(nx, ny, nz, s, h)
         use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
 
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(inout) :: s(nx*ny*nz, *)
         real(wp), intent(in) :: h(nx*ny*nz)
-        real(wp), intent(in) :: e(*), p(*)
 
         ! -------------------------------------------------------------------
         integer(wi) inr, nrmax
@@ -1091,8 +1075,8 @@ contains
         ij = 0
         do jk = 0, ny*nz - 1
             is = mod(jk, ny) + 1
-            P_LOC = p(is)
-            E_LOC = e(is)
+            P_LOC = pbackground(is)
+            E_LOC = epbackground(is)
 
             do i = 1, nx
                 ij = ij + 1
@@ -1216,8 +1200,8 @@ contains
 !             ij = 0
 !             do jk = 0, ny*nz - 1
 !                 is = mod(jk, ny) + 1
-!                 P_LOC = p(is)
-!                 E_LOC = e(is)
+!                 P_LOC = pbackground(is)
+!                 E_LOC = epbackground(is)
 
 !                 do i = 1, nx
 !                     ij = ij + 1
