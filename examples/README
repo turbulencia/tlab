@@ -47,7 +47,8 @@ Case24. Airwater equilibrium incompressible formulation: Stratocumulus-topped bo
 Case25. Anelastic formulation of CBL.
 Case26. Airvapor anelastic formulation of CBL.
 Case27. Airwater equilibrium anelastic formulation: Stratocumulus-topped boundary layer.
-Case28. Channel flow. 
+Case28. Same as Case27, but adding subsidence and sedimentation.
+Case29. Channel flow. 
 
 2D cases: Lagrangian routines
 
