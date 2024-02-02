@@ -22,7 +22,7 @@ TRASHDIR=$JOBDIR-transfered
 # Create Working Directories
 mkdir -p $LOCALDIR
 
-# avoid catching lustre problems 
+# Avoid catching lustre problems 
 # (write logs [dns.log, dns.out, dns.obs] to home, afterwards copy back)
 export DNS_LOGGER_PATH=$HOME/logs/logs-$TIMESTAMP
 mkdir -p $DNS_LOGGER_PATH
@@ -44,7 +44,7 @@ touch *
 
 module load aocc/2.1.0 mpt/2.23 fftw/3.3.8 amd-libm
 
-# write list of used nodes
+# Write list of used nodes
 cat $PBS_NODEFILE > nodefile.txt
 
 # Run Simulation
@@ -76,7 +76,7 @@ fi
 
 stat -t core* >/dev/null 2>&1 && ABORT="yes"
 
-#clean
+# Clean
 if [ -f dns.ini ]; then
     cp dns.ini dns.ini-$TIMESTAMP
 fi
@@ -87,7 +87,7 @@ for FILE in $LOGFILES; do
     fi
 done
 
-# move remaining log files from home to localdir
+# Copy log-files from home to localdir
 cd $DNS_LOGGER_PATH
 for FILE in $LOGFILES; do
     if [ -f $FILE ]; then
