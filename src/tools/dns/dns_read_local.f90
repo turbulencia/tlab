@@ -5,7 +5,7 @@
 subroutine DNS_READ_LOCAL(inifile)
 
     use TLAB_TYPES, only: MAX_MODES
-    use TLAB_CONSTANTS, only: wp, wi, big_wp, efile, lfile, wfile
+    use TLAB_CONSTANTS, only: wp, wi, big_wp, efile, wfile
     use TLAB_VARS
     use TLAB_PROCS
     use PARTICLE_VARS
@@ -448,7 +448,6 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#[Statsitics]')
     call TLAB_WRITE_ASCII(bakfile, '#Averages=<yes/no>')
     call TLAB_WRITE_ASCII(bakfile, '#Pdfs=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ConditionalAverages=<yes/no>')
     call TLAB_WRITE_ASCII(bakfile, '#Intermittency=<yes/no>')
 
     call SCANINICHAR(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)

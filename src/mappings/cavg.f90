@@ -5,7 +5,8 @@
 !#
 !########################################################################
 subroutine CAVG1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, a, y, avg)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: lfile
     use TLAB_TYPES, only: pointers_dt
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_PROCS
@@ -91,7 +92,8 @@ end subroutine CAVG1V_N
 !########################################################################
 !########################################################################
 subroutine CAVG2V(fname, time, nx, ny, nz, nbins, u, v, a, y, avg)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_VARS, only: lfile
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk2d
     use PDFS

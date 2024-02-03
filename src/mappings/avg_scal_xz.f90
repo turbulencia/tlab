@@ -16,7 +16,7 @@
 
 subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, mean2d)
     use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
+    use TLAB_CONSTANTS, only: efile, wp, wi
     use TLAB_VARS
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d

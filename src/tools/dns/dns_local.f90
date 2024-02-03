@@ -3,6 +3,8 @@
 
 module DNS_LOCAL
     use TLAB_CONSTANTS, only: MAX_NSP, wp, wi, sp
+    USE TLAB_CONSTANTS, only: MAX_PATH_LENGTH
+    use TLAB_VARS, only: lfile
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
 #endif
@@ -22,8 +24,9 @@ module DNS_LOCAL
     real(wp) :: wall_time        ! Actual elapsed time during the simulation in seconds
 
     integer :: nitera_log           ! Iteration step for data logger with simulation information
-    character(len=*), parameter :: ofile = 'dns.out'    ! data logger filename
-    character(len=*), parameter :: vfile = 'dns.obs'    ! insitu obs. logger filename
+    character(len=*), parameter :: ofile_base = 'dns.out'    ! data logger filename
+    character(len=*), parameter :: vfile_base = 'dns.obs'    ! insitu obs. logger filename
+    character(len=MAX_PATH_LENGTH) :: ofile,vfile
     real(wp) :: logs_data(20)       ! information (time, time step, cfls, dilatation...)
     real(wp) :: obs_data(20)        ! information (custom variables / insitu measurements ...)
     integer  :: dns_obs_log
@@ -88,7 +91,8 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
-        use TLAB_CONSTANTS, only: efile, lfile
+        use TLAB_CONSTANTS, only: efile
+        use TLAB_VARS, only: lfile
         use TLAB_VARS, only: imode_eqns, imode_ibm, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_ARRAYS

@@ -18,7 +18,8 @@
 !########################################################################
 
 module IO_FIELDS
-    use TLAB_CONSTANTS, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
+    use TLAB_CONSTANTS, only: wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
+    use TLAB_VARS, only: lfile
     use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
     use TLAB_ARRAYS, only: wrk3d
 #ifdef USE_MPI

@@ -22,6 +22,11 @@ TRASHDIR=$JOBDIR-transfered
 # Create Working Directories
 mkdir -p $LOCALDIR
 
+# Avoid catching lustre problems 
+# (write logs [dns.log, dns.out, dns.obs] to home, afterwards copy back)
+export DNS_LOGGER_PATH=$HOME/logs/logs-$TIMESTAMP
+mkdir -p $DNS_LOGGER_PATH
+
 #####################################################################
 # USE CUSTOM LFS STRIPING TO OVERRIDE THE UNFORTUNATE DEFAULT VALUES  
 #    --stripe_count -1: use all available OSF's 
@@ -38,6 +43,9 @@ dns.pre $LOCALDIR $STEP
 touch *
 
 module load aocc/2.1.0 mpt/2.23 fftw/3.3.8 amd-libm
+
+# Write list of used nodes
+cat $PBS_NODEFILE > nodefile.txt
 
 # Run Simulation
 case $RUNMODE in
@@ -68,16 +76,26 @@ fi
 
 stat -t core* >/dev/null 2>&1 && ABORT="yes"
 
-#clean
+# Clean
 if [ -f dns.ini ]; then
     cp dns.ini dns.ini-$TIMESTAMP
 fi
-LOGFILES="dns.ini.bak dns.log dns.out dns.obs dns.les partinfos.txt mapping.txt"
+LOGFILES="dns.ini.bak dns.log dns.out dns.obs dns.les partinfos.txt mapping.txt nodefile.txt"
 for FILE in $LOGFILES; do
     if [ -f $FILE ]; then
         mv $FILE $FILE-$TIMESTAMP
     fi
 done
+
+# Copy log-files from home to localdir
+cd $DNS_LOGGER_PATH
+for FILE in $LOGFILES; do
+    if [ -f $FILE ]; then
+        mv $FILE $FILE-$TIMESTAMP
+        cp $FILE-$TIMESTAMP $LOCALDIR
+    fi
+done
+cd $LOCALDIR
 
 # Organize statistics
 STATSDIR=stats-$TIMESTAMP

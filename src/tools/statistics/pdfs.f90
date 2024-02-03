@@ -7,7 +7,7 @@
 program PDFS
 
     use TLAB_TYPES, only: pointers_dt
-    use TLAB_CONSTANTS, only: ifile, efile, lfile, gfile, tag_flow, tag_scal, wp
+    use TLAB_CONSTANTS, only: ifile, efile, gfile, tag_flow, tag_scal, wp
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS
