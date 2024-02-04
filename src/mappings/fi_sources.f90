@@ -34,7 +34,6 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FI_SOURCES_FLOW(q, s, hq, tmp1)
-        use TLAB_ARRAYS, only: wrk1d
         real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field)
@@ -65,12 +64,8 @@ contains
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
 
                 else
-                    if (iq == 2) then
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
-                    else
-                        wrk1d(:, 1) = 0.0_wp
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
-                    end if
+                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
+
                 end if
 
 #ifdef USE_BLAS

@@ -35,7 +35,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby, imode_elliptic
     use TLAB_VARS, only: buoyancy, coriolis
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
     use BOUNDARY_BUFFER
@@ -131,8 +131,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
         if (buoyancy%active(3)) then
-            wrk1d(:, 1) = 0.0_wp
-            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
+            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
             dummy = buoyancy%vector(3)
             do ij = 1, isize_field
                 h3(ij) = h3(ij) + dummy*wrk3d(ij)
@@ -175,8 +174,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
     if (buoyancy%active(1)) then
-        wrk1d(:, 1) = 0.0_wp
-        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
+        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
         dummy = buoyancy%vector(1)
         do ij = 1, isize_field
             h1(ij) = h1(ij) + dummy*wrk3d(ij)

@@ -116,8 +116,10 @@ subroutine FI_BACKGROUND_INITIALIZE()
             call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, bbackground)
         else
             bbackground(:) = 0.0_wp
-            call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
-            bbackground(:) = p_wrk1d(:, 1)
+            if (buoyancy%active(2)) then
+                call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
+                bbackground(:) = p_wrk1d(:, 1)
+            end if
         end if
 
         ! -----------------------------------------------------------------------
