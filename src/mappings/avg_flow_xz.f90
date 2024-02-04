@@ -33,7 +33,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif
-    use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use OPR_PARTIAL
 
     implicit none

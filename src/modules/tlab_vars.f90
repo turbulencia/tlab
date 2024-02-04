@@ -40,12 +40,12 @@ module TLAB_VARS
 ! Arrays sizes
 ! ###################################################################
 ! fields
-    integer(wi) :: imax, jmax, kmax                 ! number of grid nodes per direction locally per processor
-    integer(wi) :: isize_field                      ! =imax*jmax*kmax, 3D fields sizes locally per processor
-    integer(wi) :: inb_flow                         ! # of prognostic 3d flow fields (flow evolution equations)
-    integer(wi) :: inb_flow_array                   ! >= inb_flow, # of prognostic and diagnostic 3d flow arrays
-    integer(wi) :: inb_scal                         ! # of prognostic 3d scal fields (scal evolution equations)
-    integer(wi) :: inb_scal_array                   ! >= inb_scal, # of prognostic and diagnostic 3d scal arrays
+    integer(wi) :: imax, jmax, kmax     ! number of grid nodes per direction locally per processor
+    integer(wi) :: isize_field          ! =imax*jmax*kmax, 3D fields sizes locally per processor
+    integer(wi) :: inb_flow             ! # of prognostic 3d flow fields (flow evolution equations)
+    integer(wi) :: inb_flow_array       ! >= inb_flow, # of prognostic and diagnostic 3d flow arrays
+    integer(wi) :: inb_scal             ! # of prognostic 3d scal fields (scal evolution equations)
+    integer(wi) :: inb_scal_array       ! >= inb_scal, # of prognostic and diagnostic 3d scal arrays
 
 ! auxiliary arrays
     integer(wi) :: isize_wrk1d, inb_wrk1d           ! 1D scratch arrays
@@ -64,7 +64,6 @@ module TLAB_VARS
     type(profiles_dt) :: pbg, rbg, tbg, hbg     ! Pressure, density, temperature, enthalpy background information
 
     real(wp), allocatable :: sbackground(:, :)  ! Scalar reference profiles
-    real(wp), allocatable :: bbackground(:)     ! Buoyancy
 
 ! ###################################################################
     type(term_dt) :: buoyancy               ! Buoyancy parameters

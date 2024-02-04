@@ -35,7 +35,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby, imode_elliptic
     use TLAB_VARS, only: buoyancy, coriolis
-    use TLAB_VARS, only: bbackground
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
@@ -43,7 +42,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use BOUNDARY_BCS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use FI_SOURCES, only: FI_BUOYANCY
+    use FI_SOURCES, only: bbackground, FI_BUOYANCY
 
     implicit none
 

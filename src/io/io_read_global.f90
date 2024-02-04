@@ -175,18 +175,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
-    else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
-    else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
-    else if (trim(adjustl(sRes)) == 'bilinear') then; buoyancy%type = EQNS_BOD_BILINEAR
-    else if (trim(adjustl(sRes)) == 'quadratic') then; buoyancy%type = EQNS_BOD_QUADRATIC
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_EXPLICIT
@@ -377,6 +365,19 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Buoyancy
 ! ###################################################################
+    ! I wonder if this should be part of [BodyForce] instead of [Main]
+    call SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
+    else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
+    else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
+    else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
+    else if (trim(adjustl(sRes)) == 'bilinear') then; buoyancy%type = EQNS_BOD_BILINEAR
+    else if (trim(adjustl(sRes)) == 'quadratic') then; buoyancy%type = EQNS_BOD_QUADRATIC
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[BodyForce]')
     call TLAB_WRITE_ASCII(bakfile, '#Vector=<Gx,Gy,Gz>')

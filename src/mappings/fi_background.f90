@@ -10,7 +10,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
-    use TLAB_VARS, only: bbackground, sbackground
+    use TLAB_VARS, only: sbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
@@ -18,7 +18,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use PROFILES
-    use FI_SOURCES, only: FI_BUOYANCY
+    use FI_SOURCES, only: bbackground, FI_BUOYANCY
 #ifdef USE_MPI
     use TLAB_MPI_VARS
 #endif
@@ -115,8 +115,9 @@ subroutine FI_BACKGROUND_INITIALIZE()
         if (buoyancy%type == EQNS_EXPLICIT) then
             call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, bbackground)
         else
-            p_wrk1d(:, 1) = 0.0_wp
-            call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), bbackground, p_wrk1d)
+            bbackground(:) = 0.0_wp
+            call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
+            bbackground(:) = p_wrk1d(:, 1)
         end if
 
         ! -----------------------------------------------------------------------

@@ -11,7 +11,6 @@ module FI_SOURCES
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
     use TLAB_VARS, only: radiation, transport, chemistry, subsidence
-    use TLAB_VARS, only: bbackground
     use THERMO_ANELASTIC
     implicit none
     private
@@ -28,6 +27,8 @@ module FI_SOURCES
     public :: FI_CORIOLIS
     public :: FI_TRANSPORT, FI_TRANSPORT_FLUX
     public :: FI_FORCING_0, FI_FORCING_1
+
+    real(wp), allocatable, public :: bbackground(:)     ! Buoyancy
 
 contains
 ! #######################################################################
@@ -289,7 +290,9 @@ contains
             b = buoyancy%parameters(1)
 
         case (EQNS_BOD_LINEAR)
-            c1_loc = buoyancy%parameters(1); c2_loc = buoyancy%parameters(2); c3_loc = buoyancy%parameters(3) ! proportionality factors
+            c1_loc = buoyancy%parameters(1); 
+            c2_loc = buoyancy%parameters(2); 
+            c3_loc = buoyancy%parameters(3) ! proportionality factors
             c0_loc = buoyancy%parameters(inb_scal_array + 1)                                                    ! independent term
 
             if (inb_scal_array == 1 .or. &
@@ -332,7 +335,9 @@ contains
             end if
 
         case (EQNS_BOD_BILINEAR)
-            c0_loc = buoyancy%parameters(1); c1_loc = buoyancy%parameters(2); c2_loc = buoyancy%parameters(3)
+            c0_loc = buoyancy%parameters(1); 
+            c1_loc = buoyancy%parameters(2); 
+            c2_loc = buoyancy%parameters(3)
 
             do k = 1, nz
                 do j = 1, ny
@@ -352,6 +357,9 @@ contains
                 end do
             end do
 
+        case default
+            b = 0.0_wp
+            
         end select
 
         return

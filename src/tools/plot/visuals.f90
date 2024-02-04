@@ -20,7 +20,7 @@ program VISUALS
     use TLAB_MPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
     use TLAB_MPI_PROCS
 #endif
-    use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
     use THERMO_VARS, only: NSP, THERMO_SPNAME
     use THERMO_ANELASTIC

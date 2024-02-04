@@ -14,7 +14,7 @@ program PDFS
 #ifdef USE_MPI
     use TLAB_MPI_PROCS
 #endif
-    use FI_SOURCES, only: FI_BUOYANCY
+    use FI_SOURCES, only: bbackground, FI_BUOYANCY
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
     use IO_FIELDS
