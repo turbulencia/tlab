@@ -1,4 +1,5 @@
 #include "dns_const.h"
+#include "dns_error.h"
 
 program DNS
 
@@ -192,6 +193,7 @@ program DNS
     ! ###################################################################
     ! Check-pointing: Initialize logfiles, write header & first line
     ! ###################################################################
+    call DNS_LOGS_PATH_INITIALIZE()
     call DNS_LOGS_INITIALIZE()
     call DNS_LOGS()            
     if (dns_obs_log /= OBS_TYPE_NONE) then
@@ -316,6 +318,32 @@ program DNS
     call TLAB_STOP(int(logs_data(1)))
 
 contains
+
+!########################################################################
+!# Initialize path to write dns.out & dns.logs
+!########################################################################
+    subroutine DNS_LOGS_PATH_INITIALIZE()
+
+        integer env_status, path_len
+        
+        call GET_ENVIRONMENT_VARIABLE("DNS_LOGGER_PATH", logger_path, path_len, env_status, .TRUE.)
+
+        select case(env_status)
+        case(-1)
+            call TLAB_WRITE_ASCII(efile, "DNS_START. The environment variable $DNS_LOGGER_PATH is too long and cannot be handled in the foreseen array.")
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        case(0)
+            if ( .not. logger_path(path_len:path_len) == '/' ) THEN
+                logger_path = trim(adjustl(logger_path)) // '/'
+            end if
+        
+        case(1:)
+            logger_path = trim(adjustl(''))
+        
+        end select
+
+    end subroutine DNS_LOGS_PATH_INITIALIZE
+
 !########################################################################
 ! Create headers or dns.out file
 !
@@ -376,7 +404,7 @@ contains
     end subroutine DNS_LOGS_INITIALIZE
 
 !########################################################################
-!########################################################################
+
     subroutine DNS_LOGS()
         use THERMO_VARS, only: imixture, NEWTONRAPHSON_ERROR
 #ifdef USE_MPI

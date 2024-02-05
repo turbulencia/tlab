@@ -1,8 +1,7 @@
 #include "dns_error.h"
 
 subroutine RAND_READ_LOCAL(inifile)
-    use TLAB_CONSTANTS, only: efile
-    use TLAB_VARS, only: lfile
+    use TLAB_CONSTANTS, only: efile, lfile
     use TLAB_PROCS
     use RAND_LOCAL
 
@@ -21,7 +20,6 @@ subroutine RAND_READ_LOCAL(inifile)
     bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
     call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
-
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Broadband]')

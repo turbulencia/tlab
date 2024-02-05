@@ -4,8 +4,7 @@
 #endif
 
 subroutine OPR_CHECK()
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: lfile
+    use TLAB_CONSTANTS, only: lfile, wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow_array, inb_txc
     use TLAB_VARS, only: g
     use TLAB_VARS, only: fourier_on

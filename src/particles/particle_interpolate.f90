@@ -1,8 +1,7 @@
 #include "dns_error.h"
 
 module PARTICLE_INTERPOLATE
-    use TLAB_CONSTANTS, only: wp, wi, efile
-    use TLAB_VARS, only: lfile
+    use TLAB_CONSTANTS, only: wp, wi, efile, lfile
     use TLAB_TYPES, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g

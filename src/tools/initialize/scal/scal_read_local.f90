@@ -3,8 +3,7 @@
 
 subroutine SCAL_READ_LOCAL(inifile)
 
-    use TLAB_CONSTANTS, only: wp, wi, efile, wfile, MAX_NSP
-    use TLAB_VARS, only: lfile
+    use TLAB_CONSTANTS, only: wp, wi, efile, lfile, wfile, MAX_NSP
     use TLAB_VARS, only: inb_scal
     use TLAB_VARS, only: sbg
     use TLAB_PROCS

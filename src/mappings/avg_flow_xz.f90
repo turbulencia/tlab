@@ -16,7 +16,7 @@
 
 subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz, mean2d)
     use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
     use TLAB_VARS
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d

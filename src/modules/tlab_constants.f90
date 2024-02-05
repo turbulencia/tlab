@@ -14,15 +14,13 @@ module TLAB_CONSTANTS
     integer, parameter :: MAX_AVG_TEMPORAL = 235
     integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
     integer, parameter :: MAX_PATH_LENGTH = 128
-    
-    character(len=*), parameter :: gfile = 'grid'
 
+    character(len=*), parameter :: gfile = 'grid'
     character(len=*), parameter :: ifile = 'dns.ini'
+    character(len=*), parameter :: lfile = 'dns.log'
     character(len=*), parameter :: efile = 'dns.err'
     character(len=*), parameter :: wfile = 'dns.war'
     character(len=*), parameter :: tfile = 'dns.trc'
-
-    character(len=*), parameter :: lfile_base = 'dns.log'
 
     character(len=*), parameter :: tag_flow = 'flow.'
     character(len=*), parameter :: tag_scal = 'scal.'
