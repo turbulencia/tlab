@@ -4,14 +4,12 @@
 !########################################################################
 subroutine DNS_FILTER()
 
-    use TLAB_CONSTANTS, only: lfile
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal
     use TLAB_VARS, only: imode_eqns, imode_sim
     use TLAB_VARS, only: itime, rtime
     use TLAB_VARS, only: FilterDomain
     use TLAB_VARS, only: g, area
     use TLAB_ARRAYS
-    use TLAB_PROCS
     use OPR_FILTERS
     use DNS_LOCAL, only: DNS_BOUNDS_LIMIT
     use DNS_LOCAL, only: nitera_stats_spa, nitera_first, nitera_stats
@@ -23,14 +21,9 @@ subroutine DNS_FILTER()
     ! -----------------------------------------------------------------------
     integer iq, is
     integer, parameter :: i1 = 1
-    character*250 line
     character*64 fname, varnames(1), groupnames(1)
 
     ! #######################################################################
-    write (line, *) itime; line = 'Filtering fields at It'//trim(adjustl(line))//'.'
-    call TLAB_WRITE_ASCII(lfile, line)
-
-    ! -------------------------------------------------------------------
     ! Statistics
 #define Tke0(j)   mean(j,1)
 #define Eps0(j)   mean(j,2)
