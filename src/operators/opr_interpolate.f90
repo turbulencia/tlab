@@ -15,7 +15,7 @@ module OPR_INTERPOLATORS
     use TLAB_VARS, only: isize_txc_field
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_VARS, only: lfile
+    use TLAB_CONSTANTS, only: lfile
     use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
     use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
     use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k

@@ -4,8 +4,8 @@
 
 module TLAB_MPI_PROCS
     use MPI
-    use TLAB_CONSTANTS, only: efile, wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax, isize_txc_dimx, isize_txc_dimz, lfile
+    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
+    use TLAB_VARS, only: imax, jmax, kmax, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: fourier_on
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use TLAB_MPI_VARS
