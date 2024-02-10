@@ -49,7 +49,7 @@ contains
         ! -----------------------------------------------------------------------
         ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
         ! -----------------------------------------------------------------------
-        
+
         call FI_CORIOLIS(coriolis, imax, jmax, kmax, q, hq)
 
         ! -----------------------------------------------------------------------
@@ -225,9 +225,9 @@ contains
 !########################################################################
     subroutine FI_CORIOLIS(coriolis, nx, ny, nz, u, r)
         type(term_dt), intent(in) :: coriolis
-        integer(wi), intent(in)   :: nx, ny, nz
-        real(wp), intent(in)      :: u(nx*ny*nz,*)
-        real(wp), intent(out)     :: r(nx*ny*nz,*)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: u(nx*ny*nz, *)
+        real(wp), intent(out) :: r(nx*ny*nz, *)
 
         ! -----------------------------------------------------------------------
         integer(wi) ii, field_sz
@@ -238,7 +238,7 @@ contains
         ! -----------------------------------------------------------------------
         select case (coriolis%type)
         case (EQNS_EXPLICIT)
-            do  ii = 1, field_sz
+            do ii = 1, field_sz
                 r(ii, 1) = r(ii, 1) + coriolis%vector(3)*u(ii, 2) - coriolis%vector(2)*u(ii, 3)
                 r(ii, 2) = r(ii, 2) + coriolis%vector(1)*u(ii, 3) - coriolis%vector(3)*u(ii, 1)
                 r(ii, 3) = r(ii, 3) + coriolis%vector(2)*u(ii, 1) - coriolis%vector(1)*u(ii, 2)
@@ -260,7 +260,7 @@ contains
             end do
 !$omp end parallel
         end select
-    
+
     end subroutine FI_CORIOLIS
 
 !########################################################################
@@ -287,11 +287,10 @@ contains
         case (EQNS_BOD_LINEAR)
             c1_loc = buoyancy%parameters(1); 
             c2_loc = buoyancy%parameters(2); 
-            c3_loc = buoyancy%parameters(3) ! proportionality factors
-            c0_loc = buoyancy%parameters(inb_scal_array + 1)                                                    ! independent term
+            c3_loc = buoyancy%parameters(3)                     ! proportionality factors
+            c0_loc = buoyancy%parameters(inb_scal_array + 1)    ! independent term
 
-            if (inb_scal_array == 1 .or. &
-                (inb_scal_array == 2 .and. abs(buoyancy%parameters(2)) < small_wp)) then ! avoid mem call for one common case is=2
+            if (buoyancy%scalar(1) == 1) then
                 do k = 1, nz
                     do j = 1, ny
                         dummy = ref(j) - c0_loc
@@ -299,7 +298,7 @@ contains
                     end do
                 end do
 
-            else if (inb_scal_array == 2) then
+            else if (buoyancy%scalar(1) == 2) then
                 do k = 1, nz
                     do j = 1, ny
                         dummy = ref(j) - c0_loc
@@ -307,7 +306,7 @@ contains
                     end do
                 end do
 
-            else if (inb_scal_array == 3) then
+            else if (buoyancy%scalar(1) == 3) then
                 do k = 1, nz
                     do j = 1, ny
                         dummy = ref(j) - c0_loc
@@ -323,7 +322,7 @@ contains
                     end do
                 end do
 
-                do is = 1, inb_scal_array
+                do is = 1, buoyancy%scalar(1)
                     if (abs(buoyancy%parameters(is)) > small_wp) b(:, :, :) = b(:, :, :) + buoyancy%parameters(is)*s(:, :, :, is)
                 end do
 
@@ -337,7 +336,7 @@ contains
             do k = 1, nz
                 do j = 1, ny
                     dummy = ref(j)
-                b(1:nx, j, k) = c0_loc*s(1:nx, j, k, 1) + c1_loc*s(1:nx, j, k, 2) + c2_loc*s(1:nx, j, k, 1)*s(1:nx, j, k, 2) - dummy
+                    b(1:nx, j, k) = c0_loc*s(1:nx, j, k, 1) + c1_loc*s(1:nx, j, k, 2) + c2_loc*s(1:nx, j, k, 1)*s(1:nx, j, k, 2) - dummy
                 end do
             end do
 
@@ -352,9 +351,19 @@ contains
                 end do
             end do
 
+        case (EQNS_BOD_NORMALIZEDMEAN)
+            c1_loc = buoyancy%parameters(1)
+
+            do k = 1, nz
+                do j = 1, ny
+                    dummy = 1.0_wp/ref(j)
+                    b(1:nx, j, k) = c1_loc*(dummy*s(1:nx, j, k, 1) - 1.0_wp)
+                end do
+            end do
+
         case default
             b = 0.0_wp
-            
+
         end select
 
         return
@@ -524,7 +533,7 @@ contains
             select case (is)
             case (2, 3)         ! q_t, q_l
                 if (exponent > 0.0_wp) then
-                 trans(:, 1) = -(transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*(s(:, is_ref)**dummy)
+                    trans(:, 1) = -(transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*(s(:, is_ref)**dummy)
                 else
                     trans(:, 1) = -(transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*s(:, is_ref)
                 end if

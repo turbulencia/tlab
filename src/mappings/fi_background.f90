@@ -120,6 +120,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
                 call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
                 bbackground(:) = p_wrk1d(:, 1)
             end if
+            buoyancy%scalar(1) = min(inb_scal_array, buoyancy%scalar(1))
         end if
 
         ! -----------------------------------------------------------------------

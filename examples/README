@@ -56,7 +56,7 @@ Case31. Case01 (shear layer), saving only the particles.
 Case32. Case01 (shear layer), saving trajectories as well (but fewer particles).
 Case33. Case32, but inertia particles instead of tracers
 Case34. Case17 (cloud-top), solving liquid equation w/ & w/o diffusion.
-Case35. Same as 27, but with a stratified bottom interface.
+Case35. Same as 34, but with a stratified bottom interface.
 
 3D cases
 

@@ -60,7 +60,8 @@ Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations 
 \end{equation}
 in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
 
-The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+%The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. 
+The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsubsection{Multispecies}
 
@@ -225,20 +226,26 @@ Another consequence of the decoupling between the momentum and the internal ener
 
 \subsubsection{Body force}
 
-In the incompressible case, $b(\mathbf{x},t)=b^e(\zeta_i(\mathbf{x},t))$ and the buoyancy function $b^e(\zeta_i)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
+In the incompressible case, $b(\mathbf{x},t)=b^e(\zeta_i(\mathbf{x},t),\mathbf{x},t)$ and the buoyancy function $b^e(\zeta_i,\mathbf{x},t)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
 
-There is also the option to define the buoyancy as $b(\mathbf{x},t)=b^e(\zeta_i(\mathbf{x},t))-b_\mathrm{ref}(z)$ and $b(\mathbf{x},t)=(b^e(\zeta_i(\mathbf{x},t))-\langle b\rangle)/\langle b\rangle$, to remove the hydrostatic balance partly or completely.
-
-For the buoyancy function (see routine {\tt mappings/fi\_buoyancy}), the most common expressions are a linear or bilinear relation to the scalar fields as
+For the buoyancy function (see routine {\tt mappings/fi\_buoyancy}), the common expressions are a linear or bilinear relation to the scalar fields as
 \begin{equation}
-    b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1}\;,
+    b^e=\alpha_1\zeta_1+\alpha_2\zeta_2+\ldots+\alpha_\mathrm{\tt inb\_scal\_array+1} -b_\mathrm{ref}(x_2)\;,
 \end{equation}
 where the coefficients $\alpha_i$ need to be provided. A quadratic form
 \begin{equation}
-    b^e=-\frac{4\alpha_0}{\alpha_1^2}\zeta_1(\zeta_1-\alpha_1) \;,
+    b^e=-\frac{4\alpha_0}{\alpha_1^2}\zeta_1(\zeta_1-\alpha_1) -b_\mathrm{ref}(x_2)
 \end{equation}
 is also available, so that the maximum buoyancy $\alpha_0$ is achieved at
 $\zeta_1=\alpha_1/2$.
+
+The reference profile $b_\mathrm{ref}(x_2)$ is used to remove the hydrostatic balance to leading order and reduce the numerical error when calculating the pressure from the Poisson equation. (The exact form is not important because the Poisson equation provides the corresponding part of the hydrostatic balance.) To consider the background variation of density, there is also the class
+\begin{equation}
+    b(\mathbf{x},t)=(\zeta_1(\mathbf{x},t)-\langle \zeta_1\rangle)/\langle \zeta_1\rangle \;,
+\end{equation}
+where angle brackets indicate an average over the horizontal directions.
+
+
 
 % Another option is a piece-wise linear function
 % \begin{equation}

@@ -373,6 +373,7 @@ subroutine IO_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
     else if (trim(adjustl(sRes)) == 'bilinear') then; buoyancy%type = EQNS_BOD_BILINEAR
     else if (trim(adjustl(sRes)) == 'quadratic') then; buoyancy%type = EQNS_BOD_QUADRATIC
+    else if (trim(adjustl(sRes)) == 'normalizedmean') then; buoyancy%type = EQNS_BOD_NORMALIZEDMEAN
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -404,6 +405,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call SCANINICHAR(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, buoyancy%parameters)
+        buoyancy%scalar(1) = idummy
 
     end if
 
