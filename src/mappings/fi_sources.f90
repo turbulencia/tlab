@@ -356,7 +356,7 @@ contains
 
             do k = 1, nz
                 do j = 1, ny
-                    dummy = 1.0_wp/ref(j)
+                    dummy = 1.0_wp/bbackground(j)
                     b(1:nx, j, k) = c1_loc*(dummy*s(1:nx, j, k, 1) - 1.0_wp)
                 end do
             end do
