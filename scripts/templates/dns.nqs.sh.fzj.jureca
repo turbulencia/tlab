@@ -96,10 +96,6 @@ if [ ! -e $STATSDIR ]; then
 	cp dns.ini $STATSDIR
     fi
 
-    if [ -f dns.def ]; then
-       mv dns.def $STATSDIR
-    fi
-
     LIST=`ls | egrep 'avg[0-9]|?cr[0-9]|?sp[0-9]|pdf[0-9]|cavgXi[0-9]|pdfXi[0-9]|int[0-9]|kin[0-9]'`
     echo "Moving statistic files into $STATSDIR"
     if [ -n "$LIST" ]; then

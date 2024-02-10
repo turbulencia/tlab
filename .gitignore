@@ -6,7 +6,6 @@ examples/Case*/dns.obs
 examples/Case*/dns.ini.bak
 examples/Case*/rand.*
 examples/Case*/avg*
-examples/Case*/dns.def
 examples/Case*/grid
 examples/Case*/grid.sts
 examples/Case*/dns.err
