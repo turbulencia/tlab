@@ -130,7 +130,7 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     select case (opt_main)
     case (:0)
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [ParamTransform] in dns.ini.')
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [ParamTransform] in tlab.ini.')
         call TLAB_STOP(DNS_ERROR_INVALOPT)
 
     case (1)

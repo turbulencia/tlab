@@ -7,7 +7,7 @@
 #define C_FILE_LOC "IO_READ_GLOBAL"
 
 !########################################################################
-!# Reading general data from file dns.ini, setting up general parameters
+!# Reading general data from file tlab.ini, setting up general parameters
 !# and doing cross-check of these general data.
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)

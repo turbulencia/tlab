@@ -20,17 +20,17 @@
 % Overview
 %###################################################################
 \section{Overview}
-In this document you will find all information needed to use the Lagrangian part of the DNS-Code of the Turbulent Mixing Group(TMP) of the Max-Planck-Institute for Meteorology. The document is organized as follows, Section~\ref{sec:options} uses the initialization file "dns.ini" to explain the different option to run the Lagrangian part. Section~\ref{sec:interpolation} explains the interpolation method. Section~\ref{sec:statistics} presents the statistic tools. Section~\ref{sec:visualization} represents procedures for the visualization and Section~\ref{sec:tools} presents some useful shell tools.\newline
+In this document you will find all information needed to use the Lagrangian part of the DNS-Code of the Turbulent Mixing Group(TMP) of the Max-Planck-Institute for Meteorology. The document is organized as follows, Section~\ref{sec:options} uses the initialization file "tlab.ini" to explain the different option to run the Lagrangian part. Section~\ref{sec:interpolation} explains the interpolation method. Section~\ref{sec:statistics} presents the statistic tools. Section~\ref{sec:visualization} represents procedures for the visualization and Section~\ref{sec:tools} presents some useful shell tools.\newline
 \textbf{Current status:} in progress \newline
 \textbf{Last change:} March 2015
 \newpage
 %###################################################################
-% Tables with options for dns.ini
+% Tables with options for tlab.ini
 %###################################################################
-\section{Options for dns.ini}
+\section{Options for tlab.ini}
 \label{sec:options}
 \subsection{Primary}
-In the "[Main]" section of the file "dns.ini" the Lagrangian model can be activated using the flag "yes"' for the "CalculateParticle" option, the default value reads "no". Furthermore, the calculation method has to be set as shown in Table~\ref{tab:main}. 
+In the "[Main]" section of the file "tlab.ini" the Lagrangian model can be activated using the flag "yes"' for the "CalculateParticle" option, the default value reads "no". Furthermore, the calculation method has to be set as shown in Table~\ref{tab:main}. 
 \begin{table}
     \makebox[\textwidth][c]{\begin{tabular}{|l|l|l|}
     \hline
@@ -38,7 +38,7 @@ In the "[Main]" section of the file "dns.ini" the Lagrangian model can be activa
     CalculateParticle & Switch on Lagrange part           & 'yes' or 'no'       \\ \hline
     Lagrange          & What kind of Lagrange calculation & see following Table~\ref{tab:type} \\ \hline
     \end{tabular}}
-    \caption{Options which can be set in [Main] of "dns.ini".}
+    \caption{Options which can be set in [Main] of "tlab.ini".}
     \label{tab:main}
 \end{table}
 %\FloatBarrier

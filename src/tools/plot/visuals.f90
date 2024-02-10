@@ -178,7 +178,7 @@ program VISUALS
     call LIST_INTEGER(sRes, iopt_size, opt_vec)
 
     if (opt_vec(1) < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'VISUALS. Missing input [PostProcessing.ParamVisuals] in dns.ini.')
+        call TLAB_WRITE_ASCII(efile, 'VISUALS. Missing input [PostProcessing.ParamVisuals] in tlab.ini.')
         call TLAB_STOP(DNS_ERROR_INVALOPT)
     end if
 

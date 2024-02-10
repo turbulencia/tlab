@@ -9,7 +9,7 @@ module THERMO_VARS
     character*128 :: chemkin_file               ! File with thermodynamic data, if used
 
     real(wp) :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
-    ! In case of imixture=NONE, I only need gama0 and it is set in dns.ini
+    ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
     ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
 
     ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars

@@ -70,7 +70,7 @@ module BOUNDARY_BUFFER
     type(buffer_dt), public :: BuffFlowImin, BuffFlowImax, BuffFlowJmin, BuffFlowJmax
     type(buffer_dt), public :: BuffScalImin, BuffScalImax, BuffScalJmin, BuffScalJmax
     !  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
-    ! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
+    ! BufferFilter should then be a block in tlab.ini as [Filter], which is read in io_read_global.
 
     public :: BOUNDARY_BUFFER_READBLOCK
     public :: BOUNDARY_BUFFER_INITIALIZE

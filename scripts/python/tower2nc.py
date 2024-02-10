@@ -49,14 +49,14 @@ system(sys_command)
 # GET GRID AND TOWER STRIDE INFORMATION
 # ##########################################################################################
 
-f = open('dns.ini','r')
+f = open('tlab.ini','r')
 stride = -1
 for line in f:
     if 'Stride' in line:
         stride = [int(i) for i in (line.split('=', 2)[1].split(','))]
 
 if ( stride==-1) :
-    print('ERROR: Keyword stride not found in dns.ini')
+    print('ERROR: Keyword stride not found in tlab.ini')
     exit(1)
 f.close()
 

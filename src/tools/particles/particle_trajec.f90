@@ -77,7 +77,7 @@ program PARTICLE_TRAJEC
     call TLAB_MPI_INITIALIZE
 #endif
 
-! Get the local information from the dns.ini
+! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
 
     call PARTICLE_ALLOCATE(C_FILE_LOC)

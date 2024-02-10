@@ -4,27 +4,27 @@ import numpy as np   # For array operations.
 import struct
 import sys
 
-nx = 0 # number of points in Ox; if 0, then search dns.ini
-ny = 0 # number of points in Oy; if 0, then search dns.ini
-nz = 0 # number of points in Oz; if 0, then search dns.ini
+nx = 0 # number of points in Ox; if 0, then search tlab.ini
+ny = 0 # number of points in Oy; if 0, then search tlab.ini
+nz = 0 # number of points in Oz; if 0, then search tlab.ini
 
 # do not edit below this line
 
-# getting grid size from dns.ini, if necessary
+# getting grid size from tlab.ini, if necessary
 if ( nx == 0 ):
-    for line in open('dns.ini'):
+    for line in open('tlab.ini'):
         if line.lower().replace(" ","").startswith("imax="):
             nx = int(line.split("=",1)[1])
             break
 
 if ( ny == 0 ):
-    for line in open('dns.ini'):
+    for line in open('tlab.ini'):
         if line.lower().replace(" ","").startswith("jmax="):
             ny = int(line.split("=",1)[1])
             break
 
 if ( nz == 0 ):
-    for line in open('dns.ini'):
+    for line in open('tlab.ini'):
         if line.lower().replace(" ","").startswith("kmax="):
             nz = int(line.split("=",1)[1])
             break

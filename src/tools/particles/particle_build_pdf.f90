@@ -40,14 +40,14 @@ program PARTICLE_BUILD_PDF
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call PARTICLE_READ_GLOBAL('dns.ini')
+    call PARTICLE_READ_GLOBAL('tlab.ini')
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
 !  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 
-! Get the local information from the dns.ini
+! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
     call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
     call SCANINIINT(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)

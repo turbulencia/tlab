@@ -30,7 +30,7 @@ program VFFT
     case_count = i0
 
     call TLAB_START()
-    call IO_READ_GLOBAL('dns.ini')
+    call IO_READ_GLOBAL('tlab.ini')
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
@@ -85,7 +85,7 @@ program VFFT
     if (ims_pro == 0) then
 #endif
         write (*, 1000) err_count, case_count
-1000    format('fft-check completed. ', I3, ' Errors in ', I3, ' Checks. For details see file dns.log')
+1000    format('fft-check completed. ', I3, ' Errors in ', I3, ' Checks. For details see file tlab.log')
 #ifdef USE_MPI
     end if
 #endif

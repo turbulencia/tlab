@@ -2,7 +2,7 @@
 
 The equations are solved using Cartesian co-ordinates and the grid is structured. The grid is constructed by building up the three directions separately (in a 2D case, $Oz$ has simply one node).  Each direction is broken into segments, and each of those segments is built with specified generation algorithms. The first node in each direction is set at zero.
 
-The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory. They allow to print out an ASCII file with the grid positions, add an offset, drop or introduce planes and make a scaling.% (As in the case of the utilities of the main code, a browse through them is recommended, though they are really simple.)
+The executable is {\tt inigrid.x} and the data in {\tt tlab.ini} is specified in the blocks [IniGridOx], [IniGridOy] and [IniGridOz]. Once created, basic information about the grid is saved into the file {\tt grid.sts}. Grid transformations can be done with {\tt transgrid.x}; the corresponding sources are in the {\tt tools/transform} sub-directory. They allow to print out an ASCII file with the grid positions, add an offset, drop or introduce planes and make a scaling.% (As in the case of the utilities of the main code, a browse through them is recommended, though they are really simple.)
 
 {
 \centering
@@ -23,7 +23,7 @@ The executable is {\tt inigrid.x} and the data in {\tt dns.ini} is specified in 
   the scale (the latter is a bit larger).\\
 \tt Mirrored & \tt yes, no &  If yes, this direction is created with the corresponding options
   and then it is mirrored with respect to the origin. The final scale is the
-  double of that set in the input file {\tt dns.ini} and the first node is
+  double of that set in the input file {\tt tlab.ini} and the first node is
   moved to zero. In the case of mirroring the number of points is always even.\\
 \tt Scales\_\# & {\it value} & Physical end of the segment number {\tt \#}.\\
 \tt Points\_\# & {\it value} & Number of points in the segment number {\tt \#}. This number includes the first and the last points of the present segment, which are common with the adjacent  ones. (E.g., if one direction has three segments with 11, 16 and 6 points each, the total number of points in that direction will be 31, 30 steps.)\\
@@ -46,7 +46,7 @@ For {\tt opts=tanh}, the mapping $x=x(s)$ is obtained by solving the equation
 \begin{equation}
 \frac{\mathrm{d}x}{\mathrm{d}s} = 1 + \frac{h_1/h_0-1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right] \;,
 \end{equation}
-that is, the grid step $\Delta x \equiv\mathrm{d}x/\mathrm{d}j$ varies according to a hyperbolic tangent function between the uniform values $h_0$ and $h_1$, the transition occurring at $s=s_{t1}$ and over a length $\delta_1$. The grid step $h_0$ corresponds to that of the initial uniform grid. The parameters $s_{t1}$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\tt vals} record of the {\tt dns.ini} file.
+that is, the grid step $\Delta x \equiv\mathrm{d}x/\mathrm{d}j$ varies according to a hyperbolic tangent function between the uniform values $h_0$ and $h_1$, the transition occurring at $s=s_{t1}$ and over a length $\delta_1$. The grid step $h_0$ corresponds to that of the initial uniform grid. The parameters $s_{t1}$, $h_1/h_0$ and $\delta_1$ are provided in the corresponding {\tt vals} record of the {\tt tlab.ini} file.
 
 The mapping can be written explicitly as
 \begin{equation}
@@ -73,7 +73,7 @@ where the stretching factor is imposed according to a hyperbolic tangent functio
 \begin{equation}
 f = \frac{\Delta f_1}{2}\left[ 1 + \tanh\left(\frac{s-s_{t1}}{2\delta_1}\right)\right] \;.
 \end{equation}
-The stretching factor is defined as $f\equiv\mathrm{d}/\mathrm{d}x (\Delta x)$, so that $f+1$ an approximation to the ratio $(\Delta x)_{j+1}/(\Delta x) _{j}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). The parameters $s_{t1}$, $\Delta f_1$ and $\delta_1$ are provided in the corresponding {\tt vals} record of the {\tt dns.ini} file.
+The stretching factor is defined as $f\equiv\mathrm{d}/\mathrm{d}x (\Delta x)$, so that $f+1$ an approximation to the ratio $(\Delta x)_{j+1}/(\Delta x) _{j}$. The non-dimensional parameter $f$ then varies from $0$ to $\Delta f_1$; values smaller that $0.1$ are recommended (less that 10\% stretching). The parameters $s_{t1}$, $\Delta f_1$ and $\delta_1$ are provided in the corresponding {\tt vals} record of the {\tt tlab.ini} file.
 
 A first integral of this problem leads to
 \begin{equation}

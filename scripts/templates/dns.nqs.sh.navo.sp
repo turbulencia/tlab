@@ -101,13 +101,13 @@ if [ $ABORT = "no" ]; then
 	    . $LOCALDIR/dns.nqs.new-vars
 	fi
 
-	if [ -e $LOCALDIR/dns.ini ]; then
+	if [ -e $LOCALDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{ 
 				if ( $1 == "End" ) 
 				    {
 				    print $2 
 				    }
-			    }' $LOCALDIR/dns.ini` 
+			    }' $LOCALDIR/tlab.ini` 
 	else
 	    echo "Error getting max time"
 	    exit 1

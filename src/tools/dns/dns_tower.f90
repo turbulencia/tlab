@@ -2,7 +2,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! MODULE DNS_TOWER - save columns at every iterations to disk
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! RELATED INPUT FROM dns.ini
+! RELATED INPUT FROM tlab.ini
 !
 ! [SaveTowers]
 ! Stride=<stride_x>,<stride_y>,<stride_z>

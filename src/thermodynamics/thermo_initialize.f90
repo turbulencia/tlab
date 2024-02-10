@@ -20,7 +20,7 @@
 !# Saturation pressure implies that reference R_0 in non-dimensionalization
 !# is such that reference pressure is 1 bar.
 !#
-!# gama0 has alread been read in dns.ini.
+!# gama0 has alread been read in tlab.ini.
 !# If needed, the new reference value of gamma0 is calculated here based on the reference species
 !#
 !########################################################################
@@ -50,7 +50,7 @@ subroutine THERMO_INITIALIZE()
 ! Species tags
 ! Thermal equation, molar masses in kg/kmol
 ! ###################################################################
-    inb_scal_loc = inb_scal     ! Control that inb_scal read in dns.ini is correct
+    inb_scal_loc = inb_scal     ! Control that inb_scal read in tlab.ini is correct
     WGHT(:) = 1.0_wp            ! We devide by WGTH below even when mxiture is none
 
     select case (imixture)
@@ -404,7 +404,7 @@ subroutine THERMO_INITIALIZE()
         CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
     end do
 
-    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
+    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in tlab.ini
         gama0 = CPREF/(CPREF - RREF)  ! Specific heat ratio
     end if
 
@@ -421,7 +421,7 @@ subroutine THERMO_INITIALIZE()
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
             MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
             CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-            PREF_1000 = 1.0_wp/MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from dns.ini
+            PREF_1000 = 1.0_wp/MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from tlab.ini
         else
             PREF_1000 = 1e5_wp/PREF            ! 1000 hPa, used as reference
         end if
@@ -480,7 +480,7 @@ subroutine THERMO_INITIALIZE()
 ! -------------------------------------------------------------------
 ! Output
 ! -------------------------------------------------------------------
-    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in dns.ini
+    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in tlab.ini
         call TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
         do is = 1, NSP
             write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))

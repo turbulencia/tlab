@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # In the current path look for the last restart file and set 
-# Start and End in dns.ini
+# Start and End in tlab.ini
 
 if [ $# -eq 0 ]; then
    echo "Usage: $0 path [inc]"
@@ -18,13 +18,13 @@ if [ ! -n "$LAST" ]; then
    LAST="0"
 fi
 
-# Modify dns.ini file
+# Modify tlab.ini file
 
 if [ $# -eq 1 ]; then
    PLUS=$1
    shift
 else
-   PLUS=`awk -F"=" '/Restart/ { print $2 }' dns.ini`
+   PLUS=`awk -F"=" '/Restart/ { print $2 }' tlab.ini`
 fi
 
 awk -F"=" '{ 
@@ -40,8 +40,8 @@ awk -F"=" '{
 		{
 		    print $0 
 		}
-	}' dns.ini > dns.ini.tmp
+	}' tlab.ini > tlab.ini.tmp
 
-/bin/mv dns.ini.tmp dns.ini
+/bin/mv tlab.ini.tmp tlab.ini
 
 

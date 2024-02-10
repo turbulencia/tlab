@@ -1,29 +1,29 @@
 #!/usr/bin/python3
 import numpy as np
 
-nx    = 0   # number of points in Ox; if 0, then search dns.ini
-ny    = 0   # number of points in Oy; if 0, then search dns.ini
-nz    = 0   # number of points in OZ; if 0, then search dns.ini
-dtype = ''  # datatype of eps0.1 field; if empty, then search dns.ini
+nx    = 0   # number of points in Ox; if 0, then search tlab.ini
+ny    = 0   # number of points in Oy; if 0, then search tlab.ini
+nz    = 0   # number of points in OZ; if 0, then search tlab.ini
+dtype = ''  # datatype of eps0.1 field; if empty, then search tlab.ini
 fname = 'eps0.1'; path  = './'
 
 # do not edit below this line
 
-# getting grid size + data format from dns.ini, if necessary
+# getting grid size + data format from tlab.ini, if necessary
 if ( nx == 0 ):
-    for line in open(path + 'dns.ini'):
+    for line in open(path + 'tlab.ini'):
         if line.lower().replace(" ","").startswith("imax="):
             nx = int(line.split("=",1)[1])
             break
 
 if ( ny == 0 ):
-    for line in open(path + 'dns.ini'):
+    for line in open(path + 'tlab.ini'):
         if line.lower().replace(" ","").startswith("jmax="):
             ny = int(line.split("=",1)[1])
             break
 
 if ( nz == 0 ):
-    for line in open(path + 'dns.ini'):
+    for line in open(path + 'tlab.ini'):
         if line.lower().replace(" ","").startswith("kmax="):
             nz = int(line.split("=",1)[1])
             break
@@ -31,7 +31,7 @@ if ( nz == 0 ):
 print("Grid size is {}x{}x{}.".format(nx,ny,nz))
 
 if ( len(dtype) == 0 ):
-    for line in open(path + 'dns.ini'):
+    for line in open(path + 'tlab.ini'):
         if line.lower().replace(" ","").startswith("datatypegeometry="):
             dtype = str(line.split("=",1)[1][:-1])
             break

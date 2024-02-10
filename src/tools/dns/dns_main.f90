@@ -320,7 +320,7 @@ program DNS
 contains
 
 !########################################################################
-!# Initialize path to write dns.out & dns.logs
+!# Initialize path to write dns.out & tlab.logs
 !########################################################################
     subroutine DNS_LOGS_PATH_INITIALIZE()
 

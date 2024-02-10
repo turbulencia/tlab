@@ -92,10 +92,10 @@ else
     mv flow_rest pt0
     mv scal_rest sc0
 fi
-if [ -f dns.ini ]; then
-    cp dns.ini dns.ini-$TIMESTAMP
+if [ -f tlab.ini ]; then
+    cp tlab.ini tlab.ini-$TIMESTAMP
 fi
-LOGFILES="dns.log dns.itera dns.output dns.les"
+LOGFILES="tlab.log dns.itera dns.output dns.les"
 for FILE in $LOGFILES; do
     if [ -f $FILE ]; then
         mv $FILE $FILE-$TIMESTAMP
@@ -116,13 +116,13 @@ if [ $RUNMODE = "simulation" ];then
 	    . $LOCALDIR/dns.nqs.new-vars
 	fi
 
-	if [ -f $LOCALDIR/dns.ini ]; then
+	if [ -f $LOCALDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{ 
 				if ( $1 == "End" ) 
 				    {
 				    print $2 
 				    }
-			    }' $LOCALDIR/dns.ini` 
+			    }' $LOCALDIR/tlab.ini` 
 	else
 	    echo "Error getting max time"
 	    exit 1

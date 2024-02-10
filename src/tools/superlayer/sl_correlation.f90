@@ -57,7 +57,7 @@ program SL_CORRELATION
 ! ###################################################################
     call DNS_START
 
-    call IO_READ_GLOBAL('dns.ini')
+    call IO_READ_GLOBAL('tlab.ini')
     call THERMO_INITIALIZE()
 
 #ifdef USE_MPI
@@ -92,7 +92,7 @@ program SL_CORRELATION
     if (ims_pro == 0) then
 #endif
         call SCANINICHAR &
-            (lfile, 'dns.ini', 'PostProcessing', 'Files', '-1', sRes)
+            (lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
             read (*, '(A512)') sRes
@@ -112,7 +112,7 @@ program SL_CORRELATION
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'dns.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
+        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 

@@ -188,7 +188,7 @@ program SPECTRA
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in dns.ini.')
+        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in tlab.ini.')
         call TLAB_STOP(DNS_ERROR_INVALOPT)
     end if
 

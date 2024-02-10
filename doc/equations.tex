@@ -126,7 +126,7 @@ is defined as \texttt{GRATIO} in the code and it is defined as $(\gamma_0-1)/\ga
 
 \subsubsection{Dimensional Formulation}
 
-In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{dns.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities.
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities.
 
 \subsubsection{On the difference between the species and the prognostic scalars}
 
@@ -189,7 +189,7 @@ and the thermal equation of state,
 \begin{equation}
     p_\mathrm{bg}  = \rho_\mathrm{bg} R_\mathrm{bg} T_\mathrm{bg} \;.
 \end{equation}
-$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy). The background profile information in the input file {\tt dns.ini}. The values $x_{2,0}$ and $p_\mathrm{bg,0}$ are provided through the background profile information for the pressure. 
+$\mathbf{g}$ is defined opposite to the gravitational acceleration (the problem is formulated in terms of the buoyancy). The background profile information in the input file {\tt tlab.ini}. The values $x_{2,0}$ and $p_\mathrm{bg,0}$ are provided through the background profile information for the pressure. 
 
 The two equations above relate 4 thermodynamic variables, so we need two additional constraints. Typically, we impose the background profile of static energy (enthalpy plus potential energy) and the composition. In this case, the first scalar is the static energy
 \begin{equation}
@@ -201,7 +201,7 @@ The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ an
 \begin{equation}
     \mathbf{H} = \frac{R_0T_0}{gL_0}
 \end{equation}
-is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{dns.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
+is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
 
 The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
 

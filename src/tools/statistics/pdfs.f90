@@ -146,7 +146,7 @@ program PDFS
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in dns.ini.')
+        call TLAB_WRITE_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in tlab.ini.')
         call TLAB_STOP(DNS_ERROR_INVALOPT)
     end if
 

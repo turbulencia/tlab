@@ -1,20 +1,20 @@
 Preprocessing Tools
 -------------------
-inigrid.x   dns.ini                              grid
-inirand.x   dns.ini, grid                        [flow,scal].rand.?
-iniflow.x   dns.ini, grid [,flow.rand.?]         flow.ics.?
-iniscal.x   dns.ini, grid [,scal.rand.?]         scal.ics.?
+inigrid.x   tlab.ini                              grid
+inirand.x   tlab.ini, grid                        [flow,scal].rand.?
+iniflow.x   tlab.ini, grid [,flow.rand.?]         flow.ics.?
+iniscal.x   tlab.ini, grid [,scal.rand.?]         scal.ics.?
 
 Simulation Tools
 ----------------
-dns.x       dns.ini, grid, flow.*.?, scal.*.?    flow.*.?, scal.*.?
+dns.x       tlab.ini, grid, flow.*.?, scal.*.?    flow.*.?, scal.*.?
 
 Postprocessing Tools
 --------------------
-averages.x  dns.ini, grid, flow.*.?, scal.*.?    avg*
-pdfs.x      dns.ini, grid, flow.*.?, scal.*.?    pdf*
-spectra.x   dns.ini, grid, flow.*.?, scal.*.?    xsp*, zsp*
-visuals.x   dns.ini, grid, flow.*.?, scal.*.?    Visualization data
+averages.x  tlab.ini, grid, flow.*.?, scal.*.?    avg*
+pdfs.x      tlab.ini, grid, flow.*.?, scal.*.?    pdf*
+spectra.x   tlab.ini, grid, flow.*.?, scal.*.?    xsp*, zsp*
+visuals.x   tlab.ini, grid, flow.*.?, scal.*.?    Visualization data
 
 ---
 

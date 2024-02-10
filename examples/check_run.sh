@@ -10,7 +10,7 @@ if [ -e "dns.out" ]; then
    echo -e "\033[1;31mFailed \033[0m[dns.out exists]."; exit 1
 else
 
-if [ -e "dns.ini" ]; then
+if [ -e "tlab.ini" ]; then
 
 #PreProcessing
     $BINPATH/inigrid.x
@@ -60,7 +60,7 @@ if [ -e "dns.ini" ]; then
     fi      
 
 else
-    echo -e "\033[1;31mFailed \033[0m[[dns.ini]."; exit 2
+    echo -e "\033[1;31mFailed \033[0m[[tlab.ini]."; exit 2
 fi 
 
 fi

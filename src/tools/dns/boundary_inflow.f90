@@ -447,7 +447,7 @@ contains
     !########################################################################
     ! Filter
     ! This should be integrated into the inflow buffer, as the filter contribution
-    ! BufferFilter should then be a block in dns.ini as [Filter], which is read in io_read_global.
+    ! BufferFilter should then be a block in tlab.ini as [Filter], which is read in io_read_global.
 
     subroutine BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q, s, txc)
         real(wp), dimension(imax, jmax, kmax, *), intent(INOUT) :: q, s

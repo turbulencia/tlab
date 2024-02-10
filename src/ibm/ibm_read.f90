@@ -38,7 +38,7 @@ subroutine IBM_READ_INI(inifile)
   ! ================================================================== !
   ! initialization 
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
-  call TLAB_WRITE_ASCII(lfile, 'Reading IBM input data from dns.ini.')
+  call TLAB_WRITE_ASCII(lfile, 'Reading IBM input data from tlab.ini.')
 
   ! read IBM parameters
   call TLAB_WRITE_ASCII(bakfile, '#')

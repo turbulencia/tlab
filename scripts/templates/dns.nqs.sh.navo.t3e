@@ -68,7 +68,7 @@ for JDIR in $JOBDIR; do
 	    cd $MASSDIR
 	    if [ -e temp_rest ]; then
 		# Restarting
-		/bin/cp dns.ini dns.x Grid.in temp_rest scal_rest $LOCALDIR
+		/bin/cp tlab.ini dns.x Grid.in temp_rest scal_rest $LOCALDIR
 	    else
 		/bin/cp * $LOCALDIR
 	    fi
@@ -157,20 +157,20 @@ if [ $JDIR = $JOBDIR ]; then
 	    . $LOCALDIR/dns.nqs.new-vars
 	fi
 
-	if [ -e $MASSDIR/dns.ini ]; then
+	if [ -e $MASSDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{ 
 				if ( $1 == "End" ) 
 				    {
 				    print $2 
 				    }
-			    }' $MASSDIR/dns.ini` 
-	elif [ -e $LOCALDIR/dns.ini ]; then
+			    }' $MASSDIR/tlab.ini` 
+	elif [ -e $LOCALDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{ 
 				if ( $1 == "End" ) 
 				    {
 				    print $2 
 				    }
-			    }' $LOCALDIR/dns.ini` 
+			    }' $LOCALDIR/tlab.ini` 
 	else
 	    echo "Error getting max time"
 	    exit 1

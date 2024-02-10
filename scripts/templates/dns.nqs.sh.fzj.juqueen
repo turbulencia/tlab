@@ -94,10 +94,10 @@ fi
 stat -t core* >/dev/null 2>&1 && ABORT="yes"
 
 #clean 
-if [ -f dns.ini ]; then
-    cp dns.ini dns.ini-$TIMESTAMP
+if [ -f tlab.ini ]; then
+    cp tlab.ini tlab.ini-$TIMESTAMP
 fi
-LOGFILES="dns.ini.bak dns.log dns.out dns.les partinfos.txt mapping.txt"
+LOGFILES="tlab.ini.bak tlab.log dns.out dns.les partinfos.txt mapping.txt"
 for FILE in $LOGFILES; do
     if [ -f $FILE ]; then
         mv $FILE $FILE-$TIMESTAMP
@@ -109,8 +109,8 @@ STATSDIR=stats-$TIMESTAMP
 if [ ! -e $STATSDIR ]; then
     mkdir $STATSDIR
 
-    if [ -f dns.ini ]; then
-	cp dns.ini $STATSDIR
+    if [ -f tlab.ini ]; then
+	cp tlab.ini $STATSDIR
     fi
 
     LIST=`ls | egrep 'avg[0-9]|?cr[0-9]|?sp[0-9]|pdf[0-9]|cavgXi[0-9]|pdfXi[0-9]|int[0-9]|kin[0-9]'`
@@ -132,13 +132,13 @@ if [ $RUNMODE = "simulation" ];then
 	    . $LOCALDIR/dns.nqs.new-vars
 	fi
 
-	if [ -f $LOCALDIR/dns.ini ]; then
+	if [ -f $LOCALDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{ 
 				if ( $1 == "End" ) 
 				    {
 				    print $2 
 				    }
-			    }' $LOCALDIR/dns.ini` 
+			    }' $LOCALDIR/tlab.ini` 
 	else
 	    echo "Error getting max time"
 	    exit 1

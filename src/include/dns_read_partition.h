@@ -4,7 +4,7 @@
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef USE_MPI
-     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [PostProcessing.Partition] in dns.ini.')
+     CALL TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [PostProcessing.Partition] in tlab.ini.')
      CALL TLAB_STOP(DNS_ERROR_INVALOPT)
 #else
      WRITE(*,*) 'Intermittency function for the conditioning ?'

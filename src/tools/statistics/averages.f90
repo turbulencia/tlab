@@ -171,7 +171,7 @@ program AVERAGES
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in dns.ini.')
+        call TLAB_WRITE_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in tlab.ini.')
         call TLAB_STOP(DNS_ERROR_INVALOPT)
     end if
 

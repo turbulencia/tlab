@@ -70,13 +70,13 @@ program PARTICLE_POS_TRAJEC
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call PARTICLE_READ_GLOBAL('dns.ini')
+    call PARTICLE_READ_GLOBAL('tlab.ini')
     
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
 
-! Get the local information from the dns.ini
+! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
     call PARTICLE_ALLOCATE(C_FILE_LOC)

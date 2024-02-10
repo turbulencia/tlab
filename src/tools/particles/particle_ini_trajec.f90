@@ -25,7 +25,7 @@
 !# l_pos_trajec.x. The file is called pos_largest_file_start.
 !#
 !# Less particles are created by setting smaller number for
-!# particle_number in dns.ini. Afterwards particles are exchanged with
+!# particle_number in tlab.ini. Afterwards particles are exchanged with
 !# position of the largest particles determined before with l_trajec.x
 !# and l_pos_trajec.x
 !#
@@ -87,7 +87,7 @@ program PARTICLE_INI_TRAJEC
 
     bakfile = TRIM(ADJUSTL(ifile))//'.bak'
 
-! Get the local information from the dns.ini
+! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
 ! -------------------------------------------------------------------

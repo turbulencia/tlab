@@ -50,7 +50,7 @@ program VINTERPARTIAL
 ! ###################################################################
     call TLAB_START()
 
-    call IO_READ_GLOBAL('dns.ini')
+    call IO_READ_GLOBAL('tlab.ini')
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
@@ -61,7 +61,7 @@ program VINTERPARTIAL
 ! Check input
 ! -------------------------------------------------------------------
     if (.not. stagger_on) then
-        call TLAB_WRITE_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in dns.ini!')
+        call TLAB_WRITE_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in tlab.ini!')
         call TLAB_STOP(0)
     end if
 

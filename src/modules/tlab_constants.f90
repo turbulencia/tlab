@@ -16,10 +16,10 @@ module TLAB_CONSTANTS
     integer, parameter :: MAX_PATH_LENGTH = 128
 
     character(len=*), parameter :: gfile = 'grid'
-    character(len=*), parameter :: ifile = 'dns.ini'
-    character(len=*), parameter :: lfile = 'dns.log'
+    character(len=*), parameter :: ifile = 'tlab.ini'
+    character(len=*), parameter :: lfile = 'tlab.log'
     character(len=*), parameter :: efile = 'dns.err'
-    character(len=*), parameter :: wfile = 'dns.war'
+    character(len=*), parameter :: wfile = 'tlab.war'
     character(len=*), parameter :: tfile = 'dns.trc'
 
     character(len=*), parameter :: tag_flow = 'flow.'
