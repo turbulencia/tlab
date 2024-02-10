@@ -20,7 +20,6 @@ subroutine RAND_READ_LOCAL(inifile)
     bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
     call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
-
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Broadband]')

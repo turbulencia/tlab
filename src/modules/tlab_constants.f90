@@ -13,6 +13,7 @@ module TLAB_CONSTANTS
     integer, parameter :: MAX_NSP = 10  ! Species in the mixture
     integer, parameter :: MAX_AVG_TEMPORAL = 235
     integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
+    integer, parameter :: MAX_PATH_LENGTH = 128
 
     character(len=*), parameter :: gfile = 'grid'
     character(len=*), parameter :: ifile = 'dns.ini'

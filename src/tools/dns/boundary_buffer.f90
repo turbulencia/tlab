@@ -18,7 +18,7 @@ module BOUNDARY_BUFFER
 
     use TLAB_TYPES, only: filter_dt
 
-    use TLAB_CONSTANTS, only: tag_flow, tag_scal, wfile, lfile, efile, MAX_VARS, wp, wi
+    use TLAB_CONSTANTS, only: tag_flow, tag_scal, wfile, efile, lfile, MAX_VARS, wp, wi
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif

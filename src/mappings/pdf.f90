@@ -121,7 +121,7 @@ end subroutine PDF1V_N
 !########################################################################
 !########################################################################
 subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
-    use TLAB_CONSTANTS, only: lfile,  wp, wi
+    use TLAB_CONSTANTS, only: lfile, wp, wi
     use TLAB_ARRAYS, only: wrk2d
     use TLAB_PROCS
     use PDFS

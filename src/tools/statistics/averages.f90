@@ -210,7 +210,6 @@ program AVERAGES
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     case (8)
         nfield = 3
-
         iread_flow = .true.; inb_txc = max(inb_txc, 6)
     case (9)
         nfield = 5

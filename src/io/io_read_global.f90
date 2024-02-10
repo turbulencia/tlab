@@ -60,7 +60,8 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Main]')
-    call TLAB_WRITE_ASCII(bakfile, '#FileFormat=<mpiio/RawSplit/NetCDF>')
+    call TLAB_WRITE_ASCII(bakfile, '#FileFormat=<mpiio/NetCDF/None>')
+    call TLAB_WRITE_ASCII(bakfile, '#FileType=<Double/Single>')
     call TLAB_WRITE_ASCII(bakfile, '#VerbosityLevel=<0/1/2>')
     call TLAB_WRITE_ASCII(bakfile, '#Type=<temporal/spatial>')
     call TLAB_WRITE_ASCII(bakfile, '#CalculateFlow=<yes/no>')
@@ -395,7 +396,7 @@ subroutine IO_READ_GLOBAL(inifile)
         if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLAB_WRITE_ASCII(lfile, 'Body force along Oz.'); end if
 
         if (froude > 0.0_wp) then
-            buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into de vector g
+            buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into the vector g
         else
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Froude number must be nonzero if buoyancy is retained.')
             call TLAB_STOP(DNS_ERROR_OPTION)
