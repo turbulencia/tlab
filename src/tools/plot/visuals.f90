@@ -152,13 +152,13 @@ program VISUALS
         end if
 
         write (*, '(I2,A)') iscal_offset + 1, '. ScalarGradientVector'
-        write (*, '(I2,A)') iscal_offset + 2, '. ScalarGradient G_iG_i (Ln)'
+        write (*, '(I2,A)') iscal_offset + 2, '. ScalarGradient G_iG_i (Log)'
         write (*, '(I2,A)') iscal_offset + 3, '. ScalarGradientEquation'
         write (*, '(I2,A)') iscal_offset + 4, '. VorticityVector'
-        write (*, '(I2,A)') iscal_offset + 5, '. Enstrophy W_iW_i (Ln)'
+        write (*, '(I2,A)') iscal_offset + 5, '. Enstrophy W_iW_i (Log)'
         write (*, '(I2,A)') iscal_offset + 6, '. EnstrophyEquation'
         write (*, '(I2,A)') iscal_offset + 7, '. StrainTensor'
-        write (*, '(I2,A)') iscal_offset + 8, '. Strain 2S_ijS_ij (Ln)'
+        write (*, '(I2,A)') iscal_offset + 8, '. Strain 2S_ijS_ij (Log)'
         write (*, '(I2,A)') iscal_offset + 9, '. StrainEquation'
         write (*, '(I2,A)') iscal_offset + 10, '. VelocityGradientInvariants'
         write (*, '(I2,A)') iscal_offset + 11, '. Space partition'
@@ -618,8 +618,8 @@ program VISUALS
                         plot_file = trim(adjustl(str))//'Gradient'//time_str(1:MaskSize)
                         call FI_GRADIENT(imax, jmax, kmax, s(1, is), txc(1, 1), txc(1, 2))
                         if (opt_vec(iv) == iscal_offset + 2) then
-                            plot_file = 'Ln'//trim(adjustl(plot_file))
-                            txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
+                            plot_file = 'Log'//trim(adjustl(plot_file))
+                            txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                         end if
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if
@@ -661,12 +661,12 @@ program VISUALS
                 plot_file = 'Enstrophy'//time_str(1:MaskSize)
                 call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
                 if (opt_vec(iv) == iscal_offset + 5) then ! Natural log
-                    plot_file = 'Ln'//trim(adjustl(plot_file))
-                    txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
+                    plot_file = 'Log'//trim(adjustl(plot_file))
+                    txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                 end if
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
-                plot_file = 'LnPotentialEnstrophy'//time_str(1:MaskSize)
+                plot_file = 'LogPotentialEnstrophy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 4))
                 else
@@ -682,7 +682,7 @@ program VISUALS
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 4) &
                                         + txc(1:isize_field, 2)*txc(1:isize_field, 5) &
                                         + txc(1:isize_field, 3)*txc(1:isize_field, 6)
-                txc(1:isize_field, 1) = log(txc(1:isize_field, 1)*txc(1:isize_field, 1) + small_wp)
+                txc(1:isize_field, 1) = log10(txc(1:isize_field, 1)*txc(1:isize_field, 1) + small_wp)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
             end if
 
@@ -714,8 +714,8 @@ program VISUALS
                 call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
                 txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 1)
                 if (opt_vec(iv) == iscal_offset + 8) then ! Natural log
-                    plot_file = 'Ln'//trim(adjustl(plot_file))
-                    txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
+                    plot_file = 'Log'//trim(adjustl(plot_file))
+                    txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                 end if
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
             end if
@@ -803,7 +803,7 @@ program VISUALS
                 txc(1:isize_field, 2) = txc(1:isize_field, 1)*txc(1:isize_field, 2)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
 
-                plot_file = 'LnBuoyancySource'//time_str(1:MaskSize)
+                plot_file = 'LogBuoyancySource'//time_str(1:MaskSize)
                 if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                     call THERMO_AIRWATER_LINEAR_SOURCE(imax*jmax*kmax, s, txc(1, 1), txc(1, 2), txc(1, 3))
                     call FI_GRADIENT(imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 4))
@@ -815,7 +815,7 @@ program VISUALS
                 end if
                 dummy = visc/schmidt(1)/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 2)*dummy
-                txc(1:isize_field, 1) = log(abs(txc(1:isize_field, 1)) + small_wp)
+                txc(1:isize_field, 1) = log10(abs(txc(1:isize_field, 1)) + small_wp)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
             end if
@@ -831,10 +831,10 @@ program VISUALS
 
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 15) then ! Turbulent quantities
-                plot_file = 'LnDissipation'//time_str(1:MaskSize)
+                plot_file = 'LogDissipation'//time_str(1:MaskSize)
                 call FI_DISSIPATION(i1, imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                     txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
-                txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
+                txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'Tke'//time_str(1:MaskSize)

@@ -226,13 +226,13 @@ contains
         ! -------------------------------------------------------------------
         if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then   
             call FI_VORTICITY(imax, jmax, kmax, q(:, 1), q(:, 2), q(:, 3), txc(:, 3), txc(:, 4), txc(:, 5))
-            txc(1:imax*jmax*kmax, 3) = log(txc(1:imax*jmax*kmax, 3) + small_wp)
+            txc(1:imax*jmax*kmax, 3) = log10(txc(1:imax*jmax*kmax, 3) + small_wp)
             if (imode_ibm == 1) call IBM_BCS_FIELD( txc(1:imax*jmax*kmax, 3))
             nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
             if (scal_on) then
                 do iv = 1, inb_scal_array
                     call FI_GRADIENT(imax, jmax, kmax, s(:, iv), txc(:, iv+3), txc(:, iv+4))
-                    txc(1:imax*jmax*kmax, iv+3) = log(txc(1:imax*jmax*kmax, iv+3) + small_wp)
+                    txc(1:imax*jmax*kmax, iv+3) = log10(txc(1:imax*jmax*kmax, iv+3) + small_wp)
                     if (imode_ibm == 1) call IBM_BCS_FIELD( txc(1:imax*jmax*kmax, iv+3))
                     nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, iv+3)
                 end do
