@@ -68,11 +68,11 @@ case $RUNMODE in
 esac
 
 # Abort on several errors
-if [ -f dns.error ]; then
+if [ -f tlab.error ]; then
     ABORT="yes"
 fi
 	
-if [ -f dns.error.0 ]; then
+if [ -f tlab.error.0 ]; then
     ABORT="yes"
 fi
 

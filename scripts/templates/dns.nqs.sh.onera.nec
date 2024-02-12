@@ -62,11 +62,11 @@ simulation $TIMESTAMP
 date
 
 # Abort on severall errors
-if [ -r dns.error ]; then
+if [ -r tlab.error ]; then
     ABORT="yes"
 fi
 	
-if [ -r dns.error.0 ]; then
+if [ -r tlab.error.0 ]; then
     ABORT="yes"
 fi
 

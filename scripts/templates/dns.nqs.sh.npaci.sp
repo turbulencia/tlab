@@ -52,11 +52,11 @@ touch *
 simulation $TIMESTAMP 
 
 # Abort on severall errors
-if [ -e dns.error ]; then
+if [ -e tlab.error ]; then
     ABORT="yes"
 fi
 	
-if [ -e dns.error.0 ]; then
+if [ -e tlab.error.0 ]; then
     ABORT="yes"
 fi
 

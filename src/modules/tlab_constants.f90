@@ -18,7 +18,7 @@ module TLAB_CONSTANTS
     character(len=*), parameter :: gfile = 'grid'
     character(len=*), parameter :: ifile = 'tlab.ini'
     character(len=*), parameter :: lfile = 'tlab.log'
-    character(len=*), parameter :: efile = 'dns.err'
+    character(len=*), parameter :: efile = 'tlab.err'
     character(len=*), parameter :: wfile = 'tlab.war'
     character(len=*), parameter :: tfile = 'dns.trc'
 
