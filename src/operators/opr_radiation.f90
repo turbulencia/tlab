@@ -7,33 +7,29 @@
 !#
 !########################################################################
 subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, BCS_MAX!, BCS_MIN
     use TLAB_TYPES, only: term_dt, grid_dt
-    use TLAB_ARRAYS, only: wrk1d, wrk3d
+    use TLAB_ARRAYS, only: wrk3d
     use AVGS, only: AVG1V2D_V
+    use OPR_ODES
 
     implicit none
 
     type(term_dt), intent(IN) :: radiation
     integer(wi), intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
-    real(wp), intent(IN) :: s(nx*ny*nz)       ! Radiatively active scalar
+    real(wp), intent(IN) :: s(nx*ny*nz)         ! Radiatively active scalar
     real(wp), intent(OUT) :: r(nx*ny*nz)        ! Radiative heating rate
 
     target s, r
 
 ! -----------------------------------------------------------------------
-    integer(wi) j, ip, ip2, nxy, nxz, ibc
+    integer(wi) j, ip, ip2, nxy, nxz
     real(wp) delta_inv, f0, f1
     real(wp), pointer :: p_org(:), p_dst(:)
 
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
-    ibc = 2     ! Boundary condition at the top for integral calulation
-
-! Prepare the pentadiagonal system
-    call INT_C1N6_LHS(ny, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-    call PENTADFS(ny - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
 
     delta_inv = 1.0_wp/radiation%parameters(2)
 
@@ -72,10 +68,11 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
     end if
 
 ! ###################################################################
-! Calculate (negative) integral path.
-    call INT_C1N6_RHS(ny, nxz, ibc, g%jac, p_org, p_dst)
-    call PENTADSS(ny - 1, nxz, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), p_dst)
+! Calculate (negative) integral path; integrating from the top, to be checked
     ip = nxz*(ny - 1) + 1; p_dst(ip:ip + nxz - 1) = 0.0_wp ! boundary condition
+    call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MAX)
+    ! p_dst(1:nxz) = 0.0_wp ! boundary condition
+    ! call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MIN)
 
 ! Calculate radiative heating rate
     f0 = radiation%parameters(1)
@@ -118,33 +115,29 @@ end subroutine OPR_RADIATION
 !########################################################################
 !########################################################################
 subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_CONSTANTS, only: wp, wi, BCS_MAX!, BCS_MIN
     use TLAB_TYPES, only: term_dt, grid_dt
-    use TLAB_ARRAYS, only: wrk1d, wrk3d
+    use TLAB_ARRAYS, only: wrk3d
     use AVGS, only: AVG1V2D_V
+    use OPR_ODES
 
     implicit none
 
     type(term_dt), intent(IN) :: radiation
     integer(wi), intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
-    real(wp), dimension(nx*ny*nz), intent(IN) :: s        ! Radiatively active scalar
-    real(wp), dimension(nx*ny*nz), intent(OUT) :: r        ! Radiative flux
+    real(wp), dimension(nx*ny*nz), intent(IN) :: s          ! Radiatively active scalar
+    real(wp), dimension(nx*ny*nz), intent(OUT) :: r         ! Radiative flux
 
     target s, r
 
 ! -----------------------------------------------------------------------
-    integer(wi) j, ip, ip2, nxy, nxz, ibc
+    integer(wi) j, ip, ip2, nxy, nxz
     real(wp) delta_inv, f0, f1
     real(wp), dimension(:), pointer :: p_org, p_dst
 
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
-    ibc = 2     ! Boundary condition at the top for integral calulation
-
-! Prepare the pentadiagonal system
-    call INT_C1N6_LHS(ny, ibc, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-    call PENTADFS(ny - 1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
 
     delta_inv = 1.0_wp/radiation%parameters(2)
 
@@ -183,10 +176,11 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     end if
 
 ! ###################################################################
-! Calculate (negative) integral path.
-    call INT_C1N6_RHS(ny, nxz, ibc, g%jac, p_org, p_dst)
-    call PENTADSS(ny - 1, nxz, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), p_dst)
+! Calculate (negative) integral path; integrating from the top, to be checked
     ip = nxz*(ny - 1) + 1; p_dst(ip:ip + nxz - 1) = 0.0_wp ! boundary condition
+    call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MAX)
+    ! p_dst(1:nxz) = 0.0_wp ! boundary condition
+    ! call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MIN)
 
 ! Calculate radiative flux
     f0 = -radiation%parameters(1)*radiation%parameters(2)
