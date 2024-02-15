@@ -8,7 +8,7 @@ examples/Case*/rand.*
 examples/Case*/avg*
 examples/Case*/grid
 examples/Case*/grid.sts
-examples/Case*/dns.err
+examples/Case*/tlab.err
 examples/Case*/tlab.war
 examples/Case*/dns.trc
 examples/Case*/eps*

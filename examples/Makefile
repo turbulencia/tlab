@@ -47,7 +47,7 @@ PRJS=\
      # Case33 \
      # Case34 \
 
-FILES=avg* grid* flow* scal* dns.out tlab.log dns.obs dns.err tlab.war tlab.ini.bak tower* part* traj* residence* eps*
+FILES=avg* grid* flow* scal* dns.out tlab.log dns.obs tlab.err tlab.war tlab.ini.bak tower* part* traj* residence* eps*
 
 ##########################################################################
 #   Directives
