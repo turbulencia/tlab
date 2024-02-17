@@ -16,6 +16,7 @@ subroutine RHS_PART_1()
     use THERMO_VARS, only: thermo_param
     use OPR_PARTIAL
     use FI_GRADIENT_EQN
+    ! use PARTICLE_TINIA
 
     implicit none
 
@@ -136,6 +137,8 @@ subroutine RHS_PART_1()
         end do
 
     ! case (PART_TYPE_NEW_CASES)
+    case (PART_TYPE_TINIA_1)
+        ! call PARTICLE_TINIA_RHS_1(l_hq)
 
     end select
 

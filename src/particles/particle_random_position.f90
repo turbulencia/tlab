@@ -20,7 +20,8 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
     use TLAB_MPI_VARS
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
-    use IO_FIELDS
+    ! use PARTICLE_TINIA
+use IO_FIELDS
     implicit none
 
     real(wp), target :: l_q(isize_part, inb_part_array)
@@ -180,6 +181,8 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
         end if
 
     ! case (PART_TYPE_NEW_CASES)
+    case (PART_TYPE_TINIA_1)
+        ! call PARTICLE_TINIA_INITIALIZE()
 
     end select
 

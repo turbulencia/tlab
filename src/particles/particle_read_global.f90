@@ -10,6 +10,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_npro
 #endif
+    ! use PARTICLE_TINIA
 
     implicit none
 
@@ -40,6 +41,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'inertia') then; part%type = PART_TYPE_INERTIA
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; part%type = PART_TYPE_BIL_CLOUD_3
     else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; part%type = PART_TYPE_BIL_CLOUD_4
+    else if (trim(adjustl(sRes)) == 'tiniaone') then; part%type = PART_TYPE_TINIA_1        
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -132,6 +134,8 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             part_spname(3) = 'residence_part'
 
     ! case (PART_TYPE_NEW_CASES)
+        case (PART_TYPE_TINIA_1)
+            ! call PARTICLE_TINIA_READBLOCK(bakfile, inifile, block)
 
         end select
 

@@ -12,6 +12,7 @@ module PARTICLE_VARS
     integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 4
     integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 5
     ! integer, parameter :: PART_TYPE_NEW_CASES = 6
+    integer, parameter :: PART_TYPE_TINIA_1 = 6
 
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
