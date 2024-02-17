@@ -38,7 +38,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
         end if
 
         ! Calculate mean bbackground
-        if (buoyancy%type == EQNS_BOD_NORMALIZEDMEAN) then
+        if (buoyancy%type == EQNS_BOD_NORMALIZEDMEAN .or. buoyancy%type == EQNS_BOD_SUBTRACTMEAN) then
             call AVG1V2D_V(nx, ny, nz, 1, s(:, 1), bbackground, wrk1d)
         end if
 

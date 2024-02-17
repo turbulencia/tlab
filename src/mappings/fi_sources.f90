@@ -361,6 +361,16 @@ contains
                 end do
             end do
 
+        case (EQNS_BOD_SUBTRACTMEAN)
+            c1_loc = buoyancy%parameters(1)
+
+            do k = 1, nz
+                do j = 1, ny
+                    dummy = bbackground(j)
+                    b(1:nx, j, k) = c1_loc*(s(1:nx, j, k, 1) - dummy)
+                end do
+            end do
+
         case default
             b = 0.0_wp
 

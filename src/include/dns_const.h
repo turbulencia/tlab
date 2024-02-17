@@ -42,6 +42,7 @@
 #define EQNS_BOD_BILINEAR           7
 #define EQNS_BOD_QUADRATIC          8
 #define EQNS_BOD_NORMALIZEDMEAN     9
+#define EQNS_BOD_SUBTRACTMEAN      10
 
 #define EQNS_COR_NORMALIZED        12
 
