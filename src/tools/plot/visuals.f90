@@ -168,9 +168,8 @@ program VISUALS
         write (*, '(I2,A)') iscal_offset + 16, '. Radiative forcing'
         write (*, '(I2,A)') iscal_offset + 17, '. Relative humidity'
         write (*, '(I2,A)') iscal_offset + 18, '. Particle Density'
-        write (*, '(I2,A)') iscal_offset + 19, '. Thermodynamic quantities'
-        write (*, '(I2,A)') iscal_offset + 20, '. Analysis of B and V'
-        write (*, '(I2,A)') iscal_offset + 21, '. Total Stress Tensor'
+        write (*, '(I2,A)') iscal_offset + 19, '. Analysis of B and V'
+        write (*, '(I2,A)') iscal_offset + 20, '. Total Stress Tensor'
         read (*, '(A512)') sRes
 #endif
     end if
@@ -216,9 +215,8 @@ program VISUALS
         if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 19) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7 ); end if
-        if (opt_vec(iv) == iscal_offset + 21) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
+        if (opt_vec(iv) == iscal_offset + 19) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7 ); end if
+        if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
     end do
 
     ! check if enough memory is provided for the IBM
@@ -576,13 +574,13 @@ program VISUALS
                 if (imixture == MIXT_TYPE_AIRWATER) then ! s(1,inb_scal+1) contains liquid mass fraction
                     if (opt_vec(iv) == 10) then ! vapor water mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(1)))//time_str(1:MaskSize)
-                        s(:, 1) = s(:, inb_scal) - s(:, inb_scal + 1)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, s, wrk3d)
+                        txc(1:isize_field, 1)  = s(1:isize_field, inb_scal) - s(1:isize_field, inb_scal + 1)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     else if (opt_vec(iv) == 11) then ! air mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(2)))//time_str(1:MaskSize)
-                        s(:, 1) = 1.0_wp - s(:, inb_scal)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, s, wrk3d)
+                        txc(1:isize_field, 1) = 1.0_wp - s(1:isize_field, inb_scal)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     else if (opt_vec(iv) == 12) then ! liquid mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(3)))//time_str(1:MaskSize)
@@ -909,24 +907,7 @@ program VISUALS
             end if
 
             ! ###################################################################
-            if (opt_vec(iv) == iscal_offset + 19) then ! Thermodynamic quantities
-                call VISUALS_FUNCTION1(imax, jmax, kmax, s, txc)
-
-                plot_file = 'Enthalpy'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, s(1, 1), wrk3d)
-                plot_file = 'TotalWater'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, s(1, 2), wrk3d)
-                plot_file = 'LiquidWater'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, s(1, 3), wrk3d)
-                plot_file = 'Temperature'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
-                plot_file = 'Density'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
-
-            end if
-
-            ! ###################################################################
-            if (opt_vec(iv) == iscal_offset + 20) then
+            if (opt_vec(iv) == iscal_offset + 19) then
                 plot_file = 'LaplacianV'//time_str(1:MaskSize)
                 call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(1, 2), txc(1, 4), txc(1, 5))
                 call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 3), txc(1, 5))
@@ -965,7 +946,7 @@ program VISUALS
             ! ###################################################################
             ! Total stress tensor
             ! ###################################################################
-            if (opt_vec(iv) == iscal_offset + 21) then ! Total stress tensor 
+            if (opt_vec(iv) == iscal_offset + 20) then ! Total stress tensor 
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3)) ! pressure in txc(1,7)
                 call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1 ,8), txc(1 ,6))            ! avg vel. + pre. in time               
                 if (it == itime_size) then
@@ -1021,40 +1002,7 @@ subroutine VISUALS_ACCUMULATE_FIELDS(q, p, q_avg, p_avg)
 
     return
 end subroutine VISUALS_ACCUMULATE_FIELDS
-!########################################################################
-!# Calculate thermodynamic information for THERMO_AIRWATER_LINEAR
-!########################################################################
-    subroutine VISUALS_FUNCTION1(nx, ny, nz, s, txc)
-        integer(wi) nx, ny, nz
-        real(wp), dimension(nx*ny*nz, *) :: s
-        real(wp), dimension(isize_txc_field, *) :: txc
-
-        ! -----------------------------------------------------------------------
-        real(wp) qt_0, qt_1, h_0, h_1, p, T_0, C_0, PsiRef
-
-        ! #######################################################################
-        imixture = MIXT_TYPE_AIRWATER
-
-        qt_0 = 9.0d-3; qt_1 = 1.5d-3
-        h_0 = 0.955376d0; h_1 = 0.981965d0
-        p = 0.940d0
-        T_0 = 0.952181d0 ! 283.75 / TREF
-        C_0 = 1.0089
-        PsiRef = 6.57d-4
-
-        s(:, 3) = h_0 + s(:, 1)*(h_1 - h_0) + s(:, 2)*C_0*T_0*PsiRef ! enthalpy
-        s(:, 2) = qt_0 + s(:, 1)*(qt_1 - qt_0)                            ! total water, space for q_l
-        s(:, 1) = s(:, 3)
-
-        epbackground = 0.0_wp                                    ! potential energy
-        pbackground = p                                        ! pressure
-
-        call THERMO_ANELASTIC_PH(nx, ny, nz, s(1, 2), s(1, 1))
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s(1, 1), txc(1, 1))
-        call THERMO_ANELASTIC_DENSITY(nx, ny, nz, s(1, 1), txc(1, 2))
-
-        return
-    end subroutine VISUALS_FUNCTION1
+    
 !########################################################################
 !########################################################################
 #define LOC_UNIT_ID 55
