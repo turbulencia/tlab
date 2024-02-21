@@ -334,7 +334,7 @@ subroutine THERMO_INITIALIZE()
         THERMO_AI(7, :, is) = SREF_LOC(is) - THERMO_AI(2, :, is)*TREF_LOC
     end do
 
-    if (molar_data) then ! Change heat capacities from molar to mass specific
+    if (molar_data) then ! Change heat capacities from molar to mass specific, i.e., J /K /kg
         do is = 1, NSP
             THERMO_AI(:, :, is) = THERMO_AI(:, :, is)/WGHT(is)
         end do
@@ -355,7 +355,7 @@ subroutine THERMO_INITIALIZE()
 
 ! Flatau et al., J. Applied Meteorol., 1507-1513, 1992
         NPSAT = 9
-        WRK1D_LOC(1) = 0.611213476e+3_wp
+        WRK1D_LOC(1) = 0.611213476e+3_wp    ! Pa
         WRK1D_LOC(2) = 0.444007856e+2_wp
         WRK1D_LOC(3) = 0.143064234e+1_wp
         WRK1D_LOC(4) = 0.264461437e-1_wp
@@ -404,8 +404,8 @@ subroutine THERMO_INITIALIZE()
         CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
     end do
 
-    if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in tlab.ini
-        gama0 = CPREF/(CPREF - RREF)  ! Specific heat ratio
+    if (imixture /= MIXT_TYPE_NONE) then    ! othewise, gama0 is read in tlab.ini
+        gama0 = CPREF/(CPREF - RREF)        ! Specific heat ratio
     end if
 
     ! Nondimensionalization
@@ -418,8 +418,8 @@ subroutine THERMO_INITIALIZE()
     CRATIO_INV = 1.0_wp
     if (nondimensional) then
         ! Parameters in the governing equations
-        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-            MRATIO = gama0*mach*mach            ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
+        if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+            MRATIO = gama0*mach*mach           ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
             CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
             PREF_1000 = 1.0_wp/MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from tlab.ini
         else
@@ -450,7 +450,10 @@ subroutine THERMO_INITIALIZE()
     end if
 
     ! Derived parameters to save operations
-    GRATIO = (gama0 - 1.0_wp)/gama0*MRATIO      ! R_0/C_{p,0} *MRATIO
+    GRATIO = 1.0_wp
+    if (nondimensional) then
+        GRATIO = (gama0 - 1.0_wp)/gama0*MRATIO      ! R_0/C_{p,0} *MRATIO
+    end if
     RRATIO = 1.0_wp/MRATIO
     THERMO_R(:) = WGHT_INV(:)*RRATIO            ! gas constants normalized by dynamic reference value U0^2/T0
 

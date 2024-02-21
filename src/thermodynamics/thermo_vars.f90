@@ -15,7 +15,7 @@ module THERMO_VARS
     ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
     integer(wi) :: NSP = 0                      ! Number of components (species) in a mixture
     character(len=32) :: THERMO_SPNAME(MAX_NSP) = ''
-    real(wp) :: THERMO_R(MAX_NSP)               ! Normalized gas constants
+    real(wp) :: THERMO_R(MAX_NSP)               ! Gas constants
 
     ! Caloric data
     integer(wi), parameter :: MAX_NCP = 7       ! Caloric data; cp(T), formation enthalpy, formation entropy
