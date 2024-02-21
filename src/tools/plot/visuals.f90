@@ -1077,7 +1077,7 @@ end subroutine VISUALS_ACCUMULATE_FIELDS
         else if (iformat == 2 .and. iflag_mode > 0) then  ! single precision, using MPI_IO
             if (ny_aux /= ny) then
                 do ifield = 1, nfield
-                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, i1, subdomain(3), i1, nx, ny_aux, nz, field(1, ifield), txc)
+                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, i1, subdomain(3), i1, nx, ny_aux, nz, field(1, ifield), wrk1d)
                 end do
             end if
 
@@ -1107,7 +1107,7 @@ end subroutine VISUALS_ACCUMULATE_FIELDS
                 call TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
                 if (ims_pro == 0) then
 #else
-                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), txc)
+                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), wrk1d)
                     write (LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux, ifield))
 #endif
                     close (LOC_UNIT_ID)
