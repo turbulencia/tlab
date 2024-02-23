@@ -394,11 +394,11 @@ subroutine THERMO_INITIALIZE()
     WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
 
     ! Reference values; in principle, these could be changed, if desired.
-    ISPREF = 2                              ! Species 2 is taken as reference
-    WREF = WGHT(ISPREF)                     ! kg /kmol
-    RREF = RGAS/WREF
     TREF = 298.0_wp                         ! K
     PREF = 1e5_wp                           ! Pa
+    ISPREF = 2                              ! Species 2 is taken as reference
+    WREF = WGHT(ISPREF)                     ! kg /kmol
+    RREF = RGAS/WREF                        ! J /kg /K
     CPREF = 0.0_wp                          ! J /kg /K
     do icp = NCP, 1, -1
         CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)

@@ -101,7 +101,7 @@ and
 \end{equation}
 and
 \begin{equation}
-    p = (\gamma_0 \mathrm{\bf M}^2)^{-1}\rho T R \;,\qquad
+    p = (\gamma_0 \mathrm{\bf Ma}^2)^{-1}\rho T R \;,\qquad
     R =\sum^N_1 R_iY_i\;.
 \end{equation}
 Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in \texttt{termo\_initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
@@ -121,7 +121,7 @@ depends on the composition of the mixture, and $\gamma_0$ is no longer an indepe
 \begin{equation}
     \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
 \end{equation}
-is defined as \texttt{GRATIO} in the code and it is defined as $(\gamma_0-1)/\gamma_0/\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily.
+is defined as \texttt{GRATIO} in the code and it is defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily.
 
 
 \subsubsection{Dimensional Formulation}
