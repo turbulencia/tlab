@@ -121,12 +121,12 @@ depends on the composition of the mixture, and $\gamma_0$ is no longer an indepe
 \begin{equation}
     \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
 \end{equation}
-is defined as \texttt{GRATIO} in the code and it is defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily.
+is defined as \texttt{GRATIO} in the code and it is defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily. (Why do we need this additional parameter?)
 
 
 \subsubsection{Dimensional Formulation}
 
-In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities.
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. %Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities. 
 
 \subsubsection{On the difference between the species and the prognostic scalars}
 
@@ -203,7 +203,7 @@ The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ an
 \end{equation}
 is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
 
-The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
+The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. %Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
 
 \subsubsection{Incompressible formulation}
 

@@ -433,7 +433,7 @@ contains
         select case (subsidence%type)
 
         case (EQNS_SUB_CONSTANT_LOCAL)
-            wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! sedimentation velocity
+            wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! subsidence velocity
 
             call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), a, source)
 
@@ -442,7 +442,7 @@ contains
             end do
 
         case (EQNS_SUB_CONSTANT_GLOBAL)
-            wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! sedimentation velocity
+            wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! subsidence velocity
 
             call AVG1V2D_V(nx, ny, nz, 1, a, wrk1d(:, 2), wrk1d(1, 3))     ! Calculate averaged scalar into wrk1d(:,2)
             call OPR_PARTIAL_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 2), wrk1d(1, 3))

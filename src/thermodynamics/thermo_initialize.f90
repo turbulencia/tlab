@@ -454,8 +454,9 @@ subroutine THERMO_INITIALIZE()
     if (nondimensional) then
         GRATIO = (gama0 - 1.0_wp)/gama0*MRATIO      ! R_0/C_{p,0} *MRATIO
     end if
+    ! GRATIO = CRATIO_INV                           ! I think these 2 are always the same... need to check
     RRATIO = 1.0_wp/MRATIO
-    THERMO_R(:) = WGHT_INV(:)*RRATIO            ! gas constants normalized by dynamic reference value U0^2/T0
+    THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0
 
 ! -------------------------------------------------------------------
     select case (imixture)

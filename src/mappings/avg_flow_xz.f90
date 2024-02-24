@@ -529,9 +529,11 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, g(1)%jac, g(3)%jac, Rxx(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, g(1)%jac, g(3)%jac, Ryy(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, Rzz(1), wrk1d, area)
-    Rxx(:) = Rxx(:)/rR(:)
-    Ryy(:) = Ryy(:)/rR(:)
-    Rzz(:) = Rzz(:)/rR(:)
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+        Rxx(:) = Rxx(:)/rR(:)
+        Ryy(:) = Ryy(:)/rR(:)
+        Rzz(:) = Rzz(:)/rR(:)
+    end if
 
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         dvdx = dwdx*dwdy
@@ -545,9 +547,11 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, g(1)%jac, g(3)%jac, Rxy(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, g(1)%jac, g(3)%jac, Rxz(1), wrk1d, area)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, Ryz(1), wrk1d, area)
-    Rxy(:) = Rxy(:)/rR(:)
-    Rxz(:) = Rxz(:)/rR(:)
-    Ryz(:) = Ryz(:)/rR(:)
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+        Rxy(:) = Rxy(:)/rR(:)
+        Rxz(:) = Rxz(:)/rR(:)
+        Ryz(:) = Ryz(:)/rR(:)
+    end if
 
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxx(1), Rxx_y(1))
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ryy(1), Ryy_y(1))
@@ -610,7 +614,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     dvdx = dwdx*dwdx*dwdy
     dvdy = dwdy*dwdy*dwdy
     dvdz = dwdz*dwdz*dwdy
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         dvdx = dvdx*rho
         dvdy = dvdy*rho
         dvdz = dvdz*rho
@@ -623,7 +627,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     dvdx = dwdx*dwdy*dwdy
     dvdy = dwdx*dwdy*dwdz
     dvdz = dwdy*dwdy*dwdz
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         dvdx = dvdx*rho
         dvdy = dvdy*rho
         dvdz = dvdz*rho
