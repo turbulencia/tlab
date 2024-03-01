@@ -328,21 +328,33 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Parameters]')
     call TLAB_WRITE_ASCII(bakfile, '#Reynolds=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Prandtl=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Froude=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Rossby=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Mach=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Gama=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Schmidt=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Damkohler=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Stokes=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Settling=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Mach=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Gama=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Prandtl=<value>')
 
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Reynolds', '100', reynolds)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Froude', '1.0', froude)
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Reynolds', '-1.0', reynolds)
+    if ( reynolds <= 0.0 ) then
+        call SCANINIREAL(bakfile, inifile, 'Parameters', 'Viscosity', '-1.0', dummy)
+        if ( dummy <= 0.0 ) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Molecular transport coefficients need to be positive.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        else
+            reynolds = 1.0_wp/dummy
+        end if
+    end if
+
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Froude', '-1.0', froude)
+    if ( froude <= 0.0 ) then
+        call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gravity', '1.0', dummy)   ! default value
+        froude = 1.0_wp/dummy
+    end if
+
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Rossby', '1.0', rossby)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Stokes', '0.0', stokes)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
@@ -363,6 +375,11 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    ! Compressible flows
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
+    
 ! ###################################################################
 ! Buoyancy
 ! ###################################################################
