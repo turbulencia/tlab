@@ -120,10 +120,10 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine FI_SOURCES_SCAL(s, hs, tmp1, tmp2)
+    subroutine FI_SOURCES_SCAL(s, hs, tmp1, tmp2, tmp3)
         real(wp), intent(in) :: s(isize_field, *)
         real(wp), intent(out) :: hs(isize_field, *)
-        real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
+        real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field), tmp3(isize_field)
 
         ! -----------------------------------------------------------------------
         integer flag_grad
@@ -165,20 +165,26 @@ contains
             ! array tmp2 should not be used inside the loop on is
             ! -----------------------------------------------------------------------
             if (transport%active(is)) then
-                if (is == 1) then; flag_grad = 1; 
-                else; flag_grad = 0
-                end if
-                call FI_TRANSPORT(transport, flag_grad, imax, jmax, kmax, is, s, s(:, transport%scalar(is)), tmp1, tmp2)
+                if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                    call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(:, transport%scalar(is)), tmp2)
+                    call FI_TRANSPORT(transport, 0, imax, jmax, kmax, is, s, tmp2, tmp1, tmp3)
+                    call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
+                else
+                    if (is == 1) then; flag_grad = 1; 
+                    else; flag_grad = 0
+                    end if
+                    call FI_TRANSPORT(transport, flag_grad, imax, jmax, kmax, is, s, s(:, transport%scalar(is)), tmp1, tmp2)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
 
-                do ij = srt, end
-                    hs(ij, is) = hs(ij, is) + tmp1(ij)
-                end do
+                    do ij = srt, end
+                        hs(ij, is) = hs(ij, is) + tmp1(ij)
+                    end do
 !$omp end parallel
 
+                end if
             end if
 
             ! -----------------------------------------------------------------------
@@ -476,21 +482,22 @@ contains
         bcs = 0
 
         exponent = transport%auxiliar(1)
+        dummy = 1.0_wp + exponent
 
-        if (transport%type == EQNS_TRANS_AIRWATERSIMPLIFIED) then
+        select case (transport%type)
+        case (EQNS_TRANS_AIRWATERSIMPLIFIED)
             if (flag_grad == 1) then
                 call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s_active, tmp)
                 if (exponent > 0.0_wp) tmp(:, 1) = tmp(:, 1)*(s_active**exponent)
             end if
 
-            dummy = transport%parameters(is)*(1.0_wp + exponent)
+            dummy = transport%parameters(is)*dummy
             source(:, 1) = dummy*tmp(:, 1)
 
-        elseif (transport%type == EQNS_TRANS_AIRWATER) then
-            dummy = 1.0_wp + exponent
+        case (EQNS_TRANS_AIRWATER)
             select case (is)
             case (2, 3)         ! q_t, q_l
-                if (exponent > 0.0_wp) then
+                if (exponent > 0.0_wp) then ! to avoid the calculation of a power, if not necessary
                     tmp(:, 1) = transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
                 else
                     tmp(:, 1) = transport%parameters(is)*(1.0_wp - s(:, is))*s_active
@@ -508,53 +515,44 @@ contains
 
             call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp(1, 1), source(1, 1))
 
-        end if
+        end select
 
         return
     end subroutine FI_TRANSPORT
 
-!########################################################################
-!########################################################################
+    !########################################################################
+    !########################################################################
+    ! Only used as diagnostic in statistics, need not be fast
     subroutine FI_TRANSPORT_FLUX(transport, nx, ny, nz, is, s, s_active, flux)
         type(term_dt), intent(in) :: transport
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: is
         real(wp), intent(in) :: s(nx*ny*nz, *), s_active(nx*ny*nz)
-        real(wp), intent(out) :: flux(nx*ny*nz, 1) ! Transport component. It could have eventually three directions
+        real(wp), intent(out) :: flux(nx*ny*nz, 1)
 
 ! -----------------------------------------------------------------------
         real(wp) dummy, exponent
 
 !########################################################################
         exponent = transport%auxiliar(1)
+        dummy = 1.0_wp + exponent
 
-        if (transport%type == EQNS_TRANS_AIRWATERSIMPLIFIED) then
-            dummy = 1.0_wp + exponent
-
+        select case (transport%type)
+        case (EQNS_TRANS_AIRWATERSIMPLIFIED)
             flux(:, 1) = -transport%parameters(is)*(s_active**dummy)
 
-        elseif (transport%type == EQNS_TRANS_AIRWATER) then
-            dummy = 1.0_wp + exponent
-
+        case (EQNS_TRANS_AIRWATER)
             select case (is)
             case (2, 3)         ! q_t, q_l
-                if (exponent > 0.0_wp) then
-                    flux(:, 1) = -transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
-                else
-                    flux(:, 1) = -transport%parameters(is)*(1.0_wp - s(:, is))*s_active
-                end if
+                flux(:, 1) = -transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
 
             case default        ! energy variables
                 call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, flux(:, 1))
-                if (exponent > 0.0_wp) then
-                    flux(:, 1) = -transport%parameters(is)*flux(:, 1)*(s_active**dummy)
-                else
-                    flux(:, 1) = -transport%parameters(is)*flux(:, 1)*s_active
-                end if
+                flux(:, 1) = -transport%parameters(is)*flux(:, 1)*(s_active**dummy)
 
             end select
 
-        end if
+        end select
 
         return
     end subroutine FI_TRANSPORT_FLUX

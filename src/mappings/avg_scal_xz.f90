@@ -495,8 +495,17 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     end if
 
     if (transport%active(is)) then ! Transport in tmp3 and dsdz
-        call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), tmp3, dsdy)
-        call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), dsdz)
+        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(:, :, :, transport%scalar(is)), tmp2)
+            call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, tmp2, tmp3, dsdy)
+            call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, tmp2, dsdz)
+            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
+            tmp2 = 0.0_wp
+
+        else
+            call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), tmp3, dsdy)
+            call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), dsdz)
+        end if
     end if
 
     if (is > inb_scal) then     ! Diagnostic variables; I overwrite tmp1 and dsdx and recalculate them.
