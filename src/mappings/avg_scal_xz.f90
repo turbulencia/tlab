@@ -32,7 +32,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
     use FI_GRADIENT_EQN
     use OPR_PARTIAL
-    
+
     implicit none
 
     integer, intent(IN) :: is
@@ -40,7 +40,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     real(wp), intent(IN) :: s(imax, jmax, kmax, inb_scal_array)
     real(wp), intent(IN) :: s_local(imax, jmax, kmax)
     real(wp), dimension(imax, jmax, kmax), intent(INOUT) :: dsdx, dsdy, dsdz, tmp1, tmp2, tmp3
-    real(wp), intent(INOUT) :: mean2d(jmax,MAX_AVG_TEMPORAL)
+    real(wp), intent(INOUT) :: mean2d(jmax, MAX_AVG_TEMPORAL)
 
     target q, tmp3
 
@@ -99,7 +99,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         sg(ng) = sg(ng) + 3
     end if
     if (radiation%active(is)) then
-        if (imixture == MIXT_TYPE_AIRWATER_LINEAR ) then
+        if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             varname(ng) = trim(adjustl(varname(ng)))//' rQrad rQradC'
         else
             varname(ng) = trim(adjustl(varname(ng)))//' rQrad rFrad'
@@ -111,7 +111,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         sg(ng) = sg(ng) + 1
     end if
     if (transport%active(is)) then
-        if (imixture == MIXT_TYPE_AIRWATER_LINEAR ) then
+        if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             varname(ng) = trim(adjustl(varname(ng)))//' rQtra rQtraC'
         else
             varname(ng) = trim(adjustl(varname(ng)))//' rQtra rFtra'
@@ -466,7 +466,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     k = ig(8) - 1
 
     do is_loc = 1, inb_scal_array
-        call AVG_IK_V(imax, jmax, kmax, jmax, s(:,:,:, is_loc), g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, s(:, :, :, is_loc), g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
         do j = 1, jmax
             tmp1(:, j, :) = (s(:, j, :, is_loc) - aux(j))*(s_local(:, j, :) - fS(j))
             tmp2(:, j, :) = tmp1(:, j, :)*(s_local(:, j, :) - fS(j))
@@ -489,14 +489,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             tmp2 = 0.0_wp
 
         else
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), dsdx)
+            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), tmp1)
+            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), dsdx)
         end if
     end if
 
     if (transport%active(is)) then ! Transport in tmp3 and dsdz
-        call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, tmp3, dsdy)
-        call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, dsdz)
+        call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), tmp3, dsdy)
+        call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), dsdz)
     end if
 
     if (is > inb_scal) then     ! Diagnostic variables; I overwrite tmp1 and dsdx and recalculate them.
@@ -507,7 +507,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             if (is == inb_scal_array + 1) then ! Default values are for liquid; defining them for buoyancy
                 coefQ = buoyancy%parameters(inb_scal_array)/froude
                 coefR = buoyancy%parameters(inb_scal)/froude
-                if ( transport%active(is) ) then
+                if (transport%active(is)) then
                     do is_loc = 1, inb_scal
                         coefT = coefT + transport%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
                     end do
@@ -526,11 +526,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             if (radiation%active(is)) then ! radiation source; needs dsdy
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:,:,:, radiation%scalar(is)), tmp1)
+                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), tmp1)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 ! Correction term needs dsdz
-                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:,:,:,radiation%scalar(is)), dsdx)
+                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), dsdx)
                 dsdx = dsdx*dsdz*dummy
             else
                 tmp1 = 0.0_wp; dsdx = 0.0_wp
@@ -540,7 +540,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
                 dummy = coefQ
                 tmp3 = tmp3*(coefT + dsdy*dummy)
                 ! Correction term needs dsdz
-                call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, dsdy)
+                call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), dsdy)
                 dsdz = dsdy*dsdz*dummy
             else
                 tmp3 = 0.0_wp; dsdz = 0.0_wp

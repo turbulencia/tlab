@@ -306,9 +306,9 @@ The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0
 
 \subsubsection{Radiation}
 
-Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $r^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt operators/opr\_radiation}), which is represented by radiation functions of the form
+Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt operators/opr\_radiation}), which is represented by radiation functions of the form
 \begin{equation}
-    r^e=\alpha_0 \zeta_{\gamma}\exp\left[
+    \omega_\mathrm{R}=\alpha_0 \zeta_{\gamma}\exp\left[
     -\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
 \end{equation}
 The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\}$ need to be provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles, instead of instantaneous values, and non-linear mapping functions can be specified.
@@ -318,6 +318,12 @@ For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_s
     \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
 \end{equation}
 The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
+
+\subsubsection{Transport}
+
+Transport phenomena different from molecular transport, e.g., that due to particle sedimentation, can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{T}\,\omega_\mathrm{T}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{T}$ is the corresponding non-dimensional transport parameter and the transport function $\omega_\mathrm{T}^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) transport parameter.
+
+For the transport function, see routine {\tt mappings/fi\_sources}.
 
 \section{Particle formulation}
 

@@ -168,7 +168,7 @@ contains
                 if (is == 1) then; flag_grad = 1; 
                 else; flag_grad = 0
                 end if
-                call FI_TRANSPORT(transport, flag_grad, imax, jmax, kmax, is, s, tmp1, tmp2)
+                call FI_TRANSPORT(transport, flag_grad, imax, jmax, kmax, is, s, s(:, transport%scalar(is)), tmp1, tmp2)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -459,56 +459,54 @@ contains
     !########################################################################
     !# Calculate the transport terms due to settling in an airwater mixture.
     !########################################################################
-    subroutine FI_TRANSPORT(transport, flag_grad, nx, ny, nz, is, s, trans, tmp)
+    subroutine FI_TRANSPORT(transport, flag_grad, nx, ny, nz, is, s, s_active, source, tmp)
         use OPR_PARTIAL, only: OPR_PARTIAL_Y
         type(term_dt), intent(IN) :: transport
         integer(wi), intent(IN) :: nx, ny, nz, flag_grad
         integer(wi), intent(IN) :: is
-        real(wp), intent(IN) :: s(nx*ny*nz, *)
-        real(wp), intent(OUT) :: trans(nx*ny*nz, 1) ! Transport component. It could have eventually three directions
+        real(wp), intent(IN) :: s(nx*ny*nz, *), s_active(nx*ny*nz)
+        real(wp), intent(OUT) :: source(nx*ny*nz, 1) ! Transport component. It could have eventually three directions
         real(wp), intent(INOUT) :: tmp(nx*ny*nz, 1)   ! To avoid re-calculations when repetedly calling this routine
 
 ! -----------------------------------------------------------------------
         real(wp) dummy, exponent
-        integer(wi) is_ref, bcs(2, 2)
+        integer(wi) bcs(2, 2)
 
 !########################################################################
         bcs = 0
 
         exponent = transport%auxiliar(1)
-        is_ref = transport%scalar(1)
 
         if (transport%type == EQNS_TRANS_AIRWATERSIMPLIFIED) then
             if (flag_grad == 1) then
-                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s(1, is_ref), tmp)
-                if (exponent > 0.0_wp) tmp(:, 1) = tmp(:, 1)*(s(:, is_ref)**exponent)
+                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s_active, tmp)
+                if (exponent > 0.0_wp) tmp(:, 1) = tmp(:, 1)*(s_active**exponent)
             end if
 
             dummy = transport%parameters(is)*(1.0_wp + exponent)
-            trans(:, 1) = dummy*tmp(:, 1)
+            source(:, 1) = dummy*tmp(:, 1)
 
         elseif (transport%type == EQNS_TRANS_AIRWATER) then
             dummy = 1.0_wp + exponent
-
             select case (is)
             case (2, 3)         ! q_t, q_l
                 if (exponent > 0.0_wp) then
-                    tmp(:, 1) = (transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*(s(:, is_ref)**dummy)
+                    tmp(:, 1) = transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
                 else
-                    tmp(:, 1) = (transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*s(:, is_ref)
+                    tmp(:, 1) = transport%parameters(is)*(1.0_wp - s(:, is))*s_active
                 end if
 
             case default        ! energy variables
                 call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, tmp(:, 1))
                 if (exponent > 0.0_wp) then
-                    tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*(s(:, is_ref)**dummy)
+                    tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*(s_active**dummy)
                 else
-                    tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*s(:, is_ref)
+                    tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*s_active
                 end if
 
             end select
 
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp(1, 1), trans(1, 1))
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp(1, 1), source(1, 1))
 
         end if
 
@@ -517,25 +515,23 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine FI_TRANSPORT_FLUX(transport, nx, ny, nz, is, s, trans)
+    subroutine FI_TRANSPORT_FLUX(transport, nx, ny, nz, is, s, s_active, flux)
         type(term_dt), intent(in) :: transport
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: is
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: trans(nx*ny*nz, 1) ! Transport component. It could have eventually three directions
+        real(wp), intent(in) :: s(nx*ny*nz, *), s_active(nx*ny*nz)
+        real(wp), intent(out) :: flux(nx*ny*nz, 1) ! Transport component. It could have eventually three directions
 
 ! -----------------------------------------------------------------------
         real(wp) dummy, exponent
-        integer(wi) is_ref
 
 !########################################################################
         exponent = transport%auxiliar(1)
-        is_ref = transport%scalar(1)
 
         if (transport%type == EQNS_TRANS_AIRWATERSIMPLIFIED) then
             dummy = 1.0_wp + exponent
 
-            trans(:, 1) = -transport%parameters(is)*(s(:, is_ref)**dummy)
+            flux(:, 1) = -transport%parameters(is)*(s_active**dummy)
 
         elseif (transport%type == EQNS_TRANS_AIRWATER) then
             dummy = 1.0_wp + exponent
@@ -543,17 +539,17 @@ contains
             select case (is)
             case (2, 3)         ! q_t, q_l
                 if (exponent > 0.0_wp) then
-                    trans(:, 1) = -(transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*(s(:, is_ref)**dummy)
+                    flux(:, 1) = -transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
                 else
-                    trans(:, 1) = -(transport%parameters(is) - transport%parameters(inb_scal_array + 3)*s(:, is))*s(:, is_ref)
+                    flux(:, 1) = -transport%parameters(is)*(1.0_wp - s(:, is))*s_active
                 end if
 
             case default        ! energy variables
-                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, trans(:, 1))
+                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, flux(:, 1))
                 if (exponent > 0.0_wp) then
-                    trans(:, 1) = -transport%parameters(is)*trans(:, 1)*(s(:, is_ref)**dummy)
+                    flux(:, 1) = -transport%parameters(is)*flux(:, 1)*(s_active**dummy)
                 else
-                    trans(:, 1) = -transport%parameters(is)*trans(:, 1)*s(:, is_ref)
+                    flux(:, 1) = -transport%parameters(is)*flux(:, 1)*s_active
                 end if
 
             end select
