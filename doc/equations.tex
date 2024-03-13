@@ -126,7 +126,9 @@ is defined as \texttt{GRATIO} in the code and it is defined as $[(\gamma_0-1)/\g
 
 \subsubsection{Dimensional Formulation}
 
-In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. %Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities. 
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the block \texttt{[Thermodynamics]} of the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. %Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities. 
+
+The input parameters \texttt{Reynolds}, \texttt{Froude} and \texttt{Rossby} are then substituted by \texttt{Viscosity}, \texttt{Gravity} and \texttt{Coriolis}.
 
 \subsubsection{On the difference between the species and the prognostic scalars}
 

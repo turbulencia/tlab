@@ -328,9 +328,9 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Parameters]')
     call TLAB_WRITE_ASCII(bakfile, '#Reynolds=<value>')
+    call TLAB_WRITE_ASCII(bakfile, '#Schmidt=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Froude=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Rossby=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Schmidt=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Damkohler=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Stokes=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Settling=<value>')
@@ -338,6 +338,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Gama=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Prandtl=<value>')
 
+    ! Molecular transport 
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Reynolds', '-1.0', reynolds)
     if ( reynolds <= 0.0 ) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Viscosity', '-1.0', dummy)
@@ -349,20 +350,25 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
     end if
 
+    call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
+    schmidt(:) = 0.0_wp; inb_scal = MAX_NSP
+    call LIST_REAL(sRes, inb_scal, schmidt)
+
+    ! Gravity
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Froude', '-1.0', froude)
     if ( froude <= 0.0 ) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gravity', '1.0', dummy)   ! default value
         froude = 1.0_wp/dummy
     end if
 
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Rossby', '1.0', rossby)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Stokes', '0.0', stokes)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
+    ! Coriolis
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Rossby', '-1.0', rossby)
+    if ( rossby <= 0.0 ) then
+        call SCANINIREAL(bakfile, inifile, 'Parameters', 'Coriolis', '1.0', dummy)   ! default value
+        rossby = 1.0_wp/dummy
+    end if
 
-    call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
-    schmidt(:) = 0.0_wp; inb_scal = MAX_NSP
-    call LIST_REAL(sRes, inb_scal, schmidt)
-
+    ! Chemistry
     lstr = '0.0'
     do is = 2, inb_scal
         lstr = trim(adjustl(lstr))//',0.0'
@@ -379,7 +385,11 @@ subroutine IO_READ_GLOBAL(inifile)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
-    
+
+    ! Particle-laden flows
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Stokes', '0.0', stokes)
+    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
+
 ! ###################################################################
 ! Buoyancy
 ! ###################################################################
