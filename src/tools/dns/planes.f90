@@ -59,7 +59,6 @@ contains
         ! -------------------------------------------------------------------
         call TLAB_WRITE_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
 
-        var%type = PLANES_NONE   ! default
         var%n = 0
 
         call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
@@ -81,6 +80,8 @@ contains
         if (trim(adjustl(sRes)) /= 'void') then
             var%n = MAX_SAVEPLANES; call LIST_REAL(sRes, var%n, var%values)
         end if
+
+        if (var%n == 0) var%type = PLANES_NONE ! default
 
         return
     end subroutine PLANES_READBLOCK
@@ -117,15 +118,15 @@ contains
         end if
 
         if (iplanes%size > imax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is is insufficient.')
+            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is insufficient.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (jplanes%size > jmax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is is insufficient.')
+            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is insufficient.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (kplanes%size > kmax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is is insufficient.')
+            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is insufficient.')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
         if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then
@@ -135,6 +136,26 @@ contains
                     call TLAB_STOP(DNS_ERROR_ALLOC)
                 end if
             end if
+        end if
+
+        ! Check [ijk]planes%nodes
+        if (iplanes%type /= PLANES_NONE) then 
+            if (any(iplanes%nodes(:iplanes%n) < 1) .or. any(iplanes%nodes(:iplanes%n) > g(1)%size)) then
+                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Iplane nodes deceed/exeed grid in x-direction.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            end if 
+        end if
+        if (jplanes%type /= PLANES_NONE) then 
+            if (any(jplanes%nodes(:jplanes%n) < 1) .or. any(jplanes%nodes(:jplanes%n) > g(2)%size)) then
+                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Jplane nodes deceed/exeed grid in y-direction.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            end if 
+        end if
+        if (kplanes%type /= PLANES_NONE) then 
+            if (any(kplanes%nodes(:kplanes%n) < 1) .or. any(kplanes%nodes(:kplanes%n) > g(3)%size)) then
+                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Kplane nodes deceed/exeed grid in z-direction.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            end if 
         end if
 
         ! Pointers
