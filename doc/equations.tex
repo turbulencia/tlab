@@ -308,18 +308,39 @@ The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0
 
 \subsubsection{Radiation}
 
-Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt operators/opr\_radiation}), which is represented by radiation functions of the form
-\begin{equation}
-    \omega_\mathrm{R}=\alpha_0 \zeta_{\gamma}\exp\left[
-    -\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
-\end{equation}
-The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\}$ need to be provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles, instead of instantaneous values, and non-linear mapping functions can be specified.
+Formally, radiation heating or cooling can be considered in the equations above as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,\omega_\mathrm{R}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$ is normalized by the corresponding (dimensional) heat parameter $Q$. 
 
-For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
+Practically, the implementation is completely embedded in the routine {\tt operators/opr\_radiation} and uses data provided in the block \texttt{[Radiation]} (i.e., assumes $\mathrm{\bf Da}_\mathrm{R}=1$ and all coefficients enter in the definition of $\omega_\mathrm{R}$). One formulation is a one-dimensional bulk model, where
 \begin{equation}
-    \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
+    \omega_\mathrm{R}=\zeta_{\gamma}\left(
+        \alpha_0 \exp\left[-\alpha_1^{-1}\int_z^{z_\infty}\zeta_{\gamma}(z')\,\mathrm{d}z'\right]
+        + \alpha_2 \exp\left[-\alpha_1^{-1}\int_0^z\zeta_{\gamma}(z')\,\mathrm{d}z'\right] 
+    \right)\;.
 \end{equation}
-The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
+The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\,,\alpha_2\}$ need to be provided. Default values are $\beta=1$, $\gamma=${\tt inb\_scal\_array} and $\alpha_2=0$. The scalar field $ \zeta_{\gamma}$ can be an average profile, instead of instantaneous values, and non-linear mapping functions can be specified.
+
+For clarity, this corresponds to
+\begin{equation}
+    \omega_\mathrm{R}=-\partial_zF\;,\qquad
+    F = F_{c,0}\exp\left[-\kappa\int_z^{z_\infty}\rho q_\mathrm{l}\,\mathrm{d}z'\right]
+    + F_{c,1}\exp\left[-\kappa\int_0^z\rho q_\mathrm{l}\,\mathrm{d}z'\right]
+\end{equation}
+with
+\begin{equation}
+    \alpha_0=-F_{c,0} \kappa\;,\qquad \alpha_1=\kappa^{-1}\;,\qquad \alpha_2=F_{c,1} \kappa\;,\qquad \zeta_{\gamma}=\rho q_\mathrm{l}\;,
+\end{equation}
+where $\rho q_\mathrm{l}$ is the liquid water content. The flux is the sum $F=F_0+F_1$ of the solutions to the linear problems
+\begin{subequations}
+    \begin{align}
+        &\partial_z F_0=\phantom{-}\kappa \rho q_\mathrm{l} F_0\;,\qquad F_0|_{z=z_\infty}=F_{c,0}\;,\\
+        &\partial_z F_1=-\kappa \rho q_\mathrm{l} F_1\;,\qquad F_1|_{z=0}=F_{c,1}\;.
+    \end{align}
+\end{subequations}
+% For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
+% \begin{equation}
+%     \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
+% \end{equation}
+% The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
 
 \subsubsection{Transport}
 
