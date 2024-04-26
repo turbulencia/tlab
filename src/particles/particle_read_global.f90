@@ -49,6 +49,10 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
     isize_part = 0
 
+    part_bcs = PART_BCS_NONE
+    if ( part%type == PART_TYPE_INERTIA ) part_bcs = PART_BCS_SPECULAR    ! probably to be read from tlab.ini
+    if ( part%type == PART_TYPE_TINIA_1 ) part_bcs = PART_BCS_SPECULAR
+
     if (part%type /= PART_TYPE_NONE) then
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS

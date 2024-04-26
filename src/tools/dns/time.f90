@@ -58,9 +58,9 @@ contains
         case (RKM_EXP3)             ! Runge-Kutta explicit 3th order from Williamson 1980
             rkm_endstep = 3
 
-            kdt(1:3)   = [ 1.0_wp/3.0_wp,  15.0_wp/16.0_wp, 8.0_wp/15.0_wp ]
-            ktime(1:3) = [ 0.0_wp,         1.0_wp/3.0_wp,   3.0_wp/4.0_wp ]
-            kco(1:2)   = [-5.0_wp/9.0_wp, -153.0_wp/128.0_wp ]
+            kdt(1:3) = [1.0_wp/3.0_wp, 15.0_wp/16.0_wp, 8.0_wp/15.0_wp]
+            ktime(1:3) = [0.0_wp, 1.0_wp/3.0_wp, 3.0_wp/4.0_wp]
+            kco(1:2) = [-5.0_wp/9.0_wp, -153.0_wp/128.0_wp]
 
         case (RKM_EXP4)             ! Runge-Kutta explicit 4th order 5 stages from Carpenter & Kennedy 1994
             rkm_endstep = 5
@@ -77,19 +77,19 @@ contains
             ktime(4) = 2006345519317.0_wp/3224310063776.0_wp !C_2006345519317_R/C_3224310063776_R
             ktime(5) = 2802321613138.0_wp/2924317926251.0_wp !C_2802321613138_R/C_2924317926251_R
 
-            kco(1) = - 567301805773.0_wp/1357537059087.0_wp     !C_567301805773_R/C_1357537059087_R
-            kco(2) = - 2404267990393.0_wp/2016746695238.0_wp    !C_2404267990393_R/C_2016746695238_R
-            kco(3) = - 3550918686646.0_wp/2091501179385.0_wp    !C_3550918686646_R/C_2091501179385_R
-            kco(4) = - 1275806237668.0_wp/842570457699.0_wp     !C_1275806237668_R/C_842570457699_R
+            kco(1) = -567301805773.0_wp/1357537059087.0_wp     !C_567301805773_R/C_1357537059087_R
+            kco(2) = -2404267990393.0_wp/2016746695238.0_wp    !C_2404267990393_R/C_2016746695238_R
+            kco(3) = -3550918686646.0_wp/2091501179385.0_wp    !C_3550918686646_R/C_2091501179385_R
+            kco(4) = -1275806237668.0_wp/842570457699.0_wp     !C_1275806237668_R/C_842570457699_R
 
         case (RKM_IMP3_DIFFUSION)   ! Runge-Kutta semi-implicit 3th order from Spalart, Moser & Rogers (1991)
             rkm_endstep = 3
 
-            kdt(1:3) = [8.0_wp/15.0_wp,     5.0_wp/12.0_wp,   3.0_wp/4.0_wp]
+            kdt(1:3) = [8.0_wp/15.0_wp, 5.0_wp/12.0_wp, 3.0_wp/4.0_wp]
 
-            kim(1:3) = [111.0_wp/256.0_wp,  1.0_wp/2.0_wp,    2.0_wp/9.0_wp]
-            kex(1:3) = [145.0_wp/256.0_wp, -9.0_wp/50.0_wp,   2.0_wp/9.0_wp]
-            kco(1:3) = [0.0_wp,            -17.0_wp/25.0_wp, -5.0_wp/9.0_wp]
+            kim(1:3) = [111.0_wp/256.0_wp, 1.0_wp/2.0_wp, 2.0_wp/9.0_wp]
+            kex(1:3) = [145.0_wp/256.0_wp, -9.0_wp/50.0_wp, 2.0_wp/9.0_wp]
+            kco(1:3) = [0.0_wp, -17.0_wp/25.0_wp, -5.0_wp/9.0_wp]
             ! TO DO - calculate ktime from coefficients  ktime
             ktime(1:3) = [0.0_wp, 0.0_wp, 0.0_wp]
 
@@ -436,7 +436,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                          p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -576,7 +576,7 @@ contains
 #ifdef USE_PSFFT
                 call RHS_GLOBAL_INCOMPRESSIBLE_NBC(q(1, 1), q(1, 2), q(1, 3), s(1, 1), &
                                                    txc(1, 1), txc(1, 2), &
-                                          txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), &
+                                                   txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), &
                                                    txc(1, 11), txc(1, 12), txc(1, 13), txc(1, 14), &
                                                    hq(1, 1), hq(1, 2), hq(1, 3), hs(1, 1))
 #else
@@ -890,6 +890,7 @@ contains
 #else
         real(wp) x_right, z_right
 #endif
+        real(wp) y_right
 
         !#####################################################################
         call RHS_PART_1()
@@ -970,9 +971,34 @@ contains
                 l_q(i, 3) = l_q(i, 3) + g(3)%scale
 
             end if
+
         end do
 
 #endif
+
+        y_right = g(2)%nodes(1) + g(2)%scale
+        select case (part_bcs)
+        case (PART_BCS_SPECULAR)
+            do i = 1, l_g%np
+                if (l_q(i, 2) > y_right) then
+                    l_q(i, 2) = 2*y_right - l_q(i, 2)
+                    l_q(i, 5) = -l_q(i, 5)
+                elseif (l_q(i, 2) < g(2)%nodes(1)) then
+                    l_q(i, 2) = 2*g(2)%nodes(1) - l_q(i, 2)
+                    l_q(i, 5) = -l_q(i, 5)
+                end if
+            end do
+
+        case (PART_BCS_STICK)
+            do i = 1, l_g%np
+                if (l_q(i, 2) > y_right) then
+                    l_q(i, 2) = y_right
+                elseif (l_q(i, 2) < g(2)%nodes(1)) then
+                    l_q(i, 2) = g(2)%nodes(1)
+                end if
+            end do
+
+        end select
 
         !#######################################################################
         ! Recalculating closest node below in Y direction
