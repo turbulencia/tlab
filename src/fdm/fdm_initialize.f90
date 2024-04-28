@@ -235,26 +235,28 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%rhsi => x(:, ig:)
     ig = ig + 5*2
 
-    bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
-    do ib = 1, 2
-        ip = (ib - 1)*g%nb_diag_1(2)
+    if (.not. g%periodic) then
+        bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+        do ib = 1, 2
+            ip = (ib - 1)*g%nb_diag_1(2)
 
-        call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
-                                 g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
-                                 g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
-        ! LU decomposition
-        select case (g%nb_diag_1(2))
-        case (3)
-            call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
-        case (5)
-            call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                          g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
-        case (7)
-            call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                          g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
-        end select
+            call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
+                                    g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
+                                    g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
+            ! LU decomposition
+            select case (g%nb_diag_1(2))
+            case (3)
+                call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
+            case (5)
+                call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                            g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
+            case (7)
+                call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                            g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
+            end select
 
-    end do
+        end do
+    end if
 
 ! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS
