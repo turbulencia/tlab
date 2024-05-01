@@ -317,7 +317,7 @@ Practically, the implementation is completely embedded in the routine {\tt opera
         + \alpha_2 \exp\left[-\alpha_1^{-1}\int_0^z\zeta_{\gamma}(z')\,\mathrm{d}z'\right] 
     \right)\;.
 \end{equation}
-The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\,,\alpha_2\}$ need to be provided. Default values are $\beta=1$, $\gamma=${\tt inb\_scal\_array} and $\alpha_2=0$. The scalar field $ \zeta_{\gamma}$ can be an average profile, instead of instantaneous values, and non-linear mapping functions can be specified.
+The scalar indices $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\,,\alpha_2\}$ need to be provided. Default values are $\beta=1$, $\gamma=${\tt inb\_scal\_array} and $\alpha_2=0$. The scalar field $ \zeta_{\gamma}$ can be an average profile, instead of instantaneous values, and non-linear mapping functions can be specified.
 
 For clarity, this corresponds to
 \begin{equation}
@@ -329,11 +329,11 @@ with
 \begin{equation}
     \alpha_0=-F_{c,0} \kappa\;,\qquad \alpha_1=\kappa^{-1}\;,\qquad \alpha_2=F_{c,1} \kappa\;,\qquad \zeta_{\gamma}=\rho q_\mathrm{l}\;,
 \end{equation}
-where $\rho q_\mathrm{l}$ is the liquid water content. The flux is the sum $F=F_0+F_1$ of the solutions to the linear problems
+where $\rho q_\mathrm{l}$ is the liquid water content. The flux is the sum $F=F_\uparrow +F_\downarrow$ of the solutions to the linear problems
 \begin{subequations}
     \begin{align}
-        &\partial_z F_0=\phantom{-}\kappa \rho q_\mathrm{l} F_0\;,\qquad F_0|_{z=z_\infty}=F_{c,0}\;,\\
-        &\partial_z F_1=-\kappa \rho q_\mathrm{l} F_1\;,\qquad F_1|_{z=0}=F_{c,1}\;.
+        &\partial_z F_\downarrow=\phantom{-}\kappa \rho q_\mathrm{l} F_\downarrow\;,\qquad F_\downarrow|_{z=z_\infty}=F_{c,0}\;,\\
+        &\partial_z F_\uparrow=-\kappa \rho q_\mathrm{l} F_\uparrow\;,\qquad F_\uparrow|_{z=0}=F_{c,1}\;.
     \end{align}
 \end{subequations}
 % For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
