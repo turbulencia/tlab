@@ -18,6 +18,7 @@ program AVERAGES
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
+    use RADIATION_M
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -94,6 +95,7 @@ program AVERAGES
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
+    call RADIATION_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------

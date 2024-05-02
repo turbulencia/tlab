@@ -30,7 +30,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #endif
     use TLAB_PROCS
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
-    ! use FI_RADIATION
+    ! use RADIATION_M
     use FI_GRADIENT_EQN
     use OPR_PARTIAL
 
@@ -486,9 +486,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, radiation%scalar(is)), tmp2)
             call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1)
             call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx)
-            ! call FI_RADIATION_X(radiation, imax, jmax, kmax, g(2), s, tmp1, tmp2, dsdx)
+            ! call RADIATION_X(radiation, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdx)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
-            tmp2 = 0.0_wp
+            tmp2 = 0.0_wp!; tmp3  = 0.0_wp
 
         else
             call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), tmp1)

@@ -185,6 +185,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    ! to be removed
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)
     if (trim(adjustl(sRes)) == 'none') then; radiation%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; radiation%type = EQNS_RAD_BULK1D_GLOBAL
@@ -486,6 +487,7 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Radiation
 ! ###################################################################
+    ! call RADIATION_READBLOCK(bakfile, inifile, 'Radiation', radiation)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Radiation]')
     call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')

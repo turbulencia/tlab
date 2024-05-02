@@ -1,10 +1,14 @@
 #include "dns_const.h"
+#include "dns_error.h"
 
-module FI_RADIATION
-    use TLAB_CONSTANTS, only: wp, wi, BCS_MAX, BCS_MIN
-    use TLAB_VARS, only: imode_eqns, inb_scal_array
+module RADIATION_M
+    use TLAB_CONSTANTS, only: wp, wi, BCS_MAX, BCS_MIN, efile, MAX_PROF
     use TLAB_TYPES, only: term_dt, grid_dt
+    use TLAB_VARS, only: imode_eqns, inb_scal_array
+    use TLAB_VARS, only: radiation
     use TLAB_ARRAYS, only: wrk3d
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use THERMO_VARS, only: imixture
     use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES
     implicit none
@@ -15,21 +19,80 @@ module FI_RADIATION
 
     real(wp) :: sigma = 5.67037442e-8_wp ! W /m^2 /K
 
-    public :: FI_RADIATION_INITIALIZE
-    public :: FI_RADIATION_X
+    public :: RADIATION_INITIALIZE
+    public :: RADIATION_X
 
 contains
+    ! ###################################################################
+    ! ###################################################################
+    subroutine RADIATION_READBLOCK(bakfile, inifile, block, var)
+        character(len=*), intent(in) :: bakfile, inifile, block
+        type(term_dt), intent(out) :: var
+
+        character(len=512) sRes
+        integer(wi) idummy
+
+        ! -------------------------------------------------------------------
+        call TLAB_WRITE_ASCII(bakfile, '#')
+        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
+
+        if (var%type == EQNS_NONE) then        ! backwards compatibility, to be removed
+            call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+            if (trim(adjustl(sRes)) == 'none') then; var%type = TYPE_NONE
+            else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; var%type = TYPE_LW_BULK1D_LIQUID
+            else if (trim(adjustl(sRes)) == 'irbulk1d') then; var%type = TYPE_LW_BULK1D
+            else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; var%type = EQNS_RAD_BULK1D_LOCAL
+            else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; var%type = EQNS_RAD_BULK1D_GLOBAL
+            else
+                call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Radiation option.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
+            end if
+        end if
+
+        var%active = .false.
+        if (var%type /= EQNS_NONE) then
+            call SCANINIINT(bakfile, inifile, block, 'Scalar', '1', idummy)
+            var%active(idummy) = .true.
+
+            var%parameters(:) = 0.0_wp
+            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
+            idummy = MAX_PROF
+            call LIST_REAL(sRes, idummy, var%parameters)
+
+        end if
+
+        return
+    end subroutine RADIATION_READBLOCK
+
 !########################################################################
 !########################################################################
-    subroutine FI_RADIATION_INITIALIZE()
+    subroutine RADIATION_INITIALIZE()
+
+        ! -------------------------------------------------------------------
+        ! By default, transport and radiation are caused by last scalar
+        radiation%scalar = inb_scal_array
+
+        if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            if (radiation%type /= EQNS_NONE) then
+                radiation%active(inb_scal_array) = .true. ! liquid
+                radiation%active(inb_scal_array + 1) = .true. ! buoyancy
+            end if
+
+        end if
+
+        ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
         return
-    end subroutine FI_RADIATION_INITIALIZE
+    end subroutine RADIATION_INITIALIZE
 
 !########################################################################
 !########################################################################
-    subroutine LWBULK1_LIQUID(radiation, nx, ny, nz, g, a, source, flux)
+    subroutine IR_BULK1_LIQUID(radiation, nx, ny, nz, g, a, source, flux)
         type(term_dt), intent(in) :: radiation
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -135,46 +198,55 @@ contains
         nullify (p_org, p_tau, p_source, p_flux)
 
         return
-    end subroutine LWBULK1_LIQUID
+    end subroutine IR_BULK1_LIQUID
 
 !########################################################################
 !########################################################################
-    subroutine FI_RADIATION_X(radiation, nx, ny, nz, g, s, source, a, flux)
+    subroutine RADIATION_X(radiation, nx, ny, nz, g, s, source, a, b, flux)
         use THERMO_ANELASTIC
         type(term_dt), intent(in) :: radiation
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
         real(wp), intent(out) :: source(nx*ny*nz)
-        real(wp), intent(inout) :: a(nx*ny*nz)
+        real(wp), intent(inout) :: a(nx*ny*nz)      ! space for bulk absorption coefficient
+        real(wp), intent(inout) :: b(nx*ny*nz)      ! space for emission function
         real(wp), intent(out), optional :: flux(nx*ny*nz)
 
         ! -----------------------------------------------------------------------
         real(wp) delta_inv
 
         !########################################################################
-        ! bulk absorption coefficient
-        delta_inv = 1.0_wp/radiation%parameters(2)
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, s(:, radiation%scalar(1)), a)
-            a = delta_inv*a
-        else
-            a = delta_inv*s(:, radiation%scalar(1))
-        end if
-
         select case (radiation%type)
         case (TYPE_LW_BULK1D_LIQUID, EQNS_RAD_BULK1D_LOCAL)
-            if (present(flux)) then
-                call LWBULK1_LIQUID(radiation, nx, ny, nz, g, a, source, flux)
+            ! bulk absorption coefficient
+            delta_inv = 1.0_wp/radiation%parameters(2)
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, s(:, radiation%scalar(1)), a)
+                a = delta_inv*a
             else
-                call LWBULK1_LIQUID(radiation, nx, ny, nz, g, a, source)
+                a = delta_inv*s(:, radiation%scalar(1))
+            end if
+
+            if (present(flux)) then
+                call IR_BULK1_LIQUID(radiation, nx, ny, nz, g, a, source, flux)
+            else
+                call IR_BULK1_LIQUID(radiation, nx, ny, nz, g, a, source)
             end if
 
         case (TYPE_LW_BULK1D)
-            ! to be done
+            ! bulk absorption coefficient
+
+            ! emission function
+
+            ! if (present(flux)) then
+            !     call IR_BULK1(radiation, nx, ny, nz, g, a, b, source, flux)
+            ! else
+            !     call IR_BULK1(radiation, nx, ny, nz, g, a, b, source)
+            ! end if
 
         end select
 
-    end subroutine FI_RADIATION_X
+    end subroutine RADIATION_X
 
 end module

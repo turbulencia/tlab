@@ -27,7 +27,7 @@
 subroutine THERMO_INITIALIZE()
     use TLAB_CONSTANTS, only: efile, lfile, wi, wp
     use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns, mach
-    use TLAB_VARS, only: damkohler, transport, radiation
+    use TLAB_VARS, only: damkohler, transport
     use TLAB_PROCS
     use THERMO_VARS
     implicit none
@@ -185,15 +185,6 @@ subroutine THERMO_INITIALIZE()
 ! By default, transport and radiation are caused by last scalar
 ! The variable inb_scal_array is only available at the end of this routine
     transport%scalar = inb_scal_array
-    radiation%scalar = inb_scal_array
-
-    if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-        if (radiation%type /= EQNS_NONE) then
-            radiation%active(inb_scal_array) = .true. ! liquid
-            radiation%active(inb_scal_array + 1) = .true. ! buoyancy
-        end if
-
-    end if
 
 ! ###################################################################
 ! Caloric equations

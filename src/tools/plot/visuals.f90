@@ -25,6 +25,7 @@ program VISUALS
     use THERMO_VARS, only: NSP, THERMO_SPNAME
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
+    use RADIATION_M
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -93,6 +94,7 @@ program VISUALS
  
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
+    call RADIATION_INITIALIZE()
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------

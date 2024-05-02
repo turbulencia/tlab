@@ -16,6 +16,7 @@ program INISCAL
     use THERMO_VARS, only: imixture
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
+    use RADIATION_M
     use IO_FIELDS
     use SCAL_LOCAL
 
@@ -29,6 +30,7 @@ program INISCAL
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
+    call RADIATION_INITIALIZE()
     call SCAL_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
