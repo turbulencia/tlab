@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module RADIATION_M
-    use TLAB_CONSTANTS, only: wp, wi, BCS_MAX, BCS_MIN, efile, MAX_PROF
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PROF
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
     use TLAB_VARS, only: radiation
@@ -88,6 +88,7 @@ contains
         if (any([EQNS_RAD_BULK1D_LOCAL, EQNS_RAD_BULK1D_GLOBAL] == radiation%type)) then
             radiation%parameters(1) = radiation%parameters(1)*radiation%parameters(2)
             radiation%parameters(3) = radiation%parameters(3)*radiation%parameters(2)
+            radiation%parameters(2) = 1.0_wp/radiation%parameters(2)
         end if
 
         ! -------------------------------------------------------------------
@@ -220,18 +221,16 @@ contains
         real(wp), intent(out), optional :: flux(nx*ny*nz)
 
         ! -----------------------------------------------------------------------
-        real(wp) delta_inv
+        real(wp) kappa, kappal, kappav
 
         !########################################################################
         select case (radiation%type)
         case (TYPE_LW_BULK1D_LIQUID, EQNS_RAD_BULK1D_LOCAL)
             ! bulk absorption coefficient
-            delta_inv = 1.0_wp/radiation%parameters(2)
+            kappa = radiation%parameters(2)
+            a = kappa*s(:, radiation%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, s(:, radiation%scalar(1)), a)
-                a = delta_inv*a
-            else
-                a = delta_inv*s(:, radiation%scalar(1))
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
             end if
 
             if (present(flux)) then
@@ -241,9 +240,18 @@ contains
             end if
 
         case (TYPE_LW_BULK1D)
-            ! bulk absorption coefficient
+            ! bulk absorption coefficients and emission function
+            kappal = radiation%parameters(2)
+            kappav = radiation%parameters(3)
+            a = kappal*s(:, radiation%scalar(1)) + kappav*(s(:,2) - s(:, radiation%scalar(1)))
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
 
-            ! emission function
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
+            else
+                ! calculate temperature
+            end if
+            b = sigma*wrk3d**4./pi_wp
 
             ! if (present(flux)) then
             !     call IR_BULK1(radiation, nx, ny, nz, g, a, b, source, flux)

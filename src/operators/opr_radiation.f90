@@ -25,13 +25,13 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
 
 ! -----------------------------------------------------------------------
     integer(wi) j, ip, ip2, nxy, nxz
-    real(wp) delta_inv, f0, f1
+    real(wp) kappa, f0, f1
     real(wp), pointer :: p_org(:), p_dst(:)
 
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
 
-    delta_inv = 1.0_wp/radiation%parameters(2)
+    kappa = radiation%parameters(2)
 
 ! ###################################################################
     if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
@@ -81,13 +81,13 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
             ip2 = ip + nx*nz - 1
-            p_dst(ip:ip2) = p_org(ip:ip2)*delta_inv*( &
-                            EXP(p_dst(ip:ip2)*delta_inv)*f0 &
-                            + EXP((p_dst(1:nx*nz) - p_dst(ip:ip2))*delta_inv)*f1)
+            p_dst(ip:ip2) = p_org(ip:ip2)*kappa*( &
+                            EXP(p_dst(ip:ip2)*kappa)*f0 &
+                            + EXP((p_dst(1:nx*nz) - p_dst(ip:ip2))*kappa)*f1)
         end do
     else
         do j = 1, ny*nxz
-            p_dst(j) = p_org(j)*EXP(p_dst(j)*delta_inv)*f0
+            p_dst(j) = p_org(j)*EXP(p_dst(j)*kappa)*f0
         end do
     end if
 
@@ -132,13 +132,13 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
 
 ! -----------------------------------------------------------------------
     integer(wi) j, ip, ip2, nxy, nxz
-    real(wp) delta_inv, f0, f1
+    real(wp) kappa, f0, f1
     real(wp), dimension(:), pointer :: p_org, p_dst
 
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
 
-    delta_inv = 1.0_wp/radiation%parameters(2)
+    kappa = radiation%parameters(2)
 
 ! ###################################################################
     if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
@@ -188,12 +188,12 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
             ip2 = ip + nx*nz - 1
-            p_dst(ip:ip2) = EXP(p_dst(ip:ip2)*delta_inv)*f0 &
-                            - EXP((p_dst(1:nx*nz) - p_dst(ip:ip2))*delta_inv)*f1
+            p_dst(ip:ip2) = EXP(p_dst(ip:ip2)*kappa)*f0 &
+                            - EXP((p_dst(1:nx*nz) - p_dst(ip:ip2))*kappa)*f1
         end do
     else
         do j = 1, ny*nxz
-            p_dst(j) = EXP(p_dst(j)*delta_inv)*f0
+            p_dst(j) = EXP(p_dst(j)*kappa)*f0
         end do
     end if
 
