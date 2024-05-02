@@ -84,6 +84,12 @@ contains
 
         end if
 
+        ! backwards compatibility
+        if (any([EQNS_RAD_BULK1D_LOCAL, EQNS_RAD_BULK1D_GLOBAL] == radiation%type)) then
+            radiation%parameters(1) = radiation%parameters(1)*radiation%parameters(2)
+            radiation%parameters(3) = radiation%parameters(3)*radiation%parameters(2)
+        end if
+
         ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
@@ -151,8 +157,8 @@ contains
 
 ! ###################################################################
 ! Calculate heating rate
-        f0 = radiation%parameters(1)*radiation%parameters(2)
-        f1 = radiation%parameters(3)*radiation%parameters(2)
+        f0 = radiation%parameters(1)
+        f1 = radiation%parameters(3)
         if (abs(radiation%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
                 p_source(:, j) = p_org(:, j)*(p_tau(:, j)*f0 &                       ! downward flux
@@ -173,8 +179,8 @@ contains
 ! ###################################################################
 ! Calculate radiative flux, if necessary
         if (present(flux)) then
-            f0 = -radiation%parameters(1)*radiation%parameters(2)
-            f1 = radiation%parameters(3)*radiation%parameters(2)
+            f0 = -radiation%parameters(1)
+            f1 = radiation%parameters(3)
             if (abs(radiation%parameters(3)) > 0.0_wp) then
                 do j = ny, 1, -1
                     p_flux(:, j) = p_tau(:, j)*f0 &                       ! downward flux

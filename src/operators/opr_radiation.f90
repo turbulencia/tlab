@@ -81,7 +81,7 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
             ip2 = ip + nx*nz - 1
-            p_dst(ip:ip2) = p_org(ip:ip2)*( &
+            p_dst(ip:ip2) = p_org(ip:ip2)*delta_inv*( &
                             EXP(p_dst(ip:ip2)*delta_inv)*f0 &
                             + EXP((p_dst(1:nx*nz) - p_dst(ip:ip2))*delta_inv)*f1)
         end do
@@ -89,7 +89,6 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
         do j = 1, ny*nxz
             p_dst(j) = p_org(j)*EXP(p_dst(j)*delta_inv)*f0
         end do
-!  p_dst(1:ny*nxz) = radiation%parameters(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
     end if
 
 ! ###################################################################
@@ -183,9 +182,9 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     ! call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MIN)
 
 ! Calculate radiative flux
-    f0 = -radiation%parameters(1)*radiation%parameters(2)
+    f0 = -radiation%parameters(1)
     if (ABS(radiation%parameters(3)) > 0.0_wp) then
-        f1 = -radiation%parameters(3)*radiation%parameters(2)
+        f1 = -radiation%parameters(3)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
             ip2 = ip + nx*nz - 1
@@ -196,7 +195,6 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
         do j = 1, ny*nxz
             p_dst(j) = EXP(p_dst(j)*delta_inv)*f0
         end do
-!  p_dst(1:ny*nxz) = radiation%parameters(1) *p_org(1:ny*nxz) *DEXP( p_dst(1:ny*nxz) *delta_inv ) seg-fault; need ulimit -u unlimited
     end if
 
 ! ###################################################################
