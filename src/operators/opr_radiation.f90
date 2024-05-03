@@ -6,7 +6,7 @@
 !# using compact schemes to calculate the integral term.
 !#
 !########################################################################
-subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
+subroutine OPR_RADIATION(infrared, nx, ny, nz, g, s, r)
     use TLAB_CONSTANTS, only: wp, wi, BCS_MAX!, BCS_MIN
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_ARRAYS, only: wrk3d
@@ -15,7 +15,7 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
 
     implicit none
 
-    type(term_dt), intent(IN) :: radiation
+    type(term_dt), intent(IN) :: infrared
     integer(wi), intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
     real(wp), intent(IN) :: s(nx*ny*nz)         ! Radiatively active scalar
@@ -31,10 +31,10 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
 
-    kappa = radiation%parameters(2)
+    kappa = infrared%parameters(2)
 
 ! ###################################################################
-    if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
+    if (infrared%type == EQNS_RAD_BULK1D_GLOBAL) then
         nxz = 1
 
         if (nz == 1) then
@@ -48,7 +48,7 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
         call AVG1V2D_V(nx, ny, nz, 1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
 
 ! ###################################################################
-    else if (radiation%type == EQNS_RAD_BULK1D_LOCAL) then
+    else if (infrared%type == EQNS_RAD_BULK1D_LOCAL) then
         nxz = nx*nz
 
         if (nz == 1) then
@@ -75,9 +75,9 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
     ! call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MIN)
 
 ! Calculate radiative heating rate
-    f0 = radiation%parameters(1)
-    if (ABS(radiation%parameters(3)) > 0.0_wp) then
-        f1 = radiation%parameters(3)
+    f0 = infrared%parameters(1)
+    if (ABS(infrared%parameters(3)) > 0.0_wp) then
+        f1 = infrared%parameters(3)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
             ip2 = ip + nx*nz - 1
@@ -92,7 +92,7 @@ subroutine OPR_RADIATION(radiation, nx, ny, nz, g, s, r)
     end if
 
 ! ###################################################################
-    if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
+    if (infrared%type == EQNS_RAD_BULK1D_GLOBAL) then
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1; p_dst(ip:ip + nx*nz - 1) = p_dst(j)
         end do
@@ -113,7 +113,7 @@ end subroutine OPR_RADIATION
 
 !########################################################################
 !########################################################################
-subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
+subroutine OPR_RADIATION_FLUX(infrared, nx, ny, nz, g, s, r)
     use TLAB_CONSTANTS, only: wp, wi, BCS_MAX!, BCS_MIN
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_ARRAYS, only: wrk3d
@@ -122,7 +122,7 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
 
     implicit none
 
-    type(term_dt), intent(IN) :: radiation
+    type(term_dt), intent(IN) :: infrared
     integer(wi), intent(IN) :: nx, ny, nz
     type(grid_dt), intent(IN) :: g
     real(wp), dimension(nx*ny*nz), intent(IN) :: s          ! Radiatively active scalar
@@ -138,10 +138,10 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
 ! #######################################################################
     nxy = nx*ny ! For transposition to make y direction the last one
 
-    kappa = radiation%parameters(2)
+    kappa = infrared%parameters(2)
 
 ! ###################################################################
-    if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
+    if (infrared%type == EQNS_RAD_BULK1D_GLOBAL) then
         nxz = 1
 
         if (nz == 1) then
@@ -155,7 +155,7 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
         call AVG1V2D_V(nx, ny, nz, 1, s, p_org, p_dst) ! Calculate averaged scalar into p_org; p_dst is auxiliar
 
 ! ###################################################################
-    else if (radiation%type == EQNS_RAD_BULK1D_LOCAL) then
+    else if (infrared%type == EQNS_RAD_BULK1D_LOCAL) then
         nxz = nx*nz
 
         if (nz == 1) then
@@ -182,9 +182,9 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     ! call OPR_Integral1(nxz, g, p_org, p_dst, BCS_MIN)
 
 ! Calculate radiative flux
-    f0 = -radiation%parameters(1)
-    if (ABS(radiation%parameters(3)) > 0.0_wp) then
-        f1 = -radiation%parameters(3)
+    f0 = -infrared%parameters(1)
+    if (ABS(infrared%parameters(3)) > 0.0_wp) then
+        f1 = -infrared%parameters(3)
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1
             ip2 = ip + nx*nz - 1
@@ -198,7 +198,7 @@ subroutine OPR_RADIATION_FLUX(radiation, nx, ny, nz, g, s, r)
     end if
 
 ! ###################################################################
-    if (radiation%type == EQNS_RAD_BULK1D_GLOBAL) then
+    if (infrared%type == EQNS_RAD_BULK1D_GLOBAL) then
         do j = ny, 1, -1
             ip = nx*nz*(j - 1) + 1; p_dst(ip:ip + nx*nz - 1) = p_dst(j)
         end do

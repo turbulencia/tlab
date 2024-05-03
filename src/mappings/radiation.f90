@@ -1,11 +1,11 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-module RADIATION_M
+module Radiation
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PROF
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
-    use TLAB_VARS, only: radiation
+    use TLAB_VARS, only: infrared
     use TLAB_ARRAYS, only: wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use THERMO_VARS, only: imixture
@@ -19,8 +19,8 @@ module RADIATION_M
 
     real(wp) :: sigma = 5.67037442e-8_wp ! W /m^2 /K
 
-    public :: RADIATION_INITIALIZE
-    public :: RADIATION_X
+    public :: Radiation_Initialize
+    public :: Radiation_Infrared
 
 contains
     ! ###################################################################
@@ -70,37 +70,37 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine RADIATION_INITIALIZE()
+    subroutine Radiation_Initialize()
 
         ! -------------------------------------------------------------------
         ! By default, transport and radiation are caused by last scalar
-        radiation%scalar = inb_scal_array
+        infrared%scalar = inb_scal_array
 
         if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-            if (radiation%type /= EQNS_NONE) then
-                radiation%active(inb_scal_array) = .true. ! liquid
-                radiation%active(inb_scal_array + 1) = .true. ! buoyancy
+            if (infrared%type /= EQNS_NONE) then
+                infrared%active(inb_scal_array) = .true. ! liquid
+                infrared%active(inb_scal_array + 1) = .true. ! buoyancy
             end if
 
         end if
 
         ! backwards compatibility
-        if (any([EQNS_RAD_BULK1D_LOCAL, EQNS_RAD_BULK1D_GLOBAL] == radiation%type)) then
-            radiation%parameters(1) = radiation%parameters(1)*radiation%parameters(2)
-            radiation%parameters(3) = radiation%parameters(3)*radiation%parameters(2)
-            radiation%parameters(2) = 1.0_wp/radiation%parameters(2)
+        if (any([EQNS_RAD_BULK1D_LOCAL, EQNS_RAD_BULK1D_GLOBAL] == infrared%type)) then
+            infrared%parameters(1) = infrared%parameters(1)*infrared%parameters(2)
+            infrared%parameters(3) = infrared%parameters(3)*infrared%parameters(2)
+            infrared%parameters(2) = 1.0_wp/infrared%parameters(2)
         end if
 
         ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
         return
-    end subroutine RADIATION_INITIALIZE
+    end subroutine Radiation_Initialize
 
 !########################################################################
 !########################################################################
-    subroutine IR_BULK1_LIQUID(radiation, nx, ny, nz, g, a, source, flux)
-        type(term_dt), intent(in) :: radiation
+    subroutine IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a, source, flux)
+        type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: a(nx*nz, ny)                ! bulk absorption coefficent
@@ -158,9 +158,9 @@ contains
 
 ! ###################################################################
 ! Calculate heating rate
-        f0 = radiation%parameters(1)
-        f1 = radiation%parameters(3)
-        if (abs(radiation%parameters(3)) > 0.0_wp) then
+        f0 = infrared%parameters(1)
+        f1 = infrared%parameters(3)
+        if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
                 p_source(:, j) = p_org(:, j)*(p_tau(:, j)*f0 &                       ! downward flux
                                               + p_tau(:, 1)/p_tau(:, j)*f1)       ! upward flux
@@ -180,9 +180,9 @@ contains
 ! ###################################################################
 ! Calculate radiative flux, if necessary
         if (present(flux)) then
-            f0 = -radiation%parameters(1)
-            f1 = radiation%parameters(3)
-            if (abs(radiation%parameters(3)) > 0.0_wp) then
+            f0 = -infrared%parameters(1)
+            f1 = infrared%parameters(3)
+            if (abs(infrared%parameters(3)) > 0.0_wp) then
                 do j = ny, 1, -1
                     p_flux(:, j) = p_tau(:, j)*f0 &                       ! downward flux
                                    + p_tau(:, 1)/p_tau(:, j)*f1       ! upward flux
@@ -205,13 +205,13 @@ contains
         nullify (p_org, p_tau, p_source, p_flux)
 
         return
-    end subroutine IR_BULK1_LIQUID
+    end subroutine IR_Bulk1D_Liquid
 
 !########################################################################
 !########################################################################
-    subroutine RADIATION_X(radiation, nx, ny, nz, g, s, source, a, b, flux)
+    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, a, b, flux)
         use THERMO_ANELASTIC
-        type(term_dt), intent(in) :: radiation
+        type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
@@ -224,26 +224,26 @@ contains
         real(wp) kappa, kappal, kappav
 
         !########################################################################
-        select case (radiation%type)
+        select case (infrared%type)
         case (TYPE_LW_BULK1D_LIQUID, EQNS_RAD_BULK1D_LOCAL)
             ! bulk absorption coefficient
-            kappa = radiation%parameters(2)
-            a = kappa*s(:, radiation%scalar(1))
+            kappa = infrared%parameters(2)
+            a = kappa*s(:, infrared%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
             end if
 
             if (present(flux)) then
-                call IR_BULK1_LIQUID(radiation, nx, ny, nz, g, a, source, flux)
+                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a, source, flux)
             else
-                call IR_BULK1_LIQUID(radiation, nx, ny, nz, g, a, source)
+                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a, source)
             end if
 
         case (TYPE_LW_BULK1D)
             ! bulk absorption coefficients and emission function
-            kappal = radiation%parameters(2)
-            kappav = radiation%parameters(3)
-            a = kappal*s(:, radiation%scalar(1)) + kappav*(s(:,2) - s(:, radiation%scalar(1)))
+            kappal = infrared%parameters(2)
+            kappav = infrared%parameters(3)
+            a = kappal*s(:, infrared%scalar(1)) + kappav*(s(:,2) - s(:, infrared%scalar(1)))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
 
@@ -254,13 +254,13 @@ contains
             b = sigma*wrk3d**4./pi_wp
 
             ! if (present(flux)) then
-            !     call IR_BULK1(radiation, nx, ny, nz, g, a, b, source, flux)
+            !     call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, flux)
             ! else
-            !     call IR_BULK1(radiation, nx, ny, nz, g, a, b, source)
+            !     call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source)
             ! end if
 
         end select
 
-    end subroutine RADIATION_X
+    end subroutine Radiation_Infrared
 
 end module

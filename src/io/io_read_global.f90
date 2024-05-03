@@ -187,9 +187,9 @@ subroutine IO_READ_GLOBAL(inifile)
 
     ! to be removed
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; radiation%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; radiation%type = EQNS_RAD_BULK1D_GLOBAL
-    else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; radiation%type = EQNS_RAD_BULK1D_LOCAL
+    if (trim(adjustl(sRes)) == 'none') then; infrared%type = EQNS_NONE
+    else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; infrared%type = EQNS_RAD_BULK1D_GLOBAL
+    else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = EQNS_RAD_BULK1D_LOCAL
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermRadiation option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -493,15 +493,15 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-    radiation%active = .false.
-    if (radiation%type /= EQNS_NONE) then
+    infrared%active = .false.
+    if (infrared%type /= EQNS_NONE) then
         call SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
-        radiation%active(idummy) = .true.
+        infrared%active(idummy) = .true.
 
-        radiation%parameters(:) = 0.0_wp
+        infrared%parameters(:) = 0.0_wp
         call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
         idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, radiation%parameters)
+        call LIST_REAL(sRes, idummy, infrared%parameters)
 
     end if
 

@@ -125,7 +125,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
   use TLAB_CONSTANTS, only : efile, MAX_VARS, wi, wp
   use TLAB_VARS,      only : imax, g
   use TLAB_VARS,      only : imode_eqns, iadvection, inb_scal
-  use TLAB_VARS,      only : radiation, transport, chemistry, subsidence
+  use TLAB_VARS,      only : infrared, transport, chemistry, subsidence
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS
   
@@ -198,12 +198,12 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
     call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for combined rhs mode.')
     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
   end if
-  if ( ( radiation%type  /= EQNS_NONE) .or. &
+  if ( ( infrared%type  /= EQNS_NONE) .or. &
        ( transport%type  /= EQNS_NONE) .or. &
-       ( radiation%type  /= EQNS_NONE) .or. &
+       ( infrared%type  /= EQNS_NONE) .or. &
        ( chemistry%type  /= EQNS_NONE) .or. &
        ( subsidence%type /= EQNS_NONE)        ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM not implemented for radiation, transport, chemistry, subsidence.')
+    call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM not implemented for infrared, transport, chemistry, subsidence.')
     call TLAB_STOP(DNS_ERROR_UNDEVELOP)
   end if
   do is = 1,inb_scal

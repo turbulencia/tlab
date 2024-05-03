@@ -48,7 +48,7 @@ program SPECTRA
     use FI_SOURCES, only: FI_BUOYANCY
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
-    use RADIATION_M
+    use Radiation
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
@@ -120,7 +120,7 @@ program SPECTRA
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call RADIATION_INITIALIZE()
+    call Radiation_Initialize()
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)

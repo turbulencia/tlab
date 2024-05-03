@@ -25,7 +25,7 @@ program VISUALS
     use THERMO_VARS, only: NSP, THERMO_SPNAME
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
-    use RADIATION_M
+    use Radiation
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -94,7 +94,7 @@ program VISUALS
  
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call RADIATION_INITIALIZE()
+    call Radiation_Initialize()
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------
@@ -859,14 +859,14 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 16) then
                 do is = 1, inb_scal
 
-                    if (radiation%active(is)) then
+                    if (infrared%active(is)) then
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
                         if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                         call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, radiation%scalar(is)), txc(1, 2))
-                            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1))
+                         call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, infrared%scalar(is)), txc(1, 2))
+                            call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1))
                             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, txc(1, 1))
                         else
-                           call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(1)), txc(1, 1))
+                           call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(1)), txc(1, 1))
                         end if
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if

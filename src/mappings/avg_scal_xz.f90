@@ -30,7 +30,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #endif
     use TLAB_PROCS
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
-    ! use RADIATION_M
+    ! use Radiation
     use FI_GRADIENT_EQN
     use OPR_PARTIAL
 
@@ -99,7 +99,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #define Sbcs(j)   mean2d(j,ig(1)+8)
         sg(ng) = sg(ng) + 3
     end if
-    if (radiation%active(is)) then
+    if (infrared%active(is)) then
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             varname(ng) = trim(adjustl(varname(ng)))//' rQrad rQradC'
         else
@@ -481,18 +481,18 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     dsdx = 0.0_wp; dsdy = 0.0_wp; dsdz = 0.0_wp; tmp1 = 0.0_wp; tmp2 = 0.0_wp; tmp3 = 0.0_wp
 
-    if (radiation%active(is)) then ! Radiation in tmp1 and dsdx
+    if (infrared%active(is)) then ! Radiation in tmp1 and dsdx
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, radiation%scalar(is)), tmp2)
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), tmp2, dsdx)
-            ! call RADIATION_X(radiation, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdx)
+            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, infrared%scalar(is)), tmp2)
+            call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), tmp2, tmp1)
+            call OPR_RADIATION_FLUX(infrared, imax, jmax, kmax, g(2), tmp2, dsdx)
+            ! call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdx)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
             tmp2 = 0.0_wp!; tmp3  = 0.0_wp
 
         else
-            call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), tmp1)
-            call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), dsdx)
+            call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), tmp1)
+            call OPR_RADIATION_FLUX(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), dsdx)
         end if
     end if
 
@@ -531,17 +531,17 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             dummy = -diff*coefQ
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
 
-            if (transport%active(is) .or. radiation%active(is)) then ! preparing correction terms into dsdz
+            if (transport%active(is) .or. infrared%active(is)) then ! preparing correction terms into dsdz
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1)
                 dsdz = dsdz*tmp1
             end if
 
-            if (radiation%active(is)) then ! radiation source; needs dsdy
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), tmp1)
+            if (infrared%active(is)) then ! radiation source; needs dsdy
+                call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), tmp1)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 ! Correction term needs dsdz
-                call OPR_RADIATION_FLUX(radiation, imax, jmax, kmax, g(2), s(:, :, :, radiation%scalar(is)), dsdx)
+                call OPR_RADIATION_FLUX(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), dsdx)
                 dsdx = dsdx*dsdz*dummy
             else
                 tmp1 = 0.0_wp; dsdx = 0.0_wp
@@ -571,7 +571,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! -----------------------------------------------------------------------
     ! Calculating averages
     k = ig(1) + im
-    if (radiation%active(is)) then
+    if (infrared%active(is)) then
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
     end if

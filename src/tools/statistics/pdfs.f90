@@ -17,7 +17,7 @@ program PDFS
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
-    use RADIATION_M
+    use Radiation
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -84,7 +84,7 @@ program PDFS
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call RADIATION_INITIALIZE()
+    call Radiation_Initialize()
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

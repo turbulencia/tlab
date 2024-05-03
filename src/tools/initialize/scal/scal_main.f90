@@ -16,7 +16,7 @@ program INISCAL
     use THERMO_VARS, only: imixture
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
-    use RADIATION_M
+    use Radiation
     use IO_FIELDS
     use SCAL_LOCAL
 
@@ -30,7 +30,7 @@ program INISCAL
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call RADIATION_INITIALIZE()
+    call Radiation_Initialize()
     call SCAL_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
@@ -42,7 +42,7 @@ program INISCAL
         inb_wrk2d = max(inb_wrk2d, 6)
     end if
 
-    if (flag_s == PERT_LAYER_BROADBAND .or. radiation%type /= EQNS_NONE) then; inb_txc = 1
+    if (flag_s == PERT_LAYER_BROADBAND .or. infrared%type /= EQNS_NONE) then; inb_txc = 1
     else; inb_txc = 0
     end if
 
@@ -97,20 +97,20 @@ program INISCAL
 
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
-    if (radiation%type /= EQNS_NONE) then
+    if (infrared%type /= EQNS_NONE) then
 
-        if (abs(radiation%parameters(1)) > 0.0_wp) then
-            radiation%parameters(3) = radiation%parameters(3)/radiation%parameters(1)*norm_ini_radiation
+        if (abs(infrared%parameters(1)) > 0.0_wp) then
+            infrared%parameters(3) = infrared%parameters(3)/infrared%parameters(1)*norm_ini_radiation
         end if
-        radiation%parameters(1) = norm_ini_radiation
+        infrared%parameters(1) = norm_ini_radiation
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
             call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, inb_scal_array))
         end if
         do is = 1, inb_scal
-            if (radiation%active(is)) then
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), txc)
+            if (infrared%active(is)) then
+                call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(is)), txc)
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do

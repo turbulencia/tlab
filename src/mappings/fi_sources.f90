@@ -10,7 +10,7 @@ module FI_SOURCES
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
-    use TLAB_VARS, only: radiation, transport, chemistry, subsidence
+    use TLAB_VARS, only: infrared, transport, chemistry, subsidence
     use THERMO_ANELASTIC
     implicit none
     private
@@ -138,14 +138,14 @@ contains
             ! -----------------------------------------------------------------------
             ! Radiation
             ! -----------------------------------------------------------------------
-            if (radiation%active(is)) then
+            if (infrared%active(is)) then
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, radiation%scalar(is)), tmp2)
-                    call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), tmp2, tmp1)
+                    call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, infrared%scalar(is)), tmp2)
+                    call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), tmp2, tmp1)
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(1, is))
 
                 else
-                    call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), tmp1)
+                    call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(is)), tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
