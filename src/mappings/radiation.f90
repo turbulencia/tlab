@@ -94,6 +94,12 @@ contains
         ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
+        ! ! testing
+        ! infrared%type = TYPE_LW_BULK1D
+        ! infrared%parameters(4) = infrared%parameters(3)
+        ! infrared%parameters(3) = 0.0_wp
+        ! sigma = 0.0_wp
+        !
         return
     end subroutine Radiation_Initialize
 
@@ -103,7 +109,7 @@ contains
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: a(nx*nz, ny)                ! bulk absorption coefficent
+        real(wp), intent(inout) :: a(nx*nz, ny)                ! bulk absorption coefficent
         real(wp), intent(out) :: source(nx*nz, ny)
         real(wp), intent(out), optional :: flux(nx*nz, ny)
 
@@ -111,8 +117,8 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) f0, f1
-        real(wp), pointer :: p_org(:, :) => null()
+        real(wp) fd, fu
+        real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
@@ -122,12 +128,12 @@ contains
         nxz = nx*nz
 
         if (nz == 1) then
-            p_org => a
+            p_a => a
             p_tau(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
             p_source => source
             if (present(flux)) p_flux => flux
         else
-            p_org => source
+            p_a => source
             p_tau(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
             if (present(flux)) then
                 p_source => flux
@@ -137,20 +143,20 @@ contains
             end if
 
 #ifdef USE_ESSL
-            call DGETMO(a, nxy, nxy, nz, p_org, nz)
+            call DGETMO(a, nxy, nxy, nz, p_a, nz)
 #else
-            call DNS_TRANSPOSE(a, nxy, nz, nxy, p_org, nz)
+            call DNS_TRANSPOSE(a, nxy, nz, nxy, p_a, nz)
 #endif
         end if
 
 ! ###################################################################
         ! Calculate (negative) optical thickness; integrating from the top, to be checked
         p_tau(:, ny) = 0.0_wp   ! boundary condition
-        call OPR_Integral1(nxz, g, p_org, p_tau, BCS_MAX)
+        call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
         ! p_tau(:, 1) = 0.0_wp     ! boundary condition
         ! call OPR_Integral1(nxz, g, p_org, p_tau, BCS_MIN)
 
-! Calculate exp(-\tau(z, zmax)/\mu)
+! Calculate exp(-tau(z, zmax)/\mu)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
         end do
@@ -158,15 +164,15 @@ contains
 
 ! ###################################################################
 ! Calculate heating rate
-        f0 = infrared%parameters(1)
-        f1 = infrared%parameters(3)
+        fd = infrared%parameters(1)
+        fu = infrared%parameters(3)
         if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
-                p_source(:, j) = p_org(:, j)*(p_tau(:, j)*f0 &                       ! downward flux
-                                              + p_tau(:, 1)/p_tau(:, j)*f1)       ! upward flux
+                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*fd &                       ! downward flux
+                                            + p_tau(:, 1)/p_tau(:, j)*fu)       ! upward flux
             end do
         else
-            p_source = p_org*p_tau*f0
+            p_source = p_a*p_tau*fd
         end if
 
         if (nz > 1) then ! Put arrays back in the order in which they came in
@@ -180,15 +186,15 @@ contains
 ! ###################################################################
 ! Calculate radiative flux, if necessary
         if (present(flux)) then
-            f0 = -infrared%parameters(1)
-            f1 = infrared%parameters(3)
+            fd = -infrared%parameters(1)
+            fu = infrared%parameters(3)
             if (abs(infrared%parameters(3)) > 0.0_wp) then
                 do j = ny, 1, -1
-                    p_flux(:, j) = p_tau(:, j)*f0 &                       ! downward flux
-                                   + p_tau(:, 1)/p_tau(:, j)*f1       ! upward flux
+                    p_flux(:, j) = fd*p_tau(:, j) &                       ! downward flux
+                                   + fu*p_tau(:, 1)/p_tau(:, j)       ! upward flux
                 end do
             else
-                p_flux = p_tau*f0
+                p_flux = p_tau*fd
             end if
 
             if (nz > 1) then ! Put arrays back in the order in which they came in
@@ -202,14 +208,129 @@ contains
         end if
 
 ! ###################################################################
-        nullify (p_org, p_tau, p_source, p_flux)
+        nullify (p_a, p_tau, p_source, p_flux)
 
         return
     end subroutine IR_Bulk1D_Liquid
 
 !########################################################################
 !########################################################################
-    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, a, b, flux)
+    subroutine IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, tmp1, flux)
+        type(term_dt), intent(in) :: infrared
+        integer(wi), intent(in) :: nx, ny, nz
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(inout) :: a(nx*nz, ny)                ! bulk absorption coefficent
+        real(wp), intent(inout) :: b(nx*nz, ny)                ! emission function
+        real(wp), intent(out) :: source(nx*nz, ny)
+        real(wp), intent(inout) :: tmp1(nx*nz, ny)                ! emission function
+        real(wp), intent(out), optional :: flux(nx*nz, ny)
+
+        target a, b, source, flux, tmp1
+
+! -----------------------------------------------------------------------
+        integer(wi) j, nxy, nxz
+        real(wp) fd, fu, mu, dummy
+        real(wp), pointer :: p_a(:, :) => null()
+        real(wp), pointer :: p_tau(:, :) => null()
+        real(wp), pointer :: p_ab(:, :) => null()
+        real(wp), pointer :: p_source(:, :) => null()
+        real(wp), pointer :: p_flux(:, :) => null()
+        real(wp), pointer :: p_wrk(:, :) => null()
+
+! #######################################################################
+        nxy = nx*ny     ! For transposition to make y direction the last one
+        nxz = nx*nz
+
+        p_a => source
+        p_ab => a
+        p_tau(1:nx*nz, 1:ny) => b
+        p_wrk(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        p_flux(1:nx*nz, 1:ny) => tmp1
+
+#ifdef USE_ESSL
+        call DGETMO(a, nxy, nxy, nz, p_a, nz)
+        call DGETMO(b, nxy, nxy, nz, p_ab, nz)
+#else
+        call DNS_TRANSPOSE(a, nxy, nz, nxy, p_a, nz)
+        call DNS_TRANSPOSE(b, nxy, nz, nxy, p_ab, nz)
+#endif
+
+! ###################################################################
+        mu = 1.0_wp     ! spherical angle correction
+
+        dummy = 1.0_wp/mu
+        p_a = p_a*dummy
+        ! Calculate (negative) optical thickness; integrating from the top, to be checked
+        p_tau(:, ny) = 0.0_wp   ! boundary condition
+        call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
+        ! p_tau(:, 1) = 0.0_wp     ! boundary condition
+        ! call OPR_Integral1(nxz, g, p_org, p_tau, BCS_MIN)
+
+        ! Calculate exp(-tau(z, zmax)/\mu)
+        do j = ny, 1, -1
+            p_tau(:, j) = exp(p_tau(:, j))
+        end do
+        !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
+
+        ! product of absorption coefficient times emission function
+        dummy = 2.0_wp*pi_wp*mu
+        p_ab = p_a*p_ab*dummy
+
+! ###################################################################
+        ! downward flux
+        fd = -infrared%parameters(1)
+        do j = ny, 1, -1
+            p_wrk(:, j) = p_ab(:, j)*p_tau(:, 1)/p_tau(:, j)
+        end do
+        p_flux(:, ny) = 0.0_wp                                  ! boundary condition
+        call OPR_Integral1(nxz, g, p_wrk, p_flux, BCS_MAX)     ! recall this gives the negative of the integral
+        p_flux = fd*p_tau - p_flux
+
+        ! calculate upward flux at the surface
+        fu = infrared%parameters(4)                             ! to be updated
+
+        ! upward flux
+        if (present(flux)) then
+            p_wrk = p_ab*p_tau
+            flux(:, ny) = 0.0_wp                                  ! boundary condition
+            call OPR_Integral1(nxz, g, p_wrk, flux, BCS_MAX)     ! recall this gives the negative of the integral
+            do j = ny, 1, -1
+                p_flux(:, j) = fu*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
+                     + p_flux(:, j)
+            end do
+
+#ifdef USE_ESSL
+            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
+#else
+            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
+#endif
+        end if
+
+! ###################################################################
+! Calculate heating rate
+        fd = infrared%parameters(1)
+        fu = infrared%parameters(4)
+        do j = ny, 1, -1
+            p_source(:, j) = (fd*p_a(:, j) - p_ab(:, j))*p_tau(:, j) &
+                             + (fu*p_a(:, j) - p_ab(:, j))*p_tau(:, 1)/p_tau(:, j)
+        end do
+
+#ifdef USE_ESSL
+        call DGETMO(p_source, nz, nz, nxy, source, nxy)
+#else
+        call DNS_TRANSPOSE(p_source, nz, nxy, nz, source, nxy)
+#endif
+
+! ###################################################################
+        nullify (p_a, p_tau, p_source, p_flux)
+
+        return
+    end subroutine IR_Bulk1D
+
+!########################################################################
+!########################################################################
+    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, a, b, tmp1, flux)
         use THERMO_ANELASTIC
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
@@ -218,6 +339,7 @@ contains
         real(wp), intent(out) :: source(nx*ny*nz)
         real(wp), intent(inout) :: a(nx*ny*nz)      ! space for bulk absorption coefficient
         real(wp), intent(inout) :: b(nx*ny*nz)      ! space for emission function
+        real(wp), intent(inout) :: tmp1(nx*ny*nz)
         real(wp), intent(out), optional :: flux(nx*ny*nz)
 
         ! -----------------------------------------------------------------------
@@ -243,7 +365,7 @@ contains
             ! bulk absorption coefficients and emission function
             kappal = infrared%parameters(2)
             kappav = infrared%parameters(3)
-            a = kappal*s(:, infrared%scalar(1)) + kappav*(s(:,2) - s(:, infrared%scalar(1)))
+            a = kappal*s(:, infrared%scalar(1)) + kappav*(s(:, 2) - s(:, infrared%scalar(1)))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
 
@@ -253,11 +375,11 @@ contains
             end if
             b = sigma*wrk3d**4./pi_wp
 
-            ! if (present(flux)) then
-            !     call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, flux)
-            ! else
-            !     call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source)
-            ! end if
+            if (present(flux)) then
+                call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, tmp1, flux)
+            else
+                call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, tmp1)
+            end if
 
         end select
 
