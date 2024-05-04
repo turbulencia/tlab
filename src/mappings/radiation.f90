@@ -5,7 +5,7 @@ module Radiation
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PROF
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
-    use TLAB_VARS, only: infrared
+    ! use TLAB_VARS, only: infrared
     use TLAB_ARRAYS, only: wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use THERMO_VARS, only: imixture
@@ -71,6 +71,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine Radiation_Initialize()
+        use TLAB_VARS, only: infrared
 
         ! -------------------------------------------------------------------
         ! By default, transport and radiation are caused by last scalar
@@ -105,15 +106,14 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a, source, flux)
+    subroutine IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a_source, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: a(nx*nz, ny)                ! bulk absorption coefficent
-        real(wp), intent(out) :: source(nx*nz, ny)
+        real(wp), intent(inout) :: a_source(nx*nz, ny)      ! input as bulk absorption coefficent, output as source
         real(wp), intent(out), optional :: flux(nx*nz, ny)
 
-        target a, source, flux
+        target a_source, flux
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
@@ -128,24 +128,24 @@ contains
         nxz = nx*nz
 
         if (nz == 1) then
-            p_a => a
+            p_a => a_source
+            p_source => a_source
             p_tau(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-            p_source => source
             if (present(flux)) p_flux => flux
         else
-            p_a => source
-            p_tau(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+            p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+            p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
             if (present(flux)) then
-                p_source => flux
+                p_tau => flux
                 p_flux(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
             else
-                p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+                p_tau => a_source
             end if
 
 #ifdef USE_ESSL
-            call DGETMO(a, nxy, nxy, nz, p_a, nz)
+            call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
 #else
-            call DNS_TRANSPOSE(a, nxy, nz, nxy, p_a, nz)
+            call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
 #endif
         end if
 
@@ -177,9 +177,9 @@ contains
 
         if (nz > 1) then ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
-            call DGETMO(p_source, nz, nz, nxy, source, nxy)
+            call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
 #else
-            call DNS_TRANSPOSE(p_source, nz, nxy, nz, source, nxy)
+            call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
 #endif
         end if
 
@@ -297,7 +297,7 @@ contains
             call OPR_Integral1(nxz, g, p_wrk, flux, BCS_MAX)     ! recall this gives the negative of the integral
             do j = ny, 1, -1
                 p_flux(:, j) = fu*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
-                     + p_flux(:, j)
+                               + p_flux(:, j)
             end do
 
 #ifdef USE_ESSL
@@ -348,17 +348,17 @@ contains
         !########################################################################
         select case (infrared%type)
         case (TYPE_LW_BULK1D_LIQUID, EQNS_RAD_BULK1D_LOCAL)
-            ! bulk absorption coefficient
+            ! bulk absorption coefficient; we save it in array source to save memory
             kappa = infrared%parameters(2)
-            a = kappa*s(:, infrared%scalar(1))
+            source = kappa*s(:, infrared%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
             end if
 
             if (present(flux)) then
-                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a, source, flux)
+                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source, flux)
             else
-                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a, source)
+                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source)
             end if
 
         case (TYPE_LW_BULK1D)
