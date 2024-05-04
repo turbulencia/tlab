@@ -482,17 +482,6 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     dsdx = 0.0_wp; dsdy = 0.0_wp; dsdz = 0.0_wp; tmp1 = 0.0_wp; tmp2 = 0.0_wp; tmp3 = 0.0_wp
 
     if (infrared%active(is)) then ! Radiation in tmp1 and dsdx
-        ! if (imode_eqns == DNS_EQNS_ANELASTIC) then
-        !     call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, 1, 1, infrared%scalar(is)), tmp2)
-        !     call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), tmp2, tmp1)
-        !     call OPR_RADIATION_FLUX(infrared, imax, jmax, kmax, g(2), tmp2, dsdx)
-        !     call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
-        !     tmp2 = 0.0_wp
-
-        ! else
-        !     call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), tmp1)
-        !     call OPR_RADIATION_FLUX(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), dsdx)
-        ! end if
         call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
@@ -541,13 +530,10 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             end if
 
             if (infrared%active(is)) then ! radiation source; needs dsdy
-                ! call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), tmp1)
                 ! only valid for IR_Bulk1D_Liquid, where tmp2, tmp3, dsdy are not used
                 call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
-                ! Correction term needs dsdz
-                ! call OPR_RADIATION_FLUX(infrared, imax, jmax, kmax, g(2), s(:, :, :, infrared%scalar(is)), dsdx)
                 dsdx = dsdx*dsdz*dummy
             else
                 tmp1 = 0.0_wp; dsdx = 0.0_wp

@@ -42,9 +42,9 @@ program INISCAL
         inb_wrk2d = max(inb_wrk2d, 6)
     end if
 
-    if (flag_s == PERT_LAYER_BROADBAND .or. infrared%type /= EQNS_NONE) then; inb_txc = 1
-    else; inb_txc = 0
-    end if
+    inb_txc = 0
+    if (flag_s == PERT_LAYER_BROADBAND) inb_txc = max(inb_txc, 1)
+    if (infrared%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 
@@ -110,7 +110,7 @@ program INISCAL
         end if
         do is = 1, inb_scal
             if (infrared%active(is)) then
-                call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(is)), txc)
+                call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do

@@ -14,6 +14,7 @@ subroutine RHS_PART_1()
     use PARTICLE_ARRAYS
     use PARTICLE_INTERPOLATE
     use THERMO_VARS, only: thermo_param
+    use Radiation
     use OPR_PARTIAL
     use FI_GRADIENT_EQN
     ! use PARTICLE_TINIA
@@ -76,8 +77,8 @@ subroutine RHS_PART_1()
         call FI_GRADIENT(imax, jmax, kmax, txc(1, 2), txc(1, 3), txc(1, 4)) ! square of chi gradient in txc(1,3)
         txc(:, 3) = visc*txc(:, 3)
 
-        call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(1)), txc(1, 4))
-! Radiation *** ATTENTION RADIATION IS MINUS
+        call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, txc(:, 4), txc(:, 5), txc(:, 6), txc(:, 7))
+        ! Radiation *** ATTENTION RADIATION IS MINUS
         txc(:, 1) = txc(:, 1) + dummy2*txc(:, 4)
 
 ! Radiation SECOND FORMULATION *** ATTENTION RADIATION IS MINUS

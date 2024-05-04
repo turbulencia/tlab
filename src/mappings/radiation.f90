@@ -215,17 +215,17 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, tmp1, flux)
+! Here we do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
+    subroutine IR_Bulk1D(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: a(nx*nz, ny)                ! bulk absorption coefficent
-        real(wp), intent(inout) :: b(nx*nz, ny)                ! emission function
-        real(wp), intent(out) :: source(nx*nz, ny)
-        real(wp), intent(inout) :: tmp1(nx*nz, ny)                ! emission function
+        real(wp), intent(inout) :: a_source(nx*nz, ny)          ! input as bulk absorption coefficent, output as source
+        real(wp), intent(inout) :: b(nx*nz, ny)                 ! emission function
+        real(wp), intent(inout) :: tmp1(nx*nz, ny), tmp2(nx*nz, ny)
         real(wp), intent(out), optional :: flux(nx*nz, ny)
 
-        target a, b, source, flux, tmp1
+        target a_source, b, tmp1
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
@@ -235,29 +235,27 @@ contains
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_wrk(:, :) => null()
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
         nxz = nx*nz
 
-        p_a => source
-        p_ab => a
-        p_tau(1:nx*nz, 1:ny) => b
-        p_wrk(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
         p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_flux(1:nx*nz, 1:ny) => tmp1
+        p_ab => a_source
+        p_tau => b
+        p_flux => tmp1
 
 #ifdef USE_ESSL
-        call DGETMO(a, nxy, nxy, nz, p_a, nz)
+        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
         call DGETMO(b, nxy, nxy, nz, p_ab, nz)
 #else
-        call DNS_TRANSPOSE(a, nxy, nz, nxy, p_a, nz)
+        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
         call DNS_TRANSPOSE(b, nxy, nz, nxy, p_ab, nz)
 #endif
 
 ! ###################################################################
-        mu = 1.0_wp     ! spherical angle correction
+        mu = 1.0_wp     ! solid angle factor
 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
@@ -281,10 +279,10 @@ contains
         ! downward flux
         fd = -infrared%parameters(1)
         do j = ny, 1, -1
-            p_wrk(:, j) = p_ab(:, j)*p_tau(:, 1)/p_tau(:, j)
+            tmp2(:, j) = p_ab(:, j)*p_tau(:, 1)/p_tau(:, j)
         end do
         p_flux(:, ny) = 0.0_wp                                  ! boundary condition
-        call OPR_Integral1(nxz, g, p_wrk, p_flux, BCS_MAX)     ! recall this gives the negative of the integral
+        call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)     ! recall this gives the negative of the integral
         p_flux = fd*p_tau - p_flux
 
         ! calculate upward flux at the surface
@@ -292,9 +290,9 @@ contains
 
         ! upward flux
         if (present(flux)) then
-            p_wrk = p_ab*p_tau
+            tmp2 = p_ab*p_tau
             flux(:, ny) = 0.0_wp                                  ! boundary condition
-            call OPR_Integral1(nxz, g, p_wrk, flux, BCS_MAX)     ! recall this gives the negative of the integral
+            call OPR_Integral1(nxz, g, tmp2, flux, BCS_MAX)     ! recall this gives the negative of the integral
             do j = ny, 1, -1
                 p_flux(:, j) = fu*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
                                + p_flux(:, j)
@@ -317,29 +315,28 @@ contains
         end do
 
 #ifdef USE_ESSL
-        call DGETMO(p_source, nz, nz, nxy, source, nxy)
+        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
 #else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, source, nxy)
+        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
 #endif
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_source, p_flux)
+        nullify (p_a, p_tau, p_ab, p_source, p_flux)
 
         return
     end subroutine IR_Bulk1D
 
 !########################################################################
 !########################################################################
-    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, a, b, tmp1, flux)
+    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
         use THERMO_ANELASTIC
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
-        real(wp), intent(out) :: source(nx*ny*nz)
-        real(wp), intent(inout) :: a(nx*ny*nz)      ! space for bulk absorption coefficient
-        real(wp), intent(inout) :: b(nx*ny*nz)      ! space for emission function
-        real(wp), intent(inout) :: tmp1(nx*ny*nz)
+        real(wp), intent(out) :: source(nx*ny*nz)   ! also used for bulk absorption coefficient
+        real(wp), intent(inout) :: b(nx*ny*nz)      ! emission function
+        real(wp), intent(inout) :: tmp1(nx*ny*nz), tmp2(nx*ny*nz)
         real(wp), intent(out), optional :: flux(nx*ny*nz)
 
         ! -----------------------------------------------------------------------
@@ -362,23 +359,24 @@ contains
             end if
 
         case (TYPE_LW_BULK1D)
-            ! bulk absorption coefficients and emission function
+            ! bulk absorption coefficient; we save it in array source to save memory
             kappal = infrared%parameters(2)
             kappav = infrared%parameters(3)
-            a = kappal*s(:, infrared%scalar(1)) + kappav*(s(:, 2) - s(:, infrared%scalar(1)))
+            source = kappal*s(:, infrared%scalar(1)) + kappav*(s(:, 2) - s(:, infrared%scalar(1)))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, a)
-
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
+                ! calculate temperature to calculate emission function
                 call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
             else
-                ! calculate temperature
+                ! tbd
             end if
-            b = sigma*wrk3d**4./pi_wp
+            ! emission function
+            b = sigma*wrk3d**4.0_wp/pi_wp
 
             if (present(flux)) then
-                call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, tmp1, flux)
+                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
             else
-                call IR_Bulk1D(infrared, nx, ny, nz, g, a, b, source, tmp1)
+                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
             end if
 
         end select

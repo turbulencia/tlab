@@ -12,6 +12,7 @@ module FI_SOURCES
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
     use TLAB_VARS, only: infrared, transport, chemistry, subsidence
     use THERMO_ANELASTIC
+    use Radiation
     implicit none
     private
 
@@ -120,10 +121,10 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine FI_SOURCES_SCAL(s, hs, tmp1, tmp2, tmp3)
+    subroutine FI_SOURCES_SCAL(s, hs, tmp1, tmp2, tmp3, tmp4)
         real(wp), intent(in) :: s(isize_field, *)
         real(wp), intent(out) :: hs(isize_field, *)
-        real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field), tmp3(isize_field)
+        real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field), tmp3(isize_field), tmp4(isize_field)
 
         ! -----------------------------------------------------------------------
         integer flag_grad
@@ -139,14 +140,11 @@ contains
             ! Radiation
             ! -----------------------------------------------------------------------
             if (infrared%active(is)) then
+                call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
+                
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, infrared%scalar(is)), tmp2)
-                    call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), tmp2, tmp1)
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(1, is))
-
                 else
-                    call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(is)), tmp1)
-
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
                     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
@@ -155,7 +153,6 @@ contains
                         hs(ij, is) = hs(ij, is) + tmp1(ij)
                     end do
 !$omp end parallel
-
                 end if
 
             end if

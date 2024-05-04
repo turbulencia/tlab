@@ -214,7 +214,7 @@ program VISUALS
         if (opt_vec(iv) == iscal_offset + 12) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
         if (opt_vec(iv) == iscal_offset + 14) then; iread_flow = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 15) then; iread_flow = .true.; inb_txc = max(inb_txc, 6); end if
-        if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
+        if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
         if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 19) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7 ); end if
@@ -861,13 +861,7 @@ program VISUALS
 
                     if (infrared%active(is)) then
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
-                        if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                         call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(1, infrared%scalar(is)), txc(1, 2))
-                            call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), txc(1, 2), txc(1, 1))
-                            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, txc(1, 1))
-                        else
-                           call OPR_RADIATION(infrared, imax, jmax, kmax, g(2), s(1, infrared%scalar(1)), txc(1, 1))
-                        end if
+                        call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if
 
