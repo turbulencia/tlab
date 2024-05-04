@@ -30,7 +30,7 @@ program INISCAL
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call Radiation_Initialize()
+    call Radiation_Initialize(ifile)
     call SCAL_READ_LOCAL(ifile)
 
 #ifdef USE_MPI

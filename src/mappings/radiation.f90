@@ -14,8 +14,9 @@ module Radiation
     implicit none
 
     integer, parameter :: TYPE_NONE = 0
-    integer, parameter :: TYPE_LW_BULK1D_LIQUID = 1
-    integer, parameter :: TYPE_LW_BULK1D = 2
+    integer, parameter :: TYPE_IR_BULK1D_LIQUID = 1
+    integer, parameter :: TYPE_IR_BULK1D = 2
+    integer, parameter :: TYPE_BULK1DLOCAL = 10         ! backwards compatibility, to be removed
 
     real(wp) :: sigma = 5.67037442e-8_wp ! W /m^2 /K
 
@@ -23,55 +24,48 @@ module Radiation
     public :: Radiation_Infrared
 
 contains
-    ! ###################################################################
-    ! ###################################################################
-    subroutine RADIATION_READBLOCK(bakfile, inifile, block, var)
-        character(len=*), intent(in) :: bakfile, inifile, block
-        type(term_dt), intent(out) :: var
+!########################################################################
+!########################################################################
+    subroutine Radiation_Initialize(inifile)
+        use TLAB_VARS, only: infrared
+        character(len=*), intent(in) :: inifile
 
+        character(len=32) bakfile
         character(len=512) sRes
         integer(wi) idummy
 
         ! -------------------------------------------------------------------
+        bakfile = trim(adjustl(inifile))//'.bak'
+
         call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLAB_WRITE_ASCII(bakfile, '#[Radiation]')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-        if (var%type == EQNS_NONE) then        ! backwards compatibility, to be removed
-            call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
-            if (trim(adjustl(sRes)) == 'none') then; var%type = TYPE_NONE
-            else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; var%type = TYPE_LW_BULK1D_LIQUID
-            else if (trim(adjustl(sRes)) == 'irbulk1d') then; var%type = TYPE_LW_BULK1D
-            else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; var%type = EQNS_RAD_BULK1D_LOCAL
-            else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; var%type = EQNS_RAD_BULK1D_GLOBAL
-            else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Radiation option.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
-            end if
+        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Type', 'None', sRes)
+        if (trim(adjustl(sRes)) == 'none') &
+            call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
+        if (trim(adjustl(sRes)) == 'none') then; infrared%type = TYPE_NONE
+        else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; infrared%type = TYPE_IR_BULK1D_LIQUID
+        else if (trim(adjustl(sRes)) == 'irbulk1d')       then; infrared%type = TYPE_IR_BULK1D
+        else if (trim(adjustl(sRes)) == 'bulk1dlocal')    then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
+        else
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Radiation option.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        var%active = .false.
-        if (var%type /= EQNS_NONE) then
-            call SCANINIINT(bakfile, inifile, block, 'Scalar', '1', idummy)
-            var%active(idummy) = .true.
+        infrared%active = .false.
+        if (infrared%type /= TYPE_NONE) then
+            call SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
+            infrared%active(idummy) = .true.
 
-            var%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
+            infrared%parameters(:) = 0.0_wp
+            call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
             idummy = MAX_PROF
-            call LIST_REAL(sRes, idummy, var%parameters)
+            call LIST_REAL(sRes, idummy, infrared%parameters)
 
         end if
-
-        return
-    end subroutine RADIATION_READBLOCK
-
-!########################################################################
-!########################################################################
-    subroutine Radiation_Initialize()
-        use TLAB_VARS, only: infrared
 
         ! -------------------------------------------------------------------
         ! By default, transport and radiation are caused by last scalar
@@ -86,7 +80,7 @@ contains
         end if
 
         ! backwards compatibility
-        if (any([EQNS_RAD_BULK1D_LOCAL, EQNS_RAD_BULK1D_GLOBAL] == infrared%type)) then
+        if (infrared%type == TYPE_BULK1DLOCAL) then
             infrared%parameters(1) = infrared%parameters(1)*infrared%parameters(2)
             infrared%parameters(3) = infrared%parameters(3)*infrared%parameters(2)
             infrared%parameters(2) = 1.0_wp/infrared%parameters(2)
@@ -95,12 +89,9 @@ contains
         ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
-        ! ! testing
-        ! infrared%type = TYPE_LW_BULK1D
-        ! infrared%parameters(4) = infrared%parameters(3)
-        ! infrared%parameters(3) = 0.0_wp
-        ! sigma = 0.0_wp
-        !
+        ! testing
+        sigma = 0.0_wp
+        
         return
     end subroutine Radiation_Initialize
 
@@ -344,7 +335,7 @@ contains
 
         !########################################################################
         select case (infrared%type)
-        case (TYPE_LW_BULK1D_LIQUID, EQNS_RAD_BULK1D_LOCAL)
+        case (TYPE_IR_BULK1D_LIQUID, TYPE_BULK1DLOCAL)
             ! bulk absorption coefficient; we save it in array source to save memory
             kappa = infrared%parameters(2)
             source = kappa*s(:, infrared%scalar(1))
@@ -358,7 +349,7 @@ contains
                 call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source)
             end if
 
-        case (TYPE_LW_BULK1D)
+        case (TYPE_IR_BULK1D)
             ! bulk absorption coefficient; we save it in array source to save memory
             kappal = infrared%parameters(2)
             kappav = infrared%parameters(3)

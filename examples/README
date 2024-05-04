@@ -25,15 +25,15 @@ Case02. Same as Case01, but compressible
 Case03. Same as Case01, but with stretched grid.
 Case04. Same as Case03, but compressible
 Case05. Same as Case03, but 2 scalars with different Schmidt numbers.
-Case06. Oscillating inversion (stably stratified density interface) with discrete ICs.
-Case07. Unstable inversion. Rayleigh-Taylor.
-Case08. Stably stratified shear layer. 
-Case09. Heated plate. 
+Case06. Stably stratified density interface with discrete ICs: oscillating inversion.
+Case07. Unstable  stratified density interface: Rayleigh-Taylor.
+Case08. Stably stratified shear layer.
+Case09. Heated plate.
 Case10. Same as Case09, but two scalars with different BCs.
-Case11. Half Channel flow. 
+Case11. Half Channel flow.
 Case12. Same as 11, implicit solver.
-Case13. Radiation case.
-Case14. Cloud-top mixing layer, airwater equilibrium compressible formulation 
+Case13. Channel flow.
+Case14. Cloud-top mixing layer, airwater equilibrium compressible formulation.
 Case15. Cloud-top mixing layer; airwater equilibrium incompressible formulation.
 Case16. Cloud-top mixing layer; airwaterlinear, evaporation only. (Case06 plus buoyancy reversal.)
 Case17. Cloud-top mixing layer; airwaterlinear, radiation only.
@@ -41,15 +41,15 @@ Case18. Cloud-top mixing layer; airwaterlinear, radiation case with evaporative 
 Case19. Cloud-top mixing layer; airwaterlinear, radiation case with evaporative cooling and settling.
 Case20. Subsiding shell; airwater. Gravity vector along the horizontal.
 Case21. Subsiding shell; airwater. Broadband perturbation.
-Case22. Convective boundary layer with quadratic chemistry in three pasive scalars.
+Case22. Convective boundary layer with quadratic chemistry in three passive scalars.
 Case23. Rayleigh-Benard convection with Dirichlet boundary conditions.
-Case24. Airwater equilibrium incompressible formulation: Stratocumulus-topped boundary layer.
+Case24. Airwater equilibrium incompressible formulation of stratocumulus-topped boundary layer.
 Case25. Anelastic formulation of CBL.
 Case26. Airvapor anelastic formulation of CBL.
-Case27. Airwater equilibrium anelastic formulation: Stratocumulus-topped boundary layer.
+Case27. Airwater equilibrium anelastic formulation of stratocumulus-topped boundary layer.
 Case28. Same as Case27, but adding subsidence and sedimentation.
 Case29. Same as Case28, but with dimensions
-Case30. Channel flow. 
+Case30. Same as Case29, but with different radiation model.
 
 2D cases: Lagrangian routines
 

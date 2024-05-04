@@ -95,7 +95,7 @@ program AVERAGES
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call Radiation_Initialize()
+    call Radiation_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------

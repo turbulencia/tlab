@@ -72,7 +72,6 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
     call TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
     call TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
     call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
     call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
@@ -182,16 +181,6 @@ subroutine IO_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'normalized') then; coriolis%type = EQNS_COR_NORMALIZED
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermCoriolis option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    ! to be removed
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; infrared%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; infrared%type = EQNS_RAD_BULK1D_GLOBAL
-    else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = EQNS_RAD_BULK1D_LOCAL
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermRadiation option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
@@ -482,27 +471,6 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. TermCoriolis option only allows for angular velocity along Oy.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
-    end if
-
-! ###################################################################
-! Radiation
-! ###################################################################
-    ! call RADIATION_READBLOCK(bakfile, inifile, 'Radiation', radiation)
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Radiation]')
-    call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-    infrared%active = .false.
-    if (infrared%type /= EQNS_NONE) then
-        call SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
-        infrared%active(idummy) = .true.
-
-        infrared%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, infrared%parameters)
-
     end if
 
 ! ###################################################################

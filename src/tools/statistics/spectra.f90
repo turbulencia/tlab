@@ -120,7 +120,7 @@ program SPECTRA
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call Radiation_Initialize()
+    call Radiation_Initialize(ifile)
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)

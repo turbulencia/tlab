@@ -84,7 +84,7 @@ program PDFS
 
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
-    call Radiation_Initialize()
+    call Radiation_Initialize(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
