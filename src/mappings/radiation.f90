@@ -18,7 +18,8 @@ module Radiation
     integer, parameter :: TYPE_IR_BULK1D = 2
     integer, parameter :: TYPE_BULK1DLOCAL = 10         ! backwards compatibility, to be removed
 
-    real(wp) :: sigma = 5.67037442e-8_wp ! W /m^2 /K
+    real(wp), parameter :: sigma = 5.67037442e-8_wp     ! W /m^2 /K
+    real(wp) :: sigma_o_pi
 
     public :: Radiation_Initialize
     public :: Radiation_Infrared
@@ -48,8 +49,8 @@ contains
             call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; infrared%type = TYPE_NONE
         else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; infrared%type = TYPE_IR_BULK1D_LIQUID
-        else if (trim(adjustl(sRes)) == 'irbulk1d')       then; infrared%type = TYPE_IR_BULK1D
-        else if (trim(adjustl(sRes)) == 'bulk1dlocal')    then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
+        else if (trim(adjustl(sRes)) == 'irbulk1d') then; infrared%type = TYPE_IR_BULK1D
+        else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Radiation option.')
             call TLAB_STOP(DNS_ERROR_OPTION)
@@ -89,9 +90,9 @@ contains
         ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
-        ! testing
-        sigma = 0.0_wp
-        
+        sigma_o_pi = sigma/pi_wp
+        ! sigma_o_pi = 0.0_wp       ! testing
+
         return
     end subroutine Radiation_Initialize
 
@@ -220,12 +221,14 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) fd, fu, mu, dummy
+        real(wp) fd, mu, epsilon, dummy!, fu
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
+
+        real(wp) :: bcs(nx*nz)
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
@@ -246,7 +249,8 @@ contains
 #endif
 
 ! ###################################################################
-        mu = 1.0_wp     ! solid angle factor
+        mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! solid angle factor, in (1/sqrt{3}, 1/sqrt{2})
+        ! mu = 1.0_wp     ! testing
 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
@@ -262,9 +266,10 @@ contains
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
-        ! product of absorption coefficient times emission function
+        ! emission function
         dummy = 2.0_wp*pi_wp*mu
-        p_ab = p_a*p_ab*dummy
+        bcs = p_ab(:, 1)*dummy          ! save for calculation of surface flux
+        p_ab = p_a*p_ab*dummy           ! absorption coefficient times emission function
 
 ! ###################################################################
         ! downward flux
@@ -273,20 +278,23 @@ contains
             tmp2(:, j) = p_ab(:, j)*p_tau(:, 1)/p_tau(:, j)
         end do
         p_flux(:, ny) = 0.0_wp                                  ! boundary condition
-        call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)     ! recall this gives the negative of the integral
-        p_flux = fd*p_tau - p_flux
+        call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)       ! recall this gives the negative of the integral
+        p_flux = fd*p_tau + p_flux                              ! negative going down
 
         ! calculate upward flux at the surface
-        fu = infrared%parameters(4)                             ! to be updated
+        epsilon = infrared%parameters(4)
+        bcs = epsilon*bcs - (1.0_wp - epsilon)*p_flux(:, 1)
 
         ! upward flux
         if (present(flux)) then
             tmp2 = p_ab*p_tau
-            flux(:, ny) = 0.0_wp                                  ! boundary condition
+            flux(:, ny) = 0.0_wp                                ! boundary condition
             call OPR_Integral1(nxz, g, tmp2, flux, BCS_MAX)     ! recall this gives the negative of the integral
             do j = ny, 1, -1
-                p_flux(:, j) = fu*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
+                p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
                                + p_flux(:, j)
+                ! p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) ! only up, testing
+                ! p_flux(:, j) = -p_flux(:, j) ! only down, testing
             end do
 
 #ifdef USE_ESSL
@@ -299,10 +307,9 @@ contains
 ! ###################################################################
 ! Calculate heating rate
         fd = infrared%parameters(1)
-        fu = infrared%parameters(4)
         do j = ny, 1, -1
             p_source(:, j) = (fd*p_a(:, j) - p_ab(:, j))*p_tau(:, j) &
-                             + (fu*p_a(:, j) - p_ab(:, j))*p_tau(:, 1)/p_tau(:, j)
+                             + (bcs(:)*p_a(:, j) - p_ab(:, j))*p_tau(:, 1)/p_tau(:, j)
         end do
 
 #ifdef USE_ESSL
@@ -362,7 +369,7 @@ contains
                 ! tbd
             end if
             ! emission function
-            b = sigma*wrk3d**4.0_wp/pi_wp
+            b = sigma_o_pi*wrk3d**4.0_wp
 
             if (present(flux)) then
                 call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
