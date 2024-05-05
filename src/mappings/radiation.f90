@@ -274,12 +274,17 @@ contains
 ! ###################################################################
         ! downward flux
         fd = -infrared%parameters(1)
-        do j = ny, 1, -1
-            tmp2(:, j) = p_ab(:, j)*p_tau(:, 1)/p_tau(:, j)
-        end do
+        ! do j = ny, 1, -1
+        !     tmp2(:, j) = p_ab(:, j)/p_tau(:, j)*p_tau(:, 1)
+        ! end do
+        tmp2 = p_ab/p_tau
         p_flux(:, ny) = 0.0_wp                                  ! boundary condition
         call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)       ! recall this gives the negative of the integral
-        p_flux = fd*p_tau + p_flux                              ! negative going down
+!        p_flux = fd*p_tau + p_flux                              ! negative going down
+        ! do j = ny, 1, -1
+        !     p_flux(:, j) = p_tau(:, j)*(fd + p_flux(:, j)/p_tau(:, 1))
+        ! end do
+        p_flux = p_tau*(fd + p_flux)
 
         ! calculate upward flux at the surface
         epsilon = infrared%parameters(4)
@@ -287,14 +292,21 @@ contains
 
         ! upward flux
         if (present(flux)) then
-            tmp2 = p_ab*p_tau
+            ! tmp2 = p_ab*p_tau
+            do j = ny, 1, -1
+                tmp2(:, j) = p_ab(:, j)*p_tau(:, j)/p_tau(:, 1)
+            end do
             flux(:, ny) = 0.0_wp                                ! boundary condition
             call OPR_Integral1(nxz, g, tmp2, flux, BCS_MAX)     ! recall this gives the negative of the integral
             do j = ny, 1, -1
-                p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
-                               + p_flux(:, j)
+                p_source(:, j) = p_a(:, j)*(p_tau(:, 1)/p_tau(:, j)*(bcs(:) + flux(:, j) - flux(:, 1)) - p_flux(:, j))- 2.0_wp*p_ab(:,j)
+                ! p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
+                !                + p_flux(:, j)
+                p_flux(:, j) = p_tau(:, 1)/p_tau(:, j)*(bcs(:) + flux(:, j) - flux(:, 1)) + p_flux(:, j)
                 ! p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) ! only up, testing
+                ! p_flux(:, j) = p_tau(:, 1)/p_tau(:, j)*(bcs(:) + flux(:, j) - flux(:, 1))! only up, testing
                 ! p_flux(:, j) = -p_flux(:, j) ! only down, testing
+                p_source(:, j) = p_a(:, j)
             end do
 
 #ifdef USE_ESSL
@@ -307,10 +319,10 @@ contains
 ! ###################################################################
 ! Calculate heating rate
         fd = infrared%parameters(1)
-        do j = ny, 1, -1
-            p_source(:, j) = (fd*p_a(:, j) - p_ab(:, j))*p_tau(:, j) &
-                             + (bcs(:)*p_a(:, j) - p_ab(:, j))*p_tau(:, 1)/p_tau(:, j)
-        end do
+        ! do j = ny, 1, -1
+        !     p_source(:, j) = (fd*p_a(:, j) - p_ab(:, j))*p_tau(:, j) &
+        !                      + (bcs(:)*p_a(:, j) - p_ab(:, j))*p_tau(:, 1)/p_tau(:, j)
+        ! end do
 
 #ifdef USE_ESSL
         call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
