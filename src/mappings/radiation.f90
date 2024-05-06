@@ -98,6 +98,63 @@ contains
 
 !########################################################################
 !########################################################################
+    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
+        use THERMO_ANELASTIC
+        type(term_dt), intent(in) :: infrared
+        integer(wi), intent(in) :: nx, ny, nz
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
+        real(wp), intent(out) :: source(nx*ny*nz)   ! also used for bulk absorption coefficient
+        real(wp), intent(inout) :: b(nx*ny*nz)      ! emission function
+        real(wp), intent(inout) :: tmp1(nx*ny*nz), tmp2(nx*ny*nz)
+        real(wp), intent(out), optional :: flux(nx*ny*nz)
+
+        ! -----------------------------------------------------------------------
+        real(wp) kappa, kappal, kappav
+
+        !########################################################################
+        select case (infrared%type)
+        case (TYPE_IR_BULK1D_LIQUID, TYPE_BULK1DLOCAL)
+            ! bulk absorption coefficient; in array source to save memory
+            kappa = infrared%parameters(2)
+            source = kappa*s(:, infrared%scalar(1))
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
+            end if
+
+            if (present(flux)) then
+                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source, flux)
+            else
+                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source)
+            end if
+
+        case (TYPE_IR_BULK1D)
+            ! bulk absorption coefficient; in array source to save memory
+            kappal = infrared%parameters(2)
+            kappav = infrared%parameters(3)
+            source = kappal*s(:, infrared%scalar(1)) + kappav*(s(:, 2) - s(:, infrared%scalar(1)))
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
+                ! calculate temperature to calculate emission function
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
+            else
+                ! tbd
+            end if
+            ! emission function
+            b = sigma_o_pi*wrk3d**4.0_wp
+
+            if (present(flux)) then
+                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+            else
+                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
+            end if
+
+        end select
+
+    end subroutine Radiation_Infrared
+
+!########################################################################
+!########################################################################
     subroutine IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a_source, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
@@ -249,14 +306,15 @@ contains
 #endif
 
 ! ###################################################################
-        mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! solid angle factor, in (1/sqrt{3}, 1/sqrt{2})
+        mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
         ! mu = 1.0_wp     ! testing
 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
         ! Calculate (negative) optical thickness; integrating from the top, to be checked
         p_tau(:, ny) = 0.0_wp   ! boundary condition
-        call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
+        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
+        call Integral2n(nxz, g, p_a, p_tau, BCS_MAX)
         ! p_tau(:, 1) = 0.0_wp     ! boundary condition
         ! call OPR_Integral1(nxz, g, p_org, p_tau, BCS_MIN)
 
@@ -274,39 +332,27 @@ contains
 ! ###################################################################
         ! downward flux
         fd = -infrared%parameters(1)
-        ! do j = ny, 1, -1
-        !     tmp2(:, j) = p_ab(:, j)/p_tau(:, j)*p_tau(:, 1)
-        ! end do
         tmp2 = p_ab/p_tau
         p_flux(:, ny) = 0.0_wp                                  ! boundary condition
-        call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)       ! recall this gives the negative of the integral
-!        p_flux = fd*p_tau + p_flux                              ! negative going down
-        ! do j = ny, 1, -1
-        !     p_flux(:, j) = p_tau(:, j)*(fd + p_flux(:, j)/p_tau(:, 1))
-        ! end do
-        p_flux = p_tau*(fd + p_flux)
+        ! call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)     ! recall this gives the negative of the integral
+        call Integral2n(nxz, g, tmp2, p_flux, BCS_MAX)          ! recall this gives the negative of the integral
+        p_flux = p_tau*(fd + p_flux)                            ! negative going down
 
-        ! calculate upward flux at the surface
+        ! calculate upward flux at the bottom
         epsilon = infrared%parameters(4)
         bcs = epsilon*bcs - (1.0_wp - epsilon)*p_flux(:, 1)
 
         ! upward flux
-        if (present(flux)) then
-            ! tmp2 = p_ab*p_tau
+        if (present(flux)) then ! this needs to be fixed; now I need flux always
             do j = ny, 1, -1
-                tmp2(:, j) = p_ab(:, j)*p_tau(:, j)/p_tau(:, 1)
+                p_tau(:, j) = p_tau(:, 1)/p_tau(:, j)
             end do
-            flux(:, ny) = 0.0_wp                                ! boundary condition
-            call OPR_Integral1(nxz, g, tmp2, flux, BCS_MAX)     ! recall this gives the negative of the integral
+            tmp2 = p_ab/p_tau
+            flux(:, 1) = 0.0_wp
+            call Integral2n(nxz, g, tmp2, flux, BCS_MIN)
             do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*(p_tau(:, 1)/p_tau(:, j)*(bcs(:) + flux(:, j) - flux(:, 1)) - p_flux(:, j))- 2.0_wp*p_ab(:,j)
-                ! p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) &
-                !                + p_flux(:, j)
-                p_flux(:, j) = p_tau(:, 1)/p_tau(:, j)*(bcs(:) + flux(:, j) - flux(:, 1)) + p_flux(:, j)
-                ! p_flux(:, j) = bcs(:)*p_tau(:, 1)/p_tau(:, j) + flux(:, j) - flux(:, 1) ! only up, testing
-                ! p_flux(:, j) = p_tau(:, 1)/p_tau(:, j)*(bcs(:) + flux(:, j) - flux(:, 1))! only up, testing
-                ! p_flux(:, j) = -p_flux(:, j) ! only down, testing
-                p_source(:, j) = p_a(:, j)
+                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*(bcs(:) + flux(:, j)) - p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+                p_flux(:, j) = p_tau(:, j)*(bcs(:) + flux(:, j)) + p_flux(:, j)
             end do
 
 #ifdef USE_ESSL
@@ -315,14 +361,6 @@ contains
             call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
 #endif
         end if
-
-! ###################################################################
-! Calculate heating rate
-        fd = infrared%parameters(1)
-        ! do j = ny, 1, -1
-        !     p_source(:, j) = (fd*p_a(:, j) - p_ab(:, j))*p_tau(:, j) &
-        !                      + (bcs(:)*p_a(:, j) - p_ab(:, j))*p_tau(:, 1)/p_tau(:, j)
-        ! end do
 
 #ifdef USE_ESSL
         call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
@@ -338,59 +376,38 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
-        use THERMO_ANELASTIC
-        type(term_dt), intent(in) :: infrared
-        integer(wi), intent(in) :: nx, ny, nz
+    ! Second-order integral
+    subroutine Integral2n(nlines, g, f, result, ibc)
+        integer(wi), intent(in) :: nlines
         type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
-        real(wp), intent(out) :: source(nx*ny*nz)   ! also used for bulk absorption coefficient
-        real(wp), intent(inout) :: b(nx*ny*nz)      ! emission function
-        real(wp), intent(inout) :: tmp1(nx*ny*nz), tmp2(nx*ny*nz)
-        real(wp), intent(out), optional :: flux(nx*ny*nz)
+        real(wp), intent(in) :: f(nlines, g%size)
+        real(wp), intent(inout) :: result(nlines, g%size)   ! contains bcs
+        integer, intent(in), optional :: ibc
 
-        ! -----------------------------------------------------------------------
-        real(wp) kappa, kappal, kappav
+! -------------------------------------------------------------------
+        integer(wi) j
+        integer ibc_loc
 
-        !########################################################################
-        select case (infrared%type)
-        case (TYPE_IR_BULK1D_LIQUID, TYPE_BULK1DLOCAL)
-            ! bulk absorption coefficient; we save it in array source to save memory
-            kappa = infrared%parameters(2)
-            source = kappa*s(:, infrared%scalar(1))
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
-            end if
+! ###################################################################
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_MIN
+        end if
 
-            if (present(flux)) then
-                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source, flux)
-            else
-                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source)
-            end if
+        select case (ibc_loc)
+        case (BCS_MIN)
+            do j = 2, g%size
+                result(:, j) = result(:, j - 1) + 0.5_wp*(f(:, j) + f(:, j - 1))*(g%nodes(j) - (g%nodes(j - 1)))
+            end do
 
-        case (TYPE_IR_BULK1D)
-            ! bulk absorption coefficient; we save it in array source to save memory
-            kappal = infrared%parameters(2)
-            kappav = infrared%parameters(3)
-            source = kappal*s(:, infrared%scalar(1)) + kappav*(s(:, 2) - s(:, infrared%scalar(1)))
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
-                ! calculate temperature to calculate emission function
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
-            else
-                ! tbd
-            end if
-            ! emission function
-            b = sigma_o_pi*wrk3d**4.0_wp
-
-            if (present(flux)) then
-                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-            else
-                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-            end if
+        case (BCS_MAX)
+            do j = g%size - 1, 1, -1
+                result(:, j) = result(:, j + 1) - 0.5_wp*(f(:, j) + f(:, j + 1))*(g%nodes(j + 1) - (g%nodes(j)))
+            end do
 
         end select
 
-    end subroutine Radiation_Infrared
+    end subroutine Integral2n
 
 end module
