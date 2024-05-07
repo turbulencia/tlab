@@ -486,7 +486,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
         end if
-        tmp2 = 0.0_wp; tmp3 = 0.0_wp; dsdy = 0.0_wp
+        tmp2 = 0.0_wp; 
+        tmp3 = 0.0_wp; dsdy = 0.0_wp
     end if
 
     if (transport%active(is)) then ! Transport in tmp3 and dsdz

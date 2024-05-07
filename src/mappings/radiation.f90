@@ -6,7 +6,7 @@ module Radiation
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
     ! use TLAB_VARS, only: infrared
-    use TLAB_ARRAYS, only: wrk3d
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use THERMO_VARS, only: imixture
     use OPR_PARTIAL, only: OPR_PARTIAL_Y
@@ -270,8 +270,9 @@ contains
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nx*nz, ny)          ! input as bulk absorption coefficent, output as source
-        real(wp), intent(inout) :: b(nx*nz, ny)                 ! emission function
-        real(wp), intent(inout) :: tmp1(nx*nz, ny), tmp2(nx*nz, ny)
+        real(wp), intent(inout) :: b(nx*nz, ny)                 ! input as emission function, output as upward flux, if flux is to be return
+        real(wp), intent(inout) :: tmp1(nx*nz, ny)
+        real(wp), intent(inout) :: tmp2(nx*nz, ny)
         real(wp), intent(out), optional :: flux(nx*nz, ny)
 
         target a_source, b, tmp1
@@ -284,8 +285,7 @@ contains
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
-
-        real(wp) :: bcs(nx*nz)
+        real(wp), pointer :: p_bcs(:) => null()
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
@@ -296,6 +296,7 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
+        p_bcs(1:nx*nz) => wrk2d(1:nx*nz, 1)
 
 #ifdef USE_ESSL
         call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
@@ -311,12 +312,10 @@ contains
 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
-        ! Calculate (negative) optical thickness; integrating from the top, to be checked
+        ! Calculate optical thickness; integrating from the top; recall this gives the negative of the integral
         p_tau(:, ny) = 0.0_wp   ! boundary condition
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
         call Integral2n(nxz, g, p_a, p_tau, BCS_MAX)
-        ! p_tau(:, 1) = 0.0_wp     ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_org, p_tau, BCS_MIN)
 
         ! Calculate exp(-tau(z, zmax)/\mu)
         do j = ny, 1, -1
@@ -326,39 +325,41 @@ contains
 
         ! emission function
         dummy = 2.0_wp*pi_wp*mu
-        bcs = p_ab(:, 1)*dummy          ! save for calculation of surface flux
-        p_ab = p_a*p_ab*dummy           ! absorption coefficient times emission function
+        p_bcs = p_ab(:, 1)*dummy                ! save for calculation of surface flux
+        p_ab = p_a*p_ab*dummy                   ! absorption coefficient times emission function
 
 ! ###################################################################
         ! downward flux
         fd = -infrared%parameters(1)
-        tmp2 = p_ab/p_tau
-        p_flux(:, ny) = 0.0_wp                                  ! boundary condition
-        ! call OPR_Integral1(nxz, g, tmp2, p_flux, BCS_MAX)     ! recall this gives the negative of the integral
-        call Integral2n(nxz, g, tmp2, p_flux, BCS_MAX)          ! recall this gives the negative of the integral
+        p_flux = p_ab/p_tau
+        call Integral2n_InPlace(nxz, g, p_flux, BCS_MAX)        ! recall this gives the negative of the integral
         p_flux = p_tau*(fd + p_flux)                            ! negative going down
 
         ! calculate upward flux at the bottom
         epsilon = infrared%parameters(4)
-        bcs = epsilon*bcs - (1.0_wp - epsilon)*p_flux(:, 1)
+        p_bcs = epsilon*p_bcs - (1.0_wp - epsilon)*p_flux(:, 1)
 
         ! upward flux
-        if (present(flux)) then ! this needs to be fixed; now I need flux always
-            do j = ny, 1, -1
-                p_tau(:, j) = p_tau(:, 1)/p_tau(:, j)
-            end do
-            tmp2 = p_ab/p_tau
-            flux(:, 1) = 0.0_wp
-            call Integral2n(nxz, g, tmp2, flux, BCS_MIN)
-            do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*(bcs(:) + flux(:, j)) - p_flux(:, j)) - 2.0_wp*p_ab(:, j)
-                p_flux(:, j) = p_tau(:, j)*(bcs(:) + flux(:, j)) + p_flux(:, j)
-            end do
+        do j = ny, 1, -1
+            p_tau(:, j) = p_tau(:, 1)/p_tau(:, j)
+        end do
+        tmp2 = p_ab/p_tau
+        call Integral2n_InPlace(nxz, g, tmp2, BCS_MIN)
+        do j = ny, 1, -1
+            tmp2(:, j) = p_tau(:, j)*(p_bcs(:) + tmp2(:, j))    ! upward flux
+            p_source(:, j) = p_a(:, j)*(tmp2(:, j) - p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+            p_flux(:, j) = tmp2(:, j) + p_flux(:, j)            ! total flux
+            ! p_flux(:, j) = tmp2(:, j)                           ! only upward flux for testing
+            ! p_flux(:, j) = -p_flux(:, j)                        ! only downward flux for testing
+        end do
 
+        if (present(flux)) then
 #ifdef USE_ESSL
             call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
+            call DGETMO(tmp2, nz, nz, nxy, b, nxy)
 #else
             call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
+            call DNS_TRANSPOSE(tmp2, nz, nxy, nz, b, nxy)
 #endif
         end if
 
@@ -369,7 +370,7 @@ contains
 #endif
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux)
+        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs)
 
         return
     end subroutine IR_Bulk1D
@@ -409,5 +410,52 @@ contains
         end select
 
     end subroutine Integral2n
+
+!########################################################################
+!########################################################################
+    ! Second-order integral; assumes zero boundary condition
+    subroutine Integral2n_InPlace(nlines, g, f, ibc)
+        integer(wi), intent(in) :: nlines
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(inout) :: f(nlines, g%size)
+        integer, intent(in), optional :: ibc
+
+! -------------------------------------------------------------------
+        integer(wi) j
+        integer ibc_loc
+
+! ###################################################################
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_MIN
+        end if
+
+        select case (ibc_loc)
+        case (BCS_MIN)
+            j = 1
+            f(:, j) = 0.5_wp*(f(:, j) + f(:, j + 1))*(g%nodes(j + 1) - (g%nodes(j)))
+            do j = 2, g%size - 1
+                f(:, j) = f(:, j - 1) + 0.5_wp*(f(:, j) + f(:, j + 1))*(g%nodes(j + 1) - (g%nodes(j)))
+            end do
+            do j = g%size, 2, -1
+                f(:, j) = f(:, j - 1)
+            end do
+            f(:, 1) = 0.0_wp
+
+        case (BCS_MAX)
+            j = g%size
+            f(:, j) = -0.5_wp*(f(:, j) + f(:, j - 1))*(g%nodes(j) - (g%nodes(j - 1)))
+            do j = g%size - 1, 2, -1
+                f(:, j) = f(:, j + 1) - 0.5_wp*(f(:, j) + f(:, j - 1))*(g%nodes(j) - (g%nodes(j - 1)))
+            end do
+            do j = 1, g%size - 1
+                f(:, j) = f(:, j + 1)
+            end do
+            f(:, g%size) = 0.0_wp
+
+        end select
+
+    end subroutine Integral2n_InPlace
 
 end module
