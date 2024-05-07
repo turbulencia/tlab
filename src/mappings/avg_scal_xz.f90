@@ -479,24 +479,19 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Source terms
     ! #######################################################################
-    dsdx = 0.0_wp; dsdy = 0.0_wp; dsdz = 0.0_wp; tmp1 = 0.0_wp; tmp2 = 0.0_wp; tmp3 = 0.0_wp
-
-    if (infrared%active(is)) then ! Radiation in tmp1 and dsdx
+    if (infrared%active(is)) then       ! Radiation in tmp1 and dsdx
         call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
         end if
-        tmp2 = 0.0_wp; 
-        tmp3 = 0.0_wp; dsdy = 0.0_wp
     end if
 
-    if (transport%active(is)) then ! Transport in tmp3 and dsdz
+    if (transport%active(is)) then      ! Transport in tmp3 and dsdz
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(:, :, :, transport%scalar(is)), tmp2)
             call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, tmp2, tmp3, dsdy)
             call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, tmp2, dsdz)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
-            tmp2 = 0.0_wp
 
         else
             call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), tmp3, dsdy)
@@ -576,7 +571,18 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
     end if
 
-    p_wrk3d = tmp1 + tmp2 + tmp3 ! total
+    p_wrk3d = 0.0_wp ! total
+    if (infrared%active(is)) then
+        p_wrk3d = p_wrk3d + tmp1
+    end if
+    if (is > inb_scal) then
+        if (imixture == MIXT_TYPE_AIRWATER_LINEAR .or. imixture == MIXT_TYPE_AIRWATER) then
+            p_wrk3d = p_wrk3d + tmp2
+        end if
+    end if
+    if (transport%active(is)) then
+        p_wrk3d = p_wrk3d + tmp3
+    end if
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, rQ(1), wrk1d, area)
     if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) p_wrk3d = p_wrk3d*rho
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, fQ(1), wrk1d, area)
