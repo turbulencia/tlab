@@ -18,7 +18,7 @@ module Radiation
     integer, parameter :: TYPE_IR_BULK1D = 2
     integer, parameter :: TYPE_BULK1DLOCAL = 10         ! backwards compatibility, to be removed
 
-    real(wp), parameter :: sigma = 5.67037442e-8_wp     ! W /m^2 /K
+    real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: sigma_o_pi
 
     public :: Radiation_Initialize
@@ -307,8 +307,8 @@ contains
 #endif
 
 ! ###################################################################
-        mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
-        ! mu = 1.0_wp     ! testing
+        ! mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
+        mu = 0.5_wp     ! testing
 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy

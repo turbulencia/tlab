@@ -328,7 +328,7 @@ is the bulk absorption coefficient, the constants $\kappa_i$ being the correspon
 \begin{equation}
     \omega_\mathrm{R}=(a/\mu) (F_\uparrow +F_\downarrow) - 4\pi\mu a B \;.
 \end{equation}
-(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\mu\in[1/\sqrt{3},1/\sqrt{2}]$. The solution to the transfer equation yields
+(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\mu\in[1/\sqrt{3},1/\sqrt{2}]$; \textbf{Using 0.5 because it yields better agreement with ARTS}. The solution to the transfer equation yields
 \begin{subequations}
     \begin{align}
         F_\uparrow &= e^{-\tau(z_\mathrm{min},z)/\mu}\left[ F_{\uparrow,z_\mathrm{min}} + 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{\tau(z_\mathrm{min},z')/\mu}\mathrm{d}z'\right]\notag \\
