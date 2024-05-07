@@ -310,7 +310,7 @@ The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0
 
 Formally, radiation heating or cooling can be considered in the equations above as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,\omega_\mathrm{R}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$ is normalized by the corresponding (dimensional) heat parameter $Q$. 
 
-Practically, the implementation is completely embedded in the routine {\tt operators/opr\_radiation} and uses data provided in the block \texttt{[Radiation]} (i.e., assumes $\mathrm{\bf Da}_\mathrm{R}=1$ and all coefficients enter in the definition of $\omega_\mathrm{R}$). 
+Practically, the implementation is completely embedded in the routine {\tt mappings/radiation} and uses data provided in the block \texttt{[Radiation]} (i.e., assumes $\mathrm{\bf Da}_\mathrm{R}=1$ and all coefficients enter in the definition of $\omega_\mathrm{R}$). 
 
 In a one-dimensional bulk model, the source term is expressed in terms of upward and downward fluxes according to
 \begin{equation}
