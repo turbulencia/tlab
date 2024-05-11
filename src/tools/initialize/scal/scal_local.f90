@@ -4,7 +4,7 @@
 module SCAL_LOCAL
     use TLAB_CONSTANTS, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp
     use TLAB_TYPES, only: profiles_dt, discrete_dt
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_NSP
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_VARS
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLAB_ARRAYS, only: wrk1d
@@ -32,9 +32,9 @@ module SCAL_LOCAL
     integer, parameter :: PERT_FLUX_BROADBAND = 8
     integer, parameter :: PERT_FLUX_DISCRETE = 9
 
-    type(profiles_dt) :: IniS(MAX_NSP)                          ! Geometry of perturbation of initial boundary condition
+    type(profiles_dt) :: IniS(MAX_VARS)                          ! Geometry of perturbation of initial boundary condition
     type(profiles_dt) :: prof_loc
-    real(wp) :: norm_ini_s(MAX_NSP), norm_ini_radiation         ! Scaling of perturbation
+    real(wp) :: norm_ini_s(MAX_VARS), norm_ini_radiation         ! Scaling of perturbation
     type(discrete_dt) :: fp                                     ! Discrete perturbation
 
     public :: flag_s, flag_mixture, IniS, norm_ini_radiation

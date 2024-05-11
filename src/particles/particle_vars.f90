@@ -1,5 +1,5 @@
 module PARTICLE_VARS
-    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_NSP
+    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_VARS
     use TLAB_TYPES, only: profiles_dt, term_dt
     use PARTICLE_TYPES
     implicit none
@@ -30,7 +30,7 @@ module PARTICLE_VARS
     integer, parameter :: TRAJ_TYPE_EULERIAN = 2        ! add the Eulerian prognostic properties
     integer, parameter :: TRAJ_TYPE_VORTICITY = 3       ! add the Eulerian vorticity
 
-    character(len=32) :: part_spname(MAX_NSP)
+    character(len=32) :: part_spname(MAX_VARS)
 
     integer(longi)    :: isize_part_total             ! total # of particles
     integer(wi)       :: isize_part                   ! maximum # of particles per processor (to allocate memory space)

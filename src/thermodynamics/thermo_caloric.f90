@@ -8,9 +8,9 @@
 ! we use explicit-shape arrays in argements for the routines to be calleable with different array ranks
 
 module THERMO_CALORIC
-    use TLAB_CONSTANTS, only: wp, wi, MAX_NSP, efile
+    use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, THERMO_R, NSP
+    use THERMO_VARS, only: imixture, THERMO_R, MAX_NSP, NSP
     use THERMO_VARS, only: gama0, GRATIO, NCP, THERMO_AI, THERMO_TLIM
     use THERMO_VARS, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
     use THERMO_AIRWATER

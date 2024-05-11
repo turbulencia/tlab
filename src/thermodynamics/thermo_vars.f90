@@ -1,8 +1,9 @@
 module THERMO_VARS
-    use TLAB_CONSTANTS, only: MAX_NSP, MAX_PROF, wp, wi
+    use TLAB_CONSTANTS, only: MAX_PROF, wp, wi
 
     implicit none
     save
+
 
     ! Thermodynamic properties
     integer(wi) :: imixture
@@ -12,7 +13,7 @@ module THERMO_VARS
     ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
     ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
 
-    ! NSP_MAX is defined in global TLAB_CONSTANTS because it is used as maximum number of scalars
+    integer, parameter :: MAX_NSP = 10          ! Maximum number of components (species) in a mixture
     integer(wi) :: NSP = 0                      ! Number of components (species) in a mixture
     character(len=32) :: THERMO_SPNAME(MAX_NSP) = ''
     real(wp) :: THERMO_R(MAX_NSP)               ! Gas constants

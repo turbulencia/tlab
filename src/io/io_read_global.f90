@@ -324,11 +324,11 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Gama=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Prandtl=<value>')
 
-    ! Molecular transport 
+    ! Molecular transport
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Reynolds', '-1.0', reynolds)
-    if ( reynolds <= 0.0 ) then
+    if (reynolds <= 0.0) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Viscosity', '-1.0', dummy)
-        if ( dummy <= 0.0 ) then
+        if (dummy <= 0.0) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Molecular transport coefficients need to be positive.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         else
@@ -337,19 +337,19 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
-    schmidt(:) = 0.0_wp; inb_scal = MAX_NSP
+    schmidt(:) = 0.0_wp; inb_scal = MAX_VARS
     call LIST_REAL(sRes, inb_scal, schmidt)
 
     ! Gravity
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Froude', '-1.0', froude)
-    if ( froude <= 0.0 ) then
+    if (froude <= 0.0) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gravity', '1.0', dummy)   ! default value
         froude = 1.0_wp/dummy
     end if
 
     ! Coriolis
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Rossby', '-1.0', rossby)
-    if ( rossby <= 0.0 ) then
+    if (rossby <= 0.0) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Coriolis', '1.0', dummy)   ! default value
         rossby = 1.0_wp/dummy
     end if
@@ -360,7 +360,7 @@ subroutine IO_READ_GLOBAL(inifile)
         lstr = trim(adjustl(lstr))//',0.0'
     end do
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
-    damkohler(:) = 0.0_wp; idummy = MAX_NSP
+    damkohler(:) = 0.0_wp; idummy = MAX_VARS
     call LIST_REAL(sRes, idummy, damkohler)
     if (inb_scal /= idummy) then ! Consistency check
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Schmidt and Damkholer sizes do not match.')
@@ -724,7 +724,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
 
-    do is = 1, MAX_NSP
+    do is = 1, MAX_VARS
         write (lstr, *) is
         call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
     end do
@@ -763,7 +763,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(bakfile, '#ThickB=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Flux=<value>')
 
-        do is = 1, MAX_NSP
+        do is = 1, MAX_VARS
             write (lstr, *) is; lstr = 'ThickA'//trim(adjustl(lstr))
             call SCANINIREAL(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
             write (lstr, *) is; lstr = 'ThickB'//trim(adjustl(lstr))
@@ -881,8 +881,8 @@ subroutine IO_READ_GLOBAL(inifile)
 
     end select
 
-    if (inb_flow + inb_scal > MAX_VARS) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS should be less than or equal to inb_flow + inb_scal')
+    if (max(inb_flow, inb_scal) > MAX_VARS) then
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS should be larger than or equal to inb_flow and inb_scal')
         call TLAB_STOP(DNS_ERROR_TOTALVARS)
     end if
 
