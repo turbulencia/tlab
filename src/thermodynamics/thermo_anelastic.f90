@@ -17,7 +17,6 @@ module THERMO_ANELASTIC
     use THERMO_VARS, only: CRATIO_INV, MRATIO
     use THERMO_VARS, only: THERMO_PSAT, NPSAT
     use THERMO_VARS, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
-    use THERMO_VARS, only: scaleheight
     implicit none
     private
 
@@ -47,6 +46,7 @@ module THERMO_ANELASTIC
     ! public :: THERMO_ANELASTIC_PH_RE
 
     ! background, reference profiles
+    real(wp), public :: scaleheight                                     ! Equivalent to Fr/MRATIO in compressible formulation
     real(wp), allocatable, public :: pbackground(:)                     ! Pressure background profile
     real(wp), allocatable, public :: tbackground(:)                     ! Temperature
     real(wp), allocatable, public :: rbackground(:), ribackground(:)    ! Density and its inverse

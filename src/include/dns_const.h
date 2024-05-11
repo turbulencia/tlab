@@ -52,8 +52,6 @@
 
 #define EQNS_TRANS_POWERLAW             21
 #define EQNS_TRANS_SUTHERLAND           22
-#define EQNS_TRANS_AIRWATER             23
-#define EQNS_TRANS_AIRWATERSIMPLIFIED   24
 
 #define EQNS_CHEM_QUADRATIC             25
 #define EQNS_CHEM_QUADRATIC3            26

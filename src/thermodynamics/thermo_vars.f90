@@ -37,9 +37,6 @@ module THERMO_VARS
     real(wp) :: GRATIO                          ! (gama0-1)/gama0 *MRATIO = R0/Cp0 *MRATIO
     !                                           Anelastic and incompressible formulation use MRATIO=RRATIO=CRATIO_INV=1
 
-    ! Anelastic formulation
-    real(wp) :: scaleheight                     ! Equivalent to Fr/MRATIO in compressible formulation
-
     ! Nondimensional formulation
     logical :: nondimensional = .true.          ! consider nondimensional formulation
     !                                           A dimensional formulation can be imposed by setting MRATIO=RRATIO=CRATIO_INV=1 
@@ -47,7 +44,7 @@ module THERMO_VARS
     !                                           Reference density results from rho_0=p_0/(T_0R_0)
 
     real(wp) :: thermo_param(MAX_PROF)          ! Additional data
-    real(wp) :: dsmooth                         ! Smoothing factor for derivaative discontinuity in inifinitely fast chemistry and saturation adjustment
+    real(wp) :: dsmooth                         ! Smoothing factor for derivative discontinuity in inifinitely fast chemistry and saturation adjustment
 
     ! Derived parameters, for clarity in airwater formulation
     real(wp) :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, rd_ov_cd, PREF_1000

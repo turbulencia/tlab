@@ -14,7 +14,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, GRATIO, scaleheight, MRATIO
+    use THERMO_VARS, only: imixture, GRATIO, MRATIO
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use PROFILES
@@ -213,7 +213,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
-    use THERMO_VARS, only: imixture, scaleheight
+    use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL

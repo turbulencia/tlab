@@ -16,6 +16,7 @@ subroutine IO_READ_GLOBAL(inifile)
     use TLAB_VARS
     use TLAB_PROCS
     use THERMO_VARS
+    use THERMO_ANELASTIC
     use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
@@ -73,7 +74,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
     call TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
+    call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
     call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
     call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
