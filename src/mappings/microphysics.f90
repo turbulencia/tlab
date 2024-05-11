@@ -35,8 +35,14 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#')
         call TLAB_WRITE_ASCII(bakfile, '#[Sedimentation]')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#Exponent=<value>')
+
+        call SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)                 ! backwards compatibility, to be removed
+        if (trim(adjustl(sRes)) /= 'void') then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Deprecated block [Transport]. Update to [Sedimentation].')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
 
         call SCANINICHAR(bakfile, inifile, 'Sedimentation', 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
@@ -52,10 +58,10 @@ contains
         sedimentation%active = .false.
         if (sedimentation%type /= EQNS_NONE) then
             if (any([MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR] == imixture)) then
-                sedimentation%active = .true. ! All scalars are affected
+                sedimentation%active = .true.           ! All scalars are affected
             end if
 
-            sedimentation%parameters(:) = 1.0_wp ! default values
+            sedimentation%parameters(:) = 1.0_wp        ! default values
             call SCANINICHAR(bakfile, inifile, 'Sedimentation', 'Parameters', 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
                 idummy = MAX_PROF
@@ -69,7 +75,7 @@ contains
         end if
 
         ! -------------------------------------------------------------------
-        ! By default, transport and radiation are caused by last scalar
+        ! By default, sedimentation is caused by last scalar
         sedimentation%scalar = inb_scal_array
 
         if (sedimentation%type /= EQNS_NONE) then
@@ -137,17 +143,30 @@ contains
 
             end select
 
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
+            if (present(flux)) flux = -tmp1
+
         case (TYPE_SED_AIRWATERSIMPLIFIED)
-            if (exponent > 0.0_wp) then ! to avoid the calculation of a power, if not necessary
-                tmp1 = sedimentation%parameters(is)*(s_active**dummy)
-            else
-                tmp1 = sedimentation%parameters(is)*s_active
-            end if
+            ! if (exponent > 0.0_wp) then ! to avoid the calculation of a power, if not necessary
+            !     tmp1 = sedimentation%parameters(is)*(s_active**dummy)
+            ! else
+            !     tmp1 = sedimentation%parameters(is)*s_active
+            ! end if
+
+            ! call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
+            ! if (present(flux)) flux = -tmp1
+
+            ! the previous formulation yields oscillations at sharp gradients
+            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, s_active, tmp1)
+            if (exponent > 0.0_wp) tmp1 = tmp1*(s_active**exponent)
+            source = sedimentation%parameters(is)*dummy*tmp1
+
+            if (present(flux)) flux = -sedimentation%parameters(is)*(s_active**dummy)
 
         end select
 
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
-        if (present(flux)) flux = -tmp1
+! ###################################################################
+        nullify (s_active)
 
     end subroutine Microphysics_Sedimentation
 

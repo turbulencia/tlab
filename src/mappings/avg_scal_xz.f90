@@ -29,8 +29,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_MPI_VARS
 #endif
     use TLAB_PROCS
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE, FI_TRANSPORT, FI_TRANSPORT_FLUX
+    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use Radiation
+    use Microphysics
     use FI_GRADIENT_EQN
     use OPR_PARTIAL
 
@@ -111,7 +112,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         varname(ng) = trim(adjustl(varname(ng)))//' rQeva'
         sg(ng) = sg(ng) + 1
     end if
-    if (transport%active(is)) then
+    if (sedimentation%active(is)) then
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             varname(ng) = trim(adjustl(varname(ng)))//' rQtra rQtraC'
         else
@@ -486,16 +487,10 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         end if
     end if
 
-    if (transport%active(is)) then      ! Transport in tmp3 and dsdz
+    if (sedimentation%active(is)) then      ! Transport in tmp3 and dsdz
+        call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, tmp3, dsdy, dsdz)
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(:, :, :, transport%scalar(is)), dsdy)
-            call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, dsdy, tmp3, dsdz)
-            call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, dsdy, dsdz)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
-
-        else
-            call FI_TRANSPORT(transport, 1, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), tmp3, dsdy)
-            call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), dsdz)
         end if
     end if
 
@@ -507,9 +502,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             if (is == inb_scal_array + 1) then ! Default values are for liquid; defining them for buoyancy
                 coefQ = buoyancy%parameters(inb_scal_array)/froude
                 coefR = buoyancy%parameters(inb_scal)/froude
-                if (transport%active(is)) then
+                if (sedimentation%active(is)) then
                     do is_loc = 1, inb_scal
-                        coefT = coefT + transport%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
+                        coefT = coefT + sedimentation%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
                     end do
                 end if
             end if
@@ -520,7 +515,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             dummy = -diff*coefQ
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
 
-            if (transport%active(is) .or. infrared%active(is)) then ! preparing correction terms into dsdz
+            if (sedimentation%active(is) .or. infrared%active(is)) then ! preparing correction terms into dsdz
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1)
                 dsdz = dsdz*tmp1
             end if
@@ -535,11 +530,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
                 tmp1 = 0.0_wp; dsdx = 0.0_wp
             end if
 
-            if (transport%active(is)) then ! transport source; needs dsdy
+            if (sedimentation%active(is)) then ! transport source; needs dsdy
                 dummy = coefQ
                 tmp3 = tmp3*(coefT + dsdy*dummy)
-                ! Correction term needs dsdz
-                call FI_TRANSPORT_FLUX(transport, imax, jmax, kmax, is, s, s(:, :, :, transport%scalar(is)), dsdy)
+                ! Correction term needs dsdz; the following call assumes incompressible mode
+                call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, dsdy, dsdy, dsdy)
                 dsdz = dsdy*dsdz*dummy
             else
                 tmp3 = 0.0_wp; dsdz = 0.0_wp
@@ -566,7 +561,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (imixture == MIXT_TYPE_AIRWATER_LINEAR .or. imixture == MIXT_TYPE_AIRWATER) then           ! evaporation
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
     end if
-    if (transport%active(is)) then
+    if (sedimentation%active(is)) then
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
     end if
@@ -580,7 +575,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             p_wrk3d = p_wrk3d + tmp2
         end if
     end if
-    if (transport%active(is)) then
+    if (sedimentation%active(is)) then
         p_wrk3d = p_wrk3d + tmp3
     end if
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, rQ(1), wrk1d, area)

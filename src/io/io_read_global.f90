@@ -195,13 +195,9 @@ subroutine IO_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
-    if (trim(adjustl(sRes)) == 'sutherland') then; transport%type = EQNS_TRANS_SUTHERLAND; 
-    elseif (trim(adjustl(sRes)) == 'powerlaw') then; transport%type = EQNS_TRANS_POWERLAW; 
-    elseif (trim(adjustl(sRes)) == 'airwater') then; transport%type = EQNS_TRANS_AIRWATER; 
-    elseif (trim(adjustl(sRes)) == 'airwatersimplified') then; transport%type = EQNS_TRANS_AIRWATERSIMPLIFIED; 
-    else; transport%type = EQNS_NONE; end if
-
-    itransport = transport%type
+    if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
+    elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
+    else; itransport = EQNS_NONE; end if
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
@@ -494,38 +490,6 @@ subroutine IO_READ_GLOBAL(inifile)
 ! This subsidence type is implemented in opr_burgers_y only
 ! to speed up calculation
     if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
-
-! ###################################################################
-! Transport
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Transport]')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Exponent=<value>')
-
-    transport%active = .false.
-    if (transport%type /= EQNS_NONE) then
-        transport%parameters(:) = 1.0_wp ! default values
-        call SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)
-        if (trim(adjustl(sRes)) /= 'void') then
-            idummy = MAX_PROF
-            call LIST_REAL(sRes, idummy, transport%parameters)
-        end if
-
-        if (settling > 0.0_wp) then
-            transport%parameters = transport%parameters*settling ! adding the settling number in the parameter definitions
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Settling number must be nonzero if transport is retained.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-
-        if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-            transport%active = .true. ! All scalars are affected
-
-            call SCANINIREAL(bakfile, inifile, 'Transport', 'Exponent', '0.0', transport%auxiliar(1))
-        end if
-
-    end if
 
 ! ###################################################################
 ! Chemistry
@@ -913,7 +877,7 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
         inb_flow = 5                            ! space for u, v, w, e, rho
         inb_flow_array = inb_flow + 2           ! space for p, T
-        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == transport%type)) inb_flow_array = inb_flow_array + 1    ! space for vis
+        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for vis
 
     end select
 

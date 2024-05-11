@@ -70,7 +70,6 @@ module TLAB_VARS
     type(term_dt) :: coriolis               ! Coriolis parameters
     type(term_dt) :: infrared               ! Radiation parameters
     ! type(term_dt) :: visible                ! Radiation parameters
-    type(term_dt) :: transport              ! Transport parameters
     type(term_dt) :: sedimentation          ! Microphysics parameters
     ! type(term_dt) :: evaporation            ! Microphysics parameters
     type(term_dt) :: chemistry              ! Chemistry parameters

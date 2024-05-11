@@ -27,7 +27,7 @@
 subroutine THERMO_INITIALIZE()
     use TLAB_CONSTANTS, only: efile, lfile, wi, wp
     use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns, mach
-    use TLAB_VARS, only: damkohler, transport
+    use TLAB_VARS, only: damkohler
     use TLAB_PROCS
     use THERMO_VARS
     implicit none
@@ -177,14 +177,6 @@ subroutine THERMO_INITIALIZE()
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Incorrect number of Schmidt numbers.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-! -------------------------------------------------------------------
-! Other processes that need correct inb_scal_array
-! should go in initialization of each process
-! -------------------------------------------------------------------
-! By default, transport and radiation are caused by last scalar
-! The variable inb_scal_array is only available at the end of this routine
-    transport%scalar = inb_scal_array
 
 ! ###################################################################
 ! Caloric equations

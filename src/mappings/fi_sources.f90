@@ -10,9 +10,10 @@ module FI_SOURCES
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
-    use TLAB_VARS, only: infrared, transport, chemistry, subsidence
+    use TLAB_VARS, only: infrared, sedimentation, chemistry, subsidence
     use THERMO_ANELASTIC
     use Radiation
+    use Microphysics
     implicit none
     private
 
@@ -26,7 +27,6 @@ module FI_SOURCES
     public :: FI_SOURCES_SCAL
     public :: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     public :: FI_CORIOLIS
-    public :: FI_TRANSPORT, FI_TRANSPORT_FLUX
     public :: FI_FORCING_0, FI_FORCING_1
 
     real(wp), allocatable, public :: bbackground(:)     ! Buoyancy
@@ -127,7 +127,6 @@ contains
         real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field), tmp3(isize_field), tmp4(isize_field)
 
         ! -----------------------------------------------------------------------
-        integer flag_grad
 
         ! #######################################################################
 #ifdef USE_BLAS
@@ -143,7 +142,7 @@ contains
                 call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
                 
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(1, is))
+                    call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -158,20 +157,14 @@ contains
             end if
 
             ! -----------------------------------------------------------------------
-            ! Transport, such as settling
-            ! array tmp2 should not be used inside the loop on is
+            ! Microphysics
             ! -----------------------------------------------------------------------
-            if (transport%active(is)) then
+            if (sedimentation%active(is)) then
+                call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
+
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, s(:, transport%scalar(is)), tmp2)
-                    call FI_TRANSPORT(transport, 0, imax, jmax, kmax, is, s, tmp2, tmp1, tmp3)
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
-                    if (is == 1) then; flag_grad = 1; 
-                    else; flag_grad = 0
-                    end if
-                    call FI_TRANSPORT(transport, flag_grad, imax, jmax, kmax, is, s, s(:, transport%scalar(is)), tmp1, tmp2)
-
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
                     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
@@ -180,8 +173,8 @@ contains
                         hs(ij, is) = hs(ij, is) + tmp1(ij)
                     end do
 !$omp end parallel
-
                 end if
+
             end if
 
             ! -----------------------------------------------------------------------
@@ -458,101 +451,6 @@ contains
 
         return
     end subroutine FI_SUBSIDENCE
-
-    !########################################################################
-    !# Calculate the transport terms due to settling in an airwater mixture.
-    !########################################################################
-    subroutine FI_TRANSPORT(transport, flag_grad, nx, ny, nz, is, s, s_active, source, tmp)
-        use OPR_PARTIAL, only: OPR_PARTIAL_Y
-        type(term_dt), intent(IN) :: transport
-        integer(wi), intent(IN) :: nx, ny, nz, flag_grad
-        integer(wi), intent(IN) :: is
-        real(wp), intent(IN) :: s(nx*ny*nz, *), s_active(nx*ny*nz)
-        real(wp), intent(OUT) :: source(nx*ny*nz, 1) ! Transport component. It could have eventually three directions
-        real(wp), intent(INOUT) :: tmp(nx*ny*nz, 1)   ! To avoid re-calculations when repetedly calling this routine
-
-! -----------------------------------------------------------------------
-        real(wp) dummy, exponent
-        integer(wi) bcs(2, 2)
-
-!########################################################################
-        bcs = 0
-
-        exponent = transport%auxiliar(1)
-        dummy = 1.0_wp + exponent
-
-        select case (transport%type)
-        case (EQNS_TRANS_AIRWATERSIMPLIFIED)
-            if (flag_grad == 1) then
-                call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s_active, tmp)
-                if (exponent > 0.0_wp) tmp(:, 1) = tmp(:, 1)*(s_active**exponent)
-            end if
-
-            dummy = transport%parameters(is)*dummy
-            source(:, 1) = dummy*tmp(:, 1)
-
-        case (EQNS_TRANS_AIRWATER)
-            select case (is)
-            case (2, 3)         ! q_t, q_l
-                if (exponent > 0.0_wp) then ! to avoid the calculation of a power, if not necessary
-                    tmp(:, 1) = transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
-                else
-                    tmp(:, 1) = transport%parameters(is)*(1.0_wp - s(:, is))*s_active
-                end if
-
-            case default        ! energy variables
-                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, tmp(:, 1))
-                if (exponent > 0.0_wp) then
-                    tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*(s_active**dummy)
-                else
-                    tmp(:, 1) = transport%parameters(is)*tmp(:, 1)*s_active
-                end if
-
-            end select
-
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp(1, 1), source(1, 1))
-
-        end select
-
-        return
-    end subroutine FI_TRANSPORT
-
-    !########################################################################
-    !########################################################################
-    ! Only used as diagnostic in statistics, need not be fast
-    subroutine FI_TRANSPORT_FLUX(transport, nx, ny, nz, is, s, s_active, flux)
-        type(term_dt), intent(in) :: transport
-        integer(wi), intent(in) :: nx, ny, nz
-        integer(wi), intent(in) :: is
-        real(wp), intent(in) :: s(nx*ny*nz, *), s_active(nx*ny*nz)
-        real(wp), intent(out) :: flux(nx*ny*nz, 1)
-
-! -----------------------------------------------------------------------
-        real(wp) dummy, exponent
-
-!########################################################################
-        exponent = transport%auxiliar(1)
-        dummy = 1.0_wp + exponent
-
-        select case (transport%type)
-        case (EQNS_TRANS_AIRWATERSIMPLIFIED)
-            flux(:, 1) = -transport%parameters(is)*(s_active**dummy)
-
-        case (EQNS_TRANS_AIRWATER)
-            select case (is)
-            case (2, 3)         ! q_t, q_l
-                flux(:, 1) = -transport%parameters(is)*(1.0_wp - s(:, is))*(s_active**dummy)
-
-            case default        ! energy variables
-                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, flux(:, 1))
-                flux(:, 1) = -transport%parameters(is)*flux(:, 1)*(s_active**dummy)
-
-            end select
-
-        end select
-
-        return
-    end subroutine FI_TRANSPORT_FLUX
 
     ! #######################################################################
     ! #######################################################################

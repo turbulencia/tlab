@@ -49,6 +49,7 @@ program SPECTRA
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
     use Radiation
+    use Microphysics
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
@@ -121,6 +122,7 @@ program SPECTRA
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
     call Radiation_Initialize(ifile)
+    call Microphysics_Initialize(ifile)
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)

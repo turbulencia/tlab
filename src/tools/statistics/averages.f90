@@ -19,6 +19,7 @@ program AVERAGES
     use THERMO_VARS, only: imixture
     use THERMO_ANELASTIC
     use Radiation
+    use Microphysics
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -96,6 +97,7 @@ program AVERAGES
     call IO_READ_GLOBAL(ifile)
     call THERMO_INITIALIZE()
     call Radiation_Initialize(ifile)
+    call Microphysics_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------

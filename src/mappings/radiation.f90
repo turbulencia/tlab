@@ -49,8 +49,8 @@ contains
             call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; infrared%type = TYPE_NONE
         else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; infrared%type = TYPE_IR_BULK1D_LIQUID
-        else if (trim(adjustl(sRes)) == 'irbulk1d') then; infrared%type = TYPE_IR_BULK1D
-        else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
+        else if (trim(adjustl(sRes)) == 'irbulk1d')       then; infrared%type = TYPE_IR_BULK1D
+        else if (trim(adjustl(sRes)) == 'bulk1dlocal')    then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Radiation option.')
             call TLAB_STOP(DNS_ERROR_OPTION)
@@ -69,7 +69,7 @@ contains
         end if
 
         ! -------------------------------------------------------------------
-        ! By default, transport and radiation are caused by last scalar
+        ! By default, radiation is caused by last scalar
         infrared%scalar = inb_scal_array
 
         if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
