@@ -20,7 +20,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLAB_VARS
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
-    use THERMO_VARS, only: imixture, thermo_param
+    use Thermodynamics, only: imixture, thermo_param
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use IBM_VARS, only: gamma_0, gamma_1, scal_bcs

@@ -58,7 +58,7 @@ Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations 
 \begin{equation}
     \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
+in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{Thermodynamics\_Initialize}.
 
 %The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. 
 The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
@@ -104,7 +104,7 @@ and
     p = (\gamma_0 \mathrm{\bf Ma}^2)^{-1}\rho T R \;,\qquad
     R =\sum^N_1 R_iY_i\;.
 \end{equation}
-Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in \texttt{termo\_initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
+Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in {Thermodynamics\_Initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
 \begin{equation}
     \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
@@ -117,11 +117,11 @@ to save computation time and facilitate the consideration of a dimensional formu
 \begin{equation}
     \gamma=\frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2\tilde{R}}
 \end{equation}
-depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in \texttt{termo\_initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. The parameter
+depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in {Thermodynamics\_Initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. The parameter
 \begin{equation}
     \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
 \end{equation}
-is defined as \texttt{GRATIO} in the code and it is defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily. (Why do we need this additional parameter?)
+is referred to as \texttt{GRATIO} and defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$ in the code. This definition allows us to switch between dimensional and nondimensional formulations easily. (Why do we need this additional parameter?)
 
 
 \subsubsection{Dimensional Formulation}

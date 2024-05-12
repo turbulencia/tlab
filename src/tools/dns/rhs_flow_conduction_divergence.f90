@@ -22,7 +22,7 @@ subroutine RHS_FLOW_CONDUCTION_DIVERGENCE()
     use TLAB_VARS, only: idiffusion, visc, prandtl
     use TLAB_POINTERS
     use TLAB_ARRAYS, only: s
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture
     use THERMO_CALORIC
     use DNS_ARRAYS, only: hq
     use BOUNDARY_BCS

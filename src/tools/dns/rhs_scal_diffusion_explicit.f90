@@ -15,7 +15,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
-    use THERMO_VARS, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
+    use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use TLAB_POINTERS
     use TLAB_ARRAYS, only: s
     use DNS_ARRAYS, only: hs, hq

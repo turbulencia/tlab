@@ -8,8 +8,8 @@
 
 module THERMO_THERMAL
     use TLAB_CONSTANTS, only: wp, wi
-    use THERMO_VARS, only: imixture, THERMO_R, MRATIO, RRATIO, NSP
-    use THERMO_VARS, only: Rd, Rdv, Rv
+    use Thermodynamics, only: imixture, THERMO_R, MRATIO, RRATIO, NSP
+    use Thermodynamics, only: Rd, Rdv, Rv
     implicit none
     private
 

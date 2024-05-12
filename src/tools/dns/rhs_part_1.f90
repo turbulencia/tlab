@@ -13,7 +13,7 @@ subroutine RHS_PART_1()
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_INTERPOLATE
-    use THERMO_VARS, only: thermo_param
+    use Thermodynamics, only: thermo_param
     use Radiation
     use OPR_PARTIAL
     use FI_GRADIENT_EQN

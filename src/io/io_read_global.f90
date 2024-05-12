@@ -12,11 +12,9 @@
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)
 
-    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, wfile, MajorVersion, MinorVersion
+    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS
-    use THERMO_ANELASTIC
     use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
@@ -135,17 +133,6 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     if (imode_sim == DNS_MODE_TEMPORAL) fourier_on = .true.
-
-    call SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
-    else if (trim(adjustl(sRes)) == 'air') then; imixture = MIXT_TYPE_AIR
-    else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
-    else if (trim(adjustl(sRes)) == 'airwater') then; imixture = MIXT_TYPE_AIRWATER
-    else if (trim(adjustl(sRes)) == 'airwaterlinear') then; imixture = MIXT_TYPE_AIRWATER_LINEAR
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong entry Main.Mixture model.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermAdvection', 'void', sRes)
@@ -514,36 +501,6 @@ subroutine IO_READ_GLOBAL(inifile)
     end do
 
 ! ###################################################################
-! Thermodynamics
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Thermodynamics]')
-    call TLAB_WRITE_ASCII(bakfile, '#Nondimensional=<yes,no>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-    call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; nondimensional = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; nondimensional = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Thermodynamics.Nondimensional')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    if (imixture /= EQNS_NONE) then
-        thermo_param(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, thermo_param)
-
-    end if
-
-    call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
-
-    if (imixture == MIXT_TYPE_AIRWATER) then
-        call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
-    end if
-
-! ###################################################################
 ! Grid Parameters
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
@@ -818,11 +775,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
-    if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Incorrect mixture type.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
     if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
         buoyancy%type = EQNS_NONE
@@ -844,23 +796,6 @@ subroutine IO_READ_GLOBAL(inifile)
     select case (imode_eqns)
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         prandtl = schmidt(1)
-
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-        if (imixture == MIXT_TYPE_AIRWATER) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
-
-    end select
-
-    select case (imixture)
-    case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
-        schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
-
-    case (MIXT_TYPE_AIRWATER)
-        if (all([damkohler(1:2)] == 0.0_wp)) then
-            damkohler(1:2) = damkohler(3)
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. AirWater requires at least first 2 Damkholer numbers zero.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
 
     end select
 
@@ -888,7 +823,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
-    !                           can be changed in THERMO_INITIALIZE()
+    !                           can be changed in Thermodynamics_Initialize(ifile)
 
 ! scratch arrays
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))

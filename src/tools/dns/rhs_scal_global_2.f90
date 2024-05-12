@@ -23,7 +23,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use TLAB_ARRAYS, only: s
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, T, rho
     use DNS_ARRAYS, only: hs, hq
-    use THERMO_VARS, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
+    use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use BOUNDARY_BCS
     use OPR_PARTIAL
 

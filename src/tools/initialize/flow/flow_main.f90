@@ -13,7 +13,7 @@ program INIFLOW
     use MPI
     use TLAB_MPI_PROCS
 #endif
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture,  Thermodynamics_Initialize
     use THERMO_THERMAL
     use THERMO_CALORIC
     use IO_FIELDS
@@ -27,7 +27,7 @@ program INIFLOW
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call FLOW_READ_LOCAL(ifile)
 
 #ifdef USE_MPI

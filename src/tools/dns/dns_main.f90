@@ -10,7 +10,7 @@ program DNS
 #ifdef USE_MPI
     use TLAB_MPI_PROCS
 #endif
-    use THERMO_VARS
+    use Thermodynamics
     use Radiation
     use Microphysics
     use PARTICLE_VARS
@@ -44,7 +44,7 @@ program DNS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
@@ -368,7 +368,7 @@ contains
 !# logs_data11 Maximum dilatation
 !########################################################################
     subroutine DNS_LOGS_INITIALIZE()
-        use THERMO_VARS, only: imixture
+        use Thermodynamics, only: imixture
 
         integer ip
         character(len=256) line1
@@ -411,7 +411,7 @@ contains
 !########################################################################
 
     subroutine DNS_LOGS()
-        use THERMO_VARS, only: imixture, NEWTONRAPHSON_ERROR
+        use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
 #ifdef USE_MPI
         use MPI
         use TLAB_MPI_VARS, only: ims_err

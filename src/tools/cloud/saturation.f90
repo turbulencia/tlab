@@ -5,11 +5,11 @@ program SATURATION
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS
+    use Thermodynamics
 
     implicit none
 
-    real(wp) t_min, t_max, t_del, t, psat, qsat, dummy, t_loc, p, dpsat!, dpsat2
+    real(wp) t_min, t_max, t_del, t, psat(1), qsat(1), dummy(1), t_loc(1), p(1), dpsat(1)!, dpsat2
     integer(wi) iopt
 
 ! ###################################################################
@@ -17,7 +17,7 @@ program SATURATION
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize()
 
     write (*, *) '1 - Saturation pressure as a function of T'
     write (*, *) '2 - Saturation specific humidity as a function of T-p'
@@ -47,8 +47,8 @@ program SATURATION
     do while (t <= t_max)
 
         t_loc = (t + 273.15)/TREF
-        call THERMO_POLYNOMIAL_PSAT(1, t_loc, psat)
-        call THERMO_POLYNOMIAL_DPSAT(1, t_loc, dpsat)
+        call Thermo_Psat_Polynomial(1, t_loc, psat)
+        call Thermo_dPsat_Polynomial(1, t_loc, dpsat)
         dummy = 1.0_wp/(p/psat - 1.0_wp)*rd_ov_rv
         qsat = dummy/(1.0_wp + dummy)
         if (iopt == 1) then

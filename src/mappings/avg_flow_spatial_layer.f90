@@ -13,7 +13,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     use TLAB_VARS
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d, wrk2d
-    use THERMO_VARS, only: gama0, MRATIO
+    use Thermodynamics, only: MRATIO
     use OPR_PARTIAL
     implicit none
 

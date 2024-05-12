@@ -21,8 +21,9 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
-    use THERMO_VARS, only: imixture, CRATIO_INV, GRATIO, MRATIO
-    use THERMO_VARS, only: rd_ov_rv, Cd, Rv, Cvl, Lvl, Ldl, Rd, PREF_1000
+    use Thermodynamics, only: imixture, CRATIO_INV, GRATIO, MRATIO
+    use Thermodynamics, only: rd_ov_rv, Cd, Rv, Cvl, Lvl, Ldl, Rd, PREF_1000
+    use Thermodynamics, only: Thermo_Psat_Polynomial
     use THERMO_ANELASTIC
     use THERMO_CALORIC
     use IBM_VARS, only: gamma_0, gamma_1
@@ -731,7 +732,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         end do
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, g(1)%jac, g(3)%jac, rT2(1), wrk1d, area)
 
-        call THERMO_POLYNOMIAL_PSAT(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
+        call Thermo_Psat_Polynomial(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, g(1)%jac, g(3)%jac, psat(1), wrk1d, area)
 
         call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, T_LOC(1, 1, 1), p_wrk3d)
@@ -856,7 +857,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         ! -------------------------------------------------------------------
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, dvdy)
 
-        call THERMO_POLYNOMIAL_PSAT(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
+        call Thermo_Psat_Polynomial(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
         call THERMO_CP(imax*jmax*kmax, s, GAMMA_LOC(:, :, :), dvdx)
 
         do j = 1, jmax

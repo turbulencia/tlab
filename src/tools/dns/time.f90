@@ -15,7 +15,6 @@ module TIME
 #endif
     use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
     use TLAB_VARS
-    use THERMO_VARS, only: gama0, CRATIO_INV
     use TLAB_PROCS
     use PARTICLE_VARS
 #ifdef USE_MPI
@@ -658,6 +657,7 @@ contains
         use TLAB_ARRAYS
         use TLAB_POINTERS
         use THERMO_CALORIC, only: THERMO_GAMMA
+        use Thermodynamics, only: CRATIO_INV
         use DNS_ARRAYS
         use BOUNDARY_BUFFER
         use BOUNDARY_BCS, only: BcsDrift

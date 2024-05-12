@@ -79,9 +79,10 @@ module TLAB_VARS
 ! ###################################################################
 ! Nondimensional numbers
 ! ###################################################################
-    real(wp) :: visc, prandtl, schmidt(MAX_VARS)     ! molecular transport
+    real(wp) :: visc, prandtl, schmidt(MAX_VARS)    ! molecular transport
     real(wp) :: mach                                ! compressibility
-    real(wp) :: damkohler(MAX_VARS)                  ! reaction
+    real(wp) :: gama0                               ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
+    real(wp) :: damkohler(MAX_VARS)                 ! reaction
     real(wp) :: froude                              ! body force
     real(wp) :: rossby                              ! Coriolis force
     real(wp) :: stokes                              ! inertial effects

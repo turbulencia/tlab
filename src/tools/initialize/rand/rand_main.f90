@@ -15,6 +15,7 @@ program INIRAND
 #ifdef USE_MPI
     use TLAB_MPI_VARS, only: ims_pro
 #endif
+    use Thermodynamics, only: Thermodynamics_Initialize
     use IO_FIELDS
     use OPR_FOURIER
 
@@ -27,7 +28,7 @@ program INIRAND
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

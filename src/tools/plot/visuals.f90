@@ -21,8 +21,7 @@ program VISUALS
     use TLAB_MPI_PROCS
 #endif
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
-    use THERMO_VARS, only: imixture
-    use THERMO_VARS, only: NSP, THERMO_SPNAME
+    use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use Radiation
@@ -94,7 +93,7 @@ program VISUALS
     call TLAB_START()
  
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)

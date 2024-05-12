@@ -19,6 +19,7 @@ program PARTICLE_BUILD_PDF
 #ifdef USE_MPI
     use TLAB_MPI_PROCS
 #endif
+    use Thermodynamics
     use THERMO_AIRWATER
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
@@ -39,7 +40,7 @@ program PARTICLE_BUILD_PDF
     call TLAB_START
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call PARTICLE_READ_GLOBAL('tlab.ini')
 
 #ifdef USE_MPI

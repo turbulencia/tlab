@@ -9,7 +9,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
     use TLAB_VARS, only: g, buoyancy
     use TLAB_POINTERS
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: CRATIO_INV
+    use Thermodynamics, only: CRATIO_INV
     use OPR_PARTIAL
     implicit none
 

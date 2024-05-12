@@ -11,7 +11,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLAB_VARS, only: imode_eqns, itransport, damkohler, buoyancy
     use TLAB_ARRAYS, only: wrk1d, wrk3d
     use FI_SOURCES
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER

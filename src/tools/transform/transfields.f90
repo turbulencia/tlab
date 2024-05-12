@@ -18,6 +18,7 @@ program TRANSFIELDS
     use TLAB_MPI_PROCS
 #endif
     use IO_FIELDS
+    use Thermodynamics
     use THERMO_ANELASTIC
     use OPR_FILTERS
     use OPR_INTERPOLATORS
@@ -68,7 +69,7 @@ program TRANSFIELDS
     call TLAB_START
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -816,8 +817,8 @@ contains
     !########################################################################
     subroutine TRANS_FUNCTION(nx, ny, nz, a, b, txc)
 
-        use THERMO_VARS, only: imixture!, MRATIO, GRATIO, dsmooth
-        use THERMO_VARS, only: rd_ov_rv, Lvl
+        use Thermodynamics, only: imixture!, MRATIO, GRATIO, dsmooth
+        use Thermodynamics, only: rd_ov_rv, Lvl
         use THERMO_ANELASTIC, only: pbackground
 
         implicit none
@@ -831,7 +832,7 @@ contains
 
         ! #######################################################################
         imixture = MIXT_TYPE_AIRWATER
-        call THERMO_INITIALIZE()
+        call Thermodynamics_Initialize(ifile)
         ! MRATIO = 1.0_wp
         ! dsmooth = 0.0_wp
         inb_scal = 1
@@ -850,7 +851,7 @@ contains
         call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, txc(1, 1), txc(1, 5))
 
         ! Calculate saturation specific humidity
-        call THERMO_POLYNOMIAL_PSAT(nx*ny*nz, txc(1, 5), txc(1, 1))
+        call Thermo_Psat_Polynomial(nx*ny*nz, txc(1, 5), txc(1, 1))
         txc(:, 1) = 1.0_wp/(txc(:, 4)/txc(:, 1) - 1.0_wp)*rd_ov_rv
         txc(:, 1) = txc(:, 1)/(1.0_wp + txc(:, 1))
 

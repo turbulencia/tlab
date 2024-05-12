@@ -8,7 +8,7 @@ module Radiation
     ! use TLAB_VARS, only: infrared
     use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture
     use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES
     implicit none
@@ -31,11 +31,12 @@ contains
         use TLAB_VARS, only: infrared
         character(len=*), intent(in) :: inifile
 
+        ! -------------------------------------------------------------------
         character(len=32) bakfile
         character(len=512) sRes
         integer(wi) idummy
 
-        ! -------------------------------------------------------------------
+        !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
         call TLAB_WRITE_ASCII(bakfile, '#')
@@ -52,7 +53,7 @@ contains
         else if (trim(adjustl(sRes)) == 'irbulk1d')       then; infrared%type = TYPE_IR_BULK1D
         else if (trim(adjustl(sRes)) == 'bulk1dlocal')    then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Radiation option.')
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Radiation.Type.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 

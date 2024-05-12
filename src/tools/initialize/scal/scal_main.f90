@@ -13,7 +13,7 @@ program INISCAL
     use MPI
     use TLAB_MPI_PROCS
 #endif
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
     use Radiation
@@ -29,7 +29,7 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call SCAL_READ_LOCAL(ifile)
 

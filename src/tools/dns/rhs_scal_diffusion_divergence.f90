@@ -18,7 +18,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     use TLAB_POINTERS
     use TLAB_ARRAYS, only: s
     use DNS_ARRAYS, only: hs
-    use THERMO_VARS, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
+    use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use OPR_PARTIAL
     use BOUNDARY_BCS
     implicit none

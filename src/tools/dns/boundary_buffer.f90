@@ -27,7 +27,7 @@ module BOUNDARY_BUFFER
     use TLAB_VARS, only: g
     use TLAB_VARS, only: itime
     use TLAB_PROCS
-    use THERMO_VARS, only: CRATIO_INV
+    use Thermodynamics, only: CRATIO_INV
     use IO_FIELDS
     use OPR_FILTERS
     use AVGS, only: COV2V1D, COV2V2D

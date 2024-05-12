@@ -6,14 +6,14 @@
 ! we use explicit-shape arrays in arguments for the routines to be callable with different array ranks
 
 module THERMO_AIRWATER
-    use TLAB_VARS, only: inb_scal
     use TLAB_CONSTANTS, only: wp, wi, small_wp, big_wp
-    use THERMO_VARS, only: imixture, gama0, GRATIO
-    use THERMO_VARS, only: CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
-    use THERMO_VARS, only: THERMO_PSAT, NPSAT
-    use THERMO_VARS, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
-    use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
-    use THERMO_VARS, only: thermo_param
+    use TLAB_VARS, only: inb_scal, gama0
+    use Thermodynamics, only: imixture, GRATIO
+    use Thermodynamics, only: CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
+    use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial
+    use Thermodynamics, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
+    use Thermodynamics, only: dsmooth, NEWTONRAPHSON_ERROR
+    use Thermodynamics, only: thermo_param
     use THERMO_THERMAL
     implicit none
     private
@@ -42,7 +42,7 @@ contains
         real(wp) dqldqt
 
         ! ###################################################################
-        call THERMO_POLYNOMIAL_PSAT(ijmax, T, s(1, 2))
+        call Thermo_Psat_Polynomial(ijmax, T, s(1, 2))
         do ij = 1, ijmax
             ! this is really the vapor content
             qsat = 1.0_wp/(p(ij)/s(ij, 2) - 1.0_wp)*rd_ov_rv*(1.0_wp - s(ij, 1))
@@ -92,7 +92,7 @@ contains
         ! -------------------------------------------------------------------
         if (dsmooth <= 0.0_wp) then
             ! calculate saturation specific humidity, in array s(1,2).
-            ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+            ! Thermo_Psat_Polynomial is duplicated here to avoid array calls
             do ij = 1, ijmax
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
@@ -180,7 +180,7 @@ contains
                 ERROR_LOC = max(ERROR_LOC, abs(FUN/DER)/T(ij))
 
                 ! calculate saturation specific humidity, in array s(1,2).
-                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+                ! Thermo_Psat_Polynomial is duplicated here to avoid array calls
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(ij) + THERMO_PSAT(ipsat)
@@ -278,7 +278,7 @@ contains
         ! -------------------------------------------------------------------
         if (dsmooth <= 0.0_wp) then
             ! calculate saturation specific humidity, in array s(1,2).
-            ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+            ! Thermo_Psat_Polynomial is duplicated here to avoid array calls
             do i = 1, ijmax
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
@@ -317,7 +317,7 @@ contains
                 end do
                 NEWTONRAPHSON_ERROR = max(NEWTONRAPHSON_ERROR, abs(FUN/DER)/t_loc)
                 ! calculate saturation specific humidity, in array s(1,2).
-                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid routine calls
+                ! Thermo_Psat_Polynomial is duplicated here to avoid routine calls
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
                     psat = psat*t_loc + THERMO_PSAT(ipsat)
@@ -397,7 +397,7 @@ contains
                 NEWTONRAPHSON_ERROR = max(NEWTONRAPHSON_ERROR, abs(FUN/DER)/T(i))
 
                 ! calculate saturation specific humidity, in array s(1,2).
-                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid routine calls
+                ! Thermo_Psat_Polynomial is duplicated here to avoid routine calls
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(i) + THERMO_PSAT(ipsat)

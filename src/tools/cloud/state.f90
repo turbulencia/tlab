@@ -4,7 +4,7 @@ program STATE
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS
+    use Thermodynamics
     use THERMO_THERMAL
     use THERMO_ANELASTIC
     use THERMO_CALORIC
@@ -21,7 +21,7 @@ program STATE
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize()
     ep = 1.0_wp
     dsmooth = 1.0_wp
     scaleheight = 1.0_wp
@@ -61,7 +61,7 @@ program STATE
 
 ! ###################################################################
     if (iopt == 1) then
-        call THERMO_POLYNOMIAL_PSAT(1, t, ps)
+        call Thermo_Psat_Polynomial(1, t, ps)
         qs = 1.0_wp/(p/ps - 1.0_wp)*rd_ov_rv
         qs = qs/(1.0_wp + qs)
         if (qt(1) > qs(1)) then
@@ -89,7 +89,7 @@ program STATE
         qv = qt - ql
         qs = qv ! initial condition for next routine
         call THERMO_THERMAL_PRESSURE(1, z1, r, t, p)
-        call THERMO_POLYNOMIAL_PSAT(1, t, ps)
+        call Thermo_Psat_Polynomial(1, t, ps)
         qs = 1.0_wp/(p/ps - 1.0_wp)*rd_ov_rv
         qs = qs/(1.0_wp + qs)
         call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
@@ -109,7 +109,7 @@ program STATE
         ql(1) = z1(2)
         qv = qt - ql
 
-        call THERMO_POLYNOMIAL_PSAT(1, T, ps)
+        call Thermo_Psat_Polynomial(1, T, ps)
         qs = 1.0_wp/(p/ps - 1.0_wp)*rd_ov_rv
         qs = qs/(1.0_wp + qs)
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)

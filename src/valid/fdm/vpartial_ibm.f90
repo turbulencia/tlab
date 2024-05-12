@@ -35,7 +35,7 @@ program VPARTIAL
 
 ! ###################################################################
     call TLAB_START()
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     ! call PARTICLE_READ_GLOBAL(ifile)
     ! call DNS_READ_LOCAL(ifile)
     call IBM_READ_INI(ifile)

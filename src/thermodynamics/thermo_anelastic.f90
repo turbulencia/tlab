@@ -13,10 +13,11 @@
 
 module THERMO_ANELASTIC
     use TLAB_CONSTANTS, only: wp, wi
-    use THERMO_VARS, only: imixture, gama0, GRATIO
-    use THERMO_VARS, only: CRATIO_INV, MRATIO
-    use THERMO_VARS, only: THERMO_PSAT, NPSAT
-    use THERMO_VARS, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
+    use TLAB_VARS, only: gama0
+    use Thermodynamics, only: imixture, GRATIO, scaleheight
+    use Thermodynamics, only: CRATIO_INV, MRATIO
+    use Thermodynamics, only: THERMO_PSAT, NPSAT
+    use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
     implicit none
     private
 
@@ -46,7 +47,6 @@ module THERMO_ANELASTIC
     ! public :: THERMO_ANELASTIC_PH_RE
 
     ! background, reference profiles
-    real(wp), public :: scaleheight                                     ! Equivalent to Fr/MRATIO in compressible formulation
     real(wp), allocatable, public :: pbackground(:)                     ! Pressure background profile
     real(wp), allocatable, public :: tbackground(:)                     ! Temperature
     real(wp), allocatable, public :: rbackground(:), ribackground(:)    ! Density and its inverse
@@ -1037,7 +1037,7 @@ contains
     !# Calculating the equilibrium T and q_l for given enthalpy and pressure.
     !# Assumes often that THERMO_AI(6,1,1) = THERMO_AI(6,1,2) = 0
     !#
-    !# Routine THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+    !# Routine Thermo_Psat_Polynomial is duplicated here to avoid array calls
     !#
     !# Smoothing according to Eq. 25 in Mellado et al., TCFD, 2010
     !#
@@ -1046,7 +1046,7 @@ contains
     !#
     !########################################################################
     subroutine THERMO_ANELASTIC_PH(nx, ny, nz, s, h)
-        use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
+        use Thermodynamics, only: dsmooth, NEWTONRAPHSON_ERROR
 
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(inout) :: s(nx*ny*nz, *)
