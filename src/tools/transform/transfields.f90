@@ -817,7 +817,7 @@ contains
     !########################################################################
     subroutine TRANS_FUNCTION(nx, ny, nz, a, b, txc)
 
-        use Thermodynamics, only: imixture!, MRATIO, GRATIO, dsmooth
+        use Thermodynamics, only: imixture!, MRATIO, dsmooth
         use Thermodynamics, only: rd_ov_rv, Lvl
         use THERMO_ANELASTIC, only: pbackground
 

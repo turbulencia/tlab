@@ -11,15 +11,15 @@ module THERMO_CALORIC
     use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_PROCS
     use TLAB_VARS, only: gama0
-    use Thermodynamics, only: imixture, THERMO_R, MAX_NSP, NSP
-    use Thermodynamics, only: GRATIO, NCP, THERMO_AI, THERMO_TLIM
+    use Thermodynamics, only: imixture, CRATIO_INV, THERMO_R, MAX_NSP, NSP
+    use Thermodynamics, only: NCP, THERMO_AI, THERMO_TLIM
     use Thermodynamics, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
     use THERMO_AIRWATER
     implicit none
     private
 
     integer(wi) ij, is, icp, im
-    real(wp) RMEAN, CPMEAN, CPMEAN_I, YMASS(MAX_NSP), ENTHALPY_I, dummy
+    real(wp) RMEAN, CPMEAN, CPMEAN_I, YMASS(MAX_NSP), ENTHALPY_I, ENTROPY_I, XMOL_I, dummy
 
     public :: THERMO_CALORIC_ENTHALPY
     public :: THERMO_CALORIC_ENERGY
@@ -113,7 +113,7 @@ contains
             do ij = 1, ijmax
                 e(ij) = (Cd + s(ij, 1)*Cdv + s(ij, 2)*Cvl)*T(ij) + (Ld + s(ij, 1)*Ldv + s(ij, 2)*Lvl)
                 RMEAN = Rd + s(ij, 1)*Rdv - s(ij, 2)*Rv
-                e(ij) = e(ij) - RMEAN*GRATIO*T(ij)
+                e(ij) = e(ij) - CRATIO_INV*RMEAN*T(ij)
             end do
 
         case default
@@ -141,7 +141,7 @@ contains
                     RMEAN = RMEAN + YMASS(is)*THERMO_R(is)
                 end do
 
-                e(ij) = e(ij) - RMEAN*GRATIO*T(ij)
+                e(ij) = e(ij) - CRATIO_INV*RMEAN*T(ij)
 
             end do
 
@@ -182,7 +182,7 @@ contains
                         T(ij) = T(ij) - s(ij, is)*(THERMO_AI(6, 1, is) - THERMO_AI(6, 1, NSP))
                         RMEAN = RMEAN + s(ij, is)*(THERMO_R(is) - THERMO_R(NSP))
                     end do
-                    T(ij) = T(ij)/(CPMEAN - GRATIO*RMEAN) ! solve for T; go from C_p to C_v
+                    T(ij) = T(ij)/(CPMEAN - CRATIO_INV*RMEAN) ! solve for T; go from C_p to C_v
                 end do
 
             else
@@ -220,7 +220,7 @@ contains
             do ij = 1, ijmax
                 CPMEAN = Cd + s(ij, 1)*Cdv + s(ij, 2)*Cvl
                 RMEAN = Rd + s(ij, 1)*Rdv - s(ij, 2)*Rv
-                gama(ij) = CPMEAN/(CPMEAN - RMEAN*GRATIO)
+                gama(ij) = CPMEAN/(CPMEAN - CRATIO_INV*RMEAN)
 
             end do
 
@@ -249,7 +249,7 @@ contains
                     RMEAN = RMEAN + YMASS(is)*THERMO_R(is)
                 end do
 
-                gama(ij) = CPMEAN/(CPMEAN - RMEAN*GRATIO)
+                gama(ij) = CPMEAN/(CPMEAN - CRATIO_INV*RMEAN)
 
             end do
 
@@ -281,7 +281,7 @@ contains
         case (MIXT_TYPE_AIRWATER)   ! s(1,2) contains liquid mass fraction
             do ij = 1, ijmax
                 RMEAN = Rd + s(ij, 1)*Rdv - s(ij, 2)*Rv
-                cp(ij) = gama(ij)*RMEAN*GRATIO/(gama(ij) - 1.0_wp)
+                cp(ij) = gama(ij)*CRATIO_INV*RMEAN/(gama(ij) - 1.0_wp)
             end do
 
         case default
@@ -290,7 +290,7 @@ contains
                 do is = 1, NSP - 1
                     RMEAN = RMEAN + s(ij, is)*(THERMO_R(is) - THERMO_R(NSP))
                 end do
-                cp(ij) = gama(ij)*RMEAN*GRATIO/(gama(ij) - 1.0_wp)
+                cp(ij) = gama(ij)*CRATIO_INV*RMEAN/(gama(ij) - 1.0_wp)
             end do
 
         end select
@@ -310,12 +310,11 @@ contains
         real(wp), intent(in) :: z1(ijmax, *), T(ijmax), p(ijmax)
         real(wp), intent(out) :: result(ijmax)
 
-        ! -------------------------------------------------------------------
-        real(wp) ENTROPY_I, XMOL_I
-
+        ! ###################################################################
         select case (imixture)
         case (MIXT_TYPE_NONE)
-            result(:) = log(T(:)/(p(:)/pbg%mean)**GRATIO)
+            dummy = (gama0 - 1.0_wp)/gama0
+            result(:) = log(T(:)/(p(:)/pbg%mean)**dummy)
 
         case (MIXT_TYPE_AIRWATER)       ! to be reformulated in terms of Cd, Rd, ...
             do ij = 1, ijmax
@@ -340,10 +339,10 @@ contains
                 do is = 1, 2
                     XMOL_I = YMASS(is)*THERMO_R(is)/RMEAN
                     if (XMOL_I > 0.0_wp) then
-                        result(ij) = result(ij) - GRATIO*YMASS(is)*THERMO_R(is)*log(XMOL_I)
+                        result(ij) = result(ij) - CRATIO_INV*YMASS(is)*THERMO_R(is)*log(XMOL_I)
                     end if
                 end do
-                result(ij) = result(ij) - GRATIO*RMEAN*log(p(ij)/pbg%mean)
+                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
 
                 result(ij) = result(ij) + z1(ij, 2)*(THERMO_AI(7, im, 3) + THERMO_AI(1, 1, 3)*log(T(ij)))
 
@@ -375,10 +374,10 @@ contains
                 do is = 1, NSP
                     XMOL_I = YMASS(is)*THERMO_R(is)/RMEAN
                     if (XMOL_I > 0.0_wp) then
-                        result(ij) = result(ij) - GRATIO*YMASS(is)*THERMO_R(is)*log(XMOL_I)
+                        result(ij) = result(ij) - CRATIO_INV*YMASS(is)*THERMO_R(is)*log(XMOL_I)
                     end if
                 end do
-                result(ij) = result(ij) - GRATIO*RMEAN*log(p(ij)/pbg%mean)
+                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
             end do
 
         end select

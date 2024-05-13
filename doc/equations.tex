@@ -104,7 +104,9 @@ and
     p = (\gamma_0 \mathrm{\bf Ma}^2)^{-1}\rho T R \;,\qquad
     R =\sum^N_1 R_iY_i\;.
 \end{equation}
-Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in {Thermodynamics\_Initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
+Each species has a specific heat capacity $C_{pi}$ and a specific gas constant $R_i=\mathcal{R}/W_i$,  where  $\mathcal{R}$ is the universal gas constant and $W_i$ the molar mass of the species. They are defined in the procedure \texttt{Thermodynamics\_Initialize}. They are nondimensionalized by the reference values $C_{p0}$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$. $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$, but we do not use this variable if the current implementation. 
+
+Note that $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in {Thermodynamics\_Initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. As in the single species case, it proves convenient to introduce the derived parameters
 \begin{equation}
     \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
@@ -113,16 +115,13 @@ in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{C
     \tilde{R}\equiv (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\tilde{R}_i\;,\qquad\tilde{R}_i\equiv (\gamma_0\Ma^2)^{-1}R_i
     \;,
 \end{equation}
-to save computation time and facilitate the consideration of a dimensional formulation in addition to the default non-dimensional formulation here described (see below). Note that specific heat ratio
-\begin{equation}
-    \gamma=\frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2\tilde{R}}
-\end{equation}
-depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in {Thermodynamics\_Initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. The parameter
-\begin{equation}
-    \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
-\end{equation}
-is referred to as \texttt{GRATIO} and defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$ in the code. This definition allows us to switch between dimensional and nondimensional formulations easily. (Why do we need this additional parameter?)
+to save computation time and facilitate the consideration of a dimensional formulation in addition to the default non-dimensional formulation here described (see below). 
 
+Note that the specific heat ratio
+\begin{equation}
+    \gamma=\frac{C_p}{C_p-(\gamma_0-1)\Ma^2\tilde{R}}
+\end{equation}
+depends on the composition of the mixture.
 
 \subsubsection{Dimensional Formulation}
 
@@ -203,9 +202,13 @@ The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ an
 \begin{equation}
     \mathbf{H} = \frac{R_0T_0}{gL_0}
 \end{equation}
-is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
+is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{Thermodynamics\_Initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
 
-The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. %Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
+The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. Additionally, however, we need 
+\begin{equation}
+    (\gamma_0-1)/\gamma_0
+\end{equation}
+as conversion factor between gas constants and heat capacities. We refer to it in the code as \texttt{GRATIO}.
 
 \subsubsection{Incompressible formulation}
 

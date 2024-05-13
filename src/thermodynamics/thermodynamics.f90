@@ -43,7 +43,7 @@ module Thermodynamics
     ! Nondimensional formulation
     logical, public :: nondimensional = .true.          ! consider nondimensional formulation
     !                                                   A dimensional formulation can be imposed by setting MRATIO=RRATIO=CRATIO_INV=1
-    real(wp), public :: TREF, PREF, RREF                ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
+    real(wp) :: TREF, PREF, RREF                ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
     !                                                   Reference density results from rho_0=p_0/(T_0R_0)
 
     real(wp), public :: thermo_param(MAX_PROF)          ! Additional data
@@ -512,6 +512,7 @@ contains
         do icp = NCP, 1, -1
             CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
         end do
+        PREF_1000 =  1e5_wp                     ! 1000 hPa, reference to calculate potential temperatures
 
         if (imixture /= MIXT_TYPE_NONE) then    ! othewise, gama0 is read in tlab.ini
             gama0 = CPREF/(CPREF - RREF)        ! Specific heat ratio
@@ -523,20 +524,20 @@ contains
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        MRATIO = 1.0_wp
+        MRATIO = 1.0_wp                                 ! Compressible formulation uses MRATIO, CRATIO_INV
         CRATIO_INV = 1.0_wp
+        GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO
         if (nondimensional) then
             ! Parameters in the governing equations
             if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
-                MRATIO = gama0*mach*mach           ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scales reference pressre
+                MRATIO = gama0*mach*mach                ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-                PREF_1000 = 1.0_wp/MRATIO          ! Assumes pressure is normalized by 1000 hPa; PREF_1000 should be read from tlab.ini
             else
-                PREF_1000 = 1e5_wp/PREF            ! 1000 hPa, used as reference
+                GRATIO = (gama0 - 1.0_wp)/gama0         ! R_0/C_{p,0}
             end if
 
             ! Thermal equation of state
-            WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)    ! normalized gas constants (Inverse of molar masses)
+            WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)  ! normalized gas constants (Inverse of molar masses)
 
             ! Caloric equations of state
             do is = 1, NSP
@@ -548,7 +549,9 @@ contains
                     end do
                 end do
             end do
-            THERMO_TLIM = THERMO_TLIM/TREF          ! Temperature limis for polynomial fits to cp
+            THERMO_TLIM = THERMO_TLIM/TREF              ! Temperature limis for polynomial fits to cp
+
+            PREF_1000 = PREF_1000/PREF/MRATIO           ! 1000 hPa, reference to calculate potential temperatures
 
             ! Saturation vapor pressure
             do ipsat = 1, NPSAT
@@ -559,11 +562,6 @@ contains
         end if
 
         ! Derived parameters to save operations
-        GRATIO = 1.0_wp
-        if (nondimensional) then
-            GRATIO = (gama0 - 1.0_wp)/gama0*MRATIO      ! R_0/C_{p,0} *MRATIO
-        end if
-        ! GRATIO = CRATIO_INV                           ! I think these 2 are always the same... need to check
         RRATIO = 1.0_wp/MRATIO
         THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0
 

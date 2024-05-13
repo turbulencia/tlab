@@ -166,9 +166,9 @@ program REVERSAL
             heat2 = heat1*(1.0_wp + qvqd) - &
                     (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
+            alpha = 1.0_wp + heat1*qvqd/(CRATIO_INV*Rd*t)
 
-            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+            dummy = heat1*heat1/(CRATIO_INV*Rv*(t**2))* &
                     qvqd*(1.0_wp + qvqd/rd_ov_rv)
             dummy = dummy + &
                     THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
@@ -200,9 +200,9 @@ program REVERSAL
             heat2 = heat1*(1.0_wp + qvqd) - &
                     (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
+            alpha = 1.0_wp + heat1*qvqd/(CRATIO_INV*Rd*t)
 
-            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+            dummy = heat1*heat1/(CRATIO_INV*Rv*(t**2))* &
                     qvqd*(1.0_wp + qvqd/rd_ov_rv)
             dummy = dummy + &
                     THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
@@ -234,9 +234,9 @@ program REVERSAL
             heat2 = heat1*(1.0_wp + qvqd) - &
                     (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
+            alpha = 1.0_wp + heat1*qvqd/(CRATIO_INV*Rd*t)
 
-            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+            dummy = heat1*heat1/(CRATIO_INV*Rv*(t**2))* &
                     qvqd*(1.0_wp + qvqd/rd_ov_rv)
             dummy = dummy + &
                     THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
@@ -274,9 +274,9 @@ program REVERSAL
             heat2 = heat1*(1.0_wp + qvqd) - &
                     (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
+            alpha = 1.0_wp + heat1*qvqd/(CRATIO_INV*Rd*t)
 
-            dummy = heat1*heat1/(GRATIO*Rv*(t**2))* &
+            dummy = heat1*heat1/(CRATIO_INV*Rv*(t**2))* &
                     qvqd*(1.0_wp + qvqd/rd_ov_rv)
             dummy = dummy + &
                     THERMO_AI(1, 1, 2) + qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3)) - THERMO_AI(1, 1, 3)
@@ -314,11 +314,11 @@ program REVERSAL
             heat2 = heat1*(1.0_wp + qvqd) - &
                     (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
+            alpha = 1.0_wp + heat1*qvqd/(CRATIO_INV*Rd*t)
 
             dummy = (heat2 - ba_ratio)/t*alpha
             dummy = dummy - &
-                    heat1*heat1/(GRATIO*Rv*(t**2))* &
+                    heat1*heat1/(CRATIO_INV*Rv*(t**2))* &
                     qvqd*(1.0_wp + qvqd/rd_ov_rv)
             dummy = dummy - &
                     THERMO_AI(1, 1, 2) - qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))
@@ -349,11 +349,11 @@ program REVERSAL
             heat2 = heat1*(1.0_wp + qvqd) - &
                     (THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 2))*t
 
-            alpha = 1.0_wp + heat1*qvqd/(GRATIO*Rd*t)
+            alpha = 1.0_wp + heat1*qvqd/(CRATIO_INV*Rd*t)
 
             dummy = (heat2 - ba_ratio)/t*alpha
             dummy = dummy - &
-                    heat1*heat1/(GRATIO*Rv*t**2)* &
+                    heat1*heat1/(CRATIO_INV*Rv*t**2)* &
                     qvqd*(1.0_wp + qvqd/rd_ov_rv)
             dummy = dummy - &
                     THERMO_AI(1, 1, 2) - qvqd*(THERMO_AI(1, 1, 1) - THERMO_AI(1, 1, 3))
