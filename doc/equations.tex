@@ -156,7 +156,7 @@ and $\Da_i$ are the Damk{\"o}hler numbers. A reaction mechanism needs to be give
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Incompressible formulation}
 
-We need to solve a Poisson equation for the pressure.
+We need to solve a Poisson equation for the pressure. The thermodynamics is normalized differently.
 
 \subsubsection{Anelastic formulation}
 
@@ -180,7 +180,7 @@ The dynamic pressure $p'$ satisfies the following Poisson equation:
     -\partial_k ( u_i u_k )+\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
     \right)\right]\;.
 \end{equation}
-So far, only the case $\mu^*=1$ in the equations above has been implemented. The variables in these equations are assumed to be nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
+So far, only the case $\mu^*=1$ in the equations above has been implemented. The dynamic variables in these equations are  nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
 
 The thermodynamics is defined by the background profiles $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, Y_\mathrm{bg}\}$, which are steady and satisfy the hydrostatic balance equation,
 \begin{equation}
@@ -198,17 +198,19 @@ The two equations above relate 4 thermodynamic variables, so we need two additio
 \end{equation}
 The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture). If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint. 
 
-The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ and $R_0$, such that $\rho_0=p_0(R_0T_0)^{-1}$ and
+The thermodynamic variables are nondimensionalized by $\rho_0$, $T_0$ and $R_0$, such that $p_0=\rho_0R_0T_0$. (Note the difference with the compressible formulation, where the pressure was nondimensionalized with $\rho_0U_0^2$.) A nondimensional parameter that appears in the equations is 
 \begin{equation}
-    \mathbf{H} = \frac{R_0T_0}{gL_0}
+    (\gamma_0-1)/\gamma_0 \;,
 \end{equation}
-is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{Thermodynamics\_Initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
+as conversion factor between gas constants and heat capacities (thermal equation of state and caloric equation of state). We refer to it in the code as \texttt{GRATIO}. It is calculated in \texttt{Thermodynamics\_Initilize}. The default reference values are $p_0=10^5$~Pa and $T_0=298$~K, and are set in \texttt{Thermodynamics\_Initilize}. 
 
-The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. Additionally, however, we need 
+The nondimensional scale height is
 \begin{equation}
-    (\gamma_0-1)/\gamma_0
+    \mathbf{H} = \frac{R_0T_0}{gL_0} \;.
 \end{equation}
-as conversion factor between gas constants and heat capacities. We refer to it in the code as \texttt{GRATIO}.
+This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. 
+
+A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}, which sets \texttt{GRATIO} equal to 1
 
 \subsubsection{Incompressible formulation}
 
@@ -225,9 +227,10 @@ Dynamics and thermodynamics are at most coupled by the buoyancy field, and therm
 \end{subequations}
 So far, only the case $\mu^*=1$ in the equations above has been implemented.
 
-Because of the decoupling between the momentum and the internal energy evolution equations, one of the scalar equations can correspond to the internal energy equation. Reaction or phase change processes, as well as radiation processes, can then be formulated as the appropriate source terms $\mathrm{\bf   Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$, respectively, in the corresponding scalar equation. Note that the physical meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf   Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a non-dimensional heat parameter, and not a timescale ratio -- which is the correct meaning of the Damk{\"o}hler numbers appearing in the evolution equations for the components in a compressible mixture. We maintain this inconsistency, instead of introducing new symbols and variables, for code simplicity.
+Because of the decoupling between the momentum and the internal energy evolution equations, one of the scalar equations can correspond to the internal energy equation. Reaction or phase change processes, as well as radiation processes, can then be formulated as the appropriate source terms $\mathrm{\bf   Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$, respectively, in the corresponding scalar equation. %Note that the physical meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf   Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a non-dimensional heat parameter, and not a timescale ratio -- which is the correct meaning of the Damk{\"o}hler numbers appearing in the evolution equations for the components in a compressible mixture. We maintain this inconsistency, instead of introducing new symbols and variables, for code simplicity.
 
-Another consequence of the decoupling between the momentum and the internal energy evolution equations is that the compressibility terms in the code are not needed. We set \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1. The thermodynamic modules can still be used, and the formulation can also be dimensional or non-dimensional. In non-dimensional, the thermodynamic pressure is nondimensionalized by $p_0=\rho_0R_0T_0$ instead of $\rho_0U_0^2$. The parameter \texttt{GRATIO} remains in the governing equations to relate gas constant and heat capacity (thermal equation of state and caloric equation of state).
+The formulation of the thermodynamics is the same as in the anelastic formulation.
+%Another consequence of the decoupling between the momentum and the internal energy evolution equations is that the compressibility terms in the code are not needed. We set \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1. The thermodynamic modules can still be used, and the formulation can also be dimensional or non-dimensional. In non-dimensional, the thermodynamic pressure is nondimensionalized by $p_0=\rho_0R_0T_0$ instead of $\rho_0U_0^2$. The parameter \texttt{GRATIO} remains in the governing equations to relate gas constant and heat capacity (thermal equation of state and caloric equation of state).
 
 \subsubsection{Body force}
 
