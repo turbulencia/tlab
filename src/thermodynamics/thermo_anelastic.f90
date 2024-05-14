@@ -13,7 +13,6 @@
 
 module THERMO_ANELASTIC
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: gama0
     use Thermodynamics, only: imixture, GRATIO, scaleheight
     use Thermodynamics, only: THERMO_PSAT, NPSAT
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
