@@ -21,7 +21,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
-    use Thermodynamics, only: imixture, CRATIO_INV, MRATIO
+    use Thermodynamics, only: imixture, CRATIO_INV, RRATIO
     use Thermodynamics, only: rd_ov_rv, Cd, Rv, Cvl, Lvl, Ldl, Rd, PREF_1000
     use Thermodynamics, only: Thermo_Psat_Polynomial
     use THERMO_ANELASTIC
@@ -892,9 +892,9 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
             p_wrk3d = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
                     (dudx/(dudx - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)  ! dudx is GAMMA_LOC
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, lapse_eq(1), wrk1d, area)
-            lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)*MRATIO
+            lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)/RRATIO
 
-            p_wrk3d = (dudz - buoyancy%vector(2)*MRATIO*p_wrk3d)/dwdx &
+            p_wrk3d = (dudz - buoyancy%vector(2)/RRATIO*p_wrk3d)/dwdx &
                     *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, :, :, 1)))
             p_wrk3d = p_wrk3d - Rd/RMEAN*dudy
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, bfreq_eq(1), wrk1d, area)

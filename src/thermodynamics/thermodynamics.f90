@@ -33,16 +33,16 @@ module Thermodynamics
     ! real(wp) :: gama0                                 ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0), defined in tlab_vars because it is global in basic formulation
     ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
     ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
-    real(wp), public :: MRATIO                          ! gama0 mach^2 = (U0^2/T0)/R0
     real(wp), public :: RRATIO                          ! 1/(gama0 mach^2) = R0/(U0^2/T0)
     real(wp), public :: CRATIO_INV                      ! (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
+    real(wp), public :: RRATIO_INV                      ! gama0 mach^2 = (U0^2/T0)/R0, inverse of RRATIO to save computational time in some routines
     ! Anelastic and incompressible formulation 
     real(wp), public :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
-    real(wp), public :: scaleheight                     ! Equivalent to Fr/MRATIO in compressible formulation
+    real(wp), public :: scaleheight                     ! Equivalent to Fr*RRATIO in compressible formulation
 
     ! Nondimensional formulation
     logical, public :: nondimensional = .true.          ! consider nondimensional formulation
-    !                                                   A dimensional formulation can be imposed by setting MRATIO=RRATIO=CRATIO_INV=1
+    !                                                   A dimensional formulation can be imposed by setting RRATIO=CRATIO_INV=1, or GRATIO=1
 
     real(wp), public :: thermo_param(MAX_PROF)          ! Additional data
     real(wp), public :: dsmooth                         ! Smoothing factor for derivative discontinuity in inifinitely fast chemistry and saturation adjustment
@@ -77,7 +77,7 @@ contains
     !########################################################################
     subroutine Thermodynamics_Initialize(inifile)
         use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns
-        use TLAB_VARS, only: gama0, mach, prandtl, schmidt, damkohler
+        use TLAB_VARS, only: gama0, mach, schmidt, damkohler
         use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
         ! use THERMO_ANELASTIC, only: scaleheight
 
@@ -101,7 +101,7 @@ contains
 
         real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
 
-        real(wp) :: TREF, PREF, RREF                ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
+        real(wp) :: TREF, PREF, RREF                        ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
         !                                                   Reference density results from rho_0=p_0/(T_0R_0)
 
         !########################################################################
@@ -110,11 +110,11 @@ contains
 
             call TLAB_WRITE_ASCII(bakfile, '#')
             call TLAB_WRITE_ASCII(bakfile, '#[Thermodynamics]')
-            call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
+            call TLAB_WRITE_ASCII(bakfile, '#Mixture=<value>')
             call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
             call TLAB_WRITE_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Type', 'None', sRes)
+            call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
                 call SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)               ! backwards compatibility, to be removed
             if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
@@ -156,18 +156,18 @@ contains
             end if
 
             select case (imixture)
-            case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
-                schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
+            ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
+            !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
 
             case (MIXT_TYPE_AIRWATER)
                 if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
 
-                if (all([damkohler(1:2)] == 0.0_wp)) then
-                    damkohler(1:2) = damkohler(3)
-                else
-                    call TLAB_WRITE_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
-                    call TLAB_STOP(DNS_ERROR_OPTION)
-                end if
+                ! if (all([damkohler(1:2)] == 0.0_wp)) then
+                !     damkohler(1:2) = damkohler(3)
+                ! else
+                !     call TLAB_WRITE_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
+                !     call TLAB_STOP(DNS_ERROR_OPTION)
+                ! end if
 
             end select
 
@@ -525,13 +525,13 @@ contains
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        MRATIO = 1.0_wp                                 ! Compressible formulation uses MRATIO, CRATIO_INV
+        RRATIO = 1.0_wp                                 ! Compressible formulation uses RRATIO, CRATIO_INV
         CRATIO_INV = 1.0_wp
         GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO
         if (nondimensional) then
             ! Parameters in the governing equations
             if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
-                MRATIO = gama0*mach*mach                ! U_0^2/(R_0T_0) = rho_0U_0^2/p_0, i.e., inverse of scaled reference pressure
+                RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
             else
                 GRATIO = (gama0 - 1.0_wp)/gama0         ! R_0/C_{p,0}
@@ -552,19 +552,19 @@ contains
             end do
             THERMO_TLIM = THERMO_TLIM/TREF              ! Temperature limis for polynomial fits to cp
 
-            PREF_1000 = PREF_1000/PREF/MRATIO           ! 1000 hPa, reference to calculate potential temperatures
+            PREF_1000 = PREF_1000/PREF*RRATIO           ! 1000 hPa, reference to calculate potential temperatures
 
             ! Saturation vapor pressure
             do ipsat = 1, NPSAT
-                THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF/MRATIO         ! Scaling by rho_0U_0^2 as total pressure
+                THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF*RRATIO         ! Scaling by rho_0U_0^2 as total pressure
                 THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
             end do
 
         end if
 
         ! Derived parameters to save operations
-        RRATIO = 1.0_wp/MRATIO
         THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0
+        RRATIO_INV = 1.0_wp/RRATIO
 
         ! -------------------------------------------------------------------
         select case (imixture)
