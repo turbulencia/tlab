@@ -34,17 +34,15 @@ module Thermodynamics
     ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
     ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
     real(wp), public :: MRATIO                          ! gama0 mach^2 = (U0^2/T0)/R0
-    real(wp), public :: RRATIO                          ! 1/MRATIO = R0/(U0^2/T0)
+    real(wp), public :: RRATIO                          ! 1/(gama0 mach^2) = R0/(U0^2/T0)
     real(wp), public :: CRATIO_INV                      ! (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
-    real(wp), public :: GRATIO                          ! (gama0-1)/gama0 *MRATIO = R0/Cp0 *MRATIO -- Do I still need this one?
-    !                                                   Anelastic and incompressible formulation use MRATIO=RRATIO=CRATIO_INV=1
+    ! Anelastic and incompressible formulation 
+    real(wp), public :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
     real(wp), public :: scaleheight                     ! Equivalent to Fr/MRATIO in compressible formulation
 
     ! Nondimensional formulation
     logical, public :: nondimensional = .true.          ! consider nondimensional formulation
     !                                                   A dimensional formulation can be imposed by setting MRATIO=RRATIO=CRATIO_INV=1
-    real(wp) :: TREF, PREF, RREF                ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
-    !                                                   Reference density results from rho_0=p_0/(T_0R_0)
 
     real(wp), public :: thermo_param(MAX_PROF)          ! Additional data
     real(wp), public :: dsmooth                         ! Smoothing factor for derivative discontinuity in inifinitely fast chemistry and saturation adjustment
@@ -102,6 +100,9 @@ contains
         logical :: molar_data = .true.
 
         real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
+
+        real(wp) :: TREF, PREF, RREF                ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
+        !                                                   Reference density results from rho_0=p_0/(T_0R_0)
 
         !########################################################################
         if (present(inifile)) then

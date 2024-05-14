@@ -817,7 +817,7 @@ contains
     !########################################################################
     subroutine TRANS_FUNCTION(nx, ny, nz, a, b, txc)
 
-        use Thermodynamics, only: imixture!, MRATIO, dsmooth
+        use Thermodynamics, only: imixture
         use Thermodynamics, only: rd_ov_rv, Lvl
         use THERMO_ANELASTIC, only: pbackground
 
@@ -833,8 +833,6 @@ contains
         ! #######################################################################
         imixture = MIXT_TYPE_AIRWATER
         call Thermodynamics_Initialize(ifile)
-        ! MRATIO = 1.0_wp
-        ! dsmooth = 0.0_wp
         inb_scal = 1
 
         qt_0 = 9.0d-3; qt_1 = 1.5d-3

@@ -15,7 +15,6 @@ module THERMO_ANELASTIC
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: gama0
     use Thermodynamics, only: imixture, GRATIO, scaleheight
-    use Thermodynamics, only: CRATIO_INV, MRATIO
     use Thermodynamics, only: THERMO_PSAT, NPSAT
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
     implicit none
@@ -174,7 +173,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*pbackground(is)
+                P_LOC = pbackground(is)
                 E_LOC = epbackground(is)
 
                 do i = 1, nx
@@ -233,7 +232,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*pbackground(is)
+                P_LOC = pbackground(is)
                 E_LOC = epbackground(is)
                 R_LOC = rbackground(is)
                 R_LOC_INV = 1.0_wp/R_LOC
@@ -724,7 +723,7 @@ contains
                 E_LOC = epbackground(is)
                 R_LOC = rbackground(is)
 
-                RT_INV = R_LOC/(MRATIO*P_LOC)/scaleheight
+                RT_INV = R_LOC/(P_LOC)/scaleheight
 
                 do i = 1, nx
                     ij = ij + 1
@@ -817,7 +816,7 @@ contains
                     end do
 !           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                     Td(ij) = T_LOC
-                    Lapse(ij) = scaleheightinv*R_LOC/(MRATIO*P_LOC)*psat/dpsat
+                    Lapse(ij) = scaleheightinv*R_LOC/(P_LOC)*psat/dpsat
 
                 end do
             end do
@@ -863,7 +862,7 @@ contains
                         ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                         ! print*,NEWTONRAPHSON_ERROR
                         Td(ij) = T_LOC
-                        Lapse(ij) = scaleheightinv*R_LOC/(MRATIO*P_LOC)*psat/dpsat
+                        Lapse(ij) = scaleheightinv*R_LOC/(P_LOC)*psat/dpsat
 
                     end if
 
