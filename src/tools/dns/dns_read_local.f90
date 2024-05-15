@@ -174,7 +174,7 @@ subroutine DNS_READ_LOCAL(inifile)
         bound_s(:)%active = .true.
     end if
 
-    bound_s(:)%min = 0.0_wp; inb_scal_local1 = MAX_NSP
+    bound_s(:)%min = 0.0_wp; inb_scal_local1 = MAX_VARS
     if (any(bound_s(:)%active)) then
         call SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
@@ -188,7 +188,7 @@ subroutine DNS_READ_LOCAL(inifile)
         end if
     end if
 
-    bound_s%max = 1.0_wp; inb_scal_local1 = MAX_NSP
+    bound_s%max = 1.0_wp; inb_scal_local1 = MAX_VARS
     if (any(bound_s(:)%active)) then
         call SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then

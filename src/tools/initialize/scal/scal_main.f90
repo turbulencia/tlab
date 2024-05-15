@@ -13,9 +13,10 @@ program INISCAL
     use MPI
     use TLAB_MPI_PROCS
 #endif
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
+    use Radiation
     use IO_FIELDS
     use SCAL_LOCAL
 
@@ -28,7 +29,8 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
+    call Radiation_Initialize(ifile)
     call SCAL_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
@@ -40,9 +42,9 @@ program INISCAL
         inb_wrk2d = max(inb_wrk2d, 6)
     end if
 
-    if (flag_s == 1 .or. flag_s == 3 .or. radiation%type /= EQNS_NONE) then; inb_txc = 1
-    else; inb_txc = 0
-    end if
+    inb_txc = 0
+    if (flag_s == PERT_LAYER_BROADBAND) inb_txc = max(inb_txc, 1)
+    if (infrared%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 
@@ -52,15 +54,16 @@ program INISCAL
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
     call FI_BACKGROUND_INITIALIZE()
-    do is = 1, size(Sini)
-        if (Sini(is)%relative) Sini(is)%ymean = g(2)%nodes(1) + g(2)%scale*Sini(is)%ymean_rel
+    do is = 1, size(IniS)
+        if (IniS(is)%relative) IniS(is)%ymean = g(2)%nodes(1) + g(2)%scale*IniS(is)%ymean_rel
     end do
 
-! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Initializing scalar fiels.')
-
+    ! ###################################################################
     itime = 0; rtime = 0.0_wp
     s = 0.0_wp
+
+    ! ###################################################################
+    call TLAB_WRITE_ASCII(lfile, 'Initializing scalars.')
 
     inb_scal_loc = inb_scal
     if (imixture == MIXT_TYPE_AIRWATER) then
@@ -73,44 +76,48 @@ program INISCAL
         call SCAL_MEAN(is, s(:, is))
 
         select case (flag_s)
-        case (1, 2, 3)
+        case (PERT_LAYER_BROADBAND, PERT_LAYER_DISCRETE)
             call SCAL_FLUCTUATION_VOLUME(is, s(1, is), txc)
 
-        case (4, 5, 6, 7, 8, 9)
+        case (PERT_PLANE_BROADBAND, PERT_PLANE_DISCRETE, &
+              PERT_DELTA_BROADBAND, PERT_DELTA_DISCRETE, PERT_FLUX_BROADBAND, PERT_FLUX_DISCRETE)
             call SCAL_FLUCTUATION_PLANE(is, s(1, is))
 
         end select
 
     end do
 
-    if (imixture == MIXT_TYPE_AIRWATER) then ! Initial liquid in equilibrium; overwrite previous values
+    ! ###################################################################
+    ! Initial liquid in equilibrium; overwrite previous values
+    if (imixture == MIXT_TYPE_AIRWATER) then
         if (damkohler(3) > 0.0_wp .and. flag_mixture == 1) then
             call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         end if
     end if
 
     ! ###################################################################
-    if (radiation%type /= EQNS_NONE) then         ! Initial radiation effect as an accumulation during a certain interval of time
+    ! Initial radiation effect as an accumulation during a certain interval of time
+    if (infrared%type /= EQNS_NONE) then
 
-        if (ABS(radiation%parameters(1)) > 0.0_wp) then
-            radiation%parameters(3) = radiation%parameters(3)/radiation%parameters(1)*norm_ini_radiation
+        if (abs(infrared%parameters(1)) > 0.0_wp) then
+            infrared%parameters(3) = infrared%parameters(3)/infrared%parameters(1)*norm_ini_radiation
         end if
-        radiation%parameters(1) = norm_ini_radiation
+        infrared%parameters(1) = norm_ini_radiation
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
             call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, inb_scal_array))
         end if
         do is = 1, inb_scal
-            if (radiation%active(is)) then
-                call OPR_RADIATION(radiation, imax, jmax, kmax, g(2), s(1, radiation%scalar(is)), txc)
+            if (infrared%active(is)) then
+                call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do
 
     end if
 
-! ###################################################################
+    ! ###################################################################
     call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
     call TLAB_STOP(0)

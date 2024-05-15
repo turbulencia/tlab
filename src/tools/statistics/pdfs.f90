@@ -15,8 +15,10 @@ program PDFS
     use TLAB_MPI_PROCS
 #endif
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize
     use THERMO_ANELASTIC
+    use Radiation
+    use Microphysics
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -82,7 +84,9 @@ program PDFS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
+    call Radiation_Initialize(ifile)
+    call Microphysics_Initialize(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

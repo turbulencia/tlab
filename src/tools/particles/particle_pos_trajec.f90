@@ -40,6 +40,7 @@ program PARTICLE_POS_TRAJEC
     use TLAB_MPI_VARS, only: ims_pro, ims_npro
     use TLAB_MPI_PROCS
 #endif
+    use Thermodynamics
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -69,7 +70,7 @@ program PARTICLE_POS_TRAJEC
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
     call PARTICLE_READ_GLOBAL('tlab.ini')
     
 #ifdef USE_MPI

@@ -8,8 +8,8 @@
 
 module THERMO_THERMAL
     use TLAB_CONSTANTS, only: wp, wi
-    use THERMO_VARS, only: imixture, THERMO_R, MRATIO, RRATIO, NSP
-    use THERMO_VARS, only: Rd, Rdv, Rv
+    use Thermodynamics, only: imixture, THERMO_R, RRATIO_INV, RRATIO, NSP
+    use Thermodynamics, only: Rd, Rdv, Rv
     implicit none
     private
 
@@ -32,13 +32,13 @@ contains
 ! ###################################################################
         select case (imixture)
         case (MIXT_TYPE_NONE)
-            rho(:) = MRATIO*p(:)/T(:)
+            rho(:) = RRATIO_INV*p(:)/T(:)
 
         case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH, MIXT_TYPE_QUASIBS) ! Mass fractions defined by a conserved scalar Z.
 !     DO ij = 1,ijmax
 !#define MACRO_ZINPUT s(ij,inb_scal)
 !#include "dns_chem_mass.h"
-!        rho(ij) = MRATIO*p(ij)*WMEAN/T(ij)
+!        rho(ij) = RRATIO_INV*p(ij)*WMEAN/T(ij)
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)
@@ -69,13 +69,13 @@ contains
 ! ###################################################################
         select case (imixture)
         case (MIXT_TYPE_NONE)
-            T(:) = MRATIO*p(:)/rho(:)
+            T(:) = RRATIO_INV*p(:)/rho(:)
 
         case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH, MIXT_TYPE_QUASIBS) ! Mass fractions defined by a conserved scalar Z.
 !     DO ij = 1,ijmax
 !#define MACRO_ZINPUT s(ij,inb_scal)
 !#include "dns_chem_mass.h"
-!        T(ij) = MRATIO*p(ij)*WMEAN/rho(ij)
+!        T(ij) = RRATIO_INV*p(ij)*WMEAN/rho(ij)
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)
@@ -112,7 +112,7 @@ contains
 !     DO ij = 1,ijmax
 !#define MACRO_ZINPUT s(ij,inb_scal)
 !#include "dns_chem_mass.h"
-!        p(ij) = rho(ij)*T(ij)/(MRATIO*WMEAN)
+!        p(ij) = rho(ij)*T(ij)/(RRATIO_INV*WMEAN)
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)

@@ -130,7 +130,7 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use TLAB_VARS, only: g
         use TLAB_VARS, only: pbg, qbg
-        use THERMO_VARS, only: CRATIO_INV
+        use Thermodynamics, only: CRATIO_INV
         use THERMO_THERMAL
         use THERMO_CALORIC
         use BOUNDARY_BUFFER

@@ -54,14 +54,14 @@ and
 \begin{equation}
     \Fr \equiv \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} \qquad \Ro \equiv \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
 \end{equation}
-Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations depend on $\gamma_0\Ma^2$ and $(\gamma_0-1)\Ma^2$, which suggests to introduce the derived set of parameters
+Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations depend on $(\gamma_0\Ma^2)^{-1}$ and $(\gamma_0-1)\Ma^2$, which suggests to introduce the derived set of parameters
 \begin{equation}
-    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+    (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. The values of these parameters are defined in the procedure \texttt{termo\_initialize}.
+in the code implementation (names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. We also define $\gamma_0\Ma^2=U_0^2/(R_0T_0)$ as \texttt{RRATIO\_INV}, to save operations. The values of these parameters are defined in the procedure \texttt{Thermodynamics\_Initialize}.
 
 %The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. 
-The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding non-dimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
+The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding nondimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
 
 \subsubsection{Multispecies}
 
@@ -104,29 +104,28 @@ and
     p = (\gamma_0 \mathrm{\bf Ma}^2)^{-1}\rho T R \;,\qquad
     R =\sum^N_1 R_iY_i\;.
 \end{equation}
-Each species has a specific heat capacity $C_{pi}$, a molar mass $W_i$, and a specific gas constant $R_i=\mathcal{R}/W_i$, where  $\mathcal{R}$ is the universal gas constant. They are defined in \texttt{termo\_initialize}. They are nondimensionalized by the reference values $C_{p0}$, $W_0$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$ and $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$. As in the single species case, it proves convenient to introduce the derived parameters
+Each species has a specific heat capacity $C_{pi}$ and a specific gas constant $R_i=\mathcal{R}/W_i$,  where  $\mathcal{R}$ is the universal gas constant and $W_i$ the molar mass of the species. They are defined in the procedure \texttt{Thermodynamics\_Initialize}. They are nondimensionalized by the reference values $C_{p0}$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$. $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$, but we do not use this variable if the current implementation. 
+
+Note that $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in {Thermodynamics\_Initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. As in the single species case, it proves convenient to introduce the derived parameters
 \begin{equation}
-    \gamma_0\Ma^2=\frac{U_0^2}{R_0T_0}\;,\qquad (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
+    (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation (names \texttt{MRATIO}, \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively) and use 
+in the code implementation (names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively) and use 
 \begin{equation}
     \tilde{R}\equiv (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\tilde{R}_i\;,\qquad\tilde{R}_i\equiv (\gamma_0\Ma^2)^{-1}R_i
     \;,
 \end{equation}
-to save computation time and facilitate the consideration of a dimensional formulation in addition to the default non-dimensional formulation here described (see below). Note that specific heat ratio
-\begin{equation}
-    \gamma=\frac{C_p}{C_p-\frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2\tilde{R}}
-\end{equation}
-depends on the composition of the mixture, and $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in \texttt{termo\_initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. The parameter
-\begin{equation}
-    \frac{\gamma_0-1}{\gamma_0}\gamma_0\Ma^2
-\end{equation}
-is defined as \texttt{GRATIO} in the code and it is defined as $[(\gamma_0-1)/\gamma_0]\texttt{MRATIO}$. This definition allows us to switch between dimensional and nondimensional formulations easily. (Why do we need this additional parameter?)
+to save computation time and facilitate the consideration of a dimensional formulation in addition to the default nondimensional formulation here described (see below). 
 
+Note that the specific heat ratio
+\begin{equation}
+    \gamma=\frac{C_p}{C_p-(\gamma_0-1)\Ma^2\tilde{R}}
+\end{equation}
+depends on the composition of the mixture and it is a derived (diagnostic) quantity.
 
 \subsubsection{Dimensional Formulation}
 
-In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the block \texttt{[Thermodynamics]} of the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. %Note that \texttt{GRATIO} is not one in this case, and remains as conversion factor between gas constants and heat capacities. 
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the block \texttt{[Thermodynamics]} of the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. 
 
 The input parameters \texttt{Reynolds}, \texttt{Froude} and \texttt{Rossby} are then substituted by \texttt{Viscosity}, \texttt{Gravity} and \texttt{Coriolis}.
 
@@ -140,7 +139,7 @@ It is then clear that we do not need $Y_N$ as prognostic variable. More generall
 
 Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
 
-Another possible case is phase equilibrium (saturation adjustment), as considered for an misture of air and water, where only the total water content is a prognostic variables and the partition into liquid and vapor is done assuming phase equilibrium. 
+Another possible case is phase equilibrium (saturation adjustment), as considered for an mixture of air and water, where only the total water content is a prognostic variables and the partition into liquid and vapor is done assuming phase equilibrium. 
 
 To reserve memory space for some of these diagnostic variables, the code implementation considers two global variables, namely, {\tt inb\_scal} and {\tt inb\_scal\_array}. The first one is the number of prognostic variables, and the latter is the number of prognostic and diagnostic variables. In principle, this should be specified through the variable {\tt imixture} in the input file. The average statistical data is calculated for all of them, prognostic and diagnostic variables.
 
@@ -157,7 +156,7 @@ and $\Da_i$ are the Damk{\"o}hler numbers. A reaction mechanism needs to be give
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Incompressible formulation}
 
-We need to solve a Poisson equation for the pressure.
+We need to solve a Poisson equation for the pressure. The thermodynamics is normalized differently.
 
 \subsubsection{Anelastic formulation}
 
@@ -181,7 +180,7 @@ The dynamic pressure $p'$ satisfies the following Poisson equation:
     -\partial_k ( u_i u_k )+\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
     \right)\right]\;.
 \end{equation}
-So far, only the case $\mu^*=1$ in the equations above has been implemented. The variables in these equations are assumed to be nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
+So far, only the case $\mu^*=1$ in the equations above has been implemented. The dynamic variables in these equations are  nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
 
 The thermodynamics is defined by the background profiles $\{\rho_\mathrm{bg},\, p_\mathrm{bg},\, T_\mathrm{bg},\, Y_\mathrm{bg}\}$, which are steady and satisfy the hydrostatic balance equation,
 \begin{equation}
@@ -199,13 +198,19 @@ The two equations above relate 4 thermodynamic variables, so we need two additio
 \end{equation}
 The remaining scalars are the composition (e.g., total water specific humidity and liquid water specific humidity in the case of the airwater mixture). If there is only one species, then $R_\mathrm{bg}=1$ and we only need one additional constraint. 
 
-The thermodynamics is nondimensionalized by the reference scales $p_0$, $T_0$ and $R_0$, such that $\rho_0=p_0(R_0T_0)^{-1}$ and
+The thermodynamic variables are nondimensionalized by $\rho_0$, $T_0$ and $R_0$, such that $p_0=\rho_0R_0T_0$. (Note the difference with the compressible formulation, where the pressure was nondimensionalized with $\rho_0U_0^2$.) The equations depend on the nondimensional parameter
 \begin{equation}
-    \mathbf{H} = \frac{R_0T_0}{gL_0}
+    (\gamma_0-1)/\gamma_0 \;,
 \end{equation}
-is a nondimensional scale height. This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. The default reference values are $p_0=10^5$~Pa and $T_0=298~K$, and are set in \texttt{thermo\_initilize}. A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}.
+a conversion factor between gas constants and heat capacities (thermal equation of state and caloric equation of state). We refer to it in the code as \texttt{GRATIO}. The default reference values are $p_0=10^5$~Pa and $T_0=298$~K, and are set in \texttt{Thermodynamics\_Initilize}. 
 
-The code sets the parameters \texttt{RRATIO}, \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1, and we can use the same thermodynamic routines that in the compressible formulation. %Note that \texttt{GRATIO} is $(\gamma_0-1)/\gamma_0$ and remains as conversion factor between gas constants and heat capacities.
+The nondimensional scale height is
+\begin{equation}
+    \mathbf{H} = \frac{R_0T_0}{gL_0} \;.
+\end{equation}
+This is a new thermodynamic parameter that appears in the anelastic formulation and needs to be provided in \texttt{tlab.ini}. 
+
+A dimensional formulation can be considered by setting the parameter \texttt{nondimensional} equal to \texttt{.false.}, which sets \texttt{GRATIO} equal to 1
 
 \subsubsection{Incompressible formulation}
 
@@ -222,13 +227,13 @@ Dynamics and thermodynamics are at most coupled by the buoyancy field, and therm
 \end{subequations}
 So far, only the case $\mu^*=1$ in the equations above has been implemented.
 
-Because of the decoupling between the momentum and the internal energy evolution equations, one of the scalar equations can correspond to the internal energy equation. Reaction or phase change processes, as well as radiation processes, can then be formulated as the appropriate source terms $\mathrm{\bf   Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$, respectively, in the corresponding scalar equation. Note that the physical meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf   Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a non-dimensional heat parameter, and not a timescale ratio -- which is the correct meaning of the Damk{\"o}hler numbers appearing in the evolution equations for the components in a compressible mixture. We maintain this inconsistency, instead of introducing new symbols and variables, for code simplicity.
+Because of the decoupling between the momentum and the internal energy evolution equations, one of the scalar equations can correspond to the internal energy equation. Reaction or phase change processes, as well as radiation processes, can then be formulated as the appropriate source terms $\mathrm{\bf   Da}_\mathrm{L}w_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}w_\mathrm{R}$, respectively, in the corresponding scalar equation. %Note that the physical meaning of the corresponding (generalized) Damk{\"o}hler numbers $\mathrm{\bf   Da}_\mathrm{L}$ and $\mathrm{\bf Da}_\mathrm{R}$ is a nondimensional heat parameter, and not a timescale ratio -- which is the correct meaning of the Damk{\"o}hler numbers appearing in the evolution equations for the components in a compressible mixture. We maintain this inconsistency, instead of introducing new symbols and variables, for code simplicity.
 
-Another consequence of the decoupling between the momentum and the internal energy evolution equations is that the compressibility terms in the code are not needed. We set \texttt{MRATIO} and \texttt{CRATIO\_INV} equal to 1. The thermodynamic modules can still be used, and the formulation can also be dimensional or non-dimensional. In non-dimensional, the thermodynamic pressure is nondimensionalized by $p_0=\rho_0R_0T_0$ instead of $\rho_0U_0^2$. The parameter \texttt{GRATIO} remains in the governing equations to relate gas constant and heat capacity (thermal equation of state and caloric equation of state).
+The formulation of the thermodynamics is the same as in the anelastic formulation.
 
 \subsubsection{Body force}
 
-In the incompressible case, $b(\mathbf{x},t)=b^e(\zeta_i(\mathbf{x},t),\mathbf{x},t)$ and the buoyancy function $b^e(\zeta_i,\mathbf{x},t)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that non-dimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
+In the incompressible case, $b(\mathbf{x},t)=b^e(\zeta_i(\mathbf{x},t),\mathbf{x},t)$ and the buoyancy function $b^e(\zeta_i,\mathbf{x},t)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that nondimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
 
 For the buoyancy function (see routine {\tt mappings/fi\_buoyancy}), the common expressions are a linear or bilinear relation to the scalar fields as
 \begin{equation}
@@ -308,22 +313,87 @@ The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0
 
 \subsubsection{Radiation}
 
-Radiation heating or cooling can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,r\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding non-dimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) heat parameter $Q$. So far, $\mathrm{\bf Da}_\mathrm{R}=1$ (to be added at the end of the input list of the Damk{\"o}hler numbers?). One possible formulation is a one-dimensional bulk model (see routine {\tt operators/opr\_radiation}), which is represented by radiation functions of the form
-\begin{equation}
-    \omega_\mathrm{R}=\alpha_0 \zeta_{\gamma}\exp\left[
-    -\alpha_1^{-1}\int_z^\infty\zeta_{\gamma}(z')\,\mathrm{d}z'\right] \;.
-\end{equation}
-The scalar indeces $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\}$ need to be provided. Default values are $\beta=1$ and $\gamma=${\tt inb\_scal\_array}. The scalar fields can be average profiles, instead of instantaneous values, and non-linear mapping functions can be specified.
+Formally, radiation heating or cooling can be considered in the equations above as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,\omega_\mathrm{R}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding nondimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$ is normalized by the corresponding (dimensional) heat parameter $Q$. 
 
-For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
+Practically, the implementation is completely embedded in the routine {\tt mappings/radiation} and uses data provided in the block \texttt{[Radiation]} (i.e., assumes $\mathrm{\bf Da}_\mathrm{R}=1$ and all coefficients enter in the definition of $\omega_\mathrm{R}$). 
+
+In a one-dimensional bulk model, the source term is expressed in terms of upward and downward fluxes according to
 \begin{equation}
-    \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
+    \omega_\mathrm{R}=-\partial_z(F_\uparrow -F_\downarrow) \;.
 \end{equation}
-The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
+($F_\downarrow$ is defined positive going downwards.) The fluxes are obtained from the transfer equation
+\begin{equation}
+    \partial_s F+(a/\mu) F = 2\pi\mu a B\;,\qquad F|_{s=0}=F_0 \;,
+\end{equation}
+where $s$ is the distance, $B=\sigma T^4/\pi$ is the emission function, and 
+\begin{equation}
+    a = \kappa_1 \rho \zeta_1 + \kappa_2 \rho \zeta_2 + \ldots
+\end{equation}
+is the bulk absorption coefficient, the constants $\kappa_i$ being the corresponding mass absorption coefficients. The source term is then given by
+\begin{equation}
+    \omega_\mathrm{R}=(a/\mu) (F_\uparrow +F_\downarrow) - 4\pi\mu a B \;.
+\end{equation}
+(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\mu\in[1/\sqrt{3},1/\sqrt{2}]$; \textbf{Using 0.5 because it yields better agreement with ARTS}. The solution to the transfer equation yields
+\begin{subequations}
+    \begin{align}
+        F_\uparrow &= e^{-\tau(z_\mathrm{min},z)/\mu}\left[ F_{\uparrow,z_\mathrm{min}} + 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{\tau(z_\mathrm{min},z')/\mu}\mathrm{d}z'\right]\notag \\
+        &= F_{\uparrow,z_\mathrm{min}}e^{-\tau(z_\mathrm{min},z)/\mu}+ 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{-\tau(z',z)/\mu}\mathrm{d}z' \;,\\
+        F_\downarrow &= e^{-\tau(z,z_\mathrm{max})/\mu}\left[ F_{\downarrow,z_\mathrm{max}} + 2\pi\mu\int_z^{z_\mathrm{max}} a B e^{\tau(z',z_\mathrm{max})/\mu}\mathrm{d}z'\right]\notag \\
+        &=F_{\downarrow,z_\mathrm{max}}e^{-\tau(z,z_\mathrm{max})/\mu} + 2\pi\mu\int_z^{z_\mathrm{max}} a B e^{-\tau(z,z')/\mu}\mathrm{d}z'\;,
+    \end{align}
+\end{subequations}
+where the optical-depth function is defined as
+\begin{equation}
+    \tau(z_1, z_2) = \int_{z_1}^{z_2}a(z')\mathrm{d} z'
+\end{equation}
+and we have used the relationship
+\begin{equation}
+    \tau(z_1, z_2) = \tau(z_1, z') + \tau(z', z_2)\;,\qquad z_1\le z'\le z_2 \;.
+\end{equation}
+
+One model sets the emission function to zero and consider only the liquid water. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$ and $F_{\uparrow,z_\mathrm{min}}$.
+
+Another model considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the equation
+\begin{equation}
+    F_{\uparrow,z_\mathrm{min}} = \epsilon 2\pi\mu B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
+\end{equation}
+The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v}$ and the surface emission $\epsilon\in[0,1]$. Note that we need to solve the downward flux to obtain its value at $z=z_\mathrm{min}$ to use this equation and then solve for the upward flux.
+
+% One formulation is a one-dimensional bulk model, where
+% \begin{equation}
+%     \omega_\mathrm{R}=\zeta_{\gamma}\left(
+%         \alpha_0 \exp\left[-\alpha_1^{-1}\int_z^{z_\infty}\zeta_{\gamma}(z')\,\mathrm{d}z'\right]
+%         + \alpha_2 \exp\left[-\alpha_1^{-1}\int_0^z\zeta_{\gamma}(z')\,\mathrm{d}z'\right] 
+%     \right)\;.
+% \end{equation}
+% The scalar indices $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\,,\alpha_2\}$ need to be provided. Default values are $\beta=1$, $\gamma=${\tt inb\_scal\_array} and $\alpha_2=0$. The scalar field $ \zeta_{\gamma}$ can be an average profile, instead of instantaneous values, and nonlinear mapping functions can be specified.
+
+% For clarity, this corresponds to
+% \begin{equation}
+%     \omega_\mathrm{R}=-\partial_zF\;,\qquad
+%     F = F_{c,0}\exp\left[-\kappa\int_z^{z_\infty}\rho q_\mathrm{l}\,\mathrm{d}z'\right]
+%     + F_{c,1}\exp\left[-\kappa\int_0^z\rho q_\mathrm{l}\,\mathrm{d}z'\right]
+% \end{equation}
+% with
+% \begin{equation}
+%     \alpha_0=-F_{c,0} \kappa\;,\qquad \alpha_1=\kappa^{-1}\;,\qquad \alpha_2=F_{c,1} \kappa\;,\qquad \zeta_{\gamma}=\rho q_\mathrm{l}\;,
+% \end{equation}
+% where $\rho q_\mathrm{l}$ is the liquid water content. The flux is the sum $F=F_\uparrow +F_\downarrow$ of the solutions to the linear problems
+% \begin{subequations}
+%     \begin{align}
+%         &\partial_z F_\downarrow=\phantom{-}\kappa \rho q_\mathrm{l} F_\downarrow\;,\qquad F_\downarrow|_{z=z_\infty}=F_{c,0}\;,\\
+%         &\partial_z F_\uparrow=-\kappa \rho q_\mathrm{l} F_\uparrow\;,\qquad F_\uparrow|_{z=0}=F_{c,1}\;.
+%     \end{align}
+% \end{subequations}
+% For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
+% \begin{equation}
+%     \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
+% \end{equation}
+% The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
 
 \subsubsection{Transport}
 
-Transport phenomena different from molecular transport, e.g., that due to particle sedimentation, can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{T}\,\omega_\mathrm{T}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{T}$ is the corresponding non-dimensional transport parameter and the transport function $\omega_\mathrm{T}^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) transport parameter.
+Transport phenomena different from molecular transport, e.g., that due to particle sedimentation, can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{T}\,\omega_\mathrm{T}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{T}$ is the corresponding nondimensional transport parameter and the transport function $\omega_\mathrm{T}^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) transport parameter.
 
 For the transport function, see routine {\tt mappings/fi\_sources}.
 

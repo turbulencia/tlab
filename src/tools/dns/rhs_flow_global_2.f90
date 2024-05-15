@@ -21,7 +21,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     use TLAB_VARS, only: idiffusion, visc, prandtl
     use TLAB_ARRAYS, only: s
     use TLAB_POINTERS
-    use THERMO_VARS, only: CRATIO_INV
+    use Thermodynamics, only: CRATIO_INV
     use THERMO_CALORIC
     use DNS_ARRAYS
     use BOUNDARY_BCS

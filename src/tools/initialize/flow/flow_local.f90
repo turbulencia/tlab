@@ -407,7 +407,7 @@ contains
     !########################################################################
     subroutine DENSITY_FLUCTUATION(s, p, rho, T, h)
         use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
-        use THERMO_VARS, only: imixture
+        use Thermodynamics, only: imixture
 
         real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
         real(wp), dimension(imax, jmax, kmax, *) :: s
@@ -529,8 +529,8 @@ contains
     !# assuming p/rho^\gamma0 constant(Homentropic conditions)
     ! ###################################################################
     subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4)
-        use THERMO_VARS, only: gama0
-
+        use TLAB_VARS, only: gama0
+        
         real(wp), dimension(imax, jmax, kmax), intent(in) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: rho, p, pprime
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: txc1, txc2, txc3, txc4

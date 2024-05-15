@@ -4,7 +4,7 @@ program SMOOTH
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS
+    use Thermodynamics
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER
@@ -21,7 +21,7 @@ program SMOOTH
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call THERMO_INITIALIZE
+    call Thermodynamics_Initialize()
     ep = 0.0_wp
 
     write (*, *) 'Case d-e (1) or d-p (2) or p-h (3) ?'
@@ -69,14 +69,14 @@ program SMOOTH
         z1(1) = qt(1)
         if (opt == 1) then
             call THERMO_CALORIC_TEMPERATURE(1, z1, e, rho, T, dqldqt)
-            call THERMO_POLYNOMIAL_PSAT(1, T, qs)
+            call Thermo_Psat_Polynomial(1, T, qs)
             qs = qs/(rho*T*Rv)
             call THERMO_THERMAL_PRESSURE(1, z1, rho, T, p)
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 2) then
             call THERMO_AIRWATER_RP(1, z1, p, rho, T, dqldqt)
-            call THERMO_POLYNOMIAL_PSAT(1, T, qs)
+            call Thermo_Psat_Polynomial(1, T, qs)
             qs = qs/(rho*T*Rv)
             call THERMO_CALORIC_ENERGY(1, z1, T, e)
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
@@ -86,7 +86,7 @@ program SMOOTH
             s(1) = h(1); s(2:3) = z1(1:2)
             call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, T)
 !        CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
-            call THERMO_POLYNOMIAL_PSAT(1, T, qs)
+            call Thermo_Psat_Polynomial(1, T, qs)
             qs = 1.0_wp/(p/qs - 1.0_wp)*rd_ov_rv
             qs = qs/(1.0_wp + qs)
             call THERMO_THERMAL_DENSITY(1, z1, p, T, rho)

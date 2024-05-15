@@ -17,7 +17,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     use TLAB_POINTERS
     use TLAB_ARRAYS, only: s
     use DNS_ARRAYS, only: hq, hs
-    use THERMO_VARS, only: CRATIO_INV
+    use Thermodynamics, only: CRATIO_INV
     use OPR_PARTIAL
 
     implicit none

@@ -13,7 +13,7 @@ subroutine PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
     use PARTICLE_VARS
     use PARTICLE_ARRAYS, only: l_g ! but this is also varying, like l_q...
     use PARTICLE_INTERPOLATE
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture
     use THERMO_AIRWATER
 #ifdef USE_MPI
     use MPI

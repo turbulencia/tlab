@@ -4,14 +4,14 @@ program STATE
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS
+    use Thermodynamics
     use THERMO_THERMAL
     use THERMO_ANELASTIC
     use THERMO_CALORIC
 
     implicit none
 
-    real(wp) p(1), ps(1), t(1), qs(1), qv(1), qt(1), ql(1), r(1), e(1), h(1), z1(2), dummy(1), dqldqt(1), ep(1), theta(1), theta_e(1), Td(1)
+    real(wp) p(1), ps(1), t(1), qs(1), qv(1), qt(1), ql(1), r(1), e(1), h(1), z1(2), dummy(1), dqldqt(1), ep(1), theta_v(1), theta_l(1), theta_e(1), Td(1)
     real(wp) heat1(1), heat2(1), cp1(1), cp2(1), alpha(1), as(1), bs(1)
     real(wp) r1(1), h1(1), s(3)
     integer(wi) iopt
@@ -21,8 +21,8 @@ program STATE
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call THERMO_INITIALIZE()
-    ep = 1.0_wp
+    call Thermodynamics_Initialize()
+    ep = 0.0_wp
     dsmooth = 1.0_wp
     scaleheight = 1.0_wp
 
@@ -30,11 +30,12 @@ program STATE
     read (*, *) iopt
 
     if (iopt == 1) then
-        write (*, *) 'temperature (K) ?'
+        write (*, *) 'temperature (C) ?'
         read (*, *) t
-        t = t/TREF !t = (t+273.15)/TREF
-        write (*, *) 'pressure (bar) ?'
+        t = t + 273.15
+        write (*, *) 'pressure (hPa) ?'
         read (*, *) p
+        p = p *100.0_wp
 
     else if (iopt == 2) then
         write (*, *) 'density ?'
@@ -45,8 +46,9 @@ program STATE
     else if (iopt == 3) then
         write (*, *) 'enthalpy (kJ/kg)?'
         read (*, *) h
-        write (*, *) 'pressure (bar) ?'
+        write (*, *) 'pressure (hPa) ?'
         read (*, *) p
+        p = p *100.0_wp
 
     end if
 
@@ -61,7 +63,7 @@ program STATE
 
 ! ###################################################################
     if (iopt == 1) then
-        call THERMO_POLYNOMIAL_PSAT(1, t, ps)
+        call Thermo_Psat_Polynomial(1, t, ps)
         qs = 1.0_wp/(p/ps - 1.0_wp)*rd_ov_rv
         qs = qs/(1.0_wp + qs)
         if (qt(1) > qs(1)) then
@@ -69,7 +71,7 @@ program STATE
             ql = qt - qv
         else
             qv = qt
-            ql = 1.0_wp
+            ql = 0.0_wp
         end if
         z1(1) = qt(1)
         z1(2) = ql(1)
@@ -78,7 +80,8 @@ program STATE
         call THERMO_THERMAL_DENSITY(1, z1, p, t, r)
 
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta)
+        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v)
+        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l)
         call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e)
         call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, Td, dummy)
 
@@ -89,18 +92,19 @@ program STATE
         qv = qt - ql
         qs = qv ! initial condition for next routine
         call THERMO_THERMAL_PRESSURE(1, z1, r, t, p)
-        call THERMO_POLYNOMIAL_PSAT(1, t, ps)
+        call Thermo_Psat_Polynomial(1, t, ps)
         qs = 1.0_wp/(p/ps - 1.0_wp)*rd_ov_rv
         qs = qs/(1.0_wp + qs)
         call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
 
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta)
+        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v)
+        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l)
         call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e)
         call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, Td, dummy)
 
     else if (iopt == 3) then
-        h = h/TREF/1.007
+        ! h = h/TREF/1.007
         z1(1) = qt(1)
         call THERMO_ANELASTIC_PH(1, 1, 1, z1, h)
         s(1) = h(1); s(2:3) = z1(1:2)
@@ -109,12 +113,14 @@ program STATE
         ql(1) = z1(2)
         qv = qt - ql
 
-        call THERMO_POLYNOMIAL_PSAT(1, T, ps)
+        call Thermo_Psat_Polynomial(1, T, ps)
         qs = 1.0_wp/(p/ps - 1.0_wp)*rd_ov_rv
         qs = qs/(1.0_wp + qs)
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)
         call THERMO_CALORIC_ENERGY(1, z1, T, e)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta)
+
+        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v)
+        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l)
         call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e)
         call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, Td, dummy)
 
@@ -125,21 +131,22 @@ program STATE
 
     end if
 
-    write (*, 1000) 'Saturation specific humidity ......:', qs
-    write (*, 1000) 'Vapor specific humidity ...........:', qv
-    write (*, 1000) 'Liquid specific humidity ..........:', ql
+    write (*, 1000) 'Saturation specific humidity (g/kg):', qs*1.0e3_wp
+    write (*, 1000) 'Vapor specific humidity (g/kg).....:', qv*1.0e3_wp
+    write (*, 1000) 'Liquid specific humidity (g/kg)....:', ql*1.0e3_wp
     write (*, 1000) 'Density ...........................:', r
-    write (*, 1000) 'Pressure (bar) ....................:', p
-    write (*, 1000) 'Saturation pressure (bar) .........:', ps
-    write (*, 1000) 'Temperature (K) ...................:', t*TREF !- 273.15
-    write (*, 1000) 'Dewpoint temperature (K) ..........:', Td*TREF
-    write (*, 1000) 'Specific heat capacity ............:', Cd + qt*Cdv + ql*Cvl
-    write (*, 1000) 'Specific energy ...................:', e
-    write (*, 1000) 'Specific enthalpy .................:', h
-    write (*, 1000) 'Reference latent heat (kJ/kg) .....:', -THERMO_AI(6, 1, 3)*1.007*TREF
-    write (*, 1000) 'Latent heat (kJ/kg) ...............:', (-Cl - t*Lvl)*1.007*TREF
-    write (*, 1000) 'Liquid-water potential T (K) ......:', theta*TREF
-    write (*, 1000) 'Equivalent potential T (K) ........:', theta_e*TREF
+    write (*, 1000) 'Pressure (hPa) ....................:', p/100.0_wp
+    write (*, 1000) 'Saturation pressure (hPa) .........:', ps/100.0_wp
+    write (*, 1000) 'Temperature (K) ...................:', t !- 273.15
+    write (*, 1000) 'Dewpoint temperature (K) ..........:', Td
+    write (*, 1000) 'Specific heat capacity (J/kg/T)....:', Cd + qt*Cdv + ql*Cvl
+    write (*, 1000) 'Specific energy  (J/kg)............:', e
+    write (*, 1000) 'Specific enthalpy (J/kg)...........:', h
+    write (*, 1000) 'Reference latent heat (J/kg) ......:', -THERMO_AI(6, 1, 3)
+    write (*, 1000) 'Latent heat (J/kg) ................:', (-Cl - t*Lvl)
+    write (*, 1000) 'Virtual potential T (K) ...........:', theta_v
+    write (*, 1000) 'Liquid-water potential T (K) ......:', theta_l
+    write (*, 1000) 'Equivalent potential T (K) ........:', theta_e
     if (iopt == 3) then
         write (*, 1000) 'Density ...........................:', r1
         write (*, 1000) 'Specific enthalpy .................:', h1
@@ -155,10 +162,10 @@ program STATE
         heat2 = heat1*(1.0_wp + qv/(1.0_wp - qt)) - Cdv*t
 
         cp1 = (1.0_wp - qt)*Cd + qv*THERMO_AI(1, 1, 1) + ql*Cl
-        dummy = (heat1**2)*qv/((t**2)*cp1*GRATIO*Rv)
+        dummy = (heat1**2)*qv/((t**2)*cp1*CRATIO_INV*Rv)
         cp2 = cp1*(1.0_wp + dummy*(1.0_wp + qv/(1.0_wp - qt)/rd_ov_rv))
 
-        alpha = 1.0_wp + heat1*qv/((1.0_wp - qt)*GRATIO*Rd*t)
+        alpha = 1.0_wp + heat1*qv/((1.0_wp - qt)*CRATIO_INV*Rd*t)
 
         as = -alpha/cp2/t
         bs = heat2*as + 1.0_wp/(1.0_wp - qt)

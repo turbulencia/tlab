@@ -10,7 +10,7 @@ module FLOW_MEAN
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk3d
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use PROFILES

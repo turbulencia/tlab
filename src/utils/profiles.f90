@@ -28,7 +28,7 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#Diam'//trim(adjustl(tag))//'=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Thick'//trim(adjustl(tag))//'=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Delta'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#BottomSlope'//trim(adjustl(tag))//'=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#LowerSlope'//trim(adjustl(tag))//'=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#UpperSlope'//trim(adjustl(tag))//'=<value>')
 
         ! -------------------------------------------------------------------
@@ -100,7 +100,7 @@ contains
             end if
         end if
 
-        call SCANINIREAL(bakfile, inifile, block, 'BottomSlope'//trim(adjustl(tag)), '0.0', var%lslope)
+        call SCANINIREAL(bakfile, inifile, block, 'LowerSlope'//trim(adjustl(tag)), '0.0', var%lslope)
         call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//trim(adjustl(tag)), '0.0', var%uslope)
         call SCANINIREAL(bakfile, inifile, block, 'Diam'//trim(adjustl(tag)), '0.0', var%diam)
 

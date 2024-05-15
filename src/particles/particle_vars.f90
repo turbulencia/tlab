@@ -1,5 +1,5 @@
 module PARTICLE_VARS
-    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_NSP
+    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_VARS
     use TLAB_TYPES, only: profiles_dt, term_dt
     use PARTICLE_TYPES
     implicit none
@@ -14,15 +14,23 @@ module PARTICLE_VARS
     ! integer, parameter :: PART_TYPE_NEW_CASES = 6
     integer, parameter :: PART_TYPE_TINIA_1 = 6
 
+    type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
+
+    ! Possible values of part_bcs
+    integer, parameter :: PART_BCS_NONE = 0
+    integer, parameter :: PART_BCS_STICK = 1            ! particles remain at the surface (one limit case of inelastic)
+    integer, parameter :: PART_BCS_SPECULAR = 2         ! elastic, specular collision
+    ! integer, parameter :: PART_BCS_INELASTIC = 3        ! I guess this needs a coefficient for the energy loss in collision
+
+    integer            :: part_bcs
+
     ! Posible values of imode_traj
     integer, parameter :: TRAJ_TYPE_NONE = 0
     integer, parameter :: TRAJ_TYPE_BASIC = 1           ! save particle prognostic properties
     integer, parameter :: TRAJ_TYPE_EULERIAN = 2        ! add the Eulerian prognostic properties
     integer, parameter :: TRAJ_TYPE_VORTICITY = 3       ! add the Eulerian vorticity
 
-    type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
-
-    character(len=32) :: part_spname(MAX_NSP)
+    character(len=32) :: part_spname(MAX_VARS)
 
     integer(longi)    :: isize_part_total             ! total # of particles
     integer(wi)       :: isize_part                   ! maximum # of particles per processor (to allocate memory space)

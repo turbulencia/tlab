@@ -1,6 +1,6 @@
 module TLAB_VARS
     use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt
-    use TLAB_CONSTANTS, only: MAX_VARS, MAX_NSP, wp, wi, sp
+    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
     save
@@ -60,7 +60,7 @@ module TLAB_VARS
 
 ! ###################################################################
     type(profiles_dt) :: qbg(3)                 ! Velocity background information
-    type(profiles_dt) :: sbg(MAX_NSP)           ! Scalars background information
+    type(profiles_dt) :: sbg(MAX_VARS)           ! Scalars background information
     type(profiles_dt) :: pbg, rbg, tbg, hbg     ! Pressure, density, temperature, enthalpy background information
 
     real(wp), allocatable :: sbackground(:, :)  ! Scalar reference profiles
@@ -68,8 +68,10 @@ module TLAB_VARS
 ! ###################################################################
     type(term_dt) :: buoyancy               ! Buoyancy parameters
     type(term_dt) :: coriolis               ! Coriolis parameters
-    type(term_dt) :: radiation              ! Radiation parameters
-    type(term_dt) :: transport              ! Transport parameters
+    type(term_dt) :: infrared               ! Radiation parameters
+    ! type(term_dt) :: visible                ! Radiation parameters
+    type(term_dt) :: sedimentation          ! Microphysics parameters
+    ! type(term_dt) :: evaporation            ! Microphysics parameters
     type(term_dt) :: chemistry              ! Chemistry parameters
     type(term_dt) :: subsidence             ! Large-scale parameters
     type(term_dt) :: random                 ! Random Forcing parameters
@@ -77,9 +79,10 @@ module TLAB_VARS
 ! ###################################################################
 ! Nondimensional numbers
 ! ###################################################################
-    real(wp) :: visc, prandtl, schmidt(MAX_NSP)     ! molecular transport
+    real(wp) :: visc, prandtl, schmidt(MAX_VARS)    ! molecular transport
     real(wp) :: mach                                ! compressibility
-    real(wp) :: damkohler(MAX_NSP)                  ! reaction
+    real(wp) :: gama0                               ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
+    real(wp) :: damkohler(MAX_VARS)                 ! reaction
     real(wp) :: froude                              ! body force
     real(wp) :: rossby                              ! Coriolis force
     real(wp) :: stokes                              ! inertial effects

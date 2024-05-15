@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 module DNS_LOCAL
-    use TLAB_CONSTANTS, only: MAX_NSP, wp, wi, sp
+    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
     USE TLAB_CONSTANTS, only: MAX_PATH_LENGTH
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
@@ -43,7 +43,7 @@ module DNS_LOCAL
 
     type(bounds_dt) bound_p             ! limit pressure in compressible flows
     type(bounds_dt) bound_r             ! limit density in compressible flows
-    type(bounds_dt) bound_s(MAX_NSP)    ! limit scalars
+    type(bounds_dt) bound_s(MAX_VARS)    ! limit scalars
     type(bounds_dt) bound_d             ! control dilatation in incompressible/anelastic flows
 
 ! Variable viscosity

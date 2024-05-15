@@ -46,17 +46,12 @@
 
 #define EQNS_COR_NORMALIZED        12
 
-#define EQNS_RAD_BULK1D_LOCAL      13
-#define EQNS_RAD_BULK1D_GLOBAL     14
-
 #define EQNS_RHS_SPLIT             18
 #define EQNS_RHS_COMBINED          19
 #define EQNS_RHS_NONBLOCKING       20
 
 #define EQNS_TRANS_POWERLAW             21
 #define EQNS_TRANS_SUTHERLAND           22
-#define EQNS_TRANS_AIRWATER             23
-#define EQNS_TRANS_AIRWATERSIMPLIFIED   24
 
 #define EQNS_CHEM_QUADRATIC             25
 #define EQNS_CHEM_QUADRATIC3            26

@@ -54,7 +54,7 @@ contains
         use TLAB_ARRAYS
         use THERMO_ANELASTIC
         use DNS_ARRAYS
-        use THERMO_VARS, only: imixture
+        use Thermodynamics, only: imixture
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
         use FI_SOURCES, only: FI_BUOYANCY

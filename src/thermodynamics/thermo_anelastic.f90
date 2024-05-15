@@ -13,11 +13,9 @@
 
 module THERMO_ANELASTIC
     use TLAB_CONSTANTS, only: wp, wi
-    use THERMO_VARS, only: imixture, gama0, GRATIO
-    use THERMO_VARS, only: CRATIO_INV, MRATIO
-    use THERMO_VARS, only: THERMO_PSAT, NPSAT
-    use THERMO_VARS, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
-    use THERMO_VARS, only: scaleheight
+    use Thermodynamics, only: imixture, GRATIO, scaleheight
+    use Thermodynamics, only: THERMO_PSAT, NPSAT
+    use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
     implicit none
     private
 
@@ -174,7 +172,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*pbackground(is)
+                P_LOC = pbackground(is)
                 E_LOC = epbackground(is)
 
                 do i = 1, nx
@@ -233,7 +231,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                P_LOC = MRATIO*pbackground(is)
+                P_LOC = pbackground(is)
                 E_LOC = epbackground(is)
                 R_LOC = rbackground(is)
                 R_LOC_INV = 1.0_wp/R_LOC
@@ -724,7 +722,7 @@ contains
                 E_LOC = epbackground(is)
                 R_LOC = rbackground(is)
 
-                RT_INV = R_LOC/(MRATIO*P_LOC)/scaleheight
+                RT_INV = R_LOC/(P_LOC)/scaleheight
 
                 do i = 1, nx
                     ij = ij + 1
@@ -817,7 +815,7 @@ contains
                     end do
 !           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                     Td(ij) = T_LOC
-                    Lapse(ij) = scaleheightinv*R_LOC/(MRATIO*P_LOC)*psat/dpsat
+                    Lapse(ij) = scaleheightinv*R_LOC/(P_LOC)*psat/dpsat
 
                 end do
             end do
@@ -863,7 +861,7 @@ contains
                         ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                         ! print*,NEWTONRAPHSON_ERROR
                         Td(ij) = T_LOC
-                        Lapse(ij) = scaleheightinv*R_LOC/(MRATIO*P_LOC)*psat/dpsat
+                        Lapse(ij) = scaleheightinv*R_LOC/(P_LOC)*psat/dpsat
 
                     end if
 
@@ -1037,7 +1035,7 @@ contains
     !# Calculating the equilibrium T and q_l for given enthalpy and pressure.
     !# Assumes often that THERMO_AI(6,1,1) = THERMO_AI(6,1,2) = 0
     !#
-    !# Routine THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+    !# Routine Thermo_Psat_Polynomial is duplicated here to avoid array calls
     !#
     !# Smoothing according to Eq. 25 in Mellado et al., TCFD, 2010
     !#
@@ -1046,7 +1044,7 @@ contains
     !#
     !########################################################################
     subroutine THERMO_ANELASTIC_PH(nx, ny, nz, s, h)
-        use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
+        use Thermodynamics, only: dsmooth, NEWTONRAPHSON_ERROR
 
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(inout) :: s(nx*ny*nz, *)

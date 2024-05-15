@@ -6,14 +6,13 @@
 ! we use explicit-shape arrays in arguments for the routines to be callable with different array ranks
 
 module THERMO_AIRWATER
-    use TLAB_VARS, only: inb_scal
     use TLAB_CONSTANTS, only: wp, wi, small_wp, big_wp
-    use THERMO_VARS, only: imixture, gama0, GRATIO
-    use THERMO_VARS, only: CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
-    use THERMO_VARS, only: THERMO_PSAT, NPSAT
-    use THERMO_VARS, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
-    use THERMO_VARS, only: dsmooth, NEWTONRAPHSON_ERROR
-    use THERMO_VARS, only: thermo_param
+    use TLAB_VARS, only: inb_scal, gama0
+    use Thermodynamics, only: imixture, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
+    use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial
+    use Thermodynamics, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
+    use Thermodynamics, only: dsmooth, NEWTONRAPHSON_ERROR
+    use Thermodynamics, only: thermo_param
     use THERMO_THERMAL
     implicit none
     private
@@ -42,7 +41,7 @@ contains
         real(wp) dqldqt
 
         ! ###################################################################
-        call THERMO_POLYNOMIAL_PSAT(ijmax, T, s(1, 2))
+        call Thermo_Psat_Polynomial(ijmax, T, s(1, 2))
         do ij = 1, ijmax
             ! this is really the vapor content
             qsat = 1.0_wp/(p(ij)/s(ij, 2) - 1.0_wp)*rd_ov_rv*(1.0_wp - s(ij, 1))
@@ -92,7 +91,7 @@ contains
         ! -------------------------------------------------------------------
         if (dsmooth <= 0.0_wp) then
             ! calculate saturation specific humidity, in array s(1,2).
-            ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+            ! Thermo_Psat_Polynomial is duplicated here to avoid array calls
             do ij = 1, ijmax
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
@@ -132,8 +131,8 @@ contains
 
                 ! calculate dqldqt
                 qsat = s(ij, 2)
-                alpha = -Lvl - (Cvl + GRATIO*Rv)*t_loc
-                alpha = alpha/(t_loc*GRATIO*Rv) - 1.0_wp
+                alpha = -Lvl - (Cvl + CRATIO_INV*Rv)*t_loc
+                alpha = alpha/(t_loc*CRATIO_INV*Rv) - 1.0_wp
 
                 dummy = p(ij)/(qsat*rho(ij)*Rv*t_loc)
 
@@ -180,7 +179,7 @@ contains
                 ERROR_LOC = max(ERROR_LOC, abs(FUN/DER)/T(ij))
 
                 ! calculate saturation specific humidity, in array s(1,2).
-                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+                ! Thermo_Psat_Polynomial is duplicated here to avoid array calls
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(ij) + THERMO_PSAT(ipsat)
@@ -270,7 +269,7 @@ contains
             T(ij) = e(ij) - (Ld + s(ij, 1)*Ldv)
             CPMEAN = Cd + s(ij, 1)*Cdv
             RMEAN = Rd + s(ij, 1)*Rdv
-            T(ij) = (e(ij) - (Ld + s(ij, 1)*Ldv))/(CPMEAN - RMEAN*GRATIO)
+            T(ij) = (e(ij) - (Ld + s(ij, 1)*Ldv))/(CPMEAN - RMEAN*CRATIO_INV)
         end do
 
         ! -------------------------------------------------------------------
@@ -278,7 +277,7 @@ contains
         ! -------------------------------------------------------------------
         if (dsmooth <= 0.0_wp) then
             ! calculate saturation specific humidity, in array s(1,2).
-            ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid array calls
+            ! Thermo_Psat_Polynomial is duplicated here to avoid array calls
             do i = 1, ijmax
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
@@ -289,7 +288,7 @@ contains
 
         else
             ! initialize homogeneous data
-            HEAT_CAPACITY_VD = Rdv*GRATIO - Cdv
+            HEAT_CAPACITY_VD = Rdv*CRATIO_INV - Cdv
             do i = 1, 9
                 B_LOC(i) = -THERMO_PSAT(i)*Ldv
             end do
@@ -303,7 +302,7 @@ contains
             ! loop on all points
             do i = 1, ijmax
                 B_LOC(2) = B_LOC_CONST_2 + rho(i)*Rv*(e(i) - Lv)
-                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(Cd - GRATIO*Rd)
+                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(Cd - CRATIO_INV*Rd)
                 ! Newton-Raphson
                 t_loc = T(i)
                 do inr = 1, nrmax
@@ -317,7 +316,7 @@ contains
                 end do
                 NEWTONRAPHSON_ERROR = max(NEWTONRAPHSON_ERROR, abs(FUN/DER)/t_loc)
                 ! calculate saturation specific humidity, in array s(1,2).
-                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid routine calls
+                ! Thermo_Psat_Polynomial is duplicated here to avoid routine calls
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
                     psat = psat*t_loc + THERMO_PSAT(ipsat)
@@ -326,13 +325,13 @@ contains
 
                 ! calculate dqldqt
                 qsat = s(i, 2)
-                alpha = -Lvl - (Cvl + GRATIO*Rv)*t_loc
-                alpha = alpha/(t_loc*GRATIO*Rv) - 1.0_wp
+                alpha = -Lvl - (Cvl + CRATIO_INV*Rv)*t_loc
+                alpha = alpha/(t_loc*CRATIO_INV*Rv) - 1.0_wp
 
-                dummy1 = -Ldl - (Cdl + GRATIO*Rd)*t_loc
+                dummy1 = -Ldl - (Cdl + CRATIO_INV*Rd)*t_loc
                 dummy1 = dummy1*qsat*alpha
 
-                dummy2 = -Ldv + t_loc*GRATIO*Rv*alpha*(alpha + 1.0_wp)
+                dummy2 = -Ldv + t_loc*CRATIO_INV*Rv*alpha*(alpha + 1.0_wp)
                 dummy2 = dummy2*qsat + e(i) - Lv
 
                 dqldqt(i) = 1.0_wp - dummy1/dummy2
@@ -344,8 +343,8 @@ contains
         ! calculate final T and q_l
         ! -------------------------------------------------------------------
         ! initialize homogeneous data
-        HEAT_CAPACITY_LV = Cvl + GRATIO*Rv
-        HEAT_CAPACITY_LD = Cdl + GRATIO*Rd
+        HEAT_CAPACITY_LV = Cvl + CRATIO_INV*Rv
+        HEAT_CAPACITY_LD = Cdl + CRATIO_INV*Rd
         HEAT_CAPACITY_VD = HEAT_CAPACITY_LD - HEAT_CAPACITY_LV
         do i = 1, 9
             B_LOC(i) = THERMO_PSAT(i)*Lvl
@@ -369,13 +368,13 @@ contains
                               *log(exp((s(i, 1) - qsat)/dsmooth_loc) + 1.0_wp)
                     ! change T consistently
                     T(i) = (e(i) - s(i, 1)*Ldv - Lv - s(i, 2)*Lvl)/ &
-                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - GRATIO*Rd + s(i, 2)*HEAT_CAPACITY_LV)
+                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - CRATIO_INV*Rd + s(i, 2)*HEAT_CAPACITY_LV)
                 end if
 
                 ! if q_s < q_t, then we have to repeat calculation of T
             else
                 B_LOC(2) = B_LOC_CONST_2 + rho(i)*Rv*(e(i) - s(i, 1)*Ldl - Ld)
-                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(s(i, 1)*HEAT_CAPACITY_LD + Cd - GRATIO*Rd)
+                B_LOC(3) = B_LOC_CONST_3 - rho(i)*Rv*(s(i, 1)*HEAT_CAPACITY_LD + Cd - CRATIO_INV*Rd)
                 ! IF ( dsmooth .GT. 0.0_wp ) THEN
                 ! dsmooth_loc = dsmooth*qsat
                 ! alpha =-( dsmooth_loc*LOG(EXP((s(i,1)-qsat)/dsmooth_loc)+1.0_wp)
@@ -397,7 +396,7 @@ contains
                 NEWTONRAPHSON_ERROR = max(NEWTONRAPHSON_ERROR, abs(FUN/DER)/T(i))
 
                 ! calculate saturation specific humidity, in array s(1,2).
-                ! THERMO_POLYNOMIAL_PSAT is duplicated here to avoid routine calls
+                ! Thermo_Psat_Polynomial is duplicated here to avoid routine calls
                 psat = 0.0_wp
                 do ipsat = NPSAT, 1, -1
                     psat = psat*T(i) + THERMO_PSAT(ipsat)
@@ -413,7 +412,7 @@ contains
                               + s(i, 2) - dqldqt(i)*(s(i, 1) - qsat)
                     ! change T consistently
                     T(i) = (e(i) - s(i, 1)*Ldv - Lv - s(i, 2)*Lvl)/ &
-                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - GRATIO*Rd &
+                           (s(i, 1)*HEAT_CAPACITY_VD + Cd - CRATIO_INV*Rd &
                             + s(i, 2)*HEAT_CAPACITY_LV)
                 end if
             end if

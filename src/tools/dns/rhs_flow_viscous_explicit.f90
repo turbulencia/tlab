@@ -21,7 +21,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     use TLAB_VARS, only: visc
     use TLAB_POINTERS
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: CRATIO_INV
+    use Thermodynamics, only: CRATIO_INV
     use BOUNDARY_BCS
     use OPR_PARTIAL
 

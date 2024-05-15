@@ -14,7 +14,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
-    use THERMO_VARS, only: imixture, GRATIO, scaleheight, MRATIO
+    use Thermodynamics, only: imixture, GRATIO, RRATIO, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use PROFILES
@@ -38,7 +38,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
             rbg = tbg
             dummy = tbg%delta/tbg%mean
-            rbg%mean = MRATIO*pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
+            rbg%mean = pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)/RRATIO
             rbg%delta = -rbg%mean*dummy
 
         else if (rbg%type == PROFILE_NONE .and. hbg%type /= PROFILE_NONE) then
@@ -47,7 +47,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         else
             tbg = rbg
             dummy = rbg%delta/rbg%mean
-            tbg%mean = MRATIO*pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)
+            tbg%mean = pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)/RRATIO
             tbg%delta = -tbg%mean*dummy
 
         end if
@@ -213,7 +213,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
-    use THERMO_VARS, only: imixture, scaleheight
+    use Thermodynamics, only: imixture, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL

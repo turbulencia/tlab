@@ -74,7 +74,7 @@ program SL_BOUNDARY
     call DNS_START
 
     call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
+    call Thermodynamics_Initialize(ifile)
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif

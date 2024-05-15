@@ -12,10 +12,9 @@
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)
 
-    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, wfile, MajorVersion, MinorVersion
+    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
     use TLAB_PROCS
-    use THERMO_VARS
     use PROFILES
 #ifdef USE_MPI
     use TLAB_MPI_VARS
@@ -72,9 +71,8 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
     call TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermRadiation=<none/Bulk1dGlobal/Bulk1dLocal>')
     call TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland/Airwater/AirwaterSimplified>')
+    call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
     call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
     call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
@@ -136,17 +134,6 @@ subroutine IO_READ_GLOBAL(inifile)
 
     if (imode_sim == DNS_MODE_TEMPORAL) fourier_on = .true.
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
-    else if (trim(adjustl(sRes)) == 'air') then; imixture = MIXT_TYPE_AIR
-    else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
-    else if (trim(adjustl(sRes)) == 'airwater') then; imixture = MIXT_TYPE_AIRWATER
-    else if (trim(adjustl(sRes)) == 'airwaterlinear') then; imixture = MIXT_TYPE_AIRWATER_LINEAR
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong entry Main.Mixture model.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermAdvection', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; iadvection = EQNS_NONE
@@ -185,15 +172,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; radiation%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'bulk1dglobal') then; radiation%type = EQNS_RAD_BULK1D_GLOBAL
-    else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; radiation%type = EQNS_RAD_BULK1D_LOCAL
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermRadiation option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermSubsidence', 'None', sRes)
     if (trim(adjustl(sRes)) == 'none') then; subsidence%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'constantdivergencelocal') then; subsidence%type = EQNS_SUB_CONSTANT_LOCAL
@@ -205,13 +183,9 @@ subroutine IO_READ_GLOBAL(inifile)
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
-    if (trim(adjustl(sRes)) == 'sutherland') then; transport%type = EQNS_TRANS_SUTHERLAND; 
-    elseif (trim(adjustl(sRes)) == 'powerlaw') then; transport%type = EQNS_TRANS_POWERLAW; 
-    elseif (trim(adjustl(sRes)) == 'airwater') then; transport%type = EQNS_TRANS_AIRWATER; 
-    elseif (trim(adjustl(sRes)) == 'airwatersimplified') then; transport%type = EQNS_TRANS_AIRWATERSIMPLIFIED; 
-    else; transport%type = EQNS_NONE; end if
-
-    itransport = transport%type
+    if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
+    elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
+    else; itransport = EQNS_NONE; end if
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
@@ -338,11 +312,11 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Gama=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#Prandtl=<value>')
 
-    ! Molecular transport 
+    ! Molecular transport
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Reynolds', '-1.0', reynolds)
-    if ( reynolds <= 0.0 ) then
+    if (reynolds <= 0.0) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Viscosity', '-1.0', dummy)
-        if ( dummy <= 0.0 ) then
+        if (dummy <= 0.0) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Molecular transport coefficients need to be positive.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         else
@@ -351,19 +325,19 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
-    schmidt(:) = 0.0_wp; inb_scal = MAX_NSP
+    schmidt(:) = 0.0_wp; inb_scal = MAX_VARS
     call LIST_REAL(sRes, inb_scal, schmidt)
 
     ! Gravity
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Froude', '-1.0', froude)
-    if ( froude <= 0.0 ) then
+    if (froude <= 0.0) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gravity', '1.0', dummy)   ! default value
         froude = 1.0_wp/dummy
     end if
 
     ! Coriolis
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Rossby', '-1.0', rossby)
-    if ( rossby <= 0.0 ) then
+    if (rossby <= 0.0) then
         call SCANINIREAL(bakfile, inifile, 'Parameters', 'Coriolis', '1.0', dummy)   ! default value
         rossby = 1.0_wp/dummy
     end if
@@ -374,7 +348,7 @@ subroutine IO_READ_GLOBAL(inifile)
         lstr = trim(adjustl(lstr))//',0.0'
     end do
     call SCANINICHAR(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
-    damkohler(:) = 0.0_wp; idummy = MAX_NSP
+    damkohler(:) = 0.0_wp; idummy = MAX_VARS
     call LIST_REAL(sRes, idummy, damkohler)
     if (inb_scal /= idummy) then ! Consistency check
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Schmidt and Damkholer sizes do not match.')
@@ -484,26 +458,6 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
 ! ###################################################################
-! Radiation
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Radiation]')
-    call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-    radiation%active = .false.
-    if (radiation%type /= EQNS_NONE) then
-        call SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
-        radiation%active(idummy) = .true.
-
-        radiation%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, radiation%parameters)
-
-    end if
-
-! ###################################################################
 ! Subsidence
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
@@ -526,38 +480,6 @@ subroutine IO_READ_GLOBAL(inifile)
     if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
 
 ! ###################################################################
-! Transport
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Transport]')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Exponent=<value>')
-
-    transport%active = .false.
-    if (transport%type /= EQNS_NONE) then
-        transport%parameters(:) = 1.0_wp ! default values
-        call SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)
-        if (trim(adjustl(sRes)) /= 'void') then
-            idummy = MAX_PROF
-            call LIST_REAL(sRes, idummy, transport%parameters)
-        end if
-
-        if (settling > 0.0_wp) then
-            transport%parameters = transport%parameters*settling ! adding the settling number in the parameter definitions
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Settling number must be nonzero if transport is retained.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-
-        if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-            transport%active = .true. ! All scalars are affected
-
-            call SCANINIREAL(bakfile, inifile, 'Transport', 'Exponent', '0.0', transport%auxiliar(1))
-        end if
-
-    end if
-
-! ###################################################################
 ! Chemistry
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
@@ -577,36 +499,6 @@ subroutine IO_READ_GLOBAL(inifile)
     do is = 1, inb_scal
         if (abs(damkohler(is)) > 0.0_wp) chemistry%active(is) = .true.
     end do
-
-! ###################################################################
-! Thermodynamics
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Thermodynamics]')
-    call TLAB_WRITE_ASCII(bakfile, '#Nondimensional=<yes,no>')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-    call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
-    if (trim(adjustl(sRes)) == 'yes') then; nondimensional = .true.
-    else if (trim(adjustl(sRes)) == 'no') then; nondimensional = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Thermodynamics.Nondimensional')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-    if (imixture /= EQNS_NONE) then
-        thermo_param(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, thermo_param)
-
-    end if
-
-    call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
-
-    if (imixture == MIXT_TYPE_AIRWATER) then
-        call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
-    end if
 
 ! ###################################################################
 ! Grid Parameters
@@ -790,7 +682,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
 
-    do is = 1, MAX_NSP
+    do is = 1, MAX_VARS
         write (lstr, *) is
         call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
     end do
@@ -829,7 +721,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(bakfile, '#ThickB=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Flux=<value>')
 
-        do is = 1, MAX_NSP
+        do is = 1, MAX_VARS
             write (lstr, *) is; lstr = 'ThickA'//trim(adjustl(lstr))
             call SCANINIREAL(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
             write (lstr, *) is; lstr = 'ThickB'//trim(adjustl(lstr))
@@ -883,11 +775,6 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
-    if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Incorrect mixture type.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
     if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
         buoyancy%type = EQNS_NONE
@@ -910,23 +797,6 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         prandtl = schmidt(1)
 
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-        if (imixture == MIXT_TYPE_AIRWATER) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
-
-    end select
-
-    select case (imixture)
-    case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
-        schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
-
-    case (MIXT_TYPE_AIRWATER)
-        if (all([damkohler(1:2)] == 0.0_wp)) then
-            damkohler(1:2) = damkohler(3)
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. AirWater requires at least first 2 Damkholer numbers zero.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-
     end select
 
 ! -------------------------------------------------------------------
@@ -943,17 +813,17 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
         inb_flow = 5                            ! space for u, v, w, e, rho
         inb_flow_array = inb_flow + 2           ! space for p, T
-        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == transport%type)) inb_flow_array = inb_flow_array + 1    ! space for vis
+        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for vis
 
     end select
 
-    if (inb_flow + inb_scal > MAX_VARS) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS should be less than or equal to inb_flow + inb_scal')
+    if (max(inb_flow, inb_scal) > MAX_VARS) then
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error MAX_VARS should be larger than or equal to inb_flow and inb_scal')
         call TLAB_STOP(DNS_ERROR_TOTALVARS)
     end if
 
     inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
-    !                           can be changed in THERMO_INITIALIZE()
+    !                           can be changed in Thermodynamics_Initialize(ifile)
 
 ! scratch arrays
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))

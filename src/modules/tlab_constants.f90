@@ -6,11 +6,10 @@ module TLAB_CONSTANTS
     integer, parameter :: MinorVersion = 0
 
     integer, parameter :: MAX_PARS = 10
-    integer, parameter :: MAX_VARS = 20
+    integer, parameter :: MAX_VARS = 10
     integer, parameter :: MAX_MODES = 20
     integer, parameter :: MAX_PROF = 10
     integer, parameter :: MAX_JETS = 5
-    integer, parameter :: MAX_NSP = 10  ! Species in the mixture
     integer, parameter :: MAX_AVG_TEMPORAL = 235
     integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
     integer, parameter :: MAX_PATH_LENGTH = 128
