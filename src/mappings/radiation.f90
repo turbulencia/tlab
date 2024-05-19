@@ -6,12 +6,13 @@ module Radiation
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
     ! use TLAB_VARS, only: infrared
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLAB_ARRAYS, only: wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use Thermodynamics, only: imixture
-    use OPR_PARTIAL, only: OPR_PARTIAL_Y
+    ! use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES
     implicit none
+    private 
 
     integer, parameter :: TYPE_NONE = 0
     integer, parameter :: TYPE_IR_BULK1D_LIQUID = 1
@@ -20,7 +21,8 @@ module Radiation
 
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: sigma_o_pi
-
+    real(wp),allocatable, target :: bcs(:)
+    
     public :: Radiation_Initialize
     public :: Radiation_Infrared
 
@@ -28,7 +30,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine Radiation_Initialize(inifile)
-        use TLAB_VARS, only: infrared
+        use TLAB_VARS, only: infrared, imax, kmax
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
@@ -93,6 +95,8 @@ contains
 
         sigma_o_pi = sigma/pi_wp
         ! sigma_o_pi = 0.0_wp       ! testing
+
+        allocate(bcs(imax*kmax))
 
         return
     end subroutine Radiation_Initialize
@@ -297,7 +301,7 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
-        p_bcs(1:nx*nz) => wrk2d(1:nx*nz, 1)
+        p_bcs(1:nx*nz) => bcs(1:nx*nz)
 
 #ifdef USE_ESSL
         call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
@@ -311,47 +315,65 @@ contains
         ! mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
         mu = 0.5_wp     ! testing
 
+        ! emission function
+        dummy = 2.0_wp*pi_wp*mu
+        p_ab = p_ab*dummy                 ! emission function
+        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
+
+        ! absorption coefficient
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
-        ! Calculate optical thickness; integrating from the top; recall this gives the negative of the integral
-        p_tau(:, ny) = 0.0_wp   ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
-        call Integral2n(nxz, g, p_a, p_tau, BCS_MAX)
 
-        ! Calculate exp(-tau(z, zmax)/\mu)
+        ! test
+        ! p_ab = 0.0_wp   ! test
+        ! p_ab = 1.0_wp   ! test
+        ! p_bcs = 0.0_wp
+        ! p_bcs = infrared%parameters(1)
+
+        ! p_a = 0.1_wp    ! test
+        ! p_a = 0.0_wp    ! test
+
+        ! ###################################################################
+        ! downward flux
+
+        ! calculate exp(-tau(z, zmax)/\mu)
+        p_tau(:, ny) = 0.0_wp                                   ! boundary condition
+        call Integral2n(nxz, g, p_a, p_tau, BCS_MAX)            ! recall this gives the negative of the integral
+        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
-        ! emission function
-        dummy = 2.0_wp*pi_wp*mu
-        p_bcs = p_ab(:, 1)*dummy                ! save for calculation of surface flux
-        p_ab = p_a*p_ab*dummy                   ! absorption coefficient times emission function
-
-! ###################################################################
-        ! downward flux
-        fd = -infrared%parameters(1)
         p_flux = p_ab/p_tau
         call Integral2n_InPlace(nxz, g, p_flux, BCS_MAX)        ! recall this gives the negative of the integral
+        fd = -infrared%parameters(1)
         p_flux = p_tau*(fd + p_flux)                            ! negative going down
 
-        ! calculate upward flux at the bottom
+        ! ###################################################################
+
+        ! bottom boundary condition; calculate upward flux at the bottom
         epsilon = infrared%parameters(4)
         p_bcs = epsilon*p_bcs - (1.0_wp - epsilon)*p_flux(:, 1)
 
+        ! ###################################################################
         ! upward flux
-        do j = ny, 1, -1
-            p_tau(:, j) = p_tau(:, 1)/p_tau(:, j)
+
+        ! calculate exp(-tau(zmin, z)/\mu)
+        p_tau(:, 1) = 0.0_wp                                    ! boundary condition
+        call Integral2n(nxz, g, p_a, p_tau, BCS_MIN)
+        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
+        do j = 1, ny
+            p_tau(:, j) = exp(-p_tau(:, j))
         end do
+
         tmp2 = p_ab/p_tau
         call Integral2n_InPlace(nxz, g, tmp2, BCS_MIN)
         do j = ny, 1, -1
             tmp2(:, j) = p_tau(:, j)*(p_bcs(:) + tmp2(:, j))    ! upward flux
             p_source(:, j) = p_a(:, j)*(tmp2(:, j) - p_flux(:, j)) - 2.0_wp*p_ab(:, j)
             p_flux(:, j) = tmp2(:, j) + p_flux(:, j)            ! total flux
-            ! p_flux(:, j) = tmp2(:, j)                           ! only upward flux for testing
-            ! p_flux(:, j) = -p_flux(:, j)                        ! only downward flux for testing
         end do
 
         if (present(flux)) then
