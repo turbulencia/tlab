@@ -28,7 +28,7 @@ program VPOISSON
     real(wp), dimension(:, :), allocatable :: bcs_hb, bcs_ht
     real(wp), dimension(:, :, :), pointer :: a, b, c, d, e, f
     real(wp) mean, lambda
-    ! real(wp) SIMPSON_NU, delta
+    ! real(wp) Int_Simpson, delta
 
     integer(wi) i, j, k, ig, bcs(2, 2)
     integer(wi) type_of_operator, type_of_problem
@@ -104,7 +104,7 @@ program VPOISSON
         ! For Neumann conditions, we need to satisfy the compatibility constraint dpdy_top-dpdy_bottom=int f
         ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb, g(1)%jac, g(3)%jac, area)
         ! call AVG_IK_V(imax, jmax, kmax, jmax, a, g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
-        ! delta = mean + SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
+        ! delta = mean + Int_Simpson(jmax, wrk1d, g(2)%nodes)
         ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht, g(1)%jac, g(3)%jac, area)
         ! bcs_ht = bcs_ht - mean + delta
 

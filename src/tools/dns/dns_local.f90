@@ -231,17 +231,14 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_OBS_CONTROL()
-
         use TLAB_VARS, only: imax, jmax, kmax, g, area
         use TLAB_VARS, only: scal_on, inb_scal
         use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLAB_ARRAYS
         use AVGS
-    
-        implicit none
+        use Integration, only: Int_Simpson
 
         integer(wi) :: ip, is
-        real(wp)    :: SIMPSON_NU
 
         ! -------------------------------------------------------------------
         
@@ -261,8 +258,8 @@ contains
             ! ubulk, wbulk
             call AVG_IK_V(imax, jmax, kmax, jmax, q(1,1), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
             call AVG_IK_V(imax, jmax, kmax, jmax, q(1,3), g(1)%jac, g(3)%jac, wrk1d(:,3), wrk1d(:,4), area)
-            ubulk = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,1), g(2)%nodes)
-            wbulk = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,3), g(2)%nodes)
+            ubulk = (1.0_wp / g(2)%nodes(g(2)%size)) * Int_Simpson(jmax, wrk1d(:,1), g(2)%nodes)
+            wbulk = (1.0_wp / g(2)%nodes(g(2)%size)) * Int_Simpson(jmax, wrk1d(:,3), g(2)%nodes)
            
             ! dudy(1), dwdy(1) approximation
             uy1 = wrk1d(2,1) / g(2)%nodes(2)
@@ -275,7 +272,7 @@ contains
             ! integrated entstrophy
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
             call AVG_IK_V(imax, jmax, kmax, jmax, txc(1,1), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
-            int_ent = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,1), g(2)%nodes)
+            int_ent = (1.0_wp / g(2)%nodes(g(2)%size)) * Int_Simpson(jmax, wrk1d(:,1), g(2)%nodes)
 
             if (scal_on) then
                 do is = 1, inb_scal

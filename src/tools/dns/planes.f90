@@ -215,6 +215,7 @@ contains
         use TLAB_POINTERS_3D, only: p_wrk2d
         use TLAB_VARS, only: sbg
         use AVGS
+        use Integration, only: Int_Simpson
 
         ! -------------------------------------------------------------------
         integer(wi) offset, j, k, iv, nvars
@@ -222,7 +223,6 @@ contains
         character*250 line1
         type(pointers3d_dt) :: vars(16)
         real(wp) yrescaled(MAX_SAVEPLANES), henc
-        real(wp) SIMPSON_NU
 
         ! ###################################################################
         ! general order of variabeles 
@@ -267,7 +267,7 @@ contains
                     wrk1d(j, 1) = AVG1V2D(imax, jmax, kmax, j, 1, s(:, 1))
                 end do
                 wrk1d(1:jmax, 1) = 2.0_wp*(wrk1d(1:jmax, 1)/sbg(1)%uslope - g(2)%nodes(1:jmax))
-                henc = sqrt(SIMPSON_NU(jmax, wrk1d, g(2)%nodes))
+                henc = sqrt(Int_Simpson(jmax, wrk1d, g(2)%nodes))
             else
                 henc = 1.0_wp
             end if

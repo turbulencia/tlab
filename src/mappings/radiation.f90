@@ -9,6 +9,7 @@ module Radiation
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use Thermodynamics, only: imixture
     use OPR_ODES
+    use Integration
     implicit none
     private
 
@@ -147,8 +148,8 @@ contains
             b = sigma_o_pi*wrk3d**4.0_wp
 
             if (present(flux)) then
-                ! call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
             else
                 call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
             end if
@@ -338,7 +339,7 @@ contains
 
         ! calculate exp(-tau(z, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        call Integral2n(nxz, g, p_a, p_tau, BCS_MAX)            ! recall this gives the negative of the integral
+        call Int_Trapezoidal(p_a, g%nodes, p_tau, BCS_MAX)            ! recall this gives the negative of the integral
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
@@ -346,7 +347,7 @@ contains
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
         p_flux = p_ab/p_tau
-        call Integral2n_InPlace(nxz, g, p_flux, BCS_MAX)        ! recall this gives the negative of the integral
+        call Int_Trapezoidal_InPlace(p_flux, g%nodes, BCS_MAX)        ! recall this gives the negative of the integral
         fd = -infrared%parameters(1)
         p_flux = p_tau*(fd + p_flux)                            ! negative going down
 
@@ -361,14 +362,14 @@ contains
 
         ! calculate exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        call Integral2n(nxz, g, p_a, p_tau, BCS_MIN)
+        call Int_Trapezoidal(p_a, g%nodes, p_tau, BCS_MIN)
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
         do j = 1, ny
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
 
         tmp2 = p_ab/p_tau
-        call Integral2n_InPlace(nxz, g, tmp2, BCS_MIN)
+        call Int_Trapezoidal_InPlace(tmp2, g%nodes, BCS_MIN)
         do j = ny, 1, -1
             tmp2(:, j) = p_tau(:, j)*(p_bcs(:) + tmp2(:, j))    ! upward flux
             p_source(:, j) = p_a(:, j)*(tmp2(:, j) - p_flux(:, j)) - 2.0_wp*p_ab(:, j)
@@ -422,8 +423,8 @@ contains
         real(wp), pointer :: p_bcs(:) => null()
         real(wp), pointer :: p_wrk2d(:) => null()
 
-        real(wp), allocatable :: wrk(:), wrkx(:, :)
-        allocate (wrk(5*nx*nz), wrkx(nx*nz, ny))
+        real(wp), allocatable :: wrk(:, :), wrkx(:, :)
+        allocate (wrk(nx*nz, 5), wrkx(nx*nz, ny))
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
@@ -471,7 +472,7 @@ contains
         ! ###################################################################
         ! calculate exp(-tau(zi, zj)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        call Integral2n(nxz, g, p_a, p_tau, BCS_MIN)
+        call Int_Trapezoidal(p_a, g%nodes, p_tau, BCS_MIN)
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
@@ -486,13 +487,13 @@ contains
         do j = ny - 1, 1, -1
             p_wrk2d = p_wrk2d*p_tau(:, j + 1)
 
-            wrk(1:nxz) = 1.0_wp
+            wrk(1:nxz, 1) = 1.0_wp
             tmp2(:, j) = p_ab(:, j)
             do k = j + 1, ny
-                wrk(1:nxz) = wrk(1:nxz)*p_tau(:, k)
-                tmp2(:, k) = p_ab(:, k)*wrk(1:nxz)
+                wrk(1:nxz, 1) = wrk(1:nxz, 1)*p_tau(:, k)
+                tmp2(:, k) = p_ab(:, k)*wrk(1:nxz, 1)
             end do
-            call SIMPSON_NU_V(ny - j + 1, nxz, tmp2(:, j:ny), g%nodes(j:ny), p_flux(:, j), wrk)
+            call Int_Simpson_v(tmp2(:, j:ny), g%nodes(j:ny), p_flux(:, j), wrk)
             p_flux(:, j) = p_flux(:, j) + p_wrk2d
         end do
 
@@ -513,13 +514,13 @@ contains
         do j = 2, ny
             p_wrk2d = p_wrk2d*p_tau(:, j)
 
-            wrk(1:nxz) = 1.0_wp
+            wrk(1:nxz, 1) = 1.0_wp
             wrkx(:, j) = p_ab(:, j)
             do k = j - 1, 1, -1
-                wrk(1:nxz) = wrk(1:nxz)*p_tau(:, k + 1)
-                wrkx(:, k) = p_ab(:, k)*wrk(1:nxz)
+                wrk(1:nxz, 1) = wrk(1:nxz, 1)*p_tau(:, k + 1)
+                wrkx(:, k) = p_ab(:, k)*wrk(1:nxz, 1)
             end do
-            call SIMPSON_NU_V(j, nxz, wrkx(:, 1:j), g%nodes(1:j), tmp2(:, j), wrk)
+            call Int_Simpson_v(wrkx(:, 1:j), g%nodes(1:j), tmp2(:, j), wrk)
             tmp2(:, j) = tmp2(:, j) + p_wrk2d                                ! upward flux
 
             p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
@@ -548,88 +549,5 @@ contains
 
         return
     end subroutine IR_Bulk1D_Incremental
-
-!########################################################################
-!########################################################################
-    ! Second-order integral
-    subroutine Integral2n(nlines, g, f, result, ibc)
-        integer(wi), intent(in) :: nlines
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: f(nlines, g%size)
-        real(wp), intent(inout) :: result(nlines, g%size)   ! contains bcs
-        integer, intent(in), optional :: ibc
-
-! -------------------------------------------------------------------
-        integer(wi) j
-        integer ibc_loc
-
-! ###################################################################
-        if (present(ibc)) then
-            ibc_loc = ibc
-        else
-            ibc_loc = BCS_MIN
-        end if
-
-        select case (ibc_loc)
-        case (BCS_MIN)
-            do j = 2, g%size
-                result(:, j) = result(:, j - 1) + 0.5_wp*(f(:, j) + f(:, j - 1))*(g%nodes(j) - (g%nodes(j - 1)))
-            end do
-
-        case (BCS_MAX)
-            do j = g%size - 1, 1, -1
-                result(:, j) = result(:, j + 1) - 0.5_wp*(f(:, j) + f(:, j + 1))*(g%nodes(j + 1) - (g%nodes(j)))
-            end do
-
-        end select
-
-    end subroutine Integral2n
-
-!########################################################################
-!########################################################################
-    ! Second-order integral; assumes zero boundary condition
-    subroutine Integral2n_InPlace(nlines, g, f, ibc)
-        integer(wi), intent(in) :: nlines
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: f(nlines, g%size)
-        integer, intent(in), optional :: ibc
-
-! -------------------------------------------------------------------
-        integer(wi) j
-        integer ibc_loc
-
-! ###################################################################
-        if (present(ibc)) then
-            ibc_loc = ibc
-        else
-            ibc_loc = BCS_MIN
-        end if
-
-        select case (ibc_loc)
-        case (BCS_MIN)
-            j = 1
-            f(:, j) = 0.5_wp*(f(:, j) + f(:, j + 1))*(g%nodes(j + 1) - (g%nodes(j)))
-            do j = 2, g%size - 1
-                f(:, j) = f(:, j - 1) + 0.5_wp*(f(:, j) + f(:, j + 1))*(g%nodes(j + 1) - (g%nodes(j)))
-            end do
-            do j = g%size, 2, -1
-                f(:, j) = f(:, j - 1)
-            end do
-            f(:, 1) = 0.0_wp
-
-        case (BCS_MAX)
-            j = g%size
-            f(:, j) = -0.5_wp*(f(:, j) + f(:, j - 1))*(g%nodes(j) - (g%nodes(j - 1)))
-            do j = g%size - 1, 2, -1
-                f(:, j) = f(:, j + 1) - 0.5_wp*(f(:, j) + f(:, j - 1))*(g%nodes(j) - (g%nodes(j - 1)))
-            end do
-            do j = 1, g%size - 1
-                f(:, j) = f(:, j + 1)
-            end do
-            f(:, g%size) = 0.0_wp
-
-        end select
-
-    end subroutine Integral2n_InPlace
 
 end module

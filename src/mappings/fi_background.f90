@@ -418,6 +418,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     use TLAB_CONSTANTS, only: efile, wfile, wp, wi
     use TLAB_PROCS
     use PROFILES
+    use Integration, only: Int_Simpson
     implicit none
 
     integer(wi) imax, jmax
@@ -435,7 +436,6 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     real(wp) c1, c2
     real(wp) delta, eta, ExcMom_vi, Q1, Q2, U2, UC
     real(wp) dummy, flux_aux, diam_loc
-    real(wp) SIMPSON_NU
     real(wp) xi_tr, dxi_tr
 
     integer(wi) i, j, jsym
@@ -501,7 +501,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     do j = 1, jmax
         wrk1d(j, 1) = rho_vi(j)*u_vi(j)*(u_vi(j) - U2)
     end do
-    ExcMom_vi = SIMPSON_NU(jmax, wrk1d, y)
+    ExcMom_vi = Int_Simpson(jmax, wrk1d, y)
 
     do i = 1, imax
 ! Correction factor varying between 1 at the inflow and jet_u_flux
@@ -515,8 +515,8 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
             wrk1d(j, 1) = rho(i, j)*u(i, j)*u(i, j)
             wrk1d(j, 2) = rho(i, j)*u(i, j)
         end do
-        Q1 = SIMPSON_NU(jmax, wrk1d(1, 1), y)
-        Q2 = U2*SIMPSON_NU(jmax, wrk1d(1, 2), y)
+        Q1 = Int_Simpson(jmax, wrk1d(1, 1), y)
+        Q2 = U2*Int_Simpson(jmax, wrk1d(1, 2), y)
         UC = (-Q2 + sqrt(Q2*Q2 + 4.0_wp*Q1*ExcMom_vi*flux_aux))/2.0_wp/Q1
 
 ! Scaled velocity
@@ -591,6 +591,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: wfile, wp, wi
     use TLAB_PROCS
+    use Integration, only: Int_Simpson
     use PROFILES
     implicit none
 
@@ -608,7 +609,6 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     real(wp) c1, c2
     real(wp) delta, eta, ExcMom_vi, Q1, Z2, ZC, flux_aux
     real(wp) dummy, diam_loc
-    real(wp) SIMPSON_NU
     real(wp) xi_tr, dxi_tr
     integer(wi) i, j
     type(profiles_dt) prof_loc
@@ -666,7 +666,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     do j = 1, jmax
         wrk1d(j, 2) = rho_vi(j)*u_vi(j)*(z_vi(j) - Z2)
     end do
-    ExcMom_vi = SIMPSON_NU(jmax, wrk1d(1, 2), y)
+    ExcMom_vi = Int_Simpson(jmax, wrk1d(1, 2), y)
 
     do i = 1, imax
 ! Correction factor varying between 1 at the inflow and jet_z_flux
@@ -679,7 +679,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
         do j = 1, jmax
             wrk1d(j, 1) = rho(i, j)*u(i, j)*z1(i, j)
         end do
-        Q1 = SIMPSON_NU(jmax, wrk1d(1, 1), y)
+        Q1 = Int_Simpson(jmax, wrk1d(1, 1), y)
         ZC = flux_aux*ExcMom_vi/Q1
         do j = 1, jmax
             z1(i, j) = Z2 + ZC*z1(i, j)
