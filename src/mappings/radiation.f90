@@ -5,14 +5,12 @@ module Radiation
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PROF
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
-    ! use TLAB_VARS, only: infrared
-    use TLAB_ARRAYS, only: wrk3d
+    use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     use Thermodynamics, only: imixture
-    ! use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES
     implicit none
-    private 
+    private
 
     integer, parameter :: TYPE_NONE = 0
     integer, parameter :: TYPE_IR_BULK1D_LIQUID = 1
@@ -21,8 +19,8 @@ module Radiation
 
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: sigma_o_pi
-    real(wp),allocatable, target :: bcs(:)
-    
+    real(wp), allocatable, target :: bcs(:)
+
     public :: Radiation_Initialize
     public :: Radiation_Infrared
 
@@ -52,8 +50,8 @@ contains
             call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; infrared%type = TYPE_NONE
         else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; infrared%type = TYPE_IR_BULK1D_LIQUID
-        else if (trim(adjustl(sRes)) == 'irbulk1d')       then; infrared%type = TYPE_IR_BULK1D
-        else if (trim(adjustl(sRes)) == 'bulk1dlocal')    then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
+        else if (trim(adjustl(sRes)) == 'irbulk1d') then; infrared%type = TYPE_IR_BULK1D
+        else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Radiation.Type.')
             call TLAB_STOP(DNS_ERROR_OPTION)
@@ -96,7 +94,7 @@ contains
         sigma_o_pi = sigma/pi_wp
         ! sigma_o_pi = 0.0_wp       ! testing
 
-        allocate(bcs(imax*kmax))
+        allocate (bcs(imax*kmax))
 
         return
     end subroutine Radiation_Initialize
@@ -149,7 +147,8 @@ contains
             b = sigma_o_pi*wrk3d**4.0_wp
 
             if (present(flux)) then
-                call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
             else
                 call IR_Bulk1D(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
             end if
@@ -331,7 +330,7 @@ contains
         ! p_bcs = 0.0_wp
         ! p_bcs = infrared%parameters(1)
 
-        ! p_a = 0.1_wp    ! test
+        ! p_a = 0.01_wp    ! test
         ! p_a = 0.0_wp    ! test
 
         ! ###################################################################
@@ -397,6 +396,158 @@ contains
 
         return
     end subroutine IR_Bulk1D
+
+!########################################################################
+!########################################################################
+    subroutine IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
+        type(term_dt), intent(in) :: infrared
+        integer(wi), intent(in) :: nx, ny, nz
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(inout) :: a_source(nx*nz, ny)          ! input as bulk absorption coefficent, output as source
+        real(wp), intent(inout) :: b(nx*nz, ny)                 ! input as emission function, output as upward flux, if flux is to be return
+        real(wp), intent(inout) :: tmp1(nx*nz, ny)
+        real(wp), intent(inout) :: tmp2(nx*nz, ny)
+        real(wp), intent(out), optional :: flux(nx*nz, ny)
+
+        target a_source, b, tmp1
+
+! -----------------------------------------------------------------------
+        integer(wi) j, k, nxy, nxz
+        real(wp) fd, mu, epsilon, dummy!, fu
+        real(wp), pointer :: p_a(:, :) => null()
+        real(wp), pointer :: p_tau(:, :) => null()
+        real(wp), pointer :: p_ab(:, :) => null()
+        real(wp), pointer :: p_source(:, :) => null()
+        real(wp), pointer :: p_flux(:, :) => null()
+        real(wp), pointer :: p_bcs(:) => null()
+        real(wp), pointer :: p_wrk2d(:) => null()
+
+        real(wp), allocatable :: wrk(:), wrkx(:, :)
+        allocate (wrk(5*nx*nz), wrkx(nx*nz, ny))
+
+! #######################################################################
+        nxy = nx*ny     ! For transposition to make y direction the last one
+        nxz = nx*nz
+
+        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        p_ab => a_source
+        p_tau => b
+        p_flux => tmp1
+        p_bcs(1:nx*nz) => bcs(1:nx*nz)
+        p_wrk2d(1:nx*nz) => wrk2d(1:nx*nz, 1)
+
+#ifdef USE_ESSL
+        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
+        call DGETMO(b, nxy, nxy, nz, p_ab, nz)
+#else
+        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
+        call DNS_TRANSPOSE(b, nxy, nz, nxy, p_ab, nz)
+#endif
+
+! ###################################################################
+        ! mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
+        mu = 0.5_wp     ! testing
+
+        ! emission function
+        dummy = 2.0_wp*pi_wp*mu
+        p_ab = p_ab*dummy                 ! emission function
+        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
+
+        ! absorption coefficient
+        dummy = 1.0_wp/mu
+        p_a = p_a*dummy
+
+        ! test
+        ! p_ab = 0.0_wp   ! test
+        ! p_ab = 1.0_wp   ! test
+        ! p_bcs = 0.0_wp
+        ! p_bcs = infrared%parameters(1)
+
+        ! p_a = 0.01_wp    ! test
+        ! p_a = 0.0_wp    ! test
+
+        ! ###################################################################
+        ! calculate exp(-tau(zi, zj)/\mu)
+        p_tau(:, 1) = 0.0_wp                                    ! boundary condition
+        call Integral2n(nxz, g, p_a, p_tau, BCS_MIN)
+        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
+        do j = ny, 2, -1
+            p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
+        end do
+        p_tau(:, 1) = 1.0_wp
+
+        ! ###################################################################
+        ! downward flux; positive going down
+        j = ny
+        p_wrk2d = infrared%parameters(1)
+        p_flux(:, j) = p_wrk2d
+        do j = ny - 1, 1, -1
+            p_wrk2d = p_wrk2d*p_tau(:, j + 1)
+
+            wrk(1:nxz) = 1.0_wp
+            tmp2(:, j) = p_ab(:, j)
+            do k = j + 1, ny
+                wrk(1:nxz) = wrk(1:nxz)*p_tau(:, k)
+                tmp2(:, k) = p_ab(:, k)*wrk(1:nxz)
+            end do
+            call SIMPSON_NU_V(ny - j + 1, nxz, tmp2(:, j:ny), g%nodes(j:ny), p_flux(:, j), wrk)
+            p_flux(:, j) = p_flux(:, j) + p_wrk2d
+        end do
+
+        ! ###################################################################
+        ! bottom boundary condition; calculate upward flux at the bottom
+        epsilon = infrared%parameters(4)
+        p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1)
+
+        ! ###################################################################
+        ! upward flux and net terms
+        j = 1
+        p_wrk2d = p_bcs
+        tmp2(:, j) = p_wrk2d
+
+        p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+        p_flux(:, j) = tmp2(:, j) - p_flux(:, j)            ! total flux
+
+        do j = 2, ny
+            p_wrk2d = p_wrk2d*p_tau(:, j)
+
+            wrk(1:nxz) = 1.0_wp
+            wrkx(:, j) = p_ab(:, j)
+            do k = j - 1, 1, -1
+                wrk(1:nxz) = wrk(1:nxz)*p_tau(:, k + 1)
+                wrkx(:, k) = p_ab(:, k)*wrk(1:nxz)
+            end do
+            call SIMPSON_NU_V(j, nxz, wrkx(:, 1:j), g%nodes(1:j), tmp2(:, j), wrk)
+            tmp2(:, j) = tmp2(:, j) + p_wrk2d                                ! upward flux
+
+            p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+            p_flux(:, j) = tmp2(:, j) - p_flux(:, j)            ! total flux
+        end do
+
+        if (present(flux)) then
+#ifdef USE_ESSL
+            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
+            call DGETMO(tmp2, nz, nz, nxy, b, nxy)
+#else
+            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
+            call DNS_TRANSPOSE(tmp2, nz, nxy, nz, b, nxy)
+#endif
+        end if
+
+#ifdef USE_ESSL
+        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
+#else
+        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
+#endif
+
+! ###################################################################
+        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs)
+        deallocate (wrk, wrkx)
+
+        return
+    end subroutine IR_Bulk1D_Incremental
 
 !########################################################################
 !########################################################################

@@ -117,6 +117,11 @@ SUBROUTINE SIMPSON_NU_V(imax,nlines, u, x, out, wrk2d)
   
   i2 = 2 
 
+  if (imax == 2) then
+    out = C_05_R*(u(:,1)+u(:,2))*(x(2)-x(1))
+    return
+  end if
+
 ! Correct the last element contribution
   IF ( MOD(imax,i2) .EQ. 0 ) THEN 
      dx21 = x(imax)-x(imax-1)
