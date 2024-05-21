@@ -334,7 +334,7 @@ is the bulk absorption coefficient, the constants $\kappa_i$ being the correspon
     \omega_\mathrm{R}=(a/\mu) (F_\uparrow +F_\downarrow) - 4\pi\mu a B \;.
 \end{equation}
 (Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\mu\in[1/\sqrt{3},1/\sqrt{2}]$; \textbf{Using 0.5 because it yields better agreement with ARTS}. The solution to the transfer equation yields
-\begin{subequations}
+\begin{subequations}\label{rad:flux}
     \begin{align}
         F_\uparrow &= e^{-\tau(z_\mathrm{min},z)/\mu}\left[ F_{\uparrow,z_\mathrm{min}} + 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{\tau(z_\mathrm{min},z')/\mu}\mathrm{d}z'\right]\notag \\
         &= F_{\uparrow,z_\mathrm{min}}e^{-\tau(z_\mathrm{min},z)/\mu}+ 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{-\tau(z',z)/\mu}\mathrm{d}z' \;,\\
@@ -351,13 +351,22 @@ and we have used the relationship
     \tau(z_1, z_2) = \tau(z_1, z') + \tau(z', z_2)\;,\qquad z_1\le z'\le z_2 \;.
 \end{equation}
 
-One model sets the emission function to zero and consider only the liquid water. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$ and $F_{\uparrow,z_\mathrm{min}}$.
+One model option sets the emission function to zero and consider only the liquid water. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$ and $F_{\uparrow,z_\mathrm{min}}$.
 
-Another model considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the equation
+Another model option considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the equation
 \begin{equation}
     F_{\uparrow,z_\mathrm{min}} = \epsilon 2\pi\mu B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
 \end{equation}
 The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v}$ and the surface emission $\epsilon\in[0,1]$. Note that we need to solve the downward flux to obtain its value at $z=z_\mathrm{min}$ to use this equation and then solve for the upward flux.
+
+Apart from the 2 implementations indicated in (\ref{equ:radflux}), we also consider the incremental formulation
+\begin{subequations}\label{equ:radflux}
+    \begin{align}
+        &F_\uparrow(z_{i+1}) = e^{-\tau(z_i,z_{i+1})/\mu}\left[ F_\uparrow(z_i) + 2\pi\mu\int_{z_i}^{z_{i+1}} a B e^{\tau(z_i,z')/\mu}\mathrm{d}z'\right]\notag  \;,\\
+        &F_\downarrow(z_i) = e^{-\tau(z_i,z_{i+1})/\mu}\left[ F_\downarrow(z_{i+1}) + 2\pi\mu\int_{z_i}^{z_{i+1}} a B e^{\tau(z',z_{i+1})/\mu}\mathrm{d}z'\right]\notag  \;,\\
+    \end{align}
+\end{subequations}
+where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $(z_\mathrm{min}, z_\mathrm{max})$ is discretized.
 
 % One formulation is a one-dimensional bulk model, where
 % \begin{equation}
