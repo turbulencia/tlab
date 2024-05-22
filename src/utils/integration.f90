@@ -62,7 +62,7 @@ contains
         integer ibc_loc
 
 ! ###################################################################
-        nmax = size(f, 2)
+        nmax = size(x)
 
         if (present(ibc)) then
             ibc_loc = ibc
@@ -98,7 +98,7 @@ contains
         integer ibc_loc
 
 ! ###################################################################
-        nmax = size(f, 2)
+        nmax = size(x)
 
         if (present(ibc)) then
             ibc_loc = ibc
@@ -135,17 +135,18 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    function Int_Simpson(nmax, u, x) result(integral)
-        integer(wi), intent(IN) :: nmax
-        real(wp), intent(IN) :: u(nmax), x(nmax)
+    function Int_Simpson(u, x) result(integral)
+        real(wp), intent(IN) :: u(:), x(:)
         real(wp) integral
 
         ! -------------------------------------------------------------------
-        integer(wi) i, nn
+        integer(wi) i, nn, nmax
         real(wp) dx21, dx20, dx10, du20, du10, du21, b, c
         real(wp) c13
 
 ! ###################################################################
+        nmax = size(x)
+
         c13 = 1.0_wp/3.0_wp
 
 ! Correct the last element contribution
@@ -193,7 +194,7 @@ contains
         real(wp) a, b, c, dxm2, dxm1, dxp1, c16
 
 ! ###################################################################
-        nmax = size(u, 2)
+        nmax = size(x)
 
         if (nmax == 2) then
             result = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))

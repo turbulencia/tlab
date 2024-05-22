@@ -501,7 +501,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     do j = 1, jmax
         wrk1d(j, 1) = rho_vi(j)*u_vi(j)*(u_vi(j) - U2)
     end do
-    ExcMom_vi = Int_Simpson(jmax, wrk1d, y)
+    ExcMom_vi = Int_Simpson(wrk1d(1:jmax, 1), y(1:jmax))
 
     do i = 1, imax
 ! Correction factor varying between 1 at the inflow and jet_u_flux
@@ -515,8 +515,8 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
             wrk1d(j, 1) = rho(i, j)*u(i, j)*u(i, j)
             wrk1d(j, 2) = rho(i, j)*u(i, j)
         end do
-        Q1 = Int_Simpson(jmax, wrk1d(1, 1), y)
-        Q2 = U2*Int_Simpson(jmax, wrk1d(1, 2), y)
+        Q1 = Int_Simpson(wrk1d(1:jmax, 1), y(1:jmax))
+        Q2 = U2*Int_Simpson(wrk1d(1:jmax, 2), y(1:jmax))
         UC = (-Q2 + sqrt(Q2*Q2 + 4.0_wp*Q1*ExcMom_vi*flux_aux))/2.0_wp/Q1
 
 ! Scaled velocity
@@ -666,7 +666,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     do j = 1, jmax
         wrk1d(j, 2) = rho_vi(j)*u_vi(j)*(z_vi(j) - Z2)
     end do
-    ExcMom_vi = Int_Simpson(jmax, wrk1d(1, 2), y)
+    ExcMom_vi = Int_Simpson(wrk1d(1:jmax, 2), y(1:jmax))
 
     do i = 1, imax
 ! Correction factor varying between 1 at the inflow and jet_z_flux
@@ -679,7 +679,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
         do j = 1, jmax
             wrk1d(j, 1) = rho(i, j)*u(i, j)*z1(i, j)
         end do
-        Q1 = Int_Simpson(jmax, wrk1d(1, 1), y)
+        Q1 = Int_Simpson(wrk1d(1:jmax, 1), y(1:jmax))
         ZC = flux_aux*ExcMom_vi/Q1
         do j = 1, jmax
             z1(i, j) = Z2 + ZC*z1(i, j)

@@ -524,12 +524,12 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fU(n, j)*(fS(n, j) - S2)
         end do
-        IntExcScaS(n) = Int_Simpson(jmax_loc - jmin_loc + 1, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntExcScaS(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! Reynolds stress part
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fRus(n, j)
         end do
-        IntExcScaRsu(n) = Int_Simpson(jmax_loc - jmin_loc + 1, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntExcScaRsu(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
     end do
 
 ! -------------------------------------------------------------------

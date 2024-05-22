@@ -972,7 +972,7 @@ contains
                 do j = 1, ny
                     wrk1d(j) = wrk3d(i, j, k)
                 end do
-                lwp(i, k) = Int_Simpson(ny, wrk1d, g%nodes)
+                lwp(i, k) = Int_Simpson(wrk1d(1:ny), g%nodes(1:ny))
             end do
         end do
 

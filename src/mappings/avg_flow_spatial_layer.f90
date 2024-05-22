@@ -334,7 +334,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     character*2750 line2
 
     integer, parameter :: i23 = 23
-    
+
 ! ###################################################################
 #ifdef TRACE_ON
     call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_SPATIAL_LAYER')
@@ -1031,7 +1031,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fU(n, j)
         end do
-        IntMassU(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntMassU(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! lateral
         do k = 1, n
             i = statavg(k)
@@ -1043,7 +1043,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         else if (n == 2) then
             IntMassV(n) = 0.5_wp*(wrk1d(1, 1) + wrk1d(2, 1))*(wrk1d(2, 2) - wrk1d(1, 2))
         else
-            IntMassV(n) = Int_Simpson(n, wrk1d(1, 1), wrk1d(1, 2))
+            IntMassV(n) = Int_Simpson(wrk1d(1:n, 1), wrk1d(1:n, 2))
         end if
     end do
 
@@ -1055,17 +1055,17 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fU(n, j)*(fU(n, j) - U2)
         end do
-        IntExcMomU(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntExcMomU(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! pressure part
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = (rP(n, j) - pbg%mean)
         end do
-        IntExcMomP(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntExcMomP(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! Reynolds stress part
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fRxx(n, j)
         end do
-        IntExcMomRxx(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntExcMomRxx(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
     end do
 
 ! -------------------------------------------------------------------
@@ -1076,22 +1076,22 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fU(n, j)*fTKE(n, j)
         end do
-        IntTkeK(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntTkeK(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! Integral of production term
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*Prod(n, j)
         end do
-        IntTkeP(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntTkeP(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! Integral of numerical dissipation
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = -rR(n, j)*eps_f(n, j)
         end do
-        IntTkeF(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntTkeF(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! Integral of production term
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = Pres(n, j)
         end do
-        IntTkePi(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntTkePi(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
     end do
 
 ! -------------------------------------------------------------------
@@ -1101,7 +1101,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fU(n, j)*(fT(n, j) - T2)
         end do
-        IntFluxT(n) = Int_Simpson(nj, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        IntFluxT(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
     end do
 
 ! -------------------------------------------------------------------
@@ -1124,14 +1124,14 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         do j = jmin_loc, jmax/2
             wrk1d(j, 1) = rR(n, j)*(0.25_wp - ((fU(n, j) - UC)/DU)**2)
         end do
-        delta_m_d(n) = Int_Simpson(jmax/2 - jmin_loc + 1, wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
+        delta_m_d(n) = Int_Simpson(wrk1d(jmin_loc:jmax/2, 1), g(2)%nodes(jmin_loc:jmax/2))
 
         UC = 0.5_wp*(U2 + fU(n, jmax/2 + 1))
         DU = fU(n, jmax/2 + 1) - U2
         do j = jmax/2 + 1, jmax_loc
             wrk1d(j, 1) = rR(n, j)*(0.25_wp - ((fU(n, j) - UC)/DU)**2)
         end do
-        delta_m_u(n) = Int_Simpson(jmax_loc - jmax/2, wrk1d(jmax/2 + 1:jmax_loc, 1), g(2)%nodes(jmax/2 + 1:jmax_loc))
+        delta_m_u(n) = Int_Simpson(wrk1d(jmax/2 + 1:jmax_loc, 1), g(2)%nodes(jmax/2 + 1:jmax_loc))
     end do
 
 ! Jet half-width based on velocity
