@@ -5,7 +5,7 @@ module Integration
 
     public :: Int_Trapezoidal, Int_Trapezoidal_v                ! the last one is a vector version
     public :: Int_Trapezoidal_f, Int_Trapezoidal_f_InPlace      ! antiderivatives (function of x)
-    public :: Int_Simpson, Int_Simpson_v
+    public :: Int_Simpson, Int_Simpson_v, Int_Simpson_Biased_v
 
 contains
 !########################################################################
@@ -149,7 +149,7 @@ contains
         c13 = 1.0_wp/3.0_wp
 
 ! Correct the last element contribution
-        if (MOD(nmax, 2) == 0) then
+        if (mod(nmax, 2) == 0) then
             dx21 = x(nmax) - x(nmax - 1)
             dx20 = x(nmax) - x(nmax - 2)
             dx10 = x(nmax - 1) - x(nmax - 2)
@@ -181,6 +181,8 @@ contains
 
 ! ###################################################################
 ! ###################################################################
+! to be updated to allow for the correction to be at the last or the first element
+! see biased routine below
     subroutine Int_Simpson_v(u, x, result)
         real(wp), intent(IN) :: u(:, :)
         real(wp), intent(IN) :: x(:)
@@ -231,6 +233,88 @@ contains
 
         return
     end subroutine Int_Simpson_v
+
+! ###################################################################
+! ###################################################################
+    ! Calculate integral step by step instead every 2 steps using biased, 2 point formula
+    ! Bias direction is set by ibc=[BCS_MIN,BCS_MAX] parameter
+    ! ..... x x ..... calculate integral in this interval between to consecutive grid points
+    ! ... + + + ..... using this stencil (BCS_MIN)
+    ! ..... + + + ... or this stencil (BCS_MAX)
+    subroutine Int_Simpson_Biased_v(u, x, result, ibc)
+        real(wp), intent(IN) :: u(:, :)
+        real(wp), intent(IN) :: x(:)
+        real(wp), intent(OUT) :: result(:)
+        integer, intent(in), optional :: ibc
+
+        ! -------------------------------------------------------------------
+        integer(wi) n, nmax
+        real(wp) a, b, c, dxm2, dxm1, c16
+        integer ibc_loc
+
+! ###################################################################
+        nmax = size(x)
+
+        if (nmax == 2) then
+            result = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+            return
+        end if
+
+        c16 = 1.0_wp/6.0_wp
+
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_MIN
+        end if
+
+        select case (ibc_loc)
+        case (BCS_MIN)
+            n = 1
+            dxm1 = x(n + 1) - x(n)
+            dxm2 = x(n + 2) - x(n + 1)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            result = a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+
+            do n = 3, nmax
+                dxm1 = x(n) - x(n - 1)
+                dxm2 = x(n - 1) - x(n - 2)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                result = result + a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            end do
+
+        case (BCS_MAX)
+            n = nmax
+            dxm1 = x(n) - x(n - 1)
+            dxm2 = x(n - 1) - x(n - 2)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            result = a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            do n = nmax - 2, 1, -1
+                dxm1 = x(n + 1) - x(n)
+                dxm2 = x(n + 2) - x(n + 1)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                result = result + a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+
+            end do
+
+        end select
+
+        return
+    end subroutine Int_Simpson_Biased_v
 
 ! ! ###################################################################
 ! ! ###################################################################
