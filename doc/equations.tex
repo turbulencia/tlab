@@ -366,7 +366,17 @@ Apart from the 2 implementations indicated in (\ref{equ:radflux}), we also consi
         &F_\downarrow(z_i) = e^{-\tau(z_i,z_{i+1})/\mu}\left[ F_\downarrow(z_{i+1}) + 2\pi\mu\int_{z_i}^{z_{i+1}} a B e^{\tau(z',z_{i+1})/\mu}\mathrm{d}z'\right]\notag  \;,\\
     \end{align}
 \end{subequations}
-where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $(z_\mathrm{min}, z_\mathrm{max})$ is discretized.
+where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $(z_\mathrm{min}, z_\mathrm{max})$ is discretized. Note that we can write
+\begin{equation}
+    e^{-\tau(z_i,z_j)/\mu}=\prod_{k=i+1}^{j}I_k\;,\qquad 
+    I_k\equiv\left\{
+    \begin{array}{ll}
+        1 & k=1\;,\\
+        e^{-\tau(z_{k-1},z_k)/\mu} & k=2,\ldots N \;.
+    \end{array}
+    \right.
+\end{equation}
+Hence, we only need to compute and save $\{I_k\}_{k=1}^N$, and we can calculate any of the decay terms as necessary.
 
 % One formulation is a one-dimensional bulk model, where
 % \begin{equation}
