@@ -3,9 +3,12 @@ module Integration
     implicit none
     private
 
-    public :: Int_Trapezoidal, Int_Trapezoidal_v                ! the last one is a vector version
-    public :: Int_Trapezoidal_f, Int_Trapezoidal_f_InPlace      ! antiderivatives (function of x)
+    public :: Int_Trapezoidal, Int_Trapezoidal_v                            ! the last one is a vector version
+    public :: Int_Trapezoidal_f                                             ! antiderivatives (function of x)
+    public :: Int_Trapezoidal_Increments_InPlace
     public :: Int_Simpson, Int_Simpson_v, Int_Simpson_Biased_v
+    public :: Int_Simpson_Biased_f
+    public :: Int_Simpson_Biased_Increments, Int_Simpson_Biased_Increments_InPlace
 
 contains
 !########################################################################
@@ -71,12 +74,12 @@ contains
         end if
 
         select case (ibc_loc)
-        case (BCS_MIN)
+        case (BCS_MIN)              ! Backwards stencil. Result is I_n = int_{x_{1}}^{x_n} u dx
             do j = 2, nmax
                 result(:, j) = result(:, j - 1) + 0.5_wp*(f(:, j) + f(:, j - 1))*(x(j) - x(j - 1))
             end do
 
-        case (BCS_MAX)
+        case (BCS_MAX)              ! Forward stencil. Result is I_n = int_{x_{n}}^{x_{nmax}} u dx
             do j = nmax - 1, 1, -1
                 result(:, j) = result(:, j + 1) - 0.5_wp*(f(:, j) + f(:, j + 1))*(x(j + 1) - x(j))
             end do
@@ -87,8 +90,7 @@ contains
 
 !########################################################################
 !########################################################################
-! Second-order integral; assumes zero boundary condition
-    subroutine Int_Trapezoidal_f_InPlace(f, x, ibc)
+    subroutine Int_Trapezoidal_Increments_InPlace(f, x, ibc)
         real(wp), intent(inout) :: f(:, :)
         real(wp), intent(in) :: x(:)
         integer, intent(in), optional :: ibc
@@ -107,31 +109,19 @@ contains
         end if
 
         select case (ibc_loc)
-        case (BCS_MIN)
-            j = 1
-            f(:, j) = 0.5_wp*(f(:, j) + f(:, j + 1))*(x(j + 1) - x(j))
-            do j = 2, nmax - 1
-                f(:, j) = f(:, j - 1) + 0.5_wp*(f(:, j) + f(:, j + 1))*(x(j + 1) - x(j))
+        case (BCS_MIN)              ! Backwards stencil. Result is I_n = int_{x_{n-1}}^{x_n} u dx
+            do j = nmax, 2, -1      ! Starting from the top, f(:,n) is no longer used with the backwards stencil
+                f(:, j) = 0.5_wp*(f(:, j) + f(:, j - 1))*(x(j) - x(j - 1))
             end do
-            do j = nmax, 2, -1
-                f(:, j) = f(:, j - 1)
-            end do
-            f(:, 1) = 0.0_wp
 
-        case (BCS_MAX)
-            j = nmax
-            f(:, j) = -0.5_wp*(f(:, j) + f(:, j - 1))*(x(j) - (x(j - 1)))
-            do j = nmax - 1, 2, -1
-                f(:, j) = f(:, j + 1) - 0.5_wp*(f(:, j) + f(:, j - 1))*(x(j) - x(j - 1))
+        case (BCS_MAX)              ! Forward stencil. Result is I_n = int_{x_{n}}^{x_{n+1}} u dx
+            do j = 1, nmax - 1      ! Starting from the bottom, f(:,n) is no longer used with the forward stencil
+                f(:, j) = 0.5_wp*(f(:, j) + f(:, j + 1))*(x(j + 1) - x(j))
             end do
-            do j = 1, nmax - 1
-                f(:, j) = f(:, j + 1)
-            end do
-            f(:, nmax) = 0.0_wp
 
         end select
 
-    end subroutine Int_Trapezoidal_f_InPlace
+    end subroutine Int_Trapezoidal_Increments_InPlace
 
 ! ###################################################################
 ! ###################################################################
@@ -270,8 +260,8 @@ contains
         end if
 
         select case (ibc_loc)
-        case (BCS_MIN)
-            n = 1
+        case (BCS_MIN)              ! Backwards stencil
+            n = 1                   ! At the lower boundary, I need to reverse the stencil and use the other biased formula
             dxm1 = x(n + 1) - x(n)
             dxm2 = x(n + 2) - x(n + 1)
             a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
@@ -291,8 +281,8 @@ contains
 
             end do
 
-        case (BCS_MAX)
-            n = nmax
+        case (BCS_MAX)              ! Forward stencil
+            n = nmax                ! At the upper boundary, I need to reverse the stencil and use the other biased formula
             dxm1 = x(n) - x(n - 1)
             dxm2 = x(n - 1) - x(n - 2)
             a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
@@ -316,6 +306,265 @@ contains
 
         return
     end subroutine Int_Simpson_Biased_v
+
+! ###################################################################
+! ###################################################################
+    ! Calculate integral step by step instead every 2 steps using biased, 2 point formula
+    ! Bias direction is set by ibc=[BCS_MIN,BCS_MAX] parameter
+    ! ..... x x ..... calculate integral in this interval between to consecutive grid points
+    ! ... + + + ..... using this stencil (BCS_MIN). Result is I_n = int_{x_1}^{x_{n}}
+    ! ..... + + + ... or this stencil (BCS_MAX). Result is I_n = int_{x_n}^{x_{nmax}}
+    subroutine Int_Simpson_Biased_f(u, x, result, ibc)
+        real(wp), intent(IN) :: u(:, :)
+        real(wp), intent(IN) :: x(:)
+        real(wp), intent(OUT) :: result(:, :)
+        integer, intent(in), optional :: ibc
+
+        ! -------------------------------------------------------------------
+        integer(wi) n, nmax
+        real(wp) a, b, c, dxm2, dxm1, c16
+        integer ibc_loc
+
+! ###################################################################
+        nmax = size(x)
+
+        c16 = 1.0_wp/6.0_wp
+
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_MIN
+        end if
+
+        select case (ibc_loc)
+        case (BCS_MIN)              ! Backwards stencil. Result is I_n = int_{x_{1}}^{x_n} u dx
+            if (nmax == 2) then
+                result(:, 2) = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+                return
+            end if
+
+            n = 1                   ! At the lower boundary, I need to reverse the stencil and use the other biased formula
+            dxm1 = x(n + 1) - x(n)
+            dxm2 = x(n + 2) - x(n + 1)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            result(:, 2) = a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+
+            do n = 3, nmax
+                dxm1 = x(n) - x(n - 1)
+                dxm2 = x(n - 1) - x(n - 2)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                result(:, n) = result(:, n - 1) + a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            end do
+
+        case (BCS_MAX)              ! Forward stencil. Result is I_n = int_{x_n}^{x_{nmax}}
+            if (nmax == 2) then
+                result(:, 1) = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+                return
+            end if
+
+            n = nmax                ! At the upper boundary, I need to reverse the stencil and use the other biased formula
+            dxm1 = x(n) - x(n - 1)
+            dxm2 = x(n - 1) - x(n - 2)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            result(:, nmax - 1) = a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            do n = nmax - 2, 1, -1
+                dxm1 = x(n + 1) - x(n)
+                dxm2 = x(n + 2) - x(n + 1)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                result(:, n) = result(:, n + 1) + a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+
+            end do
+
+        end select
+
+        return
+    end subroutine Int_Simpson_Biased_f
+
+! ###################################################################
+! ###################################################################
+    ! Calculate integral step by step instead every 2 steps using biased, 2 point formula
+    ! Bias direction is set by ibc=[BCS_MIN,BCS_MAX] parameter
+    ! ..... x x ..... calculate integral in this interval between to consecutive grid points
+    ! ... + + + ..... using this stencil (BCS_MIN). Result is I_n = int_{x_{n-1}}^{x_n} u dx
+    ! ..... + + + ... or this stencil (BCS_MAX). Result is I_n = int_{x_{n}}^{x_{n+1}} u dx
+    subroutine Int_Simpson_Biased_Increments(u, x, result, ibc)
+        real(wp), intent(in) :: u(:, :)
+        real(wp), intent(in) :: x(:)
+        real(wp), intent(out) :: result(:, :)
+        integer, intent(in), optional :: ibc
+
+        ! -------------------------------------------------------------------
+        integer(wi) n, nmax
+        real(wp) a, b, c, dxm2, dxm1, c16
+        integer ibc_loc
+
+! ###################################################################
+        nmax = size(x)
+
+        c16 = 1.0_wp/6.0_wp
+
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_MIN
+        end if
+
+        select case (ibc_loc)
+        case (BCS_MIN)              ! Backwards stencil. Result is I_n = int_{x_{n-1}}^{x_n} u dx
+            if (nmax == 2) then
+                result(:, nmax) = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+                return
+            end if
+
+            n = 1                   ! At the lower boundary, I need to reverse the stencil and use the other biased formula
+            dxm1 = x(n + 1) - x(n)
+            dxm2 = x(n + 2) - x(n + 1)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            result(:, n + 1) = a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+            do n = nmax, 3, -1      ! Starting from the top, u(:,n) is no longer used with the backwards stencil
+                dxm1 = x(n) - x(n - 1)
+                dxm2 = x(n - 1) - x(n - 2)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                result(:, n) = a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            end do
+
+        case (BCS_MAX)              ! Forward stencil. Result is I_n = int_{x_{n}}^{x_{n+1}} u dx
+            if (nmax == 2) then
+                result(:, 1) = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+                return
+            end if
+
+            n = nmax                ! At the upper boundary, I need to reverse the stencil and use the other biased formula
+            dxm1 = x(n) - x(n - 1)
+            dxm2 = x(n - 1) - x(n - 2)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            result(:, n - 1) = a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            do n = 1, nmax - 2      ! Starting from the bottom, u(:,n) is no longer used with the forward stencil
+                dxm1 = x(n + 1) - x(n)
+                dxm2 = x(n + 2) - x(n + 1)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                result(:, n) = a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+
+            end do
+
+        end select
+
+        return
+    end subroutine Int_Simpson_Biased_Increments
+
+! ###################################################################
+! ###################################################################
+    subroutine Int_Simpson_Biased_Increments_Inplace(u, x, wrk2d, ibc)
+        real(wp), intent(inout) :: u(:, :)
+        real(wp), intent(in) :: x(:)
+        real(wp), intent(inout) :: wrk2d(:)
+        integer, intent(in), optional :: ibc
+
+        ! -------------------------------------------------------------------
+        integer(wi) n, nmax
+        real(wp) a, b, c, dxm2, dxm1, c16
+        integer ibc_loc
+
+! ###################################################################
+        nmax = size(x)
+
+        c16 = 1.0_wp/6.0_wp
+
+        if (present(ibc)) then
+            ibc_loc = ibc
+        else
+            ibc_loc = BCS_MIN
+        end if
+
+        select case (ibc_loc)
+        case (BCS_MIN)              ! Backwards stencil. Result is I_n = int_{x_{n-1}}^{x_n} u dx
+            if (nmax == 2) then
+                u(:, nmax) = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+                return
+            end if
+
+            n = 1                   ! At the lower boundary, I need to reverse the stencil and use the other biased formula
+            dxm1 = x(n + 1) - x(n)
+            dxm2 = x(n + 2) - x(n + 1)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            wrk2d(1:size(u, 1)) = a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2) ! save for later
+
+            do n = nmax, 3, -1      ! Starting from the top, u(:,n) is no longer used with the backwards stencil
+                dxm1 = x(n) - x(n - 1)
+                dxm2 = x(n - 1) - x(n - 2)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                u(:, n) = a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2)
+
+            end do
+
+            u(:, 2) = wrk2d(1:size(u, 1))
+
+        case (BCS_MAX)              ! Forward stencil. Result is I_n = int_{x_{n}}^{x_{n+1}} u dx
+            if (nmax == 2) then
+                u(:, 1) = 0.5_wp*(u(:, 1) + u(:, 2))*(x(2) - x(1))
+                return
+            end if
+
+            n = nmax                ! At the upper boundary, I need to reverse the stencil and use the other biased formula
+            dxm1 = x(n) - x(n - 1)
+            dxm2 = x(n - 1) - x(n - 2)
+            a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+            b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+            c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+            wrk2d(1:size(u, 1)) = a*u(:, n) + b*u(:, n - 1) - c*u(:, n - 2) ! save for later
+
+            do n = 1, nmax - 2      ! Starting from the bottom, u(:,n) is no longer used with the forward stencil
+                dxm1 = x(n + 1) - x(n)
+                dxm2 = x(n + 2) - x(n + 1)
+                a = c16*(2.0_wp*dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/(dxm2 + dxm1)
+                b = c16*(dxm1*dxm1 + 3.0_wp*dxm1*dxm2)/dxm2
+                c = c16*dxm1*dxm1*dxm1/dxm2/(dxm2 + dxm1)
+
+                u(:, n) = a*u(:, n) + b*u(:, n + 1) - c*u(:, n + 2)
+
+            end do
+
+            u(:, nmax - 1) = wrk2d(1:size(u, 1))
+
+        end select
+
+        return
+    end subroutine Int_Simpson_Biased_Increments_Inplace
 
 ! ! ###################################################################
 ! ! ###################################################################

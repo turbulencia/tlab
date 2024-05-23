@@ -151,12 +151,13 @@ contains
             b = sigma_o_pi*wrk3d**4.0_wp
 
             if (present(flux)) then
-                ! call IR_Bulk1D_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                call IR_Bulk1D_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                call IR_Bulk1D_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_Bulk1D_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
                 ! call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             else
+                call IR_Bulk1D_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
                 ! call IR_Bulk1D_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+                ! call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             end if
 
         end select
@@ -348,22 +349,13 @@ contains
         ! ###################################################################
         ! calculate f_j = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
-        ! do j = 2, ny
-        !     call Int_Simpson_v(p_a(:, 1:j), g%nodes(1:j), p_tau(:, j))
-        ! end do
+        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
-        ! p_tau(:, ny) = 0.0_wp
-        ! do j = 1, ny - 1
-        !     call Int_Simpson_v(p_a(:, j:ny), g%nodes(j:ny), p_tau(:, j))
-        ! end do
-        ! do j = ny, 2, -1
-        !     p_tau(:, j) = exp(p_tau(:, j) - p_tau(:, j - 1))
-        ! end do
-        p_tau(:, 1) = 1.0_wp        ! this value is not used;
+        p_tau(:, 1) = 1.0_wp        ! this value is not used
 
         ! ###################################################################
         ! downward flux; positive going down
@@ -511,12 +503,13 @@ contains
         ! ###################################################################
         ! calculate exp(-tau(zi, zj)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
-        p_tau(:, 1) = 1.0_wp
+        p_tau(:, 1) = 1.0_wp        ! this value is not used
 
         ! ###################################################################
         ! downward flux; positive going down
@@ -562,7 +555,6 @@ contains
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
                     tmp2(:, k) = p_ab(:, k)*p_flux_2
                 end do
-                ! call Int_Simpson_v_old(tmp2(:, 1:j), g%nodes(1:j), p_flux_2, wrk2d_loc)
                 call Int_Simpson_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
                 ! call Int_Trapezoidal_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
                 p_source(:, j) = p_a(:, j)*(p_flux_2 + p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
@@ -588,7 +580,6 @@ contains
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
                     tmp2(:, k) = p_ab(:, k)*p_flux_2
                 end do
-                ! call Int_Simpson_v_old(tmp2(:, 1:j), g%nodes(1:j), p_flux_2, wrk2d_loc)
                 call Int_Simpson_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
                 ! call Int_Trapezoidal_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
                 p_source(:, j) = p_a(:, j)*(p_flux_2 + p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
@@ -674,45 +665,54 @@ contains
         ! p_a = 0.0_wp    ! test
 
         ! ###################################################################
-        ! downward flux
+        ! downward flux; positive going down
 
-        ! calculate exp(-tau(z, zmax)/\mu)
+        ! calculate f_j = exp(-tau(z_j, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MAX)            ! recall this gives the negative of the integral
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
+        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)            ! recall this gives the negative of the integral
+        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MAX)
+        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
-            p_tau(:, j) = exp(p_tau(:, j))
+            p_tau(:, j) = exp(-p_tau(:, j))
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
         p_flux = p_ab/p_tau
-        call Int_Trapezoidal_f_InPlace(p_flux, g%nodes, BCS_MAX)        ! recall this gives the negative of the integral
-        fd = -infrared%parameters(1)
-        p_flux = p_tau*(fd + p_flux)                            ! negative going down
-
-        ! ###################################################################
-
-        ! bottom boundary condition; calculate upward flux at the bottom
-        epsilon = infrared%parameters(4)
-        p_bcs = epsilon*p_bcs - (1.0_wp - epsilon)*p_flux(:, 1)
+        ! call Int_Trapezoidal_Increments_InPlace(p_flux, g%nodes, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        call Int_Simpson_Biased_Increments_InPlace(p_flux, g%nodes, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        p_flux(:, ny) = 0.0_wp
+        do j = ny - 1, 1, -1
+            p_flux(:, j) = p_flux(:, j + 1) + p_flux(:, j)
+        end do
+        fd = infrared%parameters(1)
+        p_flux = p_tau*(fd + p_flux)
 
         ! ###################################################################
         ! upward flux
+        epsilon = infrared%parameters(4)
+        p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
 
         ! calculate exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
         ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MIN)
         do j = 1, ny
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
 
         tmp2 = p_ab/p_tau
-        call Int_Trapezoidal_f_InPlace(tmp2, g%nodes, BCS_MIN)
+        ! call Int_Trapezoidal_Increments_InPlace(tmp2, g%nodes, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        call Int_Simpson_Biased_Increments_InPlace(tmp2, g%nodes, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        tmp2(:, 1) = 0.0_wp
+        do j = 2, ny
+            tmp2(:, j) = tmp2(:, j - 1) + tmp2(:, j)
+        end do
+        !
         do j = ny, 1, -1
             tmp2(:, j) = p_tau(:, j)*(p_bcs(:) + tmp2(:, j))    ! upward flux
-            p_source(:, j) = p_a(:, j)*(tmp2(:, j) - p_flux(:, j)) - 2.0_wp*p_ab(:, j)
-            p_flux(:, j) = tmp2(:, j) + p_flux(:, j)            ! total flux
+            p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+            p_flux(:, j) = tmp2(:, j) - p_flux(:, j)            ! total flux
         end do
 
         if (present(flux)) then
