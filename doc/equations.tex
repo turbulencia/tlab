@@ -321,25 +321,33 @@ In a one-dimensional bulk model, the source term is expressed in terms of upward
 \begin{equation}
     \omega_\mathrm{R}=-\partial_z(F_\uparrow -F_\downarrow) \;.
 \end{equation}
-($F_\downarrow$ is defined positive going downwards.) The fluxes are obtained from the transfer equation
+($F_\downarrow$ is defined positive going downwards.) The fluxes are obtained from the radiative transfer problem
 \begin{equation}
-    \partial_s F+(a/\mu) F = 2\pi\mu a B\;,\qquad F|_{s=0}=F_0 \;,
+    \bar{\mu}\, \partial_\tau F+F = 2\pi\bar{\mu} B\;,\qquad F|_{\tau=0}=F_0 \;,
 \end{equation}
-where $s$ is the distance, $B=\sigma T^4/\pi$ is the emission function, and 
+where $\tau$ is the optical depth, $\bar{\mu}$ is a mean direction parameter and
+\begin{equation}
+    B\equiv \sigma T^4/\pi
+\end{equation}
+is the emission function. Written in spatial coordinates using the change of variables $\mathrm{d}\tau = a\,\mathrm{d}s$, we obtain
+\begin{equation}
+    \partial_s F+(a/\bar{\mu}) F = 2\pi a B\;,\qquad F|_{s=0}=F_0 \;,
+\end{equation}
+where $s$ is the distance and 
 \begin{equation}
     a = \kappa_1 \rho \zeta_1 + \kappa_2 \rho \zeta_2 + \ldots
 \end{equation}
 is the bulk absorption coefficient, the constants $\kappa_i$ being the corresponding mass absorption coefficients. The source term is then given by
 \begin{equation}
-    \omega_\mathrm{R}=(a/\mu) (F_\uparrow +F_\downarrow) - 4\pi\mu a B \;.
+    \omega_\mathrm{R}=(a/\bar{\mu}) (F_\uparrow +F_\downarrow) - 4\pi\bar{\mu} a B \;.
 \end{equation}
-(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\mu\in[1/\sqrt{3},1/\sqrt{2}]$; \textbf{Using 0.5 because it yields better agreement with ARTS}. The solution to the transfer equation yields
+(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\bar{\mu}\in[1/\sqrt{3},1/\sqrt{2}]$; \textbf{Using 0.5 because it yields better agreement with ARTS}. The solution to the transfer equation yields
 \begin{subequations}\label{rad:flux}
     \begin{align}
-        F_\uparrow &= e^{-\tau(z_\mathrm{min},z)/\mu}\left[ F_{\uparrow,z_\mathrm{min}} + 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{\tau(z_\mathrm{min},z')/\mu}\mathrm{d}z'\right]\notag \\
-        &= F_{\uparrow,z_\mathrm{min}}e^{-\tau(z_\mathrm{min},z)/\mu}+ 2\pi\mu\int_{z_\mathrm{min}}^z a B e^{-\tau(z',z)/\mu}\mathrm{d}z' \;,\\
-        F_\downarrow &= e^{-\tau(z,z_\mathrm{max})/\mu}\left[ F_{\downarrow,z_\mathrm{max}} + 2\pi\mu\int_z^{z_\mathrm{max}} a B e^{\tau(z',z_\mathrm{max})/\mu}\mathrm{d}z'\right]\notag \\
-        &=F_{\downarrow,z_\mathrm{max}}e^{-\tau(z,z_\mathrm{max})/\mu} + 2\pi\mu\int_z^{z_\mathrm{max}} a B e^{-\tau(z,z')/\mu}\mathrm{d}z'\;,
+        F_\uparrow &= e^{-\tau(z_\mathrm{min},z)/\bar{\mu}}\left[ F_{\uparrow,z_\mathrm{min}} + 2\pi\int_{z_\mathrm{min}}^z a B e^{\tau(z_\mathrm{min},z')/\bar{\mu}}\mathrm{d}z'\right]\notag \\
+        &= F_{\uparrow,z_\mathrm{min}}e^{-\tau(z_\mathrm{min},z)/\bar{\mu}}+ 2\pi\int_{z_\mathrm{min}}^z a B e^{-\tau(z',z)/\bar{\mu}}\mathrm{d}z' \;,\\
+        F_\downarrow &= e^{-\tau(z,z_\mathrm{max})/\bar{\mu}}\left[ F_{\downarrow,z_\mathrm{max}} + 2\pi\int_z^{z_\mathrm{max}} a B e^{\tau(z',z_\mathrm{max})/\bar{\mu}}\mathrm{d}z'\right]\notag \\
+        &=F_{\downarrow,z_\mathrm{max}}e^{-\tau(z,z_\mathrm{max})/\bar{\mu}} + 2\pi\int_z^{z_\mathrm{max}} a B e^{-\tau(z,z')/\bar{\mu}}\mathrm{d}z'\;,
     \end{align}
 \end{subequations}
 where the optical-depth function is defined as
@@ -355,24 +363,24 @@ One model option sets the emission function to zero and consider only the liquid
 
 Another model option considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the equation
 \begin{equation}
-    F_{\uparrow,z_\mathrm{min}} = \epsilon 2\pi\mu B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
+    F_{\uparrow,z_\mathrm{min}} = \epsilon 2\pi\bar{\mu} B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
 \end{equation}
-The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v}$ and the surface emission $\epsilon\in[0,1]$. Note that we need to solve the downward flux to obtain its value at $z=z_\mathrm{min}$ to use this equation and then solve for the upward flux.
+The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v}$ and the surface emissivity $\epsilon\in[0,1]$. Note that we need to solve first the problem for the downward flux to obtain its value at $z=z_\mathrm{min}$, use this equation to obtain the boundary condition for the upward flux, and then solve the problem for the upward flux.
 
 Apart from the 2 implementations indicated in (\ref{equ:radflux}), we also consider the incremental formulation
 \begin{subequations}\label{equ:radflux}
     \begin{align}
-        &F_\uparrow(z_{i+1}) = e^{-\tau(z_i,z_{i+1})/\mu}\left[ F_\uparrow(z_i) + 2\pi\mu\int_{z_i}^{z_{i+1}} a B e^{\tau(z_i,z')/\mu}\mathrm{d}z'\right]\notag  \;,\\
-        &F_\downarrow(z_i) = e^{-\tau(z_i,z_{i+1})/\mu}\left[ F_\downarrow(z_{i+1}) + 2\pi\mu\int_{z_i}^{z_{i+1}} a B e^{\tau(z',z_{i+1})/\mu}\mathrm{d}z'\right]\notag  \;,\\
+        &F_\uparrow(z_{i+1}) = e^{-\tau(z_i,z_{i+1})/\bar{\mu}}\left[ F_\uparrow(z_i) + 2\pi\int_{z_i}^{z_{i+1}} a B e^{\tau(z_i,z')/\bar{\mu}}\mathrm{d}z'\right]\notag  \;,\\
+        &F_\downarrow(z_i) = e^{-\tau(z_i,z_{i+1})/\bar{\mu}}\left[ F_\downarrow(z_{i+1}) + 2\pi\int_{z_i}^{z_{i+1}} a B e^{\tau(z',z_{i+1})/\bar{\mu}}\mathrm{d}z'\right]\notag  \;,\\
     \end{align}
 \end{subequations}
 where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $(z_\mathrm{min}, z_\mathrm{max})$ is discretized. Note that we can write
 \begin{equation}
-    e^{-\tau(z_i,z_j)/\mu}=\prod_{k=i+1}^{j}I_k\;,\qquad 
+    e^{-\tau(z_i,z_j)/\bar{\mu}}=\prod_{k=i+1}^{j}I_k\;,\qquad 
     I_k\equiv\left\{
     \begin{array}{ll}
         1 & k=1\;,\\
-        e^{-\tau(z_{k-1},z_k)/\mu} & k=2,\ldots N \;.
+        e^{-\tau(z_{k-1},z_k)/\bar{\mu}} & k=2,\ldots N \;.
     \end{array}
     \right.
 \end{equation}
@@ -414,7 +422,7 @@ Hence, we only need to compute and save $\{I_k\}_{k=1}^N$, and we can calculate 
 
 Transport phenomena different from molecular transport, e.g., that due to particle sedimentation, can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{T}\,\omega_\mathrm{T}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{T}$ is the corresponding nondimensional transport parameter and the transport function $\omega_\mathrm{T}^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) transport parameter.
 
-For the transport function, see routine {\tt mappings/fi\_sources}.
+For the transport function, see routine {\tt mappings/microphysics}.
 
 \section{Particle formulation}
 

@@ -96,6 +96,7 @@ contains
         ! sigma_o_pi = 0.0_wp       ! testing
 
         ! mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
+        ! mu = 1.0_wp/sqrt(2.0_wp)
         mu = 0.5_wp     ! testing
 
         allocate (bcs(imax*kmax))
@@ -328,9 +329,9 @@ contains
 
 ! ###################################################################
         ! emission function
-        dummy = 2.0_wp*pi_wp*mu
+        dummy = 2.0_wp*pi_wp
         p_ab = p_ab*dummy                 ! emission function
-        p_flux_up = p_ab(:, 1)            ! save for calculation of surface flux upwards
+        p_flux_up = p_ab(:, 1)*mu            ! save for calculation of surface flux upwards
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! absorption coefficient
@@ -482,9 +483,9 @@ contains
 
 ! ###################################################################
         ! emission function
-        dummy = 2.0_wp*pi_wp*mu
+        dummy = 2.0_wp*pi_wp
         p_ab = p_ab*dummy                 ! emission function
-        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_bcs = p_ab(:, 1)*mu             ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! absorption coefficient
@@ -646,9 +647,9 @@ contains
 
 ! ###################################################################
         ! emission function
-        dummy = 2.0_wp*pi_wp*mu
+        dummy = 2.0_wp*pi_wp
         p_ab = p_ab*dummy                 ! emission function
-        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_bcs = p_ab(:, 1)*mu             ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! absorption coefficient
@@ -691,6 +692,7 @@ contains
         ! upward flux
         epsilon = infrared%parameters(4)
         p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
+        ! p_bcs = 0.0_wp  ! test
 
         ! calculate exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
