@@ -97,7 +97,7 @@ program INISCAL
 
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
-    if (infrared%type /= EQNS_NONE) then
+    if (infrared%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
 
         if (abs(infrared%parameters(1)) > 0.0_wp) then
             infrared%parameters(3) = infrared%parameters(3)/infrared%parameters(1)*norm_ini_radiation

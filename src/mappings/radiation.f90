@@ -19,7 +19,7 @@ module Radiation
     integer, parameter :: TYPE_BULK1DLOCAL = 10         ! backwards compatibility, to be removed
 
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
-    real(wp) :: sigma_o_pi, mu
+    real(wp) :: mu!, sigma_o_pi
     real(wp), allocatable, target :: bcs(:)
 
     public :: Radiation_Initialize
@@ -92,12 +92,12 @@ contains
         ! -------------------------------------------------------------------
         ! in case nondimensional we need to adjust sigma
 
-        sigma_o_pi = sigma/pi_wp
+        ! sigma_o_pi = sigma/pi_wp
         ! sigma_o_pi = 0.0_wp       ! testing
 
-        ! mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
+        mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
         ! mu = 1.0_wp/sqrt(2.0_wp)
-        mu = 0.5_wp     ! testing
+        ! mu = 0.5_wp     ! testing
 
         allocate (bcs(imax*kmax))
 
@@ -149,7 +149,7 @@ contains
                 ! tbd
             end if
             ! emission function
-            b = sigma_o_pi*wrk3d**4.0_wp
+            b = sigma*wrk3d**4.0_wp
 
             if (present(flux)) then
                 call IR_Bulk1D_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
@@ -328,15 +328,13 @@ contains
 #endif
 
 ! ###################################################################
-        ! emission function
-        dummy = 2.0_wp*pi_wp
-        p_ab = p_ab*dummy                 ! emission function
-        p_flux_up = p_ab(:, 1)*mu            ! save for calculation of surface flux upwards
-        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
-
-        ! absorption coefficient
+        ! absorption coefficient; divide by mean direction 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
+
+        ! emission function
+        p_flux_up  = p_ab(:, 1)            ! save for calculation of surface flux
+        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! test
         ! p_ab = 0.0_wp   ! test
@@ -482,15 +480,13 @@ contains
 #endif
 
 ! ###################################################################
-        ! emission function
-        dummy = 2.0_wp*pi_wp
-        p_ab = p_ab*dummy                 ! emission function
-        p_bcs = p_ab(:, 1)*mu             ! save for calculation of surface flux
-        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
-
-        ! absorption coefficient
+        ! absorption coefficient; divide by mean direction 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
+
+        ! emission function
+        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! test
         ! p_ab = 0.0_wp   ! test
@@ -646,15 +642,13 @@ contains
 #endif
 
 ! ###################################################################
-        ! emission function
-        dummy = 2.0_wp*pi_wp
-        p_ab = p_ab*dummy                 ! emission function
-        p_bcs = p_ab(:, 1)*mu             ! save for calculation of surface flux
-        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
-
-        ! absorption coefficient
+        ! absorption coefficient; divide by mean direction 
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
+
+        ! emission function
+        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! test
         ! p_ab = 0.0_wp   ! test
