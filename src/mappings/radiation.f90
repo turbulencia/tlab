@@ -14,12 +14,14 @@ module Radiation
     private
 
     integer, parameter :: TYPE_NONE = 0
-    integer, parameter :: TYPE_IR_BULK1D_LIQUID = 1
-    integer, parameter :: TYPE_IR_BULK1D = 2
+    integer, parameter :: TYPE_IR_GRAY_LIQUID = 1
+    integer, parameter :: TYPE_IR_GRAY = 2
+    integer, parameter :: TYPE_IR_TWOBANDS = 3
     integer, parameter :: TYPE_BULK1DLOCAL = 10         ! backwards compatibility, to be removed
 
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
-    real(wp) :: mu!, sigma_o_pi
+    real(wp) :: mu                                      ! mean direction parameter
+    real(wp) :: epsilon                                 ! surface emissivity at ymin
     real(wp), allocatable, target :: bcs(:)
 
     public :: Radiation_Initialize
@@ -33,25 +35,27 @@ contains
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
-        character(len=32) bakfile
+        character(len=32) bakfile, block
         character(len=512) sRes
         integer(wi) idummy
 
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
+        block = 'Infrared'
 
         call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[Radiation]')
+        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Type', 'None', sRes)
+        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
             call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; infrared%type = TYPE_NONE
-        else if (trim(adjustl(sRes)) == 'irbulk1dliquid') then; infrared%type = TYPE_IR_BULK1D_LIQUID
-        else if (trim(adjustl(sRes)) == 'irbulk1d') then; infrared%type = TYPE_IR_BULK1D
+        else if (trim(adjustl(sRes)) == 'grayliquid') then; infrared%type = TYPE_IR_GRAY_LIQUID
+        else if (trim(adjustl(sRes)) == 'gray') then; infrared%type = TYPE_IR_GRAY
+        else if (trim(adjustl(sRes)) == 'twobands') then; infrared%type = TYPE_IR_TWOBANDS
         else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Radiation.Type.')
@@ -60,11 +64,11 @@ contains
 
         infrared%active = .false.
         if (infrared%type /= TYPE_NONE) then
-            call SCANINIINT(bakfile, inifile, 'Radiation', 'Scalar', '1', idummy)
+            call SCANINIINT(bakfile, inifile, block, 'Scalar', '1', idummy)
             infrared%active(idummy) = .true.
 
             infrared%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', '1.0', sRes)
+            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
             idummy = MAX_PROF
             call LIST_REAL(sRes, idummy, infrared%parameters)
 
@@ -90,7 +94,7 @@ contains
         end if
 
         ! -------------------------------------------------------------------
-        ! in case nondimensional we need to adjust sigma
+        ! in case nondimensional we need to adjust sigma; tbd
 
         ! sigma_o_pi = sigma/pi_wp
         ! sigma_o_pi = 0.0_wp       ! testing
@@ -100,6 +104,10 @@ contains
         ! mu = 0.5_wp     ! testing
 
         allocate (bcs(imax*kmax))
+
+        ! !########################################################################
+        ! bakfile = trim(adjustl(inifile))//'.bak'
+        ! block = 'Visible'
 
         return
     end subroutine Radiation_Initialize
@@ -118,48 +126,88 @@ contains
         real(wp), intent(out), optional :: flux(nx*ny*nz)
 
         ! -----------------------------------------------------------------------
-        real(wp) kappa, kappal, kappav
+        integer iband
+        integer, parameter :: nbands = 2        ! number of spectral bands
+        real(wp) kappal, kappav(nbands)
 
         !########################################################################
         select case (infrared%type)
-        case (TYPE_IR_BULK1D_LIQUID, TYPE_BULK1DLOCAL)
-            ! bulk absorption coefficient; in array source to save memory
-            kappa = infrared%parameters(2)
-            source = kappa*s(:, infrared%scalar(1))
+        case (TYPE_IR_GRAY_LIQUID, TYPE_BULK1DLOCAL)
+            ! infrared%parameters(1) downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            ! infrared%parameters(3) upward flux at domain bottom
+
+            source = kappal*s(:, infrared%scalar(1))        ! bulk absorption coefficient in array source to save memory
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
             end if
 
             if (present(flux)) then
-                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source, flux)
+                call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source, flux)
             else
-                call IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, source)
+                call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source)
             end if
 
-        case (TYPE_IR_BULK1D)
+        ! -----------------------------------------------------------------------
+        case (TYPE_IR_GRAY)
+            ! infrared%parameters(1) downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor
+            epsilon = infrared%parameters(4)    ! surface emissivity at ymin
+
             ! bulk absorption coefficient; in array source to save memory
-            kappal = infrared%parameters(2)
-            kappav = infrared%parameters(3)
-            source = kappal*s(:, infrared%scalar(1)) + kappav*(s(:, 2) - s(:, infrared%scalar(1)))
+            source = kappal*s(:, infrared%scalar(1)) + kappav(1)*(s(:, 2) - s(:, infrared%scalar(1)))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
-                ! calculate temperature to calculate emission function
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)                 ! calculate temperature for emission function
             else
                 ! tbd
             end if
-            ! emission function
-            b = sigma*wrk3d**4.0_wp
+            b = sigma*wrk3d**4.0_wp             ! emission function
 
-            if (present(flux)) then
-                call IR_Bulk1D_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                ! call IR_Bulk1D_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                ! call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+            if (present(flux)) then             ! solve radiative transfer equation along y
+                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             else
-                call IR_Bulk1D_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                ! call IR_Bulk1D_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                ! call IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
+                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
+                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             end if
+
+        ! -----------------------------------------------------------------------
+        case (TYPE_IR_TWOBANDS)
+            ! infrared%parameters(1) downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor, band 1
+            kappav(2) = infrared%parameters(4)  ! mass absorptivity coefficient of vapor, band 2
+            epsilon = infrared%parameters(5)    ! surface emissivity at ymin
+
+            ! liquid
+            source = kappal*s(:, infrared%scalar(1))
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)                 ! calculate temperature for emission function
+            else
+                ! tbd
+            end if
+            b = sigma*wrk3d**4.0_wp             ! emission function
+            ! call rte routine
+
+            ! vapor
+            tmp1 = s(:, 2) - s(:, infrared%scalar(1))
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, tmp1)     ! multiply by density
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, tmp2)                  ! calculate temperature for emission function
+            else
+                ! tbd
+            end if
+            do iband = 1, nbands
+                source = kappav(iband)*tmp1
+                b = sigma*wrk3d**4.0_wp             ! emission function
+                ! call rte routine
+                ! accumulate
+            end do
 
         end select
 
@@ -167,10 +215,8 @@ contains
 
 !########################################################################
 !########################################################################
-    ! infrared%parameters(1) downward flux at domain top
-    ! infrared%parameters(2) mass absorptivity coefficient of liquid
-    ! infrared%parameters(1) upward flux at domain bottom
-    subroutine IR_Bulk1D_Liquid(infrared, nx, ny, nz, g, a_source, flux)
+    ! Radiative transfer equation along y; only liquid
+    subroutine IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, a_source, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -275,15 +321,13 @@ contains
         nullify (p_a, p_tau, p_source, p_flux)
 
         return
-    end subroutine IR_Bulk1D_Liquid
+    end subroutine IR_RTE_Y_Liquid
 
 !########################################################################
 !########################################################################
-    ! infrared%parameters(1) downward flux at domain top
-    ! infrared%parameters(2) mass absorptivity coefficient of liquid
-    ! infrared%parameters(2) mass absorptivity coefficient of vapor
-    ! infrared%parameters(4) emission factor at domain bottom
-    subroutine IR_Bulk1D_Incremental(infrared, nx, ny, nz, g, a_source, b, tmp1, flux)
+    ! Radiative transfer equation along y
+    ! Here we do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
+    subroutine IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, a_source, b, tmp1, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -296,7 +340,7 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) epsilon, dummy
+        real(wp) dummy
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_ab(:, :) => null()
@@ -328,12 +372,12 @@ contains
 #endif
 
 ! ###################################################################
-        ! absorption coefficient; divide by mean direction 
+        ! absorption coefficient; divide by mean direction
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
 
         ! emission function
-        p_flux_up  = p_ab(:, 1)            ! save for calculation of surface flux
+        p_flux_up = p_ab(:, 1)            ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! test
@@ -373,7 +417,6 @@ contains
         ! ###################################################################
         ! upward flux and source
         j = 1
-        epsilon = infrared%parameters(4)
         p_flux_up = epsilon*p_flux_up + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
         p_source(:, j) = p_a(:, j)*(p_flux_up + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
 
@@ -426,15 +469,13 @@ contains
         nullify (p_a, p_tau, p_ab, p_source, p_flux, p_flux_up, p_wrk2d_1, p_wrk2d_2)
 
         return
-    end subroutine IR_Bulk1D_Incremental
+    end subroutine IR_RTE_Y_Incremental
 
 !########################################################################
 !########################################################################
-    ! infrared%parameters(1) downward flux at domain top
-    ! infrared%parameters(2) mass absorptivity coefficient of liquid
-    ! infrared%parameters(2) mass absorptivity coefficient of vapor
-    ! infrared%parameters(4) emission factor at domain bottom
-    subroutine IR_Bulk1D_Local(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
+    ! Radiative transfer equation along y
+    ! Here we do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
+    subroutine IR_RTE_Y_Local(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -448,7 +489,7 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, k, nxy, nxz
-        real(wp) epsilon, dummy
+        real(wp) dummy
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_ab(:, :) => null()
@@ -480,7 +521,7 @@ contains
 #endif
 
 ! ###################################################################
-        ! absorption coefficient; divide by mean direction 
+        ! absorption coefficient; divide by mean direction
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
 
@@ -530,7 +571,6 @@ contains
 
         ! ###################################################################
         ! bottom boundary condition; calculate upward flux at the bottom
-        epsilon = infrared%parameters(4)
         p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1)
 
         ! ###################################################################
@@ -595,12 +635,11 @@ contains
         nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs)
 
         return
-    end subroutine IR_Bulk1D_Local
+    end subroutine IR_RTE_Y_Local
 
 !########################################################################
 !########################################################################
-! Here we do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
-    subroutine IR_Bulk1D_Global(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
+    subroutine IR_RTE_Y_Global(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -614,7 +653,7 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) fd, epsilon, dummy!, fu
+        real(wp) fd, dummy
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_ab(:, :) => null()
@@ -642,7 +681,7 @@ contains
 #endif
 
 ! ###################################################################
-        ! absorption coefficient; divide by mean direction 
+        ! absorption coefficient; divide by mean direction
         dummy = 1.0_wp/mu
         p_a = p_a*dummy
 
@@ -684,7 +723,6 @@ contains
 
         ! ###################################################################
         ! upward flux
-        epsilon = infrared%parameters(4)
         p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
         ! p_bcs = 0.0_wp  ! test
 
@@ -731,6 +769,6 @@ contains
         nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs)
 
         return
-    end subroutine IR_Bulk1D_Global
+    end subroutine IR_RTE_Y_Global
 
 end module
