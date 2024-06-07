@@ -4,9 +4,9 @@
 module Radiation
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PROF
     use TLAB_TYPES, only: term_dt, grid_dt
-    use TLAB_VARS, only: imode_eqns, inb_scal_array
+    use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLAB_ARRAYS, only: wrk2d, wrk3d
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
     use Thermodynamics, only: imixture
     use OPR_ODES
     use Integration
@@ -22,7 +22,11 @@ module Radiation
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: mu                                      ! mean direction parameter
     real(wp) :: epsilon                                 ! surface emissivity at ymin
+    integer, parameter :: nbands = 2                    ! number of spectral bands
+    real(wp) kappal, kappav(nbands)                     ! mass absorption coefficients for liquid and vapor
+    real(wp) beta(3, nbands)                             ! polynomial coefficients for band functions
     real(wp), allocatable, target :: bcs(:)
+    real(wp), allocatable, target :: tmp_rad(:, :)      ! 3D temporary arrays for radiation routine
 
     public :: Radiation_Initialize
     public :: Radiation_Infrared
@@ -38,6 +42,7 @@ contains
         character(len=32) bakfile, block
         character(len=512) sRes
         integer(wi) idummy
+        integer(wi) :: inb_tmp_rad = 0
 
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
@@ -75,39 +80,61 @@ contains
         end if
 
         ! -------------------------------------------------------------------
-        ! By default, radiation is caused by last scalar
-        infrared%scalar = inb_scal_array
+        infrared%scalar = inb_scal_array                        ! By default, radiation is caused by last scalar
 
         if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             if (infrared%type /= EQNS_NONE) then
-                infrared%active(inb_scal_array) = .true. ! liquid
-                infrared%active(inb_scal_array + 1) = .true. ! buoyancy
+                infrared%active(inb_scal_array) = .true.        ! liquid
+                infrared%active(inb_scal_array + 1) = .true.    ! buoyancy
             end if
 
         end if
 
-        ! backwards compatibility
-        if (infrared%type == TYPE_BULK1DLOCAL) then
+        if (infrared%type == TYPE_BULK1DLOCAL) then     ! backwards compatibility
             infrared%parameters(1) = infrared%parameters(1)*infrared%parameters(2)
             infrared%parameters(3) = infrared%parameters(3)*infrared%parameters(2)
             infrared%parameters(2) = 1.0_wp/infrared%parameters(2)
+            infrared%type = TYPE_IR_GRAY_LIQUID
         end if
 
-        ! -------------------------------------------------------------------
-        ! in case nondimensional we need to adjust sigma; tbd
+        select case (infrared%type)
+        case (TYPE_IR_GRAY_LIQUID)
+            ! infrared%parameters(1) downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            ! infrared%parameters(3) upward flux at domain bottom
 
-        ! sigma_o_pi = sigma/pi_wp
-        ! sigma_o_pi = 0.0_wp       ! testing
+        case (TYPE_IR_GRAY)
+            ! infrared%parameters(1) downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor
+            epsilon = infrared%parameters(4)    ! surface emissivity at ymin
+
+        case (TYPE_IR_TWOBANDS)
+            ! infrared%parameters(1) downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor, band 1
+            kappav(2) = infrared%parameters(4)  ! mass absorptivity coefficient of vapor, band 2
+            epsilon = infrared%parameters(5)    ! surface emissivity at ymin
+
+            beta(1:3, 1) = [2.6774e-1_wp, -1.3344e-3_wp, 1.8017e-6_wp] ! coefficients for band 1
+            beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp] ! coefficients for band 2
+
+            inb_tmp_rad = 4                     ! Additional memory space
+
+        end select
 
         mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))     ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
         ! mu = 1.0_wp/sqrt(2.0_wp)
         ! mu = 0.5_wp     ! testing
 
-        allocate (bcs(imax*kmax))
-
         ! !########################################################################
         ! bakfile = trim(adjustl(inifile))//'.bak'
         ! block = 'Visible'
+
+        !########################################################################
+        ! Local allocation
+        allocate (bcs(imax*kmax))
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
 
         return
     end subroutine Radiation_Initialize
@@ -127,16 +154,10 @@ contains
 
         ! -----------------------------------------------------------------------
         integer iband
-        integer, parameter :: nbands = 2        ! number of spectral bands
-        real(wp) kappal, kappav(nbands)
 
         !########################################################################
         select case (infrared%type)
-        case (TYPE_IR_GRAY_LIQUID, TYPE_BULK1DLOCAL)
-            ! infrared%parameters(1) downward flux at domain top
-            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
-            ! infrared%parameters(3) upward flux at domain bottom
-
+        case (TYPE_IR_GRAY_LIQUID)
             source = kappal*s(:, infrared%scalar(1))        ! bulk absorption coefficient in array source to save memory
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
@@ -148,14 +169,7 @@ contains
                 call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source)
             end if
 
-        ! -----------------------------------------------------------------------
         case (TYPE_IR_GRAY)
-            ! infrared%parameters(1) downward flux at domain top
-            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
-            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor
-            epsilon = infrared%parameters(4)    ! surface emissivity at ymin
-
-            ! bulk absorption coefficient; in array source to save memory
             source = kappal*s(:, infrared%scalar(1)) + kappav(1)*(s(:, 2) - s(:, infrared%scalar(1)))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
@@ -175,38 +189,51 @@ contains
                 ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             end if
 
-        ! -----------------------------------------------------------------------
         case (TYPE_IR_TWOBANDS)
-            ! infrared%parameters(1) downward flux at domain top
-            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
-            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor, band 1
-            kappav(2) = infrared%parameters(4)  ! mass absorptivity coefficient of vapor, band 2
-            epsilon = infrared%parameters(5)    ! surface emissivity at ymin
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, tmp_rad(:, 1))          ! calculate temperature for emission function
+            else
+                ! tbd
+            end if
 
             ! liquid
             source = kappal*s(:, infrared%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)                 ! calculate temperature for emission function
-            else
-                ! tbd
             end if
-            b = sigma*wrk3d**4.0_wp             ! emission function
-            ! call rte routine
+            b = sigma*tmp_rad(:, 1)**4.0_wp             ! emission function
+
+            if (present(flux)) then             ! solve radiative transfer equation along y
+                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
+                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+            else
+                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
+                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
+                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+            end if
 
             ! vapor
-            tmp1 = s(:, 2) - s(:, infrared%scalar(1))
+            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, tmp1)     ! multiply by density
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, tmp2)                  ! calculate temperature for emission function
-            else
-                ! tbd
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, tmp_rad(:, 2))     ! multiply by density
             end if
             do iband = 1, nbands
-                source = kappav(iband)*tmp1
-                b = sigma*wrk3d**4.0_wp             ! emission function
-                ! call rte routine
-                ! accumulate
+                tmp_rad(:, 3) = kappav(iband)*tmp_rad(:, 2)
+                b = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
+                if (present(flux)) then             ! solve radiative transfer equation along y
+                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2, tmp_rad(:, 4))
+                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2, tmp_rad(:, 4))
+                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp_rad(:, 4))
+                    flux = flux + tmp_rad(:, 4)
+                else
+                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2)
+                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2)
+                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1)
+                end if
+
+                source = source + tmp_rad(:, 3)
+
             end do
 
         end select

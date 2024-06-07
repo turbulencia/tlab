@@ -231,7 +231,15 @@ Because of the decoupling between the momentum and the internal energy evolution
 
 The formulation of the thermodynamics is the same as in the anelastic formulation.
 
-\subsubsection{Body force}
+\section{Particle formulation}
+
+Lagrange formulation to describe the evolution of a set of particles.
+
+To be done.
+
+\section{Optional Phenomena}
+
+\subsection{Body force}
 
 In the incompressible case, $b(\mathbf{x},t)=b^e(\zeta_i(\mathbf{x},t),\mathbf{x},t)$ and the buoyancy function $b^e(\zeta_i,\mathbf{x},t)$ needs to be provided. The buoyancy function is assumed to be normalized by a reference buoyancy (acceleration) $b_0$ so that $\Fr=U_0^2/(b_0L_0)$. (Note that nondimensional numbers represent the relative magnitude of physical processes and thus they are positive semi-definite; the sign or direction associated with the process, if any, in indicated in the corresponding parameters.)
 
@@ -293,7 +301,7 @@ where angle brackets indicate an average over the horizontal directions.
 
 Note that the buoyancy field is {\it always} treated as a diagnostic variable and the average statistical data -- actually from the momentum source term $\Fr^{-1}b$ -- is calculated as an additional scalar field on top of {\tt   inb\_scal\_array} scalars (prognostic plus diagnostic). The only exception occurs when the buoyancy function is merely a linear relation because, in that case, the corresponding statistical information can be easily obtained from the corresponding scalar field.
 
-\subsubsection{Coriolis force}
+\subsection{Coriolis force}
 
 The current formulation corresponds to that of an Ekman layer along an $Ox_1x_3$ plane. The direction $Ox_2$ is defined along the angular velocity, so that $f_1=f_3=0$. The momentum equation reads 
 \begin{subequations}
@@ -311,13 +319,13 @@ The current formulation corresponds to that of an Ekman layer along an $Ox_1x_3$
 \end{subequations}
 The geostrophic velocity vector $(u_{1,g},\,u_{2,g},\,u_{3,g}) = (\cos\alpha,\,0,\,-\sin\alpha)$ is defined in terms of the input parameter $\alpha$ (rotation angle around $Ox_2$), to be provided.
 
-\subsubsection{Radiation}
+\subsection{Radiation}
 
 Formally, radiation heating or cooling can be considered in the equations above as an additional source term $\mathrm{\bf Da}_\mathrm{R}\,\omega_\mathrm{R}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{R}$ is the corresponding nondimensional heat parameter and the radiation function $\omega_\mathrm{R}(\zeta_j)$ is normalized by the corresponding (dimensional) heat parameter $Q$. 
 
-Practically, the implementation is completely embedded in the routine {\tt mappings/radiation} and uses data provided in the block \texttt{[Radiation]} (i.e., assumes $\mathrm{\bf Da}_\mathrm{R}=1$ and all coefficients enter in the definition of $\omega_\mathrm{R}$). 
+Practically, the implementation is completely embedded in the routine {\tt mappings/radiation} and uses data provided in the block \texttt{[Infrared]} or \texttt{[Visible]} (i.e., assumes $\mathrm{\bf Da}_\mathrm{R}=1$ and all coefficients enter in the definition of $\omega_\mathrm{R}$). 
 
-In a one-dimensional bulk model, the source term is expressed in terms of upward and downward fluxes according to
+In a one-dimensional model, the source term is expressed in terms of upward and downward fluxes according to
 \begin{equation}
     \omega_\mathrm{R}=-\partial_z(F_\uparrow -F_\downarrow) \;.
 \end{equation}
@@ -326,22 +334,22 @@ In a one-dimensional bulk model, the source term is expressed in terms of upward
     \bar{\mu}\, \partial_\tau F+F = B\;,\qquad F|_{\tau=0}=F_0 \;,
 \end{equation}
 where $\tau$ is the optical depth, $\bar{\mu}$ is a mean direction parameter and
-\begin{equation}
+\begin{equation}\label{equ:sb}
     B\equiv \sigma T^4
 \end{equation}
 is an emission function. Written in spatial coordinates using the change of variables $\mathrm{d}\tau = a\,\mathrm{d}s$, we obtain
-\begin{equation}
+\begin{equation}\label{equ:rte}
     \partial_s F+(a/\bar{\mu}) F = (a/\bar{\mu}) B\;,\qquad F|_{s=0}=F_0 \;,
 \end{equation}
 where $s$ is the distance and 
 \begin{equation}
     a = \kappa_1 \rho \zeta_1 + \kappa_2 \rho \zeta_2 + \ldots
 \end{equation}
-is the bulk absorption coefficient, the constants $\kappa_i$ being the corresponding mass absorption coefficients. The source term is then given by
+is the absorption coefficient, the constants $\kappa_i$ being the corresponding mass absorption coefficients. The source term is then given by
 \begin{equation}
     \omega_\mathrm{R}=(a/\bar{\mu}) (F_\uparrow +F_\downarrow) - 2(a/\bar{\mu}) B \;.
 \end{equation}
-(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\bar{\mu}\in[1/\sqrt{3},1/\sqrt{2}]$; we use the mean value over that interval. The solution to the transfer equation yields
+(Note the change of variables $s=z_\mathrm{max}-z$ in the downward flux equation.) The mean direction is $\bar{\mu}\in[1/\sqrt{3},1/\sqrt{2}]$; we use the mean value over that interval. The solution to the radiative transfer problem yields
 \begin{subequations}\label{rad:flux}
     \begin{align}
         F_\uparrow &= e^{-\tau(z_\mathrm{min},z)/\bar{\mu}}\left[ F_{\uparrow,z_\mathrm{min}} + \int_{z_\mathrm{min}}^z (a/\bar{\mu}) B e^{\tau(z_\mathrm{min},z')/\bar{\mu}}\mathrm{d}z'\right]\notag \\
@@ -352,20 +360,12 @@ is the bulk absorption coefficient, the constants $\kappa_i$ being the correspon
 \end{subequations}
 where the optical-depth function is defined as
 \begin{equation}
-    \tau(z_1, z_2) = \int_{z_1}^{z_2}a(z')\mathrm{d} z'
+    \tau(z_1, z_2) \equiv \int_{z_1}^{z_2}a(z')\mathrm{d} z'
 \end{equation}
 and we have used the relationship
 \begin{equation}
     \tau(z_1, z_2) = \tau(z_1, z') + \tau(z', z_2)\;,\qquad z_1\le z'\le z_2 \;.
 \end{equation}
-
-One model option sets the emission function to zero and consider only the liquid water. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$ and $F_{\uparrow,z_\mathrm{min}}$.
-
-Another model option considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the equation
-\begin{equation}
-    F_{\uparrow,z_\mathrm{min}} = \epsilon B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
-\end{equation}
-The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v}$ and the surface emissivity $\epsilon\in[0,1]$. Note that we need to solve first the problem for the downward flux to obtain its value at $z=z_\mathrm{min}$, use this equation to obtain the boundary condition for the upward flux, and then solve the problem for the upward flux.
 
 Apart from the 2 implementations indicated in (\ref{equ:radflux}), we also consider the incremental formulation
 \begin{subequations}\label{equ:radflux}
@@ -374,7 +374,7 @@ Apart from the 2 implementations indicated in (\ref{equ:radflux}), we also consi
         &F_\downarrow(z_i) = e^{-\tau(z_i,z_{i+1})/\bar{\mu}}\left[ F_\downarrow(z_{i+1}) + \int_{z_i}^{z_{i+1}} (a/\bar{\mu}) B e^{\tau(z',z_{i+1})/\bar{\mu}}\mathrm{d}z'\right]\notag  \;,\\
     \end{align}
 \end{subequations}
-where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $(z_\mathrm{min}, z_\mathrm{max})$ is discretized. Note that we can write
+where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $[z_\mathrm{min}, z_\mathrm{max}]$ is discretized. Note that we can write
 \begin{equation}
     e^{-\tau(z_i,z_j)/\bar{\mu}}=\prod_{k=i+1}^{j}I_k\;,\qquad 
     I_k\equiv\left\{
@@ -384,48 +384,81 @@ where $\{z_i\}_{i=1}^N$ is the set of grid points in which the interval $(z_\mat
     \end{array}
     \right.
 \end{equation}
-Hence, we only need to compute and save $\{I_k\}_{k=1}^N$, and we can calculate any of the decay terms as necessary.
+Hence, we only need to compute and save $\{I_k\}_{k=1}^N$ and we can calculate any of the decay terms as necessary.
 
-% One formulation is a one-dimensional bulk model, where
-% \begin{equation}
-%     \omega_\mathrm{R}=\zeta_{\gamma}\left(
-%         \alpha_0 \exp\left[-\alpha_1^{-1}\int_z^{z_\infty}\zeta_{\gamma}(z')\,\mathrm{d}z'\right]
-%         + \alpha_2 \exp\left[-\alpha_1^{-1}\int_0^z\zeta_{\gamma}(z')\,\mathrm{d}z'\right] 
-%     \right)\;.
-% \end{equation}
-% The scalar indices $\{\beta\,,\gamma\}$ and the parameters $\{\alpha_0\,,\alpha_1\,,\alpha_2\}$ need to be provided. Default values are $\beta=1$, $\gamma=${\tt inb\_scal\_array} and $\alpha_2=0$. The scalar field $ \zeta_{\gamma}$ can be an average profile, instead of instantaneous values, and nonlinear mapping functions can be specified.
+\subsubsection{Gray models}
 
-% For clarity, this corresponds to
-% \begin{equation}
-%     \omega_\mathrm{R}=-\partial_zF\;,\qquad
-%     F = F_{c,0}\exp\left[-\kappa\int_z^{z_\infty}\rho q_\mathrm{l}\,\mathrm{d}z'\right]
-%     + F_{c,1}\exp\left[-\kappa\int_0^z\rho q_\mathrm{l}\,\mathrm{d}z'\right]
-% \end{equation}
-% with
-% \begin{equation}
-%     \alpha_0=-F_{c,0} \kappa\;,\qquad \alpha_1=\kappa^{-1}\;,\qquad \alpha_2=F_{c,1} \kappa\;,\qquad \zeta_{\gamma}=\rho q_\mathrm{l}\;,
-% \end{equation}
-% where $\rho q_\mathrm{l}$ is the liquid water content. The flux is the sum $F=F_\uparrow +F_\downarrow$ of the solutions to the linear problems
-% \begin{subequations}
-%     \begin{align}
-%         &\partial_z F_\downarrow=\phantom{-}\kappa \rho q_\mathrm{l} F_\downarrow\;,\qquad F_\downarrow|_{z=z_\infty}=F_{c,0}\;,\\
-%         &\partial_z F_\uparrow=-\kappa \rho q_\mathrm{l} F_\uparrow\;,\qquad F_\uparrow|_{z=0}=F_{c,1}\;.
-%     \end{align}
-% \end{subequations}
-% For complex thermodynamics (e.g., airwater), the field $\zeta_\mathrm{\tt inb\_scal\_array}$ is calculated from a nonlinear mapping applied on the field
-% \begin{equation}
-%     \xi =1+\alpha_1\zeta_1+\ldots+\alpha_\mathrm{\tt inb\_scal}\zeta_\mathrm{\tt inb\_scal}\;.
-% \end{equation}
-% The parameter $\alpha_\mathrm{\tt inb\_scal+1}$ is the smoothing parameter of the nonlinear mapping.
+We neglect the dependence on frequency in equation~(\ref{equ:rte}), or interpret it as an average equation over the frequency space.
 
-\subsubsection{Transport}
+One model that is implemented in the code sets the emission function to zero and consider only the liquid water. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$ and $F_{\uparrow,z_\mathrm{min}}$.
+
+A second model considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the surface balance equation
+\begin{equation}
+    F_{\uparrow,z_\mathrm{min}} = \epsilon B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
+\end{equation}
+The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v}$ and the surface emissivity $\epsilon\in[0,1]$. Note that we need to solve first the problem for the downward flux to obtain its value at $z=z_\mathrm{min}$, use this equation to obtain the boundary condition for the upward flux, and then solve the problem for the upward flux.
+
+\subsubsection{Band Models}
+
+We partly retain the frequency dependence by considering frequency bands where the absorption coefficient is constant. These bands might be different for different components and we solve problem~(\ref{equ:rte}) separately for different bands and components:
+\begin{equation}
+    \partial_s F_\mathrm{b}+(a_\mathrm{b}/\bar{\mu}) F_\mathrm{b} = (a_\mathrm{b}/\bar{\mu}) B_\mathrm{b}\;,\qquad F_\mathrm{b}|_{s=0}=F_0 \;,
+\end{equation}
+where the subscript $\mathrm{b}$ indicates band.
+
+We can use the same solvers as for the problem~(\ref{equ:rte}) but we need the function
+\begin{equation}
+    B_\mathrm{b}(\nu_1,\nu_2,T)\equiv\int_{\nu_1}^{\nu_2}B_\nu(\nu,T)\mathrm{d} \nu\;,
+\end{equation}
+where the Planck function 
+\begin{equation}
+    B_\nu(\nu,T)\equiv c_{1L}\nu^3\frac{1}{\exp(c_2\nu/T)-1}\;,\qquad c_{1L}\equiv 2\pi hc^2\;,\qquad c_2\equiv hc/\kappa_B \;,
+\end{equation}
+is expressed in terms of the wavenumber $\nu$ (inverse of wavelength) and it is normalized such that
+\begin{equation}
+    \int_0^\infty B_\nu(\nu,T)\mathrm{d}\nu = B(T)\;,
+\end{equation}
+where $B(T)\equiv\sigma T^4$ has been defined in~(\ref{equ:sb}).
+
+The integral over a finite interval of frequencies can be written as
+\begin{equation}
+    B_\mathrm{b}(\nu_1,\nu_2,T)=\beta_\mathrm{b}(T)B(T) \;,\qquad
+    \beta_\mathrm{b}(T)\equiv\frac{15}{\pi^4}\int_{x_1(T)}^{x_2(T)}\frac{x^3}{e^x-1}\mathrm{d}x \;,
+\end{equation}
+and the limits of integration are $x_i(t)\equiv c_2\nu_i/T$. For a given band $(\nu_1,\,\nu_2)$, we can precalculate numerically $\beta_\mathrm{b}(T)$ as a function of $T$ for the interval of temperatures of interest and use a fit to $\beta_\mathrm{b}(T)$ in that interval to calculate the term during the simulation. The radiative transfer problem to solve is then
+\begin{equation}
+    \partial_s F_\mathrm{b}+(a_\mathrm{b}/\bar{\mu}) F_\mathrm{b} = (a_\mathrm{b}/\bar{\mu}) B_\mathrm{b}\;,\qquad F_\mathrm{b}|_{s=0}=F_0 \;,
+\end{equation}
+where $a_\mathrm{b}=\kappa_{\mathrm{b},i} \rho \zeta_i$ and $\kappa_{\mathrm{b},i}$ is the constant value of the mass absorption coefficient in band b.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{radiation1}
+    \caption{Band functions $\beta_\mathrm{b}(T)$ for the water vapor in the bands $150\pm 56~\mathrm{cm}^{-1}$ (left) and $1500\pm 40~\mathrm{cm}^{-1}$ (right). Symbols indicate values calculated with a numerical quadrature with a relative error of $10^{-8}$, and lines indicate the least squares parabolic fit.}\label{fig:radiation}
+\end{figure}
+
+One model that is implemented in the code considers the water substance. For the liquid, we consider a gray body. For the water vapor, we consider 2 bands: $150\pm 56~\mathrm{cm}^{-1}$ and $1500\pm 40~\mathrm{cm}^{-1}$ \citep{jeevanjee2023climate}. The numerical calculation for the vapor bands is shown in Fig.~\ref{fig:radiation}. We consider a least squares polynomial fit of second order 
+\begin{equation}
+    \beta_\mathrm{b}(T)\approx a_0+a_1T+a_2T^2 \;.
+\end{equation}
+In this way, we mimic the polynomial fits to saturation pressure and heat capacities that are customary in numerical simulations. The coefficients for the 2 vapor bands are given in Table~\ref{tab:radiation}.
+
+\begin{table}
+    \centering
+    \footnotesize
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{cccccc}
+        \hline
+        band & $\kappa_\mathrm{b}$ ($\mathrm{m}^2~\mathrm{kg}^{-1}$)& $a_0$ & $a_1$ ($\mathrm{K}^{-1}$) & $a_2$ ($\mathrm{K}^{-2}$) & rel. error (inf. norm) \\\hline
+        $150\pm 56~\mathrm{cm}^{-1}$   & 130 & $2.6774\times 10^{-1}$ & $-1.3344\times 10^{-3}$ & $1.8017\times 10^{-6}$ & $0.5\%$ \\
+        $1500\pm 40~\mathrm{cm}^{-1}$  & 8 & $-2.2993\times 10^{-2}$ & $8.7439\times 10^{-5}$ & $1.4744\times 10^{-7}$ & $0.7\%$ \\\hline
+    \end{tabular}
+    \caption{Coefficients of the least squares polynomial fit to the numerical quadrature of the band functions $\beta_\mathrm{b}(T)$ in the interval of temperatures $[250~\mathrm{K},320~\mathrm{K}]$}\label{tab:radiation}
+\end{table}
+
+\subsection{Microphysics}
 
 Transport phenomena different from molecular transport, e.g., that due to particle sedimentation, can be considered as an additional source term $\mathrm{\bf Da}_\mathrm{T}\,\omega_\mathrm{T}\,\delta_{i\beta}$ in the right-hand side of one of the evolution equations, where $\mathrm{\bf Da}_\mathrm{T}$ is the corresponding nondimensional transport parameter and the transport function $\omega_\mathrm{T}^e(\zeta_j)$, to be provided, is normalized by the corresponding (dimensional) transport parameter.
 
 For the transport function, see routine {\tt mappings/microphysics}.
 
-\section{Particle formulation}
-
-Lagrange formulation to describe the evolution of a set of particles.
-
-To be done.
