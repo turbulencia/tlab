@@ -24,8 +24,9 @@ module Radiation
     real(wp) :: epsilon                                 ! surface emissivity at ymin
     integer, parameter :: nbands = 2                    ! number of spectral bands
     real(wp) kappal, kappav(nbands)                     ! mass absorption coefficients for liquid and vapor
-    real(wp) beta(3, nbands)                             ! polynomial coefficients for band functions
-    real(wp), allocatable, target :: bcs(:)
+    real(wp) beta(3, nbands)                            ! polynomial coefficients for band functions
+    real(wp) bcs_ht                                     ! flux boundary condition at the top of the domain
+    real(wp), allocatable, target :: bcs_hb(:)          ! flux boundary condition at the bottom of the domain
     real(wp), allocatable, target :: tmp_rad(:, :)      ! 3D temporary arrays for radiation routine
 
     public :: Radiation_Initialize
@@ -90,7 +91,7 @@ contains
 
         end if
 
-        if (infrared%type == TYPE_BULK1DLOCAL) then     ! backwards compatibility
+        if (infrared%type == TYPE_BULK1DLOCAL) then             ! backwards compatibility
             infrared%parameters(1) = infrared%parameters(1)*infrared%parameters(2)
             infrared%parameters(3) = infrared%parameters(3)*infrared%parameters(2)
             infrared%parameters(2) = 1.0_wp/infrared%parameters(2)
@@ -99,27 +100,27 @@ contains
 
         select case (infrared%type)
         case (TYPE_IR_GRAY_LIQUID)
-            ! infrared%parameters(1) downward flux at domain top
-            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
+            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             ! infrared%parameters(3) upward flux at domain bottom
 
         case (TYPE_IR_GRAY)
-            ! infrared%parameters(1) downward flux at domain top
-            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
-            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor
+            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
+            kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor
             epsilon = infrared%parameters(4)    ! surface emissivity at ymin
 
         case (TYPE_IR_TWOBANDS)
-            ! infrared%parameters(1) downward flux at domain top
-            kappal = infrared%parameters(2)     ! mass absorptivity coefficient of liquid
-            kappav(1) = infrared%parameters(3)  ! mass absorptivity coefficient of vapor, band 1
-            kappav(2) = infrared%parameters(4)  ! mass absorptivity coefficient of vapor, band 2
+            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
+            kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
+            kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor, band 1
+            kappav(2) = infrared%parameters(4)  ! mass absorption coefficient of vapor, band 2
             epsilon = infrared%parameters(5)    ! surface emissivity at ymin
 
             beta(1:3, 1) = [2.6774e-1_wp, -1.3344e-3_wp, 1.8017e-6_wp] ! coefficients for band 1
             beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp] ! coefficients for band 2
 
-            inb_tmp_rad = 4                     ! Additional memory space
+            inb_tmp_rad = 5                     ! Additional memory space
 
         end select
 
@@ -133,7 +134,7 @@ contains
 
         !########################################################################
         ! Local allocation
-        allocate (bcs(imax*kmax))
+        allocate (bcs_hb(imax*kmax))
         call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
 
         return
@@ -177,7 +178,7 @@ contains
             else
                 ! tbd
             end if
-            b = sigma*wrk3d**4.0_wp             ! emission function
+            b = sigma*wrk3d**4.0_wp             ! emission function, Stefan-Boltzmann law
 
             if (present(flux)) then             ! solve radiative transfer equation along y
                 call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
@@ -201,9 +202,8 @@ contains
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
             end if
-            b = sigma*tmp_rad(:, 1)**4.0_wp             ! emission function
-
-            if (present(flux)) then             ! solve radiative transfer equation along y
+            b = sigma*tmp_rad(:, 1)**4.0_wp                                             ! emission function, Stefan-Boltzmann law
+            if (present(flux)) then                                                     ! solve radiative transfer equation along y
                 call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
                 ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
                 ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
@@ -220,16 +220,17 @@ contains
             end if
             do iband = 1, nbands
                 tmp_rad(:, 3) = kappav(iband)*tmp_rad(:, 2)
-                b = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
+                tmp_rad(:, 5) = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
                 if (present(flux)) then             ! solve radiative transfer equation along y
-                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2, tmp_rad(:, 4))
-                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2, tmp_rad(:, 4))
-                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp_rad(:, 4))
+                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2, tmp_rad(:, 4))
+                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2, tmp_rad(:, 4))
+                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp_rad(:, 4))
                     flux = flux + tmp_rad(:, 4)
+                    b = b + tmp_rad(:, 5)
                 else
-                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2)
-                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1, tmp2)
-                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), b, tmp1)
+                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2)
+                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2)
+                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1)
                 end if
 
                 source = source + tmp_rad(:, 3)
@@ -254,7 +255,7 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) fd, fu
+        real(wp) fu
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
@@ -301,15 +302,14 @@ contains
 
 ! ###################################################################
 ! Calculate heating rate
-        fd = infrared%parameters(1)
         fu = infrared%parameters(3)
         if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*fd &                       ! downward flux
+                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht &                       ! downward flux
                                             + p_tau(:, 1)/p_tau(:, j)*fu)       ! upward flux
             end do
         else
-            p_source = p_a*p_tau*fd
+            p_source = p_a*p_tau*bcs_ht
         end if
 
         if (nz > 1) then ! Put arrays back in the order in which they came in
@@ -323,15 +323,14 @@ contains
 ! ###################################################################
 ! Calculate radiative flux, if necessary
         if (present(flux)) then
-            fd = -infrared%parameters(1)
             fu = infrared%parameters(3)
             if (abs(infrared%parameters(3)) > 0.0_wp) then
                 do j = ny, 1, -1
-                    p_flux(:, j) = fd*p_tau(:, j) &                       ! downward flux
+                    p_flux(:, j) = -bcs_ht*p_tau(:, j) &                       ! downward flux
                                    + fu*p_tau(:, 1)/p_tau(:, j)       ! upward flux
                 end do
             else
-                p_flux = p_tau*fd
+                p_flux = -p_tau*bcs_ht
             end if
 
             if (nz > 1) then ! Put arrays back in the order in which they came in
@@ -386,7 +385,7 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
-        p_flux_up(1:nx*nz) => bcs(1:nx*nz)
+        p_flux_up(1:nx*nz) => bcs_hb(1:nx*nz)
         p_wrk2d_1(1:nx*nz) => wrk2d(1:nx*nz, 1)
         p_wrk2d_2(1:nx*nz) => wrk2d(1:nx*nz, 2)
 
@@ -407,15 +406,6 @@ contains
         p_flux_up = p_ab(:, 1)            ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
-        ! test
-        ! p_ab = 0.0_wp   ! test
-        ! p_ab = 1.0_wp   ! test
-        ! p_flux_up = 0.0_wp
-        ! p_flux_up = infrared%parameters(1)
-
-        ! p_a = 0.01_wp    ! test
-        ! p_a = 0.0_wp    ! test
-
         ! ###################################################################
         ! calculate f_j = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
@@ -430,7 +420,7 @@ contains
         ! ###################################################################
         ! downward flux; positive going down
         j = ny
-        p_flux(:, j) = infrared%parameters(1)
+        p_flux(:, j) = bcs_ht
 
         do j = ny - 1, 1, -1
             ! Integral contribution from emission function using a trapezoidal rule
@@ -522,7 +512,7 @@ contains
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_bcs(:) => null()
+        real(wp), pointer :: p_bcs_hb(:) => null()
         real(wp), pointer :: p_flux_1(:) => null()
         real(wp), pointer :: p_flux_2(:) => null()
 
@@ -535,7 +525,7 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
-        p_bcs(1:nx*nz) => bcs(1:nx*nz)
+        p_bcs_hb(1:nx*nz) => bcs_hb(1:nx*nz)
         p_flux_1(1:nx*nz) => wrk2d(1:nx*nz, 1)
         p_flux_2(1:nx*nz) => wrk2d(1:nx*nz, 2)
 
@@ -553,17 +543,8 @@ contains
         p_a = p_a*dummy
 
         ! emission function
-        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
-
-        ! test
-        ! p_ab = 0.0_wp   ! test
-        ! p_ab = 1.0_wp   ! test
-        ! p_bcs = 0.0_wp
-        ! p_bcs = infrared%parameters(1)
-
-        ! p_a = 0.01_wp    ! test
-        ! p_a = 0.0_wp    ! test
 
         ! ###################################################################
         ! calculate exp(-tau(zi, zj)/\mu)
@@ -579,7 +560,7 @@ contains
         ! ###################################################################
         ! downward flux; positive going down
         j = ny
-        p_flux_1 = infrared%parameters(1)
+        p_flux_1 = bcs_ht
         p_flux(:, j) = p_flux_1
 
         do j = ny - 1, 1, -1
@@ -598,12 +579,12 @@ contains
 
         ! ###################################################################
         ! bottom boundary condition; calculate upward flux at the bottom
-        p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1)
+        p_bcs_hb = epsilon*p_bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1)
 
         ! ###################################################################
         ! upward flux and net terms
         j = 1
-        p_flux_1 = p_bcs
+        p_flux_1 = p_bcs_hb
         p_source(:, j) = p_a(:, j)*(p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
 
         if (present(flux)) then                                     ! I need additional space to store fluxes
@@ -659,7 +640,7 @@ contains
 #endif
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs)
+        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs_hb)
 
         return
     end subroutine IR_RTE_Y_Local
@@ -680,13 +661,13 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) fd, dummy
+        real(wp) dummy
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_bcs(:) => null()
+        real(wp), pointer :: p_bcs_hb(:) => null()
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
@@ -697,7 +678,7 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
-        p_bcs(1:nx*nz) => bcs(1:nx*nz)
+        p_bcs_hb(1:nx*nz) => bcs_hb(1:nx*nz)
 
 #ifdef USE_ESSL
         call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
@@ -713,17 +694,8 @@ contains
         p_a = p_a*dummy
 
         ! emission function
-        p_bcs = p_ab(:, 1)                ! save for calculation of surface flux
+        p_bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
-
-        ! test
-        ! p_ab = 0.0_wp   ! test
-        ! p_ab = 1.0_wp   ! test
-        ! p_bcs = 0.0_wp
-        ! p_bcs = infrared%parameters(1)
-
-        ! p_a = 0.01_wp    ! test
-        ! p_a = 0.0_wp    ! test
 
         ! ###################################################################
         ! downward flux; positive going down
@@ -745,13 +717,12 @@ contains
         do j = ny - 1, 1, -1
             p_flux(:, j) = p_flux(:, j + 1) + p_flux(:, j)
         end do
-        fd = infrared%parameters(1)
-        p_flux = p_tau*(fd + p_flux)
+        p_flux = p_tau*(bcs_ht + p_flux)
 
         ! ###################################################################
         ! upward flux
-        p_bcs = epsilon*p_bcs + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
-        ! p_bcs = 0.0_wp  ! test
+        p_bcs_hb = epsilon*p_bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
+        ! p_bcs_hb = 0.0_wp  ! test
 
         ! calculate exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
@@ -771,7 +742,7 @@ contains
         end do
         !
         do j = ny, 1, -1
-            tmp2(:, j) = p_tau(:, j)*(p_bcs(:) + tmp2(:, j))    ! upward flux
+            tmp2(:, j) = p_tau(:, j)*(p_bcs_hb(:) + tmp2(:, j))    ! upward flux
             p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
             p_flux(:, j) = tmp2(:, j) - p_flux(:, j)            ! total flux
         end do
@@ -793,7 +764,7 @@ contains
 #endif
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs)
+        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs_hb)
 
         return
     end subroutine IR_RTE_Y_Global
