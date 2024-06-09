@@ -392,7 +392,7 @@ We neglect the dependence on frequency in equation~(\ref{equ:rte}), or interpret
 
 One model that is implemented in the code sets the emission function to zero and consider only the liquid water. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$ and $F_{\uparrow,z_\mathrm{min}}$.
 
-A second model considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the surface balance equation
+A second model considers liquid water and vapor and calculates $F_{\uparrow,z_\mathrm{min}}$ from the surface energy balance equation
 \begin{equation}
     F_{\uparrow,z_\mathrm{min}} = \epsilon B(T|_{z_\mathrm{min}})+(1-\epsilon)F_\downarrow|_{z_\mathrm{min}} \;.
 \end{equation}
@@ -400,13 +400,19 @@ The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $
 
 \subsubsection{Band Models}
 
-We partly retain the frequency dependence by considering frequency bands where the absorption coefficient is constant. These bands might be different for different components and we solve problem~(\ref{equ:rte}) separately for different bands and components:
+We partly retain the frequency dependence by considering frequency bands where the absorption coefficient is constant. We solve problem~(\ref{equ:rte}) separately for different bands:
 \begin{equation}
-    \partial_s F_\mathrm{b}+(a_\mathrm{b}/\bar{\mu}) F_\mathrm{b} = (a_\mathrm{b}/\bar{\mu}) B_\mathrm{b}\;,\qquad F_\mathrm{b}|_{s=0}=F_0 \;,
+    \partial_s F_\mathrm{b}+(a_\mathrm{b}/\bar{\mu}) F_\mathrm{b} = (a_\mathrm{b}/\bar{\mu}) B_\mathrm{b}\;,\qquad F_\mathrm{b}|_{s=0}=F_{\mathrm{b},0} \;,
 \end{equation}
-where the subscript $\mathrm{b}$ indicates band.
-
-We can use the same solvers as for the problem~(\ref{equ:rte}) but we need the function
+where the subscript $\mathrm{b}$ indicates band, 
+\begin{equation}
+    F_\mathrm{b}\equiv\int_{\nu_1}^{\nu_2}F_\nu\mathrm{d} \nu\;,
+\end{equation}
+the absorption coefficient of the band is
+\begin{equation}
+    a_\mathrm{b} = \kappa_{\mathrm{b},1} \rho \zeta_1 + \kappa_{\mathrm{b},2} \rho \zeta_2 + \ldots \;,
+\end{equation}
+and 
 \begin{equation}
     B_\mathrm{b}(\nu_1,\nu_2,T)\equiv\int_{\nu_1}^{\nu_2}B_\nu(\nu,T)\mathrm{d} \nu\;,
 \end{equation}
@@ -418,30 +424,35 @@ is expressed in terms of the wavenumber $\nu$ (inverse of wavelength) and it is 
 \begin{equation}
     \int_0^\infty B_\nu(\nu,T)\mathrm{d}\nu = B(T)\;,
 \end{equation}
-where $B(T)\equiv\sigma T^4$ has been defined in~(\ref{equ:sb}).
-
-The integral over a finite interval of frequencies can be written as
+$B(T)\equiv\sigma T^4$ having been defined in~(\ref{equ:sb}). The integral of the Planck function over a finite interval of frequencies can be written as
 \begin{equation}
     B_\mathrm{b}(\nu_1,\nu_2,T)=\beta_\mathrm{b}(T)B(T) \;,\qquad
     \beta_\mathrm{b}(T)\equiv\frac{15}{\pi^4}\int_{x_1(T)}^{x_2(T)}\frac{x^3}{e^x-1}\mathrm{d}x \;,
 \end{equation}
-and the limits of integration are $x_i(t)\equiv c_2\nu_i/T$. For a given band $(\nu_1,\,\nu_2)$, we can precalculate numerically $\beta_\mathrm{b}(T)$ as a function of $T$ for the interval of temperatures of interest and use a fit to $\beta_\mathrm{b}(T)$ in that interval to calculate the term during the simulation. The radiative transfer problem to solve is then
+and the limits of integration are $x_i(t)\equiv c_2\nu_i/T$. We assume that the union of all bands fills all the frequency space, so that
 \begin{equation}
-    \partial_s F_\mathrm{b}+(a_\mathrm{b}/\bar{\mu}) F_\mathrm{b} = (a_\mathrm{b}/\bar{\mu}) B_\mathrm{b}\;,\qquad F_\mathrm{b}|_{s=0}=F_0 \;,
+    \sum_\mathrm{b} \beta_\mathrm{b} =1\;.
 \end{equation}
-where $a_\mathrm{b}=\kappa_{\mathrm{b},i} \rho \zeta_i$ and $\kappa_{\mathrm{b},i}$ is the constant value of the mass absorption coefficient in band b.
+For a given band $(\nu_1,\,\nu_2)$, we can precalculate numerically $\beta_\mathrm{b}(T)$ as a function of $T$ for the interval of temperatures of interest and use a fit to $\beta_\mathrm{b}(T)$ in that interval to calculate the term during the simulation. The total flux is the sum over all bands,
+\begin{equation}
+    F=\sum_\mathrm{b} F_\mathrm{b}
+\end{equation}
+%
+The surface energy balance equation for band b is
+\begin{equation}
+    F_{\mathrm{b}\uparrow,z_\mathrm{min}} = \epsilon B_\mathrm{b}(T|_{z_\mathrm{min}})+(1-\epsilon)F_{\mathrm{b}\downarrow}|_{z_\mathrm{min}} \;.
+\end{equation}
+%
+We can use the same solvers as for the problem~(\ref{equ:rte}) but we also need the downward flux in each band at the top of the domain as boundary condition, $F_{\mathrm{b}\downarrow,z_\mathrm{max}}$. For simplicity, we partition the net flux that is given as input parameter into different bands according to
+\begin{equation}
+    F_{\mathrm{b}\downarrow,z_\mathrm{max}} = \beta_\mathrm{b}(T|_{z_\mathrm{max}})F_{\downarrow,z_\mathrm{max}} \;.
+\end{equation}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{radiation1}
     \caption{Band functions $\beta_\mathrm{b}(T)$ for the water vapor in the bands $150\pm 56~\mathrm{cm}^{-1}$ (left) and $1500\pm 40~\mathrm{cm}^{-1}$ (right). Symbols indicate values calculated with a numerical quadrature with a relative error of $10^{-8}$, and lines indicate the least squares parabolic fit.}\label{fig:radiation}
 \end{figure}
-
-One model that is implemented in the code considers the water substance. For the liquid, we consider a gray body. For the water vapor, we consider 2 bands: $150\pm 56~\mathrm{cm}^{-1}$ and $1500\pm 40~\mathrm{cm}^{-1}$ \citep{jeevanjee2023climate}. The numerical calculation for the vapor bands is shown in Fig.~\ref{fig:radiation}. We consider a least squares polynomial fit of second order 
-\begin{equation}
-    \beta_\mathrm{b}(T)\approx a_0+a_1T+a_2T^2 \;.
-\end{equation}
-In this way, we mimic the polynomial fits to saturation pressure and heat capacities that are customary in numerical simulations. The coefficients for the 2 vapor bands are given in Table~\ref{tab:radiation}.
 
 \begin{table}
     \centering
@@ -455,6 +466,12 @@ In this way, we mimic the polynomial fits to saturation pressure and heat capaci
     \end{tabular}
     \caption{Coefficients of the least squares polynomial fit to the numerical quadrature of the band functions $\beta_\mathrm{b}(T)$ in the interval of temperatures $[250~\mathrm{K},320~\mathrm{K}]$}\label{tab:radiation}
 \end{table}
+
+\textbf{One model that is implemented in the code considers the water substance and a 3-band model. For the liquid, we consider a gray body. For the water vapor, we consider 2 bands: $150\pm 56~\mathrm{cm}^{-1}$ and $1500\pm 40~\mathrm{cm}^{-1}$ \citep{jeevanjee2023climate}. The third band is the rest of the frequency space outside of those 2 vapor bands, where the vapor absorption is zero but (I guess) not the dray air absorption? so far, I set it to zero.} The numerical calculation for the vapor bands is shown in Fig.~\ref{fig:radiation}. We consider a least squares polynomial fit of second order 
+\begin{equation}
+    \beta_\mathrm{b}(T)\approx a_0+a_1T+a_2T^2 \;.
+\end{equation}
+In this way, we mimic the polynomial fits to saturation pressure and heat capacities that are customary in numerical simulations. The coefficients for the 2 vapor bands are given in Table~\ref{tab:radiation}. The input parameters are $F_{\downarrow,z_\mathrm{max}}$, $\kappa_\mathrm{l}$, $\kappa_\mathrm{v,2}$, $\kappa_\mathrm{v,1}$ and the surface emissivity $\epsilon\in[0,1]$. 
 
 \subsection{Microphysics}
 

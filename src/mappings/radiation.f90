@@ -6,6 +6,7 @@ module Radiation
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLAB_POINTERS_3D, only: p_wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
     use Thermodynamics, only: imixture
     use OPR_ODES
@@ -16,17 +17,18 @@ module Radiation
     integer, parameter :: TYPE_NONE = 0
     integer, parameter :: TYPE_IR_GRAY_LIQUID = 1
     integer, parameter :: TYPE_IR_GRAY = 2
-    integer, parameter :: TYPE_IR_TWOBANDS = 3
+    integer, parameter :: TYPE_IR_3BANDS = 3
     integer, parameter :: TYPE_BULK1DLOCAL = 10         ! backwards compatibility, to be removed
 
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: mu                                      ! mean direction parameter
     real(wp) :: epsilon                                 ! surface emissivity at ymin
-    integer, parameter :: nbands = 2                    ! number of spectral bands
-    real(wp) kappal, kappav(nbands)                     ! mass absorption coefficients for liquid and vapor
-    real(wp) beta(3, nbands)                            ! polynomial coefficients for band functions
-    real(wp) bcs_ht                                     ! flux boundary condition at the top of the domain
+    integer, parameter :: nbands = 3                    ! number of spectral bands
+    real(wp) beta(3, nbands)                            ! polynomial coefficients for band functions; the last one contains the sum
+    real(wp) kappad, kappal, kappav(nbands)             ! mass absorption coefficients for liquid and vapor
+    real(wp), allocatable, target :: bcs_ht(:)          ! flux boundary condition at the top of the domain
     real(wp), allocatable, target :: bcs_hb(:)          ! flux boundary condition at the bottom of the domain
+    real(wp), allocatable, target :: t_ht(:)            ! temperature at the top of the domain
     real(wp), allocatable, target :: tmp_rad(:, :)      ! 3D temporary arrays for radiation routine
 
     public :: Radiation_Initialize
@@ -61,7 +63,7 @@ contains
         if (trim(adjustl(sRes)) == 'none') then; infrared%type = TYPE_NONE
         else if (trim(adjustl(sRes)) == 'grayliquid') then; infrared%type = TYPE_IR_GRAY_LIQUID
         else if (trim(adjustl(sRes)) == 'gray') then; infrared%type = TYPE_IR_GRAY
-        else if (trim(adjustl(sRes)) == 'twobands') then; infrared%type = TYPE_IR_TWOBANDS
+        else if (trim(adjustl(sRes)) == 'threebands') then; infrared%type = TYPE_IR_3BANDS
         else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infrared%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Radiation.Type.')
@@ -100,18 +102,15 @@ contains
 
         select case (infrared%type)
         case (TYPE_IR_GRAY_LIQUID)
-            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             ! infrared%parameters(3) upward flux at domain bottom
 
         case (TYPE_IR_GRAY)
-            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor
             epsilon = infrared%parameters(4)    ! surface emissivity at ymin
 
-        case (TYPE_IR_TWOBANDS)
-            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
+        case (TYPE_IR_3BANDS)
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor, band 1
             kappav(2) = infrared%parameters(4)  ! mass absorption coefficient of vapor, band 2
@@ -134,7 +133,7 @@ contains
 
         !########################################################################
         ! Local allocation
-        allocate (bcs_hb(imax*kmax))
+        allocate (bcs_ht(imax*kmax), bcs_hb(imax*kmax), t_ht(imax*kmax))
         call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
 
         return
@@ -155,6 +154,7 @@ contains
 
         ! -----------------------------------------------------------------------
         integer iband
+        real(wp), dimension(:, :), pointer :: p_bcs
 
         !########################################################################
         select case (infrared%type)
@@ -164,6 +164,7 @@ contains
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
             end if
 
+            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
             if (present(flux)) then
                 call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source, flux)
             else
@@ -180,6 +181,7 @@ contains
             end if
             b = sigma*wrk3d**4.0_wp             ! emission function, Stefan-Boltzmann law
 
+            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
             if (present(flux)) then             ! solve radiative transfer equation along y
                 call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
                 ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
@@ -190,20 +192,34 @@ contains
                 ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             end if
 
-        case (TYPE_IR_TWOBANDS)
+        case (TYPE_IR_3BANDS)
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, tmp_rad(:, 1))          ! calculate temperature for emission function
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, tmp_rad(:, 1))         ! calculate temperature for emission function
             else
                 ! tbd
             end if
+            p_wrk3d(1:nx, 1:ny, 1:nz) => tmp_rad(1:nx*ny*nz, 1)                         ! save T at top boundary
+            p_bcs(1:nx, 1:nz) => t_ht(1:nx*nz)
+            p_bcs(1:nx, 1:nz) = p_wrk3d(1:nx, ny, 1:nz)
 
-            ! liquid
-            source = kappal*s(:, infrared%scalar(1))
+            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))                          ! vapor
+
+            ! final band; the remaining part that is not cover by the first nband-1 bands
+            bcs_ht = 1.0_wp                                                             ! downward flux at domain top
+            b = 1.0_wp                                                                  ! emission function
+            do iband = 1, nbands - 1
+                bcs_ht = bcs_ht - (beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))
+                b = b - (beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
+            end do
+            bcs_ht = infrared%parameters(1)*bcs_ht
+            b = sigma*tmp_rad(:, 1)**4.0_wp*b
+
+            kappad = 0.0 !0.0001
+            source = kappal*s(:, infrared%scalar(1)) + kappad*(1.0_wp - s(:, 2))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)        ! multiply by density
             end if
-            b = sigma*tmp_rad(:, 1)**4.0_wp                                             ! emission function, Stefan-Boltzmann law
-            if (present(flux)) then                                                     ! solve radiative transfer equation along y
+            if (present(flux)) then             ! solve radiative transfer equation along y
                 call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
                 ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
                 ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
@@ -213,13 +229,13 @@ contains
                 ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
             end if
 
-            ! vapor
-            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, tmp_rad(:, 2))     ! multiply by density
-            end if
-            do iband = 1, nbands
-                tmp_rad(:, 3) = kappav(iband)*tmp_rad(:, 2)
+            ! the first nband-1 bands
+            do iband = 1, nbands - 1
+                bcs_ht = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))  ! downward flux at domain top
+                tmp_rad(:, 3) = kappal*s(:, infrared%scalar(1)) + kappav(iband)*tmp_rad(:, 2)
+                if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                    call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, tmp_rad(:, 3))        ! multiply by density
+                end if
                 tmp_rad(:, 5) = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
                 if (present(flux)) then             ! solve radiative transfer equation along y
                     call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2, tmp_rad(:, 4))
@@ -305,11 +321,14 @@ contains
         fu = infrared%parameters(3)
         if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht &                       ! downward flux
+                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht(1:nx*nz) &                       ! downward flux
                                             + p_tau(:, 1)/p_tau(:, j)*fu)       ! upward flux
             end do
         else
-            p_source = p_a*p_tau*bcs_ht
+            ! p_source = p_a*p_tau*bcs_ht
+            do j = ny, 1, -1
+                p_source(:, j) = p_a(:, j)*p_tau(:, j)*bcs_ht(1:nx*nz)
+            end do
         end if
 
         if (nz > 1) then ! Put arrays back in the order in which they came in
@@ -323,14 +342,16 @@ contains
 ! ###################################################################
 ! Calculate radiative flux, if necessary
         if (present(flux)) then
-            fu = infrared%parameters(3)
             if (abs(infrared%parameters(3)) > 0.0_wp) then
                 do j = ny, 1, -1
-                    p_flux(:, j) = -bcs_ht*p_tau(:, j) &                       ! downward flux
+                    p_flux(:, j) = -bcs_ht(1:nx*nz)*p_tau(:, j) &                       ! downward flux
                                    + fu*p_tau(:, 1)/p_tau(:, j)       ! upward flux
                 end do
             else
-                p_flux = -p_tau*bcs_ht
+                ! p_flux = -p_tau*bcs_ht
+                do j = ny, 1, -1
+                    p_flux(:, j) = -bcs_ht(1:nx*nz)*p_tau(:, j)
+                end do
             end if
 
             if (nz > 1) then ! Put arrays back in the order in which they came in
@@ -420,7 +441,7 @@ contains
         ! ###################################################################
         ! downward flux; positive going down
         j = ny
-        p_flux(:, j) = bcs_ht
+        p_flux(1:nx*nz, j) = bcs_ht(1:nx*nz)
 
         do j = ny - 1, 1, -1
             ! Integral contribution from emission function using a trapezoidal rule
@@ -560,7 +581,7 @@ contains
         ! ###################################################################
         ! downward flux; positive going down
         j = ny
-        p_flux_1 = bcs_ht
+        p_flux_1(1:nx*nz) = bcs_ht(1:nx*nz)
         p_flux(:, j) = p_flux_1
 
         do j = ny - 1, 1, -1
@@ -717,7 +738,10 @@ contains
         do j = ny - 1, 1, -1
             p_flux(:, j) = p_flux(:, j + 1) + p_flux(:, j)
         end do
-        p_flux = p_tau*(bcs_ht + p_flux)
+        ! p_flux = p_tau*(bcs_ht + p_flux)
+        do j = ny, 1, -1
+            p_flux(:, j) = p_tau(:, j)*(bcs_ht(1:nx*nz) + p_flux(:, j))
+        end do
 
         ! ###################################################################
         ! upward flux
