@@ -23,9 +23,11 @@ module Radiation
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: mu                                      ! mean direction parameter
     real(wp) :: epsilon                                 ! surface emissivity at ymin
-    integer, parameter :: nbands = 3                    ! number of spectral bands
-    real(wp) beta(3, nbands)                            ! polynomial coefficients for band functions; the last one contains the sum
-    real(wp) kappad, kappal, kappav(nbands)             ! mass absorption coefficients for liquid and vapor
+    integer, parameter :: nbands_max = 3                ! maximum number of spectral bands
+    integer :: nbands                                   ! number of spectral bands
+    real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band functions; assuming second-order polynomial
+    ! real(wp) kappa(MAX_NSP, nbands_max)               ! mass absorption coefficients
+    real(wp) kappad, kappal, kappav(nbands_max)         ! mass absorption coefficients for liquid and vapor, for clarity
     real(wp), allocatable, target :: bcs_ht(:)          ! flux boundary condition at the top of the domain
     real(wp), allocatable, target :: bcs_hb(:)          ! flux boundary condition at the bottom of the domain
     real(wp), allocatable, target :: t_ht(:)            ! temperature at the top of the domain
@@ -102,15 +104,22 @@ contains
 
         select case (infrared%type)
         case (TYPE_IR_GRAY_LIQUID)
+            nbands = 1
+
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             ! infrared%parameters(3) upward flux at domain bottom
 
         case (TYPE_IR_GRAY)
+            nbands = 1
+
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor
             epsilon = infrared%parameters(4)    ! surface emissivity at ymin
 
         case (TYPE_IR_3BANDS)
+            nbands = 3
+            
+            ! For the airwater mixture
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor, band 1
             kappav(2) = infrared%parameters(4)  ! mass absorption coefficient of vapor, band 2
@@ -271,7 +280,6 @@ contains
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
-        real(wp) fu
         real(wp), pointer :: p_a(:, :) => null()
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
@@ -318,11 +326,11 @@ contains
 
 ! ###################################################################
 ! Calculate heating rate
-        fu = infrared%parameters(3)
+        bcs_hb = infrared%parameters(3)
         if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
                 p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht(1:nx*nz) &                       ! downward flux
-                                            + p_tau(:, 1)/p_tau(:, j)*fu)       ! upward flux
+                                            + p_tau(:, 1)/p_tau(:, j)*bcs_hb(1:nx*nz))       ! upward flux
             end do
         else
             ! p_source = p_a*p_tau*bcs_ht
@@ -345,7 +353,7 @@ contains
             if (abs(infrared%parameters(3)) > 0.0_wp) then
                 do j = ny, 1, -1
                     p_flux(:, j) = -bcs_ht(1:nx*nz)*p_tau(:, j) &                       ! downward flux
-                                   + fu*p_tau(:, 1)/p_tau(:, j)       ! upward flux
+                                   + bcs_hb(1:nx*nz)*p_tau(:, 1)/p_tau(:, j)       ! upward flux
                 end do
             else
                 ! p_flux = -p_tau*bcs_ht
@@ -533,7 +541,6 @@ contains
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_bcs_hb(:) => null()
         real(wp), pointer :: p_flux_1(:) => null()
         real(wp), pointer :: p_flux_2(:) => null()
 
@@ -546,7 +553,6 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
-        p_bcs_hb(1:nx*nz) => bcs_hb(1:nx*nz)
         p_flux_1(1:nx*nz) => wrk2d(1:nx*nz, 1)
         p_flux_2(1:nx*nz) => wrk2d(1:nx*nz, 2)
 
@@ -564,7 +570,7 @@ contains
         p_a = p_a*dummy
 
         ! emission function
-        p_bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
+        bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! ###################################################################
@@ -600,12 +606,12 @@ contains
 
         ! ###################################################################
         ! bottom boundary condition; calculate upward flux at the bottom
-        p_bcs_hb = epsilon*p_bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1)
+        bcs_hb = epsilon*bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1)
 
         ! ###################################################################
         ! upward flux and net terms
         j = 1
-        p_flux_1 = p_bcs_hb
+        p_flux_1 = bcs_hb
         p_source(:, j) = p_a(:, j)*(p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
 
         if (present(flux)) then                                     ! I need additional space to store fluxes
@@ -661,7 +667,7 @@ contains
 #endif
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs_hb)
+        nullify (p_a, p_tau, p_ab, p_source, p_flux)
 
         return
     end subroutine IR_RTE_Y_Local
@@ -688,7 +694,6 @@ contains
         real(wp), pointer :: p_ab(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_bcs_hb(:) => null()
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
@@ -699,7 +704,6 @@ contains
         p_ab => a_source
         p_tau => b
         p_flux => tmp1
-        p_bcs_hb(1:nx*nz) => bcs_hb(1:nx*nz)
 
 #ifdef USE_ESSL
         call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
@@ -715,7 +719,7 @@ contains
         p_a = p_a*dummy
 
         ! emission function
-        p_bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
+        bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
         p_ab = p_ab*p_a                   ! absorption coefficient times emission function
 
         ! ###################################################################
@@ -745,8 +749,8 @@ contains
 
         ! ###################################################################
         ! upward flux
-        p_bcs_hb = epsilon*p_bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
-        ! p_bcs_hb = 0.0_wp  ! test
+        bcs_hb = epsilon*bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
+        ! bcs_hb = 0.0_wp  ! test
 
         ! calculate exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
@@ -766,7 +770,7 @@ contains
         end do
         !
         do j = ny, 1, -1
-            tmp2(:, j) = p_tau(:, j)*(p_bcs_hb(:) + tmp2(:, j))    ! upward flux
+            tmp2(:, j) = p_tau(:, j)*(bcs_hb(:) + tmp2(:, j))    ! upward flux
             p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
             p_flux(:, j) = tmp2(:, j) - p_flux(:, j)            ! total flux
         end do
@@ -788,7 +792,7 @@ contains
 #endif
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_bcs_hb)
+        nullify (p_a, p_tau, p_ab, p_source, p_flux)
 
         return
     end subroutine IR_RTE_Y_Global
