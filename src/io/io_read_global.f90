@@ -936,6 +936,24 @@ subroutine IO_READ_GLOBAL(inifile)
         end do
     end if
 
+! ###################################################################
+! Pressure decomposition
+! ###################################################################
+    ! read decomposition parameters
+    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomposition%name = 'total'
+    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomposition%name = 'total'
+    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomposition%name = 'resolved'
+    else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomposition%name = 'advdiff' 
+    else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomposition%name = 'advection'
+    else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomposition%name = 'diffusion'
+    else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomposition%name = 'coriolis'
+    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomposition%name = 'buoyancy'
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
+        call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
+    end if
+
     return
 end subroutine IO_READ_GLOBAL
 

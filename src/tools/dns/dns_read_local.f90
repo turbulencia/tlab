@@ -695,7 +695,16 @@ subroutine DNS_READ_LOCAL(inifile)
     ! -------------------------------------------------------------------
     ! Array sizes
     ! -------------------------------------------------------------------
-    inb_txc = 9
+    if (pdecomposition%name == 'resolved') then; inb_txc = 10
+    else if (pdecomposition%name == 'advdiff') then; inb_txc = 10
+    else if (pdecomposition%name == 'advection') then; inb_txc = 10
+    else if (pdecomposition%name == 'diffusion') then; inb_txc = 10
+    else if (pdecomposition%name == 'coriolis') then; inb_txc = 10
+    else if (pdecomposition%name == 'buoyancy') then; inb_txc = 10
+    else if (pdecomposition%name == 'total') then; inb_txc = 9
+    else
+        inb_txc = 9
+    end if
 
     if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics
         inb_txc = max(inb_txc, 7)
