@@ -118,7 +118,7 @@ contains
 
         case (TYPE_IR_3BANDS)
             nbands = 3
-            
+
             ! For the airwater mixture
             kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
             kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor, band 1
@@ -175,7 +175,7 @@ contains
 
             bcs_ht = infrared%parameters(1)     ! downward flux at domain top
             if (present(flux)) then
-                call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source, flux)
+                call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source, b, flux)
             else
                 call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source)
             end if
@@ -267,16 +267,17 @@ contains
     end subroutine Radiation_Infrared
 
 !########################################################################
+! We do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
 !########################################################################
     ! Radiative transfer equation along y; only liquid
-    subroutine IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, a_source, flux)
+    subroutine IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, a_source, flux_up, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nx*nz, ny)      ! input as bulk absorption coefficent, output as source
-        real(wp), intent(out), optional :: flux(nx*nz, ny)
+        real(wp), intent(out), optional :: flux_up(nx*nz, ny), flux(nx*nz, ny)
 
-        target a_source, flux
+        target a_source, flux_up, flux
 
 ! -----------------------------------------------------------------------
         integer(wi) j, nxy, nxz
@@ -284,41 +285,34 @@ contains
         real(wp), pointer :: p_tau(:, :) => null()
         real(wp), pointer :: p_source(:, :) => null()
         real(wp), pointer :: p_flux(:, :) => null()
+        real(wp), pointer :: p_flux_up(:, :) => null()
 
 ! #######################################################################
         nxy = nx*ny     ! For transposition to make y direction the last one
         nxz = nx*nz
 
-        if (nz == 1) then
-            p_a => a_source
-            p_source => a_source
-            p_tau(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-            if (present(flux)) p_flux => flux
+        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
+        if (present(flux)) then
+            p_flux_up => flux
+            p_tau => flux_up
+            p_flux(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
         else
-            p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-            p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-            if (present(flux)) then
-                p_tau => flux
-                p_flux(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-            else
-                p_tau => a_source
-            end if
-
-#ifdef USE_ESSL
-            call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
-#else
-            call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
-#endif
+            p_tau => a_source
         end if
 
-! ###################################################################
-        ! Calculate (negative) optical thickness; integrating from the top, to be checked
-        p_tau(:, ny) = 0.0_wp   ! boundary condition
-        call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)
-        ! p_tau(:, 1) = 0.0_wp     ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_org, p_tau, BCS_MIN)
+#ifdef USE_ESSL
+        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
+#else
+        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
+#endif
 
-! Calculate exp(-tau(z, zmax)/\mu)
+! ###################################################################
+        ! calculate f_j = exp(-tau(z, zmax)/\mu)
+        p_tau(:, ny) = 0.0_wp                                   ! boundary condition
+        call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)         ! recall this gives the negative of the integral
+        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MAX)
+        ! call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
         end do
@@ -329,8 +323,8 @@ contains
         bcs_hb = infrared%parameters(3)
         if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht(1:nx*nz) &                       ! downward flux
-                                            + p_tau(:, 1)/p_tau(:, j)*bcs_hb(1:nx*nz))       ! upward flux
+                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht(1:nx*nz) &                   ! downward flux
+                                            + p_tau(:, 1)/p_tau(:, j)*bcs_hb(1:nx*nz))      ! upward flux
             end do
         else
             ! p_source = p_a*p_tau*bcs_ht
@@ -339,41 +333,32 @@ contains
             end do
         end if
 
-        if (nz > 1) then ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
-            call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
+        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
 #else
-            call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
+        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
 #endif
-        end if
 
 ! ###################################################################
 ! Calculate radiative flux, if necessary
         if (present(flux)) then
-            if (abs(infrared%parameters(3)) > 0.0_wp) then
-                do j = ny, 1, -1
-                    p_flux(:, j) = -bcs_ht(1:nx*nz)*p_tau(:, j) &                       ! downward flux
-                                   + bcs_hb(1:nx*nz)*p_tau(:, 1)/p_tau(:, j)       ! upward flux
-                end do
-            else
-                ! p_flux = -p_tau*bcs_ht
-                do j = ny, 1, -1
-                    p_flux(:, j) = -bcs_ht(1:nx*nz)*p_tau(:, j)
-                end do
-            end if
+            do j = ny, 1, -1
+                p_flux_up(:, j) = bcs_hb(1:nx*nz)*p_tau(:, 1)/p_tau(:, j)       ! upward flux
+                p_flux(:, j) = p_flux_up(:, j) - bcs_ht(1:nx*nz)*p_tau(:, j)    ! add downward flux
+            end do
 
-            if (nz > 1) then ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
-                call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
+            call DGETMO(p_flux_up, nz, nz, nxy, flux_up, nxy)
+            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
 #else
-                call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
+            call DNS_TRANSPOSE(p_flux_up, nz, nxy, nz, flux_up, nxy)
+            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
 #endif
-            end if
 
         end if
 
 ! ###################################################################
-        nullify (p_a, p_tau, p_source, p_flux)
+        nullify (p_a, p_tau, p_source, p_flux_up, p_flux)
 
         return
     end subroutine IR_RTE_Y_Liquid
@@ -381,7 +366,6 @@ contains
 !########################################################################
 !########################################################################
     ! Radiative transfer equation along y
-    ! Here we do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
     subroutine IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, a_source, b, tmp1, flux)
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
@@ -727,7 +711,7 @@ contains
 
         ! calculate f_j = exp(-tau(z_j, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)            ! recall this gives the negative of the integral
+        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)         ! recall this gives the negative of the integral
         ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MAX)
         call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
