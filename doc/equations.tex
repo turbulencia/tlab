@@ -467,7 +467,7 @@ We can use the same solvers as for the problem~(\ref{equ:rte}) but we also need 
     \caption{Coefficients of the least squares polynomial fit to the numerical quadrature of the band functions $\beta_\mathrm{b}(T)$ in the interval of temperatures $[250~\mathrm{K},320~\mathrm{K}]$}\label{tab:radiation}
 \end{table}
 
-\textbf{One model that is implemented in the code considers the water substance and a 3-band model. For the liquid, we consider a gray body. For the water vapor, we consider 2 bands: $150\pm 56~\mathrm{cm}^{-1}$ and $1500\pm 40~\mathrm{cm}^{-1}$ \citep{jeevanjee2023climate}. The third band is the rest of the frequency space outside of those 2 vapor bands, where the vapor absorption is zero but (I guess) not the dray air absorption? so far, I set it to zero.} The numerical calculation for the vapor bands is shown in Fig.~\ref{fig:radiation}. We consider a least squares polynomial fit of second order 
+One model that is implemented in the code considers the water substance and a 3-band model. For the liquid, we consider a gray body. For the water vapor, we consider 2 bands \citep{jeevanjee2023climate}: $150\pm 56~\mathrm{cm}^{-1}$ (pure rotational) and $1500\pm 40~\mathrm{cm}^{-1}$ (vibration-rotation). The third band is the rest of the frequency space outside of those 2 vapor bands, where the vapor absorption is zero. The numerical calculation for the vapor bands is shown in Fig.~\ref{fig:radiation}. We consider a least squares polynomial fit of second order 
 \begin{equation}
     \beta_\mathrm{b}(T)\approx a_0+a_1T+a_2T^2 \;.
 \end{equation}
