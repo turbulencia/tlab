@@ -26,15 +26,16 @@ module Radiation
     integer, parameter :: nbands_max = 3                ! maximum number of spectral bands
     integer :: nbands                                   ! number of spectral bands
     real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band functions; assuming second-order polynomial
-    ! real(wp) kappa(MAX_NSP, nbands_max)               ! mass absorption coefficients
-    real(wp) kappad, kappal, kappav(nbands_max)         ! mass absorption coefficients for liquid and vapor, for clarity
+    real(wp) kappal(nbands_max), kappav(nbands_max)     ! mass absorption coefficients for liquid and vapor, for clarity
     real(wp), allocatable, target :: bcs_ht(:)          ! flux boundary condition at the top of the domain
     real(wp), allocatable, target :: bcs_hb(:)          ! flux boundary condition at the bottom of the domain
     real(wp), allocatable, target :: t_ht(:)            ! temperature at the top of the domain
     real(wp), allocatable, target :: tmp_rad(:, :)      ! 3D temporary arrays for radiation routine
 
+    real(wp), pointer :: p_tau(:, :) => null()
+
     public :: Radiation_Initialize
-    public :: Radiation_Infrared
+    public :: Radiation_Infrared_Y
 
 contains
 !########################################################################
@@ -46,7 +47,7 @@ contains
         ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
-        integer(wi) idummy
+        integer(wi) idummy, iband
         integer(wi) :: inb_tmp_rad = 0
 
         !########################################################################
@@ -106,29 +107,34 @@ contains
         case (TYPE_IR_GRAY_LIQUID)
             nbands = 1
 
-            kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
+            kappal(1) = infrared%parameters(2)     ! mass absorption coefficient of liquid
             ! infrared%parameters(3) upward flux at domain bottom
 
         case (TYPE_IR_GRAY)
             nbands = 1
 
-            kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
-            kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor
-            epsilon = infrared%parameters(4)    ! surface emissivity at ymin
+            kappal(1) = infrared%parameters(2)      ! mass absorption coefficient of liquid
+            kappav(1) = infrared%parameters(3)      ! mass absorption coefficient of vapor
+            epsilon = infrared%parameters(4)        ! surface emissivity at ymin
 
         case (TYPE_IR_3BANDS)
             nbands = 3
 
             ! For the airwater mixture
-            kappal = infrared%parameters(2)     ! mass absorption coefficient of liquid
-            kappav(1) = infrared%parameters(3)  ! mass absorption coefficient of vapor, band 1
-            kappav(2) = infrared%parameters(4)  ! mass absorption coefficient of vapor, band 2
-            epsilon = infrared%parameters(5)    ! surface emissivity at ymin
+            kappal(1:3) = infrared%parameters(2)    ! mass absorption coefficient of liquid, same in all bands
+            kappav(1) = infrared%parameters(3)      ! mass absorption coefficient of vapor, band 1
+            kappav(2) = infrared%parameters(4)      ! mass absorption coefficient of vapor, band 2
+            kappav(3) = 0.0_wp                      ! assume band 3 is defined by vapor being transparent
+            epsilon = infrared%parameters(5)        ! surface emissivity at ymin
 
             beta(1:3, 1) = [2.6774e-1_wp, -1.3344e-3_wp, 1.8017e-6_wp] ! coefficients for band 1
             beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp] ! coefficients for band 2
+            beta(1:3, nbands) = [1.0_wp, 0.0_wp, 0.0_wp]               ! last band from equation sum beta_i = 1
+            do iband = 1, nbands - 1
+                beta(1:3, nbands) = beta(1:3, nbands) - beta(1:3, iband)
+            end do
 
-            inb_tmp_rad = 5                     ! Additional memory space
+            inb_tmp_rad = 5                         ! Additional memory space
 
         end select
 
@@ -150,281 +156,285 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine Radiation_Infrared(infrared, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
+    subroutine Radiation_Infrared_Y(infrared, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
         use THERMO_ANELASTIC
         type(term_dt), intent(in) :: infrared
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
-        real(wp), intent(out) :: source(nx*ny*nz)   ! also used for bulk absorption coefficient
-        real(wp), intent(inout) :: b(nx*ny*nz)      ! emission function
+        real(wp), intent(out) :: source(nx*ny*nz)           ! also used for absorption coefficient
+        real(wp), intent(inout) :: b(nx*ny*nz)              ! emission function
         real(wp), intent(inout) :: tmp1(nx*ny*nz), tmp2(nx*ny*nz)
         real(wp), intent(out), optional :: flux(nx*ny*nz)
 
+        target :: source, b, tmp1, flux
+
         ! -----------------------------------------------------------------------
-        integer iband
+        integer iband, nxy, nxz
         real(wp), dimension(:, :), pointer :: p_bcs
+        real(wp), pointer :: p_source(:) => null()
+        real(wp), pointer :: p_b(:) => null()
+        real(wp), pointer :: p_flux_down(:) => null()
+        real(wp), pointer :: p_flux_up(:) => null()
 
         !########################################################################
+        nxy = nx*ny     ! For transposition to make y direction the last one
+        nxz = nx*nz
+
+        p_source => b
+        p_b => source
+        p_flux_down => tmp1
+        if (present(flux)) then
+            p_flux_up => flux
+        end if
+
+        p_tau(1:nxz, 1:ny) => wrk3d(1:nxz*ny)                   ! set pointer to optical depth and transmission functions used in routines below
+
+        ! -----------------------------------------------------------------------
         select case (infrared%type)
         case (TYPE_IR_GRAY_LIQUID)
-            source = kappal*s(:, infrared%scalar(1))        ! bulk absorption coefficient in array source to save memory
+            wrk3d = kappal(1)*s(:, infrared%scalar(1))          ! absorption coefficient in array source to save memory
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
+            ! Local transposition: make x-direction the last one. Same in the similar blocks below
+#ifdef USE_ESSL
+            call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
+#else
+            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+#endif
 
-            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
-            if (present(flux)) then
-                call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source, b, flux)
+            bcs_ht = infrared%parameters(1)                     ! downward flux at domain top
+            if (present(flux)) then                             ! solve radiative transfer equation along y
+                call IR_RTE1_Liquid(infrared, nxz, ny, g, p_source, p_flux_down, p_flux_up)
             else
-                call IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, source)
+                call IR_RTE1_Liquid(infrared, nxz, ny, g, p_source)
             end if
 
+            ! -----------------------------------------------------------------------
         case (TYPE_IR_GRAY)
-            source = kappal*s(:, infrared%scalar(1)) + kappav(1)*(s(:, 2) - s(:, infrared%scalar(1)))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)   ! multiply by density
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)                 ! calculate temperature for emission function
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
             else
                 ! tbd
             end if
-            b = sigma*wrk3d**4.0_wp             ! emission function, Stefan-Boltzmann law
+            wrk3d = sigma*wrk3d**4.0_wp                         ! emission function, Stefan-Boltzmann law
+#ifdef USE_ESSL
+            call DGETMO(wrk3d, nxy, nxy, nz, p_b, nz)
+#else
+            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_b, nz)
+#endif
 
-            bcs_ht = infrared%parameters(1)     ! downward flux at domain top
-            if (present(flux)) then             ! solve radiative transfer equation along y
-                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+            wrk3d = kappal(1)*s(:, infrared%scalar(1)) + kappav(1)*(s(:, 2) - s(:, infrared%scalar(1))) ! absorption coefficient
+            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
+            end if
+#ifdef USE_ESSL
+            call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
+#else
+            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+#endif
+
+            bcs_ht = infrared%parameters(1)                     ! downward flux at domain top
+
+            if (present(flux)) then                             ! solve radiative transfer equation along y
+                call IR_RTE1_Global(infrared, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
+                ! call IR_RTE1_Local(infrared, nxz, ny, g, p_source, p_b, p_flux_down, tmp2, p_flux_up)
+                ! call IR_RTE1_Incremental(infrared, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
             else
-                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+                call IR_RTE1_Global(infrared, nxz, ny, g, p_source, p_b, p_flux_down, tmp2)
+                ! call IR_RTE1_Local(infrared, nxz, ny, g, p_source, p_b, p_flux_down, tmp2)
+                ! call IR_RTE1_Incremental(infrared, nxz, ny, g, p_source, p_b, p_flux_down)
             end if
 
+            ! -----------------------------------------------------------------------
         case (TYPE_IR_3BANDS)
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, tmp_rad(:, 1))         ! calculate temperature for emission function
+                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
             else
                 ! tbd
             end if
-            p_wrk3d(1:nx, 1:ny, 1:nz) => tmp_rad(1:nx*ny*nz, 1)                         ! save T at top boundary
+            p_wrk3d(1:nx, 1:ny, 1:nz) => tmp_rad(1:nx*ny*nz, 1) ! save T at top boundary
             p_bcs(1:nx, 1:nz) => t_ht(1:nx*nz)
             p_bcs(1:nx, 1:nz) = p_wrk3d(1:nx, ny, 1:nz)
+#ifdef USE_ESSL
+            call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad, nz)
+#else
+            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad, nz)
+#endif
 
-            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))                          ! vapor
+            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))  ! vapor
 
-            ! final band; the remaining part that is not cover by the first nband-1 bands
-            bcs_ht = 1.0_wp                                                             ! downward flux at domain top
-            b = 1.0_wp                                                                  ! emission function
-            do iband = 1, nbands - 1
-                bcs_ht = bcs_ht - (beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))
-                b = b - (beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
-            end do
-            bcs_ht = infrared%parameters(1)*bcs_ht
-            b = sigma*tmp_rad(:, 1)**4.0_wp*b
+            ! last band
+            iband = nbands
+            p_b = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
 
-            kappad = 0.0 !0.0001
-            source = kappal*s(:, infrared%scalar(1)) + kappad*(1.0_wp - s(:, 2))
+            wrk3d = kappal(iband)*s(:, infrared%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, source)        ! multiply by density
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
-            if (present(flux)) then             ! solve radiative transfer equation along y
-                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2, flux)
-                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+#ifdef USE_ESSL
+            call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
+#else
+            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+#endif
+
+            bcs_ht = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))
+
+            if (present(flux)) then
+                call IR_RTE1_Global(infrared, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
+                ! call IR_RTE1_Local(infrared, nxz, ny, g, p_source, p_b, p_flux_down, tmp2, p_flux_up)
+                ! call IR_RTE1_Incremental(infrared, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
             else
-                call IR_RTE_Y_Global(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, source, b, tmp1, tmp2)
-                ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, source, b, tmp1, flux)
+                call IR_RTE1_Global(infrared, nxz, ny, g, p_source, p_b, p_flux_down, tmp2)
+                ! call IR_RTE1_Local(infrared, nxz, ny, g, p_source, p_b, p_flux_down, tmp2)
+                ! call IR_RTE1_Incremental(infrared, nxz, ny, g, p_source, p_b, p_flux_down)
             end if
 
             ! the first nband-1 bands
             do iband = 1, nbands - 1
-                bcs_ht = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))  ! downward flux at domain top
-                tmp_rad(:, 3) = kappal*s(:, infrared%scalar(1)) + kappav(iband)*tmp_rad(:, 2)
-                if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, tmp_rad(:, 3))        ! multiply by density
-                end if
                 tmp_rad(:, 5) = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
+
+                wrk3d = kappal(iband)*s(:, infrared%scalar(1)) + kappav(iband)*tmp_rad(:, 2)
+                if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                    call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
+                end if
+#ifdef USE_ESSL
+                call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 3), nz)
+#else
+                call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 3), nz)
+#endif
+
+                bcs_ht = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))  ! downward flux at domain top
+
                 if (present(flux)) then             ! solve radiative transfer equation along y
-                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2, tmp_rad(:, 4))
-                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2, tmp_rad(:, 4))
-                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp_rad(:, 4))
-                    flux = flux + tmp_rad(:, 4)
-                    b = b + tmp_rad(:, 5)
+                    call IR_RTE1_Global(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
+                    ! call IR_RTE1_Local(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2, p_b)
+                    ! call IR_RTE1_Incremental(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
+                    p_flux_down = p_flux_down + tmp_rad(:, 4)
+                    p_flux_up = p_flux_up + p_b
                 else
-                    call IR_RTE_Y_Global(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2)
-                    ! call IR_RTE_Y_Local(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1, tmp2)
-                    ! call IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp1)
+                    call IR_RTE1_Global(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2)
+                    ! call IR_RTE1_Local(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2)
+                    ! call IR_RTE1_Incremental(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4))
                 end if
 
-                source = source + tmp_rad(:, 3)
+                p_source = p_source + tmp_rad(:, 3)
 
             end do
 
         end select
 
-    end subroutine Radiation_Infrared
-
-!########################################################################
-! We do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
-!########################################################################
-    ! Radiative transfer equation along y; only liquid
-    subroutine IR_RTE_Y_Liquid(infrared, nx, ny, nz, g, a_source, flux_up, flux)
-        type(term_dt), intent(in) :: infrared
-        integer(wi), intent(in) :: nx, ny, nz
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: a_source(nx*nz, ny)      ! input as bulk absorption coefficent, output as source
-        real(wp), intent(out), optional :: flux_up(nx*nz, ny), flux(nx*nz, ny)
-
-        target a_source, flux_up, flux
-
-! -----------------------------------------------------------------------
-        integer(wi) j, nxy, nxz
-        real(wp), pointer :: p_a(:, :) => null()
-        real(wp), pointer :: p_tau(:, :) => null()
-        real(wp), pointer :: p_source(:, :) => null()
-        real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_flux_up(:, :) => null()
-
-! #######################################################################
-        nxy = nx*ny     ! For transposition to make y direction the last one
-        nxz = nx*nz
-
-        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        if (present(flux)) then
-            p_flux_up => flux
-            p_tau => flux_up
-            p_flux(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        else
-            p_tau => a_source
-        end if
-
+        !########################################################################
+        ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
-        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
+        call DGETMO(p_source, nz, nz, nxy, source, nxy)
+        if (present(flux)) then
+            p_flux_down = p_flux_up - p_flux_down                 ! net flux upwards = upward flux - downward flux
+            call DGETMO(p_flux_up, nz, nz, nxy, b, nxy)
+            call DGETMO(p_flux_down, nz, nz, nxy, flux, nxy)
+        end if
 #else
-        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
+        call DNS_TRANSPOSE(p_source, nz, nxy, nz, source, nxy)
+        if (present(flux)) then
+            p_flux_down = p_flux_up - p_flux_down
+            call DNS_TRANSPOSE(p_flux_up, nz, nxy, nz, b, nxy)
+            call DNS_TRANSPOSE(p_flux_down, nz, nxy, nz, flux, nxy)
+        end if
 #endif
 
-! ###################################################################
+        nullify (p_source, p_b, p_flux_down)
+        if (associated(p_flux_up)) nullify (p_flux_up)
+        nullify (p_tau)
+
+    end subroutine Radiation_Infrared_Y
+
+!########################################################################
+! Solve radiative transfer equation along 1 direction
+! We do not treat separately 2d and 3d cases for the transposition because it was a bit messy...
+!########################################################################
+    ! only liquid
+    subroutine IR_RTE1_Liquid(infrared, nlines, ny, g, a_source, flux_down, flux_up)
+        type(term_dt), intent(in) :: infrared
+        integer(wi), intent(in) :: nlines, ny
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(inout) :: a_source(nlines, ny)      ! input as bulk absorption coefficent, output as source
+        real(wp), intent(out), optional :: flux_down(nlines, ny), flux_up(nlines, ny)
+
+! -----------------------------------------------------------------------
+        integer(wi) j
+
+! #######################################################################
         ! calculate f_j = exp(-tau(z, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)         ! recall this gives the negative of the integral
-        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MAX)
-        ! call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MAX)
+        call OPR_Integral1(nlines, g, a_source, p_tau, BCS_MAX)         ! recall this gives the negative of the integral
+        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MAX)
+        ! call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
-! ###################################################################
-! Calculate heating rate
+        ! Calculate heating rate
         bcs_hb = infrared%parameters(3)
         if (abs(infrared%parameters(3)) > 0.0_wp) then
             do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*(p_tau(:, j)*bcs_ht(1:nx*nz) &                   ! downward flux
-                                            + p_tau(:, 1)/p_tau(:, j)*bcs_hb(1:nx*nz))      ! upward flux
+                a_source(:, j) = a_source(:, j)*(p_tau(:, j)*bcs_ht(1:nlines) &                   ! downward flux
+                                                 + p_tau(:, 1)/p_tau(:, j)*bcs_hb(1:nlines))      ! upward flux
             end do
         else
-            ! p_source = p_a*p_tau*bcs_ht
             do j = ny, 1, -1
-                p_source(:, j) = p_a(:, j)*p_tau(:, j)*bcs_ht(1:nx*nz)
+                a_source(:, j) = a_source(:, j)*p_tau(:, j)*bcs_ht(1:nlines)
             end do
         end if
 
-#ifdef USE_ESSL
-        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
-#else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
-#endif
-
-! ###################################################################
-! Calculate radiative flux, if necessary
-        if (present(flux)) then
+        ! Calculate flux, if necessary
+        if (present(flux_up)) then
             do j = ny, 1, -1
-                p_flux_up(:, j) = bcs_hb(1:nx*nz)*p_tau(:, 1)/p_tau(:, j)       ! upward flux
-                p_flux(:, j) = p_flux_up(:, j) - bcs_ht(1:nx*nz)*p_tau(:, j)    ! add downward flux
+                flux_down(:, j) = bcs_ht(1:nlines)*p_tau(:, j)                       ! downward flux
+                flux_up(:, j) = bcs_hb(1:nlines)*p_tau(:, 1)/p_tau(:, j)        ! upward flux
             end do
 
-#ifdef USE_ESSL
-            call DGETMO(p_flux_up, nz, nz, nxy, flux_up, nxy)
-            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
-#else
-            call DNS_TRANSPOSE(p_flux_up, nz, nxy, nz, flux_up, nxy)
-            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
-#endif
-
         end if
-
-! ###################################################################
-        nullify (p_a, p_tau, p_source, p_flux_up, p_flux)
 
         return
-    end subroutine IR_RTE_Y_Liquid
+    end subroutine IR_RTE1_Liquid
 
 !########################################################################
 !########################################################################
-    ! Radiative transfer equation along y
-    subroutine IR_RTE_Y_Incremental(infrared, nx, ny, nz, g, a_source, b, tmp1, flux)
+    subroutine IR_RTE1_Incremental(infrared, nlines, ny, g, a_source, b, flux_down, flux_up)
         type(term_dt), intent(in) :: infrared
-        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nlines, ny
         type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: a_source(nx*nz, ny)          ! input as bulk absorption coefficent, output as source
-        real(wp), intent(inout) :: b(nx*nz, ny)                 ! input as emission function, output as upward flux, if flux is to be return
-        real(wp), intent(inout) :: tmp1(nx*nz, ny)
-        real(wp), intent(out), optional :: flux(nx*nz, ny)
-
-        target a_source, b, tmp1
+        real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
+        real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
+        real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
+        real(wp), intent(out), optional :: flux_up(nlines, ny)
 
 ! -----------------------------------------------------------------------
-        integer(wi) j, nxy, nxz
+        integer(wi) j
         real(wp) dummy
-        real(wp), pointer :: p_a(:, :) => null()
-        real(wp), pointer :: p_tau(:, :) => null()
-        real(wp), pointer :: p_ab(:, :) => null()
-        real(wp), pointer :: p_source(:, :) => null()
-        real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_flux_up(:) => null()
         real(wp), pointer :: p_wrk2d_1(:) => null()
         real(wp), pointer :: p_wrk2d_2(:) => null()
 
 ! #######################################################################
-        nxy = nx*ny     ! For transposition to make y direction the last one
-        nxz = nx*nz
-
-        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_ab => a_source
-        p_tau => b
-        p_flux => tmp1
-        p_flux_up(1:nx*nz) => bcs_hb(1:nx*nz)
-        p_wrk2d_1(1:nx*nz) => wrk2d(1:nx*nz, 1)
-        p_wrk2d_2(1:nx*nz) => wrk2d(1:nx*nz, 2)
-
-#ifdef USE_ESSL
-        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
-        call DGETMO(b, nxy, nxy, nz, p_ab, nz)
-#else
-        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
-        call DNS_TRANSPOSE(b, nxy, nz, nxy, p_ab, nz)
-#endif
+        p_wrk2d_1(1:nlines) => wrk2d(1:nlines, 1)
+        p_wrk2d_2(1:nlines) => wrk2d(1:nlines, 2)
 
 ! ###################################################################
         ! absorption coefficient; divide by mean direction
         dummy = 1.0_wp/mu
-        p_a = p_a*dummy
+        a_source = a_source*dummy
 
         ! emission function
-        p_flux_up = p_ab(:, 1)            ! save for calculation of surface flux
-        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
+        bcs_hb(1:nlines) = b(1:nlines, 1)   ! save for calculation of surface flux
+        b = b*a_source                      ! absorption coefficient times emission function
 
-        ! ###################################################################
-        ! calculate f_j = exp(-tau(z_{j-1}, z_j)/\mu)
+        ! transmission function I_{j-1,j}  = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
-        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MIN)
+        ! call OPR_Integral1(nxz, g, a_source, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
@@ -433,352 +443,254 @@ contains
         ! ###################################################################
         ! downward flux; positive going down
         j = ny
-        p_flux(1:nx*nz, j) = bcs_ht(1:nx*nz)
+        flux_down(1:nlines, j) = bcs_ht(1:nlines)
 
         do j = ny - 1, 1, -1
             ! Integral contribution from emission function using a trapezoidal rule
-            p_wrk2d_2 = p_ab(:, j + 1)
-            p_wrk2d_1 = p_ab(:, j)/p_tau(:, j + 1)
+            p_wrk2d_2 = b(:, j + 1)
+            p_wrk2d_1 = b(:, j)/p_tau(:, j + 1)
             p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j + 1) - g%nodes(j))
 
-            p_flux(:, j) = p_tau(:, j + 1)*(p_flux(:, j + 1) + p_wrk2d_1)
-        end do
-
-        ! ###################################################################
-        ! upward flux and source
-        j = 1
-        p_flux_up = epsilon*p_flux_up + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
-        p_source(:, j) = p_a(:, j)*(p_flux_up + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
-
-        if (present(flux)) then                                         ! Save fluxes
-            p_flux(:, j) = p_flux_up - p_flux(:, j)                     ! total flux until transposition below
-            flux(:, j) = p_flux_up                                      ! upward flux until transposition below
-
-            do j = 2, ny
-                ! Integral contribution from emission function using a trapezoidal rule
-                p_wrk2d_1 = p_ab(:, j - 1)
-                p_wrk2d_2 = p_ab(:, j)/p_tau(:, j)
-                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
-
-                p_flux_up = p_tau(:, j)*(p_flux_up + p_wrk2d_1)
-                p_source(:, j) = p_a(:, j)*(p_flux_up + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
-
-                p_flux(:, j) = p_flux_up - p_flux(:, j)
-                flux(:, j) = p_flux_up
-            end do
-
-            ! p_source = p_tau ! test
-
-#ifdef USE_ESSL
-            call DGETMO(flux, nz, nz, nxy, b, nxy)
-            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
-#else
-            call DNS_TRANSPOSE(flux, nz, nxy, nz, b, nxy)
-            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
-#endif
-        else                                                            ! Do not save fluxes
-            do j = 2, ny
-                ! Integral contribution from emission function using a trapezoidal rule
-                p_wrk2d_1 = p_ab(:, j - 1)
-                p_wrk2d_2 = p_ab(:, j)/p_tau(:, j)
-                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
-
-                p_flux_up = p_tau(:, j)*(p_flux_up + p_wrk2d_1)
-                p_source(:, j) = p_a(:, j)*(p_flux_up + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
-            end do
-
-        end if
-
-#ifdef USE_ESSL
-        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
-#else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
-#endif
-
-! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux, p_flux_up, p_wrk2d_1, p_wrk2d_2)
-
-        return
-    end subroutine IR_RTE_Y_Incremental
-
-!########################################################################
-!########################################################################
-    ! Radiative transfer equation along y
-    ! Here we do not treat separately 2d and 3d cases for the trasposition because it was a bit messy...
-    subroutine IR_RTE_Y_Local(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
-        type(term_dt), intent(in) :: infrared
-        integer(wi), intent(in) :: nx, ny, nz
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: a_source(nx*nz, ny)          ! input as bulk absorption coefficent, output as source
-        real(wp), intent(inout) :: b(nx*nz, ny)                 ! input as emission function, output as upward flux, if flux is to be return
-        real(wp), intent(inout) :: tmp1(nx*nz, ny)
-        real(wp), intent(inout) :: tmp2(nx*nz, ny)
-        real(wp), intent(out), optional :: flux(nx*nz, ny)
-
-        target a_source, b, tmp1
-
-! -----------------------------------------------------------------------
-        integer(wi) j, k, nxy, nxz
-        real(wp) dummy
-        real(wp), pointer :: p_a(:, :) => null()
-        real(wp), pointer :: p_tau(:, :) => null()
-        real(wp), pointer :: p_ab(:, :) => null()
-        real(wp), pointer :: p_source(:, :) => null()
-        real(wp), pointer :: p_flux(:, :) => null()
-        real(wp), pointer :: p_flux_1(:) => null()
-        real(wp), pointer :: p_flux_2(:) => null()
-
-! #######################################################################
-        nxy = nx*ny     ! For transposition to make y direction the last one
-        nxz = nx*nz
-
-        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_ab => a_source
-        p_tau => b
-        p_flux => tmp1
-        p_flux_1(1:nx*nz) => wrk2d(1:nx*nz, 1)
-        p_flux_2(1:nx*nz) => wrk2d(1:nx*nz, 2)
-
-#ifdef USE_ESSL
-        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
-        call DGETMO(b, nxy, nxy, nz, p_ab, nz)
-#else
-        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
-        call DNS_TRANSPOSE(b, nxy, nz, nxy, p_ab, nz)
-#endif
-
-! ###################################################################
-        ! absorption coefficient; divide by mean direction
-        dummy = 1.0_wp/mu
-        p_a = p_a*dummy
-
-        ! emission function
-        bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
-        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
-
-        ! ###################################################################
-        ! calculate exp(-tau(zi, zj)/\mu)
-        p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
-        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MIN)
-        do j = ny, 2, -1
-            p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
-        end do
-        p_tau(:, 1) = 1.0_wp        ! this value is not used
-
-        ! ###################################################################
-        ! downward flux; positive going down
-        j = ny
-        p_flux_1(1:nx*nz) = bcs_ht(1:nx*nz)
-        p_flux(:, j) = p_flux_1
-
-        do j = ny - 1, 1, -1
-            p_flux_1 = p_flux_1*p_tau(:, j + 1)
-
-            p_flux_2 = 1.0_wp       ! used as auxiliary array in the next loop
-            tmp2(:, j) = p_ab(:, j)
-            do k = j + 1, ny
-                p_flux_2 = p_flux_2*p_tau(:, k)
-                tmp2(:, k) = p_ab(:, k)*p_flux_2
-            end do
-            call Int_Simpson_v(tmp2(:, j:ny), g%nodes(j:ny), p_flux(:, j))
-            ! call Int_Trapezoidal_v(tmp2(:, j:ny), g%nodes(j:ny), p_flux(:, j))
-            p_flux(:, j) = p_flux(:, j) + p_flux_1
+            flux_down(:, j) = p_tau(:, j + 1)*(flux_down(:, j + 1) + p_wrk2d_1)
         end do
 
         ! ###################################################################
         ! bottom boundary condition; calculate upward flux at the bottom
-        bcs_hb = epsilon*bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1)
+        bcs_hb(1:nlines) = epsilon*bcs_hb(1:nlines) + (1.0_wp - epsilon)*flux_down(:, 1)
+
+        ! ###################################################################
+        ! upward flux and source
+        j = 1
+        a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
+
+        if (present(flux_up)) then                                          ! Save fluxes
+            flux_up(:, j) = bcs_hb(1:nlines)                                ! upward flux
+
+            do j = 2, ny
+                ! Integral contribution from emission function using a trapezoidal rule
+                p_wrk2d_1 = b(:, j - 1)
+                p_wrk2d_2 = b(:, j)/p_tau(:, j)
+                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
+
+                bcs_hb = p_tau(:, j)*(bcs_hb(1:nlines) + p_wrk2d_1)
+                a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
+
+                flux_up(:, j) = bcs_hb(1:nlines)
+            end do
+
+        else                                                                ! Do not save fluxes
+            do j = 2, ny
+                ! Integral contribution from emission function using a trapezoidal rule
+                p_wrk2d_1 = b(:, j - 1)
+                p_wrk2d_2 = b(:, j)/p_tau(:, j)
+                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
+
+                bcs_hb = p_tau(:, j)*(bcs_hb + p_wrk2d_1)
+                a_source(:, j) = a_source(:, j)*(bcs_hb + flux_down(:, j)) - 2.0_wp*b(:, j)
+            end do
+
+        end if
+
+! ###################################################################
+        nullify (p_wrk2d_1, p_wrk2d_2)
+
+        return
+    end subroutine IR_RTE1_Incremental
+
+!########################################################################
+!########################################################################
+    subroutine IR_RTE1_Local(infrared, nlines, ny, g, a_source, b, flux_down, tmp2, flux_up)
+        type(term_dt), intent(in) :: infrared
+        integer(wi), intent(in) :: nlines, ny
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
+        real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
+        real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
+        real(wp), intent(inout) :: tmp2(nlines, ny)
+        real(wp), intent(out), optional :: flux_up(nlines, ny)
+
+! -----------------------------------------------------------------------
+        integer(wi) j, k
+        real(wp) dummy
+        real(wp), pointer :: p_flux_1(:) => null()
+        real(wp), pointer :: p_flux_2(:) => null()
+
+! #######################################################################
+        p_flux_1(1:nlines) => wrk2d(1:nlines, 1)
+        p_flux_2(1:nlines) => wrk2d(1:nlines, 2)
+
+! ###################################################################
+        ! absorption coefficient; divide by mean direction
+        dummy = 1.0_wp/mu
+        a_source = a_source*dummy
+
+        ! emission function
+        bcs_hb(1:nlines) = b(1:nlines, 1)   ! save for calculation of surface flux
+        b = b*a_source                      ! absorption coefficient times emission function
+
+        ! transmission function I_{j-1,j} = exp(-tau(z_{j-1}, z_j)/\mu)
+        p_tau(:, 1) = 0.0_wp                                    ! boundary condition
+        ! call OPR_Integral1(nxz, g, a_source, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MIN)
+        do j = ny, 2, -1
+            p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
+        end do
+        p_tau(:, 1) = 1.0_wp        ! this value is not used
+
+        ! ###################################################################
+        ! downward flux; positive going down
+        j = ny
+        p_flux_1(1:nlines) = bcs_ht(1:nlines)
+        flux_down(:, j) = p_flux_1
+
+        do j = ny - 1, 1, -1
+            p_flux_1 = p_flux_1*p_tau(:, j + 1)                     ! accumulate transmission
+
+            p_flux_2 = 1.0_wp                                       ! calculate emission; p_flux_2 is aux array in the next loop
+            tmp2(:, j) = b(:, j)
+            do k = j + 1, ny
+                p_flux_2 = p_flux_2*p_tau(:, k)
+                tmp2(:, k) = b(:, k)*p_flux_2
+            end do
+            call Int_Simpson_v(tmp2(:, j:ny), g%nodes(j:ny), flux_down(:, j))
+            ! call Int_Trapezoidal_v(tmp2(:, j:ny), g%nodes(j:ny), flux_down(:, j))
+            flux_down(:, j) = flux_down(:, j) + p_flux_1
+        end do
+
+        ! ###################################################################
+        ! bottom boundary condition; calculate upward flux at the bottom
+        bcs_hb(1:nlines) = epsilon*bcs_hb(1:nlines) + (1.0_wp - epsilon)*flux_down(:, 1)
 
         ! ###################################################################
         ! upward flux and net terms
         j = 1
-        p_flux_1 = bcs_hb
-        p_source(:, j) = p_a(:, j)*(p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+        p_flux_1(1:nlines) = bcs_hb(1:nlines)
+        a_source(:, j) = a_source(:, j)*(p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
-        if (present(flux)) then                                     ! I need additional space to store fluxes
-            p_flux(:, j) = p_flux_1 - p_flux(:, j)                  ! total flux until transposition below
-            flux(:, j) = p_flux_1                                   ! upward flux until transposition below
+        if (present(flux_up)) then                                  ! I need additional space to store fluxes
+            flux_up(:, j) = p_flux_1                                ! upward flux
 
             do j = 2, ny
                 p_flux_1 = p_flux_1*p_tau(:, j)
 
                 p_flux_2 = 1.0_wp       ! used as auxiliary array in the next loop
-                tmp2(:, j) = p_ab(:, j)
+                tmp2(:, j) = b(:, j)
                 do k = j - 1, 1, -1
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
-                    tmp2(:, k) = p_ab(:, k)*p_flux_2
+                    tmp2(:, k) = b(:, k)*p_flux_2
                 end do
                 call Int_Simpson_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
                 ! call Int_Trapezoidal_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
-                p_source(:, j) = p_a(:, j)*(p_flux_2 + p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+                a_source(:, j) = a_source(:, j)*(p_flux_2 + p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
-                p_flux(:, j) = p_flux_2 + p_flux_1 - p_flux(:, j)   ! total flux
-                flux(:, j) = p_flux_2 + p_flux_1                    ! upward flux
+                flux_up(:, j) = p_flux_2 + p_flux_1                 ! upward flux
             end do
 
-#ifdef USE_ESSL
-            call DGETMO(flux, nz, nz, nxy, b, nxy)
-            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
-#else
-            call DNS_TRANSPOSE(flux, nz, nxy, nz, b, nxy)
-            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
-#endif
         else                ! we only need the source term
             do j = 2, ny
-                p_flux_1 = p_flux_1*p_tau(:, j)
+                p_flux_1 = p_flux_1*p_tau(:, j)                     ! accumulate transmission
 
-                p_flux_2 = 1.0_wp       ! used as auxiliary array in the next loop
-                tmp2(:, j) = p_ab(:, j)
+                p_flux_2 = 1.0_wp                                   ! calculate emission; p_flux_2 is aux array in the next loop
+                tmp2(:, j) = b(:, j)
                 do k = j - 1, 1, -1
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
-                    tmp2(:, k) = p_ab(:, k)*p_flux_2
+                    tmp2(:, k) = b(:, k)*p_flux_2
                 end do
                 call Int_Simpson_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
                 ! call Int_Trapezoidal_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
-                p_source(:, j) = p_a(:, j)*(p_flux_2 + p_flux_1 + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
+                a_source(:, j) = a_source(:, j)*(p_flux_2 + p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
             end do
 
         end if
 
-#ifdef USE_ESSL
-        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
-#else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
-#endif
-
-! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux)
+! #######################################################################
+        nullify (p_flux_1, p_flux_2)
 
         return
-    end subroutine IR_RTE_Y_Local
+    end subroutine IR_RTE1_Local
 
 !########################################################################
 !########################################################################
-    subroutine IR_RTE_Y_Global(infrared, nx, ny, nz, g, a_source, b, tmp1, tmp2, flux)
+    subroutine IR_RTE1_Global(infrared, nlines, ny, g, a_source, b, flux_down, flux_up)
         type(term_dt), intent(in) :: infrared
-        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nlines, ny
         type(grid_dt), intent(in) :: g
-        real(wp), intent(inout) :: a_source(nx*nz, ny)          ! input as bulk absorption coefficent, output as source
-        real(wp), intent(inout) :: b(nx*nz, ny)                 ! input as emission function, output as upward flux, if flux is to be return
-        real(wp), intent(inout) :: tmp1(nx*nz, ny)
-        real(wp), intent(inout) :: tmp2(nx*nz, ny)
-        real(wp), intent(out), optional :: flux(nx*nz, ny)
-
-        target a_source, b, tmp1
+        real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
+        real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
+        real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
+        real(wp), intent(inout) :: flux_up(nlines, ny)
 
 ! -----------------------------------------------------------------------
-        integer(wi) j, nxy, nxz
+        integer(wi) j
         real(wp) dummy
-        real(wp), pointer :: p_a(:, :) => null()
-        real(wp), pointer :: p_tau(:, :) => null()
-        real(wp), pointer :: p_ab(:, :) => null()
-        real(wp), pointer :: p_source(:, :) => null()
-        real(wp), pointer :: p_flux(:, :) => null()
-
-! #######################################################################
-        nxy = nx*ny     ! For transposition to make y direction the last one
-        nxz = nx*nz
-
-        p_a(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_source(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
-        p_ab => a_source
-        p_tau => b
-        p_flux => tmp1
-
-#ifdef USE_ESSL
-        call DGETMO(a_source, nxy, nxy, nz, p_a, nz)
-        call DGETMO(b, nxy, nxy, nz, p_ab, nz)
-#else
-        call DNS_TRANSPOSE(a_source, nxy, nz, nxy, p_a, nz)
-        call DNS_TRANSPOSE(b, nxy, nz, nxy, p_ab, nz)
-#endif
 
 ! ###################################################################
         ! absorption coefficient; divide by mean direction
         dummy = 1.0_wp/mu
-        p_a = p_a*dummy
+        a_source = a_source*dummy
 
         ! emission function
-        bcs_hb = p_ab(:, 1)                ! save for calculation of surface flux
-        p_ab = p_ab*p_a                   ! absorption coefficient times emission function
+        bcs_hb = b(:, 1)                ! save for calculation of surface flux
+        b = b*a_source                  ! absorption coefficient times emission function
 
         ! ###################################################################
         ! downward flux; positive going down
 
-        ! calculate f_j = exp(-tau(z_j, zmax)/\mu)
+        ! transmission function I_j = exp(-tau(z_j, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MAX)         ! recall this gives the negative of the integral
-        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MAX)
-        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MAX)
+        ! call OPR_Integral1(nlines, g, a_source, p_tau, BCS_MAX)         ! recall this gives the negative of the integral
+        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MAX)
+        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
-        p_flux = p_ab/p_tau
-        ! call Int_Trapezoidal_Increments_InPlace(p_flux, g%nodes, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
-        call Int_Simpson_Biased_Increments_InPlace(p_flux, g%nodes, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
-        p_flux(:, ny) = 0.0_wp
+        flux_down = b/p_tau
+        ! call Int_Trapezoidal_Increments_InPlace(flux_down, g%nodes, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        call Int_Simpson_Biased_Increments_InPlace(flux_down, g%nodes, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        j = ny
+        wrk2d(1:nlines, 1) = 0.0_wp                                         ! accumulate emission; using wrk2d as aux array
+        flux_down(:, j) = p_tau(:, j)*(bcs_ht(1:nlines) + wrk2d(1:nlines, 1))
         do j = ny - 1, 1, -1
-            p_flux(:, j) = p_flux(:, j + 1) + p_flux(:, j)
-        end do
-        ! p_flux = p_tau*(bcs_ht + p_flux)
-        do j = ny, 1, -1
-            p_flux(:, j) = p_tau(:, j)*(bcs_ht(1:nx*nz) + p_flux(:, j))
+            wrk2d(1:nlines, 1) = wrk2d(1:nlines, 1) + flux_down(:, j)            ! accumulate emission
+            flux_down(:, j) = p_tau(:, j)*(bcs_ht(1:nlines) + wrk2d(1:nlines, 1))
         end do
 
         ! ###################################################################
-        ! upward flux
-        bcs_hb = epsilon*bcs_hb + (1.0_wp - epsilon)*p_flux(:, 1) ! bottom boundary condition
-        ! bcs_hb = 0.0_wp  ! test
+        ! bottom boundary condition; calculate upward flux at the bottom
+        bcs_hb = epsilon*bcs_hb + (1.0_wp - epsilon)*flux_down(:, 1)
 
-        ! calculate exp(-tau(zmin, z)/\mu)
-        p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call OPR_Integral1(nxz, g, p_a, p_tau, BCS_MIN)
-        ! call Int_Trapezoidal_f(p_a, g%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(p_a, g%nodes, p_tau, BCS_MIN)
+        ! ###################################################################
+        ! upward flux and net terms
+
+        ! transmission function I_j = exp(-tau(zmin, z)/\mu)
+        p_tau(:, 1) = 0.0_wp                                                ! boundary condition
+        ! call OPR_Integral1(nlines, g, a_source, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MIN)
         do j = 1, ny
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
 
-        tmp2 = p_ab/p_tau
-        ! call Int_Trapezoidal_Increments_InPlace(tmp2, g%nodes, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
-        call Int_Simpson_Biased_Increments_InPlace(tmp2, g%nodes, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
-        tmp2(:, 1) = 0.0_wp
-        do j = 2, ny
-            tmp2(:, j) = tmp2(:, j - 1) + tmp2(:, j)
-        end do
+        flux_up = b/p_tau
+        ! call Int_Trapezoidal_Increments_InPlace(flux_up, g%nodes, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        call Int_Simpson_Biased_Increments_InPlace(flux_up, g%nodes, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        j = 1
+        wrk2d(1:nlines, 1) = 0.0_wp                                         ! accumulate emission; using wrk2d as aux array
+        flux_up(:, j) = p_tau(:, j)*(bcs_hb(1:nlines) + wrk2d(1:nlines, 1))
         !
-        do j = ny, 1, -1
-            tmp2(:, j) = p_tau(:, j)*(bcs_hb(:) + tmp2(:, j))    ! upward flux
-            p_source(:, j) = p_a(:, j)*(tmp2(:, j) + p_flux(:, j)) - 2.0_wp*p_ab(:, j)
-            p_flux(:, j) = tmp2(:, j) - p_flux(:, j)            ! total flux
+        a_source(:, j) = a_source(:, j)*(flux_up(:, j) + flux_down(:, j)) - 2.0_wp*b(:, j)
+        do j = 2, ny
+            wrk2d(1:nlines, 1) = wrk2d(1:nlines, 1) + flux_up(:, j)         ! accumulate emission
+            flux_up(:, j) = p_tau(:, j)*(bcs_hb(1:nlines) + wrk2d(1:nlines, 1))
+            !
+            a_source(:, j) = a_source(:, j)*(flux_up(:, j) + flux_down(:, j)) - 2.0_wp*b(:, j)
         end do
-
-        if (present(flux)) then
-#ifdef USE_ESSL
-            call DGETMO(p_flux, nz, nz, nxy, flux, nxy)
-            call DGETMO(tmp2, nz, nz, nxy, b, nxy)
-#else
-            call DNS_TRANSPOSE(p_flux, nz, nxy, nz, flux, nxy)
-            call DNS_TRANSPOSE(tmp2, nz, nxy, nz, b, nxy)
-#endif
-        end if
-
-#ifdef USE_ESSL
-        call DGETMO(p_source, nz, nz, nxy, a_source, nxy)
-#else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, a_source, nxy)
-#endif
-
-! ###################################################################
-        nullify (p_a, p_tau, p_ab, p_source, p_flux)
 
         return
-    end subroutine IR_RTE_Y_Global
+    end subroutine IR_RTE1_Global
 
 end module
