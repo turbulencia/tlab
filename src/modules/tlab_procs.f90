@@ -175,7 +175,7 @@ contains
         character(len=*), intent(in) :: s
 
         !#####################################################################
-        if (any(dims <= 0)) return
+        ! if (any(dims <= 0)) return; better allocate to zero than not allocate; error in supermuc
         call TLAB_ALLOCATE_LOG(lfile,dims,s)
         select rank (a)
         rank (1)
@@ -546,7 +546,7 @@ contains
       integer(wi), intent(in) :: dims(2)
       integer id
       !#####################################################################
-      if (any(dims <= 0)) return
+    !   if (any(dims <= 0)) return; better allocate to zero than not allocate; error in supermuc
       call TLAB_ALLOCATE_LOG(lfile,dims,s)
       allocate (a(dims(1), dims(2)), stat=ierr)
       call TLAB_ALLOCATE_ERR(C_FILE_LOC,efile,s)
