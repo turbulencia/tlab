@@ -6,7 +6,6 @@ module Radiation
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLAB_ARRAYS, only: wrk2d, wrk3d
-    use TLAB_POINTERS_3D, only: p_wrk3d
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
     use Thermodynamics, only: imixture
     use OPR_ODES
@@ -171,7 +170,6 @@ contains
 
         ! -----------------------------------------------------------------------
         integer iband, nxy, nxz
-        real(wp), dimension(:, :), pointer :: p_bcs
         real(wp), pointer :: p_source(:) => null()
         real(wp), pointer :: p_b(:) => null()
         real(wp), pointer :: p_flux_down(:) => null()
@@ -193,7 +191,7 @@ contains
         ! -----------------------------------------------------------------------
         select case (infrared%type)
         case (TYPE_IR_GRAY_LIQUID)
-            wrk3d = kappal(1)*s(:, infrared%scalar(1))          ! absorption coefficient in array source to save memory
+            wrk3d(1:nx*ny*nz) = kappal(1)*s(:, infrared%scalar(1))          ! absorption coefficient in array source to save memory
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
@@ -218,14 +216,14 @@ contains
             else
                 ! tbd
             end if
-            wrk3d = sigma*wrk3d**4.0_wp                         ! emission function, Stefan-Boltzmann law
+            wrk3d(1:nx*ny*nz) = sigma*wrk3d(1:nx*ny*nz)**4.0_wp                         ! emission function, Stefan-Boltzmann law
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_b, nz)
 #else
             call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_b, nz)
 #endif
 
-            wrk3d = kappal(1)*s(:, infrared%scalar(1)) + kappav(1)*(s(:, 2) - s(:, infrared%scalar(1))) ! absorption coefficient
+            wrk3d(1:nx*ny*nz) = kappal(1)*s(:, infrared%scalar(1)) + kappav(1)*(s(:, 2) - s(:, infrared%scalar(1))) ! absorption coefficient
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
@@ -254,22 +252,20 @@ contains
             else
                 ! tbd
             end if
-            p_wrk3d(1:nx, 1:ny, 1:nz) => tmp_rad(1:nx*ny*nz, 1) ! save T at top boundary
-            p_bcs(1:nx, 1:nz) => t_ht(1:nx*nz)
-            p_bcs(1:nx, 1:nz) = p_wrk3d(1:nx, ny, 1:nz)
 #ifdef USE_ESSL
-            call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad, nz)
+            call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 1), nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad, nz)
+            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 1), nz)
 #endif
+            t_ht(1:nxz) = tmp_rad(nxz*(ny - 1) + 1:nxz*ny, 1)           ! save T at the top boundary
 
-            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))  ! vapor
+            tmp_rad(:, 2) = s(:, 2) - s(:, infrared%scalar(1))          ! calcualte vapor field
 
             ! last band
             iband = nbands
             p_b = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
 
-            wrk3d = kappal(iband)*s(:, infrared%scalar(1))
+            wrk3d(1:nx*ny*nz) = kappal(iband)*s(:, infrared%scalar(1))
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
@@ -279,7 +275,7 @@ contains
             call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
 #endif
 
-            bcs_ht = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))
+            bcs_ht(1:nxz) = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))
 
             if (present(flux)) then
                 call IR_RTE1_Global(infrared, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
@@ -295,7 +291,7 @@ contains
             do iband = 1, nbands - 1
                 tmp_rad(:, 5) = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
 
-                wrk3d = kappal(iband)*s(:, infrared%scalar(1)) + kappav(iband)*tmp_rad(:, 2)
+                wrk3d(1:nx*ny*nz) = kappal(iband)*s(:, infrared%scalar(1)) + kappav(iband)*tmp_rad(:, 2)
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
                 end if
@@ -305,7 +301,7 @@ contains
                 call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 3), nz)
 #endif
 
-                bcs_ht = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))  ! downward flux at domain top
+                bcs_ht(1:nxz) = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))  ! downward flux at domain top
 
                 if (present(flux)) then             ! solve radiative transfer equation along y
                     call IR_RTE1_Global(infrared, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
@@ -485,8 +481,8 @@ contains
                 p_wrk2d_2 = b(:, j)/p_tau(:, j)
                 p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
 
-                bcs_hb = p_tau(:, j)*(bcs_hb + p_wrk2d_1)
-                a_source(:, j) = a_source(:, j)*(bcs_hb + flux_down(:, j)) - 2.0_wp*b(:, j)
+                bcs_hb(1:nlines) = p_tau(:, j)*(bcs_hb(1:nlines) + p_wrk2d_1(1:nlines))
+                a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
             end do
 
         end if
@@ -632,8 +628,8 @@ contains
         a_source = a_source*dummy
 
         ! emission function
-        bcs_hb = b(:, 1)                ! save for calculation of surface flux
-        b = b*a_source                  ! absorption coefficient times emission function
+        bcs_hb(1:nlines) = b(1:nlines, 1)   ! save for calculation of surface flux
+        b = b*a_source                      ! absorption coefficient times emission function
 
         ! ###################################################################
         ! downward flux; positive going down
@@ -661,7 +657,7 @@ contains
 
         ! ###################################################################
         ! bottom boundary condition; calculate upward flux at the bottom
-        bcs_hb = epsilon*bcs_hb + (1.0_wp - epsilon)*flux_down(:, 1)
+        bcs_hb(1:nlines) = epsilon*bcs_hb(1:nlines) + (1.0_wp - epsilon)*flux_down(:, 1)
 
         ! ###################################################################
         ! upward flux and net terms
