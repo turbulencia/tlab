@@ -481,7 +481,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Source terms
     ! #######################################################################
     if (infrared%active(is)) then       ! Radiation in tmp1 and dsdx
-        call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
+        call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
         end if
@@ -522,7 +522,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
             if (infrared%active(is)) then ! radiation source; needs dsdy
                 ! only valid for IR_Bulk1D_Liquid, where tmp2, tmp3, dsdy are not used
-                call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
+                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 dsdx = dsdx*dsdz*dummy

@@ -139,7 +139,7 @@ contains
             ! Radiation
             ! -----------------------------------------------------------------------
             if (infrared%active(is)) then
-                call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
+                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
                 
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
