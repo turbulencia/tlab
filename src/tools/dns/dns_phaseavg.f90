@@ -10,11 +10,12 @@ module DNS_PHASEAVG
   USE TLAB_PROCS
   USE TLAB_TYPES
   use TLAB_CONSTANTS, ONLY : wp, wi
-  use TLAB_VARS,      ONLY : imax, jmax, kmax
-  use TLAB_VARS,      ONLY : rtime
+  use TLAB_VARS,      ONLY : imax, jmax, kmax, g
+  use TLAB_VARS,      ONLY : rtime, itime
   use TLAB_VARS,      ONLY : visc, froude, rossby, prandtl, mach, gama0
   use TLAB_VARS,      ONLY : imode_eqns
   use TLAB_CONSTANTS, ONLY : sizeofint, sizeofreal
+  use DNS_LOCAL,      ONLY : nitera_first, nitera_save
 
   implicit none
 
@@ -83,9 +84,59 @@ CONTAINS
 
     return
   end subroutine DNS_AVG_ALLOCATE
+    
+  subroutine DNS_PHASEAVG_INITILIZE()
+    use IO_FIELDS
+#ifdef USE_MPI
+    use MPI
+    use TLAB_MPI_VARS, ONLY : ims_comm_x, ims_pro_k, ims_pro
+#endif
+    use TLAB_VARS, ONLY : rtime
+    use TLAB_VARS, ONLY : visc, froude, rossby, prandtl, mach, gama0
+    use TLAB_VARS, ONLY : imode_eqns
+
+    implicit none
+
+    integer(wi)                                     :: isize, iheader, header_offset, id
+    integer(wi),       parameter                    :: isize_max = 20
+    real(wp)                                        :: params(isize_max)
+    isize = 0
+    isize = isize + 1; params(isize) = rtime
+    isize = isize + 1; params(isize) = visc ! inverse of reynolds
+    if (iheader == IO_SCAL) then
+        isize = isize + 1 + 1                     ! prepare space for schmidt and damkohler
+
+    else if (iheader == IO_FLOW) then
+        isize = isize + 1; params(isize) = froude
+        isize = isize + 1; params(isize) = rossby
+        if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+            isize = isize + 1; params(isize) = gama0
+            isize = isize + 1; params(isize) = prandtl
+            isize = isize + 1; params(isize) = mach
+        end if
+    end if
+
+    ! INITIALIZATION OF MPI TYPES SHOULD ONLY BE CARRIED OUT ONCE *AND* DURING INITIALIZATION
+    header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
+
+    id = IO_AVERAGE_PLANE
+    io_aux(id)%offset = header_offset
+    io_aux(id)%precision = IO_TYPE_DOUBLE
+#ifdef USE_MPI
+    if (ims_pro_k == 0) THEN 
+        io_aux(id)%active = .true.
+        io_aux(id)%communicator = ims_comm_x
+        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax, MPI_REAL8)
+    else
+        io_aux(id)%active = .false.  
+        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax, MPI_REAL8)
+
+    end if
+#endif
+  end subroutine DNS_PHASEAVG_INITILIZE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine DNS_SPACE_AVG(field, avg, localsum, itr, itr_start, res, g)
+  subroutine DNS_SPACE_AVG(field, avg, localsum)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_VARS, ONLY : imax, jmax, kmax
 #ifdef USE_MPI 
@@ -94,37 +145,39 @@ CONTAINS
 #endif
 
     implicit none
-    real(wp), dimension(imax, jmax, kmax),   intent(in)           :: field
-    real(wp), dimension(imax, jmax, res+1),  intent(inout)        :: avg
-    real(wp), dimension(imax, jmax),         intent(inout)        :: localsum
-    type(grid_dt),                           intent(in)           :: g
-    integer(wi),                             intent(in)           :: itr, itr_start, res
-
-    integer(wi)                                                   :: plane_id, k
+    real(wp), dimension(imax, jmax, kmax),           intent(in)           :: field
+    real(wp), dimension(imax, jmax, nitera_save+1),  intent(inout)        :: avg
+    real(wp), dimension(imax, jmax)                                       :: localsum
+    integer(wi)                                                           :: plane_id, k
       ! ================================================================== !
     localsum = 0.0_wp
-    if (res==1) then
-      plane_id = 1
-    else
-      plane_id = mod(itr - itr_start-1, res) + 1
-    end if
-
+    plane_id = mod(itime - nitera_first-1, nitera_save) + 1
     do k = 1, kmax
-        localsum = localsum + field(:,:,k)/g%size
+        localsum = localsum + field(:,:,k)/g(3)%size
     end do
 
 #ifdef USE_MPI
-    call MPI_Reduce(localsum, avg(:,:,plane_id), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
-    call MPI_Reduce(localsum/res, avg(:,:,res+1), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
+    if (ims_pro_k == 0) then
+      call MPI_Reduce(localsum, avg(:,:,plane_id), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
+
+    else
+      ! using 2nd plane of local sum (usually wrk2d) as dummy array on processes 
+      call MPI_Reduce(localsum,MPI_IN_PLACE, nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
+    end if
 #else
     avg(:,:,plane_id) = localsum
-    avg(:,:,res+1) = localsum/res
 #endif
-    return
+#ifdef USE_MPI
+  if ( ims_pro_k == 0) &
+    avg(:,:,nitera_save+ 1) = avg(:,:,nitera_save+1) + avg(:,:,plane_id)/nitera_save
+#else
+  avg(:,:,nitera_save+ 1) = avg(:,:,nitera_save+1) + avg(:,:,plane_id)/nitera_save
+#endif
+  return
   end subroutine DNS_SPACE_AVG
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine DNS_WRITE_AVG(avg, iheader, nfield, itr, itr_restart, name, index)
+  subroutine DNS_WRITE_AVG(avg, iheader, nfield, name, index)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use IO_FIELDS
     use TLAB_VARS, ONLY : imax, jmax, kmax
@@ -138,9 +191,8 @@ CONTAINS
     use TLAB_MPI_VARS,  only : ims_comm_z, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_x, ims_pro_k
 #endif
     implicit none
-    real(wp),     dimension(imax,jmax,itr_restart+1), intent(in)      :: avg
-    integer(wi),                                      intent(in)      :: nfield, itr, itr_restart
-    integer(wi), OPTIONAL,                            intent(in)      :: index
+    real(wp),     dimension(imax,jmax,nitera_save+1), intent(in)      :: avg
+    integer(wi),                                      intent(in)      :: nfield
     character(len=*),                                 intent(in)      :: name
 
     character(len=128)                              :: fname
@@ -148,7 +200,7 @@ CONTAINS
     integer(wi)                                     :: sizes(5)
     integer(wi),       parameter                    :: isize_max = 20
     real(wp)                                        :: params(isize_max)
-    integer(wi)                                     :: isize, iheader, header_offset, id
+    integer(wi)                                     :: isize, iheader, header_offset, id, index
     character(len=10)                               :: start, end, ind
   
 #ifdef USE_MPI
@@ -157,8 +209,7 @@ CONTAINS
     nx_total = imax
 #endif
     ny_total = jmax
-    nz_total = itr_restart
-
+    nz_total = nitera_save
 
     isize = 0
     isize = isize + 1; params(isize) = rtime
@@ -178,55 +229,40 @@ CONTAINS
     ! INITIALIZATION OF MPI TYPES SHOULD ONLY BE CARRIED OUT ONCE *AND* DURING INITIALIZATION
     header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
 
+    id = IO_AVERAGE_PLANE
+    io_aux(id)%offset = header_offset
+    io_aux(id)%precision = IO_TYPE_DOUBLE
+
     ! Define the sizes array
-    sizes(1) = imax * jmax * itr_restart ! total size of the 3D field
+    sizes(1) = imax * jmax * nitera_save ! total size of the 3D field
     sizes(2) = 1                         ! lower bound (starting index in the data array)
     sizes(3) = sizes(1)                  ! upper bound (ending index in the data array)
     sizes(4) = 1                         ! stride (1 means every element)
     sizes(5) = 1                         ! number of variables
     
-    write(start, '(I10)') (itr - itr_restart)
-    write(end,   '(I10)') itr
-    if (present(index)) then
-      write(ind,   '(I10)') index
-    end if 
-    id = IO_SUBARRAY_PLANES_XOY
-    io_aux(id)%offset = header_offset
-    io_aux(id)%precision = IO_TYPE_DOUBLE
-#ifdef USE_MPI
-    if (ims_pro_k == 0) THEN 
-        io_aux(id)%active = .true.
-        io_aux(id)%communicator = ims_comm_x
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, jmax, itr_restart, MPI_REAL8)
-    else
-        io_aux(id)%active = .false.  
-    end if
+    write(start, '(I10)') (itime - nitera_save)
+    write(end,   '(I10)') itime
 
-#endif
-
-    if (nfield == 3) then
+    if (index == 1) then
       varname(1) = ''
-      if (present(index)) then
-        fname =  trim(adjustl(name)) // trim(adjustl(start)) // '_' // trim(adjustl(end)) //'.' // trim(adjustl(ind))
-      else
-        fname =  trim(adjustl(name)) // trim(adjustl(start)) // '_' // trim(adjustl(end))
-      end if
+      fname =  trim(adjustl(name)) // trim(adjustl(start)) // '_' // trim(adjustl(end))
+
 #ifdef USE_MPI
       if (ims_pro == 0) then
 #endif
-        call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itr, params)
+        call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itime, params)
 #ifdef USE_MPI
       end if
 #endif
 
       call IO_WRITE_SUBARRAY(io_aux(id), fname, varname, avg, sizes)
-    else if (nfield == 1) then
+    else if ((index == 4) .or. (index ==  2)) then
       varname(1) = ''
-      fname =  trim(adjustl(name)) // trim(adjustl(start)) // '_' // trim(adjustl(end)) //'.' // trim(adjustl(ind))
+      fname =  trim(adjustl(name)) // trim(adjustl(start)) // '_' // trim(adjustl(end))
 #ifdef USE_MPI
       if (ims_pro == 0) then
 #endif
-        call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itr, params)
+        call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itime, params)
 #ifdef USE_MPI
       end if
 #endif          
@@ -235,7 +271,9 @@ CONTAINS
     return
   end subroutine DNS_WRITE_AVG
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine DNS_RESET_VARIABLE()
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_CONSTANTS, only : wp
     avg_u = 0.0_wp
     avg_v = 0.0_wp

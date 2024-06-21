@@ -72,8 +72,8 @@ module IO_FIELDS
     integer, parameter, public :: IO_SUBARRAY_ENVELOPES   = 12
     integer, parameter, public :: IO_SUBARRAY_AUX         = 13
     integer, parameter, public :: IO_SUBARRAY_SIZE        = 13
-    integer, parameter, public :: IO_SUBARRAY_AVERAGES    = 14
-    type(subarray_dt), public :: io_aux(IO_SUBARRAY_SIZE)
+    integer, parameter, public :: IO_AVERAGE_PLANE        = 14
+    type(subarray_dt), public :: io_aux(IO_AVERAGE_PLANE)
 
     integer(wi) nx_total, ny_total, nz_total
     character(len=64) str, name
@@ -127,24 +127,6 @@ contains
         call MPI_Type_commit(subarray, ims_err)
 
     end function IO_CREATE_SUBARRAY_XOZ
-
-    function IO_CREATE_SUBARRAY_XOZ2(nx, ny, nz, mpi_type) result(subarray)
-        integer(wi), intent(in) :: nx, ny, nz
-        integer, intent(in) :: mpi_type
-
-        integer :: subarray
-        integer, parameter :: ndims = 3
-        integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
-
-        sizes = [nx*ims_npro_i, ny, nz]
-        locsize = [nx, ny, nz]
-        offset = [nx*ims_pro_i, 0, nz]
-
-        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                      MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
-        call MPI_Type_commit(subarray, ims_err)
-
-    end function IO_CREATE_SUBARRAY_XOZ2
 
     function IO_CREATE_SUBARRAY_ZOY(ny, nz, mpi_type) result(subarray)
         integer(wi), intent(in) :: ny, nz
