@@ -35,7 +35,7 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! ###################################################################
     bakfile = trim(adjustl(inifile))//'.bak'
-
+    print *, 'Ran DNS_local'
     call TLAB_WRITE_ASCII(lfile, 'Reading local input data.')
 
 ! ###################################################################
@@ -695,15 +695,10 @@ subroutine DNS_READ_LOCAL(inifile)
     ! -------------------------------------------------------------------
     ! Array sizes
     ! -------------------------------------------------------------------
-    if (pdecomposition%name == 'resolved') then; inb_txc = 10
-    else if (pdecomposition%name == 'advdiff') then; inb_txc = 10
-    else if (pdecomposition%name == 'advection') then; inb_txc = 10
-    else if (pdecomposition%name == 'diffusion') then; inb_txc = 10
-    else if (pdecomposition%name == 'coriolis') then; inb_txc = 10
-    else if (pdecomposition%name == 'buoyancy') then; inb_txc = 10
-    else if (pdecomposition%name == 'total') then; inb_txc = 9
-    else
-        inb_txc = 9
+    inb_txc = 9
+    if (pdecomposition%name == 'total') then; inb_txc = 9
+    else if (ANY(pdecomposition%name == &
+    ['resolved', 'advdiffu', 'advction', 'difusion', 'coriolis', 'buoyancy'])) then; inb_txc = 10
     end if
 
     if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics
