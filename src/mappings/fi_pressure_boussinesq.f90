@@ -91,7 +91,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
 
-    if (pdecomposition%name == 'advdiff' .OR. pdecomposition%name == 'total' .OR. pdecomposition%name == 'advection') then
+    if (pdecomposition%name == 'advdiffu' .OR. pdecomposition%name == 'total' .OR. pdecomposition%name == 'advction') then
         !  Advection and diffusion terms
         call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
         tmp3 = tmp3 + p
@@ -116,7 +116,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    if (pdecomposition%name == 'advection' .OR. pdecomposition%name == 'diffusion') then
+    if (pdecomposition%name == 'advction' .OR. pdecomposition%name == 'difusion') then
         tmp9 = 0.0_wp
         ! Sepereating Diffusion
         ! NSE X-Comp
@@ -145,12 +145,12 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    if (pdecomposition%name == 'advection') then
+    if (pdecomposition%name == 'advction') then
         tmp3 = tmp3 - tmp6
         tmp4 = tmp4 - tmp7
         tmp5 = tmp5 - tmp8
 
-    else if (pdecomposition%name == 'diffusion') then
+    else if (pdecomposition%name == 'difusion') then
         tmp3 = tmp6
         tmp4 = tmp7
         tmp5 = tmp8
