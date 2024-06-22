@@ -500,7 +500,7 @@ program VISUALS
                     end if
 
                 else if (opt_vec(iv) == 8) then ! pressure
-                    print *, 'Before pressure boussinessq'
+
                     if (pdecomposition%name == 'resolved') then
                         plot_file = 'PressureCoriolis'//time_str(1:MaskSize)
                         pdecomposition%name = 'coriolis'
@@ -513,13 +513,12 @@ program VISUALS
                         write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
-
+                        
                         plot_file = 'PressureDiffusion'//time_str(1:MaskSize)
                         pdecomposition%name = 'difusion'
                         write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
-
                         plot_file = 'PressureAdvection'//time_str(1:MaskSize)
                         pdecomposition%name = 'advction'
                         write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
@@ -539,7 +538,7 @@ program VISUALS
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     end if
-                    print *, 'Completed writing pressure decomposition'
+
                     plot_file = 'Pressure'//time_str(1:MaskSize)
                     call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)

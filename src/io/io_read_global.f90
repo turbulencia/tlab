@@ -940,7 +940,7 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Pressure decomposition
 ! ###################################################################
     ! read decomposition parameters
-    ! ['resolved', 'advdiffu', 'advction', 'difusion', 'coriolis', 'buoyancy']
+    
     call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
     if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomposition%name = 'total'
     else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomposition%name = 'total'

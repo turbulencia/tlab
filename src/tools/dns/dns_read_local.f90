@@ -695,6 +695,7 @@ subroutine DNS_READ_LOCAL(inifile)
     ! -------------------------------------------------------------------
     ! Array sizes
     ! -------------------------------------------------------------------
+
     inb_txc = 9
     if (pdecomposition%name == 'total') then; inb_txc = 9
     else if (ANY(pdecomposition%name == &
