@@ -97,6 +97,23 @@ program VISUALS
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
+    ! -------------------------------------------------------------------
+    ! Read pressure decomposition
+    ! -------------------------------------------------------------------
+    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomposition%name = 'total'
+    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomposition%name = 'total'
+    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomposition%name = 'resolved'
+    ! else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomposition%name = 'advdiffu' 
+    ! else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomposition%name = 'advction'
+    ! else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomposition%name = 'difusion'
+    ! else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomposition%name = 'coriolis'
+    ! else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomposition%name = 'buoyancy'
+    ! else if ( TRIM(ADJUSTL(sRes)) == 'micrPhys' ) then; pdecomposition%name = 'micrPhys'
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
+        call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
+    end if
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)

@@ -697,10 +697,6 @@ subroutine DNS_READ_LOCAL(inifile)
     ! -------------------------------------------------------------------
 
     inb_txc = 9
-    if (pdecomposition%name == 'total') then; inb_txc = 9
-    else if (ANY(pdecomposition%name == &
-    ['resolved', 'advdiffu', 'advction', 'difusion', 'coriolis', 'buoyancy', 'micrPhys'])) then; inb_txc = 10
-    end if
 
     if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics
         inb_txc = max(inb_txc, 7)
