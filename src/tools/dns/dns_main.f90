@@ -212,7 +212,6 @@ program DNS
         call DNS_OBS() 
     end if
     call DNS_PHASEAVG_INITILIZE()
-    print *, 'Starting DO simulation'
     ! ###################################################################
     ! Do simulation: Integrate equations
     ! ###################################################################
@@ -272,7 +271,6 @@ program DNS
         call DNS_SPACE_AVG(q(:,3)*q(:,3), avg_ww(:,:,:), wrk2d)
         call DNS_SPACE_AVG(s, avg_p(:,:,:), wrk2d)
         if (mod(itime - nitera_first, nitera_save) == 0) then
-            print *, 'Before calling dns_write_avg'
             call DNS_WRITE_AVG(avg_u, IO_FLOW, 3, avgu_name, 1)
             call DNS_WRITE_AVG(avg_v, IO_FLOW, 3, avgv_name, 1)
             call DNS_WRITE_AVG(avg_w, IO_FLOW, 3, avgw_name, 1)
