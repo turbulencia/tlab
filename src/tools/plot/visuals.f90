@@ -502,6 +502,12 @@ program VISUALS
                 else if (opt_vec(iv) == 8) then ! pressure
 
                     if (pdecomposition%name == 'resolved') then
+                        plot_file = 'PressureMicrPhys'//time_str(1:MaskSize)
+                        pdecomposition%name = 'micrPhys'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+
                         plot_file = 'PressureCoriolis'//time_str(1:MaskSize)
                         pdecomposition%name = 'coriolis'
                         write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name

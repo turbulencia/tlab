@@ -950,6 +950,7 @@ subroutine IO_READ_GLOBAL(inifile)
     else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomposition%name = 'difusion'
     else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomposition%name = 'coriolis'
     else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomposition%name = 'buoyancy'
+    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomposition%name = 'micrPhys'
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
