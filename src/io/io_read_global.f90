@@ -936,6 +936,12 @@ subroutine IO_READ_GLOBAL(inifile)
         end do
     end if
 
+! ###################################################################
+! Pressure decomposition
+! ###################################################################
+    ! set pressure decomposition to total.
+    pdecomposition%name = 'total'
+
     return
 end subroutine IO_READ_GLOBAL
 

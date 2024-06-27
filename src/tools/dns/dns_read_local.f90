@@ -35,7 +35,7 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! ###################################################################
     bakfile = trim(adjustl(inifile))//'.bak'
-
+    print *, 'Ran DNS_local'
     call TLAB_WRITE_ASCII(lfile, 'Reading local input data.')
 
 ! ###################################################################
@@ -695,6 +695,7 @@ subroutine DNS_READ_LOCAL(inifile)
     ! -------------------------------------------------------------------
     ! Array sizes
     ! -------------------------------------------------------------------
+
     inb_txc = 9
 
     if (imode_sim == DNS_MODE_SPATIAL) then ! because of the statistics
