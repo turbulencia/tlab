@@ -97,7 +97,7 @@ contains
             allocate (gate(isize_field))
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 4))
 
-            ! calculate vorticity gate based on 1% threshold
+            ! calculate vorticity gate based on 0.1% threshold
             call MINMAX(imax, jmax, kmax, txc(1, 1), amin(1), amax(1))
             amin(1) = 1.0e-3_wp*1.0e-3_wp*amax(1)
             do ij = 1, isize_field

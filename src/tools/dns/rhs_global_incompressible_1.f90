@@ -293,7 +293,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     ! Saving pressure for towers to tmp array
     if (use_tower .and. rkm_substep == rkm_endstep) then
-        call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
+        if (stagger_on) then ! Stagger pressure field back on velocity grid (only for towers)
+            call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
+            call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4)
+            call DNS_TOWER_ACCUMULATE(tmp4, 4, wrk1d)
+        else
+            call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
+        end if
     end if
 
     if (stagger_on) then
