@@ -3,7 +3,7 @@
 
 module DNS_LOCAL
     use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
-    USE TLAB_CONSTANTS, only: MAX_PATH_LENGTH
+    use TLAB_CONSTANTS, only: MAX_PATH_LENGTH
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
 #endif
@@ -25,11 +25,11 @@ module DNS_LOCAL
     integer :: nitera_log           ! Iteration step for data logger with simulation information
     character(len=*), parameter :: ofile_base = 'dns.out'    ! data logger filename
     character(len=*), parameter :: vfile_base = 'dns.obs'    ! insitu obs. logger filename
-    character(len=MAX_PATH_LENGTH) :: ofile,vfile
+    character(len=MAX_PATH_LENGTH) :: ofile, vfile
     character(len=MAX_PATH_LENGTH) :: logger_path
     real(wp) :: logs_data(20)       ! information (time, time step, cfls, dilatation...)
     real(wp) :: obs_data(20)        ! information (custom variables / insitu measurements ...)
-    integer  :: dns_obs_log
+    integer :: dns_obs_log
 
     integer :: imode_rhs            ! Type of implementation of the RHS of evolution equations
     logical :: remove_divergence    ! Remove residual divergence every time step
@@ -231,20 +231,17 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_OBS_CONTROL()
-
         use TLAB_VARS, only: imax, jmax, kmax, g, area
         use TLAB_VARS, only: scal_on, inb_scal
         use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLAB_ARRAYS
         use AVGS
-    
-        implicit none
+        use Integration, only: Int_Simpson
 
         integer(wi) :: ip, is
-        real(wp)    :: SIMPSON_NU
 
         ! -------------------------------------------------------------------
-        
+
 #define ubulk    obs_data(2)
 #define wbulk    obs_data(3)
 #define uy1      obs_data(4)
@@ -252,35 +249,35 @@ contains
 #define alpha_1  obs_data(6)
 #define alpha_ny obs_data(7)
 #define int_ent  obs_data(8)
-        
+
         ip = 8
-        
+
         select case (dns_obs_log)
-            
+
         case (OBS_TYPE_EKMAN)
             ! ubulk, wbulk
-            call AVG_IK_V(imax, jmax, kmax, jmax, q(1,1), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
-            call AVG_IK_V(imax, jmax, kmax, jmax, q(1,3), g(1)%jac, g(3)%jac, wrk1d(:,3), wrk1d(:,4), area)
-            ubulk = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,1), g(2)%nodes)
-            wbulk = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,3), g(2)%nodes)
-           
+            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 1), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 3), g(1)%jac, g(3)%jac, wrk1d(:, 3), wrk1d(:, 4), area)
+            ubulk = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax))
+            wbulk = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 3), g(2)%nodes(1:jmax))
+
             ! dudy(1), dwdy(1) approximation
-            uy1 = wrk1d(2,1) / g(2)%nodes(2)
-            wy1 = wrk1d(2,3) / g(2)%nodes(2)
+            uy1 = wrk1d(2, 1)/g(2)%nodes(2)
+            wy1 = wrk1d(2, 3)/g(2)%nodes(2)
 
             ! turning angles (in degrees)
-            alpha_1  = ATAN2D(wy1, uy1)
-            alpha_ny = ATAN2D(wrk1d(g(2)%size,3), wrk1d(g(2)%size,1))
+            alpha_1 = ATAN2D(wy1, uy1)
+            alpha_ny = ATAN2D(wrk1d(g(2)%size, 3), wrk1d(g(2)%size, 1))
 
             ! integrated entstrophy
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
-            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1,1), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
-            int_ent = (1.0_wp / g(2)%nodes(g(2)%size)) * SIMPSON_NU(jmax, wrk1d(:,1), g(2)%nodes)
+            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1, 1), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+            int_ent = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax))
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call AVG_IK_V(imax, jmax, kmax, jmax, s(1,is), g(1)%jac, g(3)%jac, wrk1d(:,1), wrk1d(:,2), area)
-                    obs_data(ip+is) = (wrk1d(2,1) - wrk1d(1,1)) / g(2)%nodes(2)
+                    call AVG_IK_V(imax, jmax, kmax, jmax, s(1, is), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+                    obs_data(ip + is) = (wrk1d(2, 1) - wrk1d(1, 1))/g(2)%nodes(2)
                 end do
             end if
 

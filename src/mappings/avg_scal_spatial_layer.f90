@@ -21,6 +21,7 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
     use TLAB_VARS
     use TLAB_PROCS
     use TLAB_ARRAYS, only: wrk1d
+    use Integration, only: Int_Simpson
     implicit none
 
     integer(wi) is, itxc, jmin_loc, jmax_loc
@@ -180,7 +181,6 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
 
     integer(wi) i, j, k, n
     real(wp) pts, c13, eps
-    real(wp) SIMPSON_NU
     real(wp) S2, DS, aux1, U2, DU
     real(wp) y_center, r05
     real(wp) delta_s, delta_05
@@ -524,12 +524,12 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fU(n, j)*(fS(n, j) - S2)
         end do
-        IntExcScaS(n) = SIMPSON_NU(jmax_loc - jmin_loc + 1, wrk1d(jmin_loc, 1), g(2)%nodes(jmin_loc))
+        IntExcScaS(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
 ! Reynolds stress part
         do j = jmin_loc, jmax_loc
             wrk1d(j, 1) = rR(n, j)*fRus(n, j)
         end do
-        IntExcScaRsu(n) = SIMPSON_NU(jmax_loc - jmin_loc + 1, wrk1d(jmin_loc, 1), g(2)%nodes(jmin_loc))
+        IntExcScaRsu(n) = Int_Simpson(wrk1d(jmin_loc:jmax_loc, 1), g(2)%nodes(jmin_loc:jmax_loc))
     end do
 
 ! -------------------------------------------------------------------

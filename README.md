@@ -47,6 +47,10 @@ To clean the examples tree, run `make clean`.
 
 Use valgrind to check for memory leaks.
 
+## Run
+
+See directory [`examples`](./examples/README.md).
+
 ## Directory organization
 
 * [`config`](./config): configuration files for different architectures and compilers

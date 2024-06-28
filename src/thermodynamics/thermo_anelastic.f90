@@ -952,6 +952,7 @@ contains
 !########################################################################
     subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
         use TLAB_TYPES, only: grid_dt
+        use Integration, only: Int_Simpson
 
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -962,7 +963,6 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) k
-        real(wp) SIMPSON_NU
 
 ! ###################################################################
         call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
@@ -972,7 +972,7 @@ contains
                 do j = 1, ny
                     wrk1d(j) = wrk3d(i, j, k)
                 end do
-                lwp(i, k) = SIMPSON_NU(ny, wrk1d, g%nodes)
+                lwp(i, k) = Int_Simpson(wrk1d(1:ny), g%nodes(1:ny))
             end do
         end do
 

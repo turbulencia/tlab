@@ -1,0 +1,10 @@
+from matplotlib import rc
+rc('text',  usetex=True)
+rc('font',  family='serif', size=12)
+# rc('axes',  titlesize='medium')
+rc('legend',fontsize='small')
+rc('axes',  grid=True)
+rc('grid',  color='0.9')
+rc('lines', solid_capstyle='round')
+# rc('figure',     dpi=100)
+rc('savefig',    dpi=100)

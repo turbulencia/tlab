@@ -33,10 +33,10 @@ module PLANES
 
     type(planes_dt) :: iplanes, jplanes, kplanes
     integer, parameter :: PLANES_NONE = 0
-    integer, parameter :: PLANES_FIX  = 1
-    integer, parameter :: PLANES_CBL  = 2
-    integer, parameter :: PLANES_LOG  = 3 ! flow fields: log of enstrophy
-                                          ! if scal_on: +log of magnitude of scalar gradient
+    integer, parameter :: PLANES_FIX = 1
+    integer, parameter :: PLANES_CBL = 2
+    integer, parameter :: PLANES_LOG = 3 ! flow fields: log of enstrophy
+    ! if scal_on: +log of magnitude of scalar gradient
 
     character*32 varname(1)
     integer(wi) idummy
@@ -62,7 +62,7 @@ contains
         var%n = 0
 
         call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
-        if (trim(adjustl(sRes)) == 'none')    then; var%type = PLANES_NONE
+        if (trim(adjustl(sRes)) == 'none') then; var%type = PLANES_NONE
         elseif (trim(adjustl(sRes)) == 'fix') then; var%type = PLANES_FIX
         elseif (trim(adjustl(sRes)) == 'cbl') then; var%type = PLANES_CBL
         elseif (trim(adjustl(sRes)) == 'log') then; var%type = PLANES_LOG
@@ -99,12 +99,12 @@ contains
 
         ! ###################################################################
         if (scal_on) then; inb_scal_dummy = inb_scal_array
-        else; inb_scal_dummy = 0 ; end if
+        else; inb_scal_dummy = 0; end if
 
         iplanes%size = (inb_flow_array + inb_scal_dummy + 1)*iplanes%n       ! Flow and scal variables, pressure
         jplanes%size = (inb_flow_array + inb_scal_dummy + 1)*jplanes%n
         kplanes%size = (inb_flow_array + inb_scal_dummy + 1)*kplanes%n
-        
+
         if (imixture == MIXT_TYPE_AIRWATER) jplanes%size = jplanes%size + 2  ! Add LWP and intgral of TWP
 
         if (iplanes%type == PLANES_LOG) then; iplanes%size = iplanes%size + iplanes%n
@@ -139,23 +139,23 @@ contains
         end if
 
         ! Check [ijk]planes%nodes
-        if (iplanes%type /= PLANES_NONE) then 
+        if (iplanes%type /= PLANES_NONE) then
             if (any(iplanes%nodes(:iplanes%n) < 1) .or. any(iplanes%nodes(:iplanes%n) > g(1)%size)) then
                 call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Iplane nodes deceed/exeed grid in x-direction.')
                 call TLAB_STOP(DNS_ERROR_OPTION)
-            end if 
+            end if
         end if
-        if (jplanes%type /= PLANES_NONE) then 
+        if (jplanes%type /= PLANES_NONE) then
             if (any(jplanes%nodes(:jplanes%n) < 1) .or. any(jplanes%nodes(:jplanes%n) > g(2)%size)) then
                 call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Jplane nodes deceed/exeed grid in y-direction.')
                 call TLAB_STOP(DNS_ERROR_OPTION)
-            end if 
+            end if
         end if
-        if (kplanes%type /= PLANES_NONE) then 
+        if (kplanes%type /= PLANES_NONE) then
             if (any(kplanes%nodes(:kplanes%n) < 1) .or. any(kplanes%nodes(:kplanes%n) > g(3)%size)) then
                 call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Kplane nodes deceed/exeed grid in z-direction.')
                 call TLAB_STOP(DNS_ERROR_OPTION)
-            end if 
+            end if
         end if
 
         ! Pointers
@@ -215,6 +215,7 @@ contains
         use TLAB_POINTERS_3D, only: p_wrk2d
         use TLAB_VARS, only: sbg
         use AVGS
+        use Integration, only: Int_Simpson
 
         ! -------------------------------------------------------------------
         integer(wi) offset, j, k, iv, nvars
@@ -222,10 +223,9 @@ contains
         character*250 line1
         type(pointers3d_dt) :: vars(16)
         real(wp) yrescaled(MAX_SAVEPLANES), henc
-        real(wp) SIMPSON_NU
 
         ! ###################################################################
-        ! general order of variabeles 
+        ! general order of variabeles
         ! [u,v,w,{scal1,...},p,{log(entstrophy),log(grad(scal1)),...)}]
 
         fmt = '('//fmt_r//')'
@@ -245,21 +245,21 @@ contains
         nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 1)
 
         ! -------------------------------------------------------------------
-        if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then   
+        if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then
             call FI_VORTICITY(imax, jmax, kmax, q(:, 1), q(:, 2), q(:, 3), txc(:, 3), txc(:, 4), txc(:, 5))
             txc(1:imax*jmax*kmax, 3) = log10(txc(1:imax*jmax*kmax, 3) + small_wp)
-            if (imode_ibm == 1) call IBM_BCS_FIELD( txc(1:imax*jmax*kmax, 3))
+            if (imode_ibm == 1) call IBM_BCS_FIELD(txc(1:imax*jmax*kmax, 3))
             nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
             if (scal_on) then
                 do iv = 1, inb_scal_array
-                    call FI_GRADIENT(imax, jmax, kmax, s(:, iv), txc(:, iv+3), txc(:, iv+4))
-                    txc(1:imax*jmax*kmax, iv+3) = log10(txc(1:imax*jmax*kmax, iv+3) + small_wp)
-                    if (imode_ibm == 1) call IBM_BCS_FIELD( txc(1:imax*jmax*kmax, iv+3))
-                    nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, iv+3)
+                    call FI_GRADIENT(imax, jmax, kmax, s(:, iv), txc(:, iv + 3), txc(:, iv + 4))
+                    txc(1:imax*jmax*kmax, iv + 3) = log10(txc(1:imax*jmax*kmax, iv + 3) + small_wp)
+                    if (imode_ibm == 1) call IBM_BCS_FIELD(txc(1:imax*jmax*kmax, iv + 3))
+                    nvars = nvars + 1; vars(nvars)%field(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, iv + 3)
                 end do
             end if
         end if
-        
+
         ! -------------------------------------------------------------------
         if (jplanes%type == PLANES_CBL) then    ! Calculate CBL encroachment height to reevaluate planes
             if (sbg(1)%uslope /= 0.0_wp) then
@@ -267,7 +267,7 @@ contains
                     wrk1d(j, 1) = AVG1V2D(imax, jmax, kmax, j, 1, s(:, 1))
                 end do
                 wrk1d(1:jmax, 1) = 2.0_wp*(wrk1d(1:jmax, 1)/sbg(1)%uslope - g(2)%nodes(1:jmax))
-                henc = sqrt(SIMPSON_NU(jmax, wrk1d, g(2)%nodes))
+                henc = sqrt(Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax)))
             else
                 henc = 1.0_wp
             end if

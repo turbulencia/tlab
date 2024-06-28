@@ -97,7 +97,7 @@ program INISCAL
 
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
-    if (infrared%type /= EQNS_NONE) then
+    if (infrared%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
 
         if (abs(infrared%parameters(1)) > 0.0_wp) then
             infrared%parameters(3) = infrared%parameters(3)/infrared%parameters(1)*norm_ini_radiation
@@ -110,7 +110,7 @@ program INISCAL
         end if
         do is = 1, inb_scal
             if (infrared%active(is)) then
-                call Radiation_Infrared(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do
