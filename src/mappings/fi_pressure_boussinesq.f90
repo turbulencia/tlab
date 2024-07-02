@@ -79,11 +79,9 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
         tmp7 => tmp(:, 5)
         tmp8 => tmp(:, 6)
         tmp9 => tmp(:, 7)
-        if (pdecomposition%name /= 'micrPhys') then
-            tmp3 = 0.0_wp
-            tmp4 = 0.0_wp
-            tmp5 = 0.0_wp
-        end if
+        tmp3 = 0.0_wp
+        tmp4 = 0.0_wp
+        tmp5 = 0.0_wp
         tmp6 = 0.0_wp
         tmp7 = 0.0_wp
         tmp8 = 0.0_wp

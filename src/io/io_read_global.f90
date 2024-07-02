@@ -940,8 +940,23 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Pressure decomposition
 ! ###################################################################
     ! set pressure decomposition to total.
-    pdecomposition%name = 'total'
-
+    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    if ( TRIM(ADJUSTL(sRes)) == 'total' )  then
+        pdecomposition%name = 'total'
+    else 
+        pdecomposition%name = 'total'
+        call TLAB_WRITE_ASCII(lfile, 'Option not availabe for dns.x. Pressure decomposition set to total.')
+    end if
+! ###################################################################
+! Phase Averaging
+! ###################################################################
+    call SCANINIINT(bakfile, inifile, 'PostProcessing', 'PhaseAverage', '0', phaseaverage%phaseavg)
+    if ( phaseaverage%phaseavg == 1 )  then
+        call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phaseaverage%stride)
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC// '. Invalid PhaseAverage option')
+        call TLAB_STOP(DNS_ERROR_PHASEAVG)
+    end if
     return
 end subroutine IO_READ_GLOBAL
 

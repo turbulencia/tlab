@@ -6,7 +6,7 @@
 
 program AVERAGES
 
-    use TLAB_TYPES, only: pointers_dt
+    use TLAB_TYPES, only: pointers_dt,phaseavg_dt
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
@@ -33,6 +33,7 @@ program AVERAGES
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use PHASEAVG
 
     implicit none
 
@@ -111,6 +112,17 @@ program AVERAGES
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    ! -------------------------------------------------------------------
+    ! Pressure Decomposition
+    ! -------------------------------------------------------------------
+    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    if ( TRIM(ADJUSTL(sRes)) == 'total' )  then
+        pdecomposition%name = 'total'
+    else 
+        pdecomposition%name = 'total'
+        call TLAB_WRITE_ASCII(lfile, 'Option not availabe for dns.x. Pressure decomposition set to total.')
+    end if
+
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
@@ -131,6 +143,18 @@ program AVERAGES
     call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
+
+    ! ###################################################################
+    ! Phase Averaging
+    ! ###################################################################
+    call SCANINIINT(bakfile, ifile, 'PostProcessing', 'PhaseAverage', '0', phaseaverage%phaseavg)
+    if ( phaseaverage%phaseavg == 1 )  then
+        call SCANINIINT(bakfile, ifile, 'PostProcessing', 'PhaseAverage', '1', phaseaverage%stride)
+        call STRIDE_CHECK(itime_size_max, itime_vec, phaseaverage%stride)
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC// 'Invalid PhaseAverage option')
+        call TLAB_STOP(DNS_ERROR_PHASEAVG)
+    end if
 
     if (sRes == '-1') then
 #ifdef USE_MPI
@@ -153,6 +177,7 @@ program AVERAGES
         write (*, *) '15. Dissipation'
         write (*, *) '16. Third-order scalar covariances'
         write (*, *) '17. Potential vorticity'
+        write (*, *) '18. Phase Average'
         read (*, *) opt_main
 
         write (*, *) 'Planes block size ?'
@@ -242,6 +267,10 @@ program AVERAGES
     case (17) ! potential vorticity
         nfield = 2
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
+    case (18) ! Phase average
+        nfield = 3
+        inb_txc = max(inb_txc, 9)
+        iread_flow = flow_on; iread_scal = scal_on
     end select
 
     if (imode_ibm == 1) then ! check if enough memory is provided for the IBM
@@ -950,6 +979,28 @@ program AVERAGES
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'PV'
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Cos'
 
+            ! ###################################################################
+            ! Phase average
+            ! ###################################################################
+        case (18)
+            call AVG_ALLOCATE(__FILE__, itime_size)
+            call PHASEAVG_INITIALIZE()
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
+            if (phaseaverage%phaseavg == 1) then
+                if (mod(itime, phaseaverage%stride) == 0) then
+                    call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, itime_vec(it), itime_vec(1), itime_size, 1)
+                    call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, itime_vec(it), itime_vec(1), itime_size, 2)
+                    call SPACE_AVG(q, avg_stress, 6       , wrk2d, itime_vec(it), itime_vec(1), itime_size, 5)
+                    call SPACE_AVG(txc(1, 9), avg_p, 1    , wrk2d, itime_vec(it), itime_vec(1), itime_size, 4)
+                    if (mod(itime_vec(it) - itime_vec(1), itime_size) == 0) then
+                        call WRITE_AVG( inb_flow, avg_flow,   IO_FLOW, itime_size, avgu_name  )
+                        call WRITE_AVG( 6       , avg_stress, IO_FLOW, itime_size, avgstr_name)
+                        call WRITE_AVG( 1       , avg_p,      IO_SCAL, itime_size, avgs_name  )
+                        call WRITE_AVG( inb_scal, avg_scal,   IO_SCAL, itime_size, avgp_name  )
+                        call RESET_VARIABLE()
+                    end if                  
+                end if
+            end if
         end select
 
         if (opt_main > 2) then

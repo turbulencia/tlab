@@ -35,7 +35,6 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! ###################################################################
     bakfile = trim(adjustl(inifile))//'.bak'
-    print *, 'Ran DNS_local'
     call TLAB_WRITE_ASCII(lfile, 'Reading local input data.')
 
 ! ###################################################################

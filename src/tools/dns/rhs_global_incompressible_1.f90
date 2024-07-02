@@ -25,12 +25,14 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: PressureFilter, stagger_on, imode_elliptic
+    use TLAB_VARS, only: itime
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use THERMO_ANELASTIC
     use DNS_ARRAYS
     use DNS_LOCAL, only: remove_divergence
     use DNS_LOCAL, only: use_tower
+    use DNS_LOCAL, only: nitera_first, nitera_save
     use TIME, only: rkm_substep, rkm_endstep, dte
     use DNS_TOWER
     use BOUNDARY_BUFFER
@@ -40,6 +42,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use OPR_BURGERS
     use OPR_ELLIPTIC
     use OPR_FILTERS
+    use PHASEAVG
 
     implicit none
 
@@ -311,6 +314,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
     end if
+
+    call SPACE_AVG(tmp1, avg_p, 1, wrk2d, itime+1, nitera_first, nitera_save, 4)
 
     ! -----------------------------------------------------------------------
     ! Add pressure gradient

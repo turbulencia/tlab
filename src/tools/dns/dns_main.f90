@@ -32,7 +32,7 @@ program DNS
     use OPR_ELLIPTIC
     use OPR_FILTERS
     use OPR_FOURIER
-    use DNS_PHASEAVG
+    use PHASEAVG
 #ifdef USE_MPI
     use TLAB_MPI_VARS,  only : ims_comm_z 
 #endif
@@ -88,7 +88,9 @@ program DNS
 
     call PLANES_INITIALIZE()
 
-    call DNS_AVG_ALLOCATE(__FILE__, nitera_save)
+    if (phaseaverage%phaseavg == 1) then
+        call AVG_ALLOCATE(__FILE__, nitera_save)
+    end if
 
     if (use_tower) then
         call DNS_TOWER_INITIALIZE(tower_stride)
@@ -211,7 +213,9 @@ program DNS
         call DNS_OBS_INITIALIZE() 
         call DNS_OBS() 
     end if
-    call DNS_PHASEAVG_INITILIZE()
+    if (phaseaverage%phaseavg == 1) then
+        call PHASEAVG_INITIALIZE()
+    end if
     ! ###################################################################
     ! Do simulation: Integrate equations
     ! ###################################################################
@@ -260,28 +264,19 @@ program DNS
             end if
         end if
 
-        call DNS_SPACE_AVG(q(:,1), avg_u(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,2), avg_v(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,3), avg_w(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,1)*q(:,1), avg_uu(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,1)*q(:,2), avg_uv(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,1)*q(:,3), avg_uw(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,2)*q(:,2), avg_vv(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,2)*q(:,3), avg_vw(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(q(:,3)*q(:,3), avg_ww(:,:,:), wrk2d)
-        call DNS_SPACE_AVG(s, avg_p(:,:,:), wrk2d)
-        if (mod(itime - nitera_first, nitera_save) == 0) then
-            call DNS_WRITE_AVG(avg_u, IO_FLOW, 3, avgu_name, 1)
-            call DNS_WRITE_AVG(avg_v, IO_FLOW, 3, avgv_name, 1)
-            call DNS_WRITE_AVG(avg_w, IO_FLOW, 3, avgw_name, 1)
-            call DNS_WRITE_AVG(avg_uu, IO_FLOW, 3, avguu_name, 1)
-            call DNS_WRITE_AVG(avg_uv, IO_FLOW, 3, avguv_name, 1)
-            call DNS_WRITE_AVG(avg_uw, IO_FLOW, 3, avguw_name, 1)
-            call DNS_WRITE_AVG(avg_vv, IO_FLOW, 3, avgvv_name, 1)
-            call DNS_WRITE_AVG(avg_vw, IO_FLOW, 3, avgvw_name, 1)
-            call DNS_WRITE_AVG(avg_ww, IO_FLOW, 3, avgww_name, 1)
-            call DNS_WRITE_AVG(avg_p , IO_SCAL, 1, avgp_name, 2)
-            call DNS_RESET_VARIABLE()              
+        if (phaseaverage%phaseavg == 1) then
+            if (mod(itime, phaseaverage%stride) == 0) then
+                call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, itime, nitera_first, nitera_save, 1)
+                call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, itime, nitera_first, nitera_save, 2)
+                call SPACE_AVG(q, avg_stress, 6       , wrk2d, itime, nitera_first, nitera_save, 5)
+                if (mod(itime - nitera_first, nitera_save) == 0) then
+                    call WRITE_AVG(inb_flow, avg_flow  , IO_FLOW, nitera_save, avgu_name  )
+                    call WRITE_AVG(6       , avg_stress, IO_FLOW, nitera_save, avgstr_name)
+                    call WRITE_AVG(1       , avg_p     , IO_SCAL, nitera_save, avgs_name  )
+                    call WRITE_AVG(inb_scal, avg_scal  , IO_SCAL, nitera_save, avgp_name  )
+                    call RESET_VARIABLE()
+                end if                  
+            end if
         end if
 
         if (use_tower) then
