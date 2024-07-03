@@ -88,7 +88,7 @@ program DNS
 
     call PLANES_INITIALIZE()
 
-    if (phaseaverage%phaseavg == 1) then
+    if (phaseAvg%active == 1) then
         call AVG_ALLOCATE(__FILE__, nitera_save)
     end if
 
@@ -213,7 +213,7 @@ program DNS
         call DNS_OBS_INITIALIZE() 
         call DNS_OBS() 
     end if
-    if (phaseaverage%phaseavg == 1) then
+    if (phaseAvg%active == 1) then
         call PHASEAVG_INITIALIZE()
     end if
     ! ###################################################################
@@ -264,18 +264,18 @@ program DNS
             end if
         end if
 
-        if (phaseaverage%phaseavg == 1) then
-            if (mod(itime, phaseaverage%stride) == 0) then
-                call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, itime, nitera_first, nitera_save, 1)
-                call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, itime, nitera_first, nitera_save, 2)
-                call SPACE_AVG(q, avg_stress, 6       , wrk2d, itime, nitera_first, nitera_save, 5)
+        if (phaseAvg%active == 1) then
+            if (mod(itime, phaseAvg%stride) == 0) then
+                call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, itime/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 1)
+                call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, itime/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 2)
+                call SPACE_AVG(q, avg_stress, 6       , wrk2d, itime/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 5)
                 if (mod(itime - nitera_first, nitera_save) == 0) then
-                    call WRITE_AVG(inb_flow, avg_flow  , IO_FLOW, nitera_save, avgu_name  )
-                    call WRITE_AVG(6       , avg_stress, IO_FLOW, nitera_save, avgstr_name)
-                    call WRITE_AVG(1       , avg_p     , IO_SCAL, nitera_save, avgs_name  )
-                    call WRITE_AVG(inb_scal, avg_scal  , IO_SCAL, nitera_save, avgp_name  )
+                    call WRITE_AVG(inb_flow, avg_flow  , IO_FLOW, nitera_save/phaseAvg%stride, avgu_name  )
+                    call WRITE_AVG(6       , avg_stress, IO_FLOW, nitera_save/phaseAvg%stride, avgstr_name)
+                    call WRITE_AVG(1       , avg_p     , IO_SCAL, nitera_save/phaseAvg%stride, avgs_name  )
+                    call WRITE_AVG(inb_scal, avg_scal  , IO_SCAL, nitera_save/phaseAvg%stride, avgp_name  )
                     call RESET_VARIABLE()
-                end if                  
+                end if
             end if
         end if
 

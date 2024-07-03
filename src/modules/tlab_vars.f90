@@ -114,6 +114,6 @@ module TLAB_VARS
 ! ###################################################################
 ! Pressure decomposition
 ! ###################################################################
-    type(phaseavg_dt) :: phaseaverage
+    type(phaseavg_dt) :: phaseAvg
 
 end module TLAB_VARS

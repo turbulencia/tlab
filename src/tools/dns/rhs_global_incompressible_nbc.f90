@@ -611,7 +611,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp12, tmp41)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp12, tmp42)
 
-    call SPACE_AVG(tmp12, avg_p, 1, wrk2d, itime+1, nitera_first, nitera_save, 4)
+    if (mod(itime+1, phaseAvg%stride) == 0) then
+        call SPACE_AVG(tmp12, avg_p, 1, wrk2d, (itime+1)/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 4)
+    end if
 
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp41, h1)

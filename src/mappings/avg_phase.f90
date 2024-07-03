@@ -2,8 +2,6 @@
 #include "dns_const_mpi.h"
 #include "dns_error.h"
 #include "dns_const.h"
-#define LOC_UNIT_ID 55
-#define LOC_STATUS 'unknown'
 
 module PHASEAVG
   
@@ -15,7 +13,7 @@ module PHASEAVG
   use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach, gama0
   use TLAB_VARS,      only : imode_eqns
   use TLAB_VARS,      only : inb_flow, inb_scal
-  use TLAB_VARS,      only : phaseaverage
+  use TLAB_VARS,      only : phaseAvg
   use TLAB_CONSTANTS, only : sizeofint, sizeofreal
 
   implicit none
@@ -53,8 +51,8 @@ CONTAINS
     nxy = imax*jmax
     nyz = jmax*kmax
     nxz = imax*kmax
-    if (mod(restart,phaseaverage%stride) == 0) then
-      num_strides = restart/phaseaverage%stride
+    if (mod(restart,phaseAvg%stride) == 0) then
+      num_strides = restart/phaseAvg%stride
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of average planes not an integer. Change stride.')
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
@@ -143,7 +141,7 @@ CONTAINS
     if ((index == 1) .or. (index == 2) .or. (index == 4)) then
       do ifld = 1, nfield
           localsum = 0.0_wp
-          plane_id = ((mod((itime-1) - (it_first), it_save) + 1)/phaseaverage%stride)
+          plane_id = mod((itime-1) - (it_first), it_save) + 1
           do k = 1, kmax
             localsum = localsum + field(:,:,k,ifld)/g(3)%size
           end do
@@ -197,7 +195,7 @@ CONTAINS
   end subroutine SPACE_AVG
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine WRITE_AVG(nfield, avg, iheader, it_save, name)
+  subroutine WRITE_AVG(nfield, avg, iheader, it_save, basename)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use IO_FIELDS
     use TLAB_VARS, only : imax, jmax, kmax
@@ -213,9 +211,9 @@ CONTAINS
     integer(wi),                                          intent(in)      :: nfield
     real(wp),     dimension(imax,jmax,it_save+1, nfield), intent(in)      :: avg
     integer(wi),                                          intent(in)      :: it_save
-    character(len=*),                                     intent(in)      :: name
+    character(len=*),                                     intent(in)      :: basename
 
-    character(len=128)                              :: fname
+    character(len=128)                              :: name
     character(len=32)                               :: varname(1)
     integer(wi)                                     :: sizes(5)
     integer(wi),       parameter                    :: isize_max = 20
@@ -260,24 +258,28 @@ CONTAINS
     sizes(4) = 1                         ! stride (1 means every element)
     sizes(5) = 1                         ! number of variables
     
-    write(start, '(I10)') (itime - it_save)
+    write(start, '(I10)') (itime - it_save*phaseAvg%stride)
     write(end,   '(I10)') itime
 
     do ifld = 1, nfield
         write(fld_id,   '(I10)') ifld
         varname(1) = ''
-        fname =  trim(adjustl(name)) // '_' // trim(adjustl(start)) &
+        name =  trim(adjustl(basename)) // '_' // trim(adjustl(start)) &
         // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
 
 #ifdef USE_MPI
         if (ims_pro == 0) then
 #endif
+#define LOC_UNIT_ID 75
+#define LOC_STATUS "unknown"
+#include "dns_open_file.h"
             call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itime, params)
+            close(LOC_UNIT_ID)
 #ifdef USE_MPI
         end if
 #endif
 
-        call IO_WRITE_SUBARRAY(io_aux(id), fname, varname, avg(:,:,:,ifld), sizes)
+      call IO_WRITE_SUBARRAY(io_aux(id), fname, varname, avg(:,:,:,ifld), sizes)
     end do
     return
   end subroutine WRITE_AVG

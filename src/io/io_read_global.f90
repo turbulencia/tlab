@@ -950,11 +950,14 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Phase Averaging
 ! ###################################################################
-    call SCANINIINT(bakfile, inifile, 'PostProcessing', 'PhaseAverage', '0', phaseaverage%phaseavg)
-    if ( phaseaverage%phaseavg == 1 )  then
-        call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phaseaverage%stride)
+    call SCANINIINT(bakfile, inifile, 'PostProcessing', 'PhaseAvg', '0', phaseAvg%active)
+    if ( phaseAvg%active == .true. )  then
+        call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phaseAvg%stride)
+    else if ( phaseAvg%active == 0 ) then 
+        phaseAvg%stride=0
+        phaseAvg%active = .false.
     else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC// '. Invalid PhaseAverage option')
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC// '. Invalid phaseAvg option')
         call TLAB_STOP(DNS_ERROR_PHASEAVG)
     end if
     return

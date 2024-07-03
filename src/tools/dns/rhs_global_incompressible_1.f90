@@ -295,8 +295,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
     ! Saving pressure for towers to tmp array
-    if (use_tower .and. rkm_substep == rkm_endstep) then
-        call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
+    if (rkm_substep == rkm_endstep) then
+    ! interpolate 
+        if ( use_tower ); call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
+        if ( mod(itime+1, phaseAvg%stride) == 0 );call SPACE_AVG(tmp1, avg_p, 1, wrk2d, (itime+1)/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 4)
     end if
 
     if (stagger_on) then
@@ -314,8 +316,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
     end if
-
-    call SPACE_AVG(tmp1, avg_p, 1, wrk2d, itime+1, nitera_first, nitera_save, 4)
 
     ! -----------------------------------------------------------------------
     ! Add pressure gradient
