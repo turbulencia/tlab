@@ -32,7 +32,7 @@ program DNS
     use OPR_ELLIPTIC
     use OPR_FILTERS
     use OPR_FOURIER
-    use PHASEAVG
+    use AVG_PHASE
 #ifdef USE_MPI
     use TLAB_MPI_VARS,  only : ims_comm_z 
 #endif
@@ -88,7 +88,7 @@ program DNS
 
     call PLANES_INITIALIZE()
 
-    if (phaseAvg%active == 1) then
+    if (phaseAvg%active .eqv. .true.) then
         call AVG_ALLOCATE(__FILE__, nitera_save)
     end if
 
@@ -213,7 +213,7 @@ program DNS
         call DNS_OBS_INITIALIZE() 
         call DNS_OBS() 
     end if
-    if (phaseAvg%active == 1) then
+    if (phaseAvg%active .eqv. .true.) then
         call PHASEAVG_INITIALIZE()
     end if
     ! ###################################################################
@@ -264,7 +264,7 @@ program DNS
             end if
         end if
 
-        if (phaseAvg%active == 1) then
+        if (phaseAvg%active .eqv. .true.) then
             if (mod(itime, phaseAvg%stride) == 0) then
                 call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, itime/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 1)
                 call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, itime/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 2)

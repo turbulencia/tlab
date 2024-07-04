@@ -42,7 +42,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use OPR_BURGERS
     use OPR_ELLIPTIC
     use OPR_FILTERS
-    use PHASEAVG
+    use AVG_PHASE
 
     implicit none
 
@@ -295,14 +295,17 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end if
 
     ! Saving pressure for towers to tmp array
-    if (use_tower .and. rkm_substep == rkm_endstep) then
-        if (stagger_on) then ! Stagger pressure field back on velocity grid (only for towers)
+    if (rkm_substep == rkm_endstep) then
+        if (stagger_on .and. ( use_tower .or. phaseAvg%active )) then ! Stagger pressure field back on velocity grid (only for towers)
             call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
             call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4)
+        endif
+        if ( use_tower ) &
             call DNS_TOWER_ACCUMULATE(tmp4, 4, wrk1d)
-        else
-            call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
-        end if
+            if (mod((itime+1),phaseAvg%stride) == 0) then
+                if ( phaseAvg%active ) &
+                call SPACE_AVG(tmp4, avg_p, 1, wrk2d, (itime+1)/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 4)
+            end if
     end if
 
     if (stagger_on) then

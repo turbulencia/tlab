@@ -950,10 +950,18 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Phase Averaging
 ! ###################################################################
-    call SCANINIINT(bakfile, inifile, 'PostProcessing', 'PhaseAvg', '0', phaseAvg%active)
-    if ( phaseAvg%active == .true. )  then
+    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PhaseAvg', 'no' , sRes)
+    if ( TRIM(ADJUSTL(sRes)) == 'yes' )  then
+        phaseAvg%active = .true.
         call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phaseAvg%stride)
-    else if ( phaseAvg%active == 0 ) then 
+        call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'type', 'phase', sRes)
+        if ( TRIM(ADJUSTL(sRes)) == 'space' )  then
+            phaseAvg%type = 'phase'
+            call TLAB_WRITE_ASCII(lfile, 'Space average option available in statistics average.f90.')
+        else 
+            phaseAvg%type = 'phase'
+        end if 
+    else if ( phaseAvg%active .eqv. .false. ) then 
         phaseAvg%stride=0
         phaseAvg%active = .false.
     else

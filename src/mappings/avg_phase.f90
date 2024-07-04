@@ -3,7 +3,7 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-module PHASEAVG
+module AVG_PHASE
   
   USE TLAB_PROCS
   USE TLAB_TYPES
@@ -52,7 +52,11 @@ CONTAINS
     nyz = jmax*kmax
     nxz = imax*kmax
     if (mod(restart,phaseAvg%stride) == 0) then
-      num_strides = restart/phaseAvg%stride
+      if (phaseAvg%type == 'phase') then
+        num_strides = restart/phaseAvg%stride
+      else if (phaseAvg%type == 'space') then
+        num_strides = 0
+      end if
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of average planes not an integer. Change stride.')
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
@@ -153,13 +157,16 @@ CONTAINS
             call MPI_Reduce(localsum, MPI_IN_PLACE, nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
           end if
 #else
-            avg(:,:,plane_id, ifld) = localsum
+          avg(:,:,plane_id, ifld) = localsum
 #endif
 #ifdef USE_MPI
-          if ( ims_pro_k == 0) &
+          if ( ims_pro_k == 0) then
+            if (phaseAvg%type == 'phase') &
               avg(:,:,it_save + 1, ifld) = avg(:,:,it_save+1, ifld) + avg(:,:,plane_id, ifld)/it_save
+          end if
 #else
-          avg(:,:,it_save+ 1, ifld) = avg(:,:,it_save+1, ifld) + avg(:,:,plane_id, ifld)/it_save
+          if (phaseAvg%type == 'phase') &
+            avg(:,:,it_save+ 1, ifld) = avg(:,:,it_save+1, ifld) + avg(:,:,plane_id, ifld)/it_save
 #endif
       end do
     else if (index == 5) then
@@ -182,10 +189,13 @@ CONTAINS
             avg(:,:,plane_id, fld) = localsum
 #endif
 #ifdef USE_MPI
-            if ( ims_pro_k == 0) &
+            if ( ims_pro_k == 0) then
+              if (phaseAvg%type == 'phase') &
                 avg(:,:,it_save + 1, fld) = avg(:,:,it_save + 1, fld) + avg(:,:,plane_id, fld)/it_save
+            end if
 #else
-            avg(:,:,it_save + 1, fld) = avg(:,:,it_save + 1, fld) + avg(:,:,plane_id, fld)/it_save
+            if (phaseAvg%type == 'phase') &
+              avg(:,:,it_save + 1, fld) = avg(:,:,it_save + 1, fld) + avg(:,:,plane_id, fld)/it_save
 #endif
           end if
         end do
@@ -195,7 +205,7 @@ CONTAINS
   end subroutine SPACE_AVG
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine WRITE_AVG(nfield, avg, iheader, it_save, basename)
+  subroutine WRITE_AVG(nfield, avg, iheader, it_save, basename, avg_start)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use IO_FIELDS
     use TLAB_VARS, only : imax, jmax, kmax
@@ -208,10 +218,11 @@ CONTAINS
     use TLAB_MPI_VARS,  only : ims_comm_z, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_x, ims_pro_k
 #endif
     implicit none
-    integer(wi),                                          intent(in)      :: nfield
-    real(wp),     dimension(imax,jmax,it_save+1, nfield), intent(in)      :: avg
-    integer(wi),                                          intent(in)      :: it_save
-    character(len=*),                                     intent(in)      :: basename
+    integer(wi),                                          intent(in)          :: nfield
+    real(wp),     dimension(imax,jmax,it_save+1, nfield), intent(in)          :: avg
+    integer(wi),                                          intent(in)          :: it_save
+    character(len=*),                                     intent(in)          :: basename
+    integer(wi),                                          intent(in),optional :: avg_start
 
     character(len=128)                              :: name
     character(len=32)                               :: varname(1)
@@ -227,7 +238,7 @@ CONTAINS
     nx_total = imax
 #endif
     ny_total = jmax
-    nz_total = it_save
+    nz_total = it_save + 1
 
     isize = 0
     isize = isize + 1; params(isize) = rtime
@@ -258,8 +269,13 @@ CONTAINS
     sizes(4) = 1                         ! stride (1 means every element)
     sizes(5) = 1                         ! number of variables
     
-    write(start, '(I10)') (itime - it_save*phaseAvg%stride)
-    write(end,   '(I10)') itime
+    if (present(avg_start)) then
+      write(start, '(I10)') (avg_start)
+      write(end,   '(I10)') itime
+    else
+      write(start, '(I10)') (itime - it_save*phaseAvg%stride)
+      write(end,   '(I10)') itime
+    end if
 
     do ifld = 1, nfield
         write(fld_id,   '(I10)') ifld
@@ -279,7 +295,7 @@ CONTAINS
         end if
 #endif
 
-      call IO_WRITE_SUBARRAY(io_aux(id), fname, varname, avg(:,:,:,ifld), sizes)
+      call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg(:,:,:,ifld), sizes)
     end do
     return
   end subroutine WRITE_AVG
@@ -292,20 +308,19 @@ CONTAINS
     avg_stress = 0.0_wp
     avg_p      = 0.0_wp
     avg_scal   = 0.0_wp
-  end subroutine RESET_VARIABLE  
-
+  end subroutine RESET_VARIABLE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine STRIDE_CHECK(itime_size_max, itime_vec, stride)
+  subroutine STRIDE_CHECK(itime_size, itime_vec, stride)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer(wi)     , intent(in)      :: itime_size_max
-    integer(wi)     , intent(in)      :: itime_vec(itime_size_max)
-    integer(wi)     , intent(in)      :: stride
+    integer(wi), intent(in)          :: itime_size
+    integer(wi), intent(in)          :: itime_vec(itime_size)
+    integer(wi), intent(in)          :: stride
 
     integer(wi)                       :: i
 
-    do i = 1, itime_size_max - 1
-      if (itime_vec(i) /= stride) then
+    do i = 1, itime_size - 1
+      if (itime_vec(i+1) /= itime_vec(1) + (i*stride)) then
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Stride does not match the plane integer list')
         call TLAB_STOP(DNS_ERROR_PHASEAVG)
       end if

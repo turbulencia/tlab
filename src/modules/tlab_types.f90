@@ -95,8 +95,9 @@ module TLAB_TYPES
 
     type phaseavg_dt
         sequence
-        integer active
+        logical active
         integer stride
+        character(32) :: type
     end type phaseavg_dt
 
 end module TLAB_TYPES

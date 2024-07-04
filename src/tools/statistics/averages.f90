@@ -33,7 +33,7 @@ program AVERAGES
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use PHASEAVG
+    use AVG_PHASE
 
     implicit none
 
@@ -143,18 +143,6 @@ program AVERAGES
     call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
-
-    ! ###################################################################
-    ! Phase Averaging
-    ! ###################################################################
-    call SCANINIINT(bakfile, ifile, 'PostProcessing', 'phaseAvg', '0', phaseAvg%active)
-    if ( phaseAvg%active == 1 )  then
-        call SCANINIINT(bakfile, ifile, 'PostProcessing', 'stride', '1', phaseAvg%stride)
-        call STRIDE_CHECK(itime_size_max, itime_vec, phaseAvg%stride)
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC// 'Invalid phaseAvg option')
-        call TLAB_STOP(DNS_ERROR_PHASEAVG)
-    end if
 
     if (sRes == '-1') then
 #ifdef USE_MPI
@@ -268,6 +256,8 @@ program AVERAGES
         nfield = 2
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     case (18) ! Phase average
+        phaseAvg%active = .true. 
+        phaseAvg%stride = 1
         nfield = 3
         inb_txc = max(inb_txc, 9)
         iread_flow = flow_on; iread_scal = scal_on
@@ -348,8 +338,18 @@ program AVERAGES
         call IBM_ALLOCATE(C_FILE_LOC)
     end if
 
-    if (phaseAvg%active == 1) then
-        call AVG_ALLOCATE(__FILE__, itime_vec(itime_size))
+    if (phaseAvg%active .eqv. .true.) then
+        call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'type', 'space', sRes)
+        if ( TRIM(ADJUSTL(sRes)) == 'space' )  then
+            phaseAvg%type = 'space'
+        else if ( TRIM(ADJUSTL(sRes)) == 'phase' )  then
+            phaseAvg%type = 'phase'
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong averaging type.')
+            call TLAB_STOP(DNS_ERROR_PHASEAVG)
+        end if
+
+        call AVG_ALLOCATE(__FILE__, itime_size*phaseAvg%stride)
         call PHASEAVG_INITIALIZE()
     end if 
     ! -------------------------------------------------------------------
@@ -988,20 +988,30 @@ program AVERAGES
             ! ###################################################################
         case (18)
             call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
-            if (phaseAvg%active == 1) then
-                if (mod(itime, phaseAvg%stride) == 0) then
-                    call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, itime_vec(it)/phaseAvg%stride, itime_vec(1)-phaseAvg%stride, itime_size, 1)
-                    call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, itime_vec(it)/phaseAvg%stride, itime_vec(1)-phaseAvg%stride, itime_size, 2)
-                    call SPACE_AVG(q, avg_stress, 6       , wrk2d, itime_vec(it)/phaseAvg%stride, itime_vec(1)-phaseAvg%stride, itime_size, 5)
-                    call SPACE_AVG(txc(1, 9), avg_p, 1    , wrk2d, itime_vec(it)/phaseAvg%stride, itime_vec(1)-phaseAvg%stride, itime_size, 4)
-                    if (itime_vec(it)/phaseAvg%stride == itime_size) then
-                        call WRITE_AVG( inb_flow, avg_flow,   IO_FLOW, itime_size, avgu_name  )
-                        call WRITE_AVG( 6       , avg_stress, IO_FLOW, itime_size, avgstr_name)
-                        call WRITE_AVG( 1       , avg_p,      IO_SCAL, itime_size, avgs_name  )
-                        call WRITE_AVG( inb_scal, avg_scal,   IO_SCAL, itime_size, avgp_name  )
-                        call RESET_VARIABLE()
-                    end if                  
-                end if
+            if (phaseAvg%type == 'phase') then
+                call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, it, 0, itime_size, 1)
+                call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, it, 0, itime_size, 2)
+                call SPACE_AVG(q, avg_stress, 6       , wrk2d, it, 0, itime_size, 5)
+                call SPACE_AVG(txc(1, 9), avg_p, 1    , wrk2d, it, 0, itime_size, 4)
+                if (itime_vec(it) == itime_vec(itime_size)) then
+                    call WRITE_AVG( inb_flow, avg_flow,   IO_FLOW, itime_size, avgu_name  , itime_vec(1))
+                    call WRITE_AVG( 6       , avg_stress, IO_FLOW, itime_size, avgstr_name, itime_vec(1))
+                    call WRITE_AVG( 1       , avg_p,      IO_SCAL, itime_size, avgs_name  , itime_vec(1))
+                    call WRITE_AVG( inb_scal, avg_scal,   IO_SCAL, itime_size, avgp_name  , itime_vec(1))
+                    call RESET_VARIABLE()
+                end if                  
+            else if (phaseAvg%type == 'space') then
+                call SPACE_AVG(q, avg_flow,   inb_flow, wrk2d, it, 0, 1, 1)
+                call SPACE_AVG(s, avg_scal,   inb_scal, wrk2d, it, 0, 1, 2)
+                call SPACE_AVG(q, avg_stress, 6       , wrk2d, it, 0, 1, 5)
+                call SPACE_AVG(txc(1, 9), avg_p, 1    , wrk2d, it, 0, 1, 4)
+                if (itime_vec(it)/phaseAvg%stride == itime_size) then
+                    call WRITE_AVG( inb_flow, avg_flow,   IO_FLOW, itime_size, avgu_name  , itime_vec(1))
+                    call WRITE_AVG( 6       , avg_stress, IO_FLOW, itime_size, avgstr_name, itime_vec(1))
+                    call WRITE_AVG( 1       , avg_p,      IO_SCAL, itime_size, avgs_name  , itime_vec(1))
+                    call WRITE_AVG( inb_scal, avg_scal,   IO_SCAL, itime_size, avgp_name  , itime_vec(1))
+                    call RESET_VARIABLE()
+                end if                  
             end if
         end select
 
