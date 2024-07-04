@@ -1006,10 +1006,10 @@ program AVERAGES
                 call SPACE_AVG(q, avg_stress, 6       , wrk2d, it, 0, 1, 5)
                 call SPACE_AVG(txc(1, 9), avg_p, 1    , wrk2d, it, 0, 1, 4)
                 if (itime_vec(it)/phaseAvg%stride == itime_size) then
-                    call WRITE_AVG( inb_flow, avg_flow,   IO_FLOW, itime_size, avgu_name  , itime_vec(1))
-                    call WRITE_AVG( 6       , avg_stress, IO_FLOW, itime_size, avgstr_name, itime_vec(1))
-                    call WRITE_AVG( 1       , avg_p,      IO_SCAL, itime_size, avgs_name  , itime_vec(1))
-                    call WRITE_AVG( inb_scal, avg_scal,   IO_SCAL, itime_size, avgp_name  , itime_vec(1))
+                    call WRITE_AVG( inb_flow, avg_flow,   IO_FLOW, itime_size, avgu_name  )
+                    call WRITE_AVG( 6       , avg_stress, IO_FLOW, itime_size, avgstr_name)
+                    call WRITE_AVG( 1       , avg_p,      IO_SCAL, itime_size, avgs_name  )
+                    call WRITE_AVG( inb_scal, avg_scal,   IO_SCAL, itime_size, avgp_name  )
                     call RESET_VARIABLE()
                 end if                  
             end if
