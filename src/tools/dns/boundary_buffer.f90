@@ -257,7 +257,7 @@ contains
                         sa_offset = [max(0, ims_offset_i - item%offset), 0, kmax*ims_pro_k]
                     end if
 
- call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+                    call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
                     call MPI_TYPE_COMMIT(io_aux(id)%subarray, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
