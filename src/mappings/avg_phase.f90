@@ -51,21 +51,19 @@ CONTAINS
     nxy = imax*jmax
     nyz = jmax*kmax
     nxz = imax*kmax
-    if (mod(restart,phaseAvg%stride) == 0) then
-      if (phaseAvg%type == 'phase') then
-        num_strides = restart/phaseAvg%stride
-      else if (phaseAvg%type == 'space') then
-        num_strides = 0
-      end if
+    if ( restart == -1 ) then ! used for calls from outside dns_main / dns.x 
+      num_strides = 0 
+    elseif (mod(restart,phaseAvg%stride) == 0) then
+      num_strides = restart/phaseAvg%stride
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of average planes not an integer. Change stride.')
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
     end if
     
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_flow,      [imax,jmax,num_strides+1,inb_flow], 'avgflow.')
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_stress,    [imax,jmax,num_strides+1,6],        'avgstr.' )
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_p,         [imax,jmax,num_strides+1,1],        'avgp.'   )
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_scal,      [imax,jmax,num_strides+1,inb_scal], 'avgscal.')
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_flow,      [imax,jmax,inb_flow,num_strides+1],'avgflow.')
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_stress,    [imax,jmax,6       ,num_strides+1], 'avgstr.' )
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_p,         [imax,jmax,1       ,num_strides+1], 'avgp.'   )
+    call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_scal,      [imax,jmax,inb_scal,num_strides+1], 'avgscal.')
 
     avg_flow   = 0.0_wp
     avg_stress = 0.0_wp
@@ -142,63 +140,39 @@ CONTAINS
 
     integer(wi)                                               :: k, fld, ifld, jfld, plane_id, index
       ! ================================================================== !
+
+    plane_id = 1
+    if (it_save /= 0) plane_id = mod((itime-1) - (it_first), it_save) + 1 
+
     if ((index == 1) .or. (index == 2) .or. (index == 4)) then
       do ifld = 1, nfield
           localsum = 0.0_wp
-          plane_id = mod((itime-1) - (it_first), it_save) + 1
           do k = 1, kmax
             localsum = localsum + field(:,:,k,ifld)/g(3)%size
           end do
 
 #ifdef USE_MPI
           if (ims_pro_k == 0) then
-            call MPI_Reduce(localsum, avg(:,:,plane_id, ifld), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
+            call MPI_Reduce(localsum, avg(:,:,ifld,plane_id), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
           else
             call MPI_Reduce(localsum, MPI_IN_PLACE, nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
           end if
 #else
-          avg(:,:,plane_id, ifld) = localsum
+          avg(:,:,ifld,plane_id) = localsum
 #endif
 #ifdef USE_MPI
           if ( ims_pro_k == 0) then
-            if (phaseAvg%type == 'phase') &
-              avg(:,:,it_save + 1, ifld) = avg(:,:,it_save+1, ifld) + avg(:,:,plane_id, ifld)/it_save
-          end if
-#else
-          if (phaseAvg%type == 'phase') &
-            avg(:,:,it_save+ 1, ifld) = avg(:,:,it_save+1, ifld) + avg(:,:,plane_id, ifld)/it_save
 #endif
-      end do
-    else if (index == 5) then
-      do ifld = 1, inb_flow
-        do jfld = 1, inb_flow
-          if (ifld <= jfld) then
-            fld = ifld + jfld
-            localsum = 0.0_wp
-            plane_id = mod(itime - (it_first), it_save+1)
-            do k = 1, kmax
-              localsum = localsum + (field(:,:,k,ifld)*field(:,:,k,jfld))/(g(3)%size)
-            end do
-#ifdef USE_MPI
-            if (ims_pro_k == 0) then
-              call MPI_Reduce(localsum, avg(:,:,plane_id, fld), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
-            else
-              call MPI_Reduce(localsum, MPI_IN_PLACE, nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
+            print *, 'outside',ims_pro_k,it_save
+ 
+            if (it_save /= 0) then
+              print *, 'inside',ims_pro_k,it_save
+              avg(:,:,ifld,it_save + 1) = avg(:,:,ifld,it_save+1) + avg(:,:,ifld,plane_id)/it_save
             end if
-#else
-            avg(:,:,plane_id, fld) = localsum
-#endif
 #ifdef USE_MPI
-            if ( ims_pro_k == 0) then
-              if (phaseAvg%type == 'phase') &
-                avg(:,:,it_save + 1, fld) = avg(:,:,it_save + 1, fld) + avg(:,:,plane_id, fld)/it_save
-            end if
-#else
-            if (phaseAvg%type == 'phase') &
-              avg(:,:,it_save + 1, fld) = avg(:,:,it_save + 1, fld) + avg(:,:,plane_id, fld)/it_save
-#endif
           end if
-        end do
+#endif
+
       end do
     end if
   return
@@ -280,22 +254,28 @@ CONTAINS
     do ifld = 1, nfield
         write(fld_id,   '(I10)') ifld
         varname(1) = ''
-        name =  trim(adjustl(basename)) // '_' // trim(adjustl(start)) &
-        // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
+        if (start == end) then ! write single iteration
+          name =  trim(adjustl(basename)) // trim(adjustl(start)) // '.' // trim(adjustl(fld_id))
+        else ! write multiple iteration including phase average
+          name =  trim(adjustl(basename)) // trim(adjustl(start)) &
+          // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
+        end if
+        PRINT *,'name:',name
 
 #ifdef USE_MPI
         if (ims_pro == 0) then
+          print *, 'before writing headers'
 #endif
-#define LOC_UNIT_ID 75
 #define LOC_STATUS "unknown"
+#define LOC_UNIT_ID 75
 #include "dns_open_file.h"
             call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itime, params)
             close(LOC_UNIT_ID)
 #ifdef USE_MPI
         end if
 #endif
-
-      call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg(:,:,:,ifld), sizes)
+      print *, 'Headers written'
+      call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg(:,:,ifld,:), sizes)
     end do
     return
   end subroutine WRITE_AVG

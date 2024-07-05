@@ -69,6 +69,7 @@ contains
 #endif
 
         allocate (ims_status(MPI_STATUS_SIZE, 2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
+        PRINT *,ims_pro,ims_pro_i,ims_pro_k,ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k
         allocate (ims_request(2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
 
         ! #######################################################################

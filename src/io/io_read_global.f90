@@ -954,13 +954,6 @@ subroutine IO_READ_GLOBAL(inifile)
     if ( TRIM(ADJUSTL(sRes)) == 'yes' )  then
         phaseAvg%active = .true.
         call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phaseAvg%stride)
-        call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'type', 'phase', sRes)
-        if ( TRIM(ADJUSTL(sRes)) == 'space' )  then
-            phaseAvg%type = 'phase'
-            call TLAB_WRITE_ASCII(lfile, 'Space average option available in statistics average.f90.')
-        else 
-            phaseAvg%type = 'phase'
-        end if 
     else if ( phaseAvg%active .eqv. .false. ) then 
         phaseAvg%stride=0
         phaseAvg%active = .false.
