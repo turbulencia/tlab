@@ -26,6 +26,7 @@ program VISUALS
     use THERMO_AIRWATER
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -96,6 +97,7 @@ program VISUALS
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------

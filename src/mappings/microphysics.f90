@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module Microphysics
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PROF
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
@@ -10,7 +10,8 @@ module Microphysics
     use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES
     implicit none
-
+    private
+    
     integer, parameter :: TYPE_NONE = 0
     integer, parameter :: TYPE_SED_AIRWATER = 1
     integer, parameter :: TYPE_SED_AIRWATERSIMPLIFIED = 2
@@ -65,7 +66,7 @@ contains
             sedimentation%parameters(:) = 1.0_wp        ! default values
             call SCANINICHAR(bakfile, inifile, 'Sedimentation', 'Parameters', 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
-                idummy = MAX_PROF
+                idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, sedimentation%parameters)
             end if
 

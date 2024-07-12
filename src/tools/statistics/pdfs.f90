@@ -19,6 +19,7 @@ program PDFS
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -87,6 +88,7 @@ program PDFS
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

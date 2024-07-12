@@ -73,7 +73,6 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
     call TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
     call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
     call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
@@ -186,14 +185,6 @@ subroutine IO_READ_GLOBAL(inifile)
     if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
     elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
     else; itransport = EQNS_NONE; end if
-
-! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
-    if (trim(adjustl(sRes)) == 'quadratic') then; chemistry%type = EQNS_CHEM_QUADRATIC; 
-    elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistry%type = EQNS_CHEM_QUADRATIC3; 
-    elseif (trim(adjustl(sRes)) == 'layeredrelaxation') then; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION; 
-    elseif (trim(adjustl(sRes)) == 'ozone') then; chemistry%type = EQNS_CHEM_OZONE; 
-    else; chemistry%type = EQNS_NONE; end if
 
 ! -------------------------------------------------------------------
     call SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)
@@ -478,27 +469,6 @@ subroutine IO_READ_GLOBAL(inifile)
 ! This subsidence type is implemented in opr_burgers_y only
 ! to speed up calculation
     if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
-
-! ###################################################################
-! Chemistry
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Chemistry]')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-    if (chemistry%type /= EQNS_NONE) then
-        chemistry%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, chemistry%parameters)
-
-    end if
-
-! Activating terms
-    chemistry%active = .false.
-    do is = 1, inb_scal
-        if (abs(damkohler(is)) > 0.0_wp) chemistry%active(is) = .true.
-    end do
 
 ! ###################################################################
 ! Grid Parameters

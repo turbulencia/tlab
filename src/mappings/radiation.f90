@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module Radiation
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PROF
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLAB_ARRAYS, only: wrk2d, wrk3d
@@ -79,7 +79,7 @@ contains
 
             infrared%parameters(:) = 0.0_wp
             call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
-            idummy = MAX_PROF
+            idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, infrared%parameters)
 
         end if

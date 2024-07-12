@@ -50,6 +50,7 @@ program SPECTRA
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
@@ -123,6 +124,7 @@ program SPECTRA
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)

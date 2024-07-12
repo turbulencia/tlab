@@ -53,11 +53,6 @@
 #define EQNS_TRANS_POWERLAW             21
 #define EQNS_TRANS_SUTHERLAND           22
 
-#define EQNS_CHEM_QUADRATIC             25
-#define EQNS_CHEM_QUADRATIC3            26
-#define EQNS_CHEM_LAYEREDRELAXATION     27
-#define EQNS_CHEM_OZONE                 28
-
 #define EQNS_SUB_CONSTANT_LOCAL         29
 #define EQNS_SUB_CONSTANT_GLOBAL        30
 

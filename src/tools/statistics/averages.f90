@@ -20,6 +20,7 @@ program AVERAGES
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -98,6 +99,7 @@ program AVERAGES
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------
