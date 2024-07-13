@@ -110,7 +110,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog', '10', nitera_log)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln)
-    call SCANINIREAL(bakfile,inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
+    call SCANINIREAL(bakfile, inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
 
 ! Accumulate statistics in spatial mode
     call SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
@@ -119,7 +119,6 @@ subroutine DNS_READ_LOCAL(inifile)
     call SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
     if (nitera_filter == 0) FilterDomain(:)%type = DNS_FILTER_NONE
 
-
     call SCANINICHAR(bakfile, inifile, 'Iteration', 'ObsLog', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; dns_obs_log = OBS_TYPE_NONE
     else if (trim(adjustl(sRes)) == 'ekman') then; dns_obs_log = OBS_TYPE_EKMAN
@@ -127,7 +126,6 @@ subroutine DNS_READ_LOCAL(inifile)
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. ObsLog.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
 
 ! ###################################################################
 ! Control Limits
@@ -716,13 +714,7 @@ subroutine DNS_READ_LOCAL(inifile)
     if (imode_rhs == EQNS_RHS_NONBLOCKING) inb_txc = max(inb_txc, 15)
 #endif
 
-    isize_wrk3d = max(imax, g_inf(1)%size)*max(jmax, g_inf(2)%size)*kmax
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-        isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
-        isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
-    end if
+    isize_wrk3d = max(isize_wrk3d, g_inf(1)%size*g_inf(2)%size*kmax)
     if (use_tower) then
         isize_wrk3d = max(isize_wrk3d, nitera_save*(g(2)%size + 2))
     end if

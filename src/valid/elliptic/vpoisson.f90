@@ -42,7 +42,6 @@ program VPOISSON
     call TLAB_MPI_INITIALIZE
 #endif
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 8
 
     call TLAB_ALLOCATE(__FILE__)

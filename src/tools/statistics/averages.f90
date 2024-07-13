@@ -307,11 +307,7 @@ program AVERAGES
         allocate (mean(opt_order*nfield*(jmax_aux + 1)))
     end if
 
-    isize_wrk3d = max(isize_field, opt_order*nfield*jmax)
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
+    isize_wrk3d = max(isize_wrk3d, opt_order*nfield*jmax)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 

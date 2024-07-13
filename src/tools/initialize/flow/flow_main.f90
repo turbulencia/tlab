@@ -35,7 +35,6 @@ program INIFLOW
 #endif
 
     inb_wrk2d = MAX(inb_wrk2d, 3)
-    isize_wrk3d = isize_txc_field
 
     if (flag_u == 0) then
         inb_txc = 2

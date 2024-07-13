@@ -303,13 +303,9 @@ program VISUALS
     ! -------------------------------------------------------------------
     allocate (gate(isize_field))
 
-    isize_wrk3d = isize_txc_field
 #ifdef USE_MPI
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 

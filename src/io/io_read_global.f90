@@ -806,6 +806,8 @@ subroutine IO_READ_GLOBAL(inifile)
         inb_wrk2d = 2
     end if
 
+    isize_wrk3d = isize_field
+
 ! grid array
     do is = 1, 3
         g(is)%inb_grid = 1                          ! Nodes
@@ -876,6 +878,8 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes not big enough.')
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
     end if
+
+    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
 
 ! -------------------------------------------------------------------
 ! Helmholtz filter that maintains prognostic bcs

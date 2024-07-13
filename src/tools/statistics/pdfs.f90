@@ -242,7 +242,6 @@ program PDFS
     allocate (pdf(isize_pdf*(jmax_aux + 1)*nfield))
 
     inb_wrk2d = max(inb_wrk2d, 4)
-    isize_wrk3d = max(isize_field, isize_txc_field)
     call TLAB_ALLOCATE(C_FILE_LOC)
 
     ! -------------------------------------------------------------------

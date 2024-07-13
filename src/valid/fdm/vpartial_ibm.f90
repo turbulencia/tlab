@@ -35,11 +35,11 @@ program VPARTIAL
 
 ! ###################################################################
     call TLAB_START()
+    call IO_READ_GLOBAL(ifile)
     call Thermodynamics_Initialize(ifile)
     ! call PARTICLE_READ_GLOBAL(ifile)
     ! call DNS_READ_LOCAL(ifile)
     call IBM_READ_INI(ifile)
-    call IO_READ_GLOBAL(ifile)
 ! Initialize
     
     len = jmax*kmax
@@ -53,9 +53,6 @@ program VPARTIAL
     ! g%uniform = .false.
     ! g(1)%size = imax
 
-    isize_field = imax*jmax*kmax
-    isize_txc_field = isize_field
-    isize_wrk3d = isize_txc_field
     ! isize_wrk1d = max(imax,jmax,kmax)
     ! isize_wrk2d = len
     ! inb_wrk1d = 20

@@ -37,7 +37,6 @@ program INISCAL
     call TLAB_MPI_INITIALIZE
 #endif
 
-    isize_wrk3d = isize_field
     if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then
         inb_wrk2d = max(inb_wrk2d, 6)
     end if

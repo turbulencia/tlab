@@ -55,8 +55,6 @@ program VINTERPARTIAL
     call TLAB_MPI_INITIALIZE
 #endif
 
-    isize_wrk3d = isize_txc_field
-
 ! -------------------------------------------------------------------
 ! Check input
 ! -------------------------------------------------------------------

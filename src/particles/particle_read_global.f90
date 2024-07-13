@@ -3,7 +3,7 @@
 
 subroutine PARTICLE_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile
-    use TLAB_VARS, only: inb_flow_array, inb_scal_array
+    use TLAB_VARS, only: inb_flow_array, inb_scal_array, imax, jmax, kmax, isize_wrk3d
     use PARTICLE_VARS
     use TLAB_PROCS
     use PROFILES
@@ -153,6 +153,10 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 #else
         isize_part = int(isize_part_total)
 #endif
+
+        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
+        isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
+        isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
 
 ! -------------------------------------------------------------------
         inb_traj = inb_part             ! save particle prognostic properties

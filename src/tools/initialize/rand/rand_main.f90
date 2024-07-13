@@ -34,8 +34,6 @@ program INIRAND
     call TLAB_MPI_INITIALIZE
 #endif
 
-    isize_wrk3d = isize_txc_field
-
     inb_txc = 3
 
     call TLAB_ALLOCATE(C_FILE_LOC)

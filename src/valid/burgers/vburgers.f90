@@ -37,7 +37,6 @@ program VBURGERS
     call TLAB_MPI_INITIALIZE
 #endif
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 4
 
     call TLAB_ALLOCATE(__FILE__)
