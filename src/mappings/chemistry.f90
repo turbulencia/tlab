@@ -25,7 +25,7 @@ contains
     !########################################################################
     subroutine Chemistry_Initialize(inifile)
         use TLAB_TYPES, only: profiles_dt
-        use TLAB_VARS, only: chemistry, damkohler, sbg, g
+        use TLAB_VARS, only: chemistry1, damkohler, sbg, g
         use PROFILES
         character(len=*), intent(in) :: inifile
 
@@ -44,34 +44,34 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
         call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Type', 'None', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; chemistry%type = TYPE_NONE
-        elseif (trim(adjustl(sRes)) == 'quadratic') then; chemistry%type = TYPE_QUADRATIC; 
-        elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistry%type = TYPE_QUADRATIC3; 
-        elseif (trim(adjustl(sRes)) == 'layeredrelaxation') then; chemistry%type = TYPE_LAYEREDRELAXATION; 
-        elseif (trim(adjustl(sRes)) == 'ozone') then; chemistry%type = TYPE_OZONE; 
+        if (trim(adjustl(sRes)) == 'none') then; chemistry1%type = TYPE_NONE
+        elseif (trim(adjustl(sRes)) == 'quadratic') then; chemistry1%type = TYPE_QUADRATIC; 
+        elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistry1%type = TYPE_QUADRATIC3; 
+        elseif (trim(adjustl(sRes)) == 'layeredrelaxation') then; chemistry1%type = TYPE_LAYEREDRELAXATION; 
+        elseif (trim(adjustl(sRes)) == 'ozone') then; chemistry1%type = TYPE_OZONE; 
         else
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Chemistry.Type.')
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        if (chemistry%type /= EQNS_NONE) then
-            chemistry%parameters(:) = 0.0_wp
+        if (chemistry1%type /= EQNS_NONE) then
+            chemistry1%parameters(:) = 0.0_wp
             call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
             idummy = MAX_PARS
-            call LIST_REAL(sRes, idummy, chemistry%parameters)
+            call LIST_REAL(sRes, idummy, chemistry1%parameters)
 
         end if
 
-        chemistry%active = .false.
+        chemistry1%active = .false.
         do is = 1, inb_scal
-            if (abs(damkohler(is)) > 0.0_wp) chemistry%active(is) = .true.
+            if (abs(damkohler(is)) > 0.0_wp) chemistry1%active(is) = .true.
         end do
 
-        select case (chemistry%type)
+        select case (chemistry1%type)
         case (TYPE_LAYEREDRELAXATION)
             prof_loc%type = PROFILE_TANH
             prof_loc%ymean = sbg(is)%ymean
-            prof_loc%thick = -chemistry%parameters(3)*0.5_wp
+            prof_loc%thick = -chemistry1%parameters(3)*0.5_wp
             prof_loc%mean = 0.5_wp
             prof_loc%delta = 1.0_wp
             prof_loc%lslope = 0.0_wp
@@ -79,7 +79,7 @@ contains
 
             allocate (relaxation_strength(g(2)%size))
             do j = 1, g(2)%size
-                relaxation_strength(j) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j) - chemistry%parameters(2))
+                relaxation_strength(j) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j) - chemistry1%parameters(2))
             end do
 
         end select
@@ -89,10 +89,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine Chemistry_Source(chemistry, nx, ny, nz, is, s, source)
+    subroutine Chemistry_Source(chemistry1, nx, ny, nz, is, s, source)
         use TLAB_VARS, only: damkohler
 
-        type(term_dt), intent(in) :: chemistry
+        type(term_dt), intent(in) :: chemistry1
         integer(wi), intent(in) :: nx, ny, nz, is
         real(wp), intent(in) :: s(nx, ny, nz, inb_scal)
         real(wp), intent(out) :: source(nx, ny, nz)
@@ -102,19 +102,19 @@ contains
         real(wp) dummy, dummy2
 
         !########################################################################
-        select case (chemistry%type)
+        select case (chemistry1%type)
 
         case (TYPE_LAYEREDRELAXATION)
             do j = 1, ny
-                source(:, j, :) = -damkohler(is)/chemistry%parameters(1)*relaxation_strength(j)*s(:, j, :, is)
+                source(:, j, :) = -damkohler(is)/chemistry1%parameters(1)*relaxation_strength(j)*s(:, j, :, is)
             end do
 
         case (TYPE_QUADRATIC)
-            dummy = damkohler(is)*chemistry%parameters(is)
+            dummy = damkohler(is)*chemistry1%parameters(is)
             source = dummy*s(:, :, :, 2)*s(:, :, :, 3)
 
         case (TYPE_QUADRATIC3)
-            dummy = damkohler(is)*chemistry%parameters(is)
+            dummy = damkohler(is)*chemistry1%parameters(is)
 
             if (is >= 1 .and. is <= 3) then
                 source = dummy*s(:, :, :, 2)*s(:, :, :, 3)
@@ -128,11 +128,11 @@ contains
             dummy = damkohler(is)
             if (is == 4) dummy = -dummy
 
-            source = -chemistry%parameters(1)/(1.0_wp + chemistry%parameters(2)*s(:, :, :, 1))
+            source = -chemistry1%parameters(1)/(1.0_wp + chemistry1%parameters(2)*s(:, :, :, 1))
             source = exp(source)
 
             if (is == 4) then
-                dummy2 = 1.0_wp + chemistry%parameters(3)
+                dummy2 = 1.0_wp + chemistry1%parameters(3)
                 source = dummy*(dummy2*s(:, :, :, 4) - source*s(:, :, :, 2)*s(:, :, :, 3))
             else
                 source = dummy*(s(:, :, :, 4) - source*s(:, :, :, 2)*s(:, :, :, 3))

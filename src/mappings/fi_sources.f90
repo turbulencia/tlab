@@ -10,7 +10,7 @@ module FI_SOURCES
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
-    use TLAB_VARS, only: infrared, sedimentation, chemistry, subsidence
+    use TLAB_VARS, only: infrared, sedimentation, chemistry1, subsidence
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -181,9 +181,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Chemistry
             ! -----------------------------------------------------------------------
-            if (chemistry%active(is)) then
-                ! call FI_CHEM(chemistry, imax, jmax, kmax, is, s, tmp1)
-                call Chemistry_Source(chemistry, imax, jmax, kmax, is, s, tmp1)
+            if (chemistry1%active(is)) then
+                call Chemistry_Source(chemistry1, imax, jmax, kmax, is, s, tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
