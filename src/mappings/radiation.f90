@@ -263,11 +263,11 @@ contains
 
             ! last band
             iband = nbands
-            p_b = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))
+            p_b = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))  ! emission function, Stefan-Boltzmann law
 
-            wrk3d(1:nx*ny*nz) = kappal(iband)*s(:, infrared%scalar(1))
+            wrk3d(1:nx*ny*nz) = kappal(iband)*s(:, infrared%scalar(1))  ! absorption coefficient
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
+                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
             end if
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
@@ -275,7 +275,7 @@ contains
             call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
 #endif
 
-            bcs_ht(1:nxz) = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))
+            bcs_ht(1:nxz) = infrared%parameters(1)*(beta(1, iband) + t_ht*(beta(2, iband) + t_ht*beta(3, iband)))   ! downward flux at domain top
 
             if (present(flux)) then
                 call IR_RTE1_Global(infrared, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
