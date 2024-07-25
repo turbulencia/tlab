@@ -163,10 +163,8 @@ CONTAINS
 #ifdef USE_MPI
           if ( ims_pro_k == 0) then
 #endif
-            print *, 'outside',ims_pro_k,it_save
  
             if (it_save /= 0) then
-              print *, 'inside',ims_pro_k,it_save
               avg(:,:,ifld,it_save + 1) = avg(:,:,ifld,it_save+1) + avg(:,:,ifld,plane_id)/it_save
             end if
 #ifdef USE_MPI
@@ -260,11 +258,9 @@ CONTAINS
           name =  trim(adjustl(basename)) // trim(adjustl(start)) &
           // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
         end if
-        PRINT *,'name:',name
 
 #ifdef USE_MPI
         if (ims_pro == 0) then
-          print *, 'before writing headers'
 #endif
 #define LOC_STATUS "unknown"
 #define LOC_UNIT_ID 75
@@ -274,7 +270,6 @@ CONTAINS
 #ifdef USE_MPI
         end if
 #endif
-      print *, 'Headers written'
       call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg(:,:,ifld,:), sizes)
     end do
     return
