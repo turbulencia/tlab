@@ -123,4 +123,8 @@
 #define DNS_ERROR_IBM_SHEAR         404
 #define DNS_ERROR_IBM_INITIALIZE    405
 
+#define DNS_ERROR_PRESSURE_DECOMPOSITION    500
+
+#define DNS_ERROR_PHASEAVG          600
+
 #endif

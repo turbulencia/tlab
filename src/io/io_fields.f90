@@ -34,6 +34,7 @@ module IO_FIELDS
 
     public :: IO_READ_FIELDS, IO_WRITE_FIELDS
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
+    public :: IO_WRITE_HEADER
     integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
     integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
 
@@ -71,7 +72,8 @@ module IO_FIELDS
     integer, parameter, public :: IO_SUBARRAY_ENVELOPES   = 12
     integer, parameter, public :: IO_SUBARRAY_AUX         = 13
     integer, parameter, public :: IO_SUBARRAY_SIZE        = 13
-    type(subarray_dt), public :: io_aux(IO_SUBARRAY_SIZE)
+    integer, parameter, public :: IO_AVERAGE_PLANE        = 14
+    type(subarray_dt), public :: io_aux(IO_AVERAGE_PLANE)
 
     integer(wi) nx_total, ny_total, nz_total
     character(len=64) str, name

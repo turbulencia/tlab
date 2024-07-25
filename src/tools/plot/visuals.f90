@@ -99,6 +99,22 @@ program VISUALS
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
+    ! -------------------------------------------------------------------
+    ! Read pressure decomposition
+    ! -------------------------------------------------------------------
+    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomposition%name = 'total'
+    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomposition%name = 'total'
+    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomposition%name = 'resolved'
+    else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomposition%name = 'advdiffu' 
+    else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomposition%name = 'advction'
+    else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomposition%name = 'difusion'
+    else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomposition%name = 'coriolis'
+    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomposition%name = 'buoyancy'
+    else
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
+        call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
+    end if
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)
@@ -201,6 +217,8 @@ program VISUALS
         if (opt_vec(iv) == 6) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == 7) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
         if (opt_vec(iv) == 8) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
+        if ((opt_vec(iv) == 8) .and. (pdecomposition%name == 'resolved')) then
+            iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
         if (opt_vec(iv) == 9) then; iread_scal = .true.; inb_txc = max(inb_txc, 1); end if
         if (opt_vec(iv) > 9 .and. opt_vec(iv) <= iscal_offset) then
             iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
@@ -496,6 +514,45 @@ program VISUALS
                     end if
 
                 else if (opt_vec(iv) == 8) then ! pressure
+
+                    if (pdecomposition%name == 'resolved') then
+                        plot_file = 'PressureCoriolis'//time_str(1:MaskSize)
+                        pdecomposition%name = 'coriolis'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+
+                        plot_file = 'PressureBuoyancy'//time_str(1:MaskSize)
+                        pdecomposition%name = 'buoyancy'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        
+                        plot_file = 'PressureDiffusion'//time_str(1:MaskSize)
+                        pdecomposition%name = 'difusion'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        plot_file = 'PressureAdvection'//time_str(1:MaskSize)
+                        pdecomposition%name = 'advction'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+
+                        plot_file = 'PressureAdvDiff'//time_str(1:MaskSize)
+                        pdecomposition%name = 'advdiffu'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+
+                        plot_file = 'PressureTotal'//time_str(1:MaskSize)
+                        pdecomposition%name = 'total'
+                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+
+                    end if
+
                     plot_file = 'Pressure'//time_str(1:MaskSize)
                     call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
