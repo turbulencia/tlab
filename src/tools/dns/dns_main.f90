@@ -13,6 +13,7 @@ program DNS
     use Thermodynamics
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -51,6 +52,7 @@ program DNS
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
     call DNS_READ_LOCAL(ifile)
     if (imode_ibm == 1) then

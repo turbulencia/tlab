@@ -64,8 +64,6 @@ program SL_CORRELATION
     call TLAB_MPI_INITIALIZE
 #endif
 
-    isize_wrk3d = imax*jmax*kmax
-
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------

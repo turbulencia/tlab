@@ -75,7 +75,6 @@ program SL_NORMAL_ANALYSIS
 
     call SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 
-    isize_wrk3d = imax*jmax*kmax
     itxc_size = imax*jmax*kmax*7
 
 ! -------------------------------------------------------------------

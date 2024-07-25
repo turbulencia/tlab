@@ -20,6 +20,7 @@ program AVERAGES
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -99,6 +100,7 @@ program AVERAGES
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
 
     ! -------------------------------------------------------------------
@@ -324,11 +326,7 @@ program AVERAGES
         allocate (mean(opt_order*nfield*(jmax_aux + 1)))
     end if
 
-    isize_wrk3d = max(isize_field, opt_order*nfield*jmax)
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
+    isize_wrk3d = max(isize_wrk3d, opt_order*nfield*jmax)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 

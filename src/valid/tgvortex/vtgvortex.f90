@@ -24,8 +24,6 @@ program VTGVORTEX
 
     call IO_READ_GLOBAL(ifile)
 
-    isize_wrk3d = isize_txc_field
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------

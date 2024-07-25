@@ -26,6 +26,7 @@ program VISUALS
     use THERMO_AIRWATER
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -96,6 +97,7 @@ program VISUALS
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
     ! -------------------------------------------------------------------
     ! Read pressure decomposition
@@ -319,13 +321,9 @@ program VISUALS
     ! -------------------------------------------------------------------
     allocate (gate(isize_field))
 
-    isize_wrk3d = isize_txc_field
 #ifdef USE_MPI
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 

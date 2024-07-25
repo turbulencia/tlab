@@ -72,7 +72,7 @@ module TLAB_VARS
     ! type(term_dt) :: visible                ! Radiation parameters
     type(term_dt) :: sedimentation          ! Microphysics parameters
     ! type(term_dt) :: evaporation            ! Microphysics parameters
-    type(term_dt) :: chemistry              ! Chemistry parameters
+    type(term_dt) :: chemistry1             ! Chemistry parameters
     type(term_dt) :: subsidence             ! Large-scale parameters
     type(term_dt) :: random                 ! Random Forcing parameters
 

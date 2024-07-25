@@ -53,20 +53,6 @@ program PARTICLE_BUILD_PDF
     call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
     call SCANINIINT(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
 
-    inb_part_txc = 1
-
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
-
-    isize_wrk3d = imax*jmax*kmax
-    isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
-    isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
-
-    isize_wrk2d = max(isize_wrk2d, jmax*inb_part_interp)
-
-    ! IF (jmax_part .EQ. 1) THEN
-    !    jmax_part   = jmax ! 1 by default
-    ! ENDIF
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
@@ -79,6 +65,16 @@ program PARTICLE_BUILD_PDF
     if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields
         allocate (txc(isize_field, 3))
     end if
+
+    inb_part_txc = 1
+
+    call PARTICLE_ALLOCATE(C_FILE_LOC)
+
+    isize_wrk2d = max(isize_wrk2d, jmax*inb_part_interp)
+
+    ! IF (jmax_part .EQ. 1) THEN
+    !    jmax_part   = jmax ! 1 by default
+    ! ENDIF
 
 ! -------------------------------------------------------------------
 ! Read the grid

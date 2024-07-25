@@ -125,7 +125,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
   use TLAB_CONSTANTS, only : efile, MAX_VARS, wi, wp
   use TLAB_VARS,      only : imax, g
   use TLAB_VARS,      only : imode_eqns, iadvection, inb_scal
-  use TLAB_VARS,      only : infrared, sedimentation, chemistry, subsidence
+  use TLAB_VARS,      only : infrared, sedimentation, chemistry1, subsidence
   use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS
   
@@ -201,7 +201,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK(imode_rhs,                              &
   if ( ( infrared%type  /= EQNS_NONE) .or. &
        ( sedimentation%type  /= EQNS_NONE) .or. &
        ( infrared%type  /= EQNS_NONE) .or. &
-       ( chemistry%type  /= EQNS_NONE) .or. &
+       ( chemistry1%type  /= EQNS_NONE) .or. &
        ( subsidence%type /= EQNS_NONE)        ) then
     call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM not implemented for infrared, sedimentation, chemistry, subsidence.')
     call TLAB_STOP(DNS_ERROR_UNDEVELOP)

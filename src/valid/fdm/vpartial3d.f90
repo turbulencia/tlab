@@ -29,7 +29,6 @@ program VPARTIAL3D
 
     call IO_READ_GLOBAL(ifile)
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 8
 
     call TLAB_ALLOCATE(__FILE__)

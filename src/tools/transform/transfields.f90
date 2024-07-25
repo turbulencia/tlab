@@ -267,7 +267,8 @@ program TRANSFIELDS
         inb_txc = 5
         inb_scal_dst = 1
     end select
-    isize_wrk3d = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
+    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
+    isize_wrk3d = max(isize_wrk3d, imax_dst*jmax_dst*kmax_dst)
     if (fourier_on) inb_txc = max(inb_txc, 1)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
@@ -383,7 +384,7 @@ program TRANSFIELDS
         idummy = idummy*max(imax, imax_dst)
         isize_txc_field = max(isize_txc_field, idummy)
 #endif
-        isize_wrk3d = isize_txc_field
+        isize_wrk3d = max(isize_wrk3d,isize_txc_field)
 
         deallocate (txc, wrk1d, wrk3d)
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')

@@ -33,7 +33,6 @@ program INIPART
         ! -------------------------------------------------------------------
         inb_flow_array = 0
         inb_scal_array = 0
-        isize_wrk3d = imax*jmax*kmax
         inb_txc = inb_scal
 
         call TLAB_ALLOCATE(C_FILE_LOC)

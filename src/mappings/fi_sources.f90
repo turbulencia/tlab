@@ -10,10 +10,11 @@ module FI_SOURCES
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
-    use TLAB_VARS, only: infrared, sedimentation, chemistry, subsidence
+    use TLAB_VARS, only: infrared, sedimentation, chemistry1, subsidence
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     implicit none
     private
 
@@ -180,8 +181,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Chemistry
             ! -----------------------------------------------------------------------
-            if (chemistry%active(is)) then
-                call FI_CHEM(chemistry, imax, jmax, kmax, is, s, tmp1)
+            if (chemistry1%active(is)) then
+                call Chemistry_Source(chemistry1, imax, jmax, kmax, is, s, tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -451,76 +452,6 @@ contains
 
         return
     end subroutine FI_SUBSIDENCE
-
-    ! #######################################################################
-    ! #######################################################################
-    subroutine FI_CHEM(chemistry, nx, ny, nz, is, s, source)
-        use TLAB_TYPES, only: profiles_dt
-        use TLAB_VARS, only: sbg, damkohler
-        use PROFILES
-
-        type(term_dt), intent(IN) :: chemistry
-        integer(wi), intent(IN) :: nx, ny, nz, is
-        real(wp), intent(IN) :: s(nx, ny, nz, inb_scal)
-        real(wp), intent(OUT) :: source(nx, ny, nz)
-
-        ! -----------------------------------------------------------------------
-        integer(wi) j
-        real(wp) dummy, dummy2
-        type(profiles_dt) prof_loc
-
-        !########################################################################
-        select case (chemistry%type)
-
-        case (EQNS_CHEM_LAYEREDRELAXATION)
-            prof_loc%type = PROFILE_TANH
-            prof_loc%ymean = sbg(is)%ymean
-            prof_loc%thick = -chemistry%parameters(3)*0.5_wp
-            prof_loc%mean = 0.5_wp
-            prof_loc%delta = 1.0_wp
-            prof_loc%lslope = 0.0_wp
-            prof_loc%uslope = 0.0_wp
-
-            do j = 1, ny
-                source(:, j, :) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j) - chemistry%parameters(2)) ! strength constant
-            end do
-
-            dummy = -damkohler(is)/chemistry%parameters(1)
-            source = dummy*source*s(:, :, :, is)
-
-        case (EQNS_CHEM_QUADRATIC)
-            dummy = damkohler(is)*chemistry%parameters(is)
-            source = dummy*s(:, :, :, 2)*s(:, :, :, 3)
-
-        case (EQNS_CHEM_QUADRATIC3)
-            dummy = damkohler(is)*chemistry%parameters(is)
-
-            if (is >= 1 .and. is <= 3) then
-                source = dummy*s(:, :, :, 2)*s(:, :, :, 3)
-            else if (is >= 4 .and. is <= 6) then
-                source = dummy*s(:, :, :, 4)*s(:, :, :, 5)
-            else if (is >= 7 .and. is <= 9) then
-                source = dummy*s(:, :, :, 7)*s(:, :, :, 8)
-            end if
-
-        case (EQNS_CHEM_OZONE)
-            dummy = damkohler(is)
-            if (is == 4) dummy = -dummy
-
-            source = -chemistry%parameters(1)/(1.0_wp + chemistry%parameters(2)*s(:, :, :, 1))
-            source = exp(source)
-
-            if (is == 4) then
-                dummy2 = 1.0_wp + chemistry%parameters(3)
-                source = dummy*(dummy2*s(:, :, :, 4) - source*s(:, :, :, 2)*s(:, :, :, 3))
-            else
-                source = dummy*(s(:, :, :, 4) - source*s(:, :, :, 2)*s(:, :, :, 3))
-            end if
-
-        end select
-
-        return
-    end subroutine FI_CHEM
 
     ! #######################################################################
     ! #######################################################################

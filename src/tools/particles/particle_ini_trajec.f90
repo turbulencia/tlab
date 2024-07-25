@@ -96,8 +96,6 @@ program PARTICLE_INI_TRAJEC
 ! -------------------------------------------------------------------
     allocate (wrk1d(isize_wrk1d, inb_wrk1d))
     allocate (wrk2d(isize_wrk2d, 1))
-
-    isize_wrk3d = imax*jmax*kmax
     allocate (wrk3d(isize_wrk3d))
 
     if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then !Allocte memory to read fields

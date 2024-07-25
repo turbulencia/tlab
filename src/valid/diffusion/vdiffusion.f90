@@ -22,8 +22,6 @@ program VDIFFUSION
 
     call IO_READ_GLOBAL(ifile)
 
-    isize_wrk3d = isize_field
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------

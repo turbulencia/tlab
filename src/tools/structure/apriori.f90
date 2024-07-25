@@ -154,7 +154,6 @@ program APRIORI
     end select
 
 ! -------------------------------------------------------------------
-    isize_wrk3d = isize_txc_field
 #ifdef USE_MPI
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif

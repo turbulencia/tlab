@@ -50,6 +50,7 @@ program SPECTRA
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
@@ -123,6 +124,7 @@ program SPECTRA
     call Thermodynamics_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)
@@ -370,7 +372,6 @@ program SPECTRA
 ! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
 !              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
 
-    isize_wrk3d = isize_txc_field                ! default
     isize_wrk3d = max(isize_wrk3d, isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
     call TLAB_ALLOCATE(C_FILE_LOC)
