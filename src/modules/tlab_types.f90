@@ -93,4 +93,11 @@ module TLAB_TYPES
         character(32) :: name
     end type decomposition_dt
 
+    type phaseavg_dt
+        sequence
+        logical active
+        integer stride
+        character(32) :: type
+    end type phaseavg_dt
+
 end module TLAB_TYPES
