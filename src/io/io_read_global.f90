@@ -73,7 +73,6 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
     call TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
     call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
     call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
@@ -185,17 +184,6 @@ subroutine IO_READ_GLOBAL(inifile)
     if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
     elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
     else; itransport = EQNS_NONE; end if
-
-! -------------------------------------------------------------------
-    call SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)
-    if (abs(dummy) > 0.0) then
-        random%type = EQNS_RAND_MULTIPLY
-        random%parameters = dummy
-        random%active(1:3) = .true.
-    else
-        random%type = EQNS_NONE
-        random%active(1:3) = .false.
-    end if
 
 ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)

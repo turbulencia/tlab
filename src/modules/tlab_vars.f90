@@ -74,7 +74,6 @@ module TLAB_VARS
     ! type(term_dt) :: evaporation            ! Microphysics parameters
     type(term_dt) :: chemistry1             ! Chemistry parameters
     type(term_dt) :: subsidence             ! Large-scale parameters
-    type(term_dt) :: random                 ! Random Forcing parameters
 
 ! ###################################################################
 ! Nondimensional numbers

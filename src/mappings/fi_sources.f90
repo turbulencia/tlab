@@ -9,12 +9,13 @@ module FI_SOURCES
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
+    use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLAB_VARS, only: infrared, sedimentation, chemistry1, subsidence
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
     use Chemistry
+    use Forcing
     implicit none
     private
 
@@ -28,7 +29,6 @@ module FI_SOURCES
     public :: FI_SOURCES_SCAL
     public :: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     public :: FI_CORIOLIS
-    public :: FI_FORCING_0, FI_FORCING_1
 
     real(wp), allocatable, public :: bbackground(:)     ! Buoyancy
 
@@ -110,10 +110,10 @@ contains
             end if
 
             ! -----------------------------------------------------------------------
-            ! Random forcing
+            ! volumetric forcing
             ! -----------------------------------------------------------------------
-            if (random%active(iq)) then
-                call FI_RANDOM(random, imax, jmax, kmax, hq(1, iq), tmp1)
+            if (forcing1%active(iq)) then
+                call Forcing_Source(forcing1, imax, jmax, kmax, hq(1, iq), tmp1)
             end if
         end do
 
@@ -452,139 +452,5 @@ contains
 
         return
     end subroutine FI_SUBSIDENCE
-
-    ! #######################################################################
-    ! #######################################################################
-    subroutine FI_RANDOM(random, nx, ny, nz, h, tmp)
-        type(term_dt), intent(in) :: random
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(inout) :: h(nx, ny, nz)
-        real(wp), intent(inout) :: tmp(nx, ny, nz)
-
-        ! -----------------------------------------------------------------------
-        real(wp) dummy
-
-        dummy = random%parameters(1)
-
-        call random_number(tmp)
-
-        tmp = dummy*(tmp*2.0 - 1.0)
-        h = h*(1 + tmp)
-
-        return
-
-    end subroutine FI_RANDOM
-
-    !########################################################################
-    ! Sinusoidal forcing
-    !########################################################################
-    subroutine FI_FORCING_0(imax, jmax, kmax, time, visc, u, v, h_u, h_v)
-        integer(wi) imax, jmax, kmax
-        real(wp) time, visc
-        real(wp), dimension(imax, jmax, kmax) :: u, v, h_u, h_v
-
-        ! -----------------------------------------------------------------------
-        real(wp) omega, sigma, amplitude
-        !  integer(wi) i,j
-
-        !########################################################################
-        omega = 2.0_wp*acos(-1.0_wp)
-        sigma = 2.0_wp*omega*omega*visc
-
-        !  amplitude =-( 1.0_wp + (sigma/omega)**2 )*omega
-        !  amplitude = amplitude*sin(omega*time)
-        !  DO j = 1,jmax; DO i = 1,imax
-        !     u(i,j,1) = SIN(x(i)*omega)*COS(g(2)%nodes(j)*omega)
-        !     v(i,j,1) =-COS(x(i)*omega)*SIN(g(2)%nodes(j)*omega)
-        !  ENDDO; ENDDO
-
-        amplitude = sin(omega*time)
-
-        h_u = h_u + amplitude*u
-        h_v = h_v + amplitude*v
-
-        return
-    end subroutine FI_FORCING_0
-
-    !########################################################################
-    ! Velocity field with no-slip
-    !########################################################################
-    subroutine FI_FORCING_1(imax, jmax, kmax, time, visc, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
-        integer(wi) imax, jmax, kmax
-        real(wp) time, visc
-
-        real(wp), dimension(imax*jmax*kmax) :: h1, h2
-        real(wp), dimension(imax*jmax*kmax) :: tmp1, tmp2, tmp3, tmp4
-
-        ! -----------------------------------------------------------------------
-        integer(wi) ij, i, j, bcs(2, 2)
-        real(wp) pi_loc
-
-        bcs = 0
-
-        pi_loc = acos(-1.0_wp)
-
-        ! #######################################################################
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                !     tmp1(ij) = sin(2.0_wp*pi_loc*g(1)%nodes(i))*       sin(C_4_R*pi_loc*g(2)%nodes(j))
-                !     tmp2(ij) =-cos(2.0_wp*pi_loc*g(1)%nodes(i))*(1.0_wp-cos(C_4_R*pi_loc*g(2)%nodes(j)))*0.5_wp
-                tmp1(ij) = sin(pi_loc*g(1)%nodes(i))*sin(pi_loc*g(1)%nodes(i))*sin(2.0_wp*pi_loc*g(2)%nodes(j))
-                tmp2(ij) = -sin(2.0_wp*pi_loc*g(1)%nodes(i))*sin(pi_loc*g(2)%nodes(j))*sin(pi_loc*g(2)%nodes(j))
-            end do; end do
-
-        ! Time terms
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                h1(ij) = h1(ij) - tmp1(ij)*2.0_wp*pi_loc*sin(2.0_wp*pi_loc*time)
-                h2(ij) = h2(ij) - tmp2(ij)*2.0_wp*pi_loc*sin(2.0_wp*pi_loc*time)
-            end do; end do
-
-        ! velocities
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                tmp1(ij) = tmp1(ij)*cos(2.0_wp*pi_loc*time)
-                tmp2(ij) = tmp2(ij)*cos(2.0_wp*pi_loc*time)
-            end do; end do
-
-        ! Diffusion and convection terms in Ox momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h1(ij) = h1(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp2(ij))
-        end do
-
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h1(ij) = h1(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp1(ij))
-        end do
-
-        ! Diffusion and convection terms in Oy momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h2(ij) = h2(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp2(ij))
-        end do
-
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp2, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h2(ij) = h2(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp1(ij))
-        end do
-
-        ! #######################################################################
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                !     tmp1(ij) = cos(C_4_R*pi_loc*g(1)%nodes(i))*(2.0_wp-cos(C_4_R*pi_loc*g(2)%nodes(j)))/C_8_R &
-                !          - 0.5_wp*(sin(2.0_wp*pi_loc*g(2)%nodes(j)))**4
-                tmp1(ij) = sin(2.0_wp*pi_loc*g(1)%nodes(i))*sin(2.0_wp*pi_loc*g(2)%nodes(j))
-                tmp1(ij) = tmp1(ij)*(cos(2.0_wp*pi_loc*time))**2
-            end do; end do
-
-        ! Pressure gradient
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp3)
-
-        do ij = 1, imax*jmax*kmax
-            h1(ij) = h1(ij) + tmp2(ij)
-            h2(ij) = h2(ij) + tmp3(ij)
-        end do
-
-        return
-    end subroutine FI_FORCING_1
 
 end module FI_SOURCES
