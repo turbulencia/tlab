@@ -19,6 +19,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
+#ifdef USE_MPI
+    use TLAB_MPI_VARS
+#endif
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imode_ibm
     use TLAB_VARS, only: imode_eqns
@@ -42,7 +45,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use OPR_BURGERS
     use OPR_ELLIPTIC
     use OPR_FILTERS
-    use AVG_PHASE
+    use PHASEAVG
 
     implicit none
 
@@ -296,15 +299,16 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     ! Saving pressure for towers to tmp array
     if (rkm_substep == rkm_endstep) then
-        if (stagger_on .and. ( use_tower .or. phaseAvg%active )) then ! Stagger pressure field back on velocity grid (only for towers)
+        if (stagger_on .and. ( use_tower .or. phAvg%active )) then ! Stagger pressure field back on velocity grid (only for towers)
             call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
             call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4)
         endif
         if ( use_tower ) &
             call DNS_TOWER_ACCUMULATE(tmp4, 4, wrk1d)
-        if ( phaseAvg%active .eqv. .true.) then   
-            if (mod((itime+1),phaseAvg%stride) == 0) &
-                call SPACE_AVG(tmp4, avg_p, 1, wrk2d, (itime+1)/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 4)
+        if ( phAvg%active) then   
+            if (mod((itime+1),phAvg%stride) == 0)  then
+                call PhaseAvg_Space(wrk2d, tmp4, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4)
+            end if
         end if
     end if
 

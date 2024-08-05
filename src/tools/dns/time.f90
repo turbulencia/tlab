@@ -173,7 +173,6 @@ contains
             if (scal_on) hs = 0.0_wp
             if (part%type /= PART_TYPE_NONE) l_hq = 0.0_wp
         end if
-
         !########################################################################
         ! Loop over the sub-stages
         !########################################################################
@@ -287,7 +286,6 @@ contains
 #endif
 
 #endif
-
         end do
 
         return

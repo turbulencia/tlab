@@ -34,7 +34,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use OPR_ELLIPTIC
     use FI_SOURCES
     use DNS_TOWER
-    use AVG_PHASE
+    ! use PHASEAVG
 
 #ifdef USE_PSFFT
     use DNS_LOCAL, only: nbcsetup
@@ -606,9 +606,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     if (rkm_substep == rkm_endstep) then
         if (use_tower) call DNS_TOWER_ACCUMULATE(tmp12, i4, wrk1d)
-        if ( phaseAvg%active .eqv. true) then
-            if (mod(itime+1, phaseAvg%stride) == 0) &
-                call SPACE_AVG(tmp12, avg_p, 1, wrk2d, (itime+1)/phaseAvg%stride, nitera_first, nitera_save/phaseAvg%stride, 4)
+        if ( phAvg%active) then
+            if (mod(itime+1, phAvg%stride) == 0) &
+                call PhaseAvg_Space(wrk2d, tmp12, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4)
         end if
     end if
 

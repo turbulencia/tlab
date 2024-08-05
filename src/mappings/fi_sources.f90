@@ -35,7 +35,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FI_SOURCES_FLOW(q, s, hq, tmp1)
-        real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
+        real(wp), intent(in)  ::  q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field)
 

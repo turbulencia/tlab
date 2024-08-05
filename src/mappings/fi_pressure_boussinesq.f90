@@ -5,14 +5,15 @@
 !# Calculate the pressure field from a divergence free velocity field and a body force.
 !#
 !########################################################################
-subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
+subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, pdecomp)
+! pdecomp is optional. Check if we can add the default value directly as a argument
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_VARS, only: buoyancy, coriolis
-    use TLAB_VARS, only: inb_txc, pdecomposition
+    use TLAB_VARS, only: inb_txc
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
@@ -26,18 +27,19 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     implicit none
 
-    real(wp), intent(in) :: q(isize_field, 3)
-    real(wp), intent(in) :: s(isize_field, *)
-    real(wp), intent(out) :: p(isize_field)
-    real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
-    real(wp), intent(inout) :: tmp(isize_field, inb_txc - 3)
+    real(wp),     intent(in)           :: q(isize_field, 3)
+    real(wp),     intent(in)           :: s(isize_field, *)
+    real(wp),     intent(out)          :: p(isize_field)
+    real(wp),     intent(inout)        :: tmp1(isize_field), tmp2(isize_field)
+    real(wp),     intent(inout)        :: tmp(isize_field, inb_txc - 3)
+    integer(wi),  intent(in)           :: pdecomp
 
     target q, tmp, s
 ! -----------------------------------------------------------------------
     integer(wi) bcs(2, 2)
     integer(wi) iq
     integer(wi) siz, srt, end
-    integer(wi) :: i
+    integer(wi) :: i, decomposition
 
 ! -----------------------------------------------------------------------
     real(wp) dummy
@@ -66,15 +68,11 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
 ! #######################################################################
 ! Sources
-    if (pdecomposition%name == 'total') then 
-        call FI_SOURCES_FLOW(q, s, tmp, tmp1)
-    end if
-
     tmp3 => tmp(:, 1)
     tmp4 => tmp(:, 2)
     tmp5 => tmp(:, 3)
 
-    if (pdecomposition%name /= 'total') then
+    if (decomposition /= DCMP_TOTAL) then
         tmp6 => tmp(:, 4)
         tmp7 => tmp(:, 5)
         tmp8 => tmp(:, 6)
@@ -91,7 +89,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
 
-    if (pdecomposition%name == 'advdiffu' .OR. pdecomposition%name == 'total' .OR. pdecomposition%name == 'advction') then
+    if (decomposition == DCMP_ADVDIFF .OR. decomposition == DCMP_TOTAL .OR. decomposition == DCMP_ADVECTION) then
         !  Advection and diffusion terms
         call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
         tmp3 = tmp3 + p
@@ -116,7 +114,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    if (pdecomposition%name == 'advction' .OR. pdecomposition%name == 'difusion') then
+    if (decomposition == DCMP_ADVECTION .OR. decomposition == DCMP_DIFFUSION) then
         tmp9 = 0.0_wp
         ! Sepereating Diffusion
         ! NSE X-Comp
@@ -145,12 +143,12 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 
     end if
 
-    if (pdecomposition%name == 'advction') then
+    if (decomposition == DCMP_ADVECTION) then
         tmp3 = tmp3 - tmp6
         tmp4 = tmp4 - tmp7
         tmp5 = tmp5 - tmp8
 
-    else if (pdecomposition%name == 'difusion') then
+    else if (decomposition == DCMP_DIFFUSION) then
         tmp3 = tmp6
         tmp4 = tmp7
         tmp5 = tmp8
@@ -158,7 +156,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     end if
 
     ! Coriolis Forcing term
-    if (pdecomposition%name == 'coriolis') then
+    if (decomposition == DCMP_CORIOLIS) then
         call FI_CORIOLIS(coriolis,imax, jmax, kmax, q, tmp)
         tmp3        => tmp(:, 1)
         tmp4        => tmp(:, 2)
@@ -166,7 +164,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     end if
 
     ! Buoyancy Forcing term
-    if (pdecomposition%name == 'buoyancy') then
+    if (decomposition == DCMP_BUOYANCY) then
         do iq = 1, 3
             if (buoyancy%type == EQNS_EXPLICIT) then
                 call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)

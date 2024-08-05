@@ -88,11 +88,6 @@ module TLAB_TYPES
         real(wp), dimension(MAX_PARS) :: parameters
     end type discrete_dt
 
-    type decomposition_dt
-        sequence
-        character(32) :: name
-    end type decomposition_dt
-
     type phaseavg_dt
         sequence
         logical active

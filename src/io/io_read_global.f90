@@ -937,26 +937,15 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
 ! ###################################################################
-! Pressure decomposition
-! ###################################################################
-    ! set pressure decomposition to total.
-    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
-    if ( TRIM(ADJUSTL(sRes)) == 'total' )  then
-        pdecomposition%name = 'total'
-    else 
-        pdecomposition%name = 'total'
-        call TLAB_WRITE_ASCII(lfile, 'Option not availabe for dns.x. Pressure decomposition set to total.')
-    end if
-! ###################################################################
 ! Phase Averaging
 ! ###################################################################
     call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PhaseAvg', 'no' , sRes)
     if ( TRIM(ADJUSTL(sRes)) == 'yes' )  then
-        phaseAvg%active = .true.
-        call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phaseAvg%stride)
-    else if ( phaseAvg%active .eqv. .false. ) then 
-        phaseAvg%stride=0
-        phaseAvg%active = .false.
+        phAvg%active = .true.
+        call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phAvg%stride)
+    else if ( phAvg%active .eqv. .false. ) then 
+        phAvg%stride=0
+        phAvg%active = .false.
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC// '. Invalid phaseAvg option')
         call TLAB_STOP(DNS_ERROR_PHASEAVG)

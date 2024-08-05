@@ -1,5 +1,5 @@
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt, decomposition_dt, phaseavg_dt
+    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt, phaseavg_dt
     use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
@@ -107,13 +107,8 @@ module TLAB_VARS
     real(wp) :: rstattimeorg
 
 ! ###################################################################
-! Pressure decomposition
+! Phase Average
 ! ###################################################################
-    type(decomposition_dt) :: pdecomposition
-
-! ###################################################################
-! Pressure decomposition
-! ###################################################################
-    type(phaseavg_dt) :: phaseAvg
+    type(phaseavg_dt) :: phAvg
 
 end module TLAB_VARS

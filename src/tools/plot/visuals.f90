@@ -63,7 +63,7 @@ program VISUALS
     integer(wi) opt_format
     integer(wi) opt_cond, opt_cond_scal, opt_cond_relative
     integer(wi) ij, is, bcs(2, 2), ig
-    integer(wi) iscal_offset, idummy, MaskSize
+    integer(wi) iscal_offset, idummy, MaskSize, pdecomp
     logical iread_flow, iread_scal, iread_part
     real(wp) diff, dummy
     integer(wi) subdomain(6)
@@ -101,14 +101,14 @@ program VISUALS
     ! Read pressure decomposition
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
-    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomposition%name = 'total'
-    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomposition%name = 'total'
-    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomposition%name = 'resolved'
-    else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomposition%name = 'advdiffu' 
-    else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomposition%name = 'advction'
-    else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomposition%name = 'difusion'
-    else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomposition%name = 'coriolis'
-    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomposition%name = 'buoyancy'
+    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomp = DCMP_TOTAL
+    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomp = DCMP_TOTAL 
+    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomp = DCMP_RESOLVED
+    else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomp = DCMP_ADVECTION
+    else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomp = DCMP_ADVDIFF 
+    else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomp = DCMP_DIFFUSION
+    else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomp = DCMP_CORIOLIS
+    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomp = DCMP_BUOYANCY
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
@@ -215,7 +215,7 @@ program VISUALS
         if (opt_vec(iv) == 6) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == 7) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3); end if
         if (opt_vec(iv) == 8) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
-        if ((opt_vec(iv) == 8) .and. (pdecomposition%name == 'resolved')) then
+        if ((opt_vec(iv) == 8) .and. (pdecomp == DCMP_RESOLVED)) then
             iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
         if (opt_vec(iv) == 9) then; iread_scal = .true.; inb_txc = max(inb_txc, 1); end if
         if (opt_vec(iv) > 9 .and. opt_vec(iv) <= iscal_offset) then
@@ -517,40 +517,35 @@ program VISUALS
 
                 else if (opt_vec(iv) == 8) then ! pressure
 
-                    if (pdecomposition%name == 'resolved') then
+                    if (pdecomp == DCMP_RESOLVED) then
                         plot_file = 'PressureCoriolis'//time_str(1:MaskSize)
-                        pdecomposition%name = 'coriolis'
-                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
-                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        pdecomp = DCMP_CORIOLIS
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureBuoyancy'//time_str(1:MaskSize)
-                        pdecomposition%name = 'buoyancy'
-                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
-                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        pdecomp = DCMP_BUOYANCY
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                         
                         plot_file = 'PressureDiffusion'//time_str(1:MaskSize)
-                        pdecomposition%name = 'difusion'
-                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
-                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        pdecomp = DCMP_DIFFUSION
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                         plot_file = 'PressureAdvection'//time_str(1:MaskSize)
-                        pdecomposition%name = 'advction'
-                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
-                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+
+                        pdecomp = DCMP_ADVECTION
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureAdvDiff'//time_str(1:MaskSize)
-                        pdecomposition%name = 'advdiffu'
-                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
-                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        pdecomp = DCMP_ADVDIFF
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureTotal'//time_str(1:MaskSize)
-                        pdecomposition%name = 'total'
-                        write(*, '(A)') 'Value of pdecomposition%name:', pdecomposition%name
-                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                        pdecomp = DCMP_TOTAL
+                        call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     end if
