@@ -608,7 +608,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         if (use_tower) call DNS_TOWER_ACCUMULATE(tmp12, i4, wrk1d)
         if ( phAvg%active) then
             if (mod(itime+1, phAvg%stride) == 0) &
-                call PhaseAvg_Space(wrk2d, tmp12, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4)
+                call PhaseAvg_Space_Accumulate(wrk2d, tmp12, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4)
         end if
     end if
 

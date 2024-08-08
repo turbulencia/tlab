@@ -61,11 +61,11 @@ CONTAINS
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
     end if
     
-! #ifdef USE_MPI
-!     if (ims_pro_k == 0) then
-! #endif
+#ifdef USE_MPI
+    if (ims_pro_k == 0) then
+#endif
       call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_flow,      [imax,jmax,inb_flow,num_strides+1], 'avgflow.')
-      call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_stress,    [imax,jmax,6       ,num_strides+1], 'avgstr.' )
+      call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_stress,    [imax,jmax,6       ,num_strides+1], 'avgstr.' ) ! allocated not yet coded
       call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_p,         [imax,jmax,1       ,num_strides+1], 'avgp.'   )
       call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_scal,      [imax,jmax,inb_scal,num_strides+1], 'avgscal.')
 
@@ -74,9 +74,9 @@ CONTAINS
       avg_p      = 0.0_wp
       avg_scal   = 0.0_wp
 
-! #ifdef USE_MPI
-!     end if
-! #endif
+#ifdef USE_MPI
+    end if
+#endif
     return
   end subroutine PhaseAvg_Allocate
 
@@ -135,7 +135,7 @@ CONTAINS
   end subroutine PhaseAvg_Initialize
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_Space(localsum, field, nfield, itime, it_first, it_save, index)
+  subroutine PhaseAvg_Space_Accumulate(localsum, field, nfield, itime, it_first, it_save, index)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_VARS, only : imax, jmax, kmax
 #ifdef USE_MPI 
@@ -172,7 +172,7 @@ CONTAINS
             else if (index == 4) then
               call MPI_Reduce(localsum, avg_p(:,:,ifld,plane_id), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
               call PhaseAvg_PhasePlane(nfield, it_save, ifld, plane_id, localsum, avg_p)
-            else if (index == 5) then
+            else if (index == 5) then ! allocated not yet coded
               call MPI_Reduce(localsum, avg_stress(:,:,ifld,plane_id), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
               call PhaseAvg_PhasePlane(nfield, it_save, ifld, plane_id, localsum, avg_stress)
             end if
@@ -189,7 +189,7 @@ CONTAINS
           else if (index == 4) then
             avg_p(:,:,ifld,plane_id) = localsum
             call PhaseAvg_PhasePlane(nfield, it_save, ifld, plane_id, localsum, avg_p)
-          else if (index == 5) then
+          else if (index == 5) then ! allocated not yet coded
             avg_stress(:,:,ifld,plane_id) = localsum
             call PhaseAvg_PhasePlane(nfield, it_save, ifld, plane_id, localsum, avg_stress)
           end if
@@ -197,36 +197,8 @@ CONTAINS
       end do
     end if
   return
-  end subroutine PhaseAvg_Space
+  end subroutine PhaseAvg_Space_Accumulate
   
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!   subroutine PhaseAvg_Accumulate(nfield, ifld, plane_id, localsum, avg)
-! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!     use TLAB_VARS, only : imax, jmax, kmax
-! #ifdef USE_MPI 
-!     use MPI
-!     use TLAB_MPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
-! #endif
-
-!     implicit none
-!     integer(wi)                                               , intent(in)           :: nfield
-!     integer(wi)                                               , intent(in)           :: ifld
-!     integer(wi)                                               , intent(in)           :: plane_id 
-!     real(wp), dimension(imax, jmax)                           , intent(in)           :: localsum
-!     real(wp), dimension(imax, jmax, nfield, num_strides+1)    , intent(inout)        :: avg
-
-! #ifdef USE_MPI
-!   if (ims_pro_k == 0) then
-!     call MPI_Reduce(localsum, avg(:,:,ifld,plane_id), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
-!   else
-!     call MPI_Reduce(localsum, MPI_IN_PLACE, nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
-!   end if
-! #else
-!   avg(:,:,ifld,plane_id) = localsum
-! #endif
-!   return
-!   end subroutine PhaseAvg_Accumulate
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine PhaseAvg_PhasePlane(nfield, it_save, ifld, plane_id, localsum, avg)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -357,9 +329,20 @@ CONTAINS
   subroutine PhaseAvg_ResetVariable()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_CONSTANTS, only : wp
+#ifdef USE_MPI 
+    use MPI
+    use TLAB_MPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
+#endif
+
+#ifdef USE_MPI
+    if (ims_pro_k == 0) then
+#endif
     avg_flow   = 0.0_wp
     avg_stress = 0.0_wp
     avg_p      = 0.0_wp
     avg_scal   = 0.0_wp
+#ifdef USE_MPI
+    end if
+#endif
   end subroutine PhaseAvg_ResetVariable
 end module
