@@ -307,7 +307,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call DNS_TOWER_ACCUMULATE(tmp4, 4, wrk1d)
         if ( phAvg%active) then   
             if (mod((itime+1),phAvg%stride) == 0)  then
-                call PhaseAvg_Space_Accumulate(wrk2d, tmp4, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4)
+                call PhaseAvg_Space(wrk2d, tmp4, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4)
             end if
         end if
     end if

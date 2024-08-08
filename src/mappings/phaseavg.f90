@@ -135,7 +135,7 @@ CONTAINS
   end subroutine PhaseAvg_Initialize
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_Space_Accumulate(localsum, field, nfield, itime, it_first, it_save, index)
+  subroutine PhaseAvg_Space(localsum, field, nfield, itime, it_first, it_save, index)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_VARS, only : imax, jmax, kmax
 #ifdef USE_MPI 
@@ -197,7 +197,7 @@ CONTAINS
       end do
     end if
   return
-  end subroutine PhaseAvg_Space_Accumulate
+  end subroutine PhaseAvg_Space
   
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine PhaseAvg_PhasePlane(nfield, it_save, ifld, plane_id, localsum, avg)
