@@ -43,7 +43,7 @@ program INISCAL
 
     inb_txc = 0
     if (flag_s == PERT_LAYER_BROADBAND) inb_txc = max(inb_txc, 1)
-    if (infrared%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
+    if (infraredProps%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
 
     call TLAB_ALLOCATE(C_FILE_LOC)
 
@@ -96,20 +96,20 @@ program INISCAL
 
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
-    if (infrared%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
+    if (infraredProps%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
 
-        if (abs(infrared%parameters(1)) > 0.0_wp) then
-            infrared%parameters(3) = infrared%parameters(3)/infrared%parameters(1)*norm_ini_radiation
+        if (abs(infraredProps%parameters(1)) > 0.0_wp) then
+            infraredProps%parameters(3) = infraredProps%parameters(3)/infraredProps%parameters(1)*norm_ini_radiation
         end if
-        infrared%parameters(1) = norm_ini_radiation
+        infraredProps%parameters(1) = norm_ini_radiation
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
             call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, inb_scal_array))
         end if
         do is = 1, inb_scal
-            if (infrared%active(is)) then
-                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+            if (infraredProps%active(is)) then
+                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do

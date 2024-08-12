@@ -16,6 +16,12 @@ subroutine DNS_READ_LOCAL(inifile)
     use BOUNDARY_INFLOW
     use STATISTICS
     use PLANES
+    use IBM_VARS
+    ! needed for the last part; should be moved to TLab_Consistency_Check
+    use Radiation
+    use Microphysics
+    use Chemistry
+    use SpecialForcing
 
     implicit none
 
@@ -536,7 +542,7 @@ subroutine DNS_READ_LOCAL(inifile)
     ! Parameter 2 is the x-length of the inflow domain
 
 ! ###################################################################
-! Final initialization and control statements
+! Final initialization and consistency check
 ! ###################################################################
     if (nitera_first > nitera_last) then
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not started because nitera_first > nitera_last.')
@@ -688,6 +694,51 @@ subroutine DNS_READ_LOCAL(inifile)
             call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Nonblocking Communication require at least 1 scalar')
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
+    end if
+
+    ! -------------------------------------------------------------------
+    ! IBM Data
+    ! -------------------------------------------------------------------
+    if (imode_ibm == 1) then
+        if (.not. (imode_rhs == EQNS_RHS_COMBINED)) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for combined rhs mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        do is = 1, inb_scal
+            if ((BcsScalJmin%type(is) /= DNS_BCS_DIRICHLET) .or. (BcsScalJmin%SfcType(is) /= DNS_SFC_STATIC) .or. &
+                (ibm_geo%mirrored .and. ((BcsScalJmax%type(is) /= DNS_BCS_DIRICHLET) .or. (BcsScalJmax%SfcType(is) /= DNS_SFC_STATIC)))) then
+                call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Wrong scalar BCs.')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            end if
+        end do
+        do is = 1, 3
+            if ((BcsFlowJmin%type(is) /= DNS_BCS_DIRICHLET) .or. &
+                (ibm_geo%mirrored .and. (BcsFlowJmax%type(is) /= DNS_BCS_DIRICHLET))) then
+                call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Wrong Flow BCs.')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            end if
+        end do
+
+        !   should be moved to TLab_Consistency_Check
+        if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for incompressible mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for convective advection scheme.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        if ((infraredProps%type /= EQNS_NONE) .or. &
+            (sedimentationProps%type /= EQNS_NONE) .or. &
+            (infraredProps%type /= EQNS_NONE) .or. &
+            (chemistryProps%type /= EQNS_NONE) .or. &
+            (subsidence%type /= EQNS_NONE)) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
     end if
 
     ! -------------------------------------------------------------------

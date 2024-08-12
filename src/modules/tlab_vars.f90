@@ -55,25 +55,20 @@ module TLAB_VARS
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
 
 ! ###################################################################
-    type(grid_dt), dimension(3) :: g        ! Grid information along 3 directions
-    real(wp) :: area                        ! Horizontal area and volume
+    type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
+    real(wp) :: area                                ! Horizontal area and volume
 
 ! ###################################################################
-    type(profiles_dt) :: qbg(3)                 ! Velocity background information
-    type(profiles_dt) :: sbg(MAX_VARS)           ! Scalars background information
-    type(profiles_dt) :: pbg, rbg, tbg, hbg     ! Pressure, density, temperature, enthalpy background information
+    type(profiles_dt) :: qbg(3)                     ! Velocity background information
+    type(profiles_dt) :: sbg(MAX_VARS)              ! Scalars background information
+    type(profiles_dt) :: pbg, rbg, tbg, hbg         ! Pressure, density, temperature, enthalpy background information
 
-    real(wp), allocatable :: sbackground(:, :)  ! Scalar reference profiles
+    real(wp), allocatable :: sbackground(:, :)      ! Scalar reference profiles
 
 ! ###################################################################
-    type(term_dt) :: buoyancy               ! Buoyancy parameters
-    type(term_dt) :: coriolis               ! Coriolis parameters
-    type(term_dt) :: infrared               ! Radiation parameters
-    ! type(term_dt) :: visible                ! Radiation parameters
-    type(term_dt) :: sedimentation          ! Microphysics parameters
-    ! type(term_dt) :: evaporation            ! Microphysics parameters
-    type(term_dt) :: chemistry1             ! Chemistry parameters
-    type(term_dt) :: subsidence             ! Large-scale parameters
+    type(term_dt) :: buoyancy                       ! Buoyancy parameters
+    type(term_dt) :: coriolis                       ! Coriolis parameters
+    type(term_dt) :: subsidence                     ! Large-scale parameters
 
 ! ###################################################################
 ! Nondimensional numbers

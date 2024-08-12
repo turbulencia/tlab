@@ -14,7 +14,7 @@ program DNS
     use Radiation
     use Microphysics
     use Chemistry
-    use Forcing
+    use SpecialForcing
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -50,14 +50,11 @@ program DNS
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
-    call Forcing_Initialize(ifile)
+    call SpecialForcing_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
-    call DNS_READ_LOCAL(ifile)
     if (imode_ibm == 1) then
         call IBM_READ_INI(ifile)
-        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:),    BcsFlowJmax%type(:), &
-                                                   BcsScalJmin%type(:),    BcsScalJmax%type(:), &
-                                                   BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
+        call IBM_READ_CONSISTENCY_CHECK()
     end if
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -65,6 +62,9 @@ program DNS
     if (imode_rhs == EQNS_RHS_NONBLOCKING) call DNS_NB3DFFT_INITIALIZE
 #endif
 #endif
+    ! call TLab_Consistency_Check() ! TBD
+
+    call DNS_READ_LOCAL(ifile)
 
     ! #######################################################################
     ! Initialize memory space and grid data

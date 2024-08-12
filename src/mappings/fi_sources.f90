@@ -10,12 +10,11 @@ module FI_SOURCES
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
-    use TLAB_VARS, only: infrared, sedimentation, chemistry1, subsidence
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
     use Chemistry
-    use Forcing
+    use SpecialForcing
     implicit none
     private
 
@@ -110,10 +109,10 @@ contains
             end if
 
             ! -----------------------------------------------------------------------
-            ! volumetric forcing
+            ! special forcing
             ! -----------------------------------------------------------------------
-            if (forcing1%active(iq)) then
-                call Forcing_Source(forcing1, imax, jmax, kmax, hq(1, iq), tmp1)
+            if (forcingProps%active(iq)) then
+                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, hq(1, iq), tmp1)
             end if
         end do
 
@@ -139,8 +138,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Radiation
             ! -----------------------------------------------------------------------
-            if (infrared%active(is)) then
-                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
+            if (infraredProps%active(is)) then
+                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
                 
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
@@ -160,8 +159,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Microphysics
             ! -----------------------------------------------------------------------
-            if (sedimentation%active(is)) then
-                call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
+            if (sedimentationProps%active(is)) then
+                call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
 
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
@@ -181,8 +180,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Chemistry
             ! -----------------------------------------------------------------------
-            if (chemistry1%active(is)) then
-                call Chemistry_Source(chemistry1, imax, jmax, kmax, is, s, tmp1)
+            if (chemistryProps%active(is)) then
+                call Chemistry_Source(chemistryProps, imax, jmax, kmax, is, s, tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

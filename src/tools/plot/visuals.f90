@@ -858,9 +858,9 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 16) then
                 do is = 1, inb_scal
 
-                    if (infrared%active(is)) then
+                    if (infraredProps%active(is)) then
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
-                        call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+                        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if
 
