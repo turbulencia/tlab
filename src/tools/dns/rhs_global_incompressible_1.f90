@@ -20,7 +20,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_CONSTANTS, only: tfile
 #endif
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
-    use TLAB_VARS, only: imode_ibm
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g
@@ -35,7 +34,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use DNS_TOWER
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
-    use IBM_VARS, only: imode_ibm_scal, ibm_burgers
+    use IBM_VARS, only: imode_ibm, imode_ibm_scal, ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
     use OPR_ELLIPTIC

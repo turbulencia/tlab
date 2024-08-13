@@ -40,7 +40,19 @@ subroutine IBM_READ_INI(inifile)
   bakfile = TRIM(ADJUSTL(inifile))//'.bak'
   call TLAB_WRITE_ASCII(lfile, 'Reading IBM input data from tlab.ini.')
 
-  ! read IBM parameters
+! IBM Status Parameter
+  call TLAB_WRITE_ASCII(bakfile, '#')
+  call TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
+  call TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
+  call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
+  if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
+  else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
+  else
+      call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. Wrong IBM Status option.')
+      call TLAB_STOP(DNS_ERROR_OPTION)
+  end if
+
+! read IBM parameters
   call TLAB_WRITE_ASCII(bakfile, '#')
   call TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
   call TLAB_WRITE_ASCII(bakfile, '#IBMScalar=<on/off>')

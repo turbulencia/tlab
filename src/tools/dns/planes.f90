@@ -4,10 +4,10 @@
 module PLANES
     use TLAB_CONSTANTS, only: efile, lfile, wp, wi, fmt_r, small_wp
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
-    use TLAB_VARS, only: g, imode_ibm, scal_on
+    use TLAB_VARS, only: g, scal_on
     use TLAB_VARS, only: itime, rtime
     use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
-    use IBM_VARS, only: ibm_partial
+    use IBM_VARS, only: imode_ibm, ibm_partial
     use TLAB_PROCS
     use Thermodynamics, only: imixture
     use THERMO_ANELASTIC

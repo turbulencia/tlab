@@ -9,11 +9,11 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
+    use TLAB_VARS, only: imode_eqns, imode_elliptic
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
-    use IBM_VARS, only: ibm_burgers
+    use IBM_VARS, only: imode_ibm, ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
     use OPR_ELLIPTIC

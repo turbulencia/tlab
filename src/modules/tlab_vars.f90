@@ -28,8 +28,6 @@ module TLAB_VARS
     logical :: fourier_on = .false.     ! using FFT libraries
     logical :: stagger_on = .false.     ! horizontal staggering of pressure
 
-    integer :: imode_ibm                ! IBM mode
-
 ! ###################################################################
 ! Iteration
 ! ###################################################################

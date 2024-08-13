@@ -11,8 +11,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt
-    use TLAB_VARS, only: imode_ibm
-    use IBM_VARS, only: imode_ibm_scal, ibm_partial
+    use IBM_VARS, only: imode_ibm, imode_ibm_scal, ibm_partial
     use TLAB_ARRAYS, only: s
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs

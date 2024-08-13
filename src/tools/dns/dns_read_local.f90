@@ -325,20 +325,6 @@ subroutine DNS_READ_LOCAL(inifile)
     BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
 
 ! ###################################################################
-! IBM Status Parameter
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
-    call TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
-    call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
-    if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
-    else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Status option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-! ###################################################################
 ! Buffer Zone Parameters
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
