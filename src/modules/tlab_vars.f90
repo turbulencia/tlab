@@ -48,7 +48,7 @@ module TLAB_VARS
 ! auxiliary arrays
     integer(wi) :: isize_wrk1d, inb_wrk1d           ! 1D scratch arrays
     integer(wi) :: isize_wrk2d, inb_wrk2d           ! 2D scratch arrays
-    integer(wi) :: isize_wrk3d                      ! 3D scratch arrays
+    integer(wi) :: isize_wrk3d                      ! 3D scratch array (only 1)
     integer(wi) :: isize_txc_field, inb_txc         ! 3D arrays for intermediate calculations
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
 
@@ -57,12 +57,14 @@ module TLAB_VARS
     real(wp) :: area                                ! Horizontal area and volume
 
 ! ###################################################################
-    type(profiles_dt) :: qbg(3)                     ! Velocity background information
-    type(profiles_dt) :: sbg(MAX_VARS)              ! Scalars background information
-    type(profiles_dt) :: pbg, rbg, tbg, hbg         ! Pressure, density, temperature, enthalpy background information
+! background information to set up bcs, ics, and reference profiles
+! ###################################################################
+    type(profiles_dt) :: qbg(3)                     ! Velocity
+    type(profiles_dt) :: sbg(MAX_VARS)              ! Scalars
+    type(profiles_dt) :: pbg, rbg, tbg, hbg         ! Pressure, density, temperature, enthalpy
 
-    real(wp), allocatable :: sbackground(:, :)      ! Scalar reference profiles
-
+! ###################################################################
+! phenomena in addition to the navier-stokes equations
 ! ###################################################################
     type(term_dt) :: buoyancy                       ! Buoyancy parameters
     type(term_dt) :: coriolis                       ! Coriolis parameters
@@ -75,9 +77,9 @@ module TLAB_VARS
     real(wp) :: mach                                ! compressibility
     real(wp) :: gama0                               ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
     real(wp) :: damkohler(MAX_VARS)                 ! reaction
-    real(wp) :: froude                              ! body force
+    real(wp) :: froude                              ! gravity force
     real(wp) :: rossby                              ! Coriolis force
-    real(wp) :: stokes                              ! inertial effects
+    real(wp) :: stokes                              ! particle inertial effects
     real(wp) :: settling                            ! sedimentation effects
 
 ! ###########################################################

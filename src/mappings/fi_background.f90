@@ -10,7 +10,6 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
-    use TLAB_VARS, only: sbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
@@ -64,15 +63,6 @@ subroutine FI_BACKGROUND_INITIALIZE()
         if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
     end do
 
-    ! -----------------------------------------------------------------------
-    ! Construct reference scalar profiles
-    allocate (sbackground(g(2)%size, inb_scal_array))
-    do is = 1, inb_scal
-        do j = 1, g(2)%size
-            sbackground(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
-        end do
-    end do
-
 ! #######################################################################
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         ! -----------------------------------------------------------------------
@@ -82,12 +72,18 @@ subroutine FI_BACKGROUND_INITIALIZE()
         allocate (pbackground(g(2)%size))
         allocate (tbackground(g(2)%size))
         allocate (epbackground(g(2)%size))
-
+        allocate (sbackground(g(2)%size, inb_scal_array))
+    
         rbackground = 1.0_wp ! defaults
         ribackground = 1.0_wp
         pbackground = 1.0_wp
         tbackground = 1.0_wp
         epbackground = 0.0_wp
+        do is = 1, inb_scal
+            do j = 1, g(2)%size
+                sbackground(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+            end do
+        end do
 
         if (scaleheight > 0.0_wp) then
             epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight

@@ -630,6 +630,8 @@ contains
             call TLAB_ALLOCATE_ERR('TLAB_ALLOCATE_LOG', efile, s)
         end if
 
+        if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
+
         write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
         do id = 2, size(dims)
             write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
