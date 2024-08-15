@@ -41,7 +41,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     else if (trim(adjustl(sRes)) == 'inertia') then; part%type = PART_TYPE_INERTIA
     else if (trim(adjustl(sRes)) == 'bilinearcloudthree') then; part%type = PART_TYPE_BIL_CLOUD_3
     else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; part%type = PART_TYPE_BIL_CLOUD_4
-    else if (trim(adjustl(sRes)) == 'tiniaone') then; part%type = PART_TYPE_TINIA_1        
+    else if (trim(adjustl(sRes)) == 'tiniaone') then; part%type = PART_TYPE_TINIA_1
     else
         call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -50,8 +50,13 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
     isize_part = 0
 
     part_bcs = PART_BCS_NONE
-    if ( part%type == PART_TYPE_INERTIA ) part_bcs = PART_BCS_SPECULAR    ! probably to be read from tlab.ini
-    if ( part%type == PART_TYPE_TINIA_1 ) part_bcs = PART_BCS_STICK
+    if (part%type == PART_TYPE_INERTIA) part_bcs = PART_BCS_SPECULAR
+    if (part%type == PART_TYPE_TINIA_1) part_bcs = PART_BCS_STICK
+    call SCANINICHAR(bakfile, inifile, block, 'BoundaryCondition', 'Void', sRes)
+    if (trim(adjustl(sRes)) == 'none') then; part_bcs = PART_BCS_NONE
+    else if (trim(adjustl(sRes)) == 'specular') then; part_bcs = PART_BCS_SPECULAR
+    else if (trim(adjustl(sRes)) == 'stick') then; part_bcs = PART_BCS_STICK
+    end if
 
     if (part%type /= PART_TYPE_NONE) then
         call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
@@ -137,7 +142,7 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
             part_spname(2) = 'droplet_nodiff_3'
             part_spname(3) = 'residence_part'
 
-    ! case (PART_TYPE_NEW_CASES)
+            ! case (PART_TYPE_NEW_CASES)
         case (PART_TYPE_TINIA_1)
             ! call PARTICLE_TINIA_READBLOCK(bakfile, inifile, block)
 
@@ -163,11 +168,11 @@ subroutine PARTICLE_READ_GLOBAL(inifile)
 
         select case (imode_traj)
         case (TRAJ_TYPE_BASIC)          ! save particle prognostic properties
-            
+
         case (TRAJ_TYPE_EULERIAN)       ! add the Eulerian prognostic properties
             inb_traj = inb_traj + inb_flow_array + inb_scal_array
 
-        case (TRAJ_TYPE_VORTICITY)      ! add the Eulerian vorticity  
+        case (TRAJ_TYPE_VORTICITY)      ! add the Eulerian vorticity
             inb_traj = inb_traj + 3
 
         end select

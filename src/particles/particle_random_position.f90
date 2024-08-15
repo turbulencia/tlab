@@ -110,10 +110,11 @@ use IO_FIELDS
         l_q(1:l_g%np, 2) = IniP%ymean + (l_q(1:l_g%np, 2) - 0.5_wp)*IniP%diam
 
     case (PART_INITYPE_HARDCODED)       ! For testing
-        l_q(1:l_g%np, 1) = 0.0_wp
-        l_q(1:l_g%np, 2) = IniP%ymean
-        l_q(1:l_g%np, 3) = 0.0_wp
+        l_q(1:l_g%np, 1) = xref         ! First point in the local domain, to ensure that the particles are distributed over all MPI tasks
+        l_q(1:l_g%np, 3) = zref
 
+        l_q(1:l_g%np, 2) = IniP%ymean
+        
     case (PART_INITYPE_SCALAR)          ! Use the scalar field to create the particle distribution
         call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
         is = 1 ! Reference scalar
