@@ -307,7 +307,7 @@ program VISUALS
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Memory_Initialize(C_FILE_LOC)
 
     if (iread_part) then ! Particle variables
         inb_part_txc = max(inb_part_txc, 1)

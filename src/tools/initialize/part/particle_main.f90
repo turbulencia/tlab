@@ -35,7 +35,7 @@ program INIPART
         inb_scal_array = 0
         inb_txc = inb_scal
 
-        call TLAB_ALLOCATE(C_FILE_LOC)
+        call TLab_Memory_Initialize(C_FILE_LOC)
 
         call PARTICLE_ALLOCATE(C_FILE_LOC)
 

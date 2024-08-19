@@ -634,7 +634,7 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_STOP(DNS_ERROR_IBC)
         end if
 
-        ! Consistency check
+        ! consistency check
         if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
             call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
             call TLAB_STOP(DNS_ERROR_OPTION)
@@ -673,7 +673,8 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
         end if
 
-        if (ims_npro_i*ims_npro_k == ims_npro) then ! check
+        ! consistency check
+        if (ims_npro_i*ims_npro_k == ims_npro) then
             write (lstr, *) ims_npro_i; write (sRes, *) ims_npro_k
             lstr = trim(adjustl(lstr))//'x'//trim(adjustl(sRes))
             call TLAB_WRITE_ASCII(lfile, 'Initializing domain partition '//trim(adjustl(lstr)))
@@ -689,12 +690,38 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Filters
 ! ###################################################################
+! Dealiasing
+    call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
+
 ! Domain
     call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
     FilterDomainActive(:) = .true.      ! Variable to eventually allow for control field by field
 
-! Dealiasing
-    call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
+    FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
+    FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
+    if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
+        all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
+        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'noslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
+        else if (trim(adjustl(sRes)) == 'freeslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.VelocityJmin.')
+            call TLAB_STOP(DNS_ERROR_IBC)
+        end if
+        FilterDomainBcsFlow(2) = DNS_FILTER_BCS_DIRICHLET ! Normal velocity is always Dirichlet
+
+        do is = 1, inb_scal
+            write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmin'
+            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
+            if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
+            else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
+            else
+                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.'//trim(adjustl(lstr)))
+                call TLAB_STOP(DNS_ERROR_IBC)
+            end if
+        end do
+
+    end if
 
 ! Pressure
     call FILTER_READBLOCK(bakfile, inifile, 'PressureFilter', PressureFilter)
@@ -727,13 +754,10 @@ subroutine IO_READ_GLOBAL(inifile)
     call LIST_INTEGER(sRes, nstatavg, statavg)
 
 ! ###################################################################
-! Initialization
+! Initialization of array sizes
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
 
-! -------------------------------------------------------------------
-! Arrays size
-! -------------------------------------------------------------------
 ! prognostic and diagnostic variables
     isize_field = imax*jmax*kmax
 
@@ -757,6 +781,34 @@ subroutine IO_READ_GLOBAL(inifile)
     inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
     !                           can be changed in Thermodynamics_Initialize(ifile)
 
+! auxiliar array txc for intermediate calculations
+    isize_txc_field = imax*jmax*kmax
+    if (fourier_on) then
+        isize_txc_dimz = (imax + 2)*(jmax + 2)
+        isize_txc_dimx = kmax*(jmax + 2)
+        isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
+#ifdef USE_MPI
+        if (ims_npro_k > 1) then
+            if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
+                isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
+                isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
+            end if
+            isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
+        end if
+        if (ims_npro_i > 1) then
+            if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
+                isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
+                isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
+            end if
+            isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
+        end if
+#endif
+        if (mod(imax, 2) /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
+            call TLAB_STOP(DNS_ERROR_DIMGRID)
+        end if
+    end if
+
 ! scratch arrays
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
     inb_wrk1d = 18
@@ -765,7 +817,7 @@ subroutine IO_READ_GLOBAL(inifile)
     inb_wrk2d = 2
     if (imode_sim == DNS_MODE_SPATIAL) inb_wrk2d = max(11, inb_wrk2d)
 
-    isize_wrk3d = isize_field
+    isize_wrk3d = max(isize_field, isize_txc_field)
 
 ! grid array
     do is = 1, 3
@@ -803,71 +855,6 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
 
     end do
-
-! auxiliar array txc
-    isize_txc_field = imax*jmax*kmax
-    if (fourier_on) then
-        isize_txc_dimz = (imax + 2)*(jmax + 2)
-        isize_txc_dimx = kmax*(jmax + 2)
-        isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
-#ifdef USE_MPI
-        if (ims_npro_k > 1) then
-            if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
-                isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
-                isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
-            end if
-            isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
-        end if
-        if (ims_npro_i > 1) then
-            if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
-                isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
-                isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
-            end if
-            isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
-        end if
-#endif
-        if (mod(imax, 2) /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
-            call TLAB_STOP(DNS_ERROR_DIMGRID)
-        end if
-    end if
-
-! loop counters over the whole domain are integer*4
-    if (isize_txc_field > huge(imax)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes not big enough.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    end if
-
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-
-! -------------------------------------------------------------------
-! Helmholtz filter that maintains prognostic bcs
-! Here becasue I need the values of inb_{flow,scal}
-! -------------------------------------------------------------------
-    FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
-    FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
-
-    if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
-        all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'noslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'freeslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.VelocityJmin.')
-            call TLAB_STOP(DNS_ERROR_IBC)
-        end if
-        FilterDomainBcsFlow(2) = DNS_FILTER_BCS_DIRICHLET ! Normal velocity is always Dirichlet
-        do is = 1, inb_scal
-            write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmin'
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
-            if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
-            else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
-            else
-                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.'//trim(adjustl(lstr)))
-                call TLAB_STOP(DNS_ERROR_IBC)
-            end if
-        end do
-    end if
 
     return
 end subroutine IO_READ_GLOBAL

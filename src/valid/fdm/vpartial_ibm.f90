@@ -59,7 +59,7 @@ program VPARTIAL
     ! inb_wrk2d = 2
     inb_txc = 12
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Memory_Initialize(__FILE__)
     call IBM_ALLOCATE(__FILE__)
     u(1:imax*jmax*kmax) => txc(1:imax*jmax*kmax, 1)
     du1_a(1:imax*jmax*kmax) => txc(1:imax*jmax*kmax, 2)

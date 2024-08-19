@@ -31,7 +31,7 @@ program VPARTIAL3D
 
     inb_txc = 8
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Memory_Initialize(__FILE__)
 
     allocate (bcs_ht(imax, kmax), bcs_hb(imax, kmax))
 

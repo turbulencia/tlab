@@ -22,7 +22,7 @@ module TLAB_PROCS
     public :: TLAB_START
     public :: TLAB_STOP
     public :: TLAB_WRITE_ASCII
-    public :: TLAB_ALLOCATE
+    public :: TLab_Memory_Initialize
 
 #ifdef NO_ASSUMED_RANKS
     interface TLAB_ALLOCATE_ARRAY_SINGLE
@@ -49,11 +49,17 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine TLAB_ALLOCATE(C_FILE_LOC)
+    subroutine TLab_Memory_Initialize(C_FILE_LOC)
         use TLAB_ARRAYS
 
         character(len=*), intent(in) :: C_FILE_LOC
 
+! loop counters over the whole domain are integer*4
+        if (isize_txc_field > huge(imax)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+    
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
@@ -77,7 +83,7 @@ contains
         call TLAB_DEFINE_POINTERS_C()
 
         return
-    end subroutine TLAB_ALLOCATE
+    end subroutine TLab_Memory_Initialize
 
     ! ######################################################################
     ! ######################################################################

@@ -166,7 +166,7 @@ program APRIORI
 
     allocate (mean(2*opt_order*nfield))
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Memory_Initialize(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

@@ -374,7 +374,7 @@ program SPECTRA
 
     isize_wrk3d = max(isize_wrk3d, isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Memory_Initialize(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

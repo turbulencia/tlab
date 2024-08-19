@@ -309,7 +309,7 @@ program AVERAGES
 
     isize_wrk3d = max(isize_wrk3d, opt_order*nfield*jmax)
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Memory_Initialize(C_FILE_LOC)
 
     call PARTICLE_ALLOCATE(C_FILE_LOC)
 
