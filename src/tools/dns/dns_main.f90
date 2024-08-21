@@ -52,8 +52,8 @@ program DNS
     call Chemistry_Initialize(ifile)
     call SpecialForcing_Initialize(ifile)
     call PARTICLE_READ_GLOBAL(ifile)
+    call IBM_READ_INI(ifile)
     if (imode_ibm == 1) then
-        call IBM_READ_INI(ifile)
         call IBM_READ_CONSISTENCY_CHECK()
     end if
 #ifdef USE_MPI
