@@ -30,7 +30,7 @@ contains
         ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
-        integer(wi) idummy, is, j
+        integer(wi) idummy
         real(wp) dummy
 
         !########################################################################
