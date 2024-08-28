@@ -88,6 +88,13 @@ contains
 
         end if
 
+        ! Check with previous version
+        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
         ! -------------------------------------------------------------------
         infraredProps%scalar = inb_scal_array                        ! By default, radiation is caused by last scalar
 
