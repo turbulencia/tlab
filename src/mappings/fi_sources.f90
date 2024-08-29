@@ -35,6 +35,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FI_SOURCES_FLOW(q, s, hq, tmp1)
+        use TLAB_VARS, only: rtime
         real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field)
@@ -112,7 +113,17 @@ contains
             ! special forcing
             ! -----------------------------------------------------------------------
             if (forcingProps%active(iq)) then
-                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, hq(1, iq), tmp1)
+                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, g, rtime, hq(1, iq), tmp1)
+
+!$omp parallel default( shared ) &
+!$omp private( ij, srt,end,siz )
+                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+
+                do ij = srt, end
+                    hq(ij, iq) = hq(ij, iq) + tmp1(ij)*forcingProps%vector(iq)
+                end do
+!$omp end parallel
+
             end if
         end do
 
@@ -140,7 +151,7 @@ contains
             ! -----------------------------------------------------------------------
             if (infraredProps%active(is)) then
                 call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
-                
+
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
@@ -165,7 +176,7 @@ contains
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
-!$omp parallel default( shared ) &
+!$omp parallel default( shared ) &forcingProps%vector
 !$omp private( ij, srt,end,siz )
                     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
 
@@ -260,7 +271,7 @@ contains
     end subroutine FI_CORIOLIS
 
 !########################################################################
-!# Determine the buoyancy term (density difference \rho-\rho_0)
+!# Determine the buoyancy term (density difference rho -rho_0
 !# when it is a function of a scalar
 !########################################################################
     subroutine FI_BUOYANCY(buoyancy, nx, ny, nz, s, b, ref)

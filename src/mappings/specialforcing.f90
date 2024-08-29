@@ -3,7 +3,7 @@
 
 module SpecialForcing
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
-    use TLAB_TYPES, only: term_dt
+    use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private
@@ -18,8 +18,9 @@ module SpecialForcing
     integer, parameter :: TYPE_NONE = 0
     integer, parameter :: TYPE_SINUSOIDAL = 1
     integer, parameter :: TYPE_SINUSOIDAL_NOSLIP = 2
-    integer, parameter :: TYPE_RAND_MULTIPLY = 3
-    integer, parameter :: TYPE_WAVEMAKER = 4
+    integer, parameter :: TYPE_RAND_MULTIPLICATIVE = 3
+    integer, parameter :: TYPE_RAND_ADDIVTIVE = 4
+    integer, parameter :: TYPE_WAVEMAKER = 5
 
 contains
     !########################################################################
@@ -41,10 +42,11 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#Geometry=<value>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; forcingProps%type = TYPE_NONE
-        elseif (trim(adjustl(sRes)) == 'random') then; forcingProps%type = TYPE_RAND_MULTIPLY; 
+        elseif (trim(adjustl(sRes)) == 'random') then; forcingProps%type = TYPE_RAND_MULTIPLICATIVE; 
         elseif (trim(adjustl(sRes)) == 'sinusoidal') then; forcingProps%type = TYPE_SINUSOIDAL; 
         elseif (trim(adjustl(sRes)) == 'wavemaker') then; forcingProps%type = TYPE_WAVEMAKER; 
         else
@@ -57,23 +59,32 @@ contains
             forcingProps%active(1:3) = .true.       ! default is active in x, y, z momentum equations
 
             forcingProps%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, 'Forcing', 'Parameters', '1.0', sRes)
+            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, forcingProps%parameters)
 
         end if
 
-        ! select case (forcingProps%type)
-        ! case (TYPE_RAND_MULTIPLY)
+        forcingProps%vector(:) = 1.0_wp             ! acting equally in the 3 directions
+        call SCANINICHAR(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
+        idummy = 3
+        call LIST_REAL(sRes, idummy, forcingProps%vector)
 
-        ! case (TYPE_WAVEMAKER)
+        select case (forcingProps%type)
+        case (TYPE_WAVEMAKER)
+            forcingProps%auxiliar(:) = 0.0_wp
+            call SCANINICHAR(bakfile, inifile, block, 'Geometry', '1.0,1.0,1.0, 1.0,1.0,1.0', sRes) ! position and region
+            idummy = MAX_PARS
+            call LIST_REAL(sRes, idummy, forcingProps%auxiliar)
 
-        ! end select
+        end select
 
+        ! -------------------------------------------------------------------
+        ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') &
-            call SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)  ! backwards compatibility, to be removed
+            call SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)
         if (abs(dummy) > 0.0) then
-            forcingProps%type = EQNS_RAND_MULTIPLY
+            forcingProps%type = TYPE_RAND_MULTIPLICATIVE
             forcingProps%parameters = dummy
             forcingProps%active(1:3) = .true.
         end if
@@ -83,31 +94,48 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine SpecialForcing_Source(locProps, nx, ny, nz, h, tmp)
+    subroutine SpecialForcing_Source(locProps, nx, ny, nz, g, time, h, tmp)
         type(term_dt), intent(in) :: locProps
         integer(wi), intent(in) :: nx, ny, nz
+        type(grid_dt), intent(in) :: g(3)
+        real(wp), intent(in) :: time
         real(wp), intent(inout) :: h(nx, ny, nz)
         real(wp), intent(inout) :: tmp(nx, ny, nz)
 
         ! -----------------------------------------------------------------------
         real(wp) dummy
+        integer(wi) i, j, k
 
         !########################################################################
         select case (locProps%type)
 
-        case (TYPE_RAND_MULTIPLY)
+        case (TYPE_RAND_MULTIPLICATIVE)
             dummy = locProps%parameters(1)
 
             call random_number(tmp)
 
             tmp = dummy*(tmp*2.0_wp - 1.0_wp)
-            h = h*(1.0_wp + tmp)
+            tmp = tmp*h
 
         case (TYPE_SINUSOIDAL)
 
         case (TYPE_SINUSOIDAL_NOSLIP)
 
         case (TYPE_WAVEMAKER)
+            do j = 1, ny
+                do i = 1, nx
+                    tmp(i, j, nz) = exp(-0.5_wp*((g(1)%nodes(i) - locProps%auxiliar(1))/locProps%auxiliar(4))**2.0_wp)
+                    tmp(i, j, nz) = exp(-0.5_wp*((g(2)%nodes(j) - locProps%auxiliar(2))/locProps%auxiliar(5))**2.0_wp)*tmp(i, j, nz)
+                end do
+            end do
+
+            if (nz > 1) then
+                do k = 1, nz
+                    tmp(i, j, k) = exp(0.5_wp*((g(3)%nodes(k) - locProps%auxiliar(3))/locProps%auxiliar(6))**2.0_wp)*tmp(i, j, nz)
+                end do
+            end if
+
+            tmp = tmp*sin(locProps%parameters(1)*time)
 
         end select
 
@@ -171,7 +199,7 @@ contains
                 !     tmp2(ij) =-cos(2.0_wp*pi_wp*g(1)%nodes(i))*(1.0_wp-cos(C_4_R*pi_wp*g(2)%nodes(j)))*0.5_wp
                 tmp1(ij) = sin(pi_wp*g(1)%nodes(i))*sin(pi_wp*g(1)%nodes(i))*sin(2.0_wp*pi_wp*g(2)%nodes(j))
                 tmp2(ij) = -sin(2.0_wp*pi_wp*g(1)%nodes(i))*sin(pi_wp*g(2)%nodes(j))*sin(pi_wp*g(2)%nodes(j))
-            end do 
+            end do
         end do
 
         ! Time terms
