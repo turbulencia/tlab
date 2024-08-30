@@ -59,13 +59,13 @@ contains
             forcingProps%active(1:3) = .true.       ! default is active in x, y, z momentum equations
 
             forcingProps%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
+            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0, 1.0, 0.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, forcingProps%parameters)
 
         end if
 
-        forcingProps%vector(:) = 1.0_wp             ! acting equally in the 3 directions
+        forcingProps%vector(1:3) = 1.0_wp           ! acting equally in the 3 directions
         call SCANINICHAR(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
         idummy = 3
         call LIST_REAL(sRes, idummy, forcingProps%vector)
@@ -73,9 +73,10 @@ contains
         select case (forcingProps%type)
         case (TYPE_WAVEMAKER)
             forcingProps%auxiliar(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Geometry', '1.0,1.0,1.0, 1.0,1.0,1.0', sRes) ! position and region
+            call SCANINICHAR(bakfile, inifile, block, 'Geometry', '1.0,1.0,1.0, 1.0', sRes) ! position and region
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, forcingProps%auxiliar)
+            forcingProps%auxiliar(4) = abs(forcingProps%auxiliar(4))                        ! make sure the size parameter is positive
 
         end select
 
@@ -122,20 +123,19 @@ contains
         case (TYPE_SINUSOIDAL_NOSLIP)
 
         case (TYPE_WAVEMAKER)
-            do j = 1, ny
-                do i = 1, nx
-                    tmp(i, j, nz) = exp(-0.5_wp*((g(1)%nodes(i) - locProps%auxiliar(1))/locProps%auxiliar(4))**2.0_wp)
-                    tmp(i, j, nz) = exp(-0.5_wp*((g(2)%nodes(j) - locProps%auxiliar(2))/locProps%auxiliar(5))**2.0_wp)*tmp(i, j, nz)
+            dummy = 0.5_wp/locProps%auxiliar(4)**2.0_wp
+            do k = 1, nz
+                do j = 1, ny
+                    do i = 1, nx
+                        tmp(i, j, k) = (g(1)%nodes(i) - locProps%auxiliar(1))**2.0_wp &
+                                       + (g(2)%nodes(j) - locProps%auxiliar(2))**2.0_wp &
+                                       + (g(3)%nodes(k) - locProps%auxiliar(3))**2.0_wp
+                        tmp(i, j, k) = exp(-dummy*tmp(i, j, k))         ! exp of an array can cause memory problems
+                    end do
                 end do
             end do
 
-            if (nz > 1) then
-                do k = 1, nz
-                    tmp(i, j, k) = exp(0.5_wp*((g(3)%nodes(k) - locProps%auxiliar(3))/locProps%auxiliar(6))**2.0_wp)*tmp(i, j, nz)
-                end do
-            end if
-
-            tmp = tmp*sin(locProps%parameters(1)*time)
+            tmp = tmp*locProps%parameters(1)*sin(locProps%parameters(2)*time + locProps%parameters(3))
 
         end select
 
