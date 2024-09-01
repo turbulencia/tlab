@@ -1,3 +1,5 @@
+! SHOULD BE INTEGRATED INTO INIPART
+
 #include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
@@ -56,23 +58,24 @@ program PARTICLE_INI_TRAJEC
 ! -------------------------------------------------------------------
 ! Additional local arrays
 
-    TINTEGER, dimension(:), allocatable :: dummy_proc
+    integer(wi), dimension(:), allocatable :: dummy_proc
     integer(8), dimension(:), allocatable :: l_traj_tags, fake_l_traj_tags
 #ifdef USE_MPI
-    TINTEGER dummy_ims_npro
-    TINTEGER dummy_isize_traj
+    integer(wi) dummy_ims_npro
+    integer(wi) dummy_isize_traj
     integer(8), dimension(:), allocatable :: all_fake_l_traj_tags
 #endif
-    TREAL, dimension(:, :), allocatable :: l_traj
-    TREAL, dimension(:), allocatable :: fake_liquid, all_fake_liquid
+    real(wp), dimension(:, :), allocatable :: l_traj
+    real(wp), dimension(:), allocatable :: fake_liquid, all_fake_liquid
 
-    TINTEGER nitera_first
+    integer(wi) nitera_first
+    integer(wi) :: isize_traj                       ! # of saved trajectories
 
     character*32 bakfile
 
 #ifdef USE_MPI
     character*64 fname, str
-    TINTEGER particle_pos, i
+    integer(wi) particle_pos, i
     TLONGINTEGER dummy
 #endif
 
@@ -80,15 +83,16 @@ program PARTICLE_INI_TRAJEC
 
     call IO_READ_GLOBAL(ifile)
     call Thermodynamics_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Particle_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
 #endif
 
-    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+    bakfile = trim(adjustl(ifile))//'.bak'
 
 ! Get the local information from the tlab.ini
+    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
     call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
 ! -------------------------------------------------------------------
@@ -102,7 +106,7 @@ program PARTICLE_INI_TRAJEC
         allocate (txc(isize_field, 3))
     end if
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     allocate (dummy_proc(isize_traj))
     allocate (l_traj_tags(isize_traj))
@@ -129,7 +133,7 @@ program PARTICLE_INI_TRAJEC
     !#######################################################################
     !CREATE THE RANDOM PARTICLE FIELD
     !#######################################################################
-    call PARTICLE_RANDOM_POSITION(l_q, l_txc, txc)
+    call Particle_Initialize_Properties(l_g, l_q, l_txc, txc)
 
 #ifdef USE_MPI
     !#######################################################################
@@ -138,7 +142,7 @@ program PARTICLE_INI_TRAJEC
 
     if (ims_pro == 0) then
         fname = 'pos_largest_particle_start'
-        write (str, *) nitera_first; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+        write (str, *) nitera_first; str = trim(adjustl(fname))//"."//trim(adjustl(str)) ! name with the number for direction and scalar
         open (unit=117, file=str, access='stream', form='unformatted')
         read (117) dummy_ims_npro   !is a integer
         read (117, POS=SIZEOFINT + 1) dummy_isize_traj  !is an integer
@@ -175,7 +179,7 @@ program PARTICLE_INI_TRAJEC
     !#######################################################################
     !WRITE FILE WITH NEW FAKE LARGEST IDs
     !#######################################################################
-  CALL MPI_REDUCE(fake_l_traj_tags, all_fake_l_traj_tags, isize_traj, MPI_INTEGER8, MPI_SUM,0, MPI_COMM_WORLD, ims_err)
+    call MPI_REDUCE(fake_l_traj_tags, all_fake_l_traj_tags, isize_traj, MPI_INTEGER8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
     call MPI_REDUCE(fake_liquid, all_fake_liquid, isize_traj, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
 
     !#######################################################################

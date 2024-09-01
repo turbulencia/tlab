@@ -29,8 +29,8 @@ program PARTICLE_BUILD_PDF
 
 ! -------------------------------------------------------------------
 
-    TINTEGER nitera_first, nitera_last, nitera_save
-    TINTEGER i
+    integer(wi) nitera_first, nitera_last, nitera_save
+    integer(wi) i
 
     character*64 fname
     character*32 bakfile
@@ -41,7 +41,7 @@ program PARTICLE_BUILD_PDF
 
     call IO_READ_GLOBAL(ifile)
     call Thermodynamics_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL('tlab.ini')
+    call Particle_Initialize_Parameters('tlab.ini')
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -68,7 +68,7 @@ program PARTICLE_BUILD_PDF
 
     inb_part_txc = 1
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     isize_wrk2d = max(isize_wrk2d, jmax*inb_part_interp)
 

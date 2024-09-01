@@ -1,6 +1,6 @@
 module PARTICLE_VARS
-    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_VARS
-    use TLAB_TYPES, only: profiles_dt, term_dt
+    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_VARS
+    use TLAB_TYPES, only: term_dt
     use PARTICLE_TYPES
     implicit none
     save
@@ -24,12 +24,6 @@ module PARTICLE_VARS
 
     integer            :: part_bcs
 
-    ! Posible values of imode_traj
-    integer, parameter :: TRAJ_TYPE_NONE = 0
-    integer, parameter :: TRAJ_TYPE_BASIC = 1           ! save particle prognostic properties
-    integer, parameter :: TRAJ_TYPE_EULERIAN = 2        ! add the Eulerian prognostic properties
-    integer, parameter :: TRAJ_TYPE_VORTICITY = 3       ! add the Eulerian vorticity
-
     character(len=32) :: part_spname(MAX_VARS)
 
     integer(longi)    :: isize_part_total             ! total # of particles
@@ -38,17 +32,6 @@ module PARTICLE_VARS
     integer(wi)       :: inb_part                     ! # of particle properties in Runge-Kutta (prognostic)
     integer(wi)       :: inb_part_txc                 ! # of particle auxiliary properties for intermediate calculations
     integer(wi)       :: inb_part_interp              ! # of interpolated fields into lagrangian framework
-
-    ! Initialization
-    type(profiles_dt) :: IniP                           ! Information about the initialization 
-    integer, parameter :: PART_INITYPE_HARDCODED = 101  ! Special type of particle initialization for testing
-    integer, parameter :: PART_INITYPE_SCALAR = 102     ! Special type of particle initialization not included in default profile data
-
-    ! Trajectory
-    integer(wi)   :: imode_traj = TRAJ_TYPE_NONE      ! Type of trajectory information that is saved
-    integer(wi)   :: isize_traj                       ! # of saved trajectories
-    integer(wi)   :: inb_traj                         ! # of properties saved along trajectories
-    character(len=32) :: traj_filename                ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
 
     ! Calculation of residence times
     integer(wi)   :: residence_reset     !if residence l_q should be reset

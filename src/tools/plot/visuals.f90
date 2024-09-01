@@ -98,7 +98,7 @@ program VISUALS
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Particle_Initialize_Parameters(ifile)
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)
@@ -311,7 +311,7 @@ program VISUALS
 
     if (iread_part) then ! Particle variables
         inb_part_txc = max(inb_part_txc, 1)
-        call PARTICLE_ALLOCATE(C_FILE_LOC)
+        call Particle_Initialize_Memory(C_FILE_LOC)
     end if
 
     if (imode_ibm == 1) then

@@ -28,7 +28,7 @@ program DNS
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use STATISTICS
-    use PARTICLE_TRAJECTORIES
+    use ParticleTrajectories
     use AVG_SCAL_ZT
     use IO_FIELDS
     use OPR_ELLIPTIC
@@ -51,7 +51,7 @@ program DNS
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
     call SpecialForcing_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Particle_Initialize_Parameters(ifile)
     call IBM_READ_INI(ifile)
     if (imode_ibm == 1) then
         call IBM_READ_CONSISTENCY_CHECK()
@@ -81,7 +81,8 @@ program DNS
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
 
-    call PARTICLE_ALLOCATE(__FILE__)
+    call ParticleTrajectories_Initialize(ifile)
+    call Particle_Initialize_Memory(__FILE__)
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
 
     call STATISTICS_INITIALIZE()
@@ -131,12 +132,7 @@ program DNS
     if (part%type /= PART_TYPE_NONE) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
         call IO_READ_PARTICLE(fname, l_g, l_q)
-        call PARTICLE_INITIALIZE()
-
-        if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_INITIALIZE()
-        end if
-
+        call Particle_Initialize_Fields()
     end if
 
     if (imode_sim == DNS_MODE_SPATIAL .and. nitera_stats_spa > 0) then
@@ -263,7 +259,7 @@ program DNS
         end if
 
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_ACCUMULATE()
+            call ParticleTrajectories_Accumulate()
         end if
 
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
@@ -299,7 +295,7 @@ program DNS
                 call IO_WRITE_PARTICLE(fname, l_g, l_q)
                 if (imode_traj /= TRAJ_TYPE_NONE) then
                     write (fname, *) itime; fname = trim(adjustl(tag_traj))//trim(adjustl(fname))
-                    call PARTICLE_TRAJECTORIES_WRITE(fname)
+                    call ParticleTrajectories_Write(fname)
                 end if
             end if
 

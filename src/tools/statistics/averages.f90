@@ -100,7 +100,7 @@ program AVERAGES
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Particle_Initialize_Parameters(ifile)
 
     ! -------------------------------------------------------------------
     ! IBM status (before TLAB_MPI_INITIALIZE!)
@@ -311,7 +311,7 @@ program AVERAGES
 
     call TLab_Memory_Initialize(C_FILE_LOC)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     if (imode_ibm == 1) then
         call IBM_ALLOCATE(C_FILE_LOC)

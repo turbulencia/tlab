@@ -3,11 +3,12 @@
 
 #define USE_ACCESS_STREAM
 
-module PARTICLE_TRAJECTORIES
+module ParticleTrajectories
 
     use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi, sizeofint
-    use PARTICLE_VARS
+    use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLAB_PROCS
+    use PARTICLE_VARS, only: inb_part, isize_part_total, inb_part_interp, inb_part_txc, part, PART_TYPE_NONE
     use DNS_LOCAL, only: nitera_save
 #ifdef USE_MPI
     use MPI
@@ -25,20 +26,79 @@ module PARTICLE_TRAJECTORIES
     real(sp), allocatable :: mpi_tmp(:, :)
 #endif
 
-    public :: PARTICLE_TRAJECTORIES_INITIALIZE
-    public :: PARTICLE_TRAJECTORIES_ACCUMULATE
-    public :: PARTICLE_TRAJECTORIES_WRITE
+    ! Posible values of imode_traj
+    integer, parameter :: TRAJ_TYPE_NONE = 0
+    integer, parameter :: TRAJ_TYPE_BASIC = 1           ! save particle prognostic properties
+    integer, parameter :: TRAJ_TYPE_EULERIAN = 2        ! add the Eulerian prognostic properties
+    integer, parameter :: TRAJ_TYPE_VORTICITY = 3       ! add the Eulerian vorticity
+
+    integer(wi) :: imode_traj = TRAJ_TYPE_NONE          ! Type of trajectory information that is saved
+    integer(wi) :: isize_traj                           ! # of saved trajectories
+    integer(wi) :: inb_traj                             ! # of properties saved along trajectories
+    character(len=32) :: traj_filename                  ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
+
+    public :: imode_traj, TRAJ_TYPE_NONE
+    public :: ParticleTrajectories_Initialize
+    public :: ParticleTrajectories_Accumulate
+    public :: ParticleTrajectories_Write
 
 contains
     !#######################################################################
     !#######################################################################
-    subroutine PARTICLE_TRAJECTORIES_INITIALIZE()
+    subroutine ParticleTrajectories_Initialize(inifile)
+
+        character(len=*) inifile
 
         ! -------------------------------------------------------------------
+        character*512 sRes
+        character*32 bakfile, block
+
         character(len=32) name
         integer ims_npro_loc
         integer(wi) j
         integer(longi) stride
+
+        ! -------------------------------------------------------------------
+        bakfile = trim(adjustl(inifile))//'.bak'
+        block = 'Particles'
+
+        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
+        if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
+        elseif (trim(adjustl(sRes)) == 'eulerian') then; imode_traj = TRAJ_TYPE_EULERIAN
+        elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
+        else
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
+            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+        end if
+
+        call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
+        if (isize_traj > isize_part_total) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
+            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+        end if
+        if (isize_traj <= 0) imode_traj = TRAJ_TYPE_NONE
+        if (part%type == PART_TYPE_NONE) imode_traj = TRAJ_TYPE_NONE
+
+        if (imode_traj == TRAJ_TYPE_NONE) return
+
+        call SCANINICHAR(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
+
+        ! -------------------------------------------------------------------
+        inb_traj = inb_part             ! save particle prognostic properties
+
+        select case (imode_traj)
+        case (TRAJ_TYPE_BASIC)          ! save particle prognostic properties
+
+        case (TRAJ_TYPE_EULERIAN)       ! add the Eulerian prognostic properties
+            inb_traj = inb_traj + inb_flow_array + inb_scal_array
+
+        case (TRAJ_TYPE_VORTICITY)      ! add the Eulerian vorticity
+            inb_traj = inb_traj + 3
+
+        end select
+
+        inb_part_txc = max(inb_part_txc, inb_traj)
+        inb_part_interp = max(inb_part_interp, inb_traj)
 
         !#######################################################################
         call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
@@ -88,11 +148,11 @@ contains
         counter = 0
 
         return
-    end subroutine PARTICLE_TRAJECTORIES_INITIALIZE
+    end subroutine ParticleTrajectories_Initialize
 
     !#######################################################################
     !#######################################################################
-    subroutine PARTICLE_TRAJECTORIES_ACCUMULATE()
+    subroutine ParticleTrajectories_Accumulate()
         use TLAB_TYPES, only: pointers_dt, pointers3d_dt
         use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
@@ -165,11 +225,11 @@ contains
         end do
 
         return
-    end subroutine PARTICLE_TRAJECTORIES_ACCUMULATE
+    end subroutine ParticleTrajectories_Accumulate
 
     !#######################################################################
     !#######################################################################
-    subroutine PARTICLE_TRAJECTORIES_WRITE(fname)
+    subroutine ParticleTrajectories_Write(fname)
         character(len=*) fname
 
         ! -------------------------------------------------------------------
@@ -206,6 +266,6 @@ contains
         counter = 0
 
         return
-    end subroutine PARTICLE_TRAJECTORIES_WRITE
+    end subroutine ParticleTrajectories_Write
 
-end module PARTICLE_TRAJECTORIES
+end module ParticleTrajectories
