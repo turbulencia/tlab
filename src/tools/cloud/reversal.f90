@@ -23,7 +23,7 @@ program REVERSAL
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call Thermodynamics_Initialize()
+    call Thermodynamics_Initialize_Parameters()
     dsmooth = 0.0_wp
 
     write (*, *) '1 - Density profile from nondimensional state'

@@ -21,7 +21,7 @@ program VISUALS
     use TLAB_MPI_PROCS
 #endif
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
-    use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use Radiation
@@ -94,7 +94,7 @@ program VISUALS
     call TLAB_START()
  
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -307,7 +307,7 @@ program VISUALS
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
 
-    call TLab_Memory_Initialize(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     if (iread_part) then ! Particle variables
         inb_part_txc = max(inb_part_txc, 1)

@@ -71,7 +71,7 @@ program PARTICLE_POS_TRAJEC
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters('tlab.ini')
 
 #ifdef USE_MPI

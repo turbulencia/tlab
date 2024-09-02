@@ -13,7 +13,7 @@ program INISCAL
     use MPI
     use TLAB_MPI_PROCS
 #endif
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
     use Radiation
@@ -29,7 +29,7 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call SCAL_READ_LOCAL(ifile)
 
@@ -45,7 +45,7 @@ program INISCAL
     if (flag_s == PERT_LAYER_BROADBAND) inb_txc = max(inb_txc, 1)
     if (infraredProps%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
 
-    call TLab_Memory_Initialize(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)

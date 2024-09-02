@@ -46,7 +46,7 @@ program DNS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -69,7 +69,7 @@ program DNS
     ! #######################################################################
     ! Initialize memory space and grid data
     ! #######################################################################
-    call TLab_Memory_Initialize(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)

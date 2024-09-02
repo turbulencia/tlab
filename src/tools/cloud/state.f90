@@ -21,7 +21,7 @@ program STATE
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call Thermodynamics_Initialize()
+    call Thermodynamics_Initialize_Parameters()
     ep = 0.0_wp
     dsmooth = 1.0_wp
     scaleheight = 1.0_wp

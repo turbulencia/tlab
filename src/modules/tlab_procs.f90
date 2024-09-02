@@ -22,7 +22,7 @@ module TLAB_PROCS
     public :: TLAB_START
     public :: TLAB_STOP
     public :: TLAB_WRITE_ASCII
-    public :: TLab_Memory_Initialize
+    public :: TLab_Initialize_Memory
 
 #ifdef NO_ASSUMED_RANKS
     interface TLAB_ALLOCATE_ARRAY_SINGLE
@@ -49,7 +49,7 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine TLab_Memory_Initialize(C_FILE_LOC)
+    subroutine TLab_Initialize_Memory(C_FILE_LOC)
         use TLAB_ARRAYS
 
         character(len=*), intent(in) :: C_FILE_LOC
@@ -83,7 +83,7 @@ contains
         call TLAB_DEFINE_POINTERS_C()
 
         return
-    end subroutine TLab_Memory_Initialize
+    end subroutine TLab_Initialize_Memory
 
     ! ######################################################################
     ! ######################################################################

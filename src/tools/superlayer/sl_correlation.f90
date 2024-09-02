@@ -58,7 +58,7 @@ program SL_CORRELATION
     call DNS_START
 
     call IO_READ_GLOBAL('tlab.ini')
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE

@@ -30,7 +30,7 @@ program INIPART
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
 
     if (part%type /= PART_TYPE_NONE) then
@@ -55,7 +55,7 @@ program INIPART
         inb_scal_array = 0
         inb_txc = inb_scal
 
-        call TLab_Memory_Initialize(C_FILE_LOC)
+        call TLab_Initialize_Memory(C_FILE_LOC)
 
         call Particle_Initialize_Memory(C_FILE_LOC)
 
@@ -78,7 +78,7 @@ program INIPART
         ! -------------------------------------------------------------------
         ! Initialize particle information
         ! -------------------------------------------------------------------
-        call Particle_Initialize_Properties(l_g, l_q, l_txc, txc)
+        call Particle_Initialize_Variables(l_g, l_q, l_txc, txc)
 
         call IO_WRITE_PARTICLE(trim(adjustl(tag_part))//'ics', l_g, l_q)
 
@@ -89,7 +89,7 @@ program INIPART
 contains
 
     ! ###################################################################
-    subroutine Particle_Initialize_Properties(l_g, l_q, l_txc, txc)
+    subroutine Particle_Initialize_Variables(l_g, l_q, l_txc, txc)
         use TLAB_CONSTANTS, only: wp, wi
         use TLAB_TYPES, only: pointers_dt, pointers3d_dt, wp, wi, longi
         use TLAB_VARS, only: g, imax, jmax, kmax, inb_scal, sbg
@@ -272,6 +272,6 @@ contains
         end select
 
         return
-    end subroutine Particle_Initialize_Properties
+    end subroutine Particle_Initialize_Variables
 
 end program INIPART

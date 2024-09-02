@@ -13,7 +13,7 @@ program INIFLOW
     use MPI
     use TLAB_MPI_PROCS
 #endif
-    use Thermodynamics, only: imixture,  Thermodynamics_Initialize
+    use Thermodynamics, only: imixture,  Thermodynamics_Initialize_Parameters
     use THERMO_THERMAL
     use THERMO_CALORIC
     use IO_FIELDS
@@ -27,7 +27,7 @@ program INIFLOW
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call FLOW_READ_LOCAL(ifile)
 
 #ifdef USE_MPI
@@ -42,7 +42,7 @@ program INIFLOW
         inb_txc = 8
     end if
 
-    call TLab_Memory_Initialize(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)

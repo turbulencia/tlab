@@ -779,7 +779,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
-    !                           can be changed in Thermodynamics_Initialize(ifile)
+    !                           can be changed in Thermodynamics_Initialize_Parameters(ifile)
 
 ! auxiliar array txc for intermediate calculations
     isize_txc_field = imax*jmax*kmax

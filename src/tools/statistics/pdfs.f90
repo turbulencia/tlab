@@ -15,7 +15,7 @@ program PDFS
     use TLAB_MPI_PROCS
 #endif
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -85,7 +85,7 @@ program PDFS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -242,7 +242,7 @@ program PDFS
     allocate (pdf(isize_pdf*(jmax_aux + 1)*nfield))
 
     inb_wrk2d = max(inb_wrk2d, 4)
-    call TLab_Memory_Initialize(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     ! -------------------------------------------------------------------
     ! Initialize

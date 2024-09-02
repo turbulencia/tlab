@@ -67,7 +67,7 @@ program APRIORI
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
@@ -166,7 +166,7 @@ program APRIORI
 
     allocate (mean(2*opt_order*nfield))
 
-    call TLab_Memory_Initialize(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

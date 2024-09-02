@@ -46,7 +46,7 @@ program SPECTRA
     use TLAB_MPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -121,7 +121,7 @@ program SPECTRA
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -374,7 +374,7 @@ program SPECTRA
 
     isize_wrk3d = max(isize_wrk3d, isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-    call TLab_Memory_Initialize(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

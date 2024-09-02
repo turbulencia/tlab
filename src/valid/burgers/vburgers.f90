@@ -39,7 +39,7 @@ program VBURGERS
 
     inb_txc = 4
 
-    call TLab_Memory_Initialize(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     a(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 2)
     b(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)

@@ -67,7 +67,7 @@ program SL_NORMAL_ANALYSIS
     call DNS_START
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
     call TLAB_MPI_INITIALIZE
