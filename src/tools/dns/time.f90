@@ -887,9 +887,8 @@ contains
 
 #ifdef USE_MPI
         integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
-#else
-        real(wp) x_right, z_right
 #endif
+        real(wp) x_right, z_right
         real(wp) y_right
 
         !#####################################################################
@@ -910,44 +909,80 @@ contains
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv X-Direction
         ! -------------------------------------------------------------------
-        call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+        if (ims_npro_i > 1) then
+            call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
-        if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
-            if (nzone_west /= 0) then
-                l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) = &
-                    l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + g(1)%scale
+            if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
+                if (nzone_west /= 0) then
+                    l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) = &
+                        l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + g(1)%scale
+                end if
             end if
-        end if
 
-        if (ims_pro_i == (ims_npro_i - 1)) then !Take care of periodic boundary conditions east
-            if (nzone_east /= 0) then
-                l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) = &
-                    l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - g(1)%scale
+            if (ims_pro_i == (ims_npro_i - 1)) then !Take care of periodic boundary conditions east
+                if (nzone_east /= 0) then
+                    l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) = &
+                        l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - g(1)%scale
+                end if
             end if
-        end if
 
-        call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_g%tags, l_g%np)
+            call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_g%tags, l_g%np)
+
+        else
+            x_right = g(1)%nodes(1) + g(1)%scale
+
+            do i = 1, l_g%np
+                if (l_q(i, 1) > x_right) then
+                    l_q(i, 1) = l_q(i, 1) - g(1)%scale
+
+                elseif (l_q(i, 1) < g(1)%nodes(1)) then
+                    l_q(i, 1) = l_q(i, 1) + g(1)%scale
+
+                end if
+
+            end do
+
+        end if
 
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv Z-Direction
         ! -------------------------------------------------------------------
-        call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+        if (ims_npro_k > 1) then
+            call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
-        if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
-            if (nzone_south /= 0) then
-                l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) = &
-                    l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + g(3)%scale
+            if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
+                if (nzone_south /= 0) then
+                    l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) = &
+                        l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + g(3)%scale
+                end if
             end if
-        end if
 
-        if (ims_pro_k == (ims_npro_k - 1)) then !Take care of periodic boundary conditions north
-            if (nzone_north /= 0) then
-                l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) = &
-                    l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - g(3)%scale
+            if (ims_pro_k == (ims_npro_k - 1)) then !Take care of periodic boundary conditions north
+                if (nzone_north /= 0) then
+                    l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) = &
+                        l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - g(3)%scale
+                end if
             end if
-        end if
 
-        call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_g%tags, l_g%np)
+            call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_g%tags, l_g%np)
+
+        else
+            call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+
+            z_right = g(3)%nodes(1) + g(3)%scale
+
+            do i = 1, l_g%np
+                if (l_q(i, 3) > z_right) then
+                    l_q(i, 3) = l_q(i, 3) - g(3)%scale
+
+                elseif (l_q(i, 3) < g(3)%nodes(1)) then
+                    l_q(i, 3) = l_q(i, 3) + g(3)%scale
+
+                end if
+
+            end do
+
+        end if
 
 #else
         !#######################################################################
