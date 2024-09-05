@@ -113,7 +113,7 @@ contains
             ! special forcing
             ! -----------------------------------------------------------------------
             if (forcingProps%active(iq)) then
-                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, g, rtime, hq(1, iq), tmp1)
+                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, g, rtime, q(:,iq), hq(:, iq), tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

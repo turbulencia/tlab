@@ -69,6 +69,10 @@ This is a summary of the workflow. The details of each tool and the correspondin
 * Case34. Case17 (cloud-top), solving liquid equation w/ & w/o diffusion.  
 * Case35. Same as 34, but with a stratified bottom interface.  
 
+### Gravity waves
+
+* Case37. Wave maker.
+
 ### 3D cases
 
 * Case41. Neutral Ekman layer without sponge at the top.  
