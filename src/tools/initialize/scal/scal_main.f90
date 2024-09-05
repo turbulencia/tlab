@@ -97,11 +97,8 @@ program INISCAL
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
     if (infraredProps%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
-
-        if (abs(infraredProps%parameters(1)) > 0.0_wp) then
-            infraredProps%parameters(3) = infraredProps%parameters(3)/infraredProps%parameters(1)*norm_ini_radiation
-        end if
-        infraredProps%parameters(1) = norm_ini_radiation
+        norm_ini_radiation = norm_ini_radiation/infraredProps%auxiliar(1)
+        infraredProps%auxiliar(:) = infraredProps%auxiliar(:)*norm_ini_radiation
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
             call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
