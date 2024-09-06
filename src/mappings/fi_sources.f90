@@ -113,14 +113,15 @@ contains
             ! special forcing
             ! -----------------------------------------------------------------------
             if (forcingProps%active(iq)) then
-                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, g, rtime, q(:,iq), hq(:, iq), tmp1)
+                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, iq, g, rtime, q(:,iq), hq(:, iq), tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
                 call DNS_OMP_PARTITION(isize_field, srt, end, siz)
 
                 do ij = srt, end
-                    hq(ij, iq) = hq(ij, iq) + tmp1(ij)*forcingProps%vector(iq)
+                    ! hq(ij, iq) = hq(ij, iq) + tmp1(ij)*forcingProps%vector(iq)
+                    hq(ij, iq) = hq(ij, iq) + tmp1(ij)
                 end do
 !$omp end parallel
 

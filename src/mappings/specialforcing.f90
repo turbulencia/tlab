@@ -96,11 +96,11 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine SpecialForcing_Source(locProps, nx, ny, nz, g, time, q, h, tmp)
+    subroutine SpecialForcing_Source(locProps, nx, ny, nz, iq, g, time, q, h, tmp)
         use TLAB_ARRAYS, only: wrk1d
 
         type(term_dt), intent(in) :: locProps
-        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz, iq
         type(grid_dt), intent(in) :: g(3)
         real(wp), intent(in) :: time
         real(wp), intent(in) :: q(nx, ny, nz)
@@ -140,8 +140,8 @@ contains
                         tmp(i, j, k) = wrk1d(i, 1)**2.0_wp + wrk1d(j, 2)**2.0_wp + wrk1d(k, 3)**2.0_wp
                         tmp(i, j, k) = exp(-dummy*tmp(i, j, k))         ! exp of an array can cause memory problems
                         direction = -wrk1d(i, 1)*locProps%vector(2) + wrk1d(j, 2)*locProps%vector(1) + wrk1d(k, 3)*locProps%vector(3)
-                        tmp(i, j, k) = sin(locProps%parameters(3)*direction - locProps%parameters(2)*time) &
-                                       *tmp(i, j, k)*locProps%parameters(1) - q(i, j, k)
+                        tmp(i, j, k) = (sin(locProps%parameters(3)*direction - locProps%parameters(2)*time) &
+                                       *tmp(i, j, k)*locProps%vector(iq) - q(i, j, k))*locProps%parameters(1)
                     end do
                 end do
             end do
