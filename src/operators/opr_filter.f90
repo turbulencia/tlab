@@ -5,7 +5,7 @@
 #endif
 
 module OPR_FILTERS
-    use TLAB_CONSTANTS, only: wp, wi, efile, MAX_PROF
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_TYPES, only: grid_dt, filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
@@ -86,7 +86,7 @@ contains
         !                                                           size 3 if SPECTRAL, HELMHOLTZ
         !-------------------------------------------------------------------
         real(wp) dummy
-        integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t, i2
+        integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t
 
         complex(wp), pointer :: c_tmp(:, :) => null()
         real(wp), dimension(:, :, :), pointer :: p_bcs
@@ -96,7 +96,6 @@ contains
         nxy = nx*ny
 
         bcs = 0  !Boundary conditions for derivative operator set to biased, non-zero
-        i2 = 2
 
         !Global filters
         select case (f(1)%type)
