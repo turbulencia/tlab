@@ -145,14 +145,15 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
-    select case (imode_elliptic)
-    case (FDM_COM6_JACOBIAN)
-        call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    ! select case (imode_elliptic)
+    ! case (FDM_COM6_JACOBIAN)
+    !     call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
-    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-    end select
-
+    ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+    !     call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    ! end select
+    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    
     ! filter pressure p
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         call OPR_FILTER(imax, jmax, kmax, PressureFilter, p, tmp)

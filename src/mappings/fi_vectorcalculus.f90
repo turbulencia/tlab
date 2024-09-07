@@ -89,14 +89,15 @@ contains
         call FI_INVARIANT_P(nx, ny, nz, u, v, w, tmp1, tmp2)
 
         p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
-        select case (imode_elliptic)
-        case (FDM_COM6_JACOBIAN)
-            call OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        ! select case (imode_elliptic)
+        ! case (FDM_COM6_JACOBIAN)
+        !     call OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
-        case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-            call OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        !     call OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
         
-        end select
+        ! end select
+        call OPR_Poisson(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
 ! -------------------------------------------------------------------
 ! Eliminate solenoidal part of u by adding grad(phi)

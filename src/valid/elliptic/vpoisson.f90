@@ -108,12 +108,14 @@ program VPOISSON
         ! bcs_ht = bcs_ht - mean + delta
 
         if (type_of_operator == 1) then
-            call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
             ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
 
         end if
 
@@ -193,11 +195,13 @@ program VPOISSON
         if (type_of_operator == 1) then
             ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
             ! call OPR_Poisson_FourierXZ_Direct_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
             ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
 
         end if

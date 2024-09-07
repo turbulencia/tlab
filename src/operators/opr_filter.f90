@@ -24,14 +24,14 @@ module OPR_FILTERS
 
     public :: OPR_FILTER_INITIALIZE
     public :: OPR_FILTER
-    public :: OPR_FILTER_X,  OPR_FILTER_Y, OPR_FILTER_Z
+    public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
 
 contains
     !###################################################################
     !###################################################################
     subroutine OPR_FILTER_INITIALIZE(g, f)
-        type(grid_dt),   intent(in) :: g
+        type(grid_dt), intent(in) :: g
         type(filter_dt), intent(inout) :: f
 
         !###################################################################
@@ -79,10 +79,10 @@ contains
     subroutine OPR_FILTER(nx, ny, nz, f, u, txc)
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f(3)
-        real(wp),        intent(inout) :: u(nx, ny, nz)
-        real(wp),        intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
+        real(wp), intent(inout) :: u(nx, ny, nz)
+        real(wp), intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
         !                                                           size 3 if SPECTRAL, HELMHOLTZ
         !-------------------------------------------------------------------
         real(wp) dummy
@@ -124,9 +124,10 @@ contains
             end if
 
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
-            call OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), &
-                                   p_bcs(:, :, 1), p_bcs(:, :, 2))
+            ! call OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
+            !                        txc(1, 1), txc(1, 2), txc(1, 3), &
+            !                        p_bcs(:, :, 1), p_bcs(:, :, 2))
+            call OPR_Helmholtz(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), txc(1, 1), txc(1, 2), txc(1, 3), p_bcs(:, :, 1), p_bcs(:, :, 2))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)
 
         case (DNS_FILTER_BAND)
@@ -178,10 +179,10 @@ contains
     !Filter kernel along one direction
     !###################################################################
     subroutine OPR_FILTER_1D(nlines, f, u, result)
-        integer(wi),     intent(in) :: nlines                  !# of lines to be solved
+        integer(wi), intent(in) :: nlines                  !# of lines to be solved
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(in) :: u(nlines, f%size)       !field to be filtered
-        real(wp),        intent(out) :: result(nlines, f%size)  !filtered filed
+        real(wp), intent(in) :: u(nlines, f%size)       !field to be filtered
+        real(wp), intent(out) :: result(nlines, f%size)  !filtered filed
 
         !-------------------------------------------------------------------
         integer(wi) delta
@@ -216,8 +217,8 @@ contains
         case (DNS_FILTER_4E)
             call FLT_E4(f%size, nlines, f%periodic, f%coeffs, u, result)
 
-        ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
-        !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
+            ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
+            !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
 
         case (DNS_FILTER_TOPHAT)
             if (f%periodic) then
@@ -250,9 +251,9 @@ contains
     !Filter in Ox direction
     !###################################################################
     subroutine OPR_FILTER_X(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nyz
@@ -328,9 +329,9 @@ contains
     !Filter in Oy direction
     !###################################################################
     subroutine OPR_FILTER_Y(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-----------------------------------------------------------------------
         integer(wi) nxy, nxz
@@ -383,9 +384,9 @@ contains
     !Filter in Oz direction
     !###################################################################
     subroutine OPR_FILTER_Z(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nxy
@@ -444,7 +445,7 @@ contains
     !########################################################################
     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp),    intent(in) :: spc_param(*)
+        real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------
@@ -501,7 +502,7 @@ contains
     !########################################################################
     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp),    intent(in) :: spc_param(*)
+        real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------
