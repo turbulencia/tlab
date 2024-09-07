@@ -9,7 +9,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: imode_eqns, imode_elliptic
+    use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
@@ -147,10 +147,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
 ! Pressure field in p
     select case (imode_elliptic)
     case (FDM_COM6_JACOBIAN)
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
     end select
 
     ! filter pressure p

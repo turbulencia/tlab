@@ -33,7 +33,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
-    use TLAB_VARS, only: visc, schmidt, rossby, imode_elliptic
+    use TLAB_VARS, only: visc, schmidt, rossby
     use TLAB_VARS, only: buoyancy, coriolis
     use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TIME, only: dte
@@ -307,7 +307,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
                 ip = ip + (jmax - 1)*imax; wrk2d(ip_t:ip_t + imax - 1, 1) = -alpha*aug*BcsFlowJmax%ref(1:imax, k, 2); ip_t = ip_t + imax
             end do
             ip_b = 1; ip_t = 1 + imax*kmax
-            call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+            call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, beta, &
                                    tmp7, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
 
             do ij = 1, isize_field
@@ -327,11 +327,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 
     bcs_hb(1:imax, 1:kmax, 4:6) = -alpha*aug*bcs_hb(1:imax, 1:kmax, 4:6)
     bcs_ht(1:imax, 1:kmax, 4:6) = -alpha*aug*bcs_ht(1:imax, 1:kmax, 4:6)
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+    call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, beta, &
                            tmp1, tmp5, tmp6, bcs_hb(1, 1, 4), bcs_ht(1, 1, 4))
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+    call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, beta, &
                            tmp2, tmp5, tmp6, bcs_hb(1, 1, 5), bcs_ht(1, 1, 5))
-    call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, beta, &
+    call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, beta, &
                            tmp3, tmp5, tmp6, bcs_hb(1, 1, 6), bcs_ht(1, 1, 6))
 
     do ij = 1, isize_field
@@ -371,9 +371,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! pressure in tmp8, Oy derivative in tmp3
     select case (imode_elliptic)
     case (FDM_COM6_JACOBIAN)
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+        call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+        call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     end select
 
 ! update pressure with correction from pressure solver

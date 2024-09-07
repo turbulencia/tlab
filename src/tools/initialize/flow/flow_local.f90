@@ -283,7 +283,7 @@ contains
             end if  ! NoSlip
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
                 ! Undevelop
             end if
@@ -292,7 +292,7 @@ contains
             ibc = 0                                       ! No penetration
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
                 ! Undevelop
             end if
@@ -304,7 +304,7 @@ contains
                 end if  ! NoSlip
                 if (g(1)%periodic .and. g(3)%periodic) then
                     p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                    call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
                 else                                          ! General treatment
                 ! Undevelop
                 end if
@@ -570,7 +570,7 @@ contains
         if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
             p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
             pprime = -txc4          ! change of forcing term sign
-            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
         else                                      ! General treatment
             ! Undevelop
         end if

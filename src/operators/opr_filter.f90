@@ -124,7 +124,7 @@ contains
             end if
 
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
-            call OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
+            call OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
                                    txc(1, 1), txc(1, 2), txc(1, 3), &
                                    p_bcs(:, :, 1), p_bcs(:, :, 2))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)

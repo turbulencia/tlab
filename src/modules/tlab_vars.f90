@@ -21,8 +21,6 @@ module TLAB_VARS
     integer :: imode_eqns               ! set of equations to be solved
     integer :: iadvection, iviscous, idiffusion, itransport ! formulation
 
-    integer :: imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
-
     logical :: flow_on = .true.         ! calculate flow parts of the code
     logical :: scal_on = .true.         ! calculate scal parts of the code
     logical :: fourier_on = .false.     ! using FFT libraries

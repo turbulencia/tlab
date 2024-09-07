@@ -29,7 +29,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLAB_VARS, only: scal_on, imode_elliptic
+    use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt
     use TLAB_PROCS
     use TLAB_ARRAYS
@@ -238,7 +238,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! #######################################################################
             beta = -1.0_wp/(alpha/schmidt(is))
 
-            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+            call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
                                      tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4))
 
             s(:, is) = beta*tmp4 - kef*s(:, is)
@@ -251,11 +251,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! ################################################################################
     beta = -1.0_wp/alpha
 
-    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+    call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
                              tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1))
-    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+    call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
                              tmp2, tmp5, tmp6, bcs_locb(1, 1, 2), bcs_loct(1, 1, 2))
-    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
+    call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
                              tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3))
 
     u = beta*tmp1 - kef*u
@@ -282,9 +282,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! pressure in tmp1, Oy derivative in tmp3
     select case (imode_elliptic)
     case (FDM_COM6_JACOBIAN)
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+        call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+        call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
     end select
 
 ! horizontal derivatives

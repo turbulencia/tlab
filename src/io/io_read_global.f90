@@ -229,15 +229,6 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
     g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
-    if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
-    else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
-    else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermPressure option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
 #ifdef USE_MPI
     call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
     if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLAB_MPI_TRP_NONE

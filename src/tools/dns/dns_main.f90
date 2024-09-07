@@ -100,7 +100,7 @@ program DNS
     ! ###################################################################
     ! Initialize operators and reference data
     ! ###################################################################
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))

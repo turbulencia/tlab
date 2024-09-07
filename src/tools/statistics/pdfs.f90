@@ -252,7 +252,7 @@ program PDFS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
 

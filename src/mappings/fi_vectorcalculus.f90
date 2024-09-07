@@ -3,7 +3,6 @@
 module FI_VECTORCALCULUS
     use TLAB_CONSTANTS
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: imode_elliptic
     use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL
     implicit none
@@ -92,10 +91,10 @@ contains
         p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
         select case (imode_elliptic)
         case (FDM_COM6_JACOBIAN)
-            call OPR_POISSON_FXZ(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            call OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-            call OPR_POISSON_FXZ_D(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            call OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
         
         end select
 

@@ -21,6 +21,8 @@ module OPR_ELLIPTIC
     implicit none
     private
 
+    integer :: imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
+
     complex(wp), target :: bcs(3)
     real(wp), pointer :: r_bcs(:) => null()
     complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
@@ -29,11 +31,12 @@ module OPR_ELLIPTIC
     real(wp), allocatable :: lhs(:, :), rhs(:, :)
     real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLAB_ARRAYS?
 
-    public :: OPR_ELLIPTIC_INITIALIZE
-    public :: OPR_POISSON_FXZ
-    public :: OPR_POISSON_FXZ_D         ! Using direct formulation of FDM schemes
-    public :: OPR_HELMHOLTZ_FXZ
-    public :: OPR_HELMHOLTZ_FXZ_D       ! Using direct formulation of FDM schemes
+    public :: imode_elliptic 
+    public :: OPR_Elliptic_Initialize
+    public :: OPR_Poisson_FourierXZ_Factorize
+    public :: OPR_Poisson_FourierXZ_Direct         ! Using direct formulation of FDM schemes
+    public :: OPR_Helmholtz_FourierXZ_Factorize
+    public :: OPR_Helmholtz_FourierXZ_Direct       ! Using direct formulation of FDM schemes
     ! public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields; no need if we use am initilization
 
 #define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
@@ -50,14 +53,30 @@ contains
 ! #######################################################################
 ! #######################################################################
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
-    subroutine OPR_ELLIPTIC_INITIALIZE()
-        use TLAB_VARS, only: g, imode_elliptic
+    subroutine OPR_Elliptic_Initialize(inifile)
+        use TLAB_VARS, only: g
         use FDM_ComX_Direct
 
-        integer ibc_loc, nb_diag(2)
-        integer, parameter :: i1 = 1, i2 = 2
+        character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
+        integer ibc_loc, nb_diag(2)
+        integer, parameter :: i1 = 1
+        character*512 sRes
+        character*32 bakfile
+    
+! ###################################################################
+        bakfile = trim(adjustl(inifile))//'.bak'
+
+        call SCANINICHAR(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
+        if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
+        else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
+        else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
+        else
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
         select case (imode_elliptic)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
@@ -123,7 +142,7 @@ contains
         end select
 
         return
-    end subroutine OPR_ELLIPTIC_INITIALIZE
+    end subroutine OPR_Elliptic_Initialize
 
 !########################################################################
 !#
@@ -140,7 +159,7 @@ contains
 !# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see tlab_procs%define_pointers_c)
 !#
 !########################################################################
-    subroutine OPR_POISSON_FXZ(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    subroutine OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -273,14 +292,14 @@ contains
         nullify (c_tmp1, c_tmp2, r_bcs)
 
         return
-    end subroutine OPR_POISSON_FXZ
+    end subroutine OPR_Poisson_FourierXZ_Factorize
 
 !########################################################################
 !########################################################################
 ! Same, but using the direct mode of FDM
 ! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
 ! and the last ones for the forcing and solution. The reason is the routine after this one.
-    subroutine OPR_POISSON_FXZ_D(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    subroutine OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -449,7 +468,7 @@ contains
         nullify (c_tmp1, c_tmp2)
 
         return
-    end subroutine OPR_POISSON_FXZ_D
+    end subroutine OPR_Poisson_FourierXZ_Direct
 
 !########################################################################
 !#
@@ -464,7 +483,7 @@ contains
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
 !########################################################################
-    subroutine OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+    subroutine OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -567,14 +586,14 @@ contains
         nullify (c_tmp1, c_tmp2, r_bcs)
 
         return
-    end subroutine OPR_HELMHOLTZ_FXZ
+    end subroutine OPR_Helmholtz_FourierXZ_Factorize
 
 !########################################################################
 !########################################################################
 ! Same, but using the direct mode of FDM
 ! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
 ! and the last ones for the forcing and solution. The reason is the routine after this one.
-    subroutine OPR_HELMHOLTZ_FXZ_D(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+    subroutine OPR_Helmholtz_FourierXZ_Direct(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -702,7 +721,7 @@ contains
         nullify (c_tmp1, c_tmp2)
 
         return
-    end subroutine OPR_HELMHOLTZ_FXZ_D
+    end subroutine OPR_Helmholtz_FourierXZ_Direct
 
 ! !########################################################################
 ! !########################################################################

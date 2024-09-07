@@ -17,6 +17,7 @@ program INIFLOW
     use THERMO_THERMAL
     use THERMO_CALORIC
     use IO_FIELDS
+    use OPR_Elliptic
     use OPR_FOURIER
     use FLOW_LOCAL
     use FLOW_MEAN
@@ -55,13 +56,15 @@ program INIFLOW
     ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
-        stagger_on = .false. ! turn staggering off for OPR_POISSON_FXZ(...)
+        stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
     end if
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
+        call OPR_Elliptic_Initialize(ifile)
+
         if (fourier_on .and. g(1)%periodic .and. g(3)%periodic) then
             call OPR_FOURIER_INITIALIZE()
 
