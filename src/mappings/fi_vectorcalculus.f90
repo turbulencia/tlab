@@ -79,31 +79,25 @@ contains
         real(wp), intent(INOUT) :: tmp1(nx, ny, nz), tmp2(nx, ny, nz), tmp3(nx, ny, nz)
 
 ! -------------------------------------------------------------------
-        integer(wi) ibc, bcs(2, 2)
+        integer(wi) bcs(2, 2)
 
 ! ###################################################################
         bcs = 0
-
-!  IF ( iwall .EQ. 1) THEN; ibc = 4
-!  ELSE;                    ibc = 3; ENDIF
-        ibc = 3
 
 ! -------------------------------------------------------------------
 ! Solve lap(phi) = - div(u)
 ! -------------------------------------------------------------------
         call FI_INVARIANT_P(nx, ny, nz, u, v, w, tmp1, tmp2)
 
-        if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
-            p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
-            call OPR_POISSON_FXZ(nx, ny, nz, g, ibc, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
+        select case (imode_elliptic)
+        case (FDM_COM6_JACOBIAN)
+            call OPR_POISSON_FXZ(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
-        else                                          ! General treatment
-#ifdef USE_CGLOC
-! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-            tmp2 = -tmp1            ! change of forcing term sign
-            call CGPOISSON(i1, nx, ny, nz, g(3)%size, tmp1, tmp2, tmp3, tmp4, ipos, jpos, kpos, ci, cj, ck, wrk2d)
-#endif
-        end if
+        case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+            call OPR_POISSON_FXZ_D(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        
+        end select
 
 ! -------------------------------------------------------------------
 ! Eliminate solenoidal part of u by adding grad(phi)
