@@ -88,8 +88,8 @@ contains
             call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)    ! absorption coefficients
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, infraredProps%parameters)
-            ! For the airwater mixture, first value is for liquid and then for nbands-1 of vapor
-            nbands = idummy
+            ! For the airwater mixture, first value is for liquid and then for nbands of vapor
+            nbands = idummy - 1
 
             infraredProps%auxiliar(:) = 0.0_wp
             call SCANINICHAR(bakfile, inifile, block, 'BoundaryConditions', '1.0', sRes)
@@ -128,21 +128,16 @@ contains
 
         select case (infraredProps%type)
         case (TYPE_IR_GRAY_LIQUID)
-            nbands = 1
-
             kappal(1) = infraredProps%parameters(1)     ! mass absorption coefficient of liquid
 
         case (TYPE_IR_GRAY)
-            nbands = 1
-
             kappal(1) = infraredProps%parameters(1)     ! mass absorption coefficient of liquid
             kappav(1) = infraredProps%parameters(2)     ! mass absorption coefficient of vapor
 
         case (TYPE_IR_BAND)
-            ! For the airwater mixture, first value is for liquid and then for nbands-1 of vapor
+            ! For the airwater mixture, first value is for liquid and then for nbands of vapor
             kappal(1:nbands) = infraredProps%parameters(1)              ! mass absorption coefficient of liquid, same in all bands
-            kappav(1:nbands - 1) = infraredProps%parameters(2:nbands)   ! mass absorption coefficient of vapor, band 1
-            kappav(nbands) = 0.0_wp                                     ! last band is the vapor window, defined by vapor being transparent
+            kappav(1:nbands) = infraredProps%parameters(2:nbands+1)     ! mass absorption coefficient of vapor
 
             beta(1:3, 1) = [2.6774e-1_wp, -1.3344e-3_wp, 1.8017e-6_wp]  ! coefficients for band 1
             beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp]  ! coefficients for band 2
