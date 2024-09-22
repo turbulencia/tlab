@@ -14,12 +14,12 @@ subroutine OPR_CHECK()
 #ifdef USE_MPI
     use TLAB_VARS, only: itime
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLAB_MPI_VARS, only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLAB_MPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_VARS, only: ims_sizBlock_i, ims_sizBlock_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLabMPI_VARS, only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLabMPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_sizBlock_i, ims_sizBlock_k
+    use TLabMPI_PROCS
 #endif
 
     implicit none
@@ -47,11 +47,11 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        id = TLAB_MPI_I_PARTIAL
+        id = TLabMPI_I_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call TLAB_MPI_TRPF_I(q(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
-        call TLAB_MPI_TRPB_I(wrk3d, q(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+        call TLabMPI_TRPF_I(q(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+        call TLabMPI_TRPB_I(wrk3d, q(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
@@ -69,7 +69,7 @@ subroutine OPR_CHECK()
         if (ims_npro_i > ims_sizBlock_i) then
             line = ''
             write (line, *) ims_sizBlock_i
-            line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLAB_MPI_TRP<F,B>_I'
+            line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLabMPI_TRP<F,B>_I'
             call TLAB_WRITE_ASCII(lfile, line)
         end if
     end if
@@ -80,13 +80,13 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        id = TLAB_MPI_K_PARTIAL
+        id = TLabMPI_K_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
-        call TLAB_MPI_TRPF_K(q(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        call TLabMPI_TRPF_K(q(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         itime = idummy
-        call TLAB_MPI_TRPB_K(wrk3d, q(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        call TLabMPI_TRPB_K(wrk3d, q(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
@@ -104,7 +104,7 @@ subroutine OPR_CHECK()
         if (ims_npro_k > ims_sizBlock_k) then
             line = ''
             write (line, *) ims_sizBlock_k
-            line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLAB_MPI_TRP<F,B>_K'
+            line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLabMPI_TRP<F,B>_K'
             call TLAB_WRITE_ASCII(lfile, line)
         end if
     end if

@@ -9,11 +9,11 @@ program INIRAND
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use RAND_LOCAL
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use IO_FIELDS
@@ -31,7 +31,7 @@ program INIRAND
     call Thermodynamics_Initialize_Parameters(ifile)
     call RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
     inb_txc = 3

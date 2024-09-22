@@ -16,7 +16,7 @@ subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_h
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k, ims_pro, ims_npro, ims_err
+    use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k, ims_pro, ims_npro, ims_err
 
     implicit none
 
@@ -239,7 +239,7 @@ subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k, ims_pro, ims_npro, ims_err
+    use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k, ims_pro, ims_npro, ims_err
 
     implicit none
 

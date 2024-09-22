@@ -8,7 +8,7 @@ program DNS
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use Radiation
@@ -46,6 +46,9 @@ program DNS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
@@ -56,9 +59,6 @@ program DNS
     if (imode_ibm == 1) then
         call IBM_READ_CONSISTENCY_CHECK()
     end if
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
     ! call TLab_Consistency_Check() ! TBD
 
     call DNS_READ_LOCAL(ifile)
@@ -414,7 +414,7 @@ contains
         use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
 #ifdef USE_MPI
         use MPI
-        use TLAB_MPI_VARS, only: ims_err
+        use TLabMPI_VARS, only: ims_err
         real(wp) dummy
 #endif
 

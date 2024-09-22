@@ -34,11 +34,11 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   use TLAB_CONSTANTS, only : wi, wp
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k    
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k, ims_err 
-  use TLAB_MPI_PROCS
+  use TLabMPI_VARS,  only : ims_size_i, ims_size_k    
+  use TLabMPI_VARS,  only : ims_npro_i, ims_npro_k, ims_err 
+  use TLabMPI_PROCS
 #ifdef IBM_DEBUG
-  use TLAB_MPI_VARS,  only : ims_pro
+  use TLabMPI_VARS,  only : ims_pro
 #endif
 #endif
   
@@ -47,8 +47,8 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
   
 #ifdef USE_MPI 
-  integer(wi), parameter                       :: idi = TLAB_MPI_I_PARTIAL 
-  integer(wi), parameter                       :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter                       :: idi = TLabMPI_I_PARTIAL 
+  integer(wi), parameter                       :: idk = TLabMPI_K_PARTIAL 
 #endif
   integer(wi)                                  :: i, j, k, ij, ik, jk, ip, inum, rse
   integer(wi)                                  :: nyz, nxz, nxy

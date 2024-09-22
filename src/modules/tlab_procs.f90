@@ -9,7 +9,7 @@ module TLAB_PROCS
 #endif
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_time_max, ims_time_min, ims_time_trans, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro, ims_time_max, ims_time_min, ims_time_trans, ims_err
 #endif
     implicit none
 

@@ -14,7 +14,7 @@ program VPOISSON
     use TLAB_ARRAYS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use OPR_FILTERS
@@ -39,7 +39,7 @@ program VPOISSON
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
     inb_txc = 8

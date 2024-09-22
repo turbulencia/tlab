@@ -13,10 +13,10 @@ program AVERAGES
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
-    use Thermodynamics, only: imixture,  Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -96,14 +96,15 @@ program AVERAGES
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
 
-    ! -------------------------------------------------------------------
-    ! IBM status (before TLAB_MPI_INITIALIZE!)
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
@@ -112,10 +113,6 @@ program AVERAGES
         call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
     ! -------------------------------------------------------------------
     ! File names
@@ -455,7 +452,7 @@ program AVERAGES
                         !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
+                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                     end if
                 end if
 

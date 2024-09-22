@@ -19,7 +19,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use PROFILES
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none
@@ -152,7 +152,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         g(1)%anelastic = .true.
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            nlines = ims_size_i(TLAB_MPI_I_PARTIAL)
+            nlines = ims_size_i(TLabMPI_I_PARTIAL)
             offset = nlines*ims_pro_i
         else
 #endif
@@ -180,7 +180,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         g(3)%anelastic = .true.
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            nlines = ims_size_k(TLAB_MPI_K_PARTIAL)
+            nlines = ims_size_k(TLabMPI_K_PARTIAL)
             offset = nlines*ims_pro_k
         else
 #endif

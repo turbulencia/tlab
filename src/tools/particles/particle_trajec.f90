@@ -32,9 +32,9 @@ program PARTICLE_TRAJEC
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use PARTICLE_VARS
@@ -73,11 +73,11 @@ program PARTICLE_TRAJEC
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
 ! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)

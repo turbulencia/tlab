@@ -7,7 +7,7 @@ program SL_NORMAL_ANALYSIS
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
 
@@ -67,11 +67,10 @@ program SL_NORMAL_ANALYSIS
     call DNS_START
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call Thermodynamics_Initialize_Parameters(ifile)
 
     call SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 

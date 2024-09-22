@@ -11,9 +11,9 @@ program INIFLOW
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
-    use Thermodynamics, only: imixture,  Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_THERMAL
     use THERMO_CALORIC
     use IO_FIELDS
@@ -21,21 +21,20 @@ program INIFLOW
     use OPR_FOURIER
     use FLOW_LOCAL
     use FLOW_MEAN
-    
+
     implicit none
 
     !########################################################################
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call FLOW_READ_LOCAL(ifile)
 
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
-
-    inb_wrk2d = MAX(inb_wrk2d, 3)
+    inb_wrk2d = max(inb_wrk2d, 3)
 
     if (flag_u == 0) then
         inb_txc = 2
@@ -109,7 +108,7 @@ program INIFLOW
         end if
 
         if (imixture > 0) then
-            call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+            call IO_READ_FIELDS(trim(adjustl(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (flag_t /= 0) then
@@ -123,7 +122,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    call IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
+    call IO_WRITE_FIELDS(trim(adjustl(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
     call TLAB_STOP(0)
 end program INIFLOW

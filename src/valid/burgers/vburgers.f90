@@ -9,8 +9,8 @@ program VBURGERS
     use TLAB_POINTERS_3D, only: tmp1
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
-    use TLAB_MPI_VARS
+    use TLabMPI_PROCS
+    use TLabMPI_VARS
 #endif
     use IO_FIELDS
     use OPR_PARTIAL
@@ -34,7 +34,7 @@ program VBURGERS
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
     inb_txc = 4

@@ -17,7 +17,7 @@ subroutine IO_READ_GLOBAL(inifile)
     use TLAB_PROCS
     use PROFILES
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none
@@ -231,18 +231,18 @@ subroutine IO_READ_GLOBAL(inifile)
 
 #ifdef USE_MPI
     call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLAB_MPI_TRP_NONE
-    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLAB_MPI_TRP_ASYNCHRONOUS
-    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLAB_MPI_TRP_SENDRECV
+    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLabMPI_TRP_NONE
+    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLabMPI_TRP_ASYNCHRONOUS
+    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLabMPI_TRP_SENDRECV
     else
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLAB_MPI_TRP_NONE
-    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLAB_MPI_TRP_ASYNCHRONOUS
-    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLAB_MPI_TRP_SENDRECV
+    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLabMPI_TRP_NONE
+    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLabMPI_TRP_ASYNCHRONOUS
+    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLabMPI_TRP_SENDRECV
     else
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
@@ -996,8 +996,8 @@ subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
     end do
 
 #ifdef USE_MPI
-    variable(1)%mpitype = TLAB_MPI_I_PARTIAL
-    variable(3)%mpitype = TLAB_MPI_K_PARTIAL
+    variable(1)%mpitype = TLabMPI_I_PARTIAL
+    variable(3)%mpitype = TLabMPI_K_PARTIAL
 #endif
 
     return

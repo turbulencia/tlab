@@ -236,7 +236,7 @@ contains
         use DNS_LOCAL
         use BOUNDARY_BUFFER
 #ifdef USE_MPI
-        use TLAB_MPI_VARS
+        use TLabMPI_VARS
 #endif
 
         implicit none

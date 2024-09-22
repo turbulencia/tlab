@@ -40,10 +40,10 @@ program SPECTRA
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro_k
-    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro_k
+    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
@@ -127,7 +127,7 @@ program SPECTRA
     call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
-    ! IBM status (before TLAB_MPI_INITIALIZE!)
+    ! IBM status (before TLabMPI_Initialize()!)
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
@@ -141,7 +141,7 @@ program SPECTRA
     ! Initialize MPI
     ! -------------------------------------------------------------------
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
 ! -------------------------------------------------------------------
@@ -319,8 +319,8 @@ program SPECTRA
         end if
 
         call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
-        id = TLAB_MPI_K_AUX2
-        call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
+        id = TLabMPI_K_AUX2
+        call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
                              ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     end if

@@ -17,7 +17,7 @@ program PARTICLE_BUILD_PDF
     use TLAB_PROCS
     use IO_FIELDS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use THERMO_AIRWATER
@@ -40,12 +40,12 @@ program PARTICLE_BUILD_PDF
     call TLAB_START
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters('tlab.ini')
 
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 !  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 
 ! Get the local information from the tlab.ini

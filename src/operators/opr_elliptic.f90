@@ -15,7 +15,7 @@ module OPR_ELLIPTIC
     use FDM_Integrate
     use FDM_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none

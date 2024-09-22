@@ -18,7 +18,7 @@ subroutine PARTICLE_MPI_SORT(x_or_z, l_g, l_q, l_hq, &
     use TLAB_VARS, only: g
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
     implicit none

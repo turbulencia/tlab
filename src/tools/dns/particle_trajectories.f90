@@ -12,7 +12,7 @@ module ParticleTrajectories
     use DNS_LOCAL, only: nitera_save
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_err
 #endif
     use FI_VECTORCALCULUS
     implicit none

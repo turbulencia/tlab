@@ -94,7 +94,7 @@ subroutine IO_READ_ASCII(fname, title, name, value, default)
 
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_err
 #endif
     implicit none
 
@@ -176,7 +176,7 @@ subroutine TLAB_WRITE_ASCII_FIELD(fname, imax, jmax, kmax, u)
     use TLAB_CONSTANTS, only: wp, wi
 
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_pro, ims_offset_i, ims_offset_k
 #endif
 
     implicit none

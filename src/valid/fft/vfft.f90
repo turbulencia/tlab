@@ -13,7 +13,7 @@ program VFFT
     use OPR_FOURIER
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
 
     implicit none
@@ -32,7 +32,7 @@ program VFFT
     call TLAB_START()
     call IO_READ_GLOBAL('tlab.ini')
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
     isize_fft3d = isize_txc_dimz*kmax

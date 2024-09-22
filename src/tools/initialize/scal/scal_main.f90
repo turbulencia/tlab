@@ -11,7 +11,7 @@ program INISCAL
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_AIRWATER
@@ -29,13 +29,12 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call SCAL_READ_LOCAL(ifile)
-
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
     if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then
         inb_wrk2d = max(inb_wrk2d, 6)

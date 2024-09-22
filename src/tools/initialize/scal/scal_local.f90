@@ -14,7 +14,7 @@ module SCAL_LOCAL
     use AVGS, only: AVG1V2D
     use PROFILES
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     implicit none
     save

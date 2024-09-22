@@ -8,7 +8,7 @@ module PARTICLE_PROCS
     use TLAB_VARS, only: g, imax, jmax, kmax, isize_wrk3d
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_npro
+    use TLabMPI_VARS, only: ims_npro
 #endif
     implicit none
     save

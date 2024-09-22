@@ -19,7 +19,7 @@ module TIME
     use PARTICLE_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
     implicit none
     save

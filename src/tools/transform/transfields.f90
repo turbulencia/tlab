@@ -14,8 +14,8 @@ program TRANSFIELDS
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use Thermodynamics
@@ -72,7 +72,7 @@ program TRANSFIELDS
     call Thermodynamics_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
     ! -------------------------------------------------------------------

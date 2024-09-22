@@ -13,12 +13,12 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
     use TLAB_VARS, only: g
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_npro_k
-    use TLAB_MPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_VARS, only: ims_comm_x, ims_comm_z
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_npro_k
+    use TLabMPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_comm_x, ims_comm_z
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_PROCS
 #endif
 
     implicit none
@@ -109,8 +109,8 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
     call MPI_ALLREDUCE(tmp_z(:, :, 1), tmp_z(:, :, 2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
     if (ims_npro_k > 1) then
-        id = TLAB_MPI_K_AUX2
-        call TLAB_MPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        id = TLabMPI_K_AUX2
+        call TLabMPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     else
         wrk2d(1:ny*nz, 1, 1) = tmp_z(1:ny*nz, 1, 2)
@@ -145,7 +145,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
             wrk2d(1:ny_local*count, (k - 1)*2 + 1, 1) = wrk2d(1:ny_local*count, k, 2)
         end do
 
-        call TLAB_MPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        call TLabMPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     else
 #endif
@@ -173,7 +173,7 @@ subroutine REDUCE_SPECTRUM(nx, ny, nz, nblock, in, out, tmp1, variance)
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
+    use TLabMPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
     implicit none
@@ -258,7 +258,7 @@ subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
 
     use TLAB_VARS, only: isize_wrk1d
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
     implicit none
@@ -333,7 +333,7 @@ end subroutine REDUCE_CORRELATION
 subroutine RADIAL_SAMPLESIZE(nx, nz, nr_total, samplesize)
 
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
     implicit none
@@ -374,7 +374,7 @@ subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
     use TLAB_CONSTANTS, only: lfile
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
 
     implicit none
@@ -426,7 +426,7 @@ subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
     use TLAB_VARS, only: imax, jmax, kmax
     use IO_FIELDS, only: io_aux
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 
     implicit none
 

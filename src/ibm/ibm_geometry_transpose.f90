@@ -30,11 +30,11 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   use TLAB_CONSTANTS, only : wi, wp
 #ifdef USE_MPI
   use MPI 
-  use TLAB_MPI_VARS,  only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-  use TLAB_MPI_VARS,  only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k
-  use TLAB_MPI_VARS,  only : ims_size_i 
-  use TLAB_MPI_PROCS
+  use TLabMPI_VARS,  only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+  use TLabMPI_VARS,  only : ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+  use TLabMPI_VARS,  only : ims_npro_i, ims_npro_k
+  use TLabMPI_VARS,  only : ims_size_i 
+  use TLabMPI_PROCS
 #endif
 
   implicit none
@@ -43,8 +43,8 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   real(wp), dimension(isize_field), intent(inout) :: tmp
 
 #ifdef USE_MPI 
-  integer(wi), parameter                          :: idi = TLAB_MPI_I_PARTIAL 
-  integer(wi), parameter                          :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter                          :: idi = TLabMPI_I_PARTIAL 
+  integer(wi), parameter                          :: idk = TLabMPI_K_PARTIAL 
 #endif
   integer(wi)                                     :: nyz, nxy
 
@@ -52,7 +52,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   ! MPI  and local transposition in x
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call TLAB_MPI_TRPF_I(eps, tmp, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    call TLabMPI_TRPF_I(eps, tmp, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
     nyz = ims_size_i(idi)
   else
 #endif
@@ -79,7 +79,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   ! MPI transposition in z
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call TLAB_MPI_TRPF_K(eps, epsk, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    call TLabMPI_TRPF_K(eps, epsk, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
   else
 #endif
   epsk = eps

@@ -36,9 +36,9 @@ program PARTICLE_POS_TRAJEC
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use PARTICLE_VARS
@@ -75,7 +75,7 @@ program PARTICLE_POS_TRAJEC
     call Particle_Initialize_Parameters('tlab.ini')
 
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
 ! Get the local information from the tlab.ini

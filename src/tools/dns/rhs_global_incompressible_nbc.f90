@@ -39,7 +39,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use DNS_LOCAL, only: nbcsetup
 #endif
 
-    use TLAB_MPI_VARS, only: ims_npro, ims_pro, ims_err, ims_size_i, ims_size_k
+    use TLabMPI_VARS, only: ims_npro, ims_pro, ims_err, ims_size_i, ims_size_k
 
     use NB3DFFT, only: nb3dfft_nbc_prepare, nb3dfft_nbc_finish, nb3dfft_infoType
     use NB3DFFT, only: nb3dfft_nbc_schedl_start, nb3dfft_nbc_worker_start
@@ -176,8 +176,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
         t_init = t_init + MPI_WTime()
 
-        id = TLAB_MPI_I_PARTIAL; nyz_trans = ims_size_i(id)
-        id = TLAB_MPI_K_PARTIAL; nxy_trans = ims_size_k(id)
+        id = TLabMPI_I_PARTIAL; nyz_trans = ims_size_i(id)
+        id = TLabMPI_K_PARTIAL; nxy_trans = ims_size_k(id)
         !
         ! kick off transpose U y->x and W y->z
         call NB3DFFT_R2R_YXCOMM(u, bt1, bt1, tmp11, info(FUYX), t_tmp); t_comp = t_comp + t_tmp

@@ -16,10 +16,10 @@ module OPR_INTERPOLATORS
     use TLAB_PROCS
 #ifdef USE_MPI
     use TLAB_CONSTANTS, only: lfile
-    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_PROCS
 #endif
     implicit none
     private
@@ -57,37 +57,37 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
-            id = TLAB_MPI_I_AUX1
+            id = TLabMPI_I_AUX1
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            call TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, 1, 1, 1, 1, &
+            call TLabMPI_TYPE_I(ims_npro_i, nx, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
             call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
-            id = TLAB_MPI_I_AUX2
+            id = TLabMPI_I_AUX2
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            call TLAB_MPI_TYPE_I(ims_npro_i, nx_dst, npage, 1, 1, 1, 1, &
+            call TLabMPI_TYPE_I(ims_npro_i, nx_dst, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 
         if (ims_npro_k > 1) then
             call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
-            id = TLAB_MPI_K_AUX1
+            id = TLabMPI_K_AUX1
             npage = nx_dst*ny_dst
-            call TLAB_MPI_TYPE_K(ims_npro_k, nz, npage, 1, 1, 1, 1, &
+            call TLabMPI_TYPE_K(ims_npro_k, nz, npage, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
             call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
-            id = TLAB_MPI_K_AUX2
+            id = TLabMPI_K_AUX2
             npage = nx_dst*ny_dst
-            call TLAB_MPI_TYPE_K(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, &
+            call TLabMPI_TYPE_K(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
         end if
@@ -144,9 +144,9 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            id = TLAB_MPI_I_AUX1
+            id = TLabMPI_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLAB_MPI_TRPF_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
             p_a => u_tmp1
             p_b => u_tmp2
@@ -176,8 +176,8 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            id = TLAB_MPI_I_AUX2
-            call TLAB_MPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            id = TLabMPI_I_AUX2
+            call TLabMPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -211,8 +211,8 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            id = TLAB_MPI_K_AUX1
-            call TLAB_MPI_TRPF_K(u_org, u_tmp2, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            id = TLabMPI_K_AUX1
+            call TLabMPI_TRPF_K(u_org, u_tmp2, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
             p_a => u_tmp2
             p_b => u_tmp1
@@ -259,8 +259,8 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            id = TLAB_MPI_K_AUX2
-            call TLAB_MPI_TRPB_K(u_tmp1, u_dst, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            id = TLabMPI_K_AUX2
+            call TLabMPI_TRPB_K(u_tmp1, u_dst, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 #endif
         nullify (p_a, p_b)

@@ -9,7 +9,7 @@ program INIPART
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use PARTICLE_VARS
@@ -30,13 +30,13 @@ program INIPART
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
 
     if (part%type /= PART_TYPE_NONE) then
-#ifdef USE_MPI
-        call TLAB_MPI_INITIALIZE
-#endif
 
         ! -------------------------------------------------------------------
         ! Read partcile parameters
@@ -72,7 +72,6 @@ program INIPART
         call FI_BACKGROUND_INITIALIZE()
         if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
 
-
         call Particle_Initialize_Fields()
 
         ! -------------------------------------------------------------------
@@ -100,7 +99,7 @@ contains
         use THERMO_AIRWATER
 #ifdef USE_MPI
         use MPI
-        use TLAB_MPI_VARS
+        use TLabMPI_VARS
         use PARTICLE_ARRAYS, only: ims_np_all
 #endif
         ! use PARTICLE_TINIA

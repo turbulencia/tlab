@@ -16,7 +16,7 @@ program APRIORI
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use IO_FIELDS
@@ -37,7 +37,7 @@ program APRIORI
     type(pointers_dt), dimension(16) :: vars
 
     integer, parameter :: i1 = 1
-    
+
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
@@ -67,11 +67,10 @@ program APRIORI
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

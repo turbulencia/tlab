@@ -69,7 +69,7 @@ CONTAINS
 #ifdef USE_MPI
     USE MPI
     USE TLAB_VARS,ONLY : g
-    USE TLAB_MPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
+    USE TLabMPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
 #endif
 
     IMPLICIT NONE
@@ -211,7 +211,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
     USE MPI
-    USE TLAB_MPI_VARS, ONLY : ims_err
+    USE TLabMPI_VARS, ONLY : ims_err
 #endif
 
     USE TLAB_VARS, ONLY : imax,jmax,kmax
@@ -303,7 +303,7 @@ CONTAINS
     USE TLAB_CONSTANTS, ONLY : wfile
 #ifdef USE_MPI
     USE MPI
-    USE TLAB_MPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
+    USE TLabMPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
 #endif
 
 #ifdef USE_H5

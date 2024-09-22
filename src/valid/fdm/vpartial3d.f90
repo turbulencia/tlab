@@ -7,7 +7,7 @@ program VPARTIAL3D
     use TLAB_ARRAYS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use OPR_FILTERS

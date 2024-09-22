@@ -24,7 +24,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
     use OPR_PARTIAL
     use FI_STRAIN_EQN
@@ -307,7 +307,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! TkStat file
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-        call TLAB_MPI_TAGUPDT
+        call TLabMPI_TAGUPDT
 
         if (ims_pro == 0) then
 #endif

@@ -16,8 +16,8 @@ module OPR_FILTERS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS
+    use TLabMPI_PROCS
 #endif
     implicit none
     private
@@ -265,7 +265,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLAB_MPI_I_PARTIAL
+        id = f%mpitype  !TLabMPI_I_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -273,7 +273,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
             p_a => wrk3d
             p_b => u
             nyz = ims_size_i(id)
@@ -313,7 +313,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 #endif
 
@@ -398,7 +398,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLAB_MPI_K_PARTIAL
+        id = f%mpitype  !TLabMPI_K_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -406,7 +406,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLAB_MPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             p_a => wrk3d
             p_b => u
             nxy = ims_size_k(id)
@@ -428,7 +428,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLAB_MPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 #endif
 
