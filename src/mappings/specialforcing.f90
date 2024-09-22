@@ -140,8 +140,8 @@ contains
                         tmp(i, j, k) = wrk1d(i, 1)**2.0_wp + wrk1d(j, 2)**2.0_wp + wrk1d(k, 3)**2.0_wp
                         tmp(i, j, k) = exp(-dummy*tmp(i, j, k))         ! exp of an array can cause memory problems
                         direction = -wrk1d(i, 1)*locProps%vector(2) + wrk1d(j, 2)*locProps%vector(1) + wrk1d(k, 3)*locProps%vector(3)
-                        tmp(i, j, k) = (sin(locProps%parameters(3)*direction - locProps%parameters(2)*time) &
-                                       *tmp(i, j, k)*locProps%vector(iq) - q(i, j, k))*locProps%parameters(1)
+                        tmp(i, j, k) = (sin(locProps%parameters(3)*direction - locProps%parameters(2)*time)*locProps%vector(iq) &
+                                        - q(i, j, k))*tmp(i, j, k)*locProps%parameters(1)
                     end do
                 end do
             end do
