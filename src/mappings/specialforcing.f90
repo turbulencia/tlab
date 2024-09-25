@@ -108,7 +108,7 @@ contains
         real(wp), intent(inout) :: tmp(nx, ny, nz)
 
         ! -----------------------------------------------------------------------
-        real(wp) dummy, direction
+        real(wp) dummy, direction, vector_perp(3)
         integer(wi) i, j, k
 
         !########################################################################
@@ -134,13 +134,16 @@ contains
             wrk1d(1:nx, 1) = g(1)%nodes(1:nx) - locProps%auxiliar(1)
             wrk1d(1:ny, 2) = g(2)%nodes(1:ny) - locProps%auxiliar(2)
             wrk1d(1:nz, 3) = g(3)%nodes(1:nz) - locProps%auxiliar(3)
+            vector_perp(1) = -locProps%vector(2)    ! to be cleaned
+            vector_perp(2) = locProps%vector(1)
+            vector_perp(3) = locProps%vector(3)
             do k = 1, nz
                 do j = 1, ny
                     do i = 1, nx
                         tmp(i, j, k) = wrk1d(i, 1)**2.0_wp + wrk1d(j, 2)**2.0_wp + wrk1d(k, 3)**2.0_wp
                         tmp(i, j, k) = exp(-dummy*tmp(i, j, k))         ! exp of an array can cause memory problems
-                        direction = -wrk1d(i, 1)*locProps%vector(2) + wrk1d(j, 2)*locProps%vector(1) + wrk1d(k, 3)*locProps%vector(3)
-                        tmp(i, j, k) = (sin(locProps%parameters(3)*direction - locProps%parameters(2)*time)*locProps%vector(iq) &
+                        direction = wrk1d(i, 1)*locProps%vector(1) + wrk1d(j, 2)*locProps%vector(2) + wrk1d(k, 3)*locProps%vector(3)
+                        tmp(i, j, k) = (sin(locProps%parameters(3)*direction - locProps%parameters(2)*time)*vector_perp(iq) &
                                         - q(i, j, k))*tmp(i, j, k)*locProps%parameters(1)
                     end do
                 end do
