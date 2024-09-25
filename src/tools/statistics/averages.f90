@@ -967,17 +967,17 @@ program AVERAGES
             ! ###################################################################
         case (18)
             
-            call PhaseAvg_Space(wrk2d, q, inb_flow, it, 0, 0, 1)
-            call PhaseAvg_Write( inb_flow, avg_flow,   IO_FLOW, 0, avgu_name  , itime_vec(it))
+            call PhaseAvg_Space(wrk2d, inb_flow, it, 0, 0, 1)
+            call PhaseAvg_Write( inb_flow, IO_FLOW, 0, avgu_name, 1, itime_vec(it))
             
-            call PhaseAvg_Space(wrk2d, s, inb_scal, it, 0, 0, 2)
-            call PhaseAvg_Write( inb_scal, avg_scal,   IO_SCAL, 0, avgp_name  , itime_vec(it))
+            call PhaseAvg_Space(wrk2d, inb_scal, it, 0, 0, 2)
+            call PhaseAvg_Write( inb_scal, IO_SCAL, 0, avgp_name, 2, itime_vec(it))
             
             !call PhaseAvg_Space(wrk2d, q, 6       , it, 0, 0, 5)
-            !call PhaseAvg_Write( 6       , avg_stress, IO_FLOW, 0, avgstr_name, itime_vec(it))
-            
-            call PhaseAvg_Space(wrk2d, txc(1, 9), 1  , it, 0, 0, 4)
-            call PhaseAvg_Write( 1       , avg_p,      IO_SCAL, 0, avgs_name  , itime_vec(it))
+            !call PhaseAvg_Write( 6       , IO_FLOW, 0, avgstr_name, itime_vec(it))
+           
+            call PhaseAvg_Space(wrk2d, 1, it, 0,0 , txc(:, 9))
+            call PhaseAvg_Write( 1       ,      IO_SCAL, 0, avgs_name, 4, itime_vec(it))
             
             call PhaseAvg_ResetVariable()                 
         end select
