@@ -121,13 +121,14 @@ program SPECTRA
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
-    ! -------------------------------------------------------------------
-    ! IBM status (before TLabMPI_Initialize()!)
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
@@ -136,13 +137,6 @@ program SPECTRA
         call TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-    ! -------------------------------------------------------------------
-    ! Initialize MPI
-    ! -------------------------------------------------------------------
-#ifdef USE_MPI
-    call TLabMPI_Initialize()
-#endif
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -321,7 +315,7 @@ program SPECTRA
         call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
         id = TLabMPI_K_AUX2
         call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
-                             ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                            ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     end if
 #endif
@@ -551,7 +545,7 @@ program SPECTRA
             call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3))
             if (flag_buoyancy == 1) then
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                   call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
+                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
                 else
                     wrk1d(1:jmax, 1) = C_0_R
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
@@ -643,7 +637,7 @@ program SPECTRA
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
                     wrk3d = C_0_R
                     call REDUCE_CORRELATION(imax, jmax, kmax, opt_block, kr_total, &
-                                    txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
+                                            txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
                 end if
 
 ! Check Parseval's relation

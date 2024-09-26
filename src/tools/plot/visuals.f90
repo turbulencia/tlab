@@ -92,16 +92,17 @@ program VISUALS
     bakfile = trim(adjustl(ifile))//'.bak'
 
     call TLAB_START()
- 
+
     call IO_READ_GLOBAL(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
 
-    ! -------------------------------------------------------------------
-    ! IBM status (before TLabMPI_Initialize()!)
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
@@ -110,13 +111,6 @@ program VISUALS
         call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-    ! -------------------------------------------------------------------
-    ! Initialize MPI
-    ! -------------------------------------------------------------------
-#ifdef USE_MPI
-    call TLabMPI_Initialize()
-#endif
 
     ! -------------------------------------------------------------------
     ! File names
@@ -220,7 +214,7 @@ program VISUALS
         if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
         if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 19) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7 ); end if
+        if (opt_vec(iv) == iscal_offset + 19) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
         if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
     end do
 
@@ -575,7 +569,7 @@ program VISUALS
                 if (imixture == MIXT_TYPE_AIRWATER) then ! s(1,inb_scal+1) contains liquid mass fraction
                     if (opt_vec(iv) == 10) then ! vapor water mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(1)))//time_str(1:MaskSize)
-                        txc(1:isize_field, 1)  = s(1:isize_field, inb_scal) - s(1:isize_field, inb_scal + 1)
+                        txc(1:isize_field, 1) = s(1:isize_field, inb_scal) - s(1:isize_field, inb_scal + 1)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     else if (opt_vec(iv) == 11) then ! air mass fraction
@@ -941,11 +935,11 @@ program VISUALS
             ! ###################################################################
             ! Total stress tensor
             ! ###################################################################
-            if (opt_vec(iv) == iscal_offset + 20) then ! Total stress tensor 
+            if (opt_vec(iv) == iscal_offset + 20) then ! Total stress tensor
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3)) ! pressure in txc(1,7)
-                call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1 ,8), txc(1 ,6))            ! avg vel. + pre. in time               
+                call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1, 8), txc(1, 6))            ! avg vel. + pre. in time
                 if (it == itime_size) then
-                    call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+ call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                     if (imode_ibm == 1) then
                         txc(:, 8) = eps
                         plot_file = 'EpsSolid'//time_str(1:MaskSize)
@@ -953,9 +947,9 @@ program VISUALS
                     end if
                     plot_file = 'StressTensor'
                     if (itime_size > 1) plot_file = trim(adjustl(plot_file))//'Avg'
-                    plot_file = trim(adjustl(plot_file))//time_str(1:MaskSize) 
+                    plot_file = trim(adjustl(plot_file))//time_str(1:MaskSize)
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 6, subdomain, txc(1, 1), wrk3d)
-                end if 
+                end if
 
             end if
 
@@ -970,34 +964,34 @@ contains
 !########################################################################
 !# Accumulate itime_size fields before processing the temp. avg. fields
 !########################################################################
-subroutine VISUALS_ACCUMULATE_FIELDS(q, p, q_avg, p_avg)
+    subroutine VISUALS_ACCUMULATE_FIELDS(q, p, q_avg, p_avg)
 
-    real(wp), dimension(isize_field, 3), intent(inout) :: q     ! inst. vel. fields
-    real(wp), dimension(isize_field   ), intent(inout) :: p     ! inst. pre. fields
-    real(wp), dimension(isize_field, 3), intent(inout) :: q_avg ! time avg. vel. fields
-    real(wp), dimension(isize_field   ), intent(inout) :: p_avg ! time avg. pre. fields
+        real(wp), dimension(isize_field, 3), intent(inout) :: q     ! inst. vel. fields
+        real(wp), dimension(isize_field), intent(inout) :: p     ! inst. pre. fields
+        real(wp), dimension(isize_field, 3), intent(inout) :: q_avg ! time avg. vel. fields
+        real(wp), dimension(isize_field), intent(inout) :: p_avg ! time avg. pre. fields
 
-    integer(wi) :: is
-    ! ================================================================== !
-    ! if only one iteration is chosen, do nothing
-    if (itime_size > 1) then
-        if (it == 1) then 
-            q_avg(:,:) = q(:,:); p_avg(:) = p(:)
-        else if (it > 1) then
-            do is = 1, 3    
-                q_avg(:,is) = q_avg(:,is) + q(:,is)
-            end do 
-            p_avg(:) = p_avg(:) + p(:)
+        integer(wi) :: is
+        ! ================================================================== !
+        ! if only one iteration is chosen, do nothing
+        if (itime_size > 1) then
+            if (it == 1) then
+                q_avg(:, :) = q(:, :); p_avg(:) = p(:)
+            else if (it > 1) then
+                do is = 1, 3
+                    q_avg(:, is) = q_avg(:, is) + q(:, is)
+                end do
+                p_avg(:) = p_avg(:) + p(:)
+            end if
+            if (it == itime_size) then
+                q = q_avg/itime_size
+                p = p_avg/itime_size
+            end if
         end if
-        if (it == itime_size) then    
-            q = q_avg / itime_size
-            p = p_avg / itime_size
-        end if
-    end if
 
-    return
-end subroutine VISUALS_ACCUMULATE_FIELDS
-    
+        return
+    end subroutine VISUALS_ACCUMULATE_FIELDS
+
 !########################################################################
 !########################################################################
 #define LOC_UNIT_ID 55

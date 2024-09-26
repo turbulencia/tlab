@@ -110,7 +110,7 @@ program AVERAGES
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
-        call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
+        call TLAB_WRITE_ASCII(efile, 'AVERAGES. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
