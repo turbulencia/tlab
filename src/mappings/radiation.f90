@@ -23,20 +23,20 @@ module Radiation
     !     real(wp) auxiliar(MAX_PARS)
     !     real(wp) vector(3)
     ! end type term_dt
-    ! type phenomenon_dt
-    !     sequence
-    !     integer type
-    !     logical active(MAX_VARS), lpadding(3)               ! evolution equations affected by this term
-    !     integer :: ncomps_max = 3                ! maximum number of radiatively active components
-    !     integer :: nbands_max = 3                ! maximum number of spectral bands
-    !     integer ncomps                                   ! number of radiatively active components
-    !     integer nbands                                   ! number of spectral bands
-    !     real(wp) :: kappa(ncomps_max, nbands_max)              ! mass absorption coefficients for each radiatively active component         integer scalar(MAX_VARS)                ! fields defining this term
-    !     real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band emission functions; assuming second-order polynomial
-    !     real(wp) bcs_t(3, nbands_max)                       ! downward fluxes at the top of the domain
-    !     real(wp) bcs_b(3, nbands_max)                       ! upward fluxes at the bottom of the domain
-    !     real(wp) :: epsilon                                 ! surface emissivity at ymin
-    ! end type phenomenon_dt
+    integer, parameter :: ncomps_max = 3                ! maximum number of radiatively active components
+    integer, parameter :: nbands_max = 3                ! maximum number of spectral bands
+    type infrared_dt
+        sequence
+        integer type
+        logical active(MAX_VARS), lpadding(3)               ! evolution equations affected by this term
+        integer ncomps                                      ! number of radiatively active components
+        integer nbands                                      ! number of spectral bands
+        real(wp) :: kappa(ncomps_max, nbands_max)           ! mass absorption coefficients for each radiatively active component
+        real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band emission functions; assuming second-order polynomial
+        real(wp) bcs_t(3, nbands_max)                       ! downward fluxes at the top of the domain
+        real(wp) bcs_b(3, nbands_max)                       ! upward fluxes at the bottom of the domain
+        real(wp) :: epsilon_b                               ! surface emissivity at ymin
+    end type infrared_dt
 
     type(term_dt) :: infraredProps               ! Radiation parameters
     ! type(term_dt) :: visibleProps                ! Radiation parameters
@@ -54,14 +54,13 @@ module Radiation
 
     real(wp), parameter :: sigma = 5.67037442e-8_wp     ! Stefan-Boltzmann constant, W /m^2 /K^4
     real(wp) :: mu                                      ! mean direction parameter
+    ! to be moved into module
     real(wp) :: epsilon                                 ! surface emissivity at ymin
-    integer, parameter :: ncomps_max = 3                ! maximum number of radiatively active components
     integer :: ncomps                                   ! number of radiatively active components
-    integer, parameter :: nbands_max = 3                ! maximum number of spectral bands
     integer :: nbands                                   ! number of spectral bands
     real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band emission functions; assuming second-order polynomial
     real(wp) kappa(ncomps_max, nbands_max)              ! mass absorption coefficients for each radiatively active component in each band
-    real(wp) kappal(nbands_max), kappav(nbands_max)     ! mass absorption coefficients for liquid and vapor, for clarity
+    !
     real(wp), allocatable, target :: bcs_ht(:)          ! flux boundary condition at the top of the domain
     real(wp), allocatable, target :: bcs_hb(:)          ! flux boundary condition at the bottom of the domain
     real(wp), allocatable, target :: t_ht(:)            ! temperature at the top of the domain
@@ -91,8 +90,9 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#AbsorptionComponent#=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#BoundaryConditions=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#AbsorptionComponent#=<values>')
+        call TLAB_WRITE_ASCII(bakfile, '#BoundaryConditions=<values>')
+        call TLAB_WRITE_ASCII(bakfile, '#BetaCoefficient=<values>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
@@ -119,6 +119,7 @@ contains
             epsilon = infraredProps%auxiliar(idummy)        ! last value is surface emissivity at ymin
             nbands = idummy - 1
 
+            kappa(:, :) = 0.0_wp
             do ncomps = 1, ncomps_max
                 write (sRes, *) ncomps
                 call SCANINICHAR(bakfile, inifile, block, 'AbsorptionComponent'//trim(adjustl(sRes)), 'void', sRes)
@@ -136,29 +137,10 @@ contains
             end do
             ncomps = ncomps - 1           ! correct for the increment in the loop
 
-            if (infraredProps%type == TYPE_BULK1DLOCAL) then             ! backwards compatibility
-                infraredProps%type = TYPE_IR_GRAY_LIQUID
-
-                infraredProps%parameters(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, block, 'Parameters', 'void', sRes)    ! absorption coefficients
-                idummy = MAX_PARS
-                call LIST_REAL(sRes, idummy, infraredProps%parameters)
-
-                infraredProps%auxiliar(1) = infraredProps%parameters(1)*infraredProps%parameters(2)
-                infraredProps%auxiliar(2) = infraredProps%parameters(3)*infraredProps%parameters(2)
-                kappa(1, 1) = 1.0_wp/infraredProps%parameters(2)
-
-                nbands = 1
-
-            end if
-
-            kappal(1:nbands) = kappa(1, 1:nbands)                       ! for clarity
-            kappav(1:nbands) = kappa(2, 1:nbands)
-
-            beta = 0.0_wp
+            beta(:, :) = 0.0_wp
             beta(1:3, 1) = [2.6774e-1_wp, -1.3344e-3_wp, 1.8017e-6_wp]  ! default coefficients for band 1 according to Jeevanjee, 2023 for vapor bands
             beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp]  ! default coefficients for band 2
-            do ic = 1, 3
+            do ic = 1, 3                                                ! so far, only 3 coefficients, 2. order polynomial
                 write (sRes, *) ic
                 call SCANINICHAR(bakfile, inifile, block, 'BetaCoefficient'//trim(adjustl(sRes)), 'void', sRes)
                 if (trim(adjustl(sRes)) /= 'void') then
@@ -176,32 +158,46 @@ contains
                 beta(1:3, nbands) = beta(1:3, nbands) - beta(1:3, iband)
             end do
 
-        end if
+            ! -------------------------------------------------------------------
+            infraredProps%scalar = inb_scal_array                       ! By default, radiation is caused by last scalar
 
-        ! -------------------------------------------------------------------
-        ! Check with previous version
-        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
-        if (trim(adjustl(sRes)) /= 'void') then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
+            select case (imixture)
+            case (MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
+                infraredProps%active(inb_scal_array) = .true.           ! liquid
+                infraredProps%active(inb_scal_array + 1) = .true.       ! buoyancy
+                ! first radiatively active scalar is liquid
+                ! second radiatively active scalar is vapor
+                ! third radiatively active scalar is a homogeneous field, e.g., CO2
 
-        ! -------------------------------------------------------------------
-        infraredProps%scalar = inb_scal_array                        ! By default, radiation is caused by last scalar
+            case default
+                call TLAB_WRITE_ASCII(efile, __FILE__//'. Infrared only derived for airwater mixture.')
+                call TLAB_STOP(DNS_ERROR_OPTION)
 
-        if (imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-            if (infraredProps%type /= EQNS_NONE) then
-                infraredProps%active(inb_scal_array) = .true.        ! liquid
-                infraredProps%active(inb_scal_array + 1) = .true.    ! buoyancy
+            end select
+
+            select case (infraredProps%type)
+            case (TYPE_IR_BAND)
+                inb_tmp_rad = 5                                         ! Additional memory space
+            end select
+
+            ! -------------------------------------------------------------------
+            if (infraredProps%type == TYPE_BULK1DLOCAL) then            ! backwards compatibility
+                infraredProps%type = TYPE_IR_GRAY_LIQUID
+
+                infraredProps%parameters(:) = 0.0_wp
+                call SCANINICHAR(bakfile, inifile, block, 'Parameters', 'void', sRes)    ! scaled absorption coefficients
+                idummy = MAX_PARS
+                call LIST_REAL(sRes, idummy, infraredProps%parameters)
+
+                infraredProps%auxiliar(1) = infraredProps%parameters(1)*infraredProps%parameters(2)
+                infraredProps%auxiliar(2) = infraredProps%parameters(3)*infraredProps%parameters(2)
+                kappa(1, 1) = 1.0_wp/infraredProps%parameters(2)
+
+                nbands = 1
+
             end if
 
         end if
-
-        select case (infraredProps%type)
-        case (TYPE_IR_BAND)
-            inb_tmp_rad = 5                             ! Additional memory space
-
-        end select
 
         mu = 0.5_wp*(1.0_wp/sqrt(3.0_wp) + 1.0_wp/sqrt(2.0_wp))         ! mean direction, in (1/sqrt{3}, 1/sqrt{2})
         ! mu = 1.0_wp/sqrt(2.0_wp)
@@ -215,6 +211,14 @@ contains
         ! Local allocation
         allocate (bcs_ht(imax*kmax), bcs_hb(imax*kmax), t_ht(imax*kmax))
         call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
+
+        ! -------------------------------------------------------------------
+        ! Check with previous version; to be removed
+        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
 
         return
     end subroutine Radiation_Initialize
@@ -257,7 +261,7 @@ contains
         ! -----------------------------------------------------------------------
         select case (localProps%type)
         case (TYPE_IR_GRAY_LIQUID)
-            wrk3d(1:nx*ny*nz) = kappal(1)*s(:, localProps%scalar(1))          ! absorption coefficient in array source to save memory
+            wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1))          ! absorption coefficient in array source to save memory
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
@@ -290,7 +294,7 @@ contains
             call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_b, nz)
 #endif
 
-            wrk3d(1:nx*ny*nz) = kappal(1)*s(:, localProps%scalar(1)) + kappav(1)*(s(:, 2) - s(:, localProps%scalar(1))) ! absorption coefficient
+            wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1)) + kappa(2, 1)*(s(:, 2) - s(:, localProps%scalar(1))) + kappa(3, 1) ! absorption coefficient
             if (imode_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
@@ -334,7 +338,7 @@ contains
             do iband = 1, nbands
                 tmp_rad(:, 5) = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))  ! emission function, Stefan-Boltzmann law
 
-                wrk3d(1:nx*ny*nz) = kappal(iband)*s(:, localProps%scalar(1)) + kappav(iband)*tmp_rad(:, 2)  ! calculate absorption coefficient into tmp_rad3
+                wrk3d(1:nx*ny*nz) = kappa(1, iband)*s(:, localProps%scalar(1)) + kappa(2, iband)*tmp_rad(:, 2) + kappa(3, iband) ! calculate absorption coefficient into tmp_rad3
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
                 end if
