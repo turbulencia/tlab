@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
@@ -6,8 +5,8 @@
 
 program PDFS
 
+    use TLAB_CONSTANTS, only: wp, wi, small_wp, ifile, efile, lfile, gfile, tag_flow, tag_scal
     use TLAB_TYPES, only: pointers_dt
-    use TLAB_CONSTANTS, only: ifile, efile, lfile, gfile, tag_flow, tag_scal, wp
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS
@@ -32,14 +31,14 @@ program PDFS
 
     implicit none
 
-    TINTEGER, parameter :: itime_size_max = 512
-    TINTEGER, parameter :: iopt_size_max = 20
-    TINTEGER, parameter :: igate_size_max = 8
-    TINTEGER, parameter :: params_size_max = 2
+    integer(wi), parameter :: itime_size_max = 512
+    integer(wi), parameter :: iopt_size_max = 20
+    integer(wi), parameter :: igate_size_max = 8
+    integer(wi), parameter :: params_size_max = 2
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    TREAL, allocatable :: pdf(:), y_aux(:)
+    real(wp), allocatable :: pdf(:), y_aux(:)
     integer(1), allocatable :: gate(:)
     type(pointers_dt) :: vars(16)
     integer, parameter :: i1 = 1
@@ -51,30 +50,30 @@ program PDFS
     character*32 fname, bakfile
     character*64 str
 
-    TINTEGER opt_main, opt_block, opt_bins(2)
-    TINTEGER opt_cond, opt_cond_scal, opt_cond_relative
-    TINTEGER nfield, ifield, ij, is, bcs(2, 2), isize_pdf, ig
-    TREAL dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
-    TINTEGER jmax_aux, idummy
+    integer(wi) opt_main, opt_block, opt_bins(2)
+    integer(wi) opt_cond, opt_cond_scal, opt_cond_relative
+    integer(wi) nfield, ifield, ij, is, bcs(2, 2), isize_pdf, ig
+    real(wp) dummy, eloc1, eloc2, eloc3, cos1, cos2, cos3
+    integer(wi) jmax_aux, idummy
     logical iread_flow, iread_scal
-    TINTEGER ibc(16)
-    TREAL vmin(16), vmax(16)
+    integer(wi) ibc(16)
+    real(wp) vmin(16), vmax(16)
     logical reduce_data
 
     ! Gates for the definition of the intermittency function (partition of the fields)
-    TINTEGER igate_size
-    TREAL gate_threshold(igate_size_max)
+    integer(wi) igate_size
+    real(wp) gate_threshold(igate_size_max)
     integer(1) gate_level
 
-    TINTEGER itime_size, it
-    TINTEGER itime_vec(itime_size_max)
+    integer(wi) itime_size, it
+    integer(wi) itime_vec(itime_size_max)
 
-    TINTEGER iopt_size
-    TINTEGER opt_vec(iopt_size_max)
-    TREAL opt_vec2(iopt_size_max)
+    integer(wi) iopt_size
+    integer(wi) opt_vec(iopt_size_max)
+    real(wp) opt_vec2(iopt_size_max)
 
-    TINTEGER params_size
-    TREAL params(params_size_max)
+    integer(wi) params_size
+    real(wp) params(params_size_max)
 
     !########################################################################
     !########################################################################
@@ -270,7 +269,7 @@ program PDFS
     y_aux(:) = 0                        ! Reduced vertical grid
     do ij = 1, jmax_aux*opt_block
         is = (ij - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) + y(ij, 1)/M_REAL(opt_block)
+        y_aux(is) = y_aux(is) + y(ij, 1)/real(opt_block, wp)
     end do
 
     ibc(1:nfield) = 1
@@ -382,19 +381,19 @@ program PDFS
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 if (buoyancy%type == EQNS_NONE) then
-                    txc(:, 4) = C_0_R; txc(:, 5) = C_0_R; txc(:, 6) = C_0_R
+                    txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
                     if (buoyancy%type == EQNS_EXPLICIT) then
                         call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
-                        wrk1d(1:jmax, 1) = C_0_R
+                        wrk1d(1:jmax, 1) = 0.0_wp
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
                     end if
                     s(1:isize_field, 1) = wrk3d(1:isize_field)*buoyancy%vector(2)
 
                     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s, txc(1, 4))
                     txc(:, 4) = -txc(:, 4)
-                    txc(:, 5) = C_0_R
+                    txc(:, 5) = 0.0_wp
                     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 6))
                 end if
 
@@ -443,18 +442,18 @@ program PDFS
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), q(1, 6), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             end if
-            txc(1:isize_field, 1) = C_2_R*txc(1:isize_field, 2)
+            txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 2)
 
             call FI_STRAIN_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
                                       txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7))
-            txc(1:isize_field, 2) = C_2_R*txc(1:isize_field, 2)
+            txc(1:isize_field, 2) = 2.0_wp*txc(1:isize_field, 2)
 
             call FI_STRAIN_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
                                      txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8))
-            txc(1:isize_field, 3) = C_2_R*visc*txc(1:isize_field, 3)
+            txc(1:isize_field, 3) = 2.0_wp*visc*txc(1:isize_field, 3)
 
             call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-            txc(1:isize_field, 4) = C_2_R*txc(1:isize_field, 4)
+            txc(1:isize_field, 4) = 2.0_wp*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = log(txc(1:isize_field, 4))
 
             ifield = ifield + 1; vars(1)%field => txc(:, 4); vars(ifield)%tag = '2SijSij'; ibc(ifield) = 2
@@ -507,7 +506,7 @@ program PDFS
 
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
             call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4))
-            txc(1:isize_field, 2) = C_2_R*txc(1:isize_field, 2)
+            txc(1:isize_field, 2) = 2.0_wp*txc(1:isize_field, 2)
 
             if (jmax_aux*opt_block /= g(2)%size .and. reduce_data) then ! I already need it here
                 do is = 1, ifield
@@ -664,12 +663,12 @@ program PDFS
             txc(1:isize_field, 1) = txc(1:isize_field, 1) + txc(1:isize_field, 3)*txc(1:isize_field, 4)
             txc(1:isize_field, 5) = txc(1:isize_field, 5) + txc(1:isize_field, 4)*txc(1:isize_field, 4) ! norm grad b
 
-            txc(1:isize_field, 5) = sqrt(txc(1:isize_field, 5) + C_SMALL_R)
-            txc(1:isize_field, 6) = sqrt(txc(1:isize_field, 6) + C_SMALL_R)
+            txc(1:isize_field, 5) = sqrt(txc(1:isize_field, 5) + small_wp)
+            txc(1:isize_field, 6) = sqrt(txc(1:isize_field, 6) + small_wp)
             txc(1:isize_field, 2) = txc(1:isize_field, 1)/(txc(1:isize_field, 5)*txc(1:isize_field, 6)) ! Cosine of angle between 2 vectors
 
             txc(1:isize_field, 1) = txc(1:isize_field, 1)*txc(1:isize_field, 1) ! Squared of the potential voticity
-            txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + C_SMALL_R)
+            txc(1:isize_field, 1) = log(txc(1:isize_field, 1) + small_wp)
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'LnPotentialEnstrophy'; ibc(ifield) = 2
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'CosPotentialEnstrophy'; ibc(ifield) = 2
@@ -684,10 +683,10 @@ program PDFS
             if (buoyancy%type == EQNS_EXPLICIT) then
                 call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
             else
-                wrk1d(1:jmax, 1) = C_0_R
+                wrk1d(1:jmax, 1) = 0.0_wp
                 call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
             end if
-            dummy = C_1_R/froude
+            dummy = 1.0_wp/froude
             txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'v'; ibc(ifield) = 1
@@ -759,7 +758,7 @@ program PDFS
             call CAVG2V(fname, rtime, imax*opt_block, jmax_aux, kmax, opt_bins, txc(1, 1), txc(1, 2), txc(1, 3), y_aux, pdf)
 
             ! -------------------------------------------------------------------
-            bbackground = C_0_R
+            bbackground = 0.0_wp
             call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4))
             if (jmax_aux*opt_block /= g(2)%size) then

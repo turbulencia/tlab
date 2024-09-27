@@ -33,8 +33,8 @@
 !########################################################################
 program SPECTRA
 
-    use TLAB_TYPES, only: pointers_dt
     use TLAB_CONSTANTS
+    use TLAB_TYPES, only: pointers_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS
@@ -64,13 +64,13 @@ program SPECTRA
     implicit none
 
 ! Parameter definitions
-    TINTEGER, parameter :: itime_size_max = 512
-    TINTEGER, parameter :: iopt_size_max = 20
+    integer(wi), parameter :: itime_size_max = 512
+    integer(wi), parameter :: iopt_size_max = 20
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    TREAL, dimension(:), allocatable :: p_aux, y_aux, samplesize
-    TREAL, dimension(:, :), allocatable :: out2d, outx, outz, outr
+    real(wp), dimension(:), allocatable :: p_aux, y_aux, samplesize
+    real(wp), dimension(:, :), allocatable :: out2d, outx, outz, outr
 
     type(pointers_dt), dimension(16) :: vars
 
@@ -83,35 +83,35 @@ program SPECTRA
     character*32 varname(16)
     character*64 str, line
     character*8 tag_file, tag_name, tag_var(16)
-    TINTEGER p_pairs(16, 2)
+    integer(wi) p_pairs(16, 2)
 
-    TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
-    TINTEGER flag_mode, ierr
+    integer(wi) opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
+    integer(wi) flag_mode, ierr
     logical iread_flow, iread_scal
-    TINTEGER isize_out2d, isize_aux, sizes(5)
-    TINTEGER nfield, nfield_ref
-    TINTEGER is, iv, iv_offset, iv1, iv2, ip, j, ig
-    TINTEGER jmax_aux, kxmax, kymax, kzmax
-    TINTEGER icalc_radial
-    TREAL norm, dummy
+    integer(wi) isize_out2d, isize_aux, sizes(5)
+    integer(wi) nfield, nfield_ref
+    integer(wi) is, iv, iv_offset, iv1, iv2, ip, j, ig
+    integer(wi) jmax_aux, kxmax, kymax, kzmax
+    integer(wi) icalc_radial
+    real(wp) norm, dummy
 
-    TINTEGER kx_total, ky_total, kz_total, kr_total, isize_spec2dr
+    integer(wi) kx_total, ky_total, kz_total, kr_total, isize_spec2dr
 
-    TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
+    integer(wi) inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
 ! Reading variables
     character*512 sRes
 
-    TINTEGER itime_size, it
-    TINTEGER itime_vec(itime_size_max)
+    integer(wi) itime_size, it
+    integer(wi) itime_vec(itime_size_max)
 
-    TINTEGER iopt_size
-    TREAL opt_vec(iopt_size_max)
+    integer(wi) iopt_size
+    real(wp) opt_vec(iopt_size_max)
 
     integer, parameter :: i0 = 0, i1 = 1, i2 = 2, i3 = 3
 
 #ifdef USE_MPI
-    TINTEGER id
+    integer(wi) id
 #endif
 
 !########################################################################
@@ -363,8 +363,8 @@ program SPECTRA
         call IBM_ALLOCATE(C_FILE_LOC)
     end if
 
-! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
-!              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
+! extend array by complex nyquist frequency in x (+1 complex(wp) = +2 real(wp))
+!              by boundary conditions in y       (+1 complex(wp) = +2 real(wp))
 
     isize_wrk3d = max(isize_wrk3d, isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
