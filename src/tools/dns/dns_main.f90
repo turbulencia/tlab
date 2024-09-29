@@ -50,15 +50,16 @@ program DNS
     call TLabMPI_Initialize()
 #endif
     call Thermodynamics_Initialize_Parameters(ifile)
-    call Radiation_Initialize(ifile)
-    call Microphysics_Initialize(ifile)
-    call Chemistry_Initialize(ifile)
-    call SpecialForcing_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
     call IBM_READ_INI(ifile)
     if (imode_ibm == 1) then
         call IBM_READ_CONSISTENCY_CHECK()
     end if
+
+    call Radiation_Initialize(ifile)
+    call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
+
     ! call TLab_Consistency_Check() ! TBD
 
     call DNS_READ_LOCAL(ifile)
@@ -75,6 +76,8 @@ program DNS
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call SpecialForcing_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE()
 

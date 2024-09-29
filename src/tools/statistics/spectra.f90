@@ -125,6 +125,7 @@ program SPECTRA
     call TLabMPI_Initialize()
 #endif
     call Thermodynamics_Initialize_Parameters(ifile)
+    
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)

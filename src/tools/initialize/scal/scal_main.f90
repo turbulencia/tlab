@@ -33,7 +33,9 @@ program INISCAL
     call TLabMPI_Initialize()
 #endif
     call Thermodynamics_Initialize_Parameters(ifile)
+
     call Radiation_Initialize(ifile)
+
     call SCAL_READ_LOCAL(ifile)
 
     if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then

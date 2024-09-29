@@ -4,10 +4,21 @@
 module SpecialForcing
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLAB_TYPES, only: term_dt, grid_dt
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLAB_ARRAYS, only: wrk1d
     implicit none
     private
 
+    ! to be changed to the local one
+    ! type term_dt
+    !     sequence
+    !     integer type
+    !     integer scalar(MAX_VARS)                ! fields defining this term
+    !     logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
+    !     real(wp) parameters(MAX_PARS)
+    !     real(wp) auxiliar(MAX_PARS)
+    !     real(wp) vector(3)
+    ! end type term_dt
     type(term_dt) :: forcingProps              ! Forcing parameters
 
     public :: forcingProps
@@ -23,17 +34,30 @@ module SpecialForcing
     integer, parameter :: TYPE_RAND_ADDIVTIVE = 5
     integer, parameter :: TYPE_WAVEMAKER = 6
 
+    integer, parameter :: nwaves_max = 3                ! maximum number of waves in wavemaker
+    integer :: nwaves                                   ! number of waves in wavemaker
+    real(wp) amplitude(2, nwaves_max)                   ! wave amplitudes in x, y
+    real(wp) wavenumber(2, nwaves_max)                  ! wavenumbers in x, y
+    real(wp) frequency(nwaves_max)                      ! wave frequencies
+    real(wp) envelope(4)                                ! (x,y,z) position, size
+
+    real(wp), allocatable, target :: tmp_envelope(:, :) ! arrays for this routine
+    real(wp), allocatable, target :: tmp_phase(:, :)
+
 contains
     !########################################################################
     !########################################################################
     subroutine SpecialForcing_Initialize(inifile)
+        use TLAB_VARS, only: imax, jmax, kmax, g
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
-        integer(wi) idummy
-        real(wp) dummy
+        integer(wi) idummy, i, j, k, iwave
+        real(wp) :: dummy(MAX_PARS)
+
+        real(wp), pointer :: p_envelope(:, :, :) => null(), p_phase(:, :, :) => null()
 
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
@@ -42,8 +66,9 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#')
         call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Geometry=<value>')
+        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+        call TLAB_WRITE_ASCII(bakfile, '#Wave#=<amplitude,x-wavenumber,y-wavenumber,frequency>')
+        call TLAB_WRITE_ASCII(bakfile, '#Envelope=<x,y,z,size>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; forcingProps%type = TYPE_NONE
@@ -65,30 +90,81 @@ contains
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, forcingProps%parameters)
 
+            call SCANINICHAR(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
+            idummy = 3
+            call LIST_REAL(sRes, idummy, forcingProps%vector)
+
+            select case (forcingProps%type)
+            case (TYPE_WAVEMAKER)
+                do nwaves = 1, nwaves_max
+                    write (sRes, *) nwaves
+                    call SCANINICHAR(bakfile, inifile, block, 'Wave'//trim(adjustl(sRes)), 'void', sRes)
+                    if (trim(adjustl(sRes)) /= 'void') then
+                        idummy = 4
+                        call LIST_REAL(sRes, idummy, dummy)
+                        if (idummy /= 4) then
+                            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Wave.')
+                            call TLAB_STOP(DNS_ERROR_OPTION)
+                        end if
+                        amplitude(1, nwaves) = dummy(1)*dummy(3)/sqrt(dummy(2)**2.+dummy(3)**2.)        ! in x equation
+                        amplitude(2, nwaves) = -dummy(1)*dummy(2)/sqrt(dummy(2)**2.+dummy(3)**2.)       ! in y equation
+                        wavenumber(1, nwaves) = dummy(2)                ! in x equation
+                        wavenumber(2, nwaves) = dummy(3)                ! in y equation
+                        frequency(nwaves) = dummy(4)
+                    else
+                        exit
+                    end if
+                end do
+                nwaves = nwaves - 1           ! correct for the increment in the loop
+
+                envelope(:) = 0.0_wp
+                call SCANINICHAR(bakfile, inifile, block, 'Envelope', '1.0,1.0,1.0, 1.0', sRes) ! position and size
+                idummy = MAX_PARS
+                call LIST_REAL(sRes, idummy, envelope)
+                envelope(4) = abs(envelope(4))                          ! make sure the size parameter is positive
+
+                forcingProps%active(3) = .false.                        ! only active in x and y
+
+            end select
+
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
-        idummy = 3
-        call LIST_REAL(sRes, idummy, forcingProps%vector)
+        !########################################################################
+        ! Local allocation
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
+        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
 
         select case (forcingProps%type)
         case (TYPE_WAVEMAKER)
-            forcingProps%auxiliar(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Geometry', '1.0,1.0,1.0, 1.0', sRes) ! position and region
-            idummy = MAX_PARS
-            call LIST_REAL(sRes, idummy, forcingProps%auxiliar)
-            forcingProps%auxiliar(4) = abs(forcingProps%auxiliar(4))                        ! make sure the size parameter is positive
+            p_envelope(1:imax, 1:jmax, 1:kmax) => tmp_envelope(1:imax*jmax*kmax, 1)
+            p_phase(1:imax, 1:jmax, 1:nwaves) => tmp_phase(1:imax*jmax*nwaves, 1)
+
+            dummy(1) = 0.5_wp/envelope(4)**2.0_wp
+            wrk1d(1:imax, 1) = g(1)%nodes(1:imax) - envelope(1)
+            wrk1d(1:jmax, 2) = g(2)%nodes(1:jmax) - envelope(2)
+            wrk1d(1:kmax, 3) = g(3)%nodes(1:kmax) - envelope(3)
+            do k = 1, kmax
+                do j = 1, jmax
+                    do i = 1, imax
+                        p_envelope(i, j, k) = wrk1d(i, 1)**2.0_wp + wrk1d(j, 2)**2.0_wp + wrk1d(k, 3)**2.0_wp
+                        p_envelope(i, j, k) = exp(-dummy(1)*p_envelope(i, j, k))         ! exp of an array can cause memory problems
+                        do iwave = 1, nwaves
+                            p_phase(i, j, iwave) = wrk1d(i, 1)*wavenumber(1, iwave) + wrk1d(j, 2)*wavenumber(2, iwave)
+                        end do
+                    end do
+                end do
+            end do
+
+            nullify (p_envelope, p_phase)
 
         end select
 
         ! -------------------------------------------------------------------
-        ! backwards compatibility, to be removed
-        if (trim(adjustl(sRes)) == 'none') &
-            call SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)
-        if (abs(dummy) > 0.0) then
-            forcingProps%type = TYPE_RAND_MULTIPLICATIVE
-            forcingProps%parameters = dummy
-            forcingProps%active(1:3) = .true.
+        ! Check with previous version; to be removed
+        call SCANINICHAR(bakfile, inifile, 'Main', 'TermRandom', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update TermRandom to [SpecialForcing].')
+            call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
         return
@@ -96,20 +172,16 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine SpecialForcing_Source(locProps, nx, ny, nz, iq, g, time, q, h, tmp)
-        use TLAB_ARRAYS, only: wrk1d
-
+    subroutine SpecialForcing_Source(locProps, nx, ny, nz, iq, time, q, h, tmp)
         type(term_dt), intent(in) :: locProps
         integer(wi), intent(in) :: nx, ny, nz, iq
-        type(grid_dt), intent(in) :: g(3)
         real(wp), intent(in) :: time
-        real(wp), intent(in) :: q(nx, ny, nz)
-        real(wp), intent(inout) :: h(nx, ny, nz)
-        real(wp), intent(inout) :: tmp(nx, ny, nz)
+        real(wp), intent(in) :: q(nx*ny, nz)
+        real(wp), intent(inout) :: h(nx*ny, nz)
+        real(wp), intent(inout) :: tmp(nx*ny, nz)
 
         ! -----------------------------------------------------------------------
-        real(wp) dummy, direction, vector_perp(3)
-        integer(wi) i, j, k
+        integer(wi) k, iwave
 
         !########################################################################
         select case (locProps%type)
@@ -118,11 +190,9 @@ contains
             tmp = locProps%parameters(1)
 
         case (TYPE_RAND_MULTIPLICATIVE)
-            dummy = locProps%parameters(1)
-
             call random_number(tmp)
 
-            tmp = dummy*(tmp*2.0_wp - 1.0_wp)
+            tmp = (tmp*2.0_wp - 1.0_wp)*locProps%parameters(1)
             tmp = tmp*h
 
         case (TYPE_SINUSOIDAL)
@@ -130,23 +200,12 @@ contains
         case (TYPE_SINUSOIDAL_NOSLIP)
 
         case (TYPE_WAVEMAKER)
-            dummy = 0.5_wp/locProps%auxiliar(4)**2.0_wp
-            wrk1d(1:nx, 1) = g(1)%nodes(1:nx) - locProps%auxiliar(1)
-            wrk1d(1:ny, 2) = g(2)%nodes(1:ny) - locProps%auxiliar(2)
-            wrk1d(1:nz, 3) = g(3)%nodes(1:nz) - locProps%auxiliar(3)
-            vector_perp(1) = -locProps%vector(2)    ! to be cleaned
-            vector_perp(2) = locProps%vector(1)
-            vector_perp(3) = locProps%vector(3)
+            tmp(:, :) = 0.0_wp
             do k = 1, nz
-                do j = 1, ny
-                    do i = 1, nx
-                        tmp(i, j, k) = wrk1d(i, 1)**2.0_wp + wrk1d(j, 2)**2.0_wp + wrk1d(k, 3)**2.0_wp
-                        tmp(i, j, k) = exp(-dummy*tmp(i, j, k))         ! exp of an array can cause memory problems
-                        direction = wrk1d(i, 1)*locProps%vector(1) + wrk1d(j, 2)*locProps%vector(2) + wrk1d(k, 3)*locProps%vector(3)
-                        tmp(i, j, k) = (sin(locProps%parameters(3)*direction - locProps%parameters(2)*time)*vector_perp(iq) &
-                                        - q(i, j, k))*tmp(i, j, k)*locProps%parameters(1)
-                    end do
+                do iwave = 1, nwaves
+                    tmp(:, k) = tmp(:, k) + sin(tmp_phase(:, iwave) - frequency(iwave)*time)*amplitude(iq, iwave)
                 end do
+                tmp(:, k) = (tmp(:, k) - q(:, k))*tmp_envelope(:, k)*locProps%parameters(1)
             end do
 
         end select
