@@ -67,7 +67,7 @@ contains
         call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#Wave#=<amplitude,x-wavenumber,y-wavenumber,frequency>')
+        call TLAB_WRITE_ASCII(bakfile, '#Wave#=<amplitude,wavenumber,angle,frequency>')
         call TLAB_WRITE_ASCII(bakfile, '#Envelope=<x,y,z,size>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
@@ -106,24 +106,25 @@ contains
                             call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Wave.')
                             call TLAB_STOP(DNS_ERROR_OPTION)
                         end if
-                        amplitude(1, nwaves) = dummy(1)*dummy(3)/sqrt(dummy(2)**2.+dummy(3)**2.)        ! in x equation
-                        amplitude(2, nwaves) = -dummy(1)*dummy(2)/sqrt(dummy(2)**2.+dummy(3)**2.)       ! in y equation
-                        wavenumber(1, nwaves) = dummy(2)                ! in x equation
-                        wavenumber(2, nwaves) = dummy(3)                ! in y equation
+                        dummy(3) = dummy(3)*pi_wp/180._wp                   ! from degree to radians
+                        wavenumber(1, nwaves) = dummy(2)*cos(dummy(3))      ! x-wavenumber
+                        wavenumber(2, nwaves) = dummy(2)*sin(dummy(3))      ! y-wavenumber
+                        amplitude(1, nwaves) = dummy(1)*sin(dummy(3))       ! in x equation
+                        amplitude(2, nwaves) = -dummy(1)*cos(dummy(3))      ! in y equation
                         frequency(nwaves) = dummy(4)
                     else
                         exit
                     end if
                 end do
-                nwaves = nwaves - 1           ! correct for the increment in the loop
+                nwaves = nwaves - 1                                         ! correct for the increment in the loop
 
                 envelope(:) = 0.0_wp
                 call SCANINICHAR(bakfile, inifile, block, 'Envelope', '1.0,1.0,1.0, 1.0', sRes) ! position and size
                 idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, envelope)
-                envelope(4) = abs(envelope(4))                          ! make sure the size parameter is positive
+                envelope(4) = abs(envelope(4))                              ! make sure the size parameter is positive
 
-                forcingProps%active(3) = .false.                        ! only active in x and y
+                forcingProps%active(3) = .false.                            ! only active in x and y
 
             end select
 
