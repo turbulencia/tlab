@@ -85,7 +85,7 @@ program AVERAGES
     integer(wi) io_sizes(5), id
 
     ! Pointers to existing allocated space
-    real(wp), dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: u, v, w, p
 
     !########################################################################
     !########################################################################
@@ -973,10 +973,8 @@ program AVERAGES
             call PhaseAvg_Space(wrk2d, inb_scal, it, 0, 0, 2)
             call PhaseAvg_Write( inb_scal, IO_SCAL, 0, avgp_name, 2, itime_vec(it))
             
-            !call PhaseAvg_Space(wrk2d, q, 6       , it, 0, 0, 5)
-            !call PhaseAvg_Write( 6       , IO_FLOW, 0, avgstr_name, itime_vec(it))
-           
-            call PhaseAvg_Space(wrk2d, 1, it, 0,0 , txc(:, 9))
+            p => txc(:,9) !makes sure to only pass the address, not the entire array 
+            call PhaseAvg_Space(wrk2d, 1, it, 0, 0 , p)
             call PhaseAvg_Write( 1       ,      IO_SCAL, 0, avgs_name, 4, itime_vec(it))
             
             call PhaseAvg_ResetVariable()                 
