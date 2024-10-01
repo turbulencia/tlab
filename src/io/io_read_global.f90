@@ -939,17 +939,9 @@ subroutine IO_READ_GLOBAL(inifile)
 ! ###################################################################
 ! Phase Averaging
 ! ###################################################################
-    call SCANINICHAR(bakfile, inifile, 'PostProcessing', 'PhaseAvg', 'no' , sRes)
-    if ( TRIM(ADJUSTL(sRes)) == 'yes' )  then
-        phAvg%active = .true.
-        call SCANINIINT(bakfile, inifile, 'PostProcessing', 'stride', '1', phAvg%stride)
-    else if ( phAvg%active .eqv. .false. ) then 
-        phAvg%stride=0
-        phAvg%active = .false.
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC// '. Invalid phaseAvg option')
-        call TLAB_STOP(DNS_ERROR_PHASEAVG)
-    end if
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'PhaseAvg', '0' , phAvg%stride)
+    if ( phAvg%stride .GT. 0 ) phAvg%active = .true.
+ 
     return
 end subroutine IO_READ_GLOBAL
 
