@@ -23,8 +23,8 @@ module Radiation
     !     real(wp) auxiliar(MAX_PARS)
     !     real(wp) vector(3)
     ! end type term_dt
-    integer, parameter :: ncomps_max = 3                ! maximum number of radiatively active components
-    integer, parameter :: nbands_max = 3                ! maximum number of spectral bands
+    integer, parameter :: ncomps_max = 10                ! maximum number of radiatively active components
+    integer, parameter :: nbands_max = 10                ! maximum number of spectral bands
     type infrared_dt
         sequence
         integer type
