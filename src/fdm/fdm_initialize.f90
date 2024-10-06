@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 subroutine FDM_INITIALIZE(x, g, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
+    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
@@ -27,9 +27,9 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
     integer(wi) i, ib, ip, is, ig, nx, ndl, ndr
     integer(wi) nmin, nmax, nsize, bcs_cases(4)
-    real(wp) dummy, coef(5)
+    real(wp) dummy, coef(5), scale_loc
 
-    integer, parameter :: i0 = 0, i1 = 1
+    integer, parameter :: i1 = 1
 
 #ifdef TRACE_ON
     call TLAB_WRITE_ASCII(tfile, 'Entering '//__FILE__)
@@ -47,6 +47,18 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 
     if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
         call TLAB_WRITE_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+    end if
+
+    if (g%size > 1) then
+        scale_loc = x(g%size, 1) - x(1, 1)
+        if (g%periodic) scale_loc = scale_loc*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
+    else
+        scale_loc = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
+    end if
+    ! print *, abs((scale_loc - g%scale)/scale_loc)
+    if (abs((scale_loc - g%scale)/scale_loc) > roundoff_wp) then
+        call TLAB_WRITE_ASCII(efile, __FILE__//'. Unmathed domain scale.')
+        call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
 ! ###################################################################
@@ -318,7 +330,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         ! modified wavenumbers
         g%mwn2 => x(:, ig)
 
-  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+        g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                     /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
         g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver
