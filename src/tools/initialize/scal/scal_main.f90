@@ -34,8 +34,6 @@ program INISCAL
 #endif
     call Thermodynamics_Initialize_Parameters(ifile)
 
-    call Radiation_Initialize(ifile)
-
     call SCAL_READ_LOCAL(ifile)
 
     if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then
@@ -44,7 +42,7 @@ program INISCAL
 
     inb_txc = 0
     if (flag_s == PERT_LAYER_BROADBAND) inb_txc = max(inb_txc, 1)
-    if (infraredProps%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
+    if (norm_ini_radiation /= 0.0_wp) inb_txc = max(inb_txc, 4)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
@@ -52,6 +50,8 @@ program INISCAL
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call Radiation_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE()
     do is = 1, size(IniS)
