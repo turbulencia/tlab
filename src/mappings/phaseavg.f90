@@ -186,16 +186,16 @@ CONTAINS
       ! Determing the tendency to be written
     if (index == 1) then
       avg_type => avg_flow
-      call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*ifld])
+      call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*nfield])
     elseif (index == 2) then
       avg_type => avg_scal
-      call c_f_pointer(c_loc(s), loc_field, shape=[imax*jmax*kmax*ifld])
+      call c_f_pointer(c_loc(s), loc_field, shape=[imax*jmax*kmax*nfield])
     elseif (index == 4) then
       avg_type => avg_p
-      call c_f_pointer(c_loc(field), loc_field, shape=[imax*jmax*kmax*ifld])
+      call c_f_pointer(c_loc(field), loc_field, shape=[imax*jmax*kmax*nfield])
     elseif (index == 5) then
       avg_type => avg_stress
-      call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*ifld])
+      call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*nfield])
       ! Not yet coded
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in PhaseAvg_Space_Exec')
