@@ -24,8 +24,7 @@ module PHASEAVG
 
 
   real(wp),   dimension(:),       allocatable, target   :: avg_flow, avg_stress, avg_p, avg_scal
-  integer(wi)                                           :: nx_total, ny_total, nz_total
-  integer(wi)                                           :: nxy, nxz, nyz
+  integer(wi)                                           :: nxy, nxz, nyz, nz_total
   integer(wi)                                           :: avg_planes
   character(len=32), parameter                          :: avgu_name       = 'avg_flow'
   character(len=32), parameter                          :: avgstr_name     = 'avg_stress'
@@ -38,6 +37,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine PhaseAvg_Allocate(C_FILE_LOC, restart)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    use TLAB_VARS,      only : g
 #ifdef USE_MPI
     use MPI
     use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
@@ -48,11 +48,6 @@ CONTAINS
     integer(wi)     , intent(in)    :: restart
       ! ================================================================== !
 
-#ifdef USE_MPI    
-    nx_total = imax*ims_npro_i ! allocate to the 0th process
-#else
-    nx_total = imax
-#endif
     nxy = imax*jmax
     nyz = jmax*kmax
     nxz = imax*kmax
@@ -287,13 +282,7 @@ CONTAINS
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in PhaseAvg_Write')
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
     end if
-  
-#ifdef USE_MPI
-    nx_total = imax*ims_npro_i
-#else
-    nx_total = imax
-#endif
-    ny_total = jmax
+
     nz_total = it_save + 1
 
     isize = 0
@@ -319,7 +308,7 @@ CONTAINS
     io_aux(id)%precision = IO_TYPE_DOUBLE
 
     ! Define the sizes array
-    sizes(1) = imax * jmax * (avg_planes+1) ! total size of the 3D field
+    sizes(1) = imax * jmax * (avg_planes+1) ! size of the 3D field
     sizes(2) = 1                         ! lower bound (starting index in the data array)
     sizes(3) = sizes(1)                  ! upper bound (ending index in the data array)
     sizes(4) = 1                         ! stride (1 means every element)
@@ -345,13 +334,21 @@ CONTAINS
         end if
 
 #ifdef USE_MPI
-        if (ims_pro_k == 0) then
+        if (ims_pro == 0) then
 #endif
 #define LOC_STATUS "unknown"
 #define LOC_UNIT_ID 75
 #include "dns_open_file.h"
-            call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itime, params)
+            call IO_WRITE_HEADER(LOC_UNIT_ID, isize, g(1)%size, g(2)%size, nz_total, itime, params)
             close(LOC_UNIT_ID)
+#ifdef USE_MPI
+        end if
+#endif
+
+#ifdef USE_MPI
+        if (ims_pro_k == 0) then
+#endif
+            call MPI_BARRIER(ims_comm_x,ims_err)
             call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg_type(ifld_srt:ifld_end), sizes)
 #ifdef USE_MPI
         end if
