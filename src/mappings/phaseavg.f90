@@ -46,6 +46,7 @@ CONTAINS
     implicit none
     character(len=*), intent(in)    :: C_FILE_LOC
     integer(wi)     , intent(in)    :: restart
+    integer(longi)                  :: alloc_size
       ! ================================================================== !
 
     nxy = imax*jmax
@@ -64,11 +65,12 @@ CONTAINS
 #ifdef USE_MPI
     if (ims_pro_k == 0) then
 #endif
-      call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_flow,      [imax*jmax*(avg_planes+1)*inb_flow], 'avgflow.')
-      call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_stress,    [imax*jmax*(avg_planes+1)*       6], 'avgstr.' ) ! allocated not yet coded
-      call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_p,         [imax*jmax*(avg_planes+1)*       1], 'avgp.'   )
-      call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC,   avg_scal,      [imax*jmax*(avg_planes+1)*inb_scal], 'avgscal.')
-
+      alloc_size = imax*jmax*(avg_planes+1)
+      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_flow,      [alloc_size*inb_flow], 'avgflow.')
+      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_stress,    [alloc_size*       6], 'avgstr.' ) ! allocated not yet coded
+      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_p,         [alloc_size*       1], 'avgp.'   )
+      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_scal,      [alloc_size*inb_scal], 'avgscal.')
+      
       avg_flow(:)   = 0.0_wp
       avg_stress(:) = 0.0_wp
       avg_p(:)      = 0.0_wp
@@ -179,7 +181,7 @@ CONTAINS
     real(wp), dimension(:), pointer                           :: loc_field
     integer(wi)                                               :: ipl_srt, ipl_end, iavg_srt, iavg_end, lpl_srt, lpl_end
       ! ================================================================== !
-      ! Calculation of hte plane id to write the spatial average 
+      ! Calculation of the plane id to write the spatial average 
     plane_id = 1
     if (it_save /= 0) plane_id = mod((itime-1) - (it_first), it_save) + 1
 
@@ -213,7 +215,7 @@ CONTAINS
           localsum = localsum + loc_field(ipl_srt:ipl_end) / g(3)%size !loc_field(:,:,k,ifld)/g(3)%size
         end do
         
-        ! Computing the start and end of the field for accumulating the space averages
+        ! Computing the local sum from start and end of the field for accumulating the space averages
         iavg_srt = (ifld - 1)*nxy*(avg_planes+1) + nxy*(plane_id-1) + 1
         iavg_end = (ifld - 1)*nxy*(avg_planes+1) + nxy*plane_id  
 #ifdef USE_MPI

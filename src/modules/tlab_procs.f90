@@ -45,6 +45,7 @@ module TLAB_PROCS
     public :: TLAB_ALLOCATE_ARRAY_DOUBLE
     public :: TLAB_ALLOCATE_ARRAY_INT
     public :: TLAB_ALLOCATE_ARRAY_LONG_INT
+    public :: TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG
 contains
 
     ! ###################################################################
@@ -193,6 +194,19 @@ contains
         call TLAB_ALLOCATE_ERR(C_FILE_LOC,efile,s)
 
     end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE
+
+   ! ### DOUBLE ALLOCATION ROUTINES FOR LARGE 1D ARRAYS
+    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC, a, dims, s)
+      character(len=*), intent(in) :: C_FILE_LOC,s
+      real(8), allocatable, intent(inout) :: a(:)
+      integer(8), intent(in) :: dims(1)
+      integer id
+      !#####################################################################
+      call TLAB_ALLOCATE_LOG_LONG(lfile,dims,s)
+      allocate (a(dims(1)), stat=ierr)
+      call TLAB_ALLOCATE_ERR(C_FILE_LOC,efile,s)
+    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG
+    
 
     ! ######################################################################
     ! ######################################################################
@@ -494,7 +508,7 @@ contains
       allocate (a(dims(1)), stat=ierr)
       call TLAB_ALLOCATE_ERR(C_FILE_LOC,efile,s)
     end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1
-
+ 
     subroutine TLAB_ALLOCATE_ARRAY_DOUBLE2(C_FILE_LOC, a, dims, s)
       character(len=*), intent(in) :: C_FILE_LOC,s
       real(8), allocatable, intent(inout) :: a(:,:)
@@ -624,6 +638,21 @@ contains
     SUBROUTINE TLAB_ALLOCATE_LOG(log_file,dims,s)
       integer(wi),       INTENT(IN) :: dims(:)
       character (len=*), INTENT(IN) :: log_file, s
+      integer id
+      integer(longi) :: dims_long(rank(dims)) 
+      !#####################################################################
+
+        DO id=1,rank(dims) 
+            dims_long = dims(id)
+        ENDDO
+
+        CALL TLAB_ALLOCATE_LOG_LONG(log_file,dims_long,s)
+      
+    END SUBROUTINE TLAB_ALLOCATE_LOG
+
+   SUBROUTINE TLAB_ALLOCATE_LOG_LONG(log_file,dims,s)
+      integer(longi),       INTENT(IN) :: dims(:)
+      character (len=*), INTENT(IN) :: log_file, s
       integer id 
       !#####################################################################
 
@@ -637,7 +666,7 @@ contains
          write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
       end do
       call TLAB_WRITE_ASCII(log_file, line)
-    END SUBROUTINE TLAB_ALLOCATE_LOG
+    END SUBROUTINE TLAB_ALLOCATE_LOG_LONG
 
     SUBROUTINE TLAB_ALLOCATE_ERR(C_FILE_LOC,log_file,s)
       character(len=*) :: C_FILE_LOC,log_file,s
