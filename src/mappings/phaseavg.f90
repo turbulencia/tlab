@@ -127,11 +127,10 @@ CONTAINS
     if (ims_pro_k == 0) THEN 
         io_aux(id)%active = .true.
         io_aux(id)%communicator = ims_comm_x
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax, MPI_REAL8)
+        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax*(avg_planes+1), MPI_REAL8)
     else
         io_aux(id)%active = .false.  
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax, MPI_REAL8)
-
+        ! io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax, MPI_REAL8)
     end if
 #endif
   end subroutine PhaseAvg_Initialize
@@ -305,7 +304,7 @@ CONTAINS
     ! INITIALIZATION OF MPI TYPES SHOULD ONLY BE CARRIED OUT ONCE *AND* DURING INITIALIZATION
     header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
 
-    id = IO_AVERAGE_PLANE
+    id = IO_AVERAGE_PLANE ! IO_PHASEAVG
     io_aux(id)%offset = header_offset
     io_aux(id)%precision = IO_TYPE_DOUBLE
 
@@ -348,9 +347,9 @@ CONTAINS
 #endif
 
 #ifdef USE_MPI
+        call MPI_BARRIER(MPI_COMM_WORLD,ims_err)
         if (ims_pro_k == 0) then
 #endif
-            call MPI_BARRIER(ims_comm_x,ims_err)
             call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg_type(ifld_srt:ifld_end), sizes)
 #ifdef USE_MPI
         end if
