@@ -97,20 +97,20 @@ contains
         call TLAB_WRITE_ASCII(lfile, 'Initializing MPI communicators.')
 
         ! the first index in the grid corresponds to k, the second to i
-        ! dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
-        dims(1) = ims_npro_i; dims(2) = ims_npro_k; period = .true.; reorder = .false.
+        dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
+        ! dims(1) = ims_npro_i; dims(2) = ims_npro_k; period = .true.; reorder = .false.
         call MPI_CART_CREATE(MPI_COMM_WORLD, 2, dims, period, reorder, ims_comm_xz, ims_err)
 
         !  CALL MPI_CART_COORDS(ims_comm_xz, ims_pro, 2, coord, ims_err)
         !  coord(1) is ims_pro_k, and coord(2) is ims_pro_i
 
         remain_dims(1) = .false.; remain_dims(2) = .true.
-        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
-        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
+        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
+        !call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
 
         remain_dims(1) = .true.; remain_dims(2) = .false.
-        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
-        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
+        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
+        !call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
 
         ! ip = ims_pro
         ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_x, ims_err)
