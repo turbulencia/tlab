@@ -72,10 +72,10 @@ contains
         allocate (ims_request(2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
 
         ! #######################################################################
-        ! ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
-        ims_pro_i = ims_pro / ims_npro_k
-        ! ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
-        ims_pro_k = mod(ims_pro,ims_npro_k)
+        ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
+        ! ims_pro_i = ims_pro / ims_npro_k
+        ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
+        ! ims_pro_k = mod(ims_pro,ims_npro_k)
 
         PRINT *, ims_pro, ims_pro_i, ims_pro_k
 
