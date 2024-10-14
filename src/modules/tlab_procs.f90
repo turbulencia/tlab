@@ -639,31 +639,30 @@ contains
       integer(wi),       INTENT(IN) :: dims(:)
       character (len=*), INTENT(IN) :: log_file, s
       integer id
-      integer(longi) :: dims_long(rank(dims)) 
+      integer(longi) :: dims_long(size(dims)) 
       !#####################################################################
 
-        DO id=1,rank(dims) 
-            dims_long = dims(id)
+        DO id=1,size(dims) 
+            dims_long(id) = dims(id)
         ENDDO
-
         CALL TLAB_ALLOCATE_LOG_LONG(log_file,dims_long,s)
       
     END SUBROUTINE TLAB_ALLOCATE_LOG
 
-   SUBROUTINE TLAB_ALLOCATE_LOG_LONG(log_file,dims,s)
-      integer(longi),       INTENT(IN) :: dims(:)
+   SUBROUTINE TLAB_ALLOCATE_LOG_LONG(log_file,dims_long,s)
+      integer(longi),       INTENT(IN) :: dims_long(:)
       character (len=*), INTENT(IN) :: log_file, s
       integer id 
       !#####################################################################
 
-      if ( any(dims <0 ) ) THEN
+      if ( any(dims_long <0 ) ) THEN
          ierr = DNS_ERROR_ALLOC
          call TLAB_ALLOCATE_ERR('TLAB_ALLOCATE_LOG',efile,s)
       endif
       
-      write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-      do id = 2, size(dims)
-         write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
+      write (str, *) dims_long(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+      do id = 2, size(dims_long)
+         write (str, *) dims_long(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
       end do
       call TLAB_WRITE_ASCII(log_file, line)
     END SUBROUTINE TLAB_ALLOCATE_LOG_LONG
