@@ -15,7 +15,7 @@ program INIPART
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
-    use PROFILES
+    use Profiles
 
     implicit none
 
@@ -43,7 +43,7 @@ program INIPART
         ! -------------------------------------------------------------------
         bakfile = trim(adjustl(ifile))//'.bak'
 
-        call PROFILES_READBLOCK(bakfile, ifile, 'Particles', 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
+        call Profiles_ReadBlock(bakfile, ifile, 'Particles', 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
         call SCANINICHAR(bakfile, ifile, 'Particles', 'ProfileIniP', 'None', sRes)
         if (trim(adjustl(sRes)) == 'scalar') IniP%type = PART_INITYPE_SCALAR
         if (trim(adjustl(sRes)) == 'hardcoded') IniP%type = PART_INITYPE_HARDCODED

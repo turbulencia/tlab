@@ -779,7 +779,7 @@ contains
 
         use TLAB_CONSTANTS, only: efile
         use TLAB_VARS, only: sbg, qbg
-        use PROFILES
+        use Profiles
         implicit none
 
         integer(wi) flag_mode, is, nx, ny, nz
@@ -795,7 +795,7 @@ contains
         if (flag_mode == 0) then ! Velocity
             if (is == 1) then ! Only the mean velocity
                 do j = 1, ny
-                    dummy = PROFILES_CALCULATE(qbg(1), y(j))
+                    dummy = Profiles_Calculate(qbg(1), y(j))
                     b(:, j, :) = dummy + a(:, j, :)
                 end do
             else
@@ -804,7 +804,7 @@ contains
 
         else                         ! Scalars
             do j = 1, ny
-                dummy = PROFILES_CALCULATE(sbg(is), y(j))
+                dummy = Profiles_Calculate(sbg(is), y(j))
                 b(:, j, :) = dummy + a(:, j, :)
             end do
 

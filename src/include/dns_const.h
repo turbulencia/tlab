@@ -125,32 +125,6 @@
 #define DNS_FILTER_BCS_NEUMANN   5
 #define DNS_FILTER_BCS_ZERO      6
 
-! Mean profiles
-#define PROFILE_NONE         0
-#define PROFILE_LINEAR       1
-#define PROFILE_TANH         2
-#define PROFILE_ERF          3
-#define PROFILE_BICKLEY      4
-#define PROFILE_GAUSSIAN     5
-#define PROFILE_LINEAR_ERF   6
-#define PROFILE_EKMAN_U      7
-#define PROFILE_EKMAN_V      8
-#define PROFILE_EKMAN_U_P    9
-#define PROFILE_PARABOLIC   10
-#define PROFILE_LINEAR_CROP 11
-#define PROFILE_MIXEDLAYER  12
-#define PROFILE_ERF_ANTISYM 13
-#define PROFILE_ERF_SURFACE 14
-#define PROFILE_LINEAR_ERF_SURFACE 15
-#define PROFILE_PARABOLIC_SURFACE  16
-#define PROFILE_GAUSSIAN_SURFACE   17
-#define PROFILE_GAUSSIAN_ANTISYM   18
-#define PROFILE_GAUSSIAN_SYM       19
-#define PROFILE_TANH_ANTISYM       20
-#define PROFILE_TANH_SYM           21
-#define PROFILE_TANH_COS           22
-#define PROFILE_GAUSSIAN_TANH_SYM  23
-
 ! Mixture Type
 #define MIXT_TYPE_NONE             0
 #define MIXT_TYPE_BS               1

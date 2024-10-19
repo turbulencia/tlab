@@ -15,7 +15,7 @@ subroutine IO_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
     use TLAB_PROCS
-    use PROFILES
+    use Profiles
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
@@ -489,20 +489,20 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
     do is = 1, MAX_VARS
         write (lstr, *) is
-        call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
+        call Profiles_ReadBlock(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
     end do
 
     ! Flow variables
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Flow]')
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityX', qbg(1))
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityX', qbg(1))
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
 
     ! backwards compatilibity; originally, all velocity data was contained in block 'Velocity' except for the mean value
     call SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocity', 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
-        call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Velocity', qbg(1))
+        call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Velocity', qbg(1))
         call TLAB_WRITE_ASCII(wfile, 'Update tag Flow.Velocity to Flow.VelocityX.')
     end if
 
@@ -515,10 +515,10 @@ subroutine IO_READ_GLOBAL(inifile)
         qbg(3)%delta = qbg(1)%delta
     end if
 
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Pressure', pbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Pressure', pbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Density', rbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Temperature', tbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
 
 ! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
     ! if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then

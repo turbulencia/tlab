@@ -10,7 +10,7 @@ subroutine SCAL_MEAN(is, s)
     use TLAB_ARRAYS, only: wrk2d
     use TLAB_POINTERS_3D, only: p_wrk1d
     use THERMO_THERMAL
-    use PROFILES
+    use Profiles
     implicit none
 
     integer(wi) is
@@ -24,7 +24,7 @@ subroutine SCAL_MEAN(is, s)
     !########################################################################
     if (imode_sim == DNS_MODE_TEMPORAL) then
         do j = 1, jmax
-            dummy = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+            dummy = Profiles_Calculate(sbg(is), g(2)%nodes(j))
             s(:, j, :) = dummy + s(:, j, :)
         end do
 
@@ -45,13 +45,13 @@ subroutine SCAL_MEAN(is, s)
 #define t_loc(i,j)   p_wrk2d(i,j,5)
         ! Inflow profile of scalar
         do j = 1, jmax
-            z_vi(j) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+            z_vi(j) = Profiles_Calculate(sbg(is), g(2)%nodes(j))
         end do
 
         ! Initialize density field
         rho_vi(1:jmax) = 0.0_wp
         do j = 1, jmax
-            dummy = PROFILES_CALCULATE(tbg, g(2)%nodes(j))
+            dummy = Profiles_Calculate(tbg, g(2)%nodes(j))
             ! pilot to be added: ijet_pilot, rjet_pilot_thickness, XIST
             t_loc(:, j) = dummy
         end do
@@ -65,7 +65,7 @@ subroutine SCAL_MEAN(is, s)
         ! inflow profile of velocity
         u_vi(1:jmax) = 0.0_wp
         do j = 1, jmax
-            u_vi(j) = PROFILES_CALCULATE(qbg(1), g(2)%nodes(j))
+            u_vi(j) = Profiles_Calculate(qbg(1), g(2)%nodes(j))
             ! pilot to be added: ijet_pilot, rjet_pilot_thickness, rjet_pilot_velocity
         end do
 

@@ -36,7 +36,7 @@ program INISCAL
 
     call SCAL_READ_LOCAL(ifile)
 
-    if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then
+    if (imode_sim == DNS_MODE_SPATIAL) then
         inb_wrk2d = max(inb_wrk2d, 6)
     end if
 

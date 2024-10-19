@@ -29,24 +29,25 @@ contains
     subroutine Chemistry_Initialize(inifile)
         use TLAB_TYPES, only: profiles_dt
         use TLAB_VARS, only: damkohler, sbg, g
-        use PROFILES
+        use Profiles
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
-        character(len=32) bakfile
+        character(len=32) bakfile, block
         character(len=512) sRes
         integer(wi) idummy, is, j
         type(profiles_dt) prof_loc
 
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
+        block = 'Chemistry'
 
         call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[Chemistry]')
+        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
         call TLAB_WRITE_ASCII(bakfile, '#Type=<none/quadratic/layeredrelaxation/ozone>')
         call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
 
-        call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Type', 'None', sRes)
+        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; chemistryProps%type = TYPE_NONE
         elseif (trim(adjustl(sRes)) == 'quadratic') then; chemistryProps%type = TYPE_QUADRATIC; 
         elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistryProps%type = TYPE_QUADRATIC3; 
@@ -59,7 +60,7 @@ contains
 
         if (chemistryProps%type /= EQNS_NONE) then
             chemistryProps%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
+            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, chemistryProps%parameters)
 
@@ -72,17 +73,14 @@ contains
 
         select case (chemistryProps%type)
         case (TYPE_LAYEREDRELAXATION)
-            prof_loc%type = PROFILE_TANH
+            prof_loc = profiles_dt(type=PROFILE_TANH)
             prof_loc%ymean = sbg(is)%ymean
             prof_loc%thick = -chemistryProps%parameters(3)*0.5_wp
             prof_loc%mean = 0.5_wp
-            prof_loc%delta = 1.0_wp
-            prof_loc%lslope = 0.0_wp
-            prof_loc%uslope = 0.0_wp
 
             allocate (relaxation_strength(g(2)%size))
             do j = 1, g(2)%size
-                relaxation_strength(j) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j) - chemistryProps%parameters(2))
+                relaxation_strength(j) = Profiles_Calculate(prof_loc, g(2)%nodes(j) - chemistryProps%parameters(2))
             end do
 
         end select

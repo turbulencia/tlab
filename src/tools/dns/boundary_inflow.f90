@@ -320,7 +320,7 @@ contains
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
         use TLAB_TYPES, only: profiles_dt
         use TLAB_CONSTANTS, only: pi_wp
-        use PROFILES
+        use Profiles
 
         real(wp) etime
         real(wp), intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
@@ -351,13 +351,8 @@ contains
 
         xaux = -qbg(1)%mean*etime
 
-        prof_loc%type = PROFILE_GAUSSIAN
+        prof_loc = profiles_dt(type=PROFILE_GAUSSIAN)
         prof_loc%thick = fp%parameters(1)
-        prof_loc%delta = 1.0_wp
-        prof_loc%mean = 0.0_wp
-        prof_loc%lslope = 0.0_wp
-        prof_loc%uslope = 0.0_wp
-        prof_loc%parameters = 0.0_wp
 
         ! ###################################################################
         ! Shape function
@@ -367,7 +362,7 @@ contains
             prof_loc%ymean = qbg(1)%ymean
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
+                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
                 wrk1d(j, 2) = yr/(prof_loc%thick**2)*wrk1d(j, 1) ! Derivative of f
             end do
 
@@ -375,7 +370,7 @@ contains
             prof_loc%ymean = qbg(1)%ymean - 0.5_wp*qbg(1)%diam
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
+                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
                 wrk1d(j, 2) = -yr/(prof_loc%thick**2)*wrk1d(j, 1)
             end do
 
@@ -385,7 +380,7 @@ contains
             end if
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                dummy = PROFILES_CALCULATE(prof_loc, y(j))
+                dummy = Profiles_Calculate(prof_loc, y(j))
                 wrk1d(j, 1) = wrk1d(j, 1) + dummy
                 wrk1d(j, 2) = wrk1d(j, 2) + yr/(prof_loc%thick**2)*dummy
             end do

@@ -12,7 +12,7 @@ module SCAL_LOCAL
     use TLAB_PROCS
     use IO_FIELDS
     use AVGS, only: AVG1V2D
-    use PROFILES
+    use Profiles
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -90,13 +90,13 @@ contains
             call TLAB_STOP(DNS_ERROR_OPTION)
         end if
 
-        call PROFILES_READBLOCK(bakfile, inifile, 'IniFields', 'IniS', IniS(1), 'gaussiansurface')      ! if IniS, valid for all
+        call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniS', IniS(1), 'gaussiansurface')      ! if IniS, valid for all
         if (trim(adjustl(sRes)) /= 'none') then
             IniS(2:) = IniS(1)
         else                                                                                            ! if not, read separately
             do is = 1, inb_scal
                 write (lstr, *) is
-                call PROFILES_READBLOCK(bakfile, inifile, 'IniFields', 'IniS'//trim(adjustl(lstr)), IniS(is), 'gaussiansurface')
+                call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniS'//trim(adjustl(lstr)), IniS(is), 'gaussiansurface')
             end do
         end if
         do is = 1, inb_scal
@@ -156,7 +156,7 @@ contains
         prof_loc%delta = 1.0_wp
         prof_loc%mean = 0.0_wp
         do j = 1, jmax
-            prof(j, 1) = PROFILES_CALCULATE(prof_loc, yn(j))
+            prof(j, 1) = Profiles_Calculate(prof_loc, yn(j))
         end do
 
         select case (IniS(is)%type)
@@ -314,7 +314,7 @@ contains
             do k = 1, kmax
                 do i = 1, imax
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j) - disp(i, k))
+                        s(i, j, k) = Profiles_Calculate(sbg(is), g(2)%nodes(j) - disp(i, k))
                     end do
                 end do
             end do
@@ -327,7 +327,7 @@ contains
                     prof_loc%thick = sbg(is)%thick + disp(i, k)
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
+                        s(i, j, k) = Profiles_Calculate(prof_loc, g(2)%nodes(j))
                     end do
 
                 end do
@@ -343,7 +343,7 @@ contains
                     if (sbg(is)%delta > 0) prof_loc%thick = prof_loc%delta/sbg(is)%delta*sbg(is)%thick
 
                     do j = 1, jmax
-                        s(i, j, k) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
+                        s(i, j, k) = Profiles_Calculate(prof_loc, g(2)%nodes(j))
                     end do
 
                 end do

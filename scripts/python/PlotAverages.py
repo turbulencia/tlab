@@ -37,4 +37,5 @@ axes.get_yaxis().tick_left()
 axes.spines['top'].set_visible(False)
 axes.get_xaxis().tick_bottom()
 
+plt.savefig('figure1.pdf',bbox_inches='tight')
 plt.show()

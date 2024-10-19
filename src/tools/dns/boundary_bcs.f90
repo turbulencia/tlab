@@ -134,7 +134,7 @@ contains
         use THERMO_THERMAL
         use THERMO_CALORIC
         use BOUNDARY_BUFFER
-        use PROFILES
+        use Profiles
 #ifdef USE_MPI
         use MPI
         use TLAB_VARS, only: inb_scal_array
@@ -335,17 +335,13 @@ contains
                                              BcsFlowImin%Ref(1, 1, 1), BcsFlowImin%Ref(1, 1, 7), BcsFlowImin%Ref(1, 1, 5))
 
 ! shape factor
-                prof_loc%type = PROFILE_TANH
-                prof_loc%thick = qbg(1)%diam/8.0_wp
-                prof_loc%delta = 1.0_wp
-                prof_loc%ymean = qbg(1)%ymean
+                prof_loc = profiles_dt(type=PROFILE_TANH)
                 prof_loc%mean = 0.5_wp
-                prof_loc%lslope = 0.0_wp
-                prof_loc%uslope = 0.0_wp
-                prof_loc%parameters = 0.0_wp
+                prof_loc%ymean = qbg(1)%ymean
+                prof_loc%thick = qbg(1)%diam/8.0_wp
                 prof_loc%parameters(5) = 3.0_wp*qbg(1)%diam
-                BcsFlowImin%ref(:, :, inb_flow + 1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
-                BcsScalImin%ref(:, :, inb_scal + 1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
+                BcsFlowImin%ref(:, :, inb_flow + 1) = Profiles_Calculate(prof_loc, g(2)%nodes(j))
+                BcsScalImin%ref(:, :, inb_scal + 1) = Profiles_Calculate(prof_loc, g(2)%nodes(j))
 
             end if
 
