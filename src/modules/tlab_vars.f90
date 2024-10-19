@@ -55,7 +55,7 @@ module TLAB_VARS
     real(wp) :: area                                ! Horizontal area and volume
 
 ! ###################################################################
-! background information to set up bcs, ics, and reference profiles
+! information to set up bcs, ics, and reference background profiles
 ! ###################################################################
     type(profiles_dt) :: qbg(3)                     ! Velocity
     type(profiles_dt) :: sbg(MAX_VARS)              ! Scalars

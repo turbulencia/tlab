@@ -507,12 +507,14 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     ! Consistency check
-    if (qbg(1)%type == PROFILE_EKMAN_U .or. qbg(1)%type == PROFILE_EKMAN_U_P) then
+    if (any([PROFILE_EKMAN_U, PROFILE_EKMAN_U_P] == qbg(1)%type)) then
+        !    if (qbg(1)%type == PROFILE_EKMAN_U .or. qbg(1)%type == PROFILE_EKMAN_U_P) then
+        qbg(3) = qbg(1)
         qbg(3)%type = PROFILE_EKMAN_V
-        qbg(3)%ymean = qbg(1)%ymean
-        qbg(3)%ymean_rel = qbg(1)%ymean_rel
-        qbg(3)%thick = qbg(1)%thick
-        qbg(3)%delta = qbg(1)%delta
+        ! qbg(3)%ymean = qbg(1)%ymean
+        ! qbg(3)%ymean_rel = qbg(1)%ymean_rel
+        ! qbg(3)%thick = qbg(1)%thick
+        ! qbg(3)%delta = qbg(1)%delta
     end if
 
     call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Pressure', pbg)

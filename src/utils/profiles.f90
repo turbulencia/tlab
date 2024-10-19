@@ -1,5 +1,6 @@
 #include "dns_error.h"
 
+! Definining functions f=f(x) to be used in bcs, ics, and reference background profiles
 module Profiles
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: wp, pi_wp, efile, wfile
