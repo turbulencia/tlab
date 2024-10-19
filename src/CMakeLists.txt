@@ -79,7 +79,7 @@ add_definitions(-DGITHASH="${GITHASH}")
 add_definitions(-DGITBRANCH="${GITBRANCH}")
 
 # produce mod files
-add_subdirectory(modules)
+add_subdirectory(base)
 
 # produce libraries
 add_subdirectory(utils)

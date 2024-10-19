@@ -1,4 +1,4 @@
-set(LEVEL1_LIBS utils modules)
+set(LEVEL1_LIBS utils base)
 
 FILE(GLOB sourcefiles "efilter/*.f90")
 add_executable(vefilter.x efilter/vefilter.f90)

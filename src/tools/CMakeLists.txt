@@ -1,4 +1,4 @@
-set(LEVEL1_LIBS utils modules)
+set(LEVEL1_LIBS utils base)
 if (PSFFT_LIB)
 set(LEVEL1_LIBS ${LEVEL1_LIBS} ${PSFFT_LIB} ${FFTWTHREADS_LIB})
 endif()
