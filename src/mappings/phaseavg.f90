@@ -265,11 +265,17 @@ CONTAINS
     real(wp), dimension(:), pointer                 :: avg_type
     character(len=128)                              :: name
     character(len=32)                               :: varname(1)
-    integer(wi)                                     :: sizes(5)
     integer(wi),       parameter                    :: isize_max = 20
     real(wp)                                        :: params(isize_max)
-    integer(wi)                                     :: isize, iheader, header_offset, id, ifld, ifld_srt, ifld_end
+    integer(wi)                                     :: isize, iheader, ifld, ifld_srt, ifld_end
     character(len=10)                               :: start, end, fld_id
+    integer(wi)                                     :: arr_planes, header_offset, ioffset_local
+    character(len=100)                              :: filename
+
+#ifdef USE_MPI
+    integer(kind=MPI_OFFSET_KIND)                   :: f_offset
+    integer                                         :: f_handle, ftype, mtype, status(MPI_STATUS_SIZE)
+#endif
 
     if (index == 1) then
       avg_type => avg_flow
@@ -304,17 +310,6 @@ CONTAINS
     ! INITIALIZATION OF MPI TYPES SHOULD ONLY BE CARRIED OUT ONCE *AND* DURING INITIALIZATION
     header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
 
-    id = IO_AVERAGE_PLANE ! IO_PHASEAVG
-    io_aux(id)%offset = header_offset
-    io_aux(id)%precision = IO_TYPE_DOUBLE
-
-    ! Define the sizes array
-    sizes(1) = imax * jmax * (avg_planes+1) ! size of the 3D field
-    sizes(2) = 1                         ! lower bound (starting index in the data array)
-    sizes(3) = sizes(1)                  ! upper bound (ending index in the data array)
-    sizes(4) = 1                         ! stride (1 means every element)
-    sizes(5) = 1                         ! number of variables
-    
     if (present(avg_start)) then
       write(start, '(I10)') (avg_start)
       write(end,   '(I10)') itime
@@ -334,6 +329,12 @@ CONTAINS
           // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
         end if
 
+        arr_planes = (jmax * (avg_planes+1))
+        ! Define the array size for planes and file offset
+#ifdef USE_MPI
+        f_offset = header_offset + ims_pro_i * imax * 8 
+#endif
+
 #ifdef USE_MPI
         if (ims_pro == 0) then
 #endif
@@ -349,10 +350,33 @@ CONTAINS
 #ifdef USE_MPI
         call MPI_BARRIER(MPI_COMM_WORLD,ims_err)
         if (ims_pro_k == 0) then
-#endif
-            call IO_WRITE_SUBARRAY(io_aux(id), name, varname, avg_type(ifld_srt:ifld_end), sizes)
-#ifdef USE_MPI
+            ! Create the MPI derived data types for the file view and contiguous blocks
+            call MPI_TYPE_VECTOR(arr_planes, imax, imax * ims_npro_i, MPI_REAL8, ftype, ims_err)
+            call MPI_TYPE_COMMIT(ftype, ims_err)
+            call MPI_TYPE_CONTIGUOUS(imax, MPI_REAL8, mtype, ims_err)
+            call MPI_TYPE_COMMIT(mtype, ims_err)
+
+            ! Open the file for writing
+            call MPI_FILE_OPEN(ims_comm_x, name, IOR(MPI_MODE_CREATE, MPI_MODE_WRONLY), MPI_INFO_NULL, f_handle, ims_err)
+
+            ! Set the file view
+            call MPI_File_set_view(f_handle, f_offset, MPI_REAL8, ftype, 'native', MPI_INFO_NULL, ims_err)
+
+            ! Write the data to the file
+            call MPI_FILE_WRITE_ALL(f_handle, avg_type(ifld_srt), arr_planes, mtype, status, ims_err)
+
+            ! Close the file
+            call MPI_FILE_CLOSE(f_handle, ims_err)
+
+            ! Free the MPI derived data types
+            call MPI_TYPE_FREE(ftype, ims_err)
+            call MPI_TYPE_FREE(mtype, ims_err)
         end if
+#else
+#include "dns_open_file.h"
+            ioffset_local = header_offset + 1
+            write (LOC_UNIT_ID, POS=ioffset_local) avg_type(ifld_srt:ifld_end)
+            close (LOC_UNIT_ID)
 #endif
     end do
     return

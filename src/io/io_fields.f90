@@ -783,10 +783,10 @@ contains
                     call MPI_File_read_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
                 else
-                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
-                    call MPI_File_read_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    ! call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    ! if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    ! call MPI_File_read_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
+                    ! if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
                 end if
                 call MPI_File_close(mpio_fh, ims_err)
                 if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)

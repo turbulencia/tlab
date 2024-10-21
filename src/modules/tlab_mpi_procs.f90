@@ -77,8 +77,6 @@ contains
         ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
         ! ims_pro_k = mod(ims_pro,ims_npro_k)
 
-        PRINT *, ims_pro, ims_pro_i, ims_pro_k
-
         ims_offset_i = ims_pro_i*imax
         ims_offset_j = 0
         ims_offset_k = ims_pro_k*kmax
