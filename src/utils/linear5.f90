@@ -88,7 +88,7 @@ SUBROUTINE PENTADSS(nmax,len, a,b,c,d,e, f)
 !! !$omp shared(f,a,b,c,d,e,nmax,len) &
 !! !$omp private(l,n,omp_srt,omp_end,omp_siz)   
 
-!  CALL DNS_OMP_PARTITION(len,omp_srt,omp_end,omp_siz)
+!  CALL TLab_OMP_PARTITION(len,omp_srt,omp_end,omp_siz)
   omp_srt = 1
   omp_end = len
   omp_siz = len 

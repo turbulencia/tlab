@@ -10,6 +10,7 @@ module FI_SOURCES
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
+    use TLab_OpenMP
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -77,7 +78,7 @@ contains
 !$omp parallel default( shared ) &
 !$omp private( ij,   dummy, srt,end,siz )
 #endif
-                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                 dummy = buoyancy%vector(iq)
 #ifdef USE_BLAS
@@ -100,7 +101,7 @@ contains
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                 do ij = srt, end
                     hq(ij, iq) = hq(ij, iq) + tmp1(ij)
@@ -117,7 +118,7 @@ contains
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                 do ij = srt, end
                     ! hq(ij, iq) = hq(ij, iq) + tmp1(ij)*forcingProps%vector(iq)
@@ -158,7 +159,7 @@ contains
                 else
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-                    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                     do ij = srt, end
                         hs(ij, is) = hs(ij, is) + tmp1(ij)
@@ -179,7 +180,7 @@ contains
                 else
 !$omp parallel default( shared ) &forcingProps%vector
 !$omp private( ij, srt,end,siz )
-                    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                     do ij = srt, end
                         hs(ij, is) = hs(ij, is) + tmp1(ij)
@@ -197,7 +198,7 @@ contains
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                 do ij = srt, end
                     hs(ij, is) = hs(ij, is) + tmp1(ij)
@@ -214,7 +215,7 @@ contains
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
                 do ij = srt, end
                     hs(ij, is) = hs(ij, is) + tmp1(ij)
@@ -258,7 +259,7 @@ contains
 
 !$omp parallel default( shared ) &
 !$omp private( ij, dummy,srt,end,siz )
-            call DNS_OMP_PARTITION(field_sz, srt, end, siz)
+            call TLab_OMP_PARTITION(field_sz, srt, end, siz)
 
             dummy = coriolis%vector(2)
             dtr3 = 0.0_wp; dtr1 = 0.0_wp

@@ -16,6 +16,7 @@ module TIME
     use TLab_Constants, only: efile, wp, wi, big_wp
     use TLAB_VARS
     use TLab_WorkFlow
+    use TLab_OpenMP
     use PARTICLE_VARS
 #ifdef USE_MPI
     use MPI
@@ -229,7 +230,7 @@ contains
 !$omp private (i,   ij_srt,ij_end,ij_siz,alpha,is)
 #endif
 
-                call DNS_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
+                call TLab_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
 #ifdef USE_BLAS
                 ij_len = ij_siz
 #endif
@@ -602,7 +603,7 @@ contains
 #endif
 #endif
 
-        call DNS_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
+        call TLab_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
 #ifdef USE_BLAS
         ij_len = ij_siz
 #endif

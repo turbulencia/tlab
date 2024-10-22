@@ -27,7 +27,8 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine TLAB_START()
-
+        use TLab_OpenMP
+        
         character*10 clock(2)
 
         !#####################################################################
@@ -36,8 +37,8 @@ contains
 #ifdef USE_PSFFT
         call MPI_INIT_THREAD(MPI_THREAD_SERIALIZED, ims_nb_thrsupp_provided, ims_err)
         if (ims_nb_thrsupp_provided < MPI_THREAD_SERIALIZED) then
-            call TLAB_WRITE_ASCII(efile, "DNS_START. MPI Library is missing the needed level of thread support for nonblocking communication.")
-            call TLAB_WRITE_ASCII(efile, "DNS_START. Try MPI_THREAD_FUNNELED after reading the documentation.")
+            call TLAB_WRITE_ASCII(efile, __FILE__//". MPI Library is missing the needed level of thread support for nonblocking communication.")
+            call TLAB_WRITE_ASCII(efile, __FILE__//". Try MPI_THREAD_FUNNELED after reading the documentation.")
             call TLAB_STOP(DNS_ERROR_PSFFT)
         end if
 #else
@@ -79,13 +80,13 @@ contains
         !#####################################################################
         ! Inititalize OpenMP mode
 #ifdef USE_OPENMP
-        dns_omp_numThreads = omp_get_max_threads()
-        write (line, *) dns_omp_numThreads
+        TLab_OMP_numThreads = omp_get_max_threads()
+        write (line, *) TLab_OMP_numThreads
         line = 'Number of OMP threads '//trim(adjustl(line))
         call TLAB_WRITE_ASCII(lfile, line)
 
 #else
-        dns_omp_numThreads = 1
+        TLab_OMP_numThreads = 1
 
 #endif
 

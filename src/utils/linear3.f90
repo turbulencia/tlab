@@ -56,6 +56,7 @@ END SUBROUTINE TRIDFS
 ! Backward substitution step in the Thomas algorith
 ! #######################################################################
 SUBROUTINE TRIDSS(nmax,len, a,b,c, f)
+    use TLab_OpenMP
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -98,7 +99,7 @@ SUBROUTINE TRIDSS(nmax,len, a,b,c, f)
 !$omp shared(f,a,b,c,nmax,len)
 #endif
 
-  CALL DNS_OMP_PARTITION(len,srt,end,siz)
+  CALL TLab_OMP_PARTITION(len,srt,end,siz)
   IF ( siz .LE. 0 ) THEN 
      GOTO 999
   END IF
@@ -153,6 +154,7 @@ END SUBROUTINE TRIDSS
 ! Backward substitution step in the Thomas algorith
 ! #######################################################################
 SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
+    use TLab_OpenMP
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -197,7 +199,7 @@ SUBROUTINE TRIDSS_ADD(nmax,len, a,b,c, f, g,h, d)
 !$omp shared(f,a,b,c,d,g,h,nmax,len) 
 #endif
 
-  CALL DNS_OMP_PARTITION(len,srt,end,siz)
+  CALL TLab_OMP_PARTITION(len,srt,end,siz)
   IF ( siz .LE. 0 ) THEN 
      GOTO 999
   END IF
@@ -318,6 +320,7 @@ END SUBROUTINE TRIDPFS
 ! Backward substitution step in the Thomas algorith
 ! #######################################################################
 SUBROUTINE TRIDPSS(nmax,len, a,b,c,d,e, f, wrk)
+    use TLab_OpenMP
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -353,7 +356,7 @@ SUBROUTINE TRIDPSS(nmax,len, a,b,c,d,e, f, wrk)
 !$omp shared(f,wrk,nmax,a,b,c,d,e,len)
 #endif
 
-  CALL DNS_OMP_PARTITION(len,srt,end,siz) 
+  CALL TLab_OMP_PARTITION(len,srt,end,siz) 
   IF ( siz .LE. 0 ) THEN 
      GOTO 999
   ENDIF
@@ -443,6 +446,7 @@ END SUBROUTINE TRIDPSS
 ! Backward substitution step in the Thomas algorith
 ! #######################################################################
 SUBROUTINE TRIDPSS_ADD(nmax,len, a,b,c,d,e, f, g,h, wrk)
+    use TLab_OpenMP
 
 #ifdef USE_OPENMP
   USE OMP_LIB
@@ -479,7 +483,7 @@ SUBROUTINE TRIDPSS_ADD(nmax,len, a,b,c,d,e, f, g,h, wrk)
 !$omp shared(f,g,h,wrk,nmax,a,b,c,d,e,len)
 #endif
 
-  CALL DNS_OMP_PARTITION(len,srt,end,siz) 
+  CALL TLab_OMP_PARTITION(len,srt,end,siz) 
   IF ( siz .LE. 0 ) THEN 
      GOTO 999
   ENDIF

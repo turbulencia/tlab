@@ -19,6 +19,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
+    use TLab_OpenMP
     use DNS_ARRAYS
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
@@ -60,7 +61,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, tmp4, tmp1)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         hq(:, 1) = hq(:, 1) + tmp4(ij) + visc*(tmp6(ij) + tmp5(ij)) &
                    - (w(ij)*tmp3(ij) + v(ij)*tmp2(ij))
@@ -76,7 +77,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
         call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), w, tmp4, tmp1)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
-        call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+        call TLab_OMP_PARTITION(isize_field, srt, end, siz)
         do ij = srt, end
             hq(:, 3) = hq(:, 3) + tmp6(ij) + visc*(tmp5(ij) + tmp4(ij)) &
                        - (v(ij)*tmp2(ij) + u(ij)*tmp1(ij))
@@ -99,7 +100,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 !$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz)
 #endif
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         hq(:, 2) = hq(:, 2) + tmp5(ij) + visc*(tmp6(ij) + tmp4(ij)) &
                    - (w(ij)*tmp3(ij) + u(ij)*tmp1(ij))
@@ -126,7 +127,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 !$omp private( ij,   dummy, srt,end,siz )
 #endif
 
-        call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+        call TLab_OMP_PARTITION(isize_field, srt, end, siz)
         dummy = 1.0_wp/dte
 
 #ifdef USE_ESSL
@@ -158,7 +159,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 
 ! -----------------------------------------------------------------------
 !$omp parallel default( shared ) private( ij,srt,end,siz )
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         tmp1(ij) = tmp1(ij) + tmp2(ij) + tmp3(ij) ! forcing term in tmp1
     end do
@@ -196,7 +197,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 !$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
 #ifdef USE_ESSL
     ilen = siz

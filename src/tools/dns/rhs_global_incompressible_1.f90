@@ -27,6 +27,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use THERMO_ANELASTIC
+    use TLab_OpenMP
     use DNS_ARRAYS
     use DNS_LOCAL, only: remove_divergence
     use DNS_LOCAL, only: use_tower
@@ -101,7 +102,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         hq(ij, 1) = hq(ij, 1) + tmp1(ij) + tmp7(ij) + tmp8(ij)
     end do
@@ -113,7 +114,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         hq(ij, 2) = hq(ij, 2) + tmp2(ij) + tmp7(ij) + tmp8(ij)
     end do
@@ -125,7 +126,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         hq(ij, 3) = hq(ij, 3) + tmp3(ij) + tmp7(ij) + tmp8(ij)
     end do
@@ -149,7 +150,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
-        call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+        call TLab_OMP_PARTITION(isize_field, srt, end, siz)
         do ij = srt, end
             hs(ij, is) = hs(ij, is) + tmp1(ij) + tmp2(ij) + tmp3(ij)
         end do
@@ -180,7 +181,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp private( ij,   dummy, srt,end,siz )
 #endif
 
-        call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+        call TLab_OMP_PARTITION(isize_field, srt, end, siz)
         dummy = 1.0_wp/dte
 
 #ifdef USE_ESSL
@@ -249,7 +250,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     ! -----------------------------------------------------------------------
 !$omp parallel default( shared ) private( ij,srt,end,siz )
-    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+    call TLab_OMP_PARTITION(isize_field, srt, end, siz)
     do ij = srt, end
         tmp1(ij) = tmp1(ij) + tmp2(ij) + tmp3(ij) ! forcing term in tmp1
     end do
@@ -334,7 +335,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp parallel default( shared ) &
 !$omp private( ij,   srt,end,siz,dummy )
 #endif
-        call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+        call TLab_OMP_PARTITION(isize_field, srt, end, siz)
 
 #ifdef USE_ESSL
         ilen = siz

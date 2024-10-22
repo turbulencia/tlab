@@ -12,7 +12,8 @@
 !#
 !########################################################################
 subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_OpenMP
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -44,7 +45,7 @@ subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-    call DNS_OMP_PARTITION(nca, srt, end, siz)
+    call TLab_OMP_PARTITION(nca, srt, end, siz)
 
     kk = 1; jj = 1
 
@@ -83,7 +84,8 @@ end subroutine DNS_TRANSPOSE
 !########################################################################
 !########################################################################
 subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_OpenMP
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -107,7 +109,7 @@ subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-    call DNS_OMP_PARTITION(nca, srt, end, siz)
+    call TLab_OMP_PARTITION(nca, srt, end, siz)
 
     kk = 1; jj = 1
 
@@ -144,7 +146,8 @@ end subroutine DNS_TRANSPOSE_INT1
 !########################################################################
 !########################################################################
 subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_OpenMP
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -172,7 +175,7 @@ subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-    call DNS_OMP_PARTITION(nca, srt, end, siz)
+    call TLab_OMP_PARTITION(nca, srt, end, siz)
 
     kk = 1; jj = 1
 
