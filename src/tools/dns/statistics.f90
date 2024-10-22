@@ -51,7 +51,7 @@ contains
         use TLAB_VARS, only: froude
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: schmidt
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use THERMO_ANELASTIC
         use DNS_ARRAYS
         use Thermodynamics, only: imixture
@@ -232,7 +232,7 @@ contains
         use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
         use TLAB_VARS
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use DNS_LOCAL
         use BOUNDARY_BUFFER
 #ifdef USE_MPI

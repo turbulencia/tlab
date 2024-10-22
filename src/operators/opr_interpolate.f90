@@ -320,7 +320,7 @@ contains
     ! Interpolation in 1D
     ! #######################################################################
     subroutine INTERPOLATE_1D(periodic, imax, kmax, imax_dst, scalex, x_org, x_dst, u_org, u_dst)
-        use TLAB_ARRAYS, only: wrk1d
+        use TLab_Arrays, only: wrk1d
         logical periodic
         integer(wi) imax, kmax, imax_dst
         real(wp) scalex

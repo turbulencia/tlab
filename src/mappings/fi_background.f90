@@ -11,7 +11,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: buoyancy
-    use TLAB_POINTERS_3D, only: p_wrk1d
+    use TLab_Pointers_3D, only: p_wrk1d
     use TLab_WorkFlow
     use Thermodynamics, only: imixture, GRATIO, RRATIO, scaleheight
     use THERMO_ANELASTIC

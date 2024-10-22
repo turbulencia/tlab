@@ -9,7 +9,7 @@ subroutine DNS_FILTER()
     use TLAB_VARS, only: itime, rtime
     use TLAB_VARS, only: FilterDomain
     use TLAB_VARS, only: g, area
-    use TLAB_ARRAYS
+    use TLab_Arrays
     use OPR_FILTERS
     use DNS_LOCAL, only: DNS_BOUNDS_LIMIT
     use DNS_LOCAL, only: nitera_stats_spa, nitera_first, nitera_stats

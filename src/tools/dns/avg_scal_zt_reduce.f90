@@ -35,7 +35,7 @@ module AVG_SCAL_ZT
     use TLAB_VARS, only: g
     use TLAB_VARS, only: nstatavg, statavg
     use TLAB_VARS, only: itransport, visc
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLab_Arrays, only: wrk2d, wrk3d
     use AVGS, only: SUM1V1D_V
     use OPR_PARTIAL
 

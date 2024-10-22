@@ -7,8 +7,8 @@ subroutine SCAL_MEAN(is, s)
     use TLAB_VARS, only: imax, jmax, kmax, inb_wrk2d
     use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: pbg, rbg, tbg, sbg, qbg
-    use TLAB_ARRAYS, only: wrk2d
-    use TLAB_POINTERS_3D, only: p_wrk1d
+    use TLab_Arrays, only: wrk2d
+    use TLab_Pointers_3D, only: p_wrk1d
     use THERMO_THERMAL
     use Profiles
     implicit none

@@ -65,7 +65,7 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_LIMIT()
         use TLAB_VARS, only: inb_scal
-        use TLAB_ARRAYS
+        use TLab_Arrays
 
         ! -------------------------------------------------------------------
         integer(wi) is
@@ -94,7 +94,7 @@ contains
         use TLab_Constants, only: efile, lfile
         use TLAB_VARS, only: imode_eqns, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use TLab_WorkFlow
         use THERMO_ANELASTIC
         use IBM_VARS, only: imode_ibm
@@ -235,7 +235,7 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax, g, area
         use TLAB_VARS, only: scal_on, inb_scal
         use FI_VORTICITY_EQN, only: FI_VORTICITY
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use AVGS
         use Integration, only: Int_Simpson
 

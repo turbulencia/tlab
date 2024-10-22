@@ -17,7 +17,7 @@ module OPR_BURGERS
     use TLabMPI_PROCS
 #endif
     use TLab_WorkFlow
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLab_Arrays, only: wrk2d, wrk3d
     use OPR_FILTERS
     use OPR_PARTIAL
     implicit none
@@ -289,7 +289,7 @@ contains
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !########################################################################
     subroutine OPR_BURGERS_1D(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
-        use TLAB_ARRAYS, only : wrkdea
+        use TLab_Arrays, only : wrkdea
         integer,     intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):

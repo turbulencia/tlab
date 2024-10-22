@@ -143,7 +143,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine TIME_RUNGEKUTTA()
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use PARTICLE_ARRAYS
         use DNS_LOCAL
         use DNS_ARRAYS
@@ -326,7 +326,7 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-        use TLAB_POINTERS_3D, only: u, v, w, p_wrk3d, p, rho, vis
+        use TLab_Pointers_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
         integer(wi) ipmax, k_glo
@@ -518,7 +518,7 @@ contains
 !#
 !########################################################################
     subroutine TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
-        use TLAB_ARRAYS, only: q, s, txc
+        use TLab_Arrays, only: q, s, txc
         use PARTICLE_ARRAYS
         use DNS_ARRAYS, only: hq, hs
         use DNS_LOCAL, only: imode_rhs
@@ -655,8 +655,8 @@ contains
 !########################################################################
 !########################################################################
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
-        use TLAB_ARRAYS
-        use TLAB_POINTERS
+        use TLab_Arrays
+        use TLab_Pointers
         use THERMO_CALORIC, only: THERMO_GAMMA
         use Thermodynamics, only: CRATIO_INV
         use DNS_ARRAYS

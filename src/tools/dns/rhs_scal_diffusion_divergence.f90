@@ -15,8 +15,8 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
-    use TLAB_POINTERS
-    use TLAB_ARRAYS, only: s
+    use TLab_Pointers
+    use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use OPR_PARTIAL

@@ -7,8 +7,8 @@ module SCAL_LOCAL
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_VARS
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk2d, p_wrk3d
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d
     use TLab_WorkFlow
     use IO_FIELDS
     use AVGS, only: AVG1V2D

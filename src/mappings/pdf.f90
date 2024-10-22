@@ -14,7 +14,7 @@
 subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, y, pdf)
     use TLab_Constants, only: lfile, wp, wi
     use TLab_Types, only: pointers_dt
-    use TLAB_ARRAYS, only: wrk1d
+    use TLab_Arrays, only: wrk1d
     use TLab_WorkFlow
     use PDFS
 #ifdef USE_MPI
@@ -122,7 +122,7 @@ end subroutine PDF1V_N
 !########################################################################
 subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
     use TLab_Constants, only: lfile, wp, wi
-    use TLAB_ARRAYS, only: wrk2d
+    use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow
     use PDFS
 #ifdef USE_MPI

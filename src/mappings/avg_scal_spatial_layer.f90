@@ -20,7 +20,7 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
 #endif
     use TLAB_VARS
     use TLab_WorkFlow
-    use TLAB_ARRAYS, only: wrk1d
+    use TLab_Arrays, only: wrk1d
     use Integration, only: Int_Simpson
     implicit none
 

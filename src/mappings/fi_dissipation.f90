@@ -8,8 +8,8 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: area, visc
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk3d
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk3d
     use AVGS, only: AVG_IK_V
     use OPR_PARTIAL
     implicit none
@@ -132,7 +132,7 @@ subroutine FI_RTKE(nx, ny, nz, q, ke)
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imode_eqns, inb_flow
     use TLAB_VARS, only: g, area
-    use TLAB_ARRAYS, only: wrk1d
+    use TLab_Arrays, only: wrk1d
     use THERMO_ANELASTIC, only : rbackground
     use AVGS, only: AVG_IK_V
 

@@ -40,7 +40,7 @@ program PARTICLE_INI_TRAJEC
 
     use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
+    use TLab_Arrays
     use TLab_WorkFlow
 #ifdef USE_MPI
     use MPI

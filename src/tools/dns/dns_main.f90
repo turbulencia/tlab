@@ -5,9 +5,9 @@ program DNS
 
     use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
+    use TLab_Arrays
     use TLab_WorkFlow
-    use TLab_Memory, only: TLab_Initialize_Memory, TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_DOUBLE
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
@@ -82,12 +82,12 @@ program DNS
 
     call FI_BACKGROUND_INITIALIZE()
 
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
+    call TLab_Allocate_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
+    call TLab_Allocate_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
 
     call ParticleTrajectories_Initialize(ifile)
     call Particle_Initialize_Memory(__FILE__)
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
+    call TLab_Allocate_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
 
     call STATISTICS_INITIALIZE()
 

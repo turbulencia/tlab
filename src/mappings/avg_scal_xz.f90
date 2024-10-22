@@ -18,8 +18,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLab_Constants, only: MAX_AVG_TEMPORAL
     use TLab_Constants, only: efile, lfile, wp, wi
     use TLAB_VARS
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk3d
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk3d
     use Thermodynamics, only: imixture, thermo_param
     use THERMO_ANELASTIC
     use THERMO_AIRWATER

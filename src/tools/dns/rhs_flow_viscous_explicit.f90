@@ -19,7 +19,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
-    use TLAB_POINTERS
+    use TLab_Pointers
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV
     use BOUNDARY_BCS

@@ -1,6 +1,6 @@
 ! ###################################################################
 ! ###################################################################
-module TLAB_ARRAYS
+module TLab_Arrays
     use TLab_Constants, only: wp
     implicit none
     save
@@ -17,11 +17,11 @@ module TLAB_ARRAYS
     target x, y, z
     target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
 
-end module TLAB_ARRAYS
+end module TLab_Arrays
 
 ! ###################################################################
 ! ###################################################################
-module TLAB_POINTERS
+module TLab_Pointers
     use TLab_Constants, only: wp
     implicit none
 
@@ -44,11 +44,11 @@ module TLAB_POINTERS
     real(wp), pointer :: tmp8(:) => null()
     real(wp), pointer :: tmp9(:) => null()
 
-end module TLAB_POINTERS
+end module TLab_Pointers
 
 ! ###################################################################
 ! ###################################################################
-module TLAB_POINTERS_3D
+module TLab_Pointers_3D
     use TLab_Constants, only: wp
     implicit none
 
@@ -77,18 +77,18 @@ module TLAB_POINTERS_3D
     real(wp), pointer :: tmp8(:, :, :) => null()
     real(wp), pointer :: tmp9(:, :, :) => null()
 
-end module TLAB_POINTERS_3D
+end module TLab_Pointers_3D
 
 ! ###################################################################
 ! ###################################################################
-module TLAB_POINTERS_C
+module TLab_Pointers_C
     use TLab_Constants, only: wp
     implicit none
 
     complex(wp), pointer :: c_wrk1d(:, :) => null()
     complex(wp), pointer :: c_wrk3d(:, :) => null()
 
-end module TLAB_POINTERS_C
+end module TLab_Pointers_C
 
 ! ###################################################################
 ! ###################################################################
@@ -107,34 +107,34 @@ module TLab_Memory
     integer :: ierr
 
 #ifdef NO_ASSUMED_RANKS
-    interface TLAB_ALLOCATE_ARRAY_SINGLE
-        module procedure TLAB_ALLOCATE_ARRAY_SINGLE1, TLAB_ALLOCATE_ARRAY_SINGLE2, TLAB_ALLOCATE_ARRAY_SINGLE3, TLAB_ALLOCATE_ARRAY_SINGLE4
-    end interface TLAB_ALLOCATE_ARRAY_SINGLE
+    interface TLab_Allocate_SINGLE
+        module procedure TLab_Allocate_SINGLE1, TLab_Allocate_SINGLE2, TLab_Allocate_SINGLE3, TLab_Allocate_SINGLE4
+    end interface TLab_Allocate_SINGLE
 
-    interface TLAB_ALLOCATE_ARRAY_DOUBLE
-        module procedure TLAB_ALLOCATE_ARRAY_DOUBLE1, TLAB_ALLOCATE_ARRAY_DOUBLE2, TLAB_ALLOCATE_ARRAY_DOUBLE3, TLAB_ALLOCATE_ARRAY_DOUBLE4
-    end interface TLAB_ALLOCATE_ARRAY_DOUBLE
+    interface TLab_Allocate_DOUBLE
+        module procedure TLab_Allocate_DOUBLE1, TLab_Allocate_DOUBLE2, TLab_Allocate_DOUBLE3, TLab_Allocate_DOUBLE4
+    end interface TLab_Allocate_DOUBLE
 
-    interface TLAB_ALLOCATE_ARRAY_INT
-        module procedure TLAB_ALLOCATE_ARRAY_INT1, TLAB_ALLOCATE_ARRAY_INT2, TLAB_ALLOCATE_ARRAY_INT3, TLAB_ALLOCATE_ARRAY_INT4
-    end interface TLAB_ALLOCATE_ARRAY_INT
+    interface TLab_Allocate_INT
+        module procedure TLab_Allocate_INT1, TLab_Allocate_INT2, TLab_Allocate_INT3, TLab_Allocate_INT4
+    end interface TLab_Allocate_INT
 
-    interface TLAB_ALLOCATE_ARRAY_LONG_INT
-        module procedure TLAB_ALLOCATE_ARRAY_LONG_INT1, TLAB_ALLOCATE_ARRAY_LONG_INT2, TLAB_ALLOCATE_ARRAY_LONG_INT3, TLAB_ALLOCATE_ARRAY_LONG_INT4
-    end interface TLAB_ALLOCATE_ARRAY_LONG_INT
+    interface TLab_Allocate_LONG_INT
+        module procedure TLab_Allocate_LONG_INT1, TLab_Allocate_LONG_INT2, TLab_Allocate_LONG_INT3, TLab_Allocate_LONG_INT4
+    end interface TLab_Allocate_LONG_INT
 #endif
 
     public :: TLab_Initialize_Memory
-    public :: TLAB_ALLOCATE_ARRAY_SINGLE
-    public :: TLAB_ALLOCATE_ARRAY_DOUBLE
-    public :: TLAB_ALLOCATE_ARRAY_INT
-    public :: TLAB_ALLOCATE_ARRAY_LONG_INT
+    public :: TLab_Allocate_SINGLE
+    public :: TLab_Allocate_DOUBLE
+    public :: TLab_Allocate_INT
+    public :: TLab_Allocate_LONG_INT
 contains
 
     ! ###################################################################
     ! ###################################################################
     subroutine TLab_Initialize_Memory(C_FILE_LOC)
-        use TLAB_ARRAYS
+        use TLab_Arrays
 
         character(len=*), intent(in) :: C_FILE_LOC
 
@@ -144,36 +144,36 @@ contains
             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
         end if
 
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
 
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')
 
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
+        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
 
         if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then
-            call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrkdea, [isize_field, 2], 'wrk-dealiasing')
+            call TLab_Allocate_DOUBLE(C_FILE_LOC, wrkdea, [isize_field, 2], 'wrk-dealiasing')
         end if
 
-        call TLAB_DEFINE_POINTERS()
+        call TLab_Set_Pointers()
 
-        call TLAB_DEFINE_POINTERS_3D()
+        call TLab_Set_Pointers_3D()
 
-        call TLAB_DEFINE_POINTERS_C()
+        call TLab_Set_Pointers_C()
 
         return
     end subroutine TLab_Initialize_Memory
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLAB_DEFINE_POINTERS()
-        use TLAB_ARRAYS
-        use TLAB_POINTERS
+    subroutine TLab_Set_Pointers()
+        use TLab_Arrays
+        use TLab_Pointers
 
         integer(wi) idummy(2)
 
@@ -200,13 +200,13 @@ contains
         if (idummy(2) >= 9) tmp9(1:isize_field) => txc(1:isize_field, 9)
 
         return
-    end subroutine TLAB_DEFINE_POINTERS
+    end subroutine TLab_Set_Pointers
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLAB_DEFINE_POINTERS_3D()
-        use TLAB_ARRAYS
-        use TLAB_POINTERS_3D
+    subroutine TLab_Set_Pointers_3D()
+        use TLab_Arrays
+        use TLab_Pointers_3D
 
         integer(wi) idummy(2)
 
@@ -239,25 +239,25 @@ contains
         if (idummy(2) >= 9) tmp9(1:imax, 1:jmax, 1:kmax) => txc(1:isize_field, 9)
 
         return
-    end subroutine TLAB_DEFINE_POINTERS_3D
+    end subroutine TLab_Set_Pointers_3D
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLAB_DEFINE_POINTERS_C()
-        use TLAB_ARRAYS
-        use TLAB_POINTERS_C
+    subroutine TLab_Set_Pointers_C()
+        use TLab_Arrays
+        use TLab_Pointers_C
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
         if (allocated(wrk1d)) call c_f_pointer(c_loc(wrk1d), c_wrk1d, shape=[jmax, inb_wrk1d/2])
         if (allocated(wrk3d)) call c_f_pointer(c_loc(wrk3d), c_wrk3d, shape=[isize_txc_dimz/2, kmax])
 
         return
-    end subroutine TLAB_DEFINE_POINTERS_C
+    end subroutine TLab_Set_Pointers_C
 
     ! ######################################################################
     ! ######################################################################
 #ifndef NO_ASSUMED_RANKS
-    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_DOUBLE(C_FILE_LOC, a, dims, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
         real(wp), allocatable, intent(inout) :: a(..)
@@ -282,11 +282,11 @@ contains
         end select
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
 
-    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE
+    end subroutine TLab_Allocate_DOUBLE
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY_SINGLE(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_SINGLE(C_FILE_LOC, a, dims, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
         real(sp), allocatable, intent(inout) :: a(..)
@@ -305,11 +305,11 @@ contains
         end select
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
 
-    end subroutine TLAB_ALLOCATE_ARRAY_SINGLE
+    end subroutine TLab_Allocate_SINGLE
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_INT(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC
         integer(wi), allocatable, intent(inout) :: a(..)
         integer(wi), intent(in) :: dims(:)
@@ -327,11 +327,11 @@ contains
         end select
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
 
-    end subroutine TLAB_ALLOCATE_ARRAY_INT
+    end subroutine TLab_Allocate_INT
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_LONG_INT(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC
         integer(longi), allocatable, intent(inout) :: a(..)
         integer(wi), intent(in) :: dims(:)
@@ -349,7 +349,7 @@ contains
         end select
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
 
-    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT
+    end subroutine TLab_Allocate_LONG_INT
 #endif
 
 #ifdef NO_ASSUMED_RANKS
@@ -357,7 +357,7 @@ contains
     ! ### INSTANCES FOR INTERFACES TO ALLOCATION ROUTINES
     ! ###
     ! ### SINGLE ALLOCATION ROUTINES
-    subroutine TLAB_ALLOCATE_ARRAY_SINGLE1(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_SINGLE1(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(4), allocatable, intent(inout) :: a(:)
         integer(wi), intent(in) :: dims(:)
@@ -366,9 +366,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_SINGLE1
+    end subroutine TLab_Allocate_SINGLE1
 
-    subroutine TLAB_ALLOCATE_ARRAY_SINGLE2(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_SINGLE2(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(4), allocatable, intent(inout) :: a(:, :)
         integer(wi), intent(in) :: dims(2)
@@ -377,9 +377,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_SINGLE2
+    end subroutine TLab_Allocate_SINGLE2
 
-    subroutine TLAB_ALLOCATE_ARRAY_SINGLE3(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_SINGLE3(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(4), allocatable, intent(inout) :: a(:, :, :)
         integer(wi), intent(in) :: dims(3)
@@ -388,9 +388,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_SINGLE3
+    end subroutine TLab_Allocate_SINGLE3
 
-    subroutine TLAB_ALLOCATE_ARRAY_SINGLE4(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_SINGLE4(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(4), allocatable, intent(inout) :: a(:, :, :, :)
         integer(wi), intent(in) :: dims(4)
@@ -399,10 +399,10 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_SINGLE4
+    end subroutine TLab_Allocate_SINGLE4
 
     ! ### DOUBLE ALLOCATION ROUTINES
-    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_DOUBLE1(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(8), allocatable, intent(inout) :: a(:)
         integer(wi), intent(in) :: dims(:)
@@ -411,9 +411,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1
+    end subroutine TLab_Allocate_DOUBLE1
 
-    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE2(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_DOUBLE2(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(8), allocatable, intent(inout) :: a(:, :)
         integer(wi), intent(in) :: dims(2)
@@ -422,9 +422,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE2
+    end subroutine TLab_Allocate_DOUBLE2
 
-    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE3(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_DOUBLE3(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(8), allocatable, intent(inout) :: a(:, :, :)
         integer(wi), intent(in) :: dims(3)
@@ -433,9 +433,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE3
+    end subroutine TLab_Allocate_DOUBLE3
 
-    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE4(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_DOUBLE4(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         real(8), allocatable, intent(inout) :: a(:, :, :, :)
         integer(wi), intent(in) :: dims(4)
@@ -444,10 +444,10 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE4
+    end subroutine TLab_Allocate_DOUBLE4
 
     ! # INTEGER ALLOCATION ROUTINES
-    subroutine TLAB_ALLOCATE_ARRAY_INT1(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_INT1(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(wi), allocatable, intent(inout) :: a(:)
         integer(wi), intent(in) :: dims(:)
@@ -456,9 +456,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_INT1
+    end subroutine TLab_Allocate_INT1
 
-    subroutine TLAB_ALLOCATE_ARRAY_INT2(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_INT2(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(wi), allocatable, intent(inout) :: a(:, :)
         integer(wi), intent(in) :: dims(2)
@@ -468,9 +468,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_INT2
+    end subroutine TLab_Allocate_INT2
 
-    subroutine TLAB_ALLOCATE_ARRAY_INT3(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_INT3(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(wi), allocatable, intent(inout) :: a(:, :, :)
         integer(wi), intent(in) :: dims(3)
@@ -479,9 +479,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_INT3
+    end subroutine TLab_Allocate_INT3
 
-    subroutine TLAB_ALLOCATE_ARRAY_INT4(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_INT4(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(wi), allocatable, intent(inout) :: a(:, :, :, :)
         integer(wi), intent(in) :: dims(4)
@@ -490,10 +490,10 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_INT4
+    end subroutine TLab_Allocate_INT4
 
     ! # LONG INTEGER ALLOCATION ROUTINES
-    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT1(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_LONG_INT1(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(longi), allocatable, intent(inout) :: a(:)
         integer(wi), intent(in) :: dims(:)
@@ -502,9 +502,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT1
+    end subroutine TLab_Allocate_LONG_INT1
 
-    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT2(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_LONG_INT2(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(longi), allocatable, intent(inout) :: a(:, :)
         integer(wi), intent(in) :: dims(2)
@@ -513,9 +513,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT2
+    end subroutine TLab_Allocate_LONG_INT2
 
-    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT3(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_LONG_INT3(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(longi), allocatable, intent(inout) :: a(:, :, :)
         integer(wi), intent(in) :: dims(3)
@@ -524,9 +524,9 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT3
+    end subroutine TLab_Allocate_LONG_INT3
 
-    subroutine TLAB_ALLOCATE_ARRAY_LONG_INT4(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_LONG_INT4(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
         integer(longi), allocatable, intent(inout) :: a(:, :, :, :)
         integer(wi), intent(in) :: dims(4)
@@ -535,7 +535,7 @@ contains
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_LONG_INT4
+    end subroutine TLab_Allocate_LONG_INT4
 
 #endif
 

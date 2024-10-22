@@ -9,7 +9,7 @@ subroutine OPR_CHECK()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: fourier_on
     use TLab_WorkFlow
-    use TLAB_ARRAYS
+    use TLab_Arrays
     use OPR_FOURIER
 #ifdef USE_MPI
     use TLAB_VARS, only: itime

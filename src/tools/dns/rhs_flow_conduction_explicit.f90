@@ -17,8 +17,8 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl
-    use TLAB_POINTERS
-    use TLAB_ARRAYS, only: s
+    use TLab_Pointers
+    use TLab_Arrays, only: s
     use THERMO_CALORIC
     use DNS_ARRAYS, only: hq
     use BOUNDARY_BCS

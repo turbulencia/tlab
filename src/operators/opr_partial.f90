@@ -39,7 +39,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1(nlines, bcs, g, u, result)
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
@@ -175,7 +175,7 @@ contains
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         ! bcs(*, 2) are not used, need to be updated
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -305,7 +305,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL0_INT(dir, nlines, g, u, result)
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
@@ -347,7 +347,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1_INT(dir, nlines, g, u, result)
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
@@ -389,7 +389,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1)
-        use TLAB_ARRAYS, only: wrk3d
+        use TLab_Arrays, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1         1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
@@ -524,7 +524,7 @@ contains
 !########################################################################
     subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1)
 #ifdef USE_MPI
-        use TLAB_ARRAYS, only: wrk3d
+        use TLab_Arrays, only: wrk3d
 #endif
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
@@ -642,7 +642,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1)
-        use TLAB_ARRAYS, only: wrk3d
+        use TLab_Arrays, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)

@@ -7,8 +7,8 @@ module FLOW_MEAN
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: coriolis, buoyancy
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk3d
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk1d, p_wrk3d
     use TLab_WorkFlow
     use Thermodynamics, only: imixture
     use THERMO_THERMAL

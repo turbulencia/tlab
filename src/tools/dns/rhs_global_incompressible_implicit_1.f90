@@ -30,7 +30,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby
     use TLAB_VARS, only: buoyancy, coriolis
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence

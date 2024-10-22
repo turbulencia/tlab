@@ -32,7 +32,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
   use IBM_VARS,       only : xa, xb, ya, yb, ibmscaljmin
   use TLAB_VARS,      only : isize_field
   use TLab_Constants, only : efile, wp, wi
-  use TLAB_ARRAYS,    only : wrk1d
+  use TLab_Arrays,    only : wrk1d
   use TLab_Types,     only : grid_dt
   use TLab_WorkFlow
 

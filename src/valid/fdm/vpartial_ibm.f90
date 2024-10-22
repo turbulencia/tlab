@@ -7,7 +7,7 @@ program VPARTIAL
     use TLAB_VARS, only: visc, schmidt, area
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, txc, x, y, z, wrk3d
+    use TLab_Arrays, only: wrk1d, wrk2d, txc, x, y, z, wrk3d
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_Com1_Jacobian

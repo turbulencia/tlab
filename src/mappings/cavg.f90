@@ -7,7 +7,7 @@
 subroutine CAVG1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, a, y, avg)
     use TLab_Constants, only: lfile, wp, wi
     use TLab_Types, only: pointers_dt
-    use TLAB_ARRAYS, only: wrk1d
+    use TLab_Arrays, only: wrk1d
     use TLab_WorkFlow
     use PDFS
 #ifdef USE_MPI
@@ -93,7 +93,7 @@ end subroutine CAVG1V_N
 subroutine CAVG2V(fname, time, nx, ny, nz, nbins, u, v, a, y, avg)
     use TLab_Constants, only: lfile, wp, wi
     use TLab_WorkFlow
-    use TLAB_ARRAYS, only: wrk2d
+    use TLab_Arrays, only: wrk2d
     use PDFS
 #ifdef USE_MPI
     use MPI

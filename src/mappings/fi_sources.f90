@@ -425,7 +425,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FI_SUBSIDENCE(subsidence, nx, ny, nz, a, source)
-        use TLAB_ARRAYS, only: wrk1d
+        use TLab_Arrays, only: wrk1d
         use OPR_PARTIAL, only: OPR_PARTIAL_Y
         use AVGS, only: AVG1V2D_V
         type(term_dt), intent(in) :: subsidence

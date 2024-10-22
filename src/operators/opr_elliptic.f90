@@ -6,10 +6,10 @@ module OPR_ELLIPTIC
     use TLab_Types, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
-    use TLAB_POINTERS_3D, only: p_wrk1d
-    use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
+    use TLab_Pointers_3D, only: p_wrk1d
+    use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
     use TLab_WorkFlow
-    use TLab_Memory, only: TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLab_Memory, only: TLab_Allocate_DOUBLE
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
@@ -62,7 +62,7 @@ module OPR_ELLIPTIC
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) lambda, norm
     real(wp), allocatable :: lhs(:, :), rhs(:, :)
-    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLAB_ARRAYS?
+    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
 
     procedure(OPR_Poisson_dt), pointer :: OPR_Poisson
     procedure(OPR_Helmholtz_dt), pointer :: OPR_Helmholtz
@@ -140,7 +140,7 @@ contains
         ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
             isize_line = imax/2 + 1
 
-            call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
+            call TLab_Allocate_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
 
             do k = 1, kmax
 #ifdef USE_MPI

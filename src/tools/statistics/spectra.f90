@@ -36,7 +36,7 @@ program SPECTRA
     use TLab_Constants
     use TLab_Types, only: pointers_dt
     use TLAB_VARS
-    use TLAB_ARRAYS
+    use TLab_Arrays
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI

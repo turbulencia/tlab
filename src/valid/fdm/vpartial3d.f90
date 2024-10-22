@@ -5,7 +5,7 @@ program VPARTIAL3D
     use TLAB_VARS
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory
-    use TLAB_ARRAYS
+    use TLab_Arrays
 #ifdef USE_MPI
     use MPI
     use TLabMPI_PROCS

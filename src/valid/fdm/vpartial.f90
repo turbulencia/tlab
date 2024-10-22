@@ -6,8 +6,8 @@ program VPARTIAL
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
-    use TLab_Memory, only: TLab_Initialize_Memory, TLAB_ALLOCATE_ARRAY_DOUBLE
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, txc, x!, wrk3d
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_DOUBLE
+    use TLab_Arrays, only: wrk1d, wrk2d, txc, x!, wrk3d
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_Com1_Jacobian
@@ -68,7 +68,7 @@ program VPARTIAL
     du2_n2(1:len, 1:imax) => txc(1:imax*jmax*kmax, 8)
     du2_n3(1:len, 1:imax) => txc(1:imax*jmax*kmax, 9)
 
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
+    call TLab_Allocate_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     ! Valid settings
     test_type = 1

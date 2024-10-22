@@ -5,7 +5,7 @@
 module BOUNDARY_BCS
     use TLab_Constants
     use TLab_WorkFlow
-    use TLAB_ARRAYS, only: wrk3d
+    use TLab_Arrays, only: wrk3d
     use FDM_PROCS
     use FDM_Com1_Jacobian
     implicit none

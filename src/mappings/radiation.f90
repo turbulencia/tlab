@@ -5,9 +5,9 @@ module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
     use TLab_Types, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
-    use TLab_Memory, only: TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLab_Memory, only: TLab_Allocate_DOUBLE
     use Thermodynamics, only: imixture
     use OPR_ODES
     use Integration
@@ -211,7 +211,7 @@ contains
         !########################################################################
         ! Local allocation
         allocate (bcs_ht(imax*kmax), bcs_hb(imax*kmax), t_ht(imax*kmax))
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
+        call TLab_Allocate_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
 
         ! -------------------------------------------------------------------
         ! Check with previous version; to be removed

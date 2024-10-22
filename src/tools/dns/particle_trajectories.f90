@@ -102,10 +102,10 @@ contains
         inb_part_interp = max(inb_part_interp, inb_traj)
 
         !#######################################################################
-        call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
-        call TLAB_ALLOCATE_ARRAY_LONG_INT(__FILE__, l_traj_tags, [isize_traj], 'l_traj_tags')
+        call TLab_Allocate_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
+        call TLab_Allocate_LONG_INT(__FILE__, l_traj_tags, [isize_traj], 'l_traj_tags')
 #ifdef USE_MPI
-        call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
+        call TLab_Allocate_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
 #endif
 
         !#######################################################################
@@ -158,7 +158,7 @@ contains
         use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rtime
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use FI_VECTORCALCULUS
         use DNS_ARRAYS
         use PARTICLE_ARRAYS

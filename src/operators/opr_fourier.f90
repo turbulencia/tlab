@@ -8,8 +8,8 @@ module OPR_FOURIER
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
     use TLAB_VARS, only: g
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
-    use TLAB_POINTERS_C, only: c_wrk3d
+    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
+    use TLab_Pointers_C, only: c_wrk3d
     use TLab_WorkFlow
 #ifdef USE_MPI
     use MPI
@@ -46,7 +46,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine OPR_FOURIER_INITIALIZE()
-        use TLAB_ARRAYS, only: txc
+        use TLab_Arrays, only: txc
 #ifdef USE_FFTW
 #include "fftw3.f"
 #endif

@@ -6,7 +6,7 @@ module FLOW_LOCAL
     use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g, qbg, tbg, hbg
-    use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk2d
+    use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_WorkFlow
     use THERMO_THERMAL
     use THERMO_AIRWATER
