@@ -28,7 +28,7 @@
 subroutine IBM_VERIFY_GEOMETRY()
 
   use IBM_VARS 
-  use TLAB_PROCS
+  use TLab_WorkFlow
   use TLAB_VARS,      only : g, scal_on
   use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_CONSTANTS, only : efile, wp, wi
@@ -129,7 +129,7 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
   use IBM_VARS,       only : nflu
   use TLAB_CONSTANTS, only : efile, wp, wi
   use TLAB_TYPES,     only : grid_dt
-  use TLAB_PROCS
+  use TLab_WorkFlow
 
   implicit none
   
@@ -225,7 +225,7 @@ subroutine IBM_VERIFY_UP(eps)
   use IBM_VARS,       only : ibm_objup, max_height_objlo, max_height_objup
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
   use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_PROCS
+  use TLab_WorkFlow
 #ifdef USE_MPI
   use MPI
   use TLabMPI_VARS,  only : ims_err
@@ -307,7 +307,7 @@ subroutine IBM_VERIFY_SCAL()
   use IBM_VARS,       only : max_height_objlo, max_height_objup, imode_ibm_scal
   use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile
-  use TLAB_PROCS
+  use TLab_WorkFlow
 #ifdef USE_MPI
   use MPI
   use TLabMPI_VARS,  only : ims_err

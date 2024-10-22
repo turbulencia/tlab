@@ -4,7 +4,7 @@ module RAND_LOCAL
     use TLAB_CONSTANTS, only: wp, wi, efile
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field
     use TLAB_VARS, only: g
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use AVGS, only: AVG1V2D
     use OPR_FOURIER
     implicit none

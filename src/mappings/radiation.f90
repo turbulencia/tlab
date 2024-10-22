@@ -6,7 +6,8 @@ module Radiation
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLAB_ARRAYS, only: wrk2d, wrk3d
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_Memory, only: TLAB_ALLOCATE_ARRAY_DOUBLE
     use Thermodynamics, only: imixture
     use OPR_ODES
     use Integration

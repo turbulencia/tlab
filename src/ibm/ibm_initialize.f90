@@ -38,7 +38,7 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use TLAB_VARS,      only : stagger_on
   use TLAB_VARS,      only : g
   use TLAB_CONSTANTS, only : efile, wp
-  use TLAB_PROCS
+  use TLab_WorkFlow
 
   implicit none
 

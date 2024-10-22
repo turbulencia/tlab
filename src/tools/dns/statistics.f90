@@ -42,7 +42,7 @@ contains
 
 #ifdef TRACE_ON
         use TLAB_CONSTANTS, only: tfile
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+        use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
         use TLAB_TYPES, only: pointers_dt
         use TLAB_VARS, only: g
@@ -229,7 +229,7 @@ contains
 
 #ifdef TRACE_ON
         use TLAB_CONSTANTS, only: tfile
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+        use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
         use TLAB_VARS
         use TLAB_ARRAYS

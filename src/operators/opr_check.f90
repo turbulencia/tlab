@@ -8,7 +8,7 @@ subroutine OPR_CHECK()
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow_array, inb_txc
     use TLAB_VARS, only: g
     use TLAB_VARS, only: fourier_on
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use TLAB_ARRAYS
     use OPR_FOURIER
 #ifdef USE_MPI

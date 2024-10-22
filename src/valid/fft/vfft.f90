@@ -9,7 +9,7 @@ program VFFT
 
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_txc_dimz
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use OPR_FOURIER
 #ifdef USE_MPI
     use MPI

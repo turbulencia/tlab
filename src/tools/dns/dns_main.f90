@@ -6,7 +6,8 @@ program DNS
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory, TLAB_ALLOCATE_ARRAY_DOUBLE
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif

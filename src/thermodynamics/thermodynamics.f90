@@ -78,7 +78,7 @@ contains
     subroutine Thermodynamics_Initialize_Parameters(inifile)
         use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns
         use TLAB_VARS, only: gama0, mach, schmidt, damkohler
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+        use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
         ! use THERMO_ANELASTIC, only: scaleheight
 
         character(len=*), intent(in), optional :: inifile

@@ -10,7 +10,8 @@ program AVERAGES
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
     use TLabMPI_PROCS

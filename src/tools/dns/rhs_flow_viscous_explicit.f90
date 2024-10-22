@@ -14,7 +14,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     use TLAB_CONSTANTS, only: efile, wi, wp
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g

@@ -4,7 +4,7 @@
 
 module BOUNDARY_BCS
     use TLAB_CONSTANTS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use TLAB_ARRAYS, only: wrk3d
     use FDM_PROCS
     use FDM_Com1_Jacobian
@@ -507,7 +507,7 @@ contains
     subroutine BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp1, aux)
 #ifdef TRACE_ON
         use TLAB_CONSTANTS, only: tfile
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+        use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
         use TLAB_CONSTANTS, only: lfile
         use TLAB_VARS, only: imax, jmax, kmax, g

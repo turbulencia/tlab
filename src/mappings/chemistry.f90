@@ -5,7 +5,7 @@ module Chemistry
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLAB_TYPES, only: term_dt
     use TLAB_VARS, only: inb_scal
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private
 

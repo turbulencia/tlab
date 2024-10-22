@@ -7,7 +7,7 @@ module TLabMPI_PROCS
     use TLAB_CONSTANTS, only: lfile, efile, wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: fourier_on
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     use TLabMPI_VARS
     implicit none
     save

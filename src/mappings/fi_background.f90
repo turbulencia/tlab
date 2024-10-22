@@ -12,7 +12,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Thermodynamics, only: imixture, GRATIO, RRATIO, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
@@ -316,7 +316,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
                                 x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
     use TLAB_CONSTANTS, only: wp, wi, wfile
     use TLAB_TYPES, only: profiles_dt
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use THERMO_THERMAL
     use Profiles
     implicit none
@@ -412,7 +412,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
                                  jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: efile, wfile, wp, wi
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Profiles
     use Integration, only: Int_Simpson
     implicit none
@@ -586,7 +586,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
                                x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: wfile, wp, wi
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Integration, only: Int_Simpson
     use Profiles
     implicit none

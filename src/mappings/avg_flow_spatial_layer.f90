@@ -11,7 +11,7 @@
 subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     use TLAB_CONSTANTS, only: efile, tfile, wp, wi, big_wp
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use TLAB_ARRAYS, only: wrk1d, wrk2d
     use Thermodynamics, only: RRATIO_INV
     use OPR_PARTIAL

@@ -33,7 +33,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLAB_VARS, only: itransport, visc
     use TLAB_VARS, only: nstatavg, statavg, nstatavg_points
     use TLAB_ARRAYS, only: wrk2d
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use AVGS, only: SUM1V1D_V
     use OPR_PARTIAL
     implicit none

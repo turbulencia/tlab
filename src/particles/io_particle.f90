@@ -14,7 +14,7 @@
 subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     use TLAB_CONSTANTS, only: wp, wi, longi, lfile, efile, sizeofint, sizeofreal, sizeoflongint
     use TLAB_VARS, only: g
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
@@ -155,7 +155,7 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
     use TLAB_CONSTANTS, only: wp, wi, longi, lfile, sizeofint, sizeoflongint
     use PARTICLE_VARS,  only: isize_part, inb_part_array
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use MPI

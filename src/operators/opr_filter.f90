@@ -9,7 +9,7 @@ module OPR_FILTERS
     use TLAB_TYPES, only: grid_dt, filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use FLT_COMPACT
     use FLT_EXPLICIT
     use OPR_FOURIER

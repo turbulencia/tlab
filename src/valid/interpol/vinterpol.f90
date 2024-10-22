@@ -22,7 +22,7 @@
 program INTERPOL
 
     use TLAB_TYPES, only: grid_dt
-    use TLAB_PROCS
+    use TLab_WorkFlow
 
     implicit none
 

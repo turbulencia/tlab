@@ -10,7 +10,7 @@
 ! #######################################################################
 subroutine SCANINIINT(ofile, ifile, title, name, default, value)
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -31,7 +31,7 @@ end subroutine SCANINIINT
 ! #######################################################################
 subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
     use TLAB_CONSTANTS, only: wp, wi, longi
-    use TLAB_PROCS
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -52,7 +52,7 @@ end subroutine SCANINILONGINT
 ! #######################################################################
 subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -73,7 +73,7 @@ end subroutine SCANINIREAL
 ! #######################################################################
 subroutine SCANINICHAR(ofile, ifile, title, name, default, value)
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default

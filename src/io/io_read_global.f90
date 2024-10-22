@@ -14,7 +14,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     use TLAB_CONSTANTS, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Profiles
 #ifdef USE_MPI
     use TLabMPI_VARS
@@ -854,7 +854,7 @@ subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
     use TLAB_CONSTANTS, only: efile, wp, MAX_PARS
     use TLAB_TYPES, only: filter_dt
     use TLAB_VARS, only: g
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
 
     character(len=*) bakfile, inifile, tag

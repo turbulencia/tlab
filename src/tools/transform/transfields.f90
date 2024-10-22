@@ -12,7 +12,8 @@ program TRANSFIELDS
     use TLAB_TYPES, only: filter_dt, grid_dt
     use TLAB_VARS
     use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory, TLAB_ALLOCATE_ARRAY_DOUBLE
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS

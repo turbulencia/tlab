@@ -4,7 +4,7 @@
 module Profiles
     use TLAB_TYPES,     only: profiles_dt
     use TLAB_CONSTANTS, only: wp, pi_wp, efile, wfile
-    use TLAB_PROCS,     only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow,     only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private
 

@@ -7,7 +7,8 @@ module ParticleTrajectories
 
     use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi, sizeofint
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory
     use PARTICLE_VARS, only: inb_part, isize_part_total, inb_part_interp, inb_part_txc, part, PART_TYPE_NONE
     use DNS_LOCAL, only: nitera_save
 #ifdef USE_MPI

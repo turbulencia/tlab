@@ -5,7 +5,7 @@ module Microphysics
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLAB_TYPES, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     use Thermodynamics, only: imixture
     use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES

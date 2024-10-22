@@ -10,7 +10,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
     use TLAB_CONSTANTS, only: efile, wp, wi
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g

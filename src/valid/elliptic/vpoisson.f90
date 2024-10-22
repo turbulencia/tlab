@@ -10,7 +10,8 @@
 program VPOISSON
     use TLAB_CONSTANTS
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
     use TLAB_ARRAYS
 #ifdef USE_MPI
     use MPI

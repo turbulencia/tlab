@@ -18,7 +18,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
     use TLAB_CONSTANTS, only: efile, lfile, wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk3d
     use Thermodynamics, only: imixture, CRATIO_INV, RRATIO

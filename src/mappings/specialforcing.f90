@@ -4,7 +4,8 @@
 module SpecialForcing
     use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLAB_TYPES, only: term_dt, grid_dt
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_Memory, only: TLAB_ALLOCATE_ARRAY_DOUBLE
     use TLAB_ARRAYS, only: wrk1d
     implicit none
     private

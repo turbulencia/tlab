@@ -46,7 +46,7 @@ end subroutine LIST_STRING
 !########################################################################
 subroutine LIST_INTEGER(line, n, a)
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS, only: TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_STOP
     implicit none
 
     character*(*), intent(IN) :: line
@@ -144,7 +144,7 @@ end subroutine LIST_INTEGER
 !########################################################################
 subroutine LIST_REAL(line, n, a)
     use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS, only: TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_STOP
     implicit none
 
     character*(*), intent(IN) :: line

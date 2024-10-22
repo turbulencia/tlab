@@ -29,7 +29,8 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   use TLAB_VARS,      only : g, isize_field, inb_scal, stagger_on
   use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_CONSTANTS, only : wi
-  use TLAB_PROCS  
+  use TLab_WorkFlow  
+  use TLab_Memory
 #ifdef USE_MPI
   use MPI
   use TLabMPI_VARS,  only : ims_size_i, ims_size_k 

@@ -4,7 +4,8 @@ program VBURGERS
 
     use TLAB_CONSTANTS
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
     use TLAB_ARRAYS
     use TLAB_POINTERS_3D, only: tmp1
 #ifdef USE_MPI

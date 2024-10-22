@@ -26,7 +26,7 @@
 subroutine IBM_READ_INI(inifile)
 
   use TLAB_CONSTANTS, only : efile, lfile
-  use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
+  use TLab_WorkFlow,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS
   
   implicit none
@@ -136,7 +136,7 @@ subroutine IBM_READ_CONSISTENCY_CHECK()
 
   use TLAB_CONSTANTS, only : efile, MAX_VARS, wi, wp
   use TLAB_VARS,      only : imax, g
-  use TLAB_PROCS,     only : TLAB_STOP, TLAB_WRITE_ASCII
+  use TLab_WorkFlow,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS
   
   implicit none

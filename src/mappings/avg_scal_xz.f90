@@ -28,7 +28,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use Radiation
     use Microphysics

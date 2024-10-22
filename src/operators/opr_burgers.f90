@@ -16,7 +16,7 @@ module OPR_BURGERS
     use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_PROCS
 #endif
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use TLAB_ARRAYS, only: wrk2d, wrk3d
     use OPR_FILTERS
     use OPR_PARTIAL

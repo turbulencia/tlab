@@ -4,7 +4,7 @@ program SATURATION
 
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Thermodynamics
 
     implicit none

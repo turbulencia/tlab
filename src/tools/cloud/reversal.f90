@@ -3,7 +3,7 @@
 program REVERSAL
     use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Thermodynamics
     use THERMO_THERMAL
     use THERMO_ANELASTIC

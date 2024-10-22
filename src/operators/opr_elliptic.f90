@@ -8,7 +8,8 @@ module OPR_ELLIPTIC
     use TLAB_VARS, only: stagger_on
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLAB_ALLOCATE_ARRAY_DOUBLE
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
@@ -201,7 +202,7 @@ contains
 !# The global variable isize_txc_field defines the size of array txc equal
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
-!# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see tlab_procs%define_pointers_c)
+!# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see TLab_WorkFlow%define_pointers_c)
 !#
 !########################################################################
     subroutine OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)

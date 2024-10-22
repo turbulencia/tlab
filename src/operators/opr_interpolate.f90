@@ -13,7 +13,7 @@ module OPR_INTERPOLATORS
     use TLAB_TYPES, only: grid_dt
     use TLAB_CONSTANTS, only: efile, wp, wi
     use TLAB_VARS, only: isize_txc_field
-    use TLAB_PROCS
+    use TLab_WorkFlow
 #ifdef USE_MPI
     use TLAB_CONSTANTS, only: lfile
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k

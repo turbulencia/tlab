@@ -11,7 +11,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLAB_CONSTANTS, only: wp, wi
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g

@@ -33,7 +33,7 @@ program PARTICLE_POS_TRAJEC
 
     use TLAB_CONSTANTS
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err

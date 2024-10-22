@@ -6,7 +6,8 @@ module PARTICLE_PROCS
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use TLAB_VARS, only: g, imax, jmax, kmax, isize_wrk3d
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro
 #endif

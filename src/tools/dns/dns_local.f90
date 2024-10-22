@@ -95,7 +95,7 @@ contains
         use TLAB_VARS, only: imode_eqns, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_ARRAYS
-        use TLAB_PROCS
+        use TLab_WorkFlow
         use THERMO_ANELASTIC
         use IBM_VARS, only: imode_ibm
 #ifdef USE_MPI

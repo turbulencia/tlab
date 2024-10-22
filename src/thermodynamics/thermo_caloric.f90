@@ -9,7 +9,7 @@
 
 module THERMO_CALORIC
     use TLAB_CONSTANTS, only: wp, wi, efile
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use TLAB_VARS, only: gama0
     use Thermodynamics, only: imixture, CRATIO_INV, THERMO_R, MAX_NSP, NSP
     use Thermodynamics, only: NCP, THERMO_AI, THERMO_TLIM

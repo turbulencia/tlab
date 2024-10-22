@@ -9,7 +9,7 @@ module SCAL_LOCAL
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk2d, p_wrk3d
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use IO_FIELDS
     use AVGS, only: AVG1V2D
     use Profiles

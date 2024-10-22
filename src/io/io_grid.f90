@@ -4,7 +4,7 @@
 !########################################################################
 subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z, area)
     use TLAB_CONSTANTS, only: efile, wp, wi
-    use TLAB_PROCS
+    use TLab_WorkFlow
 
     implicit none
 

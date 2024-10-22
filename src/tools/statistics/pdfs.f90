@@ -9,7 +9,8 @@ program PDFS
     use TLAB_TYPES, only: pointers_dt
     use TLAB_VARS
     use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif

@@ -6,7 +6,7 @@
 program INIGRID
     use TLAB_TYPES, only: grid_dt, wp
     use TLAB_CONSTANTS, only: gfile, ifile, lfile, efile
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use GRID_LOCAL
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro

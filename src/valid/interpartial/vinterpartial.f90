@@ -22,7 +22,7 @@ program VINTERPARTIAL
 
     use TLAB_CONSTANTS
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use IO_FIELDS
 #ifdef USE_MPI
     use MPI

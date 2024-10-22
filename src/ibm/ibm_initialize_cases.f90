@@ -25,7 +25,7 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, i
   use IBM_VARS,       only : nflu
   use TLAB_CONSTANTS, only : efile, wp, wi
   use TLAB_TYPES,     only : grid_dt
-  use TLAB_PROCS
+  use TLab_WorkFlow
 
   implicit none
   
@@ -149,7 +149,7 @@ subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, ibm_cas
 
   use TLAB_TYPES,     only : grid_dt
   use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_PROCS
+  use TLab_WorkFlow
 
   implicit none
 

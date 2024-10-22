@@ -5,7 +5,7 @@ module PARTICLE_INTERPOLATE
     use TLAB_TYPES, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_VARS
     use PARTICLE_ARRAYS, only: halo_i, halo_k, halo_ik
     use PARTICLE_ARRAYS, only: p_halo_i, p_halo_k, p_halo_ik

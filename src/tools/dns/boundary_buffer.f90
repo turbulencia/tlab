@@ -26,7 +26,7 @@ module BOUNDARY_BUFFER
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use TLAB_VARS, only: g
     use TLAB_VARS, only: itime
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Thermodynamics, only: CRATIO_INV
     use IO_FIELDS
     use OPR_FILTERS

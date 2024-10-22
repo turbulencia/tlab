@@ -7,7 +7,7 @@
 !########################################################################
 module FDM_PROCS
     use TLAB_CONSTANTS
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private
 

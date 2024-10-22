@@ -9,7 +9,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: inb_scal, stagger_on
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use FDM_PROCS
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian

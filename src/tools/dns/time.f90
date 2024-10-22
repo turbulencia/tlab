@@ -15,7 +15,7 @@ module TIME
 #endif
     use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_VARS
 #ifdef USE_MPI
     use MPI

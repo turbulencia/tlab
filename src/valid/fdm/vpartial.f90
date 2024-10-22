@@ -5,7 +5,8 @@ program VPARTIAL
     use TLAB_TYPES, only: grid_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory, TLAB_ALLOCATE_ARRAY_DOUBLE
     use TLAB_ARRAYS, only: wrk1d, wrk2d, txc, x!, wrk3d
     use FDM_ComX_Direct
     use FDM_PROCS
