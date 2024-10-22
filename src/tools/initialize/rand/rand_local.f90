@@ -1,7 +1,7 @@
 #include "dns_error.h"
 
 module RAND_LOCAL
-    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, efile
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field
     use TLAB_VARS, only: g
     use TLab_WorkFlow

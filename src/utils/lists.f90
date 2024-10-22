@@ -4,7 +4,7 @@
 !# Chops string into list of strings
 !########################################################################
 subroutine LIST_STRING(line, n, a)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     character*(*), intent(IN) :: line
@@ -45,7 +45,7 @@ end subroutine LIST_STRING
 !# Chops string into list of integers
 !########################################################################
 subroutine LIST_INTEGER(line, n, a)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLab_WorkFlow, only: TLAB_STOP
     implicit none
 
@@ -143,7 +143,7 @@ end subroutine LIST_INTEGER
 !# Chops string into list of real numbers
 !########################################################################
 subroutine LIST_REAL(line, n, a)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLab_WorkFlow, only: TLAB_STOP
     implicit none
 
@@ -240,7 +240,7 @@ end subroutine LIST_REAL
 !########################################################################
 !########################################################################
 subroutine SORT_INTEGER(n, a) ! Sorting elements in array from min to max
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     integer(wi), intent(IN) :: n
@@ -267,7 +267,7 @@ end subroutine SORT_INTEGER
 !########################################################################
 !########################################################################
 subroutine SORT_REAL(n, a)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     integer(wi), intent(IN) :: n

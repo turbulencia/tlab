@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 module SCAL_LOCAL
-    use TLAB_CONSTANTS, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp
-    use TLAB_TYPES, only: profiles_dt, discrete_dt
+    use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp
+    use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_VARS
     use TLAB_VARS, only: g, sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields

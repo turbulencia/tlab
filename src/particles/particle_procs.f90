@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module PARTICLE_PROCS
-    use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile, MAX_PARS
+    use TLab_Constants, only: wp, wi, longi, efile, lfile, MAX_PARS
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use TLAB_VARS, only: g, imax, jmax, kmax, isize_wrk3d

@@ -9,7 +9,7 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc

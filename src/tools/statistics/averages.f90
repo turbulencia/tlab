@@ -6,8 +6,8 @@
 
 program AVERAGES
 
-    use TLAB_TYPES, only: pointers_dt
-    use TLAB_CONSTANTS
+    use TLab_Types, only: pointers_dt
+    use TLab_Constants
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLab_WorkFlow

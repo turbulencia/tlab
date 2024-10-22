@@ -4,7 +4,7 @@
 #define C_FILE_LOC "INIFLOW"
 
 program INIFLOW
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_POINTERS, only: e, rho, p, T

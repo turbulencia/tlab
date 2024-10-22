@@ -16,11 +16,11 @@
 !########################################################################
 module BOUNDARY_BUFFER
 
-    use TLAB_TYPES, only: filter_dt
+    use TLab_Types, only: filter_dt
 
-    use TLAB_CONSTANTS, only: tag_flow, tag_scal, wfile, efile, lfile, MAX_VARS, wp, wi
+    use TLab_Constants, only: tag_flow, tag_scal, wfile, efile, lfile, MAX_VARS, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imode_eqns, imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field

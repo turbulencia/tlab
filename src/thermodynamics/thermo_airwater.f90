@@ -6,7 +6,7 @@
 ! we use explicit-shape arrays in arguments for the routines to be callable with different array ranks
 
 module THERMO_AIRWATER
-    use TLAB_CONSTANTS, only: wp, wi, small_wp, big_wp
+    use TLab_Constants, only: wp, wi, small_wp, big_wp
     use TLAB_VARS, only: inb_scal, gama0
     use Thermodynamics, only: imixture, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
     use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial

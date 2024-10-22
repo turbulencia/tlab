@@ -7,7 +7,7 @@
 !#
 !########################################################################
 subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt

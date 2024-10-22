@@ -25,7 +25,7 @@
 subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
                                                 q, hq, u, v, w, h1, h2, h3, s, hs, &
                                                 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8)
-    use TLAB_CONSTANTS
+    use TLab_Constants
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif

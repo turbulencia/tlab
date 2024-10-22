@@ -270,7 +270,7 @@ END SUBROUTINE PENTADSS2
 ! #######################################################################
 SUBROUTINE PENTADPFS(nmax, a,b,c,d,e,f,g)
 
-  USE TLAB_CONSTANTS, ONLY : efile
+  USE TLab_Constants, ONLY : efile
   USE TLab_WorkFlow
 
   IMPLICIT NONE

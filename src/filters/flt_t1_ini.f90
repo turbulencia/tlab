@@ -12,7 +12,7 @@
 !########################################################################
 SUBROUTINE FLT_T1_INI(scalex, x, f, wrk1d)
 
-  USE TLAB_TYPES,  ONLY : filter_dt
+  USE TLab_Types,  ONLY : filter_dt
 
   IMPLICIT NONE
 

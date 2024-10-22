@@ -5,8 +5,8 @@
 #endif
 
 module OPR_FILTERS
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_TYPES, only: grid_dt, filter_dt
+    use TLab_Constants, only: wp, wi
+    use TLab_Types, only: grid_dt, filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow

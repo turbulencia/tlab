@@ -8,7 +8,7 @@
 !#
 !########################################################################
 subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif

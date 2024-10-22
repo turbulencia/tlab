@@ -8,8 +8,8 @@
 
 program TRANSFIELDS
 
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: filter_dt, grid_dt
+    use TLab_Constants
+    use TLab_Types, only: filter_dt, grid_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLab_WorkFlow
@@ -778,7 +778,7 @@ contains
     !########################################################################
     subroutine TRANS_ADD_MEAN(flag_mode, is, nx, ny, nz, y, a, b)
 
-        use TLAB_CONSTANTS, only: efile
+        use TLab_Constants, only: efile
         use TLAB_VARS, only: sbg, qbg
         use Profiles
         implicit none

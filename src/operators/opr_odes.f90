@@ -2,7 +2,7 @@
 
 ! # Solvers for linear ordinary differential equations with constant coefficients
 module OPR_ODES
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
     private
 
@@ -37,8 +37,8 @@ contains
 !# I also wonder if wrk2d should be passed in argument list, to avoid mem overwritting...
 !########################################################################
     subroutine OPR_Integral1(nlines, g, f, result, ibc)
-        use TLAB_CONSTANTS, only: BCS_MIN, BCS_MAX, BCS_BOTH
-        use TLAB_TYPES, only: grid_dt
+        use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
+        use TLab_Types, only: grid_dt
         use TLAB_ARRAYS, only: wrk2d
         use FDM_PROCS
         integer(wi), intent(in) :: nlines

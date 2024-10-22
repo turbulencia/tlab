@@ -15,8 +15,8 @@
 !########################################################################
 
 subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz, mean2d)
-    use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
+    use TLab_Constants, only: MAX_AVG_TEMPORAL
+    use TLab_Constants, only: efile, lfile, wp, wi
     use TLAB_VARS
     use TLab_WorkFlow
     use TLAB_ARRAYS, only: wrk1d
@@ -29,7 +29,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
 #ifdef USE_MPI
     use TLabMPI_VARS

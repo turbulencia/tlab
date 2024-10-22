@@ -12,7 +12,7 @@
 !#######################################################################
 !#######################################################################
 subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_tags, particle_number)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
     use MPI
@@ -235,7 +235,7 @@ end subroutine PARTICLE_MPI_SEND_RECV_I
 !#######################################################################
 !#######################################################################
 subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_tags, particle_number)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
     use MPI

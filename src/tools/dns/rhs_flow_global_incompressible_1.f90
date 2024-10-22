@@ -11,7 +11,7 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
-    use TLAB_CONSTANTS
+    use TLab_Constants
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif

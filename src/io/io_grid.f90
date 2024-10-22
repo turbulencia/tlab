@@ -3,7 +3,7 @@
 !########################################################################
 !########################################################################
 subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z, area)
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
     use TLab_WorkFlow
 
     implicit none
@@ -58,7 +58,7 @@ end subroutine IO_READ_GRID
 !########################################################################
 !########################################################################
 subroutine IO_WRITE_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     character*(*) name

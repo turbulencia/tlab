@@ -7,9 +7,9 @@
 !# 27 derivative operations.
 !########################################################################
 subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal, imode_eqns

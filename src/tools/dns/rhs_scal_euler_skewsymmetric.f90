@@ -6,7 +6,7 @@
 !# The mass conservation terms are implemented in the routine RHS_FLOW_EULER_SKEWSYMMETRIC
 !########################################################################
 subroutine RHS_SCAL_EULER_SKEWSYMMETRIC(is)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_POINTERS

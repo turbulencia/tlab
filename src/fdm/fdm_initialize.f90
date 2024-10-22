@@ -2,11 +2,11 @@
 #include "dns_error.h"
 
 subroutine FDM_INITIALIZE(x, g, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
+    use TLab_Constants, only: wp, wi, pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: inb_scal, stagger_on
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow

@@ -1,5 +1,5 @@
 module AVGS
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_comm_z, ims_npro_i, ims_npro_k

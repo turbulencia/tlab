@@ -11,7 +11,7 @@
 !########################################################################
 program VISUALS
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLab_WorkFlow
@@ -1158,7 +1158,7 @@ contains
     ! Writing data in Ensight Gold Variable File Format
     !########################################################################
     subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
-        use TLAB_CONSTANTS, only: wp, wi
+        use TLab_Constants, only: wp, wi
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro
         use TLabMPI_PROCS
@@ -1246,7 +1246,7 @@ contains
     ! Note that record-length information has to be avoided
     !########################################################################
     subroutine ENSIGHT_GRID(name, nx, ny, nz, subdomain, x, y, z)
-        use TLAB_CONSTANTS, only: wp, wi
+        use TLab_Constants, only: wp, wi
 
         implicit none
 

@@ -11,9 +11,9 @@
 !# 12 first derivative operations and 9 second derivative operations.
 !########################################################################
 subroutine RHS_FLOW_VISCOUS_EXPLICIT()
-    use TLAB_CONSTANTS, only: efile, wi, wp
+    use TLab_Constants, only: efile, wi, wp
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax

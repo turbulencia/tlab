@@ -5,7 +5,7 @@
 
 module ParticleTrajectories
 
-    use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi, sizeofint
+    use TLab_Constants, only: efile, lfile, wp, sp, wi, longi, sizeofint
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLab_WorkFlow
     use TLab_Memory
@@ -154,7 +154,7 @@ contains
     !#######################################################################
     !#######################################################################
     subroutine ParticleTrajectories_Accumulate()
-        use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+        use TLab_Types, only: pointers_dt, pointers3d_dt
         use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rtime

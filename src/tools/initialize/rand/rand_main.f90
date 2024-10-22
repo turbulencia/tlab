@@ -4,7 +4,7 @@
 #define C_FILE_LOC "INIRAND"
 
 program INIRAND
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLab_WorkFlow

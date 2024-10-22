@@ -3,7 +3,7 @@
 #include "dns_const_mpi.h"
 
 module BOUNDARY_BCS
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLab_WorkFlow
     use TLAB_ARRAYS, only: wrk3d
     use FDM_PROCS
@@ -121,10 +121,10 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine BOUNDARY_BCS_INITIALIZE()
-        use TLAB_TYPES, only: profiles_dt
-        use TLAB_CONSTANTS, only: tag_flow, tag_scal, lfile, efile
+        use TLab_Types, only: profiles_dt
+        use TLab_Constants, only: tag_flow, tag_scal, lfile, efile
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
+        use TLab_Constants, only: tfile
 #endif
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
@@ -392,7 +392,7 @@ contains
 !# Routine format extracted from OPR_PARTIAL_Y
 !########################################################################
     subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, tmp1)
-        use TLAB_TYPES, only: grid_dt
+        use TLab_Types, only: grid_dt
 
         integer(wi), intent(in) :: ibc     ! BCs at jmin/jmax: 1, for Neumann/-
         !                                                   2, for -      /Neumann
@@ -506,10 +506,10 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     subroutine BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp1, aux)
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
+        use TLab_Constants, only: tfile
         use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
-        use TLAB_CONSTANTS, only: lfile
+        use TLab_Constants, only: lfile
         use TLAB_VARS, only: imax, jmax, kmax, g
         use TLAB_VARS, only: isize_field
         use TLAB_VARS, only: visc, schmidt

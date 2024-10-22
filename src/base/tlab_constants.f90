@@ -1,4 +1,4 @@
-module TLAB_CONSTANTS
+module TLab_Constants
     implicit none
     save
 
@@ -71,4 +71,4 @@ module TLAB_CONSTANTS
     integer, parameter :: BCS_MAX = 2    ! Special treatment at the upper interval limit
     integer, parameter :: BCS_BOTH = 3
 
-end module TLAB_CONSTANTS
+end module TLab_Constants

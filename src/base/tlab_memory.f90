@@ -1,7 +1,7 @@
 ! ###################################################################
 ! ###################################################################
 module TLAB_ARRAYS
-    use TLAB_CONSTANTS, only: wp
+    use TLab_Constants, only: wp
     implicit none
     save
 
@@ -22,7 +22,7 @@ end module TLAB_ARRAYS
 ! ###################################################################
 ! ###################################################################
 module TLAB_POINTERS
-    use TLAB_CONSTANTS, only: wp
+    use TLab_Constants, only: wp
     implicit none
 
     real(wp), pointer :: u(:) => null()
@@ -49,7 +49,7 @@ end module TLAB_POINTERS
 ! ###################################################################
 ! ###################################################################
 module TLAB_POINTERS_3D
-    use TLAB_CONSTANTS, only: wp
+    use TLab_Constants, only: wp
     implicit none
 
     real(wp), pointer :: u(:, :, :) => null()
@@ -82,7 +82,7 @@ end module TLAB_POINTERS_3D
 ! ###################################################################
 ! ###################################################################
 module TLAB_POINTERS_C
-    use TLAB_CONSTANTS, only: wp
+    use TLab_Constants, only: wp
     implicit none
 
     complex(wp), pointer :: c_wrk1d(:, :) => null()
@@ -96,7 +96,7 @@ end module TLAB_POINTERS_C
 #include "dns_error.h"
 
 module TLab_Memory
-    use TLAB_CONSTANTS, only: sp, wp, wi, longi, lfile, efile
+    use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
     use TLAB_VARS
     use TLab_WorkFlow
 #ifdef USE_OPENMP

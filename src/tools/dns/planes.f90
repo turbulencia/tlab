@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module PLANES
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi, fmt_r, small_wp
+    use TLab_Constants, only: efile, lfile, wp, wi, fmt_r, small_wp
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
     use TLAB_VARS, only: g, scal_on
     use TLAB_VARS, only: itime, rtime
@@ -211,7 +211,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine PLANES_SAVE()
-        use TLAB_TYPES
+        use TLab_Types
         use TLAB_POINTERS_3D, only: p_wrk2d
         use TLAB_VARS, only: sbg
         use AVGS

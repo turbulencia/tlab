@@ -13,7 +13,7 @@ module TIME
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
+    use TLab_Constants, only: efile, wp, wi, big_wp
     use TLAB_VARS
     use TLab_WorkFlow
     use PARTICLE_VARS

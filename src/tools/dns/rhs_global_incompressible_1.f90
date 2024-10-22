@@ -17,9 +17,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use OMP_LIB
 #endif
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
-    use TLAB_CONSTANTS, only: wp, wi, BCS_NN
+    use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g

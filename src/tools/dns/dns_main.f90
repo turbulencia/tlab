@@ -3,7 +3,7 @@
 
 program DNS
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLab_WorkFlow

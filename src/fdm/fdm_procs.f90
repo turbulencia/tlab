@@ -6,7 +6,7 @@
 ! Calculation of RHS for different stencil lengths and bcs (periodic|biased)
 !########################################################################
 module FDM_PROCS
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private

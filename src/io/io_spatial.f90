@@ -11,7 +11,7 @@
 !#
 !########################################################################
 subroutine IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
     use TLAB_VARS, only: itime, rtime, jmax, inb_scal
 
@@ -58,7 +58,7 @@ subroutine WRT_STHD(unit, irec, &
                     iter, rtime, iterorg, rtimeorg, &
                     nstatavg, jmax, nstat, nstatavg_points, statavg)
 
-    use TLAB_CONSTANTS, only: wp, wi, sizeofint, sizeofreal
+    use TLab_Constants, only: wp, wi, sizeofint, sizeofreal
     implicit none
 
     integer(wi) unit, irec
@@ -123,7 +123,7 @@ end subroutine WRT_STHD
 #define LOC_STATUS 'old'
 
 subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
     use TLAB_VARS, only: itime, rtime, jmax, inb_scal
     use TLab_WorkFlow
@@ -192,7 +192,7 @@ end subroutine IO_READ_AVG_SPATIAL
 ! ###################################################################
 subroutine RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg, &
                    nstatavg, jmax, nstat, nstatavg_points, statavg)
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
     use TLab_WorkFlow
 
     implicit none

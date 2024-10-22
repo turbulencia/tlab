@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 module Radiation
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
-    use TLAB_TYPES, only: term_dt, grid_dt
+    use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
+    use TLab_Types, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLAB_ARRAYS, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP

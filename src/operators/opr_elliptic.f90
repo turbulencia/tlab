@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 module OPR_ELLIPTIC
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
     use TLAB_POINTERS_3D, only: p_wrk1d
@@ -25,8 +25,8 @@ module OPR_ELLIPTIC
     pointer :: OPR_Poisson_dt
     interface
         subroutine OPR_Poisson_dt(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
-            use TLAB_CONSTANTS, only: wi, wp
-            use TLAB_TYPES, only: grid_dt
+            use TLab_Constants, only: wi, wp
+            use TLab_Types, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -42,8 +42,8 @@ module OPR_ELLIPTIC
     pointer :: OPR_Helmholtz_dt
     interface
         subroutine OPR_Helmholtz_dt(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
-            use TLAB_CONSTANTS, only: wi, wp
-            use TLAB_TYPES, only: grid_dt
+            use TLab_Constants, only: wi, wp
+            use TLab_Types, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -774,7 +774,7 @@ contains
 ! ! Same, but for n fields
 ! ! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
 !     subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
-!         use TLAB_TYPES, only: pointers_dt
+!         use TLab_Types, only: pointers_dt
 
 !         integer(wi), intent(in) :: nx, ny, nz, nfield
 !         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet

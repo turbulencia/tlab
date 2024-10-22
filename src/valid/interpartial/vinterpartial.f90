@@ -20,7 +20,7 @@
 !########################################################################
 program VINTERPARTIAL
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLab_WorkFlow
     use IO_FIELDS

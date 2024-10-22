@@ -13,7 +13,7 @@
 
 module IBM_TYPES
 
-  use TLAB_CONSTANTS, only : wi
+  use TLab_Constants, only : wi
 
   implicit none
   

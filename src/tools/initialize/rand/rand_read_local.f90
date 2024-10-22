@@ -1,7 +1,7 @@
 #include "dns_error.h"
 
 subroutine RAND_READ_LOCAL(inifile)
-    use TLAB_CONSTANTS, only: efile, lfile
+    use TLab_Constants, only: efile, lfile
     use TLab_WorkFlow
     use RAND_LOCAL
 

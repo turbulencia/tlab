@@ -27,7 +27,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   
   use IBM_VARS
   use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 #ifdef USE_MPI
   use MPI 
   use TLabMPI_VARS,  only : ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i

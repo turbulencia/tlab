@@ -6,7 +6,7 @@
 !########################################################################
 
 module FDM_Integrate
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     use FDM_PROCS
     implicit none

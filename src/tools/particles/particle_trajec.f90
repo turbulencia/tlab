@@ -27,7 +27,7 @@
 !########################################################################
 program PARTICLE_TRAJEC
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLab_WorkFlow
 #ifdef USE_MPI

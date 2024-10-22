@@ -16,7 +16,7 @@
 
 module IBM_VARS
 
-  use TLAB_CONSTANTS, only : MAX_VARS, wp, wi
+  use TLab_Constants, only : MAX_VARS, wp, wi
   use IBM_TYPES
 
   implicit none

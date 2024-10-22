@@ -8,7 +8,7 @@
 !       lap a = f, given a (constructing first f and then solving)
 
 program VPOISSON
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory

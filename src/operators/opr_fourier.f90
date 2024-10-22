@@ -4,7 +4,7 @@
 #endif
 
 module OPR_FOURIER
-    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, efile
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
     use TLAB_VARS, only: g

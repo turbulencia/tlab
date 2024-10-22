@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
-    use TLAB_TYPES, only: discrete_dt, MAX_MODES, MAX_PARS, wp, wi
-    use TLAB_CONSTANTS, only: efile
+    use TLab_Types, only: discrete_dt, MAX_MODES, MAX_PARS, wp, wi
+    use TLab_Constants, only: efile
     use TLab_WorkFlow
     use Profiles
     implicit none

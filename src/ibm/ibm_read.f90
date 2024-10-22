@@ -25,7 +25,7 @@
 
 subroutine IBM_READ_INI(inifile)
 
-  use TLAB_CONSTANTS, only : efile, lfile
+  use TLab_Constants, only : efile, lfile
   use TLab_WorkFlow,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS
   
@@ -134,7 +134,7 @@ end subroutine IBM_READ_INI
 
 subroutine IBM_READ_CONSISTENCY_CHECK()
 
-  use TLAB_CONSTANTS, only : efile, MAX_VARS, wi, wp
+  use TLab_Constants, only : efile, MAX_VARS, wi, wp
   use TLAB_VARS,      only : imax, g
   use TLab_WorkFlow,     only : TLAB_STOP, TLAB_WRITE_ASCII
   use IBM_VARS

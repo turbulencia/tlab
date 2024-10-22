@@ -6,7 +6,7 @@
 
 !  Nonperiodic characteristic BCs at xmin and xmax
 module BOUNDARY_BCS_COMPRESSIBLE
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
     use TLAB_VARS
     use TLab_WorkFlow
     use Thermodynamics, only: imixture, CRATIO_INV, THERMO_AI
@@ -17,7 +17,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLabMPI_VARS
 #endif
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
 
     implicit none

@@ -9,9 +9,9 @@
 !# Mass diffusion contribbution in RHS_SCAL_DIFFSUION_EXPLICIT.
 !########################################################################
 subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax

@@ -4,8 +4,8 @@
 !# Sources (processes) in the evolution equations.
 !########################################################################
 module FI_SOURCES
-    use TLAB_CONSTANTS, only: wp, wi, small_wp
-    use TLAB_TYPES, only: term_dt
+    use TLab_Constants, only: wp, wi, small_wp
+    use TLab_Types, only: term_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g

@@ -12,7 +12,7 @@
 !#
 !########################################################################
 subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
-    use TLAB_CONSTANTS
+    use TLab_Constants
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -83,7 +83,7 @@ end subroutine DNS_TRANSPOSE
 !########################################################################
 !########################################################################
 subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
-    use TLAB_CONSTANTS
+    use TLab_Constants
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -144,7 +144,7 @@ end subroutine DNS_TRANSPOSE_INT1
 !########################################################################
 !########################################################################
 subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
-    use TLAB_CONSTANTS
+    use TLab_Constants
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a

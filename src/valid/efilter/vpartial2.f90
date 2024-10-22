@@ -2,7 +2,7 @@
 
 program VPARTIAL2
 
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Types, only: grid_dt
     use OPR_PARTIAL
     implicit none
 

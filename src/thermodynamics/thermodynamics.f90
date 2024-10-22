@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module Thermodynamics
-    use TLAB_CONSTANTS, only: MAX_PROF, wp, wi, efile, lfile
+    use TLab_Constants, only: MAX_PROF, wp, wi, efile, lfile
     implicit none
     private
 

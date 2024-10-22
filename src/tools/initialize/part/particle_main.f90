@@ -3,8 +3,8 @@
 #define C_FILE_LOC "INIPART"
 
 program INIPART
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: profiles_dt
+    use TLab_Constants
+    use TLab_Types, only: profiles_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLab_WorkFlow
@@ -90,8 +90,8 @@ contains
 
     ! ###################################################################
     subroutine Particle_Initialize_Variables(l_g, l_q, l_txc, txc)
-        use TLAB_CONSTANTS, only: wp, wi
-        use TLAB_TYPES, only: pointers_dt, pointers3d_dt, wp, wi, longi
+        use TLab_Constants, only: wp, wi
+        use TLab_Types, only: pointers_dt, pointers3d_dt, wp, wi, longi
         use TLAB_VARS, only: g, imax, jmax, kmax, inb_scal, sbg
         use PARTICLE_TYPES, only: particle_dt
         use PARTICLE_VARS

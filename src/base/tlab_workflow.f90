@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module TLab_WorkFlow
-    use TLAB_CONSTANTS, only: sp, wp, wi, longi, lfile, efile
+    use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
     use TLAB_VARS
 #ifdef USE_OPENMP
     use OMP_LIB

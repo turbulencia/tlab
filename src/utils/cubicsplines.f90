@@ -33,7 +33,7 @@
 
 subroutine CUBIC_SPLINE(bc, bcval, norg, nint, xorg, yorg, xint, yint, wrk)
 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
   
@@ -109,7 +109,7 @@ end subroutine CUBIC_SPLINE
 
 subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, xint, dx)
 
-  use TLAB_CONSTANTS, only: efile, wi, wp
+  use TLab_Constants, only: efile, wi, wp
   use TLab_WorkFlow
   
   implicit none
@@ -168,7 +168,7 @@ end subroutine CUBIC_SPLINE_CHECK_INPUT
 
 subroutine CUBIC_SPLINE_LHS(bc, n, dx, a, b, c)
 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
   
   implicit none
 
@@ -224,7 +224,7 @@ end subroutine CUBIC_SPLINE_LHS
 
 subroutine CUBIC_SPLINE_RHS(bc, bcval, n, dx, y, rhs)
 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
   
   implicit none
   
@@ -283,7 +283,7 @@ end subroutine CUBIC_SPLINE_RHS
 
 subroutine CUBIC_SPLINE_COEFF(n, dx, y, rhs, a, b, c, d)
 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
   
   implicit none
   
@@ -312,7 +312,7 @@ end subroutine CUBIC_SPLINE_COEFF
 
 subroutine CUBIC_SPLINE_FUNC(norg, nint, a, b, c, d, xorg, xint, yint)
 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
   
   implicit none
   
@@ -342,7 +342,7 @@ end subroutine CUBIC_SPLINE_FUNC
 
 subroutine CUBIC_SPLINE_BISECT(n, a, x, idx)
 
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
   
   implicit none
 

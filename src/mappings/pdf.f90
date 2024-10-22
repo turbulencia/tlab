@@ -12,8 +12,8 @@
 !#
 !########################################################################
 subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, y, pdf)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
-    use TLAB_TYPES, only: pointers_dt
+    use TLab_Constants, only: lfile, wp, wi
+    use TLab_Types, only: pointers_dt
     use TLAB_ARRAYS, only: wrk1d
     use TLab_WorkFlow
     use PDFS
@@ -121,7 +121,7 @@ end subroutine PDF1V_N
 !########################################################################
 !########################################################################
 subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLab_Constants, only: lfile, wp, wi
     use TLAB_ARRAYS, only: wrk2d
     use TLab_WorkFlow
     use PDFS

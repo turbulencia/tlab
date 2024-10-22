@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 module SpecialForcing
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
-    use TLAB_TYPES, only: term_dt, grid_dt
+    use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
+    use TLab_Types, only: term_dt, grid_dt
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     use TLab_Memory, only: TLAB_ALLOCATE_ARRAY_DOUBLE
     use TLAB_ARRAYS, only: wrk1d
@@ -250,7 +250,7 @@ contains
     ! Velocity field with no-slip
     !########################################################################
     subroutine Forcing_Sinusoidal_NoSlip(nx, ny, nz, time, visc, g, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use TLAB_TYPES, only: grid_dt
+        use TLab_Types, only: grid_dt
         use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
 
         integer(wi) nx, ny, nz

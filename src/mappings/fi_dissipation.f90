@@ -5,7 +5,7 @@
 !# It assumes constant visocsity
 !########################################################################
 subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: g
     use TLAB_VARS, only: area, visc
     use TLAB_ARRAYS, only: wrk1d
@@ -129,7 +129,7 @@ end subroutine FI_DISSIPATION
 #define aux(j)    wrk1d(j,5)
 
 subroutine FI_RTKE(nx, ny, nz, q, ke)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imode_eqns, inb_flow
     use TLAB_VARS, only: g, area
     use TLAB_ARRAYS, only: wrk1d
@@ -181,7 +181,7 @@ end subroutine FI_RTKE
 ! Reynolds fluctuations of array a
 !########################################################################
 subroutine FI_FLUCTUATION_INPLACE(nx, ny, nz, a)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: g, area
     use AVGS, only: AVG_IK
 

@@ -12,7 +12,7 @@
 !########################################################################
 subroutine IO_READ_GLOBAL(inifile)
 
-    use TLAB_CONSTANTS, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
+    use TLab_Constants, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
     use TLab_WorkFlow
     use Profiles
@@ -851,8 +851,8 @@ end subroutine IO_READ_GLOBAL
 ! Should be in module opr_filters but cannot because of the dependencies...
 !########################################################################
 subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
-    use TLAB_CONSTANTS, only: efile, wp, MAX_PARS
-    use TLAB_TYPES, only: filter_dt
+    use TLab_Constants, only: efile, wp, MAX_PARS
+    use TLab_Types, only: filter_dt
     use TLAB_VARS, only: g
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none

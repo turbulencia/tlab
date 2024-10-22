@@ -7,7 +7,7 @@
 !#
 !########################################################################
 subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, groupnames, avg)
-    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
+    use TLab_Constants, only: lfile, efile, wp, wi
     use TLab_WorkFlow
 #ifdef USE_MPI
     use MPI
@@ -130,7 +130,7 @@ end subroutine IO_WRITE_AVERAGES
 ! ###################################################################
 #ifdef USE_NETCDF
 subroutine NC_CHECK(status)
-    use TLAB_CONSTANTS, only: efile
+    use TLab_Constants, only: efile
     use TLab_WorkFlow
     use NETCDF
 

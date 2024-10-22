@@ -1,6 +1,6 @@
 module PARTICLE_VARS
-    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_VARS
-    use TLAB_TYPES, only: term_dt
+    use TLab_Constants, only: wp, wi, longi, MAX_VARS
+    use TLab_Types, only: term_dt
     use PARTICLE_TYPES
     implicit none
     save

@@ -8,10 +8,10 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-    use TLAB_TYPES, only: filter_dt, grid_dt, discrete_dt
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
+    use TLab_Types, only: filter_dt, grid_dt, discrete_dt
+    use TLab_Constants, only: efile, lfile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
     use TLAB_VARS, only: imode_eqns, itransport
@@ -318,8 +318,8 @@ contains
     !########################################################################
     !########################################################################
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
-        use TLAB_TYPES, only: profiles_dt
-        use TLAB_CONSTANTS, only: pi_wp
+        use TLab_Types, only: profiles_dt
+        use TLab_Constants, only: pi_wp
         use Profiles
 
         real(wp) etime

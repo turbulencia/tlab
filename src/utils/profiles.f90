@@ -2,8 +2,8 @@
 
 ! Definining functions f=f(x) to be used in bcs, ics, and reference background profiles
 module Profiles
-    use TLAB_TYPES,     only: profiles_dt
-    use TLAB_CONSTANTS, only: wp, pi_wp, efile, wfile
+    use TLab_Types,     only: profiles_dt
+    use TLab_Constants, only: wp, pi_wp, efile, wfile
     use TLab_WorkFlow,     only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
     private

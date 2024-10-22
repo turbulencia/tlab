@@ -7,9 +7,9 @@
 !# in the routine RHS_FLOW_CONDUCTION.
 !########################################################################
 subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
-    use TLAB_CONSTANTS, only: wi, wp
+    use TLab_Constants, only: wi, wp
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax

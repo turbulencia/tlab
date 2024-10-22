@@ -1,5 +1,5 @@
-module TLAB_TYPES
-    use TLAB_CONSTANTS
+module TLab_Types
+    use TLab_Constants
     implicit none
     save
 
@@ -96,4 +96,4 @@ module TLAB_TYPES
         real(wp), dimension(MAX_PARS) :: parameters
     end type discrete_dt
 
-end module TLAB_TYPES
+end module TLab_Types

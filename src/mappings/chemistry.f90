@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 module Chemistry
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
-    use TLAB_TYPES, only: term_dt
+    use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
+    use TLab_Types, only: term_dt
     use TLAB_VARS, only: inb_scal
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
     implicit none
@@ -27,7 +27,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine Chemistry_Initialize(inifile)
-        use TLAB_TYPES, only: profiles_dt
+        use TLab_Types, only: profiles_dt
         use TLAB_VARS, only: damkohler, sbg, g
         use Profiles
         character(len=*), intent(in) :: inifile

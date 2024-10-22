@@ -3,7 +3,7 @@
 #include "avgij_map.h"
 
 module STATISTICS
-    use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
+    use TLab_Constants, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
     implicit none
     save
     private
@@ -41,10 +41,10 @@ contains
     subroutine STATISTICS_TEMPORAL()
 
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
+        use TLab_Constants, only: tfile
         use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
-        use TLAB_TYPES, only: pointers_dt
+        use TLab_Types, only: pointers_dt
         use TLAB_VARS, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
         use TLAB_VARS, only: buoyancy, imode_eqns, scal_on
@@ -228,7 +228,7 @@ contains
     subroutine STATISTICS_SPATIAL()
 
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
+        use TLab_Constants, only: tfile
         use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
         use TLAB_VARS

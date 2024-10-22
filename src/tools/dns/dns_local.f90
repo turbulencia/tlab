@@ -2,8 +2,8 @@
 #include "dns_const.h"
 
 module DNS_LOCAL
-    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
-    use TLAB_CONSTANTS, only: MAX_PATH_LENGTH
+    use TLab_Constants, only: MAX_VARS, wp, wi, sp
+    use TLab_Constants, only: MAX_PATH_LENGTH
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
 #endif
@@ -91,7 +91,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
-        use TLAB_CONSTANTS, only: efile, lfile
+        use TLab_Constants, only: efile, lfile
         use TLAB_VARS, only: imode_eqns, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_ARRAYS
@@ -291,7 +291,7 @@ contains
 end module DNS_LOCAL
 !########################################################################
 module DNS_ARRAYS
-    use TLAB_CONSTANTS, only: wp
+    use TLab_Constants, only: wp
     implicit none
     save
     private

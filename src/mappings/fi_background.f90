@@ -5,7 +5,7 @@
 !# Initialize data of reference thermodynamic profiles
 !########################################################################
 subroutine FI_BACKGROUND_INITIALIZE()
-    use TLAB_CONSTANTS, only: lfile, wp, wi
+    use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
@@ -205,8 +205,8 @@ end subroutine FI_BACKGROUND_INITIALIZE
 ! Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale height in the system
 !########################################################################
 subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, BCS_MIN, BCS_BOTH
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants, only: wp, wi, BCS_MIN, BCS_BOTH
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
     use Thermodynamics, only: imixture, scaleheight
@@ -314,8 +314,8 @@ end subroutine FI_HYDROSTATIC_H
 !########################################################################
 subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
                                 x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, wfile
-    use TLAB_TYPES, only: profiles_dt
+    use TLab_Constants, only: wp, wi, wfile
+    use TLab_Types, only: profiles_dt
     use TLab_WorkFlow
     use THERMO_THERMAL
     use Profiles
@@ -410,8 +410,8 @@ end subroutine FLOW_SPATIAL_DENSITY
 !########################################################################
 subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
                                  jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
-    use TLAB_TYPES, only: profiles_dt
-    use TLAB_CONSTANTS, only: efile, wfile, wp, wi
+    use TLab_Types, only: profiles_dt
+    use TLab_Constants, only: efile, wfile, wp, wi
     use TLab_WorkFlow
     use Profiles
     use Integration, only: Int_Simpson
@@ -584,8 +584,8 @@ end subroutine FLOW_SPATIAL_VELOCITY
 subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
                                diam_z, diam_u, jet_z_a, jet_z_b, jet_z_flux, &
                                x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
-    use TLAB_TYPES, only: profiles_dt
-    use TLAB_CONSTANTS, only: wfile, wp, wi
+    use TLab_Types, only: profiles_dt
+    use TLab_Constants, only: wfile, wp, wi
     use TLab_WorkFlow
     use Integration, only: Int_Simpson
     use Profiles

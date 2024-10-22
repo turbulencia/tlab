@@ -6,7 +6,7 @@
 !#
 !########################################################################
 subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
-    use TLAB_CONSTANTS, only: wp, wi, BCS_NN
+    use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns

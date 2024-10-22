@@ -24,9 +24,9 @@
 ! #####################################################
 subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g

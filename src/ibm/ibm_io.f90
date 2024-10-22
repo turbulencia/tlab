@@ -23,7 +23,7 @@
 
 subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
   
-  use TLAB_CONSTANTS,              only : wp, wi
+  use TLab_Constants,              only : wp, wi
   use TLAB_VARS,                   only : imax,jmax,kmax, isize_field
   use IBM_VARS,                    only : epsp, eps, eps_name,epsp_name
   use IO_FIELDS
@@ -76,7 +76,7 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
   
   use IBM_VARS,       only : epsp, eps, eps_name, epsp_name
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLab_Constants, only : wp, wi
   use IO_FIELDS
 
   implicit none
@@ -117,7 +117,7 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
   
   use IBM_VARS,       only : epsp, eps, eps_name, epsp_name
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLab_Constants, only : wp, wi
   use IO_FIELDS
 
   implicit none
@@ -167,7 +167,7 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
   
   use IBM_VARS,                    only : epsp, eps, eps_name, epsp_name
   use TLAB_VARS,                   only : isize_field, imax,jmax,kmax
-  use TLAB_CONSTANTS,              only : wp, wi
+  use TLab_Constants,              only : wp, wi
   use IO_FIELDS
   use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
 
@@ -222,7 +222,7 @@ end subroutine IBM_IO_READ_BIT_GEOMETRY
 
 subroutine IBM_IO_R2B(rsize,bsize,r,b)
 
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLab_Constants, only : wp, wi
 
   implicit none
 
@@ -254,7 +254,7 @@ end subroutine IBM_IO_R2B
 
 subroutine IBM_IO_B2R(bsize,rsize,b,r)
 
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLab_Constants, only : wp, wi
   
   implicit none
   

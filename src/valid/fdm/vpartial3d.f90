@@ -1,7 +1,7 @@
 #include "dns_const.h"
 
 program VPARTIAL3D
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory

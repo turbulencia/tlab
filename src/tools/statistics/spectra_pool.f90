@@ -8,7 +8,7 @@
 !########################################################################
 subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
                               spec_2d, data_x, data_z, spec_r, tmp_x, tmp_z, wrk2d)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: g
 #ifdef USE_MPI
     use MPI
@@ -165,7 +165,7 @@ end subroutine INTEGRATE_SPECTRUM
 !########################################################################
 !########################################################################
 subroutine REDUCE_SPECTRUM(nx, ny, nz, nblock, in, out, tmp1, variance)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: isize_txc_dimz
 
 ! need to know about domain decomposition in x b/o
@@ -254,7 +254,7 @@ end subroutine REDUCE_SPECTRUM
 !########################################################################
 subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
                               in, data_2d, data_x, data_z, data_r, variance1, variance2, icalc_radial)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: isize_wrk1d
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
@@ -330,7 +330,7 @@ end subroutine REDUCE_CORRELATION
 !########################################################################
 !########################################################################
 subroutine RADIAL_SAMPLESIZE(nx, nz, nr_total, samplesize)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
@@ -370,8 +370,8 @@ end subroutine RADIAL_SAMPLESIZE
 !########################################################################
 !########################################################################
 subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_CONSTANTS, only: lfile
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: lfile
     use TLab_WorkFlow
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro
@@ -423,7 +423,7 @@ end subroutine WRITE_SPECTRUM1D
 #ifdef USE_MPI
 
 subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use IO_FIELDS, only: io_aux
     use MPI

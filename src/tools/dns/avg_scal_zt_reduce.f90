@@ -26,9 +26,9 @@
 
 module AVG_SCAL_ZT
 
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLAB_WRITE_ASCII
 #endif
     use TLAB_VARS, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d, imode_eqns

@@ -2,8 +2,8 @@
 #include "dns_error.h"
 
 module FLOW_LOCAL
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi, pi_wp
-    use TLAB_TYPES, only: profiles_dt, discrete_dt
+    use TLab_Constants, only: efile, lfile, wp, wi, pi_wp
+    use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g, qbg, tbg, hbg
     use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk2d

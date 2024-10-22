@@ -15,7 +15,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
                      wrk2d)
 
     use TLAB_VARS, only: g, imax, jmax, kmax
-    use TLAB_CONSTANTS, only: lfile
+    use TLab_Constants, only: lfile
     use TLAB_VARS, only: isize_txc_dimx, isize_txc_dimz
     use OPR_FOURIER
 #ifdef USE_MPI
