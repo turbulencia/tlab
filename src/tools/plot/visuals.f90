@@ -103,7 +103,7 @@ program VISUALS
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
 
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Particle_Initialize_Parameters(ifile)
     ! -------------------------------------------------------------------
     ! Read pressure decomposition
     ! -------------------------------------------------------------------

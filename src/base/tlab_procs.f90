@@ -651,6 +651,13 @@ contains
         ENDDO
         CALL TLAB_ALLOCATE_LOG_LONG(log_file,dims_long,s)
       
+        if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
+
+        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
+        do id = 2, size(dims)
+            write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
+        end do
+        call TLAB_WRITE_ASCII(log_file, line)
     END SUBROUTINE TLAB_ALLOCATE_LOG
 
    SUBROUTINE TLAB_ALLOCATE_LOG_LONG(log_file,dims_long,s)
@@ -671,14 +678,6 @@ contains
       call TLAB_WRITE_ASCII(log_file, line)
     END SUBROUTINE TLAB_ALLOCATE_LOG_LONG
 
-        if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
-
-        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-        do id = 2, size(dims)
-            write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
-        end do
-        call TLAB_WRITE_ASCII(log_file, line)
-    end subroutine TLAB_ALLOCATE_LOG
 
     subroutine TLAB_ALLOCATE_ERR(C_FILE_LOC, log_file, s)
         character(len=*) :: C_FILE_LOC, log_file, s
