@@ -40,7 +40,7 @@ CONTAINS
     use TLAB_VARS,      only : g
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
+    use TLabMPI_VARS,  only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
 #endif
 
     implicit none
@@ -88,7 +88,7 @@ CONTAINS
     use IO_FIELDS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only : ims_comm_x, ims_pro_k, ims_pro
+    use TLabMPI_VARS, only : ims_comm_x, ims_pro_k, ims_pro
 #endif
     use TLAB_VARS, only : rtime
     use TLAB_VARS, only : visc, froude, rossby, prandtl, mach, gama0
@@ -164,7 +164,7 @@ CONTAINS
     use TLAB_VARS, only : imax, jmax, kmax, isize_field
 #ifdef USE_MPI 
     use MPI
-    use TLAB_MPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
+    use TLabMPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
 #endif
     use TLAB_ARRAYS, only: q, s
     use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
@@ -253,7 +253,7 @@ CONTAINS
     use TLAB_CONSTANTS, only : sizeofint, sizeofreal
 #ifdef USE_MPI 
     use MPI
-    use TLAB_MPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
+    use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
 #endif
     implicit none
     integer(wi),                                          intent(in)          :: nfield
@@ -388,7 +388,7 @@ CONTAINS
     use TLAB_CONSTANTS, only : wp
 #ifdef USE_MPI 
     use MPI
-    use TLAB_MPI_VARS,  only : ims_comm_x, ims_err, ims_pro, ims_pro_k
+    use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_pro, ims_pro_k
 #endif
 
 #ifdef USE_MPI

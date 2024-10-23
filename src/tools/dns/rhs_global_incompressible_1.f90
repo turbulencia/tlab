@@ -20,7 +20,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_CONSTANTS, only: tfile
 #endif
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imode_eqns
