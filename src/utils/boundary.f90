@@ -1,34 +1,14 @@
-#include "types.h"
-
-!########################################################################
-!# Tool/Library
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/04 - J.P. Mellado
-!#              Created
-!# 2012/09/30 - J.P. Mellado
-!#              Adding INT1 routines
-!#
-!########################################################################
-!# DESCRIPTION
-!#
-!########################################################################
-!# ARGUMENTS
-!#
-!########################################################################
 subroutine SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, amin, y, a, at, surface, wrk2d)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER imax, jmax, kmax, jmin_loc
-    TREAL y(jmax), amin
-    TREAL a(*), at(jmax, imax*kmax)
-    TREAL surface(*), wrk2d(imax*kmax)
+    integer(wi) imax, jmax, kmax, jmin_loc
+    real(wp) y(jmax), amin
+    real(wp) a(*), at(jmax, imax*kmax)
+    real(wp) surface(*), wrk2d(imax*kmax)
 
 ! -------------------------------------------------------------------
-    TINTEGER i, j, jkmax, ikmax
+    integer(wi) i, j, jkmax, ikmax
 
 ! ###################################################################
     jkmax = jmax*kmax
@@ -60,18 +40,17 @@ end subroutine SL_LOWER_BOUNDARY
 
 !########################################################################
 !########################################################################
-
 subroutine SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, amin, y, a, at, surface, wrk2d)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER imax, jmax, kmax, jmax_loc
-    TREAL y(jmax), amin
-    TREAL a(*), at(jmax, imax*kmax)
-    TREAL surface(*), wrk2d(imax*kmax)
+    integer(wi) imax, jmax, kmax, jmax_loc
+    real(wp) y(jmax), amin
+    real(wp) a(*), at(jmax, imax*kmax)
+    real(wp) surface(*), wrk2d(imax*kmax)
 
 ! -------------------------------------------------------------------
-    TINTEGER i, j, jkmax, ikmax
+    integer(wi) i, j, jkmax, ikmax
 
 ! ###################################################################
     jkmax = jmax*kmax
@@ -104,19 +83,19 @@ end subroutine SL_UPPER_BOUNDARY
 !########################################################################
 !########################################################################
 subroutine BOUNDARY_LOWER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2d)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER imax, jmax, kmax
-    TREAL, dimension(jmax), intent(IN) :: y
+    integer(wi) imax, jmax, kmax
+    real(wp), dimension(jmax), intent(IN) :: y
     integer(1), intent(IN) :: avalue
     integer(1), dimension(jmax, imax*kmax), intent(IN) :: a ! real shape is imax*jmax*kmax
     integer(1), dimension(jmax, imax*kmax), intent(INOUT) :: at(jmax, imax*kmax)
-    TREAL, dimension(imax*kmax), intent(INOUT) :: wrk2d
-    TREAL, dimension(imax*kmax), intent(OUT) :: surface
+    real(wp), dimension(imax*kmax), intent(INOUT) :: wrk2d
+    real(wp), dimension(imax*kmax), intent(OUT) :: surface
 
 ! -------------------------------------------------------------------
-    TINTEGER i, j, jkmax, ikmax
+    integer(wi) i, j, jkmax, ikmax
 
 ! ###################################################################
     jkmax = jmax*kmax
@@ -150,19 +129,19 @@ end subroutine BOUNDARY_LOWER_INT1
 ! ###################################################################
 
 subroutine BOUNDARY_UPPER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2d)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER imax, jmax, kmax
-    TREAL, dimension(jmax), intent(IN) :: y
+    integer(wi) imax, jmax, kmax
+    real(wp), dimension(jmax), intent(IN) :: y
     integer(1), intent(IN) :: avalue
     integer(1), dimension(jmax, imax*kmax), intent(IN) :: a ! real shape is imax*jmax*kmax
     integer(1), dimension(jmax, imax*kmax), intent(INOUT) :: at(jmax, imax*kmax)
-    TREAL, dimension(imax*kmax), intent(INOUT) :: wrk2d
-    TREAL, dimension(imax*kmax), intent(OUT) :: surface
+    real(wp), dimension(imax*kmax), intent(INOUT) :: wrk2d
+    real(wp), dimension(imax*kmax), intent(OUT) :: surface
 
 ! -------------------------------------------------------------------
-    TINTEGER i, j, jkmax, ikmax
+    integer(wi) i, j, jkmax, ikmax
 
 ! ###################################################################
     jkmax = jmax*kmax
@@ -193,21 +172,21 @@ end subroutine BOUNDARY_UPPER_INT1
 ! ###################################################################
 
 function UPPER_THRESHOLD(jmax, uc, u, y)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER, intent(IN) :: jmax
-    TREAL, dimension(jmax), intent(IN) :: u, y
-    TREAL, intent(IN) :: uc
-    TREAL UPPER_THRESHOLD
+    integer(wi), intent(IN) :: jmax
+    real(wp), dimension(jmax), intent(IN) :: u, y
+    real(wp), intent(IN) :: uc
+    real(wp) UPPER_THRESHOLD
 
 ! -------------------------------------------------------------------
-    TINTEGER j
+    integer(wi) j
 
 ! ###################################################################
-    UPPER_THRESHOLD = C_0_R
+    UPPER_THRESHOLD = 0.0_wp
     do j = jmax - 1, 1, -1
-        if ((u(j) - uc)*(u(j + 1) - uc) < C_0_R) then
+        if ((u(j) - uc)*(u(j + 1) - uc) < 0.0_wp) then
             UPPER_THRESHOLD = y(j) + (uc - u(j))*(y(j + 1) - y(j))/(u(j + 1) - u(j))
             exit
         end if
@@ -220,21 +199,21 @@ end function UPPER_THRESHOLD
 ! ###################################################################
 
 function LOWER_THRESHOLD(jmax, uc, u, y)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER, intent(IN) :: jmax
-    TREAL, dimension(jmax), intent(IN) :: u, y
-    TREAL, intent(IN) :: uc
-    TREAL LOWER_THRESHOLD
+    integer(wi), intent(IN) :: jmax
+    real(wp), dimension(jmax), intent(IN) :: u, y
+    real(wp), intent(IN) :: uc
+    real(wp) LOWER_THRESHOLD
 
 ! -------------------------------------------------------------------
-    TINTEGER j
+    integer(wi) j
 
 ! ###################################################################
-    LOWER_THRESHOLD = C_0_R
+    LOWER_THRESHOLD = 0.0_wp
     do j = 1, jmax - 1
-        if ((u(j) - uc)*(u(j + 1) - uc) < C_0_R) then
+        if ((u(j) - uc)*(u(j + 1) - uc) < 0.0_wp) then
             LOWER_THRESHOLD = y(j) + (uc - u(j))*(y(j + 1) - y(j))/(u(j + 1) - u(j))
             exit
         end if
@@ -247,24 +226,24 @@ end function LOWER_THRESHOLD
 ! ###################################################################
 
 subroutine DELTA_X(imax, jmax, y, a, delta, delta_d, delta_u, A2, eta)
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-    TINTEGER, intent(IN) :: imax, jmax
-    TREAL, dimension(jmax), intent(IN) :: y
-    TREAL, dimension(imax, jmax), intent(IN) :: a
-    TREAL, intent(IN) :: A2, eta
-    TREAL, dimension(imax), intent(OUT) :: delta_d, delta_u, delta
+    integer(wi), intent(IN) :: imax, jmax
+    real(wp), dimension(jmax), intent(IN) :: y
+    real(wp), dimension(imax, jmax), intent(IN) :: a
+    real(wp), intent(IN) :: A2, eta
+    real(wp), dimension(imax), intent(OUT) :: delta_d, delta_u, delta
 
 ! -------------------------------------------------------------------
-    TINTEGER i, j
-    TREAL DA, A_05, y_center
+    integer(wi) i, j
+    real(wp) DA, A_05, y_center
 
 ! ###################################################################
-    y_center = C_05_R*(y(jmax/2) + y(jmax/2 + 1))
+    y_center = 0.5_wp*(y(jmax/2) + y(jmax/2 + 1))
 
     do i = 1, imax
-        DA = C_05_R*(a(i, jmax/2) + a(i, jmax/2 + 1)) - A2
+        DA = 0.5_wp*(a(i, jmax/2) + a(i, jmax/2 + 1)) - A2
         A_05 = A2 + eta*DA
 
         do j = 1, jmax/2
@@ -281,7 +260,7 @@ subroutine DELTA_X(imax, jmax, y, a, delta, delta_d, delta_u, A2, eta)
         end do
         delta_u(i) = delta_u(i) - y_center
 
-        delta(i) = C_05_R*(delta_d(i) + delta_u(i))
+        delta(i) = 0.5_wp*(delta_d(i) + delta_u(i))
     end do
 
     return
