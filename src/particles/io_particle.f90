@@ -19,7 +19,7 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro, ims_err
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
 
@@ -159,7 +159,7 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro, ims_err
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
 

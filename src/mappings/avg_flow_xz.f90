@@ -26,13 +26,13 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use Thermodynamics, only: Thermo_Psat_Polynomial
     use THERMO_ANELASTIC
     use THERMO_CALORIC
-    use IBM_VARS, only: gamma_0, gamma_1
+    use IBM_VARS, only: imode_ibm, gamma_0, gamma_1
     use AVGS, only: AVG_IK_V
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
 #endif
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use OPR_PARTIAL

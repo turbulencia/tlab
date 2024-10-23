@@ -9,13 +9,13 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     implicit none
 
     character*(*) name
-    integer(wi) imax, jmax, kmax
+    integer(wi), intent(in) :: imax, jmax, kmax
     real(wp) scalex, scaley, scalez
     real(wp) x(imax), y(jmax), z(kmax)
     real(wp), optional :: area
 
     ! -----------------------------------------------------------------------
-    integer(wi) imaxdum, jmaxdum, kmaxdum
+    integer(wi) imax_loc, jmax_loc, kmax_loc
     real(wp) scale(3)
     character*(32) line
 
@@ -24,16 +24,16 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     rewind (50)
 
     ! -----------------------------------------------------------------------
-    read (50) imaxdum, jmaxdum, kmaxdum
+    read (50) imax_loc, jmax_loc, kmax_loc
     read (50) scale
     scalex = scale(1)
     scaley = scale(2)
     scalez = scale(3)
 
     ! -----------------------------------------------------------------------
-    if (imaxdum /= imax .or. jmaxdum /= jmax .or. kmaxdum /= kmax) then
+    if (imax_loc /= imax .or. jmax_loc /= jmax .or. kmax_loc /= kmax) then
         close (50)
-        write (line, 100) imaxdum, jmaxdum, kmaxdum
+        write (line, 100) imax_loc, jmax_loc, kmax_loc
         call TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
         call TLAB_STOP(DNS_ERROR_DIMGRID)
     end if

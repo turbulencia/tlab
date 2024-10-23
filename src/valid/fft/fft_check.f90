@@ -20,7 +20,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     use OPR_FOURIER
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none

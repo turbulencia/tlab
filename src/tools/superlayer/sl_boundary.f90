@@ -17,7 +17,7 @@ program SL_BOUNDARY
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
@@ -74,10 +74,10 @@ program SL_BOUNDARY
     call DNS_START
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call Thermodynamics_Initialize_Parameters(ifile)
 
     call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
     call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)

@@ -31,9 +31,9 @@ subroutine IBM_GENERATE_GEOMETRY_HILL(wrk3d)
   use TLAB_VARS,      only : stagger_on
 #ifdef USE_MPI 
   use MPI
-  use TLAB_MPI_VARS,  only : ims_offset_i, ims_offset_j, ims_offset_k
+  use TLabMPI_VARS,  only : ims_offset_i, ims_offset_j, ims_offset_k
 #ifdef IBM_DEBUG
-  use TLAB_MPI_VARS,  only : ims_pro, ims_npro, ims_npro_i, ims_npro_k 
+  use TLabMPI_VARS,  only : ims_pro, ims_npro, ims_npro_i, ims_npro_k 
 #endif
 #endif 
 

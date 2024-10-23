@@ -13,13 +13,14 @@ program AVERAGES
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
-    use Thermodynamics, only: imixture,  Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -96,25 +97,24 @@ program AVERAGES
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Thermodynamics_Initialize_Parameters(ifile)
+    call Particle_Initialize_Parameters(ifile)
+
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Chemistry_Initialize(ifile)
 
-    ! -------------------------------------------------------------------
-    ! IBM status (before TLAB_MPI_INITIALIZE!)
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
-        call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
+        call TLAB_WRITE_ASCII(efile, 'AVERAGES. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
     ! -------------------------------------------------------------------
     ! File names
@@ -313,15 +313,11 @@ program AVERAGES
         allocate (mean(opt_order*nfield*(jmax_aux + 1)))
     end if
 
-    isize_wrk3d = max(isize_field, opt_order*nfield*jmax)
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
+    isize_wrk3d = max(isize_wrk3d, opt_order*nfield*jmax)
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     if (imode_ibm == 1) then
         call IBM_ALLOCATE(C_FILE_LOC)
@@ -339,7 +335,7 @@ program AVERAGES
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
 
@@ -469,7 +465,7 @@ program AVERAGES
                         !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
+                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                     end if
                 end if
 

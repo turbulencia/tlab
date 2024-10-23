@@ -11,9 +11,9 @@ program INISCAL
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
     use Radiation
@@ -29,29 +29,29 @@ program INISCAL
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
-    call Radiation_Initialize(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Thermodynamics_Initialize_Parameters(ifile)
+
     call SCAL_READ_LOCAL(ifile)
 
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
-
-    isize_wrk3d = isize_field
-    if (imode_sim == DNS_MODE_SPATIAL .and. rbg%type == PROFILE_NONE) then
+    if (imode_sim == DNS_MODE_SPATIAL) then
         inb_wrk2d = max(inb_wrk2d, 6)
     end if
 
     inb_txc = 0
     if (flag_s == PERT_LAYER_BROADBAND) inb_txc = max(inb_txc, 1)
-    if (infrared%type /= EQNS_NONE) inb_txc = max(inb_txc, 4)
+    if (norm_ini_radiation /= 0.0_wp) inb_txc = max(inb_txc, 4)
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
+
+    call Radiation_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE()
     do is = 1, size(IniS)
@@ -97,20 +97,17 @@ program INISCAL
 
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
-    if (infrared%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
-
-        if (abs(infrared%parameters(1)) > 0.0_wp) then
-            infrared%parameters(3) = infrared%parameters(3)/infrared%parameters(1)*norm_ini_radiation
-        end if
-        infrared%parameters(1) = norm_ini_radiation
+    if (infraredProps%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
+        norm_ini_radiation = norm_ini_radiation/infraredProps%auxiliar(1)
+        infraredProps%auxiliar(:) = infraredProps%auxiliar(:)*norm_ini_radiation
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Calculate q_l
             call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
         else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             call THERMO_AIRWATER_LINEAR(imax*jmax*kmax, s, s(1, inb_scal_array))
         end if
         do is = 1, inb_scal
-            if (infrared%active(is)) then
-                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+            if (infraredProps%active(is)) then
+                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do

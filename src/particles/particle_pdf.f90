@@ -18,7 +18,7 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
     use PARTICLE_INTERPOLATE
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none

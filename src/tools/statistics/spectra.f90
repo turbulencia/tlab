@@ -33,23 +33,24 @@
 !########################################################################
 program SPECTRA
 
-    use TLAB_TYPES, only: pointers_dt
     use TLAB_CONSTANTS
+    use TLAB_TYPES, only: pointers_dt
     use TLAB_VARS
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro_k
-    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro_k
+    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
@@ -63,13 +64,13 @@ program SPECTRA
     implicit none
 
 ! Parameter definitions
-    TINTEGER, parameter :: itime_size_max = 512
-    TINTEGER, parameter :: iopt_size_max = 20
+    integer(wi), parameter :: itime_size_max = 512
+    integer(wi), parameter :: iopt_size_max = 20
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    TREAL, dimension(:), allocatable :: p_aux, y_aux, samplesize
-    TREAL, dimension(:, :), allocatable :: out2d, outx, outz, outr
+    real(wp), dimension(:), allocatable :: p_aux, y_aux, samplesize
+    real(wp), dimension(:, :), allocatable :: out2d, outx, outz, outr
 
     type(pointers_dt), dimension(16) :: vars
 
@@ -82,35 +83,35 @@ program SPECTRA
     character*32 varname(16)
     character*64 str, line
     character*8 tag_file, tag_name, tag_var(16)
-    TINTEGER p_pairs(16, 2)
+    integer(wi) p_pairs(16, 2)
 
-    TINTEGER opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
-    TINTEGER flag_mode, ierr
+    integer(wi) opt_main, opt_ffmt, opt_time, opt_block, flag_buoyancy
+    integer(wi) flag_mode, ierr
     logical iread_flow, iread_scal
-    TINTEGER isize_out2d, isize_aux, sizes(5)
-    TINTEGER nfield, nfield_ref
-    TINTEGER is, iv, iv_offset, iv1, iv2, ip, j, ig
-    TINTEGER jmax_aux, kxmax, kymax, kzmax
-    TINTEGER icalc_radial
-    TREAL norm, dummy
+    integer(wi) isize_out2d, isize_aux, sizes(5)
+    integer(wi) nfield, nfield_ref
+    integer(wi) is, iv, iv_offset, iv1, iv2, ip, j, ig
+    integer(wi) jmax_aux, kxmax, kymax, kzmax
+    integer(wi) icalc_radial
+    real(wp) norm, dummy
 
-    TINTEGER kx_total, ky_total, kz_total, kr_total, isize_spec2dr
+    integer(wi) kx_total, ky_total, kz_total, kr_total, isize_spec2dr
 
-    TINTEGER inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
+    integer(wi) inb_scal_min, inb_scal_max ! Iterval of scalars to calculate, to be able reduce memory constraints (hard coded)
 
 ! Reading variables
     character*512 sRes
 
-    TINTEGER itime_size, it
-    TINTEGER itime_vec(itime_size_max)
+    integer(wi) itime_size, it
+    integer(wi) itime_vec(itime_size_max)
 
-    TINTEGER iopt_size
-    TREAL opt_vec(iopt_size_max)
+    integer(wi) iopt_size
+    real(wp) opt_vec(iopt_size_max)
 
     integer, parameter :: i0 = 0, i1 = 1, i2 = 2, i3 = 3
 
 #ifdef USE_MPI
-    TINTEGER id
+    integer(wi) id
 #endif
 
 !########################################################################
@@ -120,12 +121,15 @@ program SPECTRA
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Thermodynamics_Initialize_Parameters(ifile)
+    
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
 
-    ! -------------------------------------------------------------------
-    ! IBM status (before TLAB_MPI_INITIALIZE!)
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
@@ -134,13 +138,6 @@ program SPECTRA
         call TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-    ! -------------------------------------------------------------------
-    ! Initialize MPI
-    ! -------------------------------------------------------------------
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -317,9 +314,9 @@ program SPECTRA
         end if
 
         call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
-        id = TLAB_MPI_K_AUX2
-        call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
-                             ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        id = TLabMPI_K_AUX2
+        call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
+                            ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     end if
 #endif
@@ -367,13 +364,12 @@ program SPECTRA
         call IBM_ALLOCATE(C_FILE_LOC)
     end if
 
-! extend array by complex nyquist frequency in x (+1 TCOMPLEX = +2 TREAL)
-!              by boundary conditions in y       (+1 TCOMPLEX = +2 TREAL)
+! extend array by complex nyquist frequency in x (+1 complex(wp) = +2 real(wp))
+!              by boundary conditions in y       (+1 complex(wp) = +2 real(wp))
 
-    isize_wrk3d = isize_txc_field                ! default
     isize_wrk3d = max(isize_wrk3d, isize_spec2dr) ! space needed in INTEGRATE_SPECTRUM
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid
@@ -383,7 +379,7 @@ program SPECTRA
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE()
 
@@ -550,7 +546,7 @@ program SPECTRA
             call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3), DCMP_TOTAL)
             if (flag_buoyancy == 1) then
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                   call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
+                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
                 else
                     wrk1d(1:jmax, 1) = C_0_R
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
@@ -642,7 +638,7 @@ program SPECTRA
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
                     wrk3d = C_0_R
                     call REDUCE_CORRELATION(imax, jmax, kmax, opt_block, kr_total, &
-                                    txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
+                                            txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
                 end if
 
 ! Check Parseval's relation

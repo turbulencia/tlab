@@ -56,6 +56,9 @@ module TLAB_CONSTANTS
     real(wp), parameter :: pi_wp = 3.14159265358979323846_wp
     real(wp), parameter :: small_wp = 1.0e-20_wp
     real(wp), parameter :: big_wp = 1.0e20_wp
+    real(wp), parameter :: roundoff_dp = 1.0e-15_wp
+    real(wp), parameter :: roundoff_sp = 1.0e-7_wp
+    real(wp), parameter :: roundoff_wp = roundoff_dp
 
     integer, parameter :: BCS_PERIODIC = -1
     integer, parameter :: BCS_DD = 0     ! Dirichlet/Dirichlet

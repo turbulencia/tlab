@@ -28,11 +28,11 @@ module BOUNDARY_INFLOW
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_VARS, only: ims_offset_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_offset_k
+    use TLabMPI_PROCS
 #endif
     use OPR_PARTIAL
 
@@ -111,9 +111,9 @@ contains
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
             call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for inflow filter.')
-            id = TLAB_MPI_K_INFLOW
+            id = TLabMPI_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
-            call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
+            call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             FilterInflow(3)%mpitype = id
         end if
@@ -320,7 +320,7 @@ contains
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
         use TLAB_TYPES, only: profiles_dt
         use TLAB_CONSTANTS, only: pi_wp
-        use PROFILES
+        use Profiles
 
         real(wp) etime
         real(wp), intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
@@ -351,13 +351,8 @@ contains
 
         xaux = -qbg(1)%mean*etime
 
-        prof_loc%type = PROFILE_GAUSSIAN
+        prof_loc = profiles_dt(type=PROFILE_GAUSSIAN)
         prof_loc%thick = fp%parameters(1)
-        prof_loc%delta = 1.0_wp
-        prof_loc%mean = 0.0_wp
-        prof_loc%lslope = 0.0_wp
-        prof_loc%uslope = 0.0_wp
-        prof_loc%parameters = 0.0_wp
 
         ! ###################################################################
         ! Shape function
@@ -367,7 +362,7 @@ contains
             prof_loc%ymean = qbg(1)%ymean
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
+                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
                 wrk1d(j, 2) = yr/(prof_loc%thick**2)*wrk1d(j, 1) ! Derivative of f
             end do
 
@@ -375,7 +370,7 @@ contains
             prof_loc%ymean = qbg(1)%ymean - 0.5_wp*qbg(1)%diam
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
+                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
                 wrk1d(j, 2) = -yr/(prof_loc%thick**2)*wrk1d(j, 1)
             end do
 
@@ -385,7 +380,7 @@ contains
             end if
             do j = 1, jmax
                 yr = y(j) - prof_loc%ymean
-                dummy = PROFILES_CALCULATE(prof_loc, y(j))
+                dummy = Profiles_Calculate(prof_loc, y(j))
                 wrk1d(j, 1) = wrk1d(j, 1) + dummy
                 wrk1d(j, 2) = wrk1d(j, 2) + yr/(prof_loc%thick**2)*dummy
             end do

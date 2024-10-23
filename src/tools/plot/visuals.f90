@@ -17,15 +17,16 @@ program VISUALS
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
+    use TLabMPI_PROCS
 #endif
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
-    use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use Radiation
     use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -91,11 +92,17 @@ program VISUALS
     bakfile = trim(adjustl(ifile))//'.bak'
 
     call TLAB_START()
- 
+
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Thermodynamics_Initialize_Parameters(ifile)
+    call Particle_Initialize_Parameters(ifile)
+
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+
     call PARTICLE_READ_GLOBAL(ifile)
     ! -------------------------------------------------------------------
     ! Read pressure decomposition
@@ -114,8 +121,8 @@ program VISUALS
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
     end if
 
-    ! -------------------------------------------------------------------
-    ! IBM status (before TLAB_MPI_INITIALIZE!)
+    call Chemistry_Initialize(ifile)
+
     ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
@@ -124,13 +131,6 @@ program VISUALS
         call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
-    ! -------------------------------------------------------------------
-    ! Initialize MPI
-    ! -------------------------------------------------------------------
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
     ! -------------------------------------------------------------------
     ! File names
@@ -236,7 +236,7 @@ program VISUALS
         if (opt_vec(iv) == iscal_offset + 16) then; iread_scal = .true.; inb_txc = max(inb_txc, 4); end if
         if (opt_vec(iv) == iscal_offset + 17) then; iread_scal = .true.; inb_txc = max(inb_txc, 2); end if
         if (opt_vec(iv) == iscal_offset + 18) then; iread_part = .true.; inb_txc = max(inb_txc, 2); end if
-        if (opt_vec(iv) == iscal_offset + 19) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7 ); end if
+        if (opt_vec(iv) == iscal_offset + 19) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 7); end if
         if (opt_vec(iv) == iscal_offset + 20) then; iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 10); end if
     end do
 
@@ -319,19 +319,15 @@ program VISUALS
     ! -------------------------------------------------------------------
     allocate (gate(isize_field))
 
-    isize_wrk3d = isize_txc_field
 #ifdef USE_MPI
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     if (iread_part) then ! Particle variables
         inb_part_txc = max(inb_part_txc, 1)
-        call PARTICLE_ALLOCATE(C_FILE_LOC)
+        call Particle_Initialize_Memory(C_FILE_LOC)
     end if
 
     if (imode_ibm == 1) then
@@ -346,7 +342,7 @@ program VISUALS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
     call FI_BACKGROUND_INITIALIZE() ! Initialize thermodynamic quantities
 
@@ -629,7 +625,7 @@ program VISUALS
                 if (imixture == MIXT_TYPE_AIRWATER) then ! s(1,inb_scal+1) contains liquid mass fraction
                     if (opt_vec(iv) == 10) then ! vapor water mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(1)))//time_str(1:MaskSize)
-                        txc(1:isize_field, 1)  = s(1:isize_field, inb_scal) - s(1:isize_field, inb_scal + 1)
+                        txc(1:isize_field, 1) = s(1:isize_field, inb_scal) - s(1:isize_field, inb_scal + 1)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     else if (opt_vec(iv) == 11) then ! air mass fraction
@@ -912,9 +908,9 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 16) then
                 do is = 1, inb_scal
 
-                    if (infrared%active(is)) then
+                    if (infraredProps%active(is)) then
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
-                        call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+                        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
                     end if
 
@@ -995,11 +991,11 @@ program VISUALS
             ! ###################################################################
             ! Total stress tensor
             ! ###################################################################
-            if (opt_vec(iv) == iscal_offset + 20) then ! Total stress tensor 
+            if (opt_vec(iv) == iscal_offset + 20) then ! Total stress tensor
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3)) ! pressure in txc(1,7)
-                call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1 ,8), txc(1 ,6))            ! avg vel. + pre. in time               
+                call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1, 8), txc(1, 6))            ! avg vel. + pre. in time
                 if (it == itime_size) then
-                    call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+ call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                     if (imode_ibm == 1) then
                         txc(:, 8) = eps
                         plot_file = 'EpsSolid'//time_str(1:MaskSize)
@@ -1007,9 +1003,9 @@ program VISUALS
                     end if
                     plot_file = 'StressTensor'
                     if (itime_size > 1) plot_file = trim(adjustl(plot_file))//'Avg'
-                    plot_file = trim(adjustl(plot_file))//time_str(1:MaskSize) 
+                    plot_file = trim(adjustl(plot_file))//time_str(1:MaskSize)
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 6, subdomain, txc(1, 1), wrk3d)
-                end if 
+                end if
 
             end if
 
@@ -1024,34 +1020,34 @@ contains
 !########################################################################
 !# Accumulate itime_size fields before processing the temp. avg. fields
 !########################################################################
-subroutine VISUALS_ACCUMULATE_FIELDS(q, p, q_avg, p_avg)
+    subroutine VISUALS_ACCUMULATE_FIELDS(q, p, q_avg, p_avg)
 
-    real(wp), dimension(isize_field, 3), intent(inout) :: q     ! inst. vel. fields
-    real(wp), dimension(isize_field   ), intent(inout) :: p     ! inst. pre. fields
-    real(wp), dimension(isize_field, 3), intent(inout) :: q_avg ! time avg. vel. fields
-    real(wp), dimension(isize_field   ), intent(inout) :: p_avg ! time avg. pre. fields
+        real(wp), dimension(isize_field, 3), intent(inout) :: q     ! inst. vel. fields
+        real(wp), dimension(isize_field), intent(inout) :: p     ! inst. pre. fields
+        real(wp), dimension(isize_field, 3), intent(inout) :: q_avg ! time avg. vel. fields
+        real(wp), dimension(isize_field), intent(inout) :: p_avg ! time avg. pre. fields
 
-    integer(wi) :: is
-    ! ================================================================== !
-    ! if only one iteration is chosen, do nothing
-    if (itime_size > 1) then
-        if (it == 1) then 
-            q_avg(:,:) = q(:,:); p_avg(:) = p(:)
-        else if (it > 1) then
-            do is = 1, 3    
-                q_avg(:,is) = q_avg(:,is) + q(:,is)
-            end do 
-            p_avg(:) = p_avg(:) + p(:)
+        integer(wi) :: is
+        ! ================================================================== !
+        ! if only one iteration is chosen, do nothing
+        if (itime_size > 1) then
+            if (it == 1) then
+                q_avg(:, :) = q(:, :); p_avg(:) = p(:)
+            else if (it > 1) then
+                do is = 1, 3
+                    q_avg(:, is) = q_avg(:, is) + q(:, is)
+                end do
+                p_avg(:) = p_avg(:) + p(:)
+            end if
+            if (it == itime_size) then
+                q = q_avg/itime_size
+                p = p_avg/itime_size
+            end if
         end if
-        if (it == itime_size) then    
-            q = q_avg / itime_size
-            p = p_avg / itime_size
-        end if
-    end if
 
-    return
-end subroutine VISUALS_ACCUMULATE_FIELDS
-    
+        return
+    end subroutine VISUALS_ACCUMULATE_FIELDS
+
 !########################################################################
 !########################################################################
 #define LOC_UNIT_ID 55
@@ -1153,7 +1149,7 @@ end subroutine VISUALS_ACCUMULATE_FIELDS
 
 #ifdef USE_MPI
                 end if
-                call TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
+                call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
                 if (ims_pro == 0) then
 #else
                     call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), wrk1d)
@@ -1218,8 +1214,8 @@ end subroutine VISUALS_ACCUMULATE_FIELDS
     subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
         use TLAB_CONSTANTS, only: wp, wi
 #ifdef USE_MPI
-        use TLAB_MPI_VARS, only: ims_pro
-        use TLAB_MPI_PROCS
+        use TLabMPI_VARS, only: ims_pro
+        use TLabMPI_PROCS
 #endif
 
         implicit none
@@ -1269,7 +1265,7 @@ end subroutine VISUALS_ACCUMULATE_FIELDS
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         do ifield = 1, nfield
-            call TLAB_MPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field, tmp_mpi(1, 1), tmp_mpi(1, 2))
+            call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field, tmp_mpi(1, 1), tmp_mpi(1, 2))
         end do
 
         ! -------------------------------------------------------------------

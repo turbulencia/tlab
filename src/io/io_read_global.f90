@@ -15,9 +15,9 @@ subroutine IO_READ_GLOBAL(inifile)
     use TLAB_CONSTANTS, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
     use TLAB_PROCS
-    use PROFILES
+    use Profiles
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none
@@ -65,20 +65,23 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#Type=<temporal/spatial>')
     call TLAB_WRITE_ASCII(bakfile, '#CalculateFlow=<yes/no>')
     call TLAB_WRITE_ASCII(bakfile, '#CalculateScalar=<yes/no>')
+    !
     call TLAB_WRITE_ASCII(bakfile, '#Equations=<total/internal/incompressible/anelastic>')
     call TLAB_WRITE_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
     call TLAB_WRITE_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
     call TLAB_WRITE_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
+    call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
+    !
     call TLAB_WRITE_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLAB_WRITE_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
     call TLAB_WRITE_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermChemistry=<none/quadratic/layeredrelaxation/ozone>')
-    call TLAB_WRITE_ASCII(bakfile, '#TermRandom=<value>')
+    !
     call TLAB_WRITE_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
+    !
     call TLAB_WRITE_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
     call TLAB_WRITE_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
+! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
     if (trim(adjustl(sRes)) == 'mpiio') then; imode_files = IO_MPIIO
     elseif (trim(adjustl(sRes)) == 'netcdf') then; imode_files = IO_NETCDF
@@ -122,6 +125,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_CALCSCALAR)
     end if
 
+! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
     if (trim(adjustl(sRes)) == 'total') then; imode_eqns = DNS_EQNS_TOTAL
     elseif (trim(adjustl(sRes)) == 'internal') then; imode_eqns = DNS_EQNS_INTERNAL
@@ -134,7 +138,6 @@ subroutine IO_READ_GLOBAL(inifile)
 
     if (imode_sim == DNS_MODE_TEMPORAL) fourier_on = .true.
 
-! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermAdvection', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; iadvection = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'divergence') then; iadvection = EQNS_DIVERGENCE
@@ -163,6 +166,37 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
+    call SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
+    if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
+    elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
+    else; itransport = EQNS_NONE; end if
+
+    ! consistency check
+    select case (imode_eqns)
+    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+        if (itransport == EQNS_TRANS_POWERLAW) then
+            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        if (imode_eqns == DNS_EQNS_TOTAL) then
+            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        if (iviscous /= EQNS_EXPLICIT) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermViscous undeveloped.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+        if (idiffusion /= EQNS_EXPLICIT) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermDiffusion undeveloped.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
+    end select
+
+! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_EXPLICIT
@@ -182,31 +216,6 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
-    if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
-    elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
-    else; itransport = EQNS_NONE; end if
-
-! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermChemistry', 'none', sRes)
-    if (trim(adjustl(sRes)) == 'quadratic') then; chemistry%type = EQNS_CHEM_QUADRATIC; 
-    elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistry%type = EQNS_CHEM_QUADRATIC3; 
-    elseif (trim(adjustl(sRes)) == 'layeredrelaxation') then; chemistry%type = EQNS_CHEM_LAYEREDRELAXATION; 
-    elseif (trim(adjustl(sRes)) == 'ozone') then; chemistry%type = EQNS_CHEM_OZONE; 
-    else; chemistry%type = EQNS_NONE; end if
-
-! -------------------------------------------------------------------
-    call SCANINIREAL(bakfile, inifile, 'Main', 'TermRandom', '0.0', dummy)
-    if (abs(dummy) > 0.0) then
-        random%type = EQNS_RAND_MULTIPLY
-        random%parameters = dummy
-        random%active(1:3) = .true.
-    else
-        random%type = EQNS_NONE
-        random%active(1:3) = .false.
-    end if
-
-! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
     if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm1 = FDM_COM4_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN; 
@@ -220,50 +229,25 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
     g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
-    if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
-    else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
-    else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermPressure option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
-
-! -------------------------------
 #ifdef USE_MPI
     call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLAB_MPI_TRP_NONE
-    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLAB_MPI_TRP_ASYNCHRONOUS
-    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLAB_MPI_TRP_SENDRECV
+    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLabMPI_TRP_NONE
+    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLabMPI_TRP_ASYNCHRONOUS
+    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLabMPI_TRP_SENDRECV
     else
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 
     call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLAB_MPI_TRP_NONE
-    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLAB_MPI_TRP_ASYNCHRONOUS
-    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLAB_MPI_TRP_SENDRECV
+    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLabMPI_TRP_NONE
+    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLabMPI_TRP_ASYNCHRONOUS
+    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLabMPI_TRP_SENDRECV
     else
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
 #endif
-
-! -------------------------------------------------------------------
-    select case (imode_eqns)
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-        if (itransport == EQNS_TRANS_POWERLAW) then
-            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-
-        if (imode_eqns == DNS_EQNS_TOTAL) then
-            call TLAB_WRITE_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-
-    end select
 
 ! ###################################################################
 ! Pressure staggering
@@ -364,6 +348,19 @@ subroutine IO_READ_GLOBAL(inifile)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Stokes', '0.0', stokes)
     call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
 
+    ! consistency check
+    if (iviscous == EQNS_NONE) then
+        visc = 0.0_wp
+    else
+        visc = 1.0_wp/reynolds
+    end if
+
+    select case (imode_eqns)
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        prandtl = schmidt(1)
+
+    end select
+
 ! ###################################################################
 ! Buoyancy
 ! ###################################################################
@@ -380,6 +377,11 @@ subroutine IO_READ_GLOBAL(inifile)
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Wrong TermBodyForce option.')
         call TLAB_STOP(DNS_ERROR_OPTION)
+    end if
+
+    if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
+        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
+        buoyancy%type = EQNS_NONE
     end if
 
     call TLAB_WRITE_ASCII(bakfile, '#')
@@ -480,190 +482,40 @@ subroutine IO_READ_GLOBAL(inifile)
     if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
 
 ! ###################################################################
-! Chemistry
+! Physical properties of the system
 ! ###################################################################
+    ! Scalars
     call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Chemistry]')
-    call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-
-    if (chemistry%type /= EQNS_NONE) then
-        chemistry%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Chemistry', 'Parameters', '1.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, chemistry%parameters)
-
-    end if
-
-! Activating terms
-    chemistry%active = .false.
-    do is = 1, inb_scal
-        if (abs(damkohler(is)) > 0.0_wp) chemistry%active(is) = .true.
+    call TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
+    do is = 1, MAX_VARS
+        write (lstr, *) is
+        call Profiles_ReadBlock(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
     end do
 
-! ###################################################################
-! Grid Parameters
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Grid]')
-    call TLAB_WRITE_ASCII(bakfile, '#Imax=<imax>')
-    call TLAB_WRITE_ASCII(bakfile, '#Imax(*)=<imax_proc>')
-    call TLAB_WRITE_ASCII(bakfile, '#Jmax=<jmax>')
-    call TLAB_WRITE_ASCII(bakfile, '#Kmax=<kmax>')
-    call TLAB_WRITE_ASCII(bakfile, '#Kmax(*)=<kmax_proc>')
-    call TLAB_WRITE_ASCII(bakfile, '#XUniform=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#YUniform=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ZUniform=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#XPeriodic=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#YPeriodic=<yes/no>')
-    call TLAB_WRITE_ASCII(bakfile, '#ZPeriodic=<yes/no>')
-
-    call SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
-    call SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
-    call SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
-
-! default
-    imax = g(1)%size
-    jmax = g(2)%size
-    kmax = g(3)%size
-
-    g(1)%name = 'x'
-    g(2)%name = 'y'
-    g(3)%name = 'z'
-
-! -------------------------------------------------------------------
-! Domain decomposition in parallel mode
-! -------------------------------------------------------------------
-#ifdef USE_MPI
-    if (ims_npro > 1) then
-        call SCANINIINT(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
-        if (kmax > 0 .and. mod(g(3)%size, kmax) == 0) then
-            ims_npro_k = g(3)%size/kmax
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Input kmax incorrect')
-            call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
-        end if
-
-        call SCANINIINT(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
-        if (imax > 0 .and. mod(g(1)%size, imax) == 0) then
-            ims_npro_i = g(1)%size/imax
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Input imax incorrect')
-            call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
-        end if
-
-        if (ims_npro_i*ims_npro_k == ims_npro) then ! check
-            write (lstr, *) ims_npro_i; write (sRes, *) ims_npro_k
-            lstr = trim(adjustl(lstr))//'x'//trim(adjustl(sRes))
-            call TLAB_WRITE_ASCII(lfile, 'Initializing domain partition '//trim(adjustl(lstr)))
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Inconsistency in total number of PEs')
-            call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
-        end if
-
-    end if
-
-#endif
-
-    do ig = 1, 3
-        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%uniform = .true.
-        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%uniform = .false.
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform '//g(ig)%name(1:1)//' grid')
-            call TLAB_STOP(DNS_ERROR_UNIFORMX)
-        end if
-
-        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
-        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic '//g(ig)%name(1:1)//' grid')
-            call TLAB_STOP(DNS_ERROR_IBC)
-        end if
-
-        ! Consistency check
-        if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
-        end if
-
-    end do
-
-! ###################################################################
-! Dealising (a filter type)
-! ###################################################################
-    call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
-
-! ###################################################################
-! Pressure Filter (a filter type)
-! ###################################################################
-    call FILTER_READBLOCK(bakfile, inifile, 'PressureFilter', PressureFilter)
-
-    ! Consistency check
-    if (PressureFilter(1)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.')
-    if (PressureFilter(2)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.')
-    if (PressureFilter(3)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oz.')
-
-    if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
-        if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-        if (.not. (iadvection == EQNS_CONVECTIVE)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter not implemented for current advection scheme.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-    end if
-
-! ###################################################################
-! Domain Filter (a filter type)
-! ###################################################################
-    call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
-
-! To eventually allow for control field by field
-    FilterDomainActive(:) = .true.
-
-! ###################################################################
-! Statistics Control
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Statistics]')
-    call TLAB_WRITE_ASCII(bakfile, '#IAvera=<plane1,plane2,...>')
-
-    nstatavg = MAX_STATS_SPATIAL
-    call SCANINICHAR(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
-    call LIST_INTEGER(sRes, nstatavg, statavg)
-
-! ###################################################################
-! Flow physical properties of the system
-! ###################################################################
+    ! Flow variables
     call TLAB_WRITE_ASCII(bakfile, '#')
     call TLAB_WRITE_ASCII(bakfile, '#[Flow]')
-
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityX', qbg(1))
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityX', qbg(1))
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
 
     ! backwards compatilibity; originally, all velocity data was contained in block 'Velocity' except for the mean value
     call SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocity', 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
-        call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Velocity', qbg(1))
+        call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Velocity', qbg(1))
         call TLAB_WRITE_ASCII(wfile, 'Update tag Flow.Velocity to Flow.VelocityX.')
     end if
 
     ! Consistency check
-    if (qbg(1)%type == PROFILE_EKMAN_U .or. qbg(1)%type == PROFILE_EKMAN_U_P) then
+    if (any([PROFILE_EKMAN_U, PROFILE_EKMAN_U_P] == qbg(1)%type)) then
+        qbg(3) = qbg(1)
         qbg(3)%type = PROFILE_EKMAN_V
-        qbg(3)%ymean = qbg(1)%ymean
-        qbg(3)%ymean_rel = qbg(1)%ymean_rel
-        qbg(3)%thick = qbg(1)%thick
-        qbg(3)%delta = qbg(1)%delta
     end if
 
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Pressure', pbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Density', rbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Temperature', tbg)
-    call PROFILES_READBLOCK(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Pressure', pbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Density', rbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Temperature', tbg)
+    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
 
 ! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
     ! if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
@@ -677,15 +529,6 @@ subroutine IO_READ_GLOBAL(inifile)
     !         call TLAB_STOP(DNS_ERROR_OPTION)
     !     end if
     ! end if
-
-! Scalars
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Scalar]')
-
-    do is = 1, MAX_VARS
-        write (lstr, *) is
-        call PROFILES_READBLOCK(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
-    end do
 
 ! -------------------------------------------------------------------
 ! Spatial case
@@ -733,12 +576,61 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
 ! ###################################################################
-! Final consistency check
-! some could be in the corresponding blocks before
-! some need to be after everything has been read, to not assume an order in reading the input data
+! Grid Parameters
 ! ###################################################################
     call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Grid]')
+    call TLAB_WRITE_ASCII(bakfile, '#Imax=<imax>')
+    call TLAB_WRITE_ASCII(bakfile, '#Imax(*)=<imax_proc>')
+    call TLAB_WRITE_ASCII(bakfile, '#Jmax=<jmax>')
+    call TLAB_WRITE_ASCII(bakfile, '#Kmax=<kmax>')
+    call TLAB_WRITE_ASCII(bakfile, '#Kmax(*)=<kmax_proc>')
+    call TLAB_WRITE_ASCII(bakfile, '#XUniform=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#YUniform=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ZUniform=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#XPeriodic=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#YPeriodic=<yes/no>')
+    call TLAB_WRITE_ASCII(bakfile, '#ZPeriodic=<yes/no>')
 
+    call SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
+    call SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
+    call SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
+
+! default
+    imax = g(1)%size
+    jmax = g(2)%size
+    kmax = g(3)%size
+
+    g(1)%name = 'x'
+    g(2)%name = 'y'
+    g(3)%name = 'z'
+
+    do ig = 1, 3
+        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%uniform = .true.
+        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%uniform = .false.
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Uniform '//g(ig)%name(1:1)//' grid')
+            call TLAB_STOP(DNS_ERROR_UNIFORMX)
+        end if
+
+        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
+        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Error in Periodic '//g(ig)%name(1:1)//' grid')
+            call TLAB_STOP(DNS_ERROR_IBC)
+        end if
+
+        ! consistency check
+        if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
+            call TLAB_STOP(DNS_ERROR_OPTION)
+        end if
+
+    end do
+
+    ! consistency check
     select case (imode_sim)
     case (DNS_MODE_TEMPORAL)
         if (.not. g(1)%periodic) then
@@ -748,60 +640,112 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_MODE_SPATIAL)
     end select
 
-    select case (imode_eqns)
-    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-        if (iviscous /= EQNS_EXPLICIT) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermViscous undeveloped.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+! -------------------------------------------------------------------
+! Domain decomposition in parallel mode
+! -------------------------------------------------------------------
+#ifdef USE_MPI
+    if (ims_npro > 1) then
+        call SCANINIINT(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
+        if (kmax > 0 .and. mod(g(3)%size, kmax) == 0) then
+            ims_npro_k = g(3)%size/kmax
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Input kmax incorrect')
+            call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
         end if
-        if (idiffusion /= EQNS_EXPLICIT) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Main.TermDiffusion undeveloped.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+
+        call SCANINIINT(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
+        if (imax > 0 .and. mod(g(1)%size, imax) == 0) then
+            ims_npro_i = g(1)%size/imax
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Input imax incorrect')
+            call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
         end if
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-    end select
 
-    do ig = 1, 3
-        if (g(ig)%periodic .and. g(ig)%mode_fdm1 == FDM_COM4_DIRECT) g(ig)%mode_fdm1 = FDM_COM4_JACOBIAN
-        if (g(ig)%periodic .and. g(ig)%mode_fdm1 == FDM_COM6_DIRECT) g(ig)%mode_fdm1 = FDM_COM6_JACOBIAN
-        if (g(ig)%periodic .and. g(ig)%mode_fdm2 == FDM_COM4_DIRECT) g(ig)%mode_fdm2 = FDM_COM4_JACOBIAN
-        if (g(ig)%periodic .and. g(ig)%mode_fdm2 == FDM_COM6_DIRECT) g(ig)%mode_fdm2 = FDM_COM6_JACOBIAN
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g(ig)%mode_fdm1)) g(ig)%mode_fdm1 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
-        if (any([FDM_COM6_JACOBIAN_PENTA] == g(ig)%mode_fdm2)) g(ig)%mode_fdm2 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
-        if (g(ig)%mode_fdm2 == FDM_COM6_JACOBIAN) g(ig)%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER ! default
-    end do
+        ! consistency check
+        if (ims_npro_i*ims_npro_k == ims_npro) then
+            write (lstr, *) ims_npro_i; write (sRes, *) ims_npro_k
+            lstr = trim(adjustl(lstr))//'x'//trim(adjustl(sRes))
+            call TLAB_WRITE_ASCII(lfile, 'Initializing domain partition '//trim(adjustl(lstr)))
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Inconsistency in total number of PEs')
+            call TLAB_STOP(DNS_ERROR_KMAXTOTAL)
+        end if
 
-    if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] == FDM_COM6_JACOBIAN_PENTA)) then ! CFL_max depends on max[g%mwn1(:)]
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
-    if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Zero scalars; setting TermBodyForce equal to none.')
-        buoyancy%type = EQNS_NONE
+#endif
+
+! ###################################################################
+! Filters
+! ###################################################################
+! Dealiasing
+    call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
+
+! Domain
+    call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
+    FilterDomainActive(:) = .true.      ! Variable to eventually allow for control field by field
+
+    FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
+    FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
+    if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
+        all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
+        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'noslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
+        else if (trim(adjustl(sRes)) == 'freeslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
+        else
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.VelocityJmin.')
+            call TLAB_STOP(DNS_ERROR_IBC)
+        end if
+        FilterDomainBcsFlow(2) = DNS_FILTER_BCS_DIRICHLET ! Normal velocity is always Dirichlet
+
+        do is = 1, inb_scal
+            write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmin'
+            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
+            if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
+            else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
+            else
+                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.'//trim(adjustl(lstr)))
+                call TLAB_STOP(DNS_ERROR_IBC)
+            end if
+        end do
+
+    end if
+
+! Pressure
+    call FILTER_READBLOCK(bakfile, inifile, 'PressureFilter', PressureFilter)
+
+    ! Consistency check
+    if (PressureFilter(1)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Ox.')
+    if (PressureFilter(2)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oy.')
+    if (PressureFilter(3)%type /= DNS_FILTER_NONE) call TLAB_WRITE_ASCII(lfile, 'Pressure and dpdy filter along Oz.')
+
+    if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
+        if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (.not. (iadvection == EQNS_CONVECTIVE)) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Pressure and dpdy filter not implemented for current advection scheme.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
     end if
 
 ! ###################################################################
-! Initialization
+! specific data for spatial mode
 ! ###################################################################
+    call TLAB_WRITE_ASCII(bakfile, '#')
+    call TLAB_WRITE_ASCII(bakfile, '#[Statistics]')
+    call TLAB_WRITE_ASCII(bakfile, '#IAvera=<plane1,plane2,...>')
 
-! -------------------------------------------------------------------
-!   Molecular transport
-! -------------------------------------------------------------------
-    if (iviscous == EQNS_NONE) then
-        visc = 0.0_wp
-    else
-        visc = 1.0_wp/reynolds
-    end if
+    nstatavg = MAX_STATS_SPATIAL
+    call SCANINICHAR(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
+    call LIST_INTEGER(sRes, nstatavg, statavg)
 
-    select case (imode_eqns)
-    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-        prandtl = schmidt(1)
+! ###################################################################
+! Initialization of array sizes
+! ###################################################################
+    call TLAB_WRITE_ASCII(bakfile, '#')
 
-    end select
-
-! -------------------------------------------------------------------
-! Arrays size
-! -------------------------------------------------------------------
 ! prognostic and diagnostic variables
     isize_field = imax*jmax*kmax
 
@@ -813,7 +757,7 @@ subroutine IO_READ_GLOBAL(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
         inb_flow = 5                            ! space for u, v, w, e, rho
         inb_flow_array = inb_flow + 2           ! space for p, T
-        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for vis
+        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for viscosity
 
     end select
 
@@ -823,18 +767,45 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
-    !                           can be changed in Thermodynamics_Initialize(ifile)
+    !                           can be changed in Thermodynamics_Initialize_Parameters(ifile)
+
+! auxiliar array txc for intermediate calculations
+    isize_txc_field = imax*jmax*kmax
+    if (fourier_on) then
+        isize_txc_dimz = (imax + 2)*(jmax + 2)
+        isize_txc_dimx = kmax*(jmax + 2)
+        isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
+#ifdef USE_MPI
+        if (ims_npro_k > 1) then
+            if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
+                isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
+                isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
+            end if
+            isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
+        end if
+        if (ims_npro_i > 1) then
+            if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
+                isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
+                isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
+            end if
+            isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
+        end if
+#endif
+        if (mod(imax, 2) /= 0) then
+            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
+            call TLAB_STOP(DNS_ERROR_DIMGRID)
+        end if
+    end if
 
 ! scratch arrays
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
     inb_wrk1d = 18
 
     isize_wrk2d = max(imax*jmax, max(imax*kmax, jmax*kmax))
-    if (imode_sim == DNS_MODE_SPATIAL) then
-        inb_wrk2d = 11
-    else
-        inb_wrk2d = 2
-    end if
+    inb_wrk2d = 2
+    if (imode_sim == DNS_MODE_SPATIAL) inb_wrk2d = max(11, inb_wrk2d)
+
+    isize_wrk3d = max(isize_field, isize_txc_field)
 
 ! grid array
     do is = 1, 3
@@ -872,69 +843,6 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
 
     end do
-
-! auxiliar array txc
-    isize_txc_field = imax*jmax*kmax
-    if (fourier_on) then
-        isize_txc_dimz = (imax + 2)*(jmax + 2)
-        isize_txc_dimx = kmax*(jmax + 2)
-        isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
-#ifdef USE_MPI
-        if (ims_npro_k > 1) then
-            if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
-                isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
-                isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
-            end if
-            isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
-        end if
-        if (ims_npro_i > 1) then
-            if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
-                isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
-                isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
-            end if
-            isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
-        end if
-#endif
-        if (mod(imax, 2) /= 0) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
-            call TLAB_STOP(DNS_ERROR_DIMGRID)
-        end if
-    end if
-
-! loop counters over the whole domain are integer*4
-    if (isize_txc_field > huge(imax)) then
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes not big enough.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-    end if
-
-! -------------------------------------------------------------------
-! Helmholtz filter that maintains prognostic bcs
-! Here becasue I need the values of inb_{flow,scal}
-! -------------------------------------------------------------------
-    FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin
-    FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
-
-    if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
-        all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'noslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'freeslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
-        else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.VelocityJmin.')
-            call TLAB_STOP(DNS_ERROR_IBC)
-        end if
-        FilterDomainBcsFlow(2) = DNS_FILTER_BCS_DIRICHLET ! Normal velocity is always Dirichlet
-        do is = 1, inb_scal
-            write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmin'
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
-            if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
-            else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
-            else
-                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. BoundaryConditions.'//trim(adjustl(lstr)))
-                call TLAB_STOP(DNS_ERROR_IBC)
-            end if
-        end do
-    end if
 
 ! ###################################################################
 ! Phase Averaging
@@ -1091,8 +999,8 @@ subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
     end do
 
 #ifdef USE_MPI
-    variable(1)%mpitype = TLAB_MPI_I_PARTIAL
-    variable(3)%mpitype = TLAB_MPI_K_PARTIAL
+    variable(1)%mpitype = TLabMPI_I_PARTIAL
+    variable(3)%mpitype = TLabMPI_K_PARTIAL
 #endif
 
     return

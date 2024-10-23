@@ -18,11 +18,11 @@ module OPR_PARTIAL
     use IBM_VARS, only: ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
     use IBM_VARS, only: ibm_case_x, ibm_case_y, ibm_case_z
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_npro_i
-    use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLAB_MPI_VARS, only: ims_npro_k
-    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_npro_i
+    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLabMPI_VARS, only: ims_npro_k
+    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_PROCS
 #endif
     use FDM_PROCS
     implicit none
@@ -411,7 +411,7 @@ contains
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d
 
 #ifdef USE_MPI
-        integer(wi), parameter :: id = TLAB_MPI_I_PARTIAL
+        integer(wi), parameter :: id = TLabMPI_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -420,7 +420,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPF_I(u, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
             p_a => result
             p_b => wrk3d
             p_c => result
@@ -508,9 +508,9 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (type == OPR_P2_P1) then ! only if you really want first derivative back
-                call TLAB_MPI_TRPB_I(p_c, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                call TLabMPI_TRPB_I(p_c, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
             end if
-            call TLAB_MPI_TRPB_I(p_b, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(p_b, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 #endif
 
@@ -547,7 +547,7 @@ contains
         real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
 #ifdef USE_MPI
-        integer(wi), parameter :: id = TLAB_MPI_K_PARTIAL
+        integer(wi), parameter :: id = TLabMPI_K_PARTIAL
 #endif
 
 ! ###################################################################
@@ -562,7 +562,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLAB_MPI_TRPF_K(u, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                call TLabMPI_TRPF_K(u, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
@@ -624,9 +624,9 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLAB_MPI_TRPB_K(p_b, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                call TLabMPI_TRPB_K(p_b, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
                 if (type == OPR_P2_P1) then
-                    call TLAB_MPI_TRPB_K(p_c, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                    call TLabMPI_TRPB_K(p_c, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
                 end if
             end if
 #endif

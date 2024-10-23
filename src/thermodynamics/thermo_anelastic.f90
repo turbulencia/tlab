@@ -49,6 +49,7 @@ module THERMO_ANELASTIC
     real(wp), allocatable, public :: tbackground(:)                     ! Temperature
     real(wp), allocatable, public :: rbackground(:), ribackground(:)    ! Density and its inverse
     real(wp), allocatable, public :: epbackground(:)                    ! Potential energy
+    real(wp), allocatable, public :: sbackground(:, :)                  ! Scalars
 
 contains
 

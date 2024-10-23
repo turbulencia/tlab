@@ -134,14 +134,14 @@ contains
         use THERMO_THERMAL
         use THERMO_CALORIC
         use BOUNDARY_BUFFER
-        use PROFILES
+        use Profiles
 #ifdef USE_MPI
         use MPI
         use TLAB_VARS, only: inb_scal_array
-        use TLAB_MPI_VARS, only: ims_npro_k
-        use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-        use TLAB_MPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
-        use TLAB_MPI_PROCS
+        use TLabMPI_VARS, only: ims_npro_k
+        use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+        use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
+        use TLabMPI_PROCS
 #endif
 
 ! -------------------------------------------------------------------
@@ -213,7 +213,7 @@ contains
 ! Characteristic BCs
 ! -------------------------------------------------------------------
             if (.not. g(1)%periodic) then ! Required for NRBCs in Ox
-                id = TLAB_MPI_K_NRBCX
+                id = TLabMPI_K_NRBCX
                 isize_loc = mod(jmax, ims_npro_k)
                 ims_bcs_imax = 2*(inb_flow + inb_scal_array)
                 do while (mod(isize_loc*ims_bcs_imax, ims_npro_k) > 0)
@@ -223,12 +223,12 @@ contains
                 str = 'Initialize MPI types for Ox BCs transverse terms. '//trim(adjustl(str))//' planes.'
                 call TLAB_WRITE_ASCII(lfile, str)
                 isize_loc = ims_bcs_imax*jmax
-                call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
+                call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
-                id = TLAB_MPI_K_NRBCY
+                id = TLabMPI_K_NRBCY
                 isize_loc = mod(imax, ims_npro_k)
                 ims_bcs_jmax = 2*(inb_flow + inb_scal_array)
                 do while (mod(isize_loc*ims_bcs_jmax, ims_npro_k) > 0)
@@ -238,7 +238,7 @@ contains
                 str = 'Initialize MPI types for Oy BCs transverse terms. '//trim(adjustl(str))//' planes.'
                 call TLAB_WRITE_ASCII(lfile, str)
                 isize_loc = imax*ims_bcs_jmax
-                call TLAB_MPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
+                call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             end if
 #endif
@@ -335,17 +335,13 @@ contains
                                              BcsFlowImin%Ref(1, 1, 1), BcsFlowImin%Ref(1, 1, 7), BcsFlowImin%Ref(1, 1, 5))
 
 ! shape factor
-                prof_loc%type = PROFILE_TANH
-                prof_loc%thick = qbg(1)%diam/8.0_wp
-                prof_loc%delta = 1.0_wp
-                prof_loc%ymean = qbg(1)%ymean
+                prof_loc = profiles_dt(type=PROFILE_TANH)
                 prof_loc%mean = 0.5_wp
-                prof_loc%lslope = 0.0_wp
-                prof_loc%uslope = 0.0_wp
-                prof_loc%parameters = 0.0_wp
+                prof_loc%ymean = qbg(1)%ymean
+                prof_loc%thick = qbg(1)%diam/8.0_wp
                 prof_loc%parameters(5) = 3.0_wp*qbg(1)%diam
-                BcsFlowImin%ref(:, :, inb_flow + 1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
-                BcsScalImin%ref(:, :, inb_scal + 1) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j))
+                BcsFlowImin%ref(:, :, inb_flow + 1) = Profiles_Calculate(prof_loc, g(2)%nodes(j))
+                BcsScalImin%ref(:, :, inb_scal + 1) = Profiles_Calculate(prof_loc, g(2)%nodes(j))
 
             end if
 

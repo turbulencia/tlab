@@ -1,289 +1,292 @@
-#include "types.h"
 #include "dns_error.h"
 
 !########################################################################
 !# Chops string into list of strings
 !########################################################################
-SUBROUTINE LIST_STRING(line, n, a)
-  IMPLICIT NONE
+subroutine LIST_STRING(line, n, a)
+    use TLAB_CONSTANTS, only: wp, wi
+    implicit none
 
-  CHARACTER*(*), INTENT(IN)    :: line
-  TINTEGER,      INTENT(INOUT) :: n
-  CHARACTER*(*), INTENT(OUT)   :: a(n)
+    character*(*), intent(IN) :: line
+    integer(wi), intent(INOUT) :: n
+    character*(*), intent(OUT) :: a(n)
 
-  ! -------------------------------------------------------------------
-  TINTEGER i, l1,l2,lmax
+    ! -------------------------------------------------------------------
+    integer(wi) i, l1, l2, lmax
 
-  ! ###################################################################
-  i = 0                                             ! number of items
+    ! ###################################################################
+    i = 0                                             ! number of items
 
-  lmax = LEN_TRIM(line)
-  IF ( lmax > 0 ) THEN
-    l1 = lmax -LEN_TRIM(ADJUSTL(line(1:lmax))) +1   ! absolute position of first nonblank in remaining string
-    DO
-      l2 = INDEX(line(l1:lmax),' ')                 ! relative position of first blank in remaining string
+    lmax = len_trim(line)
+    if (lmax > 0) then
+        l1 = lmax - len_trim(adjustl(line(1:lmax))) + 1   ! absolute position of first nonblank in remaining string
+        do
+            l2 = index(line(l1:lmax), ' ')                 ! relative position of first blank in remaining string
 
-      i = i +1
-      IF ( l2 == 0 ) THEN                           ! we found the last element
-        a(i) = line(l1:lmax)
-        EXIT
-      ELSE
-        a(i) = line(l1:l1+l2-1)
-        l1 = lmax -LEN_TRIM(ADJUSTL(line(l1+l2:lmax))) +1
-      END IF
-      IF ( i == n ) EXIT
+            i = i + 1
+            if (l2 == 0) then                           ! we found the last element
+                a(i) = line(l1:lmax)
+                exit
+            else
+                a(i) = line(l1:l1 + l2 - 1)
+                l1 = lmax - len_trim(adjustl(line(l1 + l2:lmax))) + 1
+            end if
+            if (i == n) exit
 
-    END DO
-  END IF
+        end do
+    end if
 
-  n = i                                             ! return the number of items
+    n = i                                             ! return the number of items
 
-  RETURN
-END SUBROUTINE LIST_STRING
+    return
+end subroutine LIST_STRING
 
 !########################################################################
 !# Chops string into list of integers
 !########################################################################
-SUBROUTINE LIST_INTEGER(line, n, a)
-  USE TLAB_PROCS
-  IMPLICIT NONE
+subroutine LIST_INTEGER(line, n, a)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_PROCS, only: TLAB_STOP
+    implicit none
 
-  CHARACTER*(*),          INTENT(IN)    :: line
-  TINTEGER,               INTENT(INOUT) :: n
-  TINTEGER, DIMENSION(n), INTENT(OUT)   :: a
-
-  ! -------------------------------------------------------------------
-  TINTEGER i, lloc
-  LOGICAL iread
-  TINTEGER incr, itmax
-  TINTEGER lfirst, ilast
-  TINTEGER l1, l2
-
-  ! ###################################################################
-  l2 = LEN_TRIM(line)
-  IF ( l2 .EQ. 0 ) THEN ! empty string
-    n = 0
-    RETURN
-  ELSE
-    l1 = l2 - LEN_TRIM(ADJUSTL(line)) + 1
-  END IF
-  lloc = INDEX(line(l1:l2),':')
-
-  ! -------------------------------------------------------------------
-  ! List separated by commas
-  ! -------------------------------------------------------------------
-  IF ( lloc .EQ. 0 ) THEN
-    i = 0
-    lfirst = l1-1
-    DO WHILE ( .TRUE. )
-      lfirst = lfirst + 1
-      IF ( (line(lfirst:lfirst) .NE. ' ' .AND. line(lfirst:lfirst) .NE. ',') ) THEN
-        ! beggining of an item
-        DO lloc = lfirst,l2
-          iread = .FALSE.
-          IF ( line(lloc:lloc) .EQ. ' ' .OR. line(lloc:lloc) .EQ. ',' ) THEN
-            iread = .TRUE.
-            ilast = lloc-1
-          END IF
-          IF ( lloc .EQ. l2 ) THEN
-            iread = .TRUE.
-            ilast = lloc
-          END IF
-          IF ( iread ) THEN
-            i = i + 1
-            ! check the array is big enough
-            IF ( i .GT. n ) THEN
-              CALL TLAB_STOP(DNS_ERROR_PARAMETER)
-            END IF
-            READ(line(lfirst:ilast),*) a(i)
-            lfirst = lloc
-            GOTO 111
-          END IF
-        END DO
-      END IF
-111   IF ( lfirst .EQ. l2 ) GOTO 222
-    END DO
-
-    ! assign the correct size
-222 n = i
+    character*(*), intent(IN) :: line
+    integer(wi), intent(INOUT) :: n
+    integer(wi), dimension(n), intent(OUT) :: a
 
     ! -------------------------------------------------------------------
-    ! Matlab notation (first:step:last)
+    integer(wi) i, lloc
+    logical iread
+    integer(wi) incr, itmax
+    integer(wi) lfirst, ilast
+    integer(wi) l1, l2
+
+    ! ###################################################################
+    l2 = len_trim(line)
+    if (l2 == 0) then ! empty string
+        n = 0
+        return
+    else
+        l1 = l2 - len_trim(adjustl(line)) + 1
+    end if
+    lloc = index(line(l1:l2), ':')
+
     ! -------------------------------------------------------------------
-  ELSE
-    READ(line(l1:lloc-1),*) a(1)
-    l1 = lloc+1
-    lloc = INDEX(line(l1:l2),':')
-    IF ( lloc .EQ. 0 ) THEN
-      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
-    END IF
-    lloc = l1 + lloc - 1
-    READ(line(l1:lloc-1),*) incr
-    l1 = lloc+1
-    READ(line(l1:l2),*) itmax
+    ! List separated by commas
+    ! -------------------------------------------------------------------
+    if (lloc == 0) then
+        i = 0
+        lfirst = l1 - 1
+        do while (.true.)
+            lfirst = lfirst + 1
+            if ((line(lfirst:lfirst) /= ' ' .and. line(lfirst:lfirst) /= ',')) then
+                ! beggining of an item
+                do lloc = lfirst, l2
+                    iread = .false.
+                    if (line(lloc:lloc) == ' ' .or. line(lloc:lloc) == ',') then
+                        iread = .true.
+                        ilast = lloc - 1
+                    end if
+                    if (lloc == l2) then
+                        iread = .true.
+                        ilast = lloc
+                    end if
+                    if (iread) then
+                        i = i + 1
+                        ! check the array is big enough
+                        if (i > n) then
+                            call TLAB_STOP(DNS_ERROR_PARAMETER)
+                        end if
+                        read (line(lfirst:ilast), *) a(i)
+                        lfirst = lloc
+                        goto 111
+                    end if
+                end do
+            end if
+111         if (lfirst == l2) goto 222
+        end do
 
-    ! check the array is big enough
-    IF ( (itmax-a(1))/incr+1 .GT. n ) THEN
-      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
-    ELSE
-      n = (itmax-a(1))/incr+1
-    END IF
+        ! assign the correct size
+222     n = i
 
-    DO i = 2,n
-      a(i) = a(1) + (i-1)*incr
-    END DO
+        ! -------------------------------------------------------------------
+        ! Matlab notation (first:step:last)
+        ! -------------------------------------------------------------------
+    else
+        read (line(l1:lloc - 1), *) a(1)
+        l1 = lloc + 1
+        lloc = index(line(l1:l2), ':')
+        if (lloc == 0) then
+            call TLAB_STOP(DNS_ERROR_PARAMETER)
+        end if
+        lloc = l1 + lloc - 1
+        read (line(l1:lloc - 1), *) incr
+        l1 = lloc + 1
+        read (line(l1:l2), *) itmax
 
-  END IF
+        ! check the array is big enough
+        if ((itmax - a(1))/incr + 1 > n) then
+            call TLAB_STOP(DNS_ERROR_PARAMETER)
+        else
+            n = (itmax - a(1))/incr + 1
+        end if
 
-  RETURN
-END SUBROUTINE LIST_INTEGER
+        do i = 2, n
+            a(i) = a(1) + (i - 1)*incr
+        end do
+
+    end if
+
+    return
+end subroutine LIST_INTEGER
 
 !########################################################################
 !# Chops string into list of real numbers
 !########################################################################
-SUBROUTINE LIST_REAL(line, n, a)
-  USE TLAB_PROCS
-  IMPLICIT NONE
+subroutine LIST_REAL(line, n, a)
+    use TLAB_CONSTANTS, only: wp, wi
+    use TLAB_PROCS, only: TLAB_STOP
+    implicit none
 
-  CHARACTER*(*),          INTENT(IN)    :: line
-  TINTEGER,               INTENT(INOUT) :: n
-  TREAL, DIMENSION(n),    INTENT(OUT)   :: a
-
-  ! -------------------------------------------------------------------
-  TINTEGER i, lloc
-  LOGICAL iread
-  TREAL aincr, amax
-  TINTEGER lfirst, ilast
-  TINTEGER l1, l2
-
-  ! ###################################################################
-  l2 = LEN_TRIM(line)
-  IF ( l2 .EQ. 0 ) THEN ! empty string
-    n = 0
-    RETURN
-  ELSE
-    l1 = l2 - LEN_TRIM(ADJUSTL(line)) + 1
-  END IF
-  lloc = INDEX(line(l1:l2),':')
-
-  ! -------------------------------------------------------------------
-  ! List separated by commas
-  ! -------------------------------------------------------------------
-  IF ( lloc .EQ. 0 ) THEN
-    i = 0
-    lfirst = l1-1
-    DO WHILE ( .TRUE. )
-      lfirst = lfirst + 1
-      IF ( (line(lfirst:lfirst) .NE. ' ' .AND. line(lfirst:lfirst) .NE. ',') ) THEN
-        ! beggining of an item
-        DO lloc = lfirst,l2
-          iread = .FALSE.
-          IF ( line(lloc:lloc) .EQ. ' ' .OR. line(lloc:lloc) .EQ. ',' ) THEN
-            iread = .TRUE.
-            ilast = lloc-1
-          END IF
-          IF ( lloc .EQ. l2 ) THEN
-            iread = .TRUE.
-            ilast = lloc
-          END IF
-          IF ( iread ) THEN
-            i = i + 1
-            ! check the array is big enough
-            IF ( i .GT. n ) THEN
-              CALL TLAB_STOP(DNS_ERROR_PARAMETER)
-            END IF
-            READ(line(lfirst:ilast),*) a(i)
-            lfirst = lloc
-            GOTO 111
-          END IF
-        END DO
-      END IF
-111   IF ( lfirst .EQ. l2 ) GOTO 222
-    END DO
-
-    ! assign the correct size
-222 n = i
+    character*(*), intent(IN) :: line
+    integer(wi), intent(INOUT) :: n
+    real(wp), dimension(n), intent(OUT) :: a
 
     ! -------------------------------------------------------------------
-    ! Matlab notation (first:step:last)
+    integer(wi) i, lloc
+    logical iread
+    real(wp) aincr, amax
+    integer(wi) lfirst, ilast
+    integer(wi) l1, l2
+
+    ! ###################################################################
+    l2 = len_trim(line)
+    if (l2 == 0) then ! empty string
+        n = 0
+        return
+    else
+        l1 = l2 - len_trim(adjustl(line)) + 1
+    end if
+    lloc = index(line(l1:l2), ':')
+
     ! -------------------------------------------------------------------
-  ELSE
-    READ(line(l1:lloc-1),*) a(1)
-    l1 = lloc+1
-    lloc = INDEX(line(l1:l2),':')
-    IF ( lloc .EQ. 0 ) THEN
-      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
-    END IF
-    lloc = l1 + lloc - 1
-    READ(line(l1:lloc-1),*) aincr
-    l1 = lloc+1
-    READ(line(l1:l2),*) amax
+    ! List separated by commas
+    ! -------------------------------------------------------------------
+    if (lloc == 0) then
+        i = 0
+        lfirst = l1 - 1
+        do while (.true.)
+            lfirst = lfirst + 1
+            if ((line(lfirst:lfirst) /= ' ' .and. line(lfirst:lfirst) /= ',')) then
+                ! beggining of an item
+                do lloc = lfirst, l2
+                    iread = .false.
+                    if (line(lloc:lloc) == ' ' .or. line(lloc:lloc) == ',') then
+                        iread = .true.
+                        ilast = lloc - 1
+                    end if
+                    if (lloc == l2) then
+                        iread = .true.
+                        ilast = lloc
+                    end if
+                    if (iread) then
+                        i = i + 1
+                        ! check the array is big enough
+                        if (i > n) then
+                            call TLAB_STOP(DNS_ERROR_PARAMETER)
+                        end if
+                        read (line(lfirst:ilast), *) a(i)
+                        lfirst = lloc
+                        goto 111
+                    end if
+                end do
+            end if
+111         if (lfirst == l2) goto 222
+        end do
 
+        ! assign the correct size
+222     n = i
 
-    ! check the array is big enough
-    IF ( INT((amax-a(1))/aincr) +1 .GT. n ) THEN
-      CALL TLAB_STOP(DNS_ERROR_PARAMETER)
-    ELSE
-      n = INT((amax-a(1))/aincr) +1
-    END IF
+        ! -------------------------------------------------------------------
+        ! Matlab notation (first:step:last)
+        ! -------------------------------------------------------------------
+    else
+        read (line(l1:lloc - 1), *) a(1)
+        l1 = lloc + 1
+        lloc = index(line(l1:l2), ':')
+        if (lloc == 0) then
+            call TLAB_STOP(DNS_ERROR_PARAMETER)
+        end if
+        lloc = l1 + lloc - 1
+        read (line(l1:lloc - 1), *) aincr
+        l1 = lloc + 1
+        read (line(l1:l2), *) amax
 
-    DO i = 2,n
-      a(i) = a(1) + (i-1)*aincr
-    END DO
+        ! check the array is big enough
+        if (int((amax - a(1))/aincr) + 1 > n) then
+            call TLAB_STOP(DNS_ERROR_PARAMETER)
+        else
+            n = int((amax - a(1))/aincr) + 1
+        end if
 
-  END IF
+        do i = 2, n
+            a(i) = a(1) + (i - 1)*aincr
+        end do
 
-  RETURN
-END SUBROUTINE LIST_REAL
+    end if
+
+    return
+end subroutine LIST_REAL
 
 !########################################################################
 !########################################################################
-SUBROUTINE SORT_INTEGER(n,a) ! Sorting elements in array from min to max
-  IMPLICIT NONE
+subroutine SORT_INTEGER(n, a) ! Sorting elements in array from min to max
+    use TLAB_CONSTANTS, only: wp, wi
+    implicit none
 
-  TINTEGER, INTENT(IN)                  :: n
-  TINTEGER, DIMENSION(n), INTENT(INOUT) :: a
+    integer(wi), intent(IN) :: n
+    integer(wi), dimension(n), intent(INOUT) :: a
 
-  ! -------------------------------------------------------------------
-  TINTEGER i, j
-  TINTEGER dummy
+    ! -------------------------------------------------------------------
+    integer(wi) i, j
+    integer(wi) dummy
 
-  ! ###################################################################
-  DO i = 1,n-1
-    DO j = i+1,n
-      IF (a(j) .LT. a(i)) THEN
-        dummy = a(i)
-        a(i) = a(j)
-        a(j) = dummy
-      END IF
-    END DO
-  END DO
+    ! ###################################################################
+    do i = 1, n - 1
+        do j = i + 1, n
+            if (a(j) < a(i)) then
+                dummy = a(i)
+                a(i) = a(j)
+                a(j) = dummy
+            end if
+        end do
+    end do
 
-  RETURN
-END SUBROUTINE SORT_INTEGER
+    return
+end subroutine SORT_INTEGER
 
 !########################################################################
 !########################################################################
-SUBROUTINE SORT_REAL(n,a)
-  IMPLICIT NONE
+subroutine SORT_REAL(n, a)
+    use TLAB_CONSTANTS, only: wp, wi
+    implicit none
 
-  TINTEGER,            INTENT(IN)    :: n
-  TREAL, DIMENSION(n), INTENT(INOUT) :: a
+    integer(wi), intent(IN) :: n
+    real(wp), dimension(n), intent(INOUT) :: a
 
-  ! -------------------------------------------------------------------
-  TINTEGER i, j
-  TREAL dummy
+    ! -------------------------------------------------------------------
+    integer(wi) i, j
+    real(wp) dummy
 
-  ! ###################################################################
-  DO i = 1,n-1
-    DO j = i+1,n
-      IF (a(j) .LT. a(i)) THEN
-        dummy = a(i)
-        a(i) = a(j)
-        a(j) = dummy
-      END IF
-    END DO
-  END DO
+    ! ###################################################################
+    do i = 1, n - 1
+        do j = i + 1, n
+            if (a(j) < a(i)) then
+                dummy = a(i)
+                a(i) = a(j)
+                a(j) = dummy
+            end if
+        end do
+    end do
 
-  RETURN
-END SUBROUTINE SORT_REAL
+    return
+end subroutine SORT_REAL

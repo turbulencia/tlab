@@ -23,10 +23,10 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use Thermodynamics, only: imixture, thermo_param
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
-    use IBM_VARS, only: gamma_0, gamma_1, scal_bcs
+    use IBM_VARS, only: imode_ibm, gamma_0, gamma_1, scal_bcs
     use AVGS, only: AVG_IK_V
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
     use TLAB_PROCS
     use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
@@ -100,7 +100,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #define Sbcs(j)   mean2d(j,ig(1)+8)
         sg(ng) = sg(ng) + 3
     end if
-    if (infrared%active(is)) then
+    if (infraredProps%active(is)) then
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             varname(ng) = trim(adjustl(varname(ng)))//' rQrad rQradC'
         else
@@ -112,7 +112,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         varname(ng) = trim(adjustl(varname(ng)))//' rQeva'
         sg(ng) = sg(ng) + 1
     end if
-    if (sedimentation%active(is)) then
+    if (sedimentationProps%active(is)) then
         if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
             varname(ng) = trim(adjustl(varname(ng)))//' rQtra rQtraC'
         else
@@ -480,15 +480,15 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Source terms
     ! #######################################################################
-    if (infrared%active(is)) then       ! Radiation in tmp1 and dsdx
-        call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
+    if (infraredProps%active(is)) then       ! Radiation in tmp1 and dsdx
+        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
         end if
     end if
 
-    if (sedimentation%active(is)) then      ! Transport in tmp3 and dsdz
-        call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, tmp3, dsdy, dsdz)
+    if (sedimentationProps%active(is)) then      ! Transport in tmp3 and dsdz
+        call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp3, dsdy, dsdz)
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
         end if
@@ -502,9 +502,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             if (is == inb_scal_array + 1) then ! Default values are for liquid; defining them for buoyancy
                 coefQ = buoyancy%parameters(inb_scal_array)/froude
                 coefR = buoyancy%parameters(inb_scal)/froude
-                if (sedimentation%active(is)) then
+                if (sedimentationProps%active(is)) then
                     do is_loc = 1, inb_scal
-                        coefT = coefT + sedimentation%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
+                        coefT = coefT + sedimentationProps%parameters(is_loc)/settling*buoyancy%parameters(is_loc)/froude
                     end do
                 end if
             end if
@@ -515,14 +515,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             dummy = -diff*coefQ
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
 
-            if (sedimentation%active(is) .or. infrared%active(is)) then ! preparing correction terms into dsdz
+            if (sedimentationProps%active(is) .or. infraredProps%active(is)) then ! preparing correction terms into dsdz
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1)
                 dsdz = dsdz*tmp1
             end if
 
-            if (infrared%active(is)) then ! radiation source; needs dsdy
+            if (infraredProps%active(is)) then ! radiation source; needs dsdy
                 ! only valid for IR_Bulk1D_Liquid, where tmp2, tmp3, dsdy are not used
-                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
+                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
                 dummy = thermo_param(2)*coefQ
                 tmp1 = tmp1*(coefR + dsdy*dummy)
                 dsdx = dsdx*dsdz*dummy
@@ -530,11 +530,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
                 tmp1 = 0.0_wp; dsdx = 0.0_wp
             end if
 
-            if (sedimentation%active(is)) then ! transport source; needs dsdy
+            if (sedimentationProps%active(is)) then ! transport source; needs dsdy
                 dummy = coefQ
                 tmp3 = tmp3*(coefT + dsdy*dummy)
                 ! Correction term needs dsdz; the following call assumes incompressible mode
-                call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, dsdy, dsdy, dsdy)
+                call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, dsdy, dsdy, dsdy)
                 dsdz = dsdy*dsdz*dummy
             else
                 tmp3 = 0.0_wp; dsdz = 0.0_wp
@@ -554,20 +554,20 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! -----------------------------------------------------------------------
     ! Calculating averages
     k = ig(1) + im
-    if (infrared%active(is)) then
+    if (infraredProps%active(is)) then
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
     end if
     if (imixture == MIXT_TYPE_AIRWATER_LINEAR .or. imixture == MIXT_TYPE_AIRWATER) then           ! evaporation
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
     end if
-    if (sedimentation%active(is)) then
+    if (sedimentationProps%active(is)) then
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
         k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
     end if
 
     p_wrk3d = 0.0_wp ! total
-    if (infrared%active(is)) then
+    if (infraredProps%active(is)) then
         p_wrk3d = p_wrk3d + tmp1
     end if
     if (is > inb_scal) then
@@ -575,7 +575,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             p_wrk3d = p_wrk3d + tmp2
         end if
     end if
-    if (sedimentation%active(is)) then
+    if (sedimentationProps%active(is)) then
         p_wrk3d = p_wrk3d + tmp3
     end if
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, rQ(1), wrk1d, area)

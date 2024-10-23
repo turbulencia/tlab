@@ -1,4 +1,4 @@
-module TLAB_MPI_VARS
+module TLabMPI_VARS
     use TLAB_CONSTANTS, only: wp, wi
     implicit none
     save
@@ -46,4 +46,4 @@ module TLAB_MPI_VARS
     integer, dimension(3) :: ims_nb_zsrt, ims_nb_zend, ims_nb_zsiz
 #endif
 
-end module TLAB_MPI_VARS
+end module TLabMPI_VARS

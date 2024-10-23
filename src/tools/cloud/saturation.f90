@@ -17,7 +17,7 @@ program SATURATION
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call Thermodynamics_Initialize()
+    call Thermodynamics_Initialize_Parameters()
 
     write (*, *) '1 - Saturation pressure as a function of T'
     write (*, *) '2 - Saturation specific humidity as a function of T-p'

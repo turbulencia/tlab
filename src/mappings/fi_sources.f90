@@ -9,11 +9,12 @@ module FI_SOURCES
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: buoyancy, coriolis, subsidence, random
-    use TLAB_VARS, only: infrared, sedimentation, chemistry, subsidence
+    use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
+    use Chemistry
+    use SpecialForcing
     implicit none
     private
 
@@ -27,7 +28,6 @@ module FI_SOURCES
     public :: FI_SOURCES_SCAL
     public :: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     public :: FI_CORIOLIS
-    public :: FI_FORCING_0, FI_FORCING_1
 
     real(wp), allocatable, public :: bbackground(:)     ! Buoyancy
 
@@ -35,7 +35,8 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine FI_SOURCES_FLOW(q, s, hq, tmp1)
-        real(wp), intent(in)  ::  q(isize_field, *), s(isize_field, *)
+        use TLAB_VARS, only: rtime
+        real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field)
 
@@ -109,10 +110,21 @@ contains
             end if
 
             ! -----------------------------------------------------------------------
-            ! Random forcing
+            ! special forcing
             ! -----------------------------------------------------------------------
-            if (random%active(iq)) then
-                call FI_RANDOM(random, imax, jmax, kmax, hq(1, iq), tmp1)
+            if (forcingProps%active(iq)) then
+                call SpecialForcing_Source(forcingProps, imax, jmax, kmax, iq, rtime, q(:,iq), hq(:, iq), tmp1)
+
+!$omp parallel default( shared ) &
+!$omp private( ij, srt,end,siz )
+                call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+
+                do ij = srt, end
+                    ! hq(ij, iq) = hq(ij, iq) + tmp1(ij)*forcingProps%vector(iq)
+                    hq(ij, iq) = hq(ij, iq) + tmp1(ij)
+                end do
+!$omp end parallel
+
             end if
         end do
 
@@ -138,9 +150,9 @@ contains
             ! -----------------------------------------------------------------------
             ! Radiation
             ! -----------------------------------------------------------------------
-            if (infrared%active(is)) then
-                call Radiation_Infrared_Y(infrared, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
-                
+            if (infraredProps%active(is)) then
+                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
+
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
@@ -159,13 +171,13 @@ contains
             ! -----------------------------------------------------------------------
             ! Microphysics
             ! -----------------------------------------------------------------------
-            if (sedimentation%active(is)) then
-                call Microphysics_Sedimentation(sedimentation, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
+            if (sedimentationProps%active(is)) then
+                call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
 
                 if (imode_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
-!$omp parallel default( shared ) &
+!$omp parallel default( shared ) &forcingProps%vector
 !$omp private( ij, srt,end,siz )
                     call DNS_OMP_PARTITION(isize_field, srt, end, siz)
 
@@ -180,8 +192,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Chemistry
             ! -----------------------------------------------------------------------
-            if (chemistry%active(is)) then
-                call FI_CHEM(chemistry, imax, jmax, kmax, is, s, tmp1)
+            if (chemistryProps%active(is)) then
+                call Chemistry_Source(chemistryProps, imax, jmax, kmax, is, s, tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -260,7 +272,7 @@ contains
     end subroutine FI_CORIOLIS
 
 !########################################################################
-!# Determine the buoyancy term (density difference \rho-\rho_0)
+!# Determine the buoyancy term (density difference rho -rho_0
 !# when it is a function of a scalar
 !########################################################################
     subroutine FI_BUOYANCY(buoyancy, nx, ny, nz, s, b, ref)
@@ -451,209 +463,5 @@ contains
 
         return
     end subroutine FI_SUBSIDENCE
-
-    ! #######################################################################
-    ! #######################################################################
-    subroutine FI_CHEM(chemistry, nx, ny, nz, is, s, source)
-        use TLAB_TYPES, only: profiles_dt
-        use TLAB_VARS, only: sbg, damkohler
-        use PROFILES
-
-        type(term_dt), intent(IN) :: chemistry
-        integer(wi), intent(IN) :: nx, ny, nz, is
-        real(wp), intent(IN) :: s(nx, ny, nz, inb_scal)
-        real(wp), intent(OUT) :: source(nx, ny, nz)
-
-        ! -----------------------------------------------------------------------
-        integer(wi) j
-        real(wp) dummy, dummy2
-        type(profiles_dt) prof_loc
-
-        !########################################################################
-        select case (chemistry%type)
-
-        case (EQNS_CHEM_LAYEREDRELAXATION)
-            prof_loc%type = PROFILE_TANH
-            prof_loc%ymean = sbg(is)%ymean
-            prof_loc%thick = -chemistry%parameters(3)*0.5_wp
-            prof_loc%mean = 0.5_wp
-            prof_loc%delta = 1.0_wp
-            prof_loc%lslope = 0.0_wp
-            prof_loc%uslope = 0.0_wp
-
-            do j = 1, ny
-                source(:, j, :) = PROFILES_CALCULATE(prof_loc, g(2)%nodes(j) - chemistry%parameters(2)) ! strength constant
-            end do
-
-            dummy = -damkohler(is)/chemistry%parameters(1)
-            source = dummy*source*s(:, :, :, is)
-
-        case (EQNS_CHEM_QUADRATIC)
-            dummy = damkohler(is)*chemistry%parameters(is)
-            source = dummy*s(:, :, :, 2)*s(:, :, :, 3)
-
-        case (EQNS_CHEM_QUADRATIC3)
-            dummy = damkohler(is)*chemistry%parameters(is)
-
-            if (is >= 1 .and. is <= 3) then
-                source = dummy*s(:, :, :, 2)*s(:, :, :, 3)
-            else if (is >= 4 .and. is <= 6) then
-                source = dummy*s(:, :, :, 4)*s(:, :, :, 5)
-            else if (is >= 7 .and. is <= 9) then
-                source = dummy*s(:, :, :, 7)*s(:, :, :, 8)
-            end if
-
-        case (EQNS_CHEM_OZONE)
-            dummy = damkohler(is)
-            if (is == 4) dummy = -dummy
-
-            source = -chemistry%parameters(1)/(1.0_wp + chemistry%parameters(2)*s(:, :, :, 1))
-            source = exp(source)
-
-            if (is == 4) then
-                dummy2 = 1.0_wp + chemistry%parameters(3)
-                source = dummy*(dummy2*s(:, :, :, 4) - source*s(:, :, :, 2)*s(:, :, :, 3))
-            else
-                source = dummy*(s(:, :, :, 4) - source*s(:, :, :, 2)*s(:, :, :, 3))
-            end if
-
-        end select
-
-        return
-    end subroutine FI_CHEM
-
-    ! #######################################################################
-    ! #######################################################################
-    subroutine FI_RANDOM(random, nx, ny, nz, h, tmp)
-        type(term_dt), intent(in) :: random
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(inout) :: h(nx, ny, nz)
-        real(wp), intent(inout) :: tmp(nx, ny, nz)
-
-        ! -----------------------------------------------------------------------
-        real(wp) dummy
-
-        dummy = random%parameters(1)
-
-        call random_number(tmp)
-
-        tmp = dummy*(tmp*2.0 - 1.0)
-        h = h*(1 + tmp)
-
-        return
-
-    end subroutine FI_RANDOM
-
-    !########################################################################
-    ! Sinusoidal forcing
-    !########################################################################
-    subroutine FI_FORCING_0(imax, jmax, kmax, time, visc, u, v, h_u, h_v)
-        integer(wi) imax, jmax, kmax
-        real(wp) time, visc
-        real(wp), dimension(imax, jmax, kmax) :: u, v, h_u, h_v
-
-        ! -----------------------------------------------------------------------
-        real(wp) omega, sigma, amplitude
-        !  integer(wi) i,j
-
-        !########################################################################
-        omega = 2.0_wp*acos(-1.0_wp)
-        sigma = 2.0_wp*omega*omega*visc
-
-        !  amplitude =-( 1.0_wp + (sigma/omega)**2 )*omega
-        !  amplitude = amplitude*sin(omega*time)
-        !  DO j = 1,jmax; DO i = 1,imax
-        !     u(i,j,1) = SIN(x(i)*omega)*COS(g(2)%nodes(j)*omega)
-        !     v(i,j,1) =-COS(x(i)*omega)*SIN(g(2)%nodes(j)*omega)
-        !  ENDDO; ENDDO
-
-        amplitude = sin(omega*time)
-
-        h_u = h_u + amplitude*u
-        h_v = h_v + amplitude*v
-
-        return
-    end subroutine FI_FORCING_0
-
-    !########################################################################
-    ! Velocity field with no-slip
-    !########################################################################
-    subroutine FI_FORCING_1(imax, jmax, kmax, time, visc, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
-        integer(wi) imax, jmax, kmax
-        real(wp) time, visc
-
-        real(wp), dimension(imax*jmax*kmax) :: h1, h2
-        real(wp), dimension(imax*jmax*kmax) :: tmp1, tmp2, tmp3, tmp4
-
-        ! -----------------------------------------------------------------------
-        integer(wi) ij, i, j, bcs(2, 2)
-        real(wp) pi_loc
-
-        bcs = 0
-
-        pi_loc = acos(-1.0_wp)
-
-        ! #######################################################################
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                !     tmp1(ij) = sin(2.0_wp*pi_loc*g(1)%nodes(i))*       sin(C_4_R*pi_loc*g(2)%nodes(j))
-                !     tmp2(ij) =-cos(2.0_wp*pi_loc*g(1)%nodes(i))*(1.0_wp-cos(C_4_R*pi_loc*g(2)%nodes(j)))*0.5_wp
-                tmp1(ij) = sin(pi_loc*g(1)%nodes(i))*sin(pi_loc*g(1)%nodes(i))*sin(2.0_wp*pi_loc*g(2)%nodes(j))
-                tmp2(ij) = -sin(2.0_wp*pi_loc*g(1)%nodes(i))*sin(pi_loc*g(2)%nodes(j))*sin(pi_loc*g(2)%nodes(j))
-            end do; end do
-
-        ! Time terms
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                h1(ij) = h1(ij) - tmp1(ij)*2.0_wp*pi_loc*sin(2.0_wp*pi_loc*time)
-                h2(ij) = h2(ij) - tmp2(ij)*2.0_wp*pi_loc*sin(2.0_wp*pi_loc*time)
-            end do; end do
-
-        ! velocities
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                tmp1(ij) = tmp1(ij)*cos(2.0_wp*pi_loc*time)
-                tmp2(ij) = tmp2(ij)*cos(2.0_wp*pi_loc*time)
-            end do; end do
-
-        ! Diffusion and convection terms in Ox momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h1(ij) = h1(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp2(ij))
-        end do
-
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h1(ij) = h1(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp1(ij))
-        end do
-
-        ! Diffusion and convection terms in Oy momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h2(ij) = h2(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp2(ij))
-        end do
-
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), tmp2, tmp4, tmp3)
-        do ij = 1, imax*jmax*kmax
-            h2(ij) = h2(ij) - visc*(tmp4(ij)) + (tmp3(ij)*tmp1(ij))
-        end do
-
-        ! #######################################################################
-        do j = 1, jmax; do i = 1, imax; ij = imax*(j - 1) + i
-                !     tmp1(ij) = cos(C_4_R*pi_loc*g(1)%nodes(i))*(2.0_wp-cos(C_4_R*pi_loc*g(2)%nodes(j)))/C_8_R &
-                !          - 0.5_wp*(sin(2.0_wp*pi_loc*g(2)%nodes(j)))**4
-                tmp1(ij) = sin(2.0_wp*pi_loc*g(1)%nodes(i))*sin(2.0_wp*pi_loc*g(2)%nodes(j))
-                tmp1(ij) = tmp1(ij)*(cos(2.0_wp*pi_loc*time))**2
-            end do; end do
-
-        ! Pressure gradient
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp1, tmp3)
-
-        do ij = 1, imax*jmax*kmax
-            h1(ij) = h1(ij) + tmp2(ij)
-            h2(ij) = h2(ij) + tmp3(ij)
-        end do
-
-        return
-    end subroutine FI_FORCING_1
 
 end module FI_SOURCES

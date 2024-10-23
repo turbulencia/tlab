@@ -14,7 +14,7 @@ program VPOISSON
     use TLAB_ARRAYS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use OPR_FILTERS
@@ -39,13 +39,12 @@ program VPOISSON
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 8
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     allocate (bcs_ht(imax, kmax), bcs_hb(imax, kmax))
 
@@ -61,12 +60,12 @@ program VPOISSON
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
 ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
-        stagger_on = .false. ! turn staggering off for OPR_POISSON_FXZ(...)
+        stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
@@ -109,12 +108,14 @@ program VPOISSON
         ! bcs_ht = bcs_ht - mean + delta
 
         if (type_of_operator == 1) then
-            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
 
         end if
 
@@ -192,13 +193,15 @@ program VPOISSON
         end select
 
         if (type_of_operator == 1) then
-            ! call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            ! call OPR_POISSON_FXZ_D_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
 
         end if

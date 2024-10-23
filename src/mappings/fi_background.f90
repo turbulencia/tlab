@@ -10,17 +10,16 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use TLAB_VARS, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
-    use TLAB_VARS, only: sbackground
     use TLAB_VARS, only: buoyancy
     use TLAB_POINTERS_3D, only: p_wrk1d
     use TLAB_PROCS
     use Thermodynamics, only: imixture, GRATIO, RRATIO, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
-    use PROFILES
+    use Profiles
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none
@@ -64,15 +63,6 @@ subroutine FI_BACKGROUND_INITIALIZE()
         if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
     end do
 
-    ! -----------------------------------------------------------------------
-    ! Construct reference scalar profiles
-    allocate (sbackground(g(2)%size, inb_scal_array))
-    do is = 1, inb_scal
-        do j = 1, g(2)%size
-            sbackground(j, is) = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
-        end do
-    end do
-
 ! #######################################################################
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         ! -----------------------------------------------------------------------
@@ -82,12 +72,18 @@ subroutine FI_BACKGROUND_INITIALIZE()
         allocate (pbackground(g(2)%size))
         allocate (tbackground(g(2)%size))
         allocate (epbackground(g(2)%size))
-
+        allocate (sbackground(g(2)%size, inb_scal_array))
+    
         rbackground = 1.0_wp ! defaults
         ribackground = 1.0_wp
         pbackground = 1.0_wp
         tbackground = 1.0_wp
         epbackground = 0.0_wp
+        do is = 1, inb_scal
+            do j = 1, g(2)%size
+                sbackground(j, is) = Profiles_Calculate(sbg(is), g(2)%nodes(j))
+            end do
+        end do
 
         if (scaleheight > 0.0_wp) then
             epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
@@ -156,7 +152,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         g(1)%anelastic = .true.
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            nlines = ims_size_i(TLAB_MPI_I_PARTIAL)
+            nlines = ims_size_i(TLabMPI_I_PARTIAL)
             offset = nlines*ims_pro_i
         else
 #endif
@@ -184,7 +180,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
         g(3)%anelastic = .true.
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            nlines = ims_size_k(TLAB_MPI_K_PARTIAL)
+            nlines = ims_size_k(TLabMPI_K_PARTIAL)
             offset = nlines*ims_pro_k
         else
 #endif
@@ -322,7 +318,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
     use TLAB_TYPES, only: profiles_dt
     use TLAB_PROCS
     use THERMO_THERMAL
-    use PROFILES
+    use Profiles
     implicit none
 
     integer(wi) imax, jmax
@@ -350,7 +346,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
 
     tem_vi(1:jmax) = 0.0_wp
     do j = 1, jmax
-        tem_vi(j) = PROFILES_CALCULATE(tbg, y(j))
+        tem_vi(j) = Profiles_Calculate(tbg, y(j))
     end do
 
 #define rho_aux(j) wrk1d(j,1)
@@ -417,7 +413,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
     use TLAB_TYPES, only: profiles_dt
     use TLAB_CONSTANTS, only: efile, wfile, wp, wi
     use TLAB_PROCS
-    use PROFILES
+    use Profiles
     use Integration, only: Int_Simpson
     implicit none
 
@@ -480,7 +476,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
         prof_loc%parameters(5) = diam_loc
         wrk1d(1:jmax, 1) = 0.0_wp
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
+            wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
         end do
         UC = wrk1d(jmax/2, 1) - U2
 
@@ -592,7 +588,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
     use TLAB_CONSTANTS, only: wfile, wp, wi
     use TLAB_PROCS
     use Integration, only: Int_Simpson
-    use PROFILES
+    use Profiles
     implicit none
 
     integer(wi) imax, jmax
@@ -646,7 +642,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
         prof_loc%parameters(5) = diam_loc
         wrk1d(1:jmax, 1) = 0.0_wp
         do j = 1, jmax
-            wrk1d(j, 1) = PROFILES_CALCULATE(prof_loc, y(j))
+            wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
         end do
         ZC = wrk1d(jmax/2, 1) - Z2
 

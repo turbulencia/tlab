@@ -13,9 +13,9 @@ module FLOW_LOCAL
     use THERMO_ANELASTIC
     use IO_FIELDS
     use AVGS, only: AVG1V2D
-    use PROFILES
+    use Profiles
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     use FI_VECTORCALCULUS
     use OPR_PARTIAL
@@ -97,7 +97,7 @@ contains
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'ForceDilatation', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'no') RemoveDilatation = .false.
 
-        call PROFILES_READBLOCK(bakfile, inifile, 'IniFields', 'IniK', IniK)
+        call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniK', IniK)
         if (.not. any(IniKvalid == IniK%type)) then
             call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Undeveloped IniK type.')
             call TLAB_STOP(DNS_ERROR_OPTION)
@@ -283,7 +283,8 @@ contains
             end if  ! NoSlip
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                call OPR_Poisson(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
                 ! Undevelop
             end if
@@ -292,7 +293,8 @@ contains
             ibc = 0                                       ! No penetration
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                call OPR_Poisson(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
                 ! Undevelop
             end if
@@ -304,7 +306,8 @@ contains
                 end if  ! NoSlip
                 if (g(1)%periodic .and. g(3)%periodic) then
                     p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                    ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                    call OPR_Poisson(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
                 else                                          ! General treatment
                 ! Undevelop
                 end if
@@ -339,7 +342,7 @@ contains
 
         yn => g(2)%nodes
         do j = 1, jmax                               ! Wall-normal velocity
-            profs(j, 1) = PROFILES_CALCULATE(IniK, yn(j))
+            profs(j, 1) = Profiles_Calculate(IniK, yn(j))
         end do
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), profs(1, 1), profs(1, 2))
         profs(:, 2) = -profs(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity
@@ -487,7 +490,7 @@ contains
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + 0.5_wp*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                        T(i, j, k) = Profiles_Calculate(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -508,7 +511,7 @@ contains
                     prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = hbg%mean + 0.5_wp*(hbg%uslope + hbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                        h(i, j, k) = Profiles_Calculate(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -570,7 +573,8 @@ contains
         if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
             p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
             pprime = -txc4          ! change of forcing term sign
-            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            call OPR_Poisson(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
         else                                      ! General treatment
             ! Undevelop
         end if

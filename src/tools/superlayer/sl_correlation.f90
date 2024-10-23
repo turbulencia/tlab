@@ -14,7 +14,7 @@ program SL_CORRELATION
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
 
@@ -58,13 +58,11 @@ program SL_CORRELATION
     call DNS_START
 
     call IO_READ_GLOBAL('tlab.ini')
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
-
-    isize_wrk3d = imax*jmax*kmax
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

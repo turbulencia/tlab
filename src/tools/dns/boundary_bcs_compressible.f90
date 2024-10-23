@@ -14,7 +14,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use BOUNDARY_BCS
     use OPR_PARTIAL
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 #ifdef TRACE_ON
     use TLAB_CONSTANTS, only: tfile
@@ -2061,7 +2061,7 @@ contains
 ! Needs to be checked
         call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-!  imode_fdm_loc = imode_fdm + (TLAB_MPI_K_NRBCX-1)*100
+!  imode_fdm_loc = imode_fdm + (TLabMPI_K_NRBCX-1)*100
         call OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax, jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
         call OPR_PARTIAL_Y(OPR_P1, ip, jmax, kmax, bcs, g(2), tmp1, ddy)
@@ -2213,7 +2213,7 @@ contains
 ! Needs to be checked
         call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_Y. To be checked')
         call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-!  imode_fdm_loc = imode_fdm + (TLAB_MPI_K_NRBCY-1)*100
+!  imode_fdm_loc = imode_fdm + (TLabMPI_K_NRBCY-1)*100
         call OPR_PARTIAL_Z(OPR_P1_BCS, imax, ims_bcs_jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
         call OPR_PARTIAL_X(OPR_P1, imax, ip, kmax, bcs, g(1), tmp1, ddx)

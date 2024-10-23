@@ -14,8 +14,8 @@ program TRANSFIELDS
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use Thermodynamics
@@ -69,10 +69,10 @@ program TRANSFIELDS
     call TLAB_START
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
 
     ! -------------------------------------------------------------------
@@ -267,10 +267,11 @@ program TRANSFIELDS
         inb_txc = 5
         inb_scal_dst = 1
     end select
-    isize_wrk3d = max(isize_txc_field, imax_dst*jmax_dst*kmax_dst)
+    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
+    isize_wrk3d = max(isize_wrk3d, imax_dst*jmax_dst*kmax_dst)
     if (fourier_on) inb_txc = max(inb_txc, 1)
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
@@ -383,7 +384,7 @@ program TRANSFIELDS
         idummy = idummy*max(imax, imax_dst)
         isize_txc_field = max(isize_txc_field, idummy)
 #endif
-        isize_wrk3d = isize_txc_field
+        isize_wrk3d = max(isize_wrk3d,isize_txc_field)
 
         deallocate (txc, wrk1d, wrk3d)
         call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
@@ -778,7 +779,7 @@ contains
 
         use TLAB_CONSTANTS, only: efile
         use TLAB_VARS, only: sbg, qbg
-        use PROFILES
+        use Profiles
         implicit none
 
         integer(wi) flag_mode, is, nx, ny, nz
@@ -794,7 +795,7 @@ contains
         if (flag_mode == 0) then ! Velocity
             if (is == 1) then ! Only the mean velocity
                 do j = 1, ny
-                    dummy = PROFILES_CALCULATE(qbg(1), y(j))
+                    dummy = Profiles_Calculate(qbg(1), y(j))
                     b(:, j, :) = dummy + a(:, j, :)
                 end do
             else
@@ -803,7 +804,7 @@ contains
 
         else                         ! Scalars
             do j = 1, ny
-                dummy = PROFILES_CALCULATE(sbg(is), y(j))
+                dummy = Profiles_Calculate(sbg(is), y(j))
                 b(:, j, :) = dummy + a(:, j, :)
             end do
 
@@ -832,7 +833,7 @@ contains
 
         ! #######################################################################
         imixture = MIXT_TYPE_AIRWATER
-        call Thermodynamics_Initialize(ifile)
+        call Thermodynamics_Initialize_Parameters(ifile)
         inb_scal = 1
 
         qt_0 = 9.0d-3; qt_1 = 1.5d-3

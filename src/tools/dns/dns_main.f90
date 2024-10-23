@@ -8,11 +8,13 @@ program DNS
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use Radiation
     use Microphysics
+    use Chemistry
+    use SpecialForcing
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -26,7 +28,7 @@ program DNS
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use STATISTICS
-    use PARTICLE_TRAJECTORIES
+    use ParticleTrajectories
     use AVG_SCAL_ZT
     use IO_FIELDS
     use OPR_ELLIPTIC
@@ -45,40 +47,46 @@ program DNS
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Thermodynamics_Initialize_Parameters(ifile)
+    call Particle_Initialize_Parameters(ifile)
+    call IBM_READ_INI(ifile)
+    if (imode_ibm == 1) then
+        call IBM_READ_CONSISTENCY_CHECK()
+    end if
+
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
+    call Chemistry_Initialize(ifile)
+
+    ! call TLab_Consistency_Check() ! TBD
+
     call DNS_READ_LOCAL(ifile)
-    if (imode_ibm == 1) then
-        call IBM_READ_INI(ifile)
-        call IBM_READ_CONSISTENCY_CHECK(imode_rhs, BcsFlowJmin%type(:),    BcsFlowJmax%type(:), &
-                                                   BcsScalJmin%type(:),    BcsScalJmax%type(:), &
-                                                   BcsScalJmin%SfcType(:), BcsScalJmax%SfcType(:))
-    end if
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
 #ifdef USE_PSFFT
     if (imode_rhs == EQNS_RHS_NONBLOCKING) call DNS_NB3DFFT_INITIALIZE
-#endif
 #endif
 
     ! #######################################################################
     ! Initialize memory space and grid data
     ! #######################################################################
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
+    call SpecialForcing_Initialize(ifile)
+
     call FI_BACKGROUND_INITIALIZE()
 
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')
 
-    call PARTICLE_ALLOCATE(__FILE__)
+    call ParticleTrajectories_Initialize(ifile)
+    call Particle_Initialize_Memory(__FILE__)
     call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
 
     call STATISTICS_INITIALIZE()
@@ -99,7 +107,7 @@ program DNS
     ! ###################################################################
     ! Initialize operators and reference data
     ! ###################################################################
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
@@ -131,12 +139,7 @@ program DNS
     if (part%type /= PART_TYPE_NONE) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
         call IO_READ_PARTICLE(fname, l_g, l_q)
-        call PARTICLE_INITIALIZE()
-
-        if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_INITIALIZE()
-        end if
-
+        call Particle_Initialize_Fields()
     end if
 
     if (imode_sim == DNS_MODE_SPATIAL .and. nitera_stats_spa > 0) then
@@ -204,10 +207,10 @@ program DNS
     ! ###################################################################
     call DNS_LOGS_PATH_INITIALIZE()
     call DNS_LOGS_INITIALIZE()
-    call DNS_LOGS()            
+    call DNS_LOGS()
     if (dns_obs_log /= OBS_TYPE_NONE) then
-        call DNS_OBS_INITIALIZE() 
-        call DNS_OBS() 
+        call DNS_OBS_INITIALIZE()
+        call DNS_OBS()
     end if
     if (phAvg%active) then
         call PhaseAvg_Initialize()
@@ -279,7 +282,7 @@ program DNS
             call DNS_TOWER_ACCUMULATE(s, 2, wrk1d)
         end if
         if (imode_traj /= TRAJ_TYPE_NONE) then
-            call PARTICLE_TRAJECTORIES_ACCUMULATE()
+            call ParticleTrajectories_Accumulate()
         end if
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
             if (flow_on) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow)
@@ -290,8 +293,8 @@ program DNS
             if (imode_sim == DNS_MODE_SPATIAL) call STATISTICS_SPATIAL()
         end if
         if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files
-            itime == nitera_last .or. int(logs_data(1)) /= 0 .or. & ! Secure that one restart file is saved 
-            wall_time > nruntime_sec) then                          ! If max runtime of the code is reached 
+            itime == nitera_last .or. int(logs_data(1)) /= 0 .or. & ! Secure that one restart file is saved
+            wall_time > nruntime_sec) then                          ! If max runtime of the code is reached
 
             if (flow_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
@@ -312,7 +315,7 @@ program DNS
                 call IO_WRITE_PARTICLE(fname, l_g, l_q)
                 if (imode_traj /= TRAJ_TYPE_NONE) then
                     write (fname, *) itime; fname = trim(adjustl(tag_traj))//trim(adjustl(fname))
-                    call PARTICLE_TRAJECTORIES_WRITE(fname)
+                    call ParticleTrajectories_Write(fname)
                 end if
             end if
 
@@ -326,6 +329,7 @@ program DNS
         if (mod(itime - nitera_first, nitera_pln) == 0) then
             call PLANES_SAVE()
         end if
+
         if (wall_time > nruntime_sec) then 
             write (str, *) wall_time
             ! write to efile so that job is not resubmitted
@@ -345,21 +349,21 @@ contains
     subroutine DNS_LOGS_PATH_INITIALIZE()
 
         integer env_status, path_len
-        
-        call GET_ENVIRONMENT_VARIABLE("DNS_LOGGER_PATH", logger_path, path_len, env_status, .TRUE.)
 
-        select case(env_status)
-        case(-1)
-            call TLAB_WRITE_ASCII(efile, "DNS_START. The environment variable $DNS_LOGGER_PATH is too long and cannot be handled in the foreseen array.")
+        call get_environment_variable("DNS_LOGGER_PATH", logger_path, path_len, env_status, .true.)
+
+        select case (env_status)
+        case (-1)
+            call TLAB_WRITE_ASCII(efile, "DNS_START. The environment variable  is too long and cannot be handled in the foreseen array.")
             call TLAB_STOP(DNS_ERROR_OPTION)
-        case(0)
-            if ( .not. logger_path(path_len:path_len) == '/' ) THEN
-                logger_path = trim(adjustl(logger_path)) // '/'
+        case (0)
+            if (.not. logger_path(path_len:path_len) == '/') then
+                logger_path = trim(adjustl(logger_path))//'/'
             end if
-        
-        case(1:)
+
+        case (1:)
             logger_path = trim(adjustl(''))
-        
+
         end select
 
     end subroutine DNS_LOGS_PATH_INITIALIZE
@@ -388,9 +392,9 @@ contains
         integer ip
         character(len=256) line1
 
-        ofile = TRIM(ADJUSTL(logger_path)) // TRIM(ADJUSTL(ofile_base))
-        ofile = TRIM(ADJUSTL(ofile))
-        
+        ofile = trim(adjustl(logger_path))//trim(adjustl(ofile_base))
+        ofile = trim(adjustl(ofile))
+
         line1 = '#'; ip = 1
         line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
         line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
@@ -429,7 +433,7 @@ contains
         use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
 #ifdef USE_MPI
         use MPI
-        use TLAB_MPI_VARS, only: ims_err
+        use TLabMPI_VARS, only: ims_err
         real(wp) dummy
 #endif
 
@@ -473,29 +477,29 @@ contains
 
         implicit none
 
-        integer(wi)        :: ip, is
+        integer(wi) :: ip, is
         character(len=256) :: line1
 
-        vfile = TRIM(ADJUSTL(logger_path)) // TRIM(ADJUSTL(vfile_base))
-        vfile = TRIM(ADJUSTL(vfile))
-        
+        vfile = trim(adjustl(logger_path))//trim(adjustl(vfile_base))
+        vfile = trim(adjustl(vfile))
+
         line1 = '#'; ip = 1
         line1 = line1(1:ip)//' '//' Itn.'; ip = ip + 1 + 7
         line1 = line1(1:ip)//' '//' time'; ip = ip + 1 + 13
 
         select case (dns_obs_log)
         case (OBS_TYPE_EKMAN)
-            line1 = line1(1:ip)//' '//' u_bulk';    ip = ip + 1 + 13
-            line1 = line1(1:ip)//' '//' w_bulk';    ip = ip + 1 + 13
-            line1 = line1(1:ip)//' '//' u_y(1)';    ip = ip + 1 + 13
-            line1 = line1(1:ip)//' '//' w_y(1)';    ip = ip + 1 + 13
-            line1 = line1(1:ip)//' '//' alpha(1)';  ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' u_bulk'; ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' w_bulk'; ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' u_y(1)'; ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' w_y(1)'; ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' alpha(1)'; ip = ip + 1 + 13
             line1 = line1(1:ip)//' '//' alpha(ny)'; ip = ip + 1 + 13
-            line1 = line1(1:ip)//' '//' entstrophy';ip = ip + 1 + 13
+            line1 = line1(1:ip)//' '//' entstrophy'; ip = ip + 1 + 13
             if (scal_on) then
                 do is = 1, inb_scal
-                    write(str,*) is
-                    line1 = line1(1:ip)//' '//' s'//trim(adjustl(str))//'_y(1)';  ip = ip + 1 + 13
+                    write (str, *) is
+                    line1 = line1(1:ip)//' '//' s'//trim(adjustl(str))//'_y(1)'; ip = ip + 1 + 13
                 end do
             end if
         end select
@@ -513,7 +517,7 @@ contains
 
         implicit none
 
-        integer(wi)        :: ip, is
+        integer(wi) :: ip, is
         character(len=256) :: line1, line2
 
         write (line1, 100) int(obs_data(1)), itime, rtime
@@ -526,7 +530,7 @@ contains
             line1 = trim(line1)//trim(line2)
             if (scal_on) then
                 do is = 1, inb_scal
-                    write (line2, 300) obs_data(8+is)
+                    write (line2, 300) obs_data(8 + is)
 300                 format(1x, E13.6)
                     line1 = trim(line1)//trim(line2)
                 end do
@@ -535,6 +539,6 @@ contains
 
         call TLAB_WRITE_ASCII(vfile, trim(adjustl(line1)))
 
-    end subroutine DNS_OBS  
+    end subroutine DNS_OBS
 
 end program DNS

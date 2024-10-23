@@ -9,13 +9,13 @@ program INIRAND
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use RAND_LOCAL
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
-    use Thermodynamics, only: Thermodynamics_Initialize
+    use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use IO_FIELDS
     use OPR_FOURIER
 
@@ -28,17 +28,15 @@ program INIRAND
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
-
-    isize_wrk3d = isize_txc_field
 
     inb_txc = 3
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)

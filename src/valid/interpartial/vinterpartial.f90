@@ -26,8 +26,8 @@ program VINTERPARTIAL
     use IO_FIELDS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
-    use TLAB_MPI_VARS
+    use TLabMPI_PROCS
+    use TLabMPI_VARS
 #endif
     use OPR_PARTIAL
 
@@ -52,10 +52,8 @@ program VINTERPARTIAL
 
     call IO_READ_GLOBAL('tlab.ini')
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
-
-    isize_wrk3d = isize_txc_field
 
 ! -------------------------------------------------------------------
 ! Check input

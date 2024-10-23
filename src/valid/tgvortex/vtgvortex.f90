@@ -24,8 +24,6 @@ program VTGVORTEX
 
     call IO_READ_GLOBAL(ifile)
 
-    isize_wrk3d = isize_txc_field
-
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
@@ -44,7 +42,7 @@ program VTGVORTEX
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
 ! ###################################################################
     call OPR_FOURIER_INITIALIZE()
@@ -70,9 +68,9 @@ program VTGVORTEX
         write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
         call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, 0, q)
         txc(:, 1) = C_0_R; txc(:, 4) = C_0_R
-!  CALL FI_FORCING_1(imax,jmax,kmax,  &
+!  CALL Forcing_Sinusoidal_NoSlip(imax,jmax,kmax,  &
 !       rtime,visc, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4))
-!  CALL FI_FORCING_0(imax,jmax,kmax, rtime,visc, q(1,1),q(1,2), txc(1,1),txc(1,4))
+!  CALL Forcing_Sinusoidal(imax,jmax,kmax, rtime,visc, q(1,1),q(1,2), txc(1,1),txc(1,4))
 !  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
 
         call FI_PRESSURE_BOUSSINESQ(q(1, 1), q(1, 2), q(1, 3), txc(1, 4), q(1, 4), &

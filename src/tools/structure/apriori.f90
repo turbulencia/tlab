@@ -16,7 +16,7 @@ program APRIORI
     use TLAB_ARRAYS
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use IO_FIELDS
@@ -37,7 +37,7 @@ program APRIORI
     type(pointers_dt), dimension(16) :: vars
 
     integer, parameter :: i1 = 1
-    
+
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
@@ -67,11 +67,10 @@ program APRIORI
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
-
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -154,7 +153,6 @@ program APRIORI
     end select
 
 ! -------------------------------------------------------------------
-    isize_wrk3d = isize_txc_field
 #ifdef USE_MPI
     isize_wrk3d = isize_wrk3d + isize_field ! more space in wrk3d array needed in IO_WRITE_VISUALS
 #endif
@@ -167,7 +165,7 @@ program APRIORI
 
     allocate (mean(2*opt_order*nfield))
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
 ! -------------------------------------------------------------------
 ! Read the grid

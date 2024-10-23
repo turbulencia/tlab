@@ -7,7 +7,7 @@ program VPARTIAL3D
     use TLAB_ARRAYS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use OPR_FILTERS
@@ -29,10 +29,9 @@ program VPARTIAL3D
 
     call IO_READ_GLOBAL(ifile)
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 8
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     allocate (bcs_ht(imax, kmax), bcs_hb(imax, kmax))
 

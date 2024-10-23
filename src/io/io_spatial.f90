@@ -16,7 +16,7 @@ subroutine IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
     use TLAB_VARS, only: itime, rtime, jmax, inb_scal
 
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
 
     implicit none
@@ -130,7 +130,7 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
 
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none

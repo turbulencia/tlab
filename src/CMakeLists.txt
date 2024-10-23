@@ -56,8 +56,30 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/modules)
 include_directories(${INCLUDE_DIRS})
 
+# retrieve current git branch and the git hash from the current commit and pass it as a string macro to the precompiler
+find_package(Git)
+if(GIT_EXECUTABLE)
+  execute_process(COMMAND git -C ${CMAKE_CURRENT_SOURCE_DIR} log -1 --format=%h OUTPUT_VARIABLE GITHASH RESULT_VARIABLE GITRETURN OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT GITRETURN MATCHES 0)
+    set(GITHASH "not available")
+  endif()
+  execute_process(COMMAND git -C ${CMAKE_CURRENT_SOURCE_DIR} rev-parse --abbrev-ref HEAD OUTPUT_VARIABLE GITBRANCH RESULT_VARIABLE GITRETURN OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT GITRETURN MATCHES 0)
+    set(GITBRANCH "not available")
+  endif()
+else()
+  set(GITHASH   "not available")
+  set(GITBRANCH "not available")
+endif()
+
+message(STATUS "Git hash   " ${GITHASH})
+message(STATUS "Git branch " ${GITBRANCH})
+
+add_definitions(-DGITHASH="${GITHASH}")
+add_definitions(-DGITBRANCH="${GITBRANCH}")
+
 # produce mod files
-add_subdirectory(modules)
+add_subdirectory(base)
 
 # produce libraries
 add_subdirectory(utils)

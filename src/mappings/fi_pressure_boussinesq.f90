@@ -10,14 +10,14 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, pdecomp)
     use TLAB_CONSTANTS, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: imode_eqns, imode_ibm, imode_elliptic
+    use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_VARS, only: buoyancy, coriolis
     use TLAB_VARS, only: inb_txc
     use TLAB_ARRAYS, only: wrk1d
     use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
-    use IBM_VARS, only: ibm_burgers
+    use IBM_VARS, only: imode_ibm, ibm_burgers
     use OPR_PARTIAL
     use OPR_BURGERS
     use OPR_ELLIPTIC
@@ -261,14 +261,15 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, pdecomp)
     p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
 
 ! Pressure field in p
-    select case (imode_elliptic)
-    case (FDM_COM6_JACOBIAN)
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    ! select case (imode_elliptic)
+    ! case (FDM_COM6_JACOBIAN)
+    !     call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
-    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-    end select
-
+    ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+    !     call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    ! end select
+    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    
     ! filter pressure p
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         call OPR_FILTER(imax, jmax, kmax, PressureFilter, p, tmp)

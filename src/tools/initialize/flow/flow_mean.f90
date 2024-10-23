@@ -13,7 +13,7 @@ module FLOW_MEAN
     use Thermodynamics, only: imixture
     use THERMO_THERMAL
     use THERMO_AIRWATER
-    use PROFILES
+    use Profiles
     use OPR_PARTIAL
     implicit none
     private
@@ -38,7 +38,7 @@ contains
             ! Construct reference profiles into array wrk1d
             do iq = 1, 3
                 do j = 1, jmax
-                    wrk1d(j, iq) = PROFILES_CALCULATE(qbg(iq), g(2)%nodes(j))
+                    wrk1d(j, iq) = Profiles_Calculate(qbg(iq), g(2)%nodes(j))
                 end do
             end do
 
@@ -69,7 +69,7 @@ contains
 ! #define u_vi(j)   wrk1d(j,2)
 ! #define aux(j)    wrk1d(j,3)
 !     DO j = 1,jmax
-!       u_vi(j) = PROFILES_CALCULATE( qbg(1), g(2)%nodes(j) )
+!       u_vi(j) = Profiles_Calculate( qbg(1), g(2)%nodes(j) )
 !     ENDDO
 !     rho_vi(:) = rho(1,:,1)
 !
@@ -124,8 +124,8 @@ contains
                 select case (imixture)
                 case (MIXT_TYPE_AIRWATER)
                     do j = 1, jmax
-                        z1_loc(j) = PROFILES_CALCULATE(hbg, g(2)%nodes(j))
-                        z2_loc(j) = PROFILES_CALCULATE(sbg(1), g(2)%nodes(j))
+                        z1_loc(j) = Profiles_Calculate(hbg, g(2)%nodes(j))
+                        z2_loc(j) = Profiles_Calculate(sbg(1), g(2)%nodes(j))
                     end do
                     ! ep contains the potential energy but it is not used in the compressible formulation
                     call FI_HYDROSTATIC_H(g(2), z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
@@ -205,13 +205,13 @@ contains
                 ! temperature/mixture profile are given
                 if (rbg%type == PROFILE_NONE) then
                     do j = 1, jmax
-                        dummy = PROFILES_CALCULATE(tbg, g(2)%nodes(j))
+                        dummy = Profiles_Calculate(tbg, g(2)%nodes(j))
                         TEM_MEAN_LOC(:, j, :) = dummy
                     end do
 
                     do is = 1, inb_scal
                         do j = 1, jmax
-                            dummy = PROFILES_CALCULATE(sbg(is), g(2)%nodes(j))
+                            dummy = Profiles_Calculate(sbg(is), g(2)%nodes(j))
                             s(:, j, :, is) = dummy
                         end do
                     end do
@@ -227,7 +227,7 @@ contains
                     ! density profile itself is given
                 else
                     do j = 1, jmax
-                        dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
+                        dummy = Profiles_Calculate(rbg, g(2)%nodes(j))
                         rho(:, j, :) = rho(:, j, :) + dummy
                     end do
 
@@ -273,7 +273,7 @@ contains
 
                 ! Inflow profile of axial velocity
                 do j = 1, jmax
-                    u_vi(j) = PROFILES_CALCULATE(qbg(1), g(2)%nodes(j))
+                    u_vi(j) = Profiles_Calculate(qbg(1), g(2)%nodes(j))
                 end do
 
                 ! 2D distribution of density
@@ -286,7 +286,7 @@ contains
 
             else ! density profile itself is given
                 do j = 1, jmax
-                    dummy = PROFILES_CALCULATE(rbg, g(2)%nodes(j))
+                    dummy = Profiles_Calculate(rbg, g(2)%nodes(j))
                     rho(:, j, :) = rho(:, j, :) + dummy
                 end do
 

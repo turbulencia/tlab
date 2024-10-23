@@ -50,7 +50,7 @@ module Thermodynamics
     ! Derived parameters, for clarity in airwater formulation
     real(wp), public :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, rd_ov_cd, PREF_1000
 
-    public :: Thermodynamics_Initialize
+    public :: Thermodynamics_Initialize_Parameters
     public :: Thermo_Psat_Polynomial, Thermo_dPsat_Polynomial
 
 contains
@@ -75,7 +75,7 @@ contains
     !# If needed, the new reference value of gamma0 is calculated here based on the reference species
     !#
     !########################################################################
-    subroutine Thermodynamics_Initialize(inifile)
+    subroutine Thermodynamics_Initialize_Parameters(inifile)
         use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns
         use TLAB_VARS, only: gama0, mach, schmidt, damkohler
         use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
@@ -728,7 +728,7 @@ contains
             return
         end subroutine THERMO_READ_CHEMKIN
 
-    end subroutine Thermodynamics_Initialize
+    end subroutine Thermodynamics_Initialize_Parameters
 
     ! ###################################################################
     ! ###################################################################

@@ -29,7 +29,7 @@ END MODULE DNS_GLOBAL
 !########################################################################
 PROGRAM VMPI_IO
 
-  USE TLAB_MPI_VARS
+  USE TLabMPI_VARS
   USE TLAB_VARS
 
   IMPLICIT NONE
@@ -79,7 +79,7 @@ PROGRAM VMPI_IO
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
 
 ! ###################################################################
-! from TLAB_MPI_INITIALIZE
+! from TLabMPI_Initialize()
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
 
@@ -125,7 +125,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
   USE TLAB_VARS,ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS
+  USE TLabMPI_VARS
 #endif
 
   IMPLICIT NONE

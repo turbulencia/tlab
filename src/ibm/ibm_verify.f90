@@ -34,18 +34,18 @@ subroutine IBM_VERIFY_GEOMETRY()
   use TLAB_CONSTANTS, only : efile, wp, wi
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k, ims_err
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k
+  use TLabMPI_VARS,  only : ims_size_i, ims_size_k, ims_err
+  use TLabMPI_VARS,  only : ims_npro_i, ims_npro_k
 #ifdef IBM_DEBUG
-  use TLAB_MPI_VARS,  only : ims_pro
+  use TLabMPI_VARS,  only : ims_pro
 #endif
 #endif    
    
   implicit none
 
 #ifdef USE_MPI 
-  integer(wi), parameter :: idi = TLAB_MPI_I_PARTIAL 
-  integer(wi), parameter :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter :: idi = TLabMPI_I_PARTIAL 
+  integer(wi), parameter :: idk = TLabMPI_K_PARTIAL 
   real(wp)               :: dummy
 #else
 #ifdef IBM_DEBUG
@@ -228,7 +228,7 @@ subroutine IBM_VERIFY_UP(eps)
   use TLAB_PROCS
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_err
+  use TLabMPI_VARS,  only : ims_err
 #endif    
 
   implicit none
@@ -310,7 +310,7 @@ subroutine IBM_VERIFY_SCAL()
   use TLAB_PROCS
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_err
+  use TLabMPI_VARS,  only : ims_err
 #endif    
 
   implicit none

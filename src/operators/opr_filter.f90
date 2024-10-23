@@ -5,7 +5,7 @@
 #endif
 
 module OPR_FILTERS
-    use TLAB_CONSTANTS, only: wp, wi, efile, MAX_PROF
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_TYPES, only: grid_dt, filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
     use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
@@ -16,22 +16,22 @@ module OPR_FILTERS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS
+    use TLabMPI_PROCS
 #endif
     implicit none
     private
 
     public :: OPR_FILTER_INITIALIZE
     public :: OPR_FILTER
-    public :: OPR_FILTER_X,  OPR_FILTER_Y, OPR_FILTER_Z
+    public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
 
 contains
     !###################################################################
     !###################################################################
     subroutine OPR_FILTER_INITIALIZE(g, f)
-        type(grid_dt),   intent(in) :: g
+        type(grid_dt), intent(in) :: g
         type(filter_dt), intent(inout) :: f
 
         !###################################################################
@@ -79,14 +79,14 @@ contains
     subroutine OPR_FILTER(nx, ny, nz, f, u, txc)
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f(3)
-        real(wp),        intent(inout) :: u(nx, ny, nz)
-        real(wp),        intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
+        real(wp), intent(inout) :: u(nx, ny, nz)
+        real(wp), intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
         !                                                           size 3 if SPECTRAL, HELMHOLTZ
         !-------------------------------------------------------------------
         real(wp) dummy
-        integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t, i2
+        integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t
 
         complex(wp), pointer :: c_tmp(:, :) => null()
         real(wp), dimension(:, :, :), pointer :: p_bcs
@@ -96,7 +96,6 @@ contains
         nxy = nx*ny
 
         bcs = 0  !Boundary conditions for derivative operator set to biased, non-zero
-        i2 = 2
 
         !Global filters
         select case (f(1)%type)
@@ -124,9 +123,10 @@ contains
             end if
 
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
-            call OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), &
-                                   p_bcs(:, :, 1), p_bcs(:, :, 2))
+            ! call OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
+            !                        txc(1, 1), txc(1, 2), txc(1, 3), &
+            !                        p_bcs(:, :, 1), p_bcs(:, :, 2))
+            call OPR_Helmholtz(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), txc(1, 1), txc(1, 2), txc(1, 3), p_bcs(:, :, 1), p_bcs(:, :, 2))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)
 
         case (DNS_FILTER_BAND)
@@ -178,10 +178,10 @@ contains
     !Filter kernel along one direction
     !###################################################################
     subroutine OPR_FILTER_1D(nlines, f, u, result)
-        integer(wi),     intent(in) :: nlines                  !# of lines to be solved
+        integer(wi), intent(in) :: nlines                  !# of lines to be solved
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(in) :: u(nlines, f%size)       !field to be filtered
-        real(wp),        intent(out) :: result(nlines, f%size)  !filtered filed
+        real(wp), intent(in) :: u(nlines, f%size)       !field to be filtered
+        real(wp), intent(out) :: result(nlines, f%size)  !filtered filed
 
         !-------------------------------------------------------------------
         integer(wi) delta
@@ -216,8 +216,8 @@ contains
         case (DNS_FILTER_4E)
             call FLT_E4(f%size, nlines, f%periodic, f%coeffs, u, result)
 
-        ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
-        !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
+            ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
+            !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
 
         case (DNS_FILTER_TOPHAT)
             if (f%periodic) then
@@ -250,9 +250,9 @@ contains
     !Filter in Ox direction
     !###################################################################
     subroutine OPR_FILTER_X(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nyz
@@ -265,7 +265,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLAB_MPI_I_PARTIAL
+        id = f%mpitype  !TLabMPI_I_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -273,7 +273,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
             p_a => wrk3d
             p_b => u
             nyz = ims_size_i(id)
@@ -313,7 +313,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 #endif
 
@@ -328,9 +328,9 @@ contains
     !Filter in Oy direction
     !###################################################################
     subroutine OPR_FILTER_Y(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-----------------------------------------------------------------------
         integer(wi) nxy, nxz
@@ -383,9 +383,9 @@ contains
     !Filter in Oz direction
     !###################################################################
     subroutine OPR_FILTER_Z(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nxy
@@ -398,7 +398,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLAB_MPI_K_PARTIAL
+        id = f%mpitype  !TLabMPI_K_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -406,7 +406,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLAB_MPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             p_a => wrk3d
             p_b => u
             nxy = ims_size_k(id)
@@ -428,7 +428,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLAB_MPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 #endif
 
@@ -444,7 +444,7 @@ contains
     !########################################################################
     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp),    intent(in) :: spc_param(*)
+        real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------
@@ -501,7 +501,7 @@ contains
     !########################################################################
     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp),    intent(in) :: spc_param(*)
+        real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------

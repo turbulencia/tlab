@@ -55,7 +55,7 @@ program VINTEGRAL
     inb_wrk2d = 2
     inb_txc = 9
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     u(1:len, 1:imax) => txc(1:imax*jmax*kmax, 1)
     w_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 2)

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -9,40 +8,40 @@
 !########################################################################
 subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
                               spec_2d, data_x, data_z, spec_r, tmp_x, tmp_z, wrk2d)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: g
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_npro_k
-    use TLAB_MPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_VARS, only: ims_comm_x, ims_comm_z
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_npro_k
+    use TLabMPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_comm_x, ims_comm_z
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_PROCS
 #endif
 
     implicit none
 
-    TINTEGER, intent(IN) :: nx, ny, nz, kr_total, isize_aux
-    TREAL, dimension(nx, ny, nz), intent(IN) :: spec_2d ! power spectral density
+    integer(wi), intent(IN) :: nx, ny, nz, kr_total, isize_aux
+    real(wp), dimension(nx, ny, nz), intent(IN) :: spec_2d ! power spectral density
 
-    TREAL, dimension(kr_total, ny), intent(OUT) :: spec_r
+    real(wp), dimension(kr_total, ny), intent(OUT) :: spec_r
 
-    TREAL, dimension(nx, ny), intent(OUT) :: data_x
-    TREAL, dimension(nx, ny, 2), intent(INOUT) :: tmp_x
-    TREAL, dimension(nz/2, ny), intent(OUT) :: data_z
-    TREAL, dimension(isize_aux, nz, 2), intent(INOUT) :: tmp_z ! need space for transpostion
+    real(wp), dimension(nx, ny), intent(OUT) :: data_x
+    real(wp), dimension(nx, ny, 2), intent(INOUT) :: tmp_x
+    real(wp), dimension(nz/2, ny), intent(OUT) :: data_z
+    real(wp), dimension(isize_aux, nz, 2), intent(INOUT) :: tmp_z ! need space for transpostion
 
 #ifdef USE_MPI
-    TREAL, dimension(isize_aux/ims_npro_k, g(3)%size, 2), intent(INOUT) :: wrk2d
+    real(wp), dimension(isize_aux/ims_npro_k, g(3)%size, 2), intent(INOUT) :: wrk2d
 #else
-    TREAL, dimension(ny, g(3)%size, 2), intent(INOUT) :: wrk2d
+    real(wp), dimension(ny, g(3)%size, 2), intent(INOUT) :: wrk2d
 #endif
 
 ! -----------------------------------------------------------------------
-    TINTEGER :: i, k, kx_global, kz_global, kr_global, flag, ny_local
+    integer(wi) :: i, k, kx_global, kz_global, kr_global, flag, ny_local
 #ifdef USE_MPI
-    TINTEGER count, id
+    integer(wi) count, id
 #endif
 
 ! #######################################################################
@@ -72,7 +71,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
 
             tmp_z(1:ny, k, 1) = tmp_z(1:ny, k, 1) + spec_2d(i, 1:ny, k)
 
-            kr_global = int(sqrt(M_REAL((kx_global - 1)**2 + (kz_global - 1)**2))) + 1
+            kr_global = int(sqrt(real((kx_global - 1)**2 + (kz_global - 1)**2, wp))) + 1
             if (kr_global <= kr_total) &
                 spec_r(kr_global, :) = spec_r(kr_global, :) + spec_2d(i, :, k)
 
@@ -109,8 +108,8 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
     call MPI_ALLREDUCE(tmp_z(:, :, 1), tmp_z(:, :, 2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
     if (ims_npro_k > 1) then
-        id = TLAB_MPI_K_AUX2
-        call TLAB_MPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        id = TLabMPI_K_AUX2
+        call TLabMPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     else
         wrk2d(1:ny*nz, 1, 1) = tmp_z(1:ny*nz, 1, 2)
@@ -145,7 +144,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
             wrk2d(1:ny_local*count, (k - 1)*2 + 1, 1) = wrk2d(1:ny_local*count, k, 2)
         end do
 
-        call TLAB_MPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        call TLabMPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
     else
 #endif
@@ -166,32 +165,32 @@ end subroutine INTEGRATE_SPECTRUM
 !########################################################################
 !########################################################################
 subroutine REDUCE_SPECTRUM(nx, ny, nz, nblock, in, out, tmp1, variance)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: isize_txc_dimz
 
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
+    use TLabMPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
     implicit none
 
-    TINTEGER, intent(IN) :: nx, ny, nz, nblock
-    TCOMPLEX, dimension(isize_txc_dimz/2, nz), intent(IN) :: in, tmp1
-    TREAL, dimension(nx/2, ny/nblock, 2*nz), intent(OUT) :: out ! Amplitude (1:nz) and Phase (nz+1:2*nz)
-    TREAL, dimension(ny, 2) :: variance
+    integer(wi), intent(IN) :: nx, ny, nz, nblock
+    complex(wp), dimension(isize_txc_dimz/2, nz), intent(IN) :: in, tmp1
+    real(wp), dimension(nx/2, ny/nblock, 2*nz), intent(OUT) :: out ! Amplitude (1:nz) and Phase (nz+1:2*nz)
+    real(wp), dimension(ny, 2) :: variance
 
 ! -----------------------------------------------------------------------
-    TINTEGER :: kx, y, kz, ipy, ip, kx_global, ny_loc
-    TCOMPLEX :: cdummy
-    TREAL :: power
+    integer(wi) :: kx, y, kz, ipy, ip, kx_global, ny_loc
+    complex(wp) :: cdummy
+    real(wp) :: power
 
 ! #######################################################################
 ! Calculate PSD and phase
 ! #######################################################################
-    variance = C_0_R ! use variance to control result
+    variance = 0.0_wp ! use variance to control result
 
 ! Drop the uppermost ny%nblock lines as there would not be
 ! nblock levels contributing to the output
@@ -223,7 +222,7 @@ subroutine REDUCE_SPECTRUM(nx, ny, nz, nblock, in, out, tmp1, variance)
 
 ! use variance to control result
                 if (kx_global == 1) then; variance(y, 1) = variance(y, 1) + power
-                else; variance(y, 1) = variance(y, 1) + power*C_2_R
+                else; variance(y, 1) = variance(y, 1) + power*2.0_wp
                 end if
 
             end do
@@ -255,30 +254,30 @@ end subroutine REDUCE_SPECTRUM
 !########################################################################
 subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
                               in, data_2d, data_x, data_z, data_r, variance1, variance2, icalc_radial)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: isize_wrk1d
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
     implicit none
 
-    TINTEGER, intent(IN) :: nx, ny, nz, nblock, nr_total
-    TINTEGER, optional, intent(IN) :: icalc_radial ! whether to reduce radial correlations or not
-    TREAL, dimension(nx, ny, nz), intent(IN) :: in
-    TREAL, dimension(nx, ny/nblock, nz), intent(OUT) :: data_2d
-    TREAL, dimension(nx, ny/nblock), intent(OUT) :: data_x
-    TREAL, dimension(nz, ny/nblock), intent(OUT) :: data_z
-    TREAL, dimension(nr_total, ny/nblock), intent(OUT) :: data_r
-    TREAL, dimension(isize_wrk1d, 2), intent(IN) :: variance1 ! to normalize
-    TREAL, dimension(isize_wrk1d), intent(OUT) :: variance2 ! to validate
+    integer(wi), intent(IN) :: nx, ny, nz, nblock, nr_total
+    integer(wi), optional, intent(IN) :: icalc_radial ! whether to reduce radial correlations or not
+    real(wp), dimension(nx, ny, nz), intent(IN) :: in
+    real(wp), dimension(nx, ny/nblock, nz), intent(OUT) :: data_2d
+    real(wp), dimension(nx, ny/nblock), intent(OUT) :: data_x
+    real(wp), dimension(nz, ny/nblock), intent(OUT) :: data_z
+    real(wp), dimension(nr_total, ny/nblock), intent(OUT) :: data_r
+    real(wp), dimension(isize_wrk1d, 2), intent(IN) :: variance1 ! to normalize
+    real(wp), dimension(isize_wrk1d), intent(OUT) :: variance2 ! to validate
 
 ! -----------------------------------------------------------------------
-    TINTEGER i, j, k, ipy, ny_loc, i_global, k_global, r_global
-    TREAL norm
+    integer(wi) i, j, k, ipy, ny_loc, i_global, k_global, r_global
+    real(wp) norm
 
 ! #######################################################################
-    variance2(:) = C_0_R ! use variance to control result
+    variance2(:) = 0.0_wp ! use variance to control result
 
 ! Drop the uppermost ny%nblock lines as there would not be
 ! nblock levels contributing to the output
@@ -287,8 +286,8 @@ subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
     do j = 1, ny_loc
         ipy = (j - 1)/nblock + 1
         norm = sqrt(variance1(j, 1))*sqrt(variance1(j, 2))
-        if (norm > C_0_R) then; norm = C_1_R/norm
-        else; norm = C_1_R
+        if (norm > 0.0_wp) then; norm = 1.0_wp/norm
+        else; norm = 1.0_wp
         end if
 
         do k = 1, nz
@@ -314,7 +313,7 @@ subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
                 if (i_global == 1) data_z(k, ipy) = data_z(k, ipy) + in(i, j, k)*norm
 
                 if (icalc_radial == 1) then
-                    r_global = int(sqrt(M_REAL((k_global - 1)**2 + (i_global - 1)**2))) + 1
+                    r_global = int(sqrt(real((k_global - 1)**2 + (i_global - 1)**2, wp))) + 1
                     if (r_global <= nr_total) data_r(r_global, ipy) = data_r(r_global, ipy) + in(i, j, k)*norm
 
                 end if
@@ -331,18 +330,19 @@ end subroutine REDUCE_CORRELATION
 !########################################################################
 !########################################################################
 subroutine RADIAL_SAMPLESIZE(nx, nz, nr_total, samplesize)
+    use TLAB_CONSTANTS, only: wp, wi
 
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
     implicit none
 
-    TINTEGER, intent(IN) :: nx, nz, nr_total
-    TREAL, dimension(nr_total), intent(OUT) :: samplesize
+    integer(wi), intent(IN) :: nx, nz, nr_total
+    real(wp), dimension(nr_total), intent(OUT) :: samplesize
 
 ! -----------------------------------------------------------------------
-    TINTEGER i, k, i_global, k_global, r_global
+    integer(wi) i, k, i_global, k_global, r_global
 
 ! #######################################################################
     do k = 1, nz
@@ -358,8 +358,8 @@ subroutine RADIAL_SAMPLESIZE(nx, nz, nr_total, samplesize)
 #else
             i_global = i
 #endif
-            r_global = int(sqrt(M_REAL((k_global - 1)**2 + (i_global - 1)**2))) + 1
-            if (r_global <= nr_total) samplesize(r_global) = samplesize(r_global) + C_1_R
+            r_global = int(sqrt(real((k_global - 1)**2 + (i_global - 1)**2, wp))) + 1
+            if (r_global <= nr_total) samplesize(r_global) = samplesize(r_global) + 1.0_wp
 
         end do
     end do
@@ -370,22 +370,22 @@ end subroutine RADIAL_SAMPLESIZE
 !########################################################################
 !########################################################################
 subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
-
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_CONSTANTS, only: lfile
     use TLAB_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
 
     implicit none
 
     character*(*), intent(IN) :: fname
     character*32, dimension(nvar), intent(IN) :: varname(nvar)
-    TINTEGER, intent(IN) :: nxy, nvar
-    TREAL, dimension(nxy, nvar), intent(IN) :: pow
+    integer(wi), intent(IN) :: nxy, nvar
+    real(wp), dimension(nxy, nvar), intent(IN) :: pow
 
 ! -----------------------------------------------------------------------
-    TINTEGER iv
+    integer(wi) iv
     character*64 name
 
 ! #######################################################################
@@ -423,18 +423,19 @@ end subroutine WRITE_SPECTRUM1D
 #ifdef USE_MPI
 
 subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
+    use TLAB_CONSTANTS, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use IO_FIELDS, only: io_aux
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 
     implicit none
 
-    TINTEGER, intent(IN) :: opt_main, nblock
+    integer(wi), intent(IN) :: opt_main, nblock
 
 ! -----------------------------------------------------------------------
-    TINTEGER :: ndims
-    TINTEGER, dimension(3) :: sizes, locsize, offset
+    integer(wi) :: ndims
+    integer(wi), dimension(3) :: sizes, locsize, offset
 
     integer ims_color
 

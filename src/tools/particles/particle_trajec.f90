@@ -32,9 +32,9 @@ program PARTICLE_TRAJEC
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro
+    use TLabMPI_PROCS
 #endif
     use Thermodynamics
     use PARTICLE_VARS
@@ -45,43 +45,45 @@ program PARTICLE_TRAJEC
 
 ! -------------------------------------------------------------------
 
-    TINTEGER i, j, k, particle_pos
-    TREAL temp
+    integer(wi) i, j, k, particle_pos
+    real(wp) temp
     integer(8) itemp
     logical :: swapped
-    TREAL, dimension(:), allocatable :: big_part
+    real(wp), dimension(:), allocatable :: big_part
 #ifdef USE_MPI
-    TREAL, dimension(:), allocatable :: big_all
-    TREAL, dimension(:), allocatable :: big_overall
+    real(wp), dimension(:), allocatable :: big_all
+    real(wp), dimension(:), allocatable :: big_overall
     integer(8), dimension(:), allocatable :: tag_big_all, tag_big_overall
 #else
-    TINTEGER dummy
+    integer(wi) dummy
 #endif
     integer(8), dimension(:), allocatable :: tag_big_part
 
-    TINTEGER nitera_last
+    integer(wi) nitera_last
+    integer(wi) :: isize_traj                       ! # of saved trajectories
 
     character*64 str, fname
     character*32 bakfile
 
-!  TINTEGER test1, test2
-!  TREAL test3(50)
+!  integer(wi) test1, test2
+!  real(wp) test3(50)
 !  INTEGER(8) test4(50)
-    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+    bakfile = trim(adjustl(ifile))//'.bak'
 
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
-    call PARTICLE_READ_GLOBAL(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call Thermodynamics_Initialize_Parameters(ifile)
+    call Particle_Initialize_Parameters(ifile)
 
 ! Get the local information from the tlab.ini
+    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
     call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     allocate (big_part(isize_traj))
     allocate (tag_big_part(isize_traj))
@@ -98,7 +100,7 @@ program PARTICLE_TRAJEC
 !#######################################################################
 !READ THE (LAST) FILE
 !#######################################################################
-    write (fname, *) nitera_last; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+    write (fname, *) nitera_last; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
     call IO_READ_PARTICLE(fname, l_g, l_q)
 
 !#######################################################################
@@ -168,7 +170,7 @@ program PARTICLE_TRAJEC
 #ifdef USE_MPI
     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
     call MPI_GATHER(big_part, isize_traj, MPI_REAL8, big_all, isize_traj, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-  CALL MPI_GATHER(tag_big_part, isize_traj, MPI_INTEGER8, tag_big_all, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
+    call MPI_GATHER(tag_big_part, isize_traj, MPI_INTEGER8, tag_big_all, isize_traj, MPI_INTEGER8, 0, MPI_COMM_WORLD, ims_err)
 
     if (ims_pro == 0) then
 
@@ -207,7 +209,7 @@ program PARTICLE_TRAJEC
 !#######################################################################
 
         fname = 'largest_particle'
-        write (str, *) nitera_last; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+        write (str, *) nitera_last; str = trim(adjustl(fname))//"."//trim(adjustl(str)) ! name with the number for direction and scalar
         open (unit=15, file=str, access='stream', form='unformatted')
         inquire (UNIT=15, POS=particle_pos) !would be 1
         write (15) ims_npro  !header
@@ -232,7 +234,7 @@ program PARTICLE_TRAJEC
 #else
     dummy = 1 !amount of processors
     fname = 'largest_particle'
-    write (str, *) nitera_last; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+    write (str, *) nitera_last; str = trim(adjustl(fname))//"."//trim(adjustl(str)) ! name with the number for direction and scalar
     open (unit=15, file=str, access='stream', form='unformatted')
     inquire (UNIT=15, POS=particle_pos) !would be 1
     write (15) dummy  !only 1

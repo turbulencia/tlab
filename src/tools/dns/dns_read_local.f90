@@ -16,6 +16,12 @@ subroutine DNS_READ_LOCAL(inifile)
     use BOUNDARY_INFLOW
     use STATISTICS
     use PLANES
+    use IBM_VARS
+    ! needed for the last part; should be moved to TLab_Consistency_Check
+    use Radiation
+    use Microphysics
+    use Chemistry
+    use SpecialForcing
 
     implicit none
 
@@ -109,7 +115,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog', '10', nitera_log)
     call SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln)
-    call SCANINIREAL(bakfile,inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
+    call SCANINIREAL(bakfile, inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
 
 ! Accumulate statistics in spatial mode
     call SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
@@ -118,7 +124,6 @@ subroutine DNS_READ_LOCAL(inifile)
     call SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
     if (nitera_filter == 0) FilterDomain(:)%type = DNS_FILTER_NONE
 
-
     call SCANINICHAR(bakfile, inifile, 'Iteration', 'ObsLog', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; dns_obs_log = OBS_TYPE_NONE
     else if (trim(adjustl(sRes)) == 'ekman') then; dns_obs_log = OBS_TYPE_EKMAN
@@ -126,7 +131,6 @@ subroutine DNS_READ_LOCAL(inifile)
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. ObsLog.')
         call TLAB_STOP(DNS_ERROR_OPTION)
     end if
-
 
 ! ###################################################################
 ! Control Limits
@@ -318,20 +322,6 @@ subroutine DNS_READ_LOCAL(inifile)
     BcsScalImin%ctan = dummy(1); BcsScalImax%ctan = dummy(1)
     BcsScalJmin%ctan = dummy(1); BcsScalJmax%ctan = dummy(1)
     BcsScalKmin%ctan = dummy(1); BcsScalKmax%ctan = dummy(1)
-
-! ###################################################################
-! IBM Status Parameter
-! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[IBMParameter]')
-    call TLAB_WRITE_ASCII(bakfile, '#Status=<on/off>')
-    call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
-    if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
-    else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
-    else
-        call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Wrong IBM Status option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
-    end if
 
 ! ###################################################################
 ! Buffer Zone Parameters
@@ -537,7 +527,7 @@ subroutine DNS_READ_LOCAL(inifile)
     ! Parameter 2 is the x-length of the inflow domain
 
 ! ###################################################################
-! Final initialization and control statements
+! Final initialization and consistency check
 ! ###################################################################
     if (nitera_first > nitera_last) then
         call TLAB_WRITE_ASCII(efile, 'DNS_READ_LOCAL. Not started because nitera_first > nitera_last.')
@@ -692,6 +682,51 @@ subroutine DNS_READ_LOCAL(inifile)
     end if
 
     ! -------------------------------------------------------------------
+    ! IBM Data
+    ! -------------------------------------------------------------------
+    if (imode_ibm == 1) then
+        if (.not. (imode_rhs == EQNS_RHS_COMBINED)) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for combined rhs mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        do is = 1, inb_scal
+            if ((BcsScalJmin%type(is) /= DNS_BCS_DIRICHLET) .or. (BcsScalJmin%SfcType(is) /= DNS_SFC_STATIC) .or. &
+                (ibm_geo%mirrored .and. ((BcsScalJmax%type(is) /= DNS_BCS_DIRICHLET) .or. (BcsScalJmax%SfcType(is) /= DNS_SFC_STATIC)))) then
+                call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Wrong scalar BCs.')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            end if
+        end do
+        do is = 1, 3
+            if ((BcsFlowJmin%type(is) /= DNS_BCS_DIRICHLET) .or. &
+                (ibm_geo%mirrored .and. (BcsFlowJmax%type(is) /= DNS_BCS_DIRICHLET))) then
+                call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. Wrong Flow BCs.')
+                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            end if
+        end do
+
+        !   should be moved to TLab_Consistency_Check
+        if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for incompressible mode.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+        if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for convective advection scheme.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+        if ((infraredProps%type /= EQNS_NONE) .or. &
+            (sedimentationProps%type /= EQNS_NONE) .or. &
+            (infraredProps%type /= EQNS_NONE) .or. &
+            (chemistryProps%type /= EQNS_NONE) .or. &
+            (subsidence%type /= EQNS_NONE)) then
+            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
+            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        end if
+
+    end if
+
+    ! -------------------------------------------------------------------
     ! Array sizes
     ! -------------------------------------------------------------------
 
@@ -716,13 +751,7 @@ subroutine DNS_READ_LOCAL(inifile)
     if (imode_rhs == EQNS_RHS_NONBLOCKING) inb_txc = max(inb_txc, 15)
 #endif
 
-    isize_wrk3d = max(imax, g_inf(1)%size)*max(jmax, g_inf(2)%size)*kmax
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-        isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
-        isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
-    end if
+    isize_wrk3d = max(isize_wrk3d, g_inf(1)%size*g_inf(2)%size*kmax)
     if (use_tower) then
         isize_wrk3d = max(isize_wrk3d, nitera_save*(g(2)%size + 2))
     end if

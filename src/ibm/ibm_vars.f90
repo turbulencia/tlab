@@ -23,6 +23,8 @@ module IBM_VARS
 
   save 
 
+  integer :: imode_ibm                ! IBM mode
+
   ! ibm_scalar mode
   integer(wi)                                    :: imode_ibm_scal
 

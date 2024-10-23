@@ -34,13 +34,13 @@ module BOUNDARY_BUFFER
 
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_npro
-    use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLAB_MPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLAB_MPI_VARS, only: ims_comm_z
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i, ims_pro_k
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_npro
+    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_comm_z
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i, ims_pro_k
+    use TLabMPI_PROCS
 #endif
 
     implicit none
@@ -258,9 +258,9 @@ contains
                     end if
 
                     call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                     call MPI_TYPE_COMMIT(io_aux(id)%subarray, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
 
                     sa_comm_color = 1
                 else
@@ -268,7 +268,7 @@ contains
                 end if
                 io_aux(id)%communicator = MPI_UNDEFINED
                 call MPI_Comm_Split(MPI_COMM_WORLD, sa_comm_color, ims_pro, io_aux(id)%communicator, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
 
             end if
 #endif
@@ -339,7 +339,7 @@ contains
             end if
 
             call MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-            if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+            if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
             var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
 #else
             var_minmax = [minval(item%ref(:, :, :, iq)), maxval(item%ref(:, :, :, iq))]
@@ -375,16 +375,16 @@ contains
             select case (idir)
             case (1)
                 call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for Ox BCs explicit filter.')
-                id = TLAB_MPI_K_OUTBCS
+                id = TLabMPI_K_OUTBCS
                 idummy = item%size*jmax
-                call TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
+                call TLabMPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
             case (2)
                 call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
-                id = TLAB_MPI_K_TOPBCS
+                id = TLabMPI_K_TOPBCS
                 idummy = imax*item%size
-                call TLAB_MPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
+                call TLabMPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
             end select
@@ -668,7 +668,7 @@ contains
         ! Outflow boundary
         ! ###################################################################
         if (BuffFlowImax%size > 1) then
-            id = TLAB_MPI_K_OUTBCS
+            id = TLabMPI_K_OUTBCS
             buff_imax = imax - BuffFlowImax%size + iloc
             ! -------------------------------------------------------------------
             ! Flow

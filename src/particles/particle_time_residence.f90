@@ -46,7 +46,7 @@ subroutine PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
     use PARTICLE_VARS, only: isize_part, inb_part_array
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none

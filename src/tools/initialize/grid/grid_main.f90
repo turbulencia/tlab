@@ -9,7 +9,7 @@ program INIGRID
     use TLAB_PROCS
     use GRID_LOCAL
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
     implicit none
 

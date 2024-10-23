@@ -11,31 +11,30 @@ program INIFLOW
     use TLAB_PROCS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
-    use Thermodynamics, only: imixture,  Thermodynamics_Initialize
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_THERMAL
     use THERMO_CALORIC
     use IO_FIELDS
+    use OPR_Elliptic
     use OPR_FOURIER
     use FLOW_LOCAL
     use FLOW_MEAN
-    
+
     implicit none
 
     !########################################################################
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Thermodynamics_Initialize_Parameters(ifile)
     call FLOW_READ_LOCAL(ifile)
 
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
-
-    inb_wrk2d = MAX(inb_wrk2d, 3)
-    isize_wrk3d = isize_txc_field
+    inb_wrk2d = max(inb_wrk2d, 3)
 
     if (flag_u == 0) then
         inb_txc = 2
@@ -43,7 +42,7 @@ program INIFLOW
         inb_txc = 8
     end if
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
     call FDM_INITIALIZE(x, g(1), wrk1d)
@@ -56,13 +55,15 @@ program INIFLOW
     ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
-        stagger_on = .false. ! turn staggering off for OPR_POISSON_FXZ(...)
+        stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
         call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
     end if
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
+        call OPR_Elliptic_Initialize(ifile)
+
         if (fourier_on .and. g(1)%periodic .and. g(3)%periodic) then
             call OPR_FOURIER_INITIALIZE()
 
@@ -107,7 +108,7 @@ program INIFLOW
         end if
 
         if (imixture > 0) then
-            call IO_READ_FIELDS(TRIM(ADJUSTL(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+            call IO_READ_FIELDS(trim(adjustl(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
         end if
 
         if (flag_t /= 0) then
@@ -121,7 +122,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    call IO_WRITE_FIELDS(TRIM(ADJUSTL(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
+    call IO_WRITE_FIELDS(trim(adjustl(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
     call TLAB_STOP(0)
 end program INIFLOW

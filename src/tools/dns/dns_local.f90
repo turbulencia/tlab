@@ -92,15 +92,16 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
         use TLAB_CONSTANTS, only: efile, lfile
-        use TLAB_VARS, only: imode_eqns, imode_ibm, stagger_on
+        use TLAB_VARS, only: imode_eqns, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_ARRAYS
         use TLAB_PROCS
         use THERMO_ANELASTIC
+        use IBM_VARS, only: imode_ibm
 #ifdef USE_MPI
         use MPI
-        use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
-        use TLAB_MPI_VARS, only: ims_time_min, ims_err
+        use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
+        use TLabMPI_VARS, only: ims_time_min, ims_err
 #endif
         use FI_VECTORCALCULUS
 

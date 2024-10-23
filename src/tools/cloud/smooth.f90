@@ -21,7 +21,7 @@ program SMOOTH
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
-    call Thermodynamics_Initialize()
+    call Thermodynamics_Initialize_Parameters()
     ep = 0.0_wp
 
     write (*, *) 'Case d-e (1) or d-p (2) or p-h (3) ?'
