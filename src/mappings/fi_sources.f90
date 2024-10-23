@@ -284,7 +284,7 @@ contains
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx, ny, nz, inb_scal_array)
         real(wp), intent(out) :: b(nx, ny, nz)
-        real(wp), intent(in) :: ref(ny)         ! reference profile
+        real(wp), intent(inout) :: ref(ny)         ! reference profile
 
         ! -----------------------------------------------------------------------
         integer(wi) j, k
@@ -292,6 +292,7 @@ contains
 
         ! #######################################################################
 
+        
         CALL AVG1V2D_V(nx,ny,nz,1,s(:,:,:,1),ref(:),b) ! (mis)using b as work space
 
         select case (buoyancy%type)
