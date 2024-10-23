@@ -309,6 +309,10 @@ CONTAINS
 #ifdef USE_H5
     USE HDF5
 #endif
+
+#ifdef USE_H5
+    USE HDF5
+#endif
     IMPLICIT NONE
 
 #ifdef USE_MPI

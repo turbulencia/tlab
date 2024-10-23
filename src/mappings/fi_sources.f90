@@ -276,6 +276,10 @@ contains
 !# when it is a function of a scalar
 !########################################################################
     subroutine FI_BUOYANCY(buoyancy, nx, ny, nz, s, b, ref)
+        use TLAB_VARS,   only: g
+        use TLAB_ARRAYS, only: wrk1d
+        use AVGS,        only: AVG1V2D_V
+
         type(term_dt), intent(in) :: buoyancy
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx, ny, nz, inb_scal_array)
@@ -287,6 +291,9 @@ contains
         real(wp) c0_loc, c1_loc, c2_loc, c3_loc, dummy
 
         ! #######################################################################
+
+        CALL AVG1V2D_V(nx,ny,nz,1,s(:,:,:,1),ref(:),b) ! (mis)using b as work space
+
         select case (buoyancy%type)
 
         case (EQNS_BOD_HOMOGENEOUS)
