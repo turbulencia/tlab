@@ -603,8 +603,12 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 ! pressure in tmp12, Oy derivative in tmp11
     call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, i3, tmp12, tmp41, tmp42, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp11)
 
-    if (use_tower .and. rkm_substep == rkm_endstep) then
-        call DNS_TOWER_ACCUMULATE(tmp12, i4, wrk1d)
+    if (rkm_substep == rkm_endstep) then
+        if (use_tower) call DNS_TOWER_ACCUMULATE(tmp12, i4, wrk1d)
+        if ( phAvg%active) then
+            if (mod(itime+1, phAvg%stride) == 0) &
+                call PhaseAvg_Space(wrk2d, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 4, tmp12)
+        end if
     end if
 
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp12, tmp41)

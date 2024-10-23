@@ -5,13 +5,16 @@
 !# Calculate the pressure field from a divergence free velocity field and a body force.
 !#
 !########################################################################
-subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
-    use TLab_Constants, only: wp, wi, BCS_NN
-    use FDM, only: g
+subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
+    use TLAB_CONSTANTS, only: wp, wi, BCS_NN
+    use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: PressureFilter, stagger_on
-    use TLab_Pointers_3D, only: p_wrk2d
+    use TLAB_VARS, only: buoyancy, coriolis
+    use TLAB_VARS, only: inb_txc
+    use TLAB_ARRAYS, only: wrk1d
+    use TLAB_POINTERS_3D, only: p_wrk2d
     use THERMO_ANELASTIC
     use IBM_VARS, only: imode_ibm, ibm_burgers
     use OPR_PARTIAL
@@ -28,7 +31,20 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
     real(wp), intent(inout) :: tmp(isize_field, 3)
 
-    target q, tmp
+    target q, tmp, s
+! -----------------------------------------------------------------------
+    integer(wi) bcs(2, 2)
+    integer(wi) iq
+    integer(wi) siz, srt, end
+    integer(wi) :: i
+
+! -----------------------------------------------------------------------
+    real(wp) dummy
+
+! -----------------------------------------------------------------------
+#ifdef USE_BLAS
+    integer ILEN
+#endif
 ! -----------------------------------------------------------------------
     integer(wi) bcs(2, 2)
 
@@ -74,12 +90,97 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
     call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
     tmp5 = tmp5 + p
 
-    call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
-    tmp5 = tmp5 + p
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
-    tmp4 = tmp4 + p
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
-    tmp3 = tmp3 + p
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
+        tmp5 = tmp5 + p
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
+        tmp4 = tmp4 + p
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
+        tmp3 = tmp3 + p
+
+    end if
+
+    if (decomposition == DCMP_ADVECTION .OR. decomposition == DCMP_DIFFUSION) then
+        tmp9 = 0.0_wp
+        ! Sepereating Diffusion
+        ! NSE X-Comp
+        call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, tmp9, p, tmp1)
+        tmp6 = tmp6 + p   ! Diffusion d2u/dx2
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, tmp9, p, tmp2, tmp1)
+        tmp7 = tmp7 + p
+        call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, tmp9, p, tmp2, tmp1)
+        tmp8 = tmp8 + p
+
+        ! NSE Y-Comp
+        call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, tmp9, p, tmp1)
+        tmp7 = tmp7 + p ! Diffusion d2v/dx2 + d2v/dy2 
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, tmp9, p, tmp2, tmp1)
+        tmp6 = tmp6 + p
+        call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, tmp9, p, tmp2, tmp1)
+        tmp8 = tmp8 + p
+
+        ! NSE Z-Comp
+        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, tmp9, p, tmp1)
+        tmp8 = tmp8 + p  ! Diffusion d2w/dx2 + d2w/dy2 + d2w/dz2
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, tmp9, p, tmp2, tmp1)
+        tmp7 = tmp7 + p
+        call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, tmp9, p, tmp2, tmp1)
+        tmp6 = tmp6 + p
+
+    end if
+
+    if (decomposition == DCMP_ADVECTION) then
+        tmp3 = tmp3 - tmp6
+        tmp4 = tmp4 - tmp7
+        tmp5 = tmp5 - tmp8
+
+    else if (decomposition == DCMP_DIFFUSION) then
+        tmp3 = tmp6
+        tmp4 = tmp7
+        tmp5 = tmp8
+
+    end if
+
+    ! Coriolis Forcing term
+    if (decomposition == DCMP_CORIOLIS) then
+        call FI_CORIOLIS(coriolis,imax, jmax, kmax, q, tmp)
+        tmp3        => tmp(:, 1)
+        tmp4        => tmp(:, 2)
+        tmp5        => tmp(:, 3)
+    end if
+
+    ! Buoyancy Forcing term
+    if (decomposition == DCMP_BUOYANCY) then
+        do iq = 1, 3
+            if (buoyancy%type == EQNS_EXPLICIT) then
+                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
+            else
+                if (buoyancy%active(iq)) then
+                    if (iq == 2) then
+                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
+                    else
+                        wrk1d(:, 1) = 0.0_wp
+                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
+                    end if
+
+                    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                    dummy = buoyancy%vector(iq)
+#ifdef USE_BLAS
+                    ILEN = isize_field
+                    call DAXPY(ILEN, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
+#else
+                    do i = srt, end
+                            tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
+                    end do
+#endif
+                end if
+            end if
+        end do
+
+        tmp3        => tmp(:, 1)
+        tmp4        => tmp(:, 2)
+        tmp5        => tmp(:, 3)
+
+    end if
 
 ! If IBM, set flag back to false
     if (imode_ibm == 1) ibm_burgers = .false.

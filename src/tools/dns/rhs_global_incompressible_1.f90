@@ -24,8 +24,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use FDM, only: g
     use TLAB_VARS, only: PressureFilter, stagger_on
-    use TLab_Arrays
-    use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
+    use TLAB_VARS, only: itime
+    use TLAB_ARRAYS
+    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use THERMO_ANELASTIC
     use TLab_OpenMP
     use DNS_ARRAYS
@@ -298,8 +299,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), tmp1, tmp5)
             call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), tmp5, tmp4)
             call DNS_TOWER_ACCUMULATE(tmp4, 4, wrk1d)
-        else
-            call DNS_TOWER_ACCUMULATE(tmp1, 4, wrk1d)
+        if ( phAvg%active) then   
+            if (mod((itime+1),phAvg%stride) == 0)  then
+                call PhaseAvg_Space(wrk2d, 1, (itime+1)/phAvg%stride, nitera_first, nitera_save/phAvg%stride, tmp4)
+            end if
         end if
     end if
 
