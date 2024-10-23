@@ -844,6 +844,12 @@ subroutine IO_READ_GLOBAL(inifile)
 
     end do
 
+! ###################################################################
+! Phase Averaging
+! ###################################################################
+    call SCANINIINT(bakfile, inifile, 'Iteration', 'PhaseAvg', '0' , phAvg%stride)
+    if ( phAvg%stride .GT. 0 ) phAvg%active = .true.
+
     return
 end subroutine IO_READ_GLOBAL
 

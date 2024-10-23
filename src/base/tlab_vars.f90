@@ -1,5 +1,5 @@
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt
+    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt, phaseavg_dt
     use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
     use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
     implicit none
@@ -97,5 +97,10 @@ module TLAB_VARS
     integer :: nstatavg_points                      ! number of accumulated points
     integer :: istattimeorg                         ! time at which accumulation of statistics started
     real(wp) :: rstattimeorg
+
+! ###################################################################
+! Phase Average
+! ###################################################################
+    type(phaseavg_dt) :: phAvg
 
 end module TLAB_VARS

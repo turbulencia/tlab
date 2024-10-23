@@ -95,5 +95,12 @@ module TLAB_TYPES
         real(wp), dimension(MAX_MODES) :: amplitude, phasex, phasez
         real(wp), dimension(MAX_PARS) :: parameters
     end type discrete_dt
+    
+    type phaseavg_dt
+        sequence
+        logical active
+        integer stride
+        character(32) :: type
+    end type phaseavg_dt
 
 end module TLAB_TYPES

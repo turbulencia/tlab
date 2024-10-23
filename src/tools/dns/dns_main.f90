@@ -34,6 +34,7 @@ program DNS
     use OPR_ELLIPTIC
     use OPR_FILTERS
     use OPR_FOURIER
+    use AVG_PHASE
     implicit none
     save
 
@@ -91,6 +92,10 @@ program DNS
     call STATISTICS_INITIALIZE()
 
     call PLANES_INITIALIZE()
+
+    if (phAvg%active) then
+        call PhaseAvg_Initialize_Memory(__FILE__, nitera_save)
+    end if
 
     if (use_tower) then
         call DNS_TOWER_INITIALIZE(tower_stride)
@@ -253,6 +258,24 @@ program DNS
             call DNS_LOGS()
             if (dns_obs_log /= OBS_TYPE_NONE) then
                 call DNS_OBS()
+            end if
+        end if
+        
+        if (phAvg%active) then
+            if (mod(itime, phAvg%stride) == 0) then
+                call PhaseAvg_Space(wrk2d, inb_flow, itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 1)
+                call PhaseAvg_Space(wrk2d, inb_scal, itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 2)
+                ! Pressure is taken from the RHS subroutine
+                call PhaseAvg_Space(wrk2d, 6       , itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 5)
+
+                if (mod(itime - nitera_first, nitera_save) == 0) then
+                    call PhaseAvg_Write(inb_flow, IO_FLOW, nitera_save/phAvg%stride, avgu_name  , 1)
+                    call PhaseAvg_Write(inb_scal, IO_SCAL, nitera_save/phAvg%stride, avgs_name  , 2)
+                    call PhaseAvg_Write(1       , IO_SCAL, nitera_save/phAvg%stride, avgp_name  , 4)
+                    call PhaseAvg_Write(6       , IO_FLOW, nitera_save/phAvg%stride, avgstr_name, 5)
+
+                    call PhaseAvg_ResetVariable()
+                end if
             end if
         end if
 
