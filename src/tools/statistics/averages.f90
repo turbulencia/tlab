@@ -6,9 +6,8 @@
 
 program AVERAGES
 
-    use TLab_Pointers, only: pointers_dt
-    use TLab_Constants, only: wp, wi, small_wp, MAX_AVG_TEMPORAL
-    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use TLAB_TYPES, only: pointers_dt, phaseavg_dt
+    use TLAB_CONSTANTS
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
