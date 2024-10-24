@@ -6,7 +6,7 @@
 
 program AVERAGES
 
-    use TLAB_TYPES, only: pointers_dt
+    use TLAB_TYPES, only: pointers_dt, phaseavg_dt
     use TLAB_CONSTANTS
     use TLAB_VARS
     use TLAB_ARRAYS
