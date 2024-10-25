@@ -11,7 +11,7 @@
 !# routine trans below is faster than TRANSPOSE routine from f90
 !#
 !########################################################################
-subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
+subroutine TLab_Transpose(a, nra, nca, ma, b, mb)
     use TLab_Constants, only: wp, wi
     use TLab_OpenMP
     implicit none
@@ -79,11 +79,11 @@ subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
 #endif
 
     return
-end subroutine DNS_TRANSPOSE
+end subroutine TLab_Transpose
 
 !########################################################################
 !########################################################################
-subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
+subroutine TLab_Transpose_INT1(a, nra, nca, ma, b, mb)
     use TLab_Constants, only: wp, wi
     use TLab_OpenMP
     implicit none
@@ -141,11 +141,11 @@ subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
 !$omp end parallel
 
     return
-end subroutine DNS_TRANSPOSE_INT1
+end subroutine TLab_Transpose_INT1
 
 !########################################################################
 !########################################################################
-subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
+subroutine TLab_Transpose_COMPLEX(a, nra, nca, ma, b, mb)
     use TLab_Constants, only: wp, wi
     use TLab_OpenMP
     implicit none
@@ -207,5 +207,5 @@ subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
 !$omp end parallel
 
     return
-end subroutine DNS_TRANSPOSE_COMPLEX
+end subroutine TLab_Transpose_COMPLEX
 

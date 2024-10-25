@@ -449,7 +449,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, g%size, g%size, nyz, p_b, nyz)
 #else
-        call DNS_TRANSPOSE(p_a, g%size, nyz, g%size, p_b, nyz)
+        call TLab_Transpose(p_a, g%size, nyz, g%size, p_b, nyz)
 #endif
 
 ! ###################################################################
@@ -494,14 +494,14 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_c, nyz, nyz, g%size, p_b, g%size)
 #else
-        call DNS_TRANSPOSE(p_c, nyz, g%size, nyz, p_b, g%size)
+        call TLab_Transpose(p_c, nyz, g%size, nyz, p_b, g%size)
 #endif
 
         if (type == OPR_P2_P1) then
 #ifdef USE_ESSL
             call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
 #else
-            call DNS_TRANSPOSE(p_d, nyz, g%size, nyz, p_c, g%size)
+            call TLab_Transpose(p_d, nyz, g%size, nyz, p_c, g%size)
 #endif
         end if
 
@@ -679,7 +679,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(u, nxy, nxy, nz, result, nz)
 #else
-                call DNS_TRANSPOSE(u, nxy, nz, nxy, result, nz)
+                call TLab_Transpose(u, nxy, nz, nxy, result, nz)
 #endif
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
@@ -741,13 +741,13 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(p_b, nz, nz, nxy, result, nxy)
 #else
-                call DNS_TRANSPOSE(p_b, nz, nxy, nz, result, nxy)
+                call TLab_Transpose(p_b, nz, nxy, nz, result, nxy)
 #endif
                 if (type == OPR_P2_P1) then
 #ifdef USE_ESSL
                     call DGETMO(p_c, nz, nz, nxy, tmp1, nxy)
 #else
-                    call DNS_TRANSPOSE(p_c, nz, nxy, nz, tmp1, nxy)
+                    call TLab_Transpose(p_c, nz, nxy, nz, tmp1, nxy)
 #endif
                 end if
             end if

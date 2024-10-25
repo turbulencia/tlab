@@ -17,7 +17,7 @@ subroutine SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, amin, y, a, at, surface
 ! -------------------------------------------------------------------
 ! Make y direction the first one; x becomes the last one
 ! -------------------------------------------------------------------
-    call DNS_TRANSPOSE(a, imax, jkmax, imax, at, jkmax)
+    call TLab_Transpose(a, imax, jkmax, imax, at, jkmax)
 
     do i = 1, ikmax
         do j = jmin_loc + 1, jmax
@@ -33,7 +33,7 @@ subroutine SL_LOWER_BOUNDARY(imax, jmax, kmax, jmin_loc, amin, y, a, at, surface
 ! -------------------------------------------------------------------
 ! Put array in right order
 ! -------------------------------------------------------------------
-    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call TLab_Transpose(wrk2d, kmax, imax, kmax, surface, imax)
 
     return
 end subroutine SL_LOWER_BOUNDARY
@@ -59,7 +59,7 @@ subroutine SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, amin, y, a, at, surface
 ! -------------------------------------------------------------------
 ! Make y direction the first one; x becomes the last one
 ! -------------------------------------------------------------------
-    call DNS_TRANSPOSE(a, imax, jkmax, imax, at, jkmax)
+    call TLab_Transpose(a, imax, jkmax, imax, at, jkmax)
 
     do i = 1, ikmax
         do j = jmax_loc - 1, 1, -1
@@ -75,7 +75,7 @@ subroutine SL_UPPER_BOUNDARY(imax, jmax, kmax, jmax_loc, amin, y, a, at, surface
 ! -------------------------------------------------------------------
 ! Put array in right order
 ! -------------------------------------------------------------------
-    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call TLab_Transpose(wrk2d, kmax, imax, kmax, surface, imax)
 
     return
 end subroutine SL_UPPER_BOUNDARY
@@ -103,7 +103,7 @@ subroutine BOUNDARY_LOWER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2
 
 ! Make y direction the first one; x becomes the last one
     if (imax > 1) then
-        call DNS_TRANSPOSE_INT1(a, imax, jkmax, imax, at, jkmax)
+        call TLab_Transpose_INT1(a, imax, jkmax, imax, at, jkmax)
     else
         at = a
     end if
@@ -120,7 +120,7 @@ subroutine BOUNDARY_LOWER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2
     end do
 
 ! Put array in right order
-    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call TLab_Transpose(wrk2d, kmax, imax, kmax, surface, imax)
 
     return
 end subroutine BOUNDARY_LOWER_INT1
@@ -149,7 +149,7 @@ subroutine BOUNDARY_UPPER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2
 
 ! Make y direction the first one; x becomes the last one
     if (imax > 1) then
-        call DNS_TRANSPOSE_INT1(a, imax, jkmax, imax, at, jkmax)
+        call TLab_Transpose_INT1(a, imax, jkmax, imax, at, jkmax)
     else
         at = a
     end if
@@ -163,7 +163,7 @@ subroutine BOUNDARY_UPPER_INT1(imax, jmax, kmax, avalue, y, a, at, surface, wrk2
     end do
 
 ! Put array in right order
-    call DNS_TRANSPOSE(wrk2d, kmax, imax, kmax, surface, imax)
+    call TLab_Transpose(wrk2d, kmax, imax, kmax, surface, imax)
 
     return
 end subroutine BOUNDARY_UPPER_INT1

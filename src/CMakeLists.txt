@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.13)
 # specify the location of loadable modules (.cmake extension)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../config)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
+#message(STATUS ${CMAKE_CURRENT_SOURCE_DIR})
 
 # load system specific settings if not set, force default.cmake
 # cmake ../src -DSYST=mpipc

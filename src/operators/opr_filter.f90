@@ -292,7 +292,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, f%size, f%size, nyz, p_b, nyz)
 #else
-        call DNS_TRANSPOSE(p_a, f%size, nyz, f%size, p_b, nyz)
+        call TLab_Transpose(p_a, f%size, nyz, f%size, p_b, nyz)
 #endif
 
         !###################################################################
@@ -305,7 +305,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, nyz, nyz, f%size, p_b, f%size)
 #else
-        call DNS_TRANSPOSE(p_a, nyz, f%size, nyz, p_b, f%size)
+        call TLab_Transpose(p_a, nyz, f%size, nyz, p_b, f%size)
 #endif
 
         !-------------------------------------------------------------------
@@ -352,7 +352,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(u, nxy, nxy, nz, wrk3d, nz)
 #else
-            call DNS_TRANSPOSE(u, nxy, nz, nxy, wrk3d, nz)
+            call TLab_Transpose(u, nxy, nz, nxy, wrk3d, nz)
 #endif
             p_org => wrk3d
             p_dst => u
@@ -368,7 +368,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(p_dst, nz, nz, nxy, p_org, nxy)
 #else
-            call DNS_TRANSPOSE(p_dst, nz, nxy, nz, p_org, nxy)
+            call TLab_Transpose(p_dst, nz, nxy, nz, p_org, nxy)
 #endif
         end if
 

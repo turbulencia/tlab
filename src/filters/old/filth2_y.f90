@@ -27,7 +27,7 @@ SUBROUTINE FILTH2_Y(iunify, j1bc, imax, jmax, kmax, ny0, ny1, cf2y, z1, zf1, wrk
      CALL DNS_STOP(DNS_ERROR_LESEVEN)
   ENDIF
 
-  CALL DNS_TRANSPOSE(z1, nij, kmax, nij, zf1, kmax)
+  CALL TLab_Transpose(z1, nij, kmax, nij, zf1, kmax)
 
   IF ( iunify .EQ. 0 ) THEN
      IF ( j1bc .EQ. 0 ) THEN
@@ -49,7 +49,7 @@ SUBROUTINE FILTH2_Y(iunify, j1bc, imax, jmax, kmax, ny0, ny1, cf2y, z1, zf1, wrk
      ENDIF
   ENDIF
 
-  CALL DNS_TRANSPOSE(wrk, kmax, nij, kmax, zf1, nij)
+  CALL TLab_Transpose(wrk, kmax, nij, kmax, zf1, nij)
 
   RETURN
 END SUBROUTINE FILTH2_Y

@@ -65,7 +65,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
 #ifdef USE_ESSL
   call DGETMO       (tmp, g(1)%size, g(1)%size, nyz,       epsi, nyz)
 #else
-  call DNS_TRANSPOSE(tmp, g(1)%size, nyz,       g(1)%size, epsi, nyz)
+  call TLab_Transpose(tmp, g(1)%size, nyz,       g(1)%size, epsi, nyz)
 #endif
   ! -------------------------------------------------------------------
   ! local transposition in y
@@ -73,7 +73,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
 #ifdef USE_ESSL
   call DGETMO       (eps, nxy, nxy, kmax, epsj, kmax)
 #else
-  call DNS_TRANSPOSE(eps, nxy, kmax, nxy, epsj, kmax)
+  call TLab_Transpose(eps, nxy, kmax, nxy, epsj, kmax)
 #endif
   ! -------------------------------------------------------------------
   ! MPI transposition in z

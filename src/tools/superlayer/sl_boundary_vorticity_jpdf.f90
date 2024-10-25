@@ -126,7 +126,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! ###################################################################
 ! make ifields the last variable, putting first the imax*kmax
     ikmax = imax*kmax
-    call DNS_TRANSPOSE(samples, nfield_loc, ikmax, nfield_loc, wrk2d, ikmax)
+    call TLab_Transpose(samples, nfield_loc, ikmax, nfield_loc, wrk2d, ikmax)
 
     isize = nfield_loc/2
     write (fname, *) itime; fname = 'jpdf'//trim(adjustl(suffix))//trim(adjustl(fname))

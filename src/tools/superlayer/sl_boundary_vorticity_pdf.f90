@@ -180,7 +180,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 ! transpose data from sample into txc space to have nfield as last index
 ! ioffset is equal to the number of fields
     ikmax = imax*kmax
-    call DNS_TRANSPOSE(samples, ioffset, ikmax, ioffset, txc, ikmax)
+    call TLab_Transpose(samples, ioffset, ikmax, ioffset, txc, ikmax)
 
     if (isl == 1 .or. isl == 2) then
         isize = 1

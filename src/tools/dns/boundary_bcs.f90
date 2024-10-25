@@ -427,7 +427,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(u, nxy, nxy, nz, tmp1, nz)
 #else
-                call DNS_TRANSPOSE(u, nxy, nz, nxy, tmp1, nz)
+                call TLab_Transpose(u, nxy, nz, nxy, tmp1, nz)
 #endif
                 p_org => tmp1
                 p_dst(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
@@ -491,8 +491,8 @@ contains
                 if (any([BCS_ND, BCS_NN] == ibc)) call DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
                 if (any([BCS_DN, BCS_NN] == ibc)) call DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
 #else
-                if (any([BCS_ND, BCS_NN] == ibc)) call DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
-                if (any([BCS_DN, BCS_NN] == ibc)) call DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
+                if (any([BCS_ND, BCS_NN] == ibc)) call TLab_Transpose(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
+                if (any([BCS_DN, BCS_NN] == ibc)) call TLab_Transpose(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
 #endif
             end if
 

@@ -270,7 +270,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, p_source, nz)
 #endif
 
             bcs_ht = localProps%auxiliar(1)                     ! downward flux at domain top
@@ -292,7 +292,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_b, nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_b, nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, p_b, nz)
 #endif
 
             wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1)) + kappa(2, 1)*(s(:, 2) - s(:, localProps%scalar(1))) + kappa(3, 1) ! absorption coefficient
@@ -302,7 +302,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, p_source, nz)
 #endif
 
             bcs_ht = localProps%auxiliar(1)                     ! downward flux at domain top
@@ -327,7 +327,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 1), nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 1), nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, tmp_rad(:, 1), nz)
 #endif
             t_ht(1:nxz) = tmp_rad(nxz*(ny - 1) + 1:nxz*ny, 1)           ! save T at the top boundary
 
@@ -346,7 +346,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 3), nz)
 #else
-                call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 3), nz)
+                call TLab_Transpose(wrk3d, nxy, nz, nxy, tmp_rad(:, 3), nz)
 #endif
 
                 bcs_ht(1:nxz) = localProps%auxiliar(iband)
@@ -379,11 +379,11 @@ contains
             call DGETMO(p_flux_down, nz, nz, nxy, flux, nxy)
         end if
 #else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, source, nxy)
+        call TLab_Transpose(p_source, nz, nxy, nz, source, nxy)
         if (present(flux)) then
             p_flux_down = p_flux_up - p_flux_down
-            call DNS_TRANSPOSE(p_flux_up, nz, nxy, nz, b, nxy)
-            call DNS_TRANSPOSE(p_flux_down, nz, nxy, nz, flux, nxy)
+            call TLab_Transpose(p_flux_up, nz, nxy, nz, b, nxy)
+            call TLab_Transpose(p_flux_down, nz, nxy, nz, flux, nxy)
         end if
 #endif
 
