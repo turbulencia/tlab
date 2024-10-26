@@ -80,7 +80,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
     else if (ith == 2) then
         ij = jmax/2
-        vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz, area)
+        vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz)
         vmin = threshold*threshold*vmean
     end if
 ! upper or lower depending on flag isl

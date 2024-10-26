@@ -56,7 +56,7 @@ program VPOISSON
     e(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 7)
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -102,10 +102,10 @@ program VPOISSON
         a = f
         bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
         ! For Neumann conditions, we need to satisfy the compatibility constraint dpdy_top-dpdy_bottom=int f
-        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb, g(1)%jac, g(3)%jac, area)
-        ! call AVG_IK_V(imax, jmax, kmax, jmax, a, g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb)
+        ! call AVG_IK_V(imax, jmax, kmax, jmax, a, wrk1d(:, 1), wrk1d(:, 2))
         ! delta = mean + Int_Simpson(wrk1d(1:jmax,1), g(2)%nodes(1:jmax))
-        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht, g(1)%jac, g(3)%jac, area)
+        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht)
         ! bcs_ht = bcs_ht - mean + delta
 
         if (type_of_operator == 1) then
@@ -160,7 +160,7 @@ program VPOISSON
 
         ! -------------------------------------------------------------------
         ! DC level at lower boundary set to zero
-        mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
+        mean = AVG_IK(imax, jmax, kmax, 1, a)
         a = a - mean
 
         ! ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)

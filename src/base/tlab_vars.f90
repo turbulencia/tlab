@@ -46,7 +46,6 @@ module TLAB_VARS
 
 ! ###################################################################
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
-    real(wp) :: area                                ! Horizontal area and volume
 
 ! ###################################################################
 ! information to set up bcs, ics, and reference background profiles

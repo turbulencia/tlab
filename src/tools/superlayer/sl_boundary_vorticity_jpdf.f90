@@ -90,7 +90,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
     else if (ith == 2) then
         ij = jmax/2
-        vmean = AVG_IK(imax, jmax, kmax, ij, txc(1, 3), g(1)%jac, g(3)%jac, area)
+        vmean = AVG_IK(imax, jmax, kmax, ij, txc(1, 3))
         vmin = threshold*threshold*vmean
     end if
 ! upper/lower/both depending on flag isl

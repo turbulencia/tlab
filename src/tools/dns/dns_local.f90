@@ -232,7 +232,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_OBS_CONTROL()
-        use TLAB_VARS, only: imax, jmax, kmax, g, area
+        use TLAB_VARS, only: imax, jmax, kmax, g
         use TLAB_VARS, only: scal_on, inb_scal
         use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLab_Arrays
@@ -257,8 +257,8 @@ contains
 
         case (OBS_TYPE_EKMAN)
             ! ubulk, wbulk
-            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 1), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
-            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 3), g(1)%jac, g(3)%jac, wrk1d(:, 3), wrk1d(:, 4), area)
+            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 1), wrk1d(:, 1), wrk1d(:, 2))
+            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 3), wrk1d(:, 3), wrk1d(:, 4))
             ubulk = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax))
             wbulk = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 3), g(2)%nodes(1:jmax))
 
@@ -272,12 +272,12 @@ contains
 
             ! integrated entstrophy
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
-            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1, 1), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1, 1), wrk1d(:, 1), wrk1d(:, 2))
             int_ent = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax))
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call AVG_IK_V(imax, jmax, kmax, jmax, s(1, is), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+                    call AVG_IK_V(imax, jmax, kmax, jmax, s(1, is), wrk1d(:, 1), wrk1d(:, 2))
                     obs_data(ip + is) = (wrk1d(2, 1) - wrk1d(1, 1))/g(2)%nodes(2)
                 end do
             end if

@@ -2,7 +2,7 @@
 
 !########################################################################
 !########################################################################
-subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z, area)
+subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
     use TLab_Constants, only: efile, wp, wi
     use TLab_WorkFlow
 
@@ -12,7 +12,6 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     integer(wi), intent(in) :: imax, jmax, kmax
     real(wp) scalex, scaley, scalez
     real(wp) x(imax), y(jmax), z(kmax)
-    real(wp), optional :: area
 
     ! -----------------------------------------------------------------------
     integer(wi) imax_loc, jmax_loc, kmax_loc
@@ -43,11 +42,6 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     read (50) y
     read (50) z
     close (50)
-
-    if (present(area)) then
-        area = scalex
-        if (kmax > 1) area = area*scalez ! 3D case
-    end if
 
     return
 

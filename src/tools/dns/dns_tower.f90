@@ -511,12 +511,11 @@ CONTAINS
   SUBROUTINE TOWER_AVG_IK_V(imax, jmax, kmax, a, avg, wrk)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#include "types.h"
 
 #ifdef USE_MPI
     USE MPI
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
-    USE TLAB_VARS, ONLY : area, g
 
     IMPLICIT NONE
 
@@ -536,20 +535,20 @@ CONTAINS
     DO k = 1, kmax
        DO j=1,tower_jmax
           DO i = 1, imax
-             avg(j) = avg(j) + a(i,tower_jpos(j),k) *g(1)%jac(i,1) *g(3)%jac(k,1)
+             avg(j) = avg(j) + a(i,tower_jpos(j),k) 
           ENDDO
        ENDDO
     ENDDO
 
+    DO j=1,tower_jmax
+        avg(j) = avg(j)/real(imax*kmax)
+    ENDDO
 #ifdef USE_MPI
     CALL MPI_REDUCE(avg, wrk, tower_jmax, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
     DO j=1,tower_jmax
-       avg(j) = wrk(j)/area
+        avg(j) = wrk(j)/real(ims_npro_i*ims_npro_k)
     ENDDO
 #else
-    DO j=1,tower_jmax
-       avg(j) = avg(j)/area
-    ENDDO
 #endif
 
     RETURN

@@ -39,7 +39,7 @@ program INIRAND
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)

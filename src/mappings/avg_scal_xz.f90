@@ -307,9 +307,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Preliminary data of velocity and density
     ! #######################################################################
-    call AVG_IK_V(imax, jmax, kmax, jmax, u, g(1)%jac, g(3)%jac, rU(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, v, g(1)%jac, g(3)%jac, rV(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, w, g(1)%jac, g(3)%jac, rW(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, u, rU(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, v, rV(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, w, rW(1), wrk1d)
 
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         rR(:) = 1.0_wp
@@ -319,14 +319,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         fW(:) = rW(:)
 
     else
-        call AVG_IK_V(imax, jmax, kmax, jmax, rho, g(1)%jac, g(3)%jac, rR(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, rho, rR(1), wrk1d)
 
         dsdx = rho*u
         dsdy = rho*v
         dsdz = rho*w
-        call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, fU(1), wrk1d, area)
-        call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, fV(1), wrk1d, area)
-        call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, fW(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, fU(1), wrk1d)
+        call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, fV(1), wrk1d)
+        call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, fW(1), wrk1d)
         fU(:) = fU(:)/rR(:)
         fV(:) = fV(:)/rR(:)
         fW(:) = fW(:)/rR(:)
@@ -347,9 +347,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) dsdy = dsdy*rho
     dsdz = v*w
     if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) dsdz = dsdz*rho
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, Rvu(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, Rvv(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, Rvw(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, Rvu(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Rvv(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, Rvw(1), wrk1d)
     Rvu(:) = Rvu(:)/rR(:) - fV(:)*fU(:)
     Rvv(:) = Rvv(:)/rR(:) - fV(:)*fV(:)
     Rvw(:) = Rvw(:)/rR(:) - fV(:)*fW(:)
@@ -357,13 +357,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Scalar
     ! #######################################################################
-    call AVG_IK_V(imax, jmax, kmax, jmax, s_local, g(1)%jac, g(3)%jac, rS(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, s_local, rS(1), wrk1d)
 
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         fS(:) = rS(:)
     else
         p_wrk3d = rho*s_local
-        call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, fS(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, fS(1), wrk1d)
         fS(:) = fS(:)/rR(:)
     end if
 
@@ -376,11 +376,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         p_wrk3d(:, j, :) = s_local(:, j, :) - rS(j)
     end do
     tmp1 = p_wrk3d*p_wrk3d
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, rS2(1), wrk1d)
     tmp1 = p_wrk3d*tmp1
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS3(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, rS3(1), wrk1d)
     tmp1 = p_wrk3d*tmp1
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, rS4(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, rS4(1), wrk1d)
 
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         fS2(:) = rS2(:)
@@ -392,11 +392,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             p_wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
         end do
         tmp1 = p_wrk3d*p_wrk3d*rho
-        call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, fS2(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, fS2(1), wrk1d)
         tmp1 = p_wrk3d*tmp1
-        call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, fS3(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, fS3(1), wrk1d)
         tmp1 = p_wrk3d*tmp1
-        call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, fS4(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, fS4(1), wrk1d)
         fS2(:) = fS2(:)/rR(:)
         fS3(:) = fS3(:)/rR(:)
         fS4(:) = fS4(:)/rR(:)
@@ -417,9 +417,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         dsdy(:, j, :) = p_wrk3d(:, j, :)*(v(:, j, :) - fV(j))
         dsdz(:, j, :) = p_wrk3d(:, j, :)*(w(:, j, :) - fW(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, Rsu(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, Rsv(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, Rsw(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, Rsu(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Rsv(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, Rsw(1), wrk1d)
     Rsu(:) = Rsu(:)/rR(:)
     Rsv(:) = Rsv(:)/rR(:)
     Rsw(:) = Rsw(:)/rR(:)
@@ -436,14 +436,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         dsdy(:, j, :) = dsdy(:, j, :)*(v(:, j, :) - fV(j))
         dsdz(:, j, :) = dsdz(:, j, :)*(v(:, j, :) - fV(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, Tssy1(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, Tsuy1(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, Tsvy1(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, Tswy1(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, Tssy1(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, Tsuy1(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Tsvy1(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, Tswy1(1), wrk1d)
 
     ! -----------------------------------------------------------------------
     ! Pressure terms in transport equations
-    call AVG_IK_V(imax, jmax, kmax, jmax, p, g(1)%jac, g(3)%jac, rP(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p, rP(1), wrk1d)
 
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
@@ -454,10 +454,10 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         dsdy(:, j, :) = (p(:, j, :) - rP(j))*(dsdy(:, j, :) - fS_y(j))
         dsdz(:, j, :) = (p(:, j, :) - rP(j))*dsdz(:, j, :)
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, Tsvy3(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, PIsu(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, PIsv(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, PIsw(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, Tsvy3(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, PIsu(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, PIsv(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, PIsw(1), wrk1d)
 
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rP(1), aux(1))
     Gsv(:) = (rS(:) - fS(:))*aux(:)
@@ -468,13 +468,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     k = ig(8) - 1
 
     do is_loc = 1, inb_scal_array
-        call AVG_IK_V(imax, jmax, kmax, jmax, s(:, :, :, is_loc), g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, s(:, :, :, is_loc), aux(1), wrk1d)
         do j = 1, jmax
             tmp1(:, j, :) = (s(:, j, :, is_loc) - aux(j))*(s_local(:, j, :) - fS(j))
             tmp2(:, j, :) = tmp1(:, j, :)*(s_local(:, j, :) - fS(j))
         end do
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, mean2d(1, k), wrk1d)
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, mean2d(1, k), wrk1d)
     end do
 
     ! #######################################################################
@@ -555,15 +555,15 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Calculating averages
     k = ig(1) + im
     if (infraredProps%active(is)) then
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, mean2d(1, k), wrk1d)
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, mean2d(1, k), wrk1d) ! correction term or flux
     end if
     if (imixture == MIXT_TYPE_AIRWATER_LINEAR .or. imixture == MIXT_TYPE_AIRWATER) then           ! evaporation
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, mean2d(1, k), wrk1d)
     end if
     if (sedimentationProps%active(is)) then
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area)
-        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, mean2d(1, k), wrk1d, area) ! correction term or flux
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, mean2d(1, k), wrk1d)
+        k = k + 1; call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, mean2d(1, k), wrk1d) ! correction term or flux
     end if
 
     p_wrk3d = 0.0_wp ! total
@@ -578,9 +578,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (sedimentationProps%active(is)) then
         p_wrk3d = p_wrk3d + tmp3
     end if
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, rQ(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, rQ(1), wrk1d)
     if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) p_wrk3d = p_wrk3d*rho
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, fQ(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, fQ(1), wrk1d)
     fQ(:) = fQ(:)/rR(:)
 
     do j = 1, jmax
@@ -589,10 +589,10 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         dsdy(:, j, :) = (v(:, j, :) - fV(j))*p_wrk3d(:, j, :)
         dsdz(:, j, :) = (w(:, j, :) - fW(j))*p_wrk3d(:, j, :)
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, Qss(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, g(1)%jac, g(3)%jac, Qsu(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, Qsv(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, g(1)%jac, g(3)%jac, Qsw(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, Qss(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, Qsu(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Qsv(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, Qsw(1), wrk1d)
     Qss(:) = Qss(:)*2.0_wp/rR(:)
     Qsu(:) = Qsu(:)/rR(:)
     Qsv(:) = Qsv(:)/rR(:)
@@ -608,7 +608,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdx*dsdx + dsdy*dsdy + dsdz*dsdz
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Ess(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Ess(1), wrk1d)
     Ess(:) = Ess(:)*diff*2.0_wp
 
     ! -----------------------------------------------------------------------
@@ -619,26 +619,26 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Transport term
     p_wrk3d = (tmp2*2.0_wp - tmp1 - tmp3)*c23*visc
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tau_yy(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tau_yy(1), wrk1d)
     do j = 1, jmax
         p_wrk3d(:, j, :) = -(p_wrk3d(:, j, :) - Tau_yy(j))*(s_local(:, j, :) - fS(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tsvy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tsvy2(1), wrk1d)
 
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yy(1), Tau_yy_y(1))
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdx*((tmp1*2.0_wp - tmp2 - tmp3)*c23*visc + tmp1*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Esu(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Esu(1), wrk1d)
 
     p_wrk3d = dsdy*((tmp2*2.0_wp - tmp1 - tmp3)*c23*visc + tmp2*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Esv(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Esv(1), wrk1d)
 
     p_wrk3d = dsdz*((tmp3*2.0_wp - tmp1 - tmp2)*c23*visc + tmp3*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Esw(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Esw(1), wrk1d)
 
     ! -----------------------------------------------------------------------
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2)
@@ -647,23 +647,23 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Transport term
     p_wrk3d = (tmp1 + tmp2)*visc
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tau_yx(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tau_yx(1), wrk1d)
     do j = 1, jmax
         p_wrk3d(:, j, :) = -(p_wrk3d(:, j, :) - Tau_yx(j))*(s_local(:, j, :) - fS(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tsuy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tsuy2(1), wrk1d)
 
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yx(1), Tau_yx_y(1))
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdy*((tmp1 + tmp2)*visc + tmp1*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, aux(1), wrk1d)
     Esu(:) = Esu(:) + aux(:)
 
     p_wrk3d = dsdx*((tmp1 + tmp2)*visc + tmp2*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, aux(1), wrk1d)
     Esv(:) = Esv(:) + aux(:)
 
     ! -----------------------------------------------------------------------
@@ -673,23 +673,23 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Transport term
     p_wrk3d = (tmp3 + tmp2)*visc
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tau_yz(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tau_yz(1), wrk1d)
     do j = 1, jmax
         p_wrk3d(:, j, :) = -(p_wrk3d(:, j, :) - Tau_yz(j))*(s_local(:, j, :) - fS(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tswy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tswy2(1), wrk1d)
 
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yz(1), Tau_yz_y(1))
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdz*((tmp3 + tmp2)*visc + tmp2*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, aux(1), wrk1d)
     Esv(:) = Esv(:) + aux(:)
 
     p_wrk3d = dsdy*((tmp3 + tmp2)*visc + tmp3*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, aux(1), wrk1d)
     Esw(:) = Esw(:) + aux(:)
 
     ! -----------------------------------------------------------------------
@@ -699,12 +699,12 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdz*((tmp3 + tmp1)*visc + tmp1*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, aux(1), wrk1d)
     Esu(:) = Esu(:) + aux(:)
 
     p_wrk3d = dsdx*((tmp3 + tmp1)*visc + tmp3*diff)
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, aux(1), wrk1d)
     Esw(:) = Esw(:) + aux(:)
 
     ! -----------------------------------------------------------------------
@@ -716,28 +716,28 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     tmp1 = dsdx*dsdx
     tmp2 = p_wrk3d*p_wrk3d
     tmp3 = dsdz*dsdz
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, S_x2(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, S_y2(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, S_z2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, S_x2(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, S_y2(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, S_z2(1), wrk1d)
 
     tmp1 = tmp1*dsdx
     tmp2 = tmp2*p_wrk3d
     tmp3 = tmp3*dsdz
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, S_x3(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, S_y3(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, S_z3(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, S_x3(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, S_y3(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, S_z3(1), wrk1d)
 
     tmp1 = tmp1*dsdx
     tmp2 = tmp2*p_wrk3d
     tmp3 = tmp3*dsdz
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, S_x4(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, S_y4(1), wrk1d, area)
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, S_z4(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, S_x4(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, S_y4(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, S_z4(1), wrk1d)
 
     ! -----------------------------------------------------------------------
     ! Molecular fluxes
     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) dsdy = dsdy*vis
-    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, g(1)%jac, g(3)%jac, Fy(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Fy(1), wrk1d)
 
     ! Contribution to turbulent transport
     do j = 1, jmax
@@ -746,13 +746,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         tmp2(:, j, :) = (dsdy(:, j, :) - Fy(j))*(v(:, j, :) - fV(j))
         tmp3(:, j, :) = (dsdy(:, j, :) - Fy(j))*(w(:, j, :) - fW(j))
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Tssy2(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tssy2(1), wrk1d)
     Tssy2(:) = -Tssy2(:)*diff*2.0_wp
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, aux(1), wrk1d)
     Tsuy2(:) = Tsuy2(:) - aux(:)*diff
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp2, aux(1), wrk1d)
     Tsvy2(:) = Tsvy2(:) - aux(:)*diff
-    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, g(1)%jac, g(3)%jac, aux(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, tmp3, aux(1), wrk1d)
     Tswy2(:) = Tswy2(:) - aux(:)*diff
 
     Fy(:) = Fy(:)*diff
@@ -781,7 +781,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     do j = 1, jmax
         p_wrk3d(:, j, :) = (s_local(:, j, :) - fS(j))*p_wrk3d(:, j, :)
     end do
-    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, g(1)%jac, g(3)%jac, Bsv(1), wrk1d, area)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Bsv(1), wrk1d)
     Bsv(:) = Bsv(:)/rR(:)
 
     ! #######################################################################
