@@ -10,8 +10,9 @@ module OPR_FILTERS
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow
-    use FLT_COMPACT
-    use FLT_EXPLICIT
+    use Filters_Compact
+    use Filters_Explicit
+    use Filters_Tophat
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
@@ -43,7 +44,7 @@ contains
             call FLT_E4_COEFFS(f%size, f%periodic, g%scale, g%nodes, f%coeffs)
 
         case (DNS_FILTER_TOPHAT)
-            call FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
+            call FLT_T1_COEFFS(g%scale, g%nodes, f, wrk1d)
 
         case (DNS_FILTER_COMPACT)
             call FLT_C4_LHS(f%size, f%bcsmin, f%bcsmax, f%parameters(1), f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
