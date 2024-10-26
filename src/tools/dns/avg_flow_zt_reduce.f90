@@ -31,7 +31,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: itransport, visc
-    use TLAB_VARS, only: nstatavg, statavg, nstatavg_points
+    use TLab_Spatial
     use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow
     use Averages, only: SUM1V1D_V
@@ -3363,6 +3363,7 @@ subroutine AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
     ! ##############################################
 
     use TLAB_VARS
+    use TLab_Spatial
     use Averages, only: SUM1V1D_V
 
     implicit none

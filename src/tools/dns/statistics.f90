@@ -22,8 +22,9 @@ contains
     ! ###################################################################
     subroutine STATISTICS_INITIALIZE()
 
-        use TLAB_VARS, only: imode_sim, jmax, inb_scal, nstatavg
-
+        use TLAB_VARS, only: imode_sim, jmax, inb_scal
+        use TLab_Spatial, only: nstatavg
+        
         if (imode_sim == DNS_MODE_TEMPORAL) then
             allocate (mean(jmax, MAX_AVG_TEMPORAL))
 

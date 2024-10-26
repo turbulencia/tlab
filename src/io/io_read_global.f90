@@ -14,6 +14,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     use TLab_Constants, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
+    use TLab_Spatial
     use TLab_WorkFlow
     use Profiles
 #ifdef USE_MPI
@@ -737,8 +738,8 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLAB_WRITE_ASCII(bakfile, '#[Statistics]')
     call TLAB_WRITE_ASCII(bakfile, '#IAvera=<plane1,plane2,...>')
 
-    nstatavg = MAX_STATS_SPATIAL
     call SCANINICHAR(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
+    nstatavg = MAX_STATS_SPATIAL
     call LIST_INTEGER(sRes, nstatavg, statavg)
 
 ! ###################################################################
