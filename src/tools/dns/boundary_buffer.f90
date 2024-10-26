@@ -30,7 +30,7 @@ module BOUNDARY_BUFFER
     use Thermodynamics, only: CRATIO_INV
     use IO_FIELDS
     use OPR_FILTERS
-    use AVGS, only: COV2V1D, COV2V2D
+    use Averages, only: COV2V1D, COV2V2D
 
 #ifdef USE_MPI
     use MPI

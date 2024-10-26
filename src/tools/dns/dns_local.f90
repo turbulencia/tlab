@@ -236,7 +236,7 @@ contains
         use TLAB_VARS, only: scal_on, inb_scal
         use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLab_Arrays
-        use AVGS
+        use Averages
         use Integration, only: Int_Simpson
 
         integer(wi) :: ip, is

@@ -11,7 +11,7 @@ module SCAL_LOCAL
     use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d
     use TLab_WorkFlow
     use IO_FIELDS
-    use AVGS, only: AVG1V2D
+    use Averages, only: AVG1V2D
     use Profiles
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k

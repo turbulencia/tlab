@@ -1,4 +1,4 @@
-module AVGS
+module Averages
     use TLab_Constants, only: wp, wi
 #ifdef USE_MPI
     use MPI
@@ -413,4 +413,4 @@ contains
 !         return
 !     end subroutine AVG_XZ_V
 
-end module AVGS
+end module Averages

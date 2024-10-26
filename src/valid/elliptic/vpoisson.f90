@@ -22,7 +22,7 @@ program VPOISSON
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use AVGS
+    use Averages
 
     implicit none
 

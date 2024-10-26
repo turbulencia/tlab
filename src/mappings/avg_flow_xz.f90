@@ -27,7 +27,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use THERMO_ANELASTIC
     use THERMO_CALORIC
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1
-    use AVGS, only: AVG_IK_V
+    use Averages, only: AVG_IK_V
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif

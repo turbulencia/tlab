@@ -24,7 +24,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1, scal_bcs
-    use AVGS, only: AVG_IK_V
+    use Averages, only: AVG_IK_V
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif

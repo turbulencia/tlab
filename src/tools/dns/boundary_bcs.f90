@@ -513,7 +513,7 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax, g
         use TLAB_VARS, only: isize_field
         use TLAB_VARS, only: visc, schmidt
-        use AVGS, only: AVG1V2D
+        use Averages, only: AVG1V2D
         use OPR_PARTIAL
 
         integer(wi) is

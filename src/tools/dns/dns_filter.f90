@@ -14,7 +14,7 @@ subroutine DNS_FILTER()
     use DNS_LOCAL, only: DNS_BOUNDS_LIMIT
     use DNS_LOCAL, only: nitera_stats_spa, nitera_first, nitera_stats
     use STATISTICS
-    use AVGS, only: AVG_IK_V
+    use Averages, only: AVG_IK_V
 
     implicit none
 

@@ -55,7 +55,7 @@ program SPECTRA
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
-    use AVGS, only: AVG1V2D, COV2V2D
+    use Averages, only: AVG1V2D, COV2V2D
     use OPR_FOURIER
     use OPR_ELLIPTIC
 #ifdef USE_OPENMP

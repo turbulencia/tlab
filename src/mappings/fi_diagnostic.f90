@@ -16,7 +16,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use THERMO_CALORIC
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
-    use AVGS, only: AVG1V2D_V
+    use Averages, only: AVG1V2D_V
 
     implicit none
 

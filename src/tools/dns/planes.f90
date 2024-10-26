@@ -214,7 +214,7 @@ contains
         use TLab_Types
         use TLab_Pointers_3D, only: p_wrk2d
         use TLAB_VARS, only: sbg
-        use AVGS
+        use Averages
         use Integration, only: Int_Simpson
 
         ! -------------------------------------------------------------------

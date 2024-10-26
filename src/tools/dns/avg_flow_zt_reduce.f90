@@ -34,7 +34,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLAB_VARS, only: nstatavg, statavg, nstatavg_points
     use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow
-    use AVGS, only: SUM1V1D_V
+    use Averages, only: SUM1V1D_V
     use OPR_PARTIAL
     implicit none
 
@@ -3363,7 +3363,7 @@ subroutine AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
     ! ##############################################
 
     use TLAB_VARS
-    use AVGS, only: SUM1V1D_V
+    use Averages, only: SUM1V1D_V
 
     implicit none
 

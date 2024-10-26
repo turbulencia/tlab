@@ -44,10 +44,9 @@
 !########################################################################
 
 subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
-
-    use TLAB_VARS, only: imax, jmax, kmax, g, isize_field
     use TLab_Constants, only: wp
-    use AVGS, only: AVG_IK_V
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use Averages, only: AVG_IK_V
 
     implicit none
 

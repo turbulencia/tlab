@@ -12,7 +12,7 @@ module FLOW_LOCAL
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
     use IO_FIELDS
-    use AVGS, only: AVG1V2D
+    use Averages, only: AVG1V2D
     use Profiles
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
