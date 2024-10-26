@@ -34,8 +34,9 @@ program INIPART
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
-    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
+
+    call Thermodynamics_Initialize_Parameters(ifile)
 
     if (part%type /= PART_TYPE_NONE) then
 

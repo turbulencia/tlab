@@ -76,9 +76,9 @@ program PARTICLE_TRAJEC
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
-    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
 
+    call Thermodynamics_Initialize_Parameters(ifile)
 ! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
     call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)

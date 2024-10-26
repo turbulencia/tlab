@@ -50,13 +50,13 @@ program DNS
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
-    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
     call IBM_READ_INI(ifile)
     if (imode_ibm == 1) then
         call IBM_READ_CONSISTENCY_CHECK()
     end if
 
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)

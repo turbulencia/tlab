@@ -29,11 +29,13 @@ program INIRAND
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-    call RAND_READ_LOCAL(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+
+    call Thermodynamics_Initialize_Parameters(ifile)
+
+    call RAND_READ_LOCAL(ifile)
 
     inb_txc = 3
 
@@ -52,7 +54,7 @@ program INIRAND
 #ifdef USE_MPI
     seed = seed + ims_pro         ! seed for random generator
 #endif
-    seed = -ABS(seed)
+    seed = -abs(seed)
 
     if (fourier_on) then
         call OPR_FOURIER_INITIALIZE()

@@ -58,11 +58,11 @@ program SL_CORRELATION
     call DNS_START
 
     call IO_READ_GLOBAL('tlab.ini')
-    call Thermodynamics_Initialize_Parameters(ifile)
-
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

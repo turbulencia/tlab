@@ -70,11 +70,11 @@ program TRANSFIELDS
     call TLAB_START
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+
+    call Thermodynamics_Initialize_Parameters(ifile)
 
     ! -------------------------------------------------------------------
     ! File names
@@ -317,7 +317,7 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     if (opt_main == 3) then
         call IO_READ_GRID('grid.trn', g_dst(1)%size, g_dst(2)%size, g_dst(3)%size, &
-                          g_dst(1)%scale, g_dst(2)%scale, g_dst(3)%scale, x_dst, y_dst, z_dst, dummy)
+                          g_dst(1)%scale, g_dst(2)%scale, g_dst(3)%scale, x_dst, y_dst, z_dst)
 
         tolerance = 0.001_wp    ! percentage of grid spacing
 

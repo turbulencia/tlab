@@ -71,12 +71,11 @@ program PARTICLE_POS_TRAJEC
     call TLAB_START()
 
     call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-    call Particle_Initialize_Parameters('tlab.ini')
-
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call Particle_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 ! Get the local information from the tlab.ini
     call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
