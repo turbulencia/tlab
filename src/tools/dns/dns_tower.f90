@@ -1,4 +1,3 @@
-#include "types.h"
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! MODULE DNS_TOWER - save columns at every iterations to disk
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -32,526 +31,519 @@
 !     - average 1 Variable horizontally over all planes in the vertical.
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-MODULE DNS_TOWER
+module DNS_TOWER
+    use TLab_Constants, only: wp, wi
+    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLab_WorkFlow
 
-  USE TLAB_VARS, ONLY : inb_flow, inb_scal
-  USE TLab_WorkFlow
+    integer(wi) tower_imax, tower_jmax, tower_kmax, tower_isize_field
+    integer(wi), target :: tower_isize_plane, tower_isize_plane_total
+    integer(wi) tower_imax_total, tower_jmax_total, tower_kmax_total
+    integer(wi) tower_offset_i, tower_offset_j, tower_offset_k
+    integer(wi) tower_isize_acc_field, tower_isize_acc_mean, tower_isize_acc_write
+    integer(wi) tower_accumulation, tower_varcount
+    integer(wi) tower_ncid, tower_ncmid, tower_stat
+    integer(wi) tower_istride, tower_jstride, tower_kstride
+    integer(wi) tower_master
+    integer(wi), dimension(:), allocatable :: tower_ipos, tower_kpos, tower_jpos
+    integer(wi) :: tower_mode_check
 
-  TINTEGER tower_imax, tower_jmax,tower_kmax, tower_isize_field
-  TINTEGER, TARGET :: tower_isize_plane,tower_isize_plane_total
-  TINTEGER tower_imax_total, tower_jmax_total,tower_kmax_total
-  TINTEGER tower_offset_i, tower_offset_j, tower_offset_k
-  TINTEGER tower_isize_acc_field, tower_isize_acc_mean, tower_isize_acc_write
-  TINTEGER tower_accumulation,tower_varcount
-  TINTEGER tower_ncid, tower_ncmid, tower_stat
-  TINTEGER tower_istride, tower_jstride, tower_kstride
-  TINTEGER tower_master
-  TINTEGER, DIMENSION(:),ALLOCATABLE :: tower_ipos, tower_kpos, tower_jpos
-  TINTEGER ::  tower_mode_check
+    integer(KIND=8) :: tower_bufsize
+    character(LEN=128) :: tower_nc_name
 
-  INTEGER(KIND=8) :: tower_bufsize
-  CHARACTER(LEN=128) :: tower_nc_name
+    real(wp), dimension(:), allocatable, target :: tower_buf
+    real(wp), dimension(:), pointer :: tower_u, tower_um, tower_v, tower_vm, tower_w, tower_wm
+    real(wp), dimension(:), pointer :: tower_p, tower_pm, tower_s, tower_sm, tower_t, tower_it
 
-  TREAL, DIMENSION(:), ALLOCATABLE, TARGET :: tower_buf
-  TREAL, DIMENSION(:), POINTER :: tower_u, tower_um, tower_v, tower_vm, tower_w, tower_wm
-  TREAL, DIMENSION(:), POINTER :: tower_p, tower_pm, tower_s, tower_sm, tower_t, tower_it
-
-CONTAINS
+contains
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-  SUBROUTINE DNS_TOWER_INITIALIZE(stride)
+    subroutine DNS_TOWER_INITIALIZE(stride)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    USE TLAB_VARS,ONLY : imax,jmax,kmax
-    USE DNS_LOCAL, ONLY : nitera_save
+        use TLAB_VARS, only: imax, jmax, kmax
+        use DNS_LOCAL, only: nitera_save
 
 #ifdef USE_MPI
-    USE MPI
-    USE TLAB_VARS,ONLY : g
-    USE TLabMPI_VARS, ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro
+        use MPI
+        use TLAB_VARS, only: g
+        use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
 #endif
 
-    IMPLICIT NONE
+        implicit none
 
 #ifdef USE_MPI
 #else
-    TINTEGER :: ims_offset_i,ims_offset_j, ims_offset_k,ims_pro
-    PARAMETER(ims_offset_i=0,ims_offset_j=0,ims_offset_k=0,ims_pro=-1)
+        integer(wi) :: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
+        parameter(ims_offset_i=0, ims_offset_j=0, ims_offset_k=0, ims_pro=-1)
 #endif
 
-    TINTEGER, DIMENSION(3), INTENT(IN) :: stride
+        integer(wi), dimension(3), intent(IN) :: stride
 
-    TINTEGER :: istart, iend, jstart,jend,kstart,kend, ibuf,i,j,k,ii
-    TINTEGER, POINTER :: tip, tip_total
-    !
-    IF ( ims_offset_i .EQ. 0 .AND. ims_offset_k .EQ. 0 ) THEN
-       tower_master = 1
-    ELSE
-       tower_master = 0
-    ENDIF
+        integer(wi) :: istart, iend, jstart, jend, kstart, kend, ibuf, i, j, k, ii
+        integer(wi), pointer :: tip, tip_total
+        !
+        if (ims_offset_i == 0 .and. ims_offset_k == 0) then
+            tower_master = 1
+        else
+            tower_master = 0
+        end if
 
-    tip => tower_isize_plane
-    tip_total => tower_isize_plane_total
+        tip => tower_isize_plane
+        tip_total => tower_isize_plane_total
 
-    tower_isize_acc_write = nitera_save
-    tower_varcount=inb_flow+inb_scal+1
+        tower_isize_acc_write = nitera_save
+        tower_varcount = inb_flow + inb_scal + 1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! DISTRIBUTE TOWERS:
 
-    tower_istride = stride(1)
-    tower_jstride = stride(2)
-    tower_kstride = stride(3)
+        tower_istride = stride(1)
+        tower_jstride = stride(2)
+        tower_kstride = stride(3)
 
-    istart=ims_offset_i; iend=ims_offset_i + imax -1
-    jstart=ims_offset_j; jend=ims_offset_j + jmax -1
-    kstart=ims_offset_k; kend=ims_offset_k + kmax -1
+        istart = ims_offset_i; iend = ims_offset_i + imax - 1
+        jstart = ims_offset_j; jend = ims_offset_j + jmax - 1
+        kstart = ims_offset_k; kend = ims_offset_k + kmax - 1
 
-    tower_imax=0;    tower_jmax=0;    tower_kmax=0
+        tower_imax = 0; tower_jmax = 0; tower_kmax = 0
 
-    tower_offset_i = CEILING(DBLE(istart)/tower_istride)
-    tower_offset_j = CEILING(DBLE(jstart)/tower_jstride)
-    tower_offset_k = CEILING(DBLE(kstart)/tower_kstride)
+        tower_offset_i = ceiling(dble(istart)/tower_istride)
+        tower_offset_j = ceiling(dble(jstart)/tower_jstride)
+        tower_offset_k = ceiling(dble(kstart)/tower_kstride)
 
-    DO i = istart,iend
-       IF ( MOD(i-1, tower_istride ) .EQ. 0 ) THEN
-          tower_imax = tower_imax + 1
-       ENDIF
-    ENDDO
+        do i = istart, iend
+            if (mod(i - 1, tower_istride) == 0) then
+                tower_imax = tower_imax + 1
+            end if
+        end do
 
-    DO j = jstart,jend
-       IF ( MOD(j-1, tower_jstride ) .EQ. 0 ) THEN
-          tower_jmax = tower_jmax + 1
-       ENDIF
-    ENDDO
+        do j = jstart, jend
+            if (mod(j - 1, tower_jstride) == 0) then
+                tower_jmax = tower_jmax + 1
+            end if
+        end do
 
-    DO k=kstart,kend
-       IF ( MOD(k-1, tower_kstride) .EQ. 0 ) THEN
-          tower_kmax = tower_kmax+1
-       ENDIF
-    ENDDO
+        do k = kstart, kend
+            if (mod(k - 1, tower_kstride) == 0) then
+                tower_kmax = tower_kmax + 1
+            end if
+        end do
 
 #ifdef USE_MPI
-    CALL MPI_Allreduce(tower_imax, tower_imax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD,i)
-    CALL MPI_Allreduce(tower_jmax, tower_jmax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD,i)
-    CALL MPI_Allreduce(tower_kmax, tower_kmax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD,i)
+        call MPI_Allreduce(tower_imax, tower_imax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, i)
+        call MPI_Allreduce(tower_jmax, tower_jmax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, i)
+        call MPI_Allreduce(tower_kmax, tower_kmax_total, 1, MPI_INTEGER4, MPI_SUM, MPI_COMM_WORLD, i)
 
-    tower_imax_total = tower_imax_total / (g(3)%size/kmax * g(2)%size/jmax)
-    tower_jmax_total = tower_jmax_total / (g(1)%size/imax * g(3)%size/kmax)
-    tower_kmax_total = tower_kmax_total / (g(1)%size/imax * g(2)%size/jmax)
+        tower_imax_total = tower_imax_total/(g(3)%size/kmax*g(2)%size/jmax)
+        tower_jmax_total = tower_jmax_total/(g(1)%size/imax*g(3)%size/kmax)
+        tower_kmax_total = tower_kmax_total/(g(1)%size/imax*g(2)%size/jmax)
 #else
-    tower_imax_total = tower_imax
-    tower_jmax_total = tower_jmax
-    tower_kmax_total = tower_kmax
+        tower_imax_total = tower_imax
+        tower_jmax_total = tower_jmax
+        tower_kmax_total = tower_kmax
 #endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! ALLOCATE SPACE FOR TOWERS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    tower_isize_plane = tower_imax * tower_kmax
-    tower_isize_field = tower_imax * tower_jmax * tower_kmax
-    tower_isize_plane_total = tower_imax_total * tower_kmax_total
-    tower_isize_acc_field = tower_isize_acc_write*tower_jmax*tip
-    tower_isize_acc_mean  = tower_isize_acc_write*tower_jmax
-    tower_bufsize = 5*tower_isize_acc_field + 5*tower_isize_acc_mean + 2* tower_isize_acc_write
+        tower_isize_plane = tower_imax*tower_kmax
+        tower_isize_field = tower_imax*tower_jmax*tower_kmax
+        tower_isize_plane_total = tower_imax_total*tower_kmax_total
+        tower_isize_acc_field = tower_isize_acc_write*tower_jmax*tip
+        tower_isize_acc_mean = tower_isize_acc_write*tower_jmax
+        tower_bufsize = 5*tower_isize_acc_field + 5*tower_isize_acc_mean + 2*tower_isize_acc_write
 
-    ALLOCATE(tower_ipos(tower_imax), tower_kpos(tower_kmax), tower_jpos(tower_jmax))
-    ALLOCATE(tower_buf( tower_bufsize))
+        allocate (tower_ipos(tower_imax), tower_kpos(tower_kmax), tower_jpos(tower_jmax))
+        allocate (tower_buf(tower_bufsize))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! REMEMBER WHICH TOWERS TO SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ii=1
-    DO i=istart,iend
-       IF ( MOD(i, tower_istride ) .EQ. 0 ) THEN
-          tower_ipos(ii) = i+1 - ims_offset_i
-          ii=ii+1
-       ENDIF
-    ENDDO
+        ii = 1
+        do i = istart, iend
+            if (mod(i, tower_istride) == 0) then
+                tower_ipos(ii) = i + 1 - ims_offset_i
+                ii = ii + 1
+            end if
+        end do
 
-    ii=1
-    DO j=jstart,jend
-       IF ( MOD(j, tower_jstride ) .EQ. 0 ) THEN
-          tower_jpos(ii) = j+1 - ims_offset_j
-          ii=ii+1
-       ENDIF
-    ENDDO
+        ii = 1
+        do j = jstart, jend
+            if (mod(j, tower_jstride) == 0) then
+                tower_jpos(ii) = j + 1 - ims_offset_j
+                ii = ii + 1
+            end if
+        end do
 
-    ii=1
-    DO k=kstart,kend
-       IF ( MOD(k,tower_kstride ) .EQ. 0 ) THEN
-          tower_kpos(ii) = k+1 - ims_offset_k
-          ii=ii+1
-       ENDIF
-    ENDDO
+        ii = 1
+        do k = kstart, kend
+            if (mod(k, tower_kstride) == 0) then
+                tower_kpos(ii) = k + 1 - ims_offset_k
+                ii = ii + 1
+            end if
+        end do
 
-    ibuf = 1;
-    tower_u(1:)=>tower_buf(ibuf:); ibuf = ibuf+tower_isize_acc_field;
-    tower_v(1:)=>tower_buf(ibuf:); ibuf = ibuf+tower_isize_acc_field;
-    tower_w(1:)=>tower_buf(ibuf:); ibuf = ibuf+tower_isize_acc_field;
-    tower_p(1:)=>tower_buf(ibuf:); ibuf = ibuf+tower_isize_acc_field;
-    tower_s(1:)=>tower_buf(ibuf:); ibuf = ibuf+tower_isize_acc_field;
-    tower_um(1:)=>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_mean;
-    tower_vm(1:)=>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_mean;
-    tower_wm(1:)=>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_mean;
-    tower_pm(1:)=>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_mean;
-    tower_sm(1:)=>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_mean;
-    tower_t(1:) =>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_write;
-    tower_it(1:)=>tower_buf(ibuf:);ibuf = ibuf+tower_isize_acc_write;
+        ibuf = 1; 
+        tower_u(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_field; 
+        tower_v(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_field; 
+        tower_w(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_field; 
+        tower_p(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_field; 
+        tower_s(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_field; 
+        tower_um(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_mean; 
+        tower_vm(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_mean; 
+        tower_wm(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_mean; 
+        tower_pm(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_mean; 
+        tower_sm(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_mean; 
+        tower_t(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_write; 
+        tower_it(1:) => tower_buf(ibuf:); ibuf = ibuf + tower_isize_acc_write; 
+        tower_accumulation = 1
 
-    tower_accumulation = 1
-
-  END SUBROUTINE DNS_TOWER_INITIALIZE
+    end subroutine DNS_TOWER_INITIALIZE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-  SUBROUTINE DNS_TOWER_ACCUMULATE(v,index,wrk1d)
+    subroutine DNS_TOWER_ACCUMULATE(v, index, wrk1d)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
-    USE MPI
-    USE TLabMPI_VARS, ONLY : ims_err
+        use MPI
+        use TLabMPI_VARS, only: ims_err
 #endif
 
-    USE TLAB_VARS, ONLY : imax,jmax,kmax
-    USE TLAB_VARS, ONLY : itime,rtime
+        use TLAB_VARS, only: imax, jmax, kmax
+        use TLAB_VARS, only: itime, rtime
 
-    IMPLICIT NONE
+        implicit none
 
-    ! 1 -- flow;  2 -- scalar;  4 -- pressure
-    TINTEGER,                           INTENT(IN)   :: index
-    TREAL, DIMENSION(imax,jmax,kmax,*), INTENT(IN)   :: v
-    TREAL, DIMENSION(*),                INTENT(INOUT):: wrk1d
+        ! 1 -- flow;  2 -- scalar;  4 -- pressure
+        integer(wi), intent(IN) :: index
+        real(wp), dimension(imax, jmax, kmax, *), intent(IN) :: v
+        real(wp), dimension(*), intent(INOUT) :: wrk1d
 
-    TINTEGER  :: ii,kk,ip,ipm
-    TINTEGER, POINTER :: tip
+        integer(wi) :: ii, kk, ip, ipm
+        integer(wi), pointer :: tip
 
+        tip => tower_isize_plane
+        ip = 1 + (tower_accumulation - 1)*tower_jmax*tip; ipm = ip + tower_jmax - 1
 
-    tip => tower_isize_plane
-    ip = 1+(tower_accumulation-1)*tower_jmax*tip; ipm=ip+tower_jmax-1
+        ! HANDLE PRESSURE
+        ! The Counter tower_accumulation is only increased when the pressure is handled
+        ! - This needs to be done first!
+        ! - The iteration is not increased yet when the pressure is calculated -> use it
+        if (index == 4) then
+            tower_t(tower_accumulation) = rtime
+            tower_it(tower_accumulation) = itime
+            do kk = 1, tower_kmax
+                do ii = 1, tower_imax
+                    tower_p(ip:ipm) = v(tower_ipos(ii), 1:tower_jmax:tower_jstride, tower_kpos(kk), 1)
+                    ip = ip + tower_jmax; ipm = ipm + tower_jmax
+                end do
+            end do
+            ip = 1 + (tower_accumulation - 1)*tower_jmax; ipm = ip + tower_jmax - 1
 
-    ! HANDLE PRESSURE
-    ! The Counter tower_accumulation is only increased when the pressure is handled
-    ! - This needs to be done first!
-    ! - The iteration is not increased yet when the pressure is calculated -> use it
-    IF ( index .EQ. 4 ) THEN
-       tower_t(tower_accumulation) = rtime
-       tower_it(tower_accumulation)= itime
-       DO kk=1,tower_kmax
-          DO ii=1,tower_imax
-             tower_p(ip:ipm) = v(tower_ipos(ii),1:tower_jmax:tower_jstride, tower_kpos(kk),1)
-             ip = ip + tower_jmax; ipm= ipm+tower_jmax
-          ENDDO
-       ENDDO
-       ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1
+            call TOWER_AVG_IK_V(imax, jmax, kmax, v(1, 1, 1, 1), tower_pm(ip:ipm), wrk1d(6*jmax))
+            ! HANDLE FLOW FIELDS
+        else if (index == 1) then
+            do kk = 1, tower_kmax
+                do ii = 1, tower_imax
+                    tower_u(ip:ipm) = &
+                        v(tower_ipos(ii), 1:tower_jmax:tower_jstride, tower_kpos(kk), 1)
+                    tower_v(ip:ipm) = &
+                        v(tower_ipos(ii), 1:tower_jmax:tower_jstride, tower_kpos(kk), 2)
+                    tower_w(ip:ipm) = &
+                        v(tower_ipos(ii), 1:tower_jmax:tower_jstride, tower_kpos(kk), 3)
+                    ip = ip + tower_jmax; ipm = ipm + tower_jmax
+                end do
+            end do
+            ip = 1 + (tower_accumulation - 1)*tower_jmax; ipm = ip + tower_jmax - 1
+            call TOWER_AVG_IK_V(imax, jmax, kmax, v(1, 1, 1, 1), tower_um(ip:ipm), wrk1d(6*jmax))
+            call TOWER_AVG_IK_V(imax, jmax, kmax, v(1, 1, 1, 2), tower_vm(ip:ipm), wrk1d(6*jmax))
+            call TOWER_AVG_IK_V(imax, jmax, kmax, v(1, 1, 1, 3), tower_wm(ip:ipm), wrk1d(6*jmax))
 
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_pm(ip:ipm),wrk1d(6*jmax))
-    ! HANDLE FLOW FIELDS
-    ELSE IF ( index .EQ. 1 ) THEN
-       DO kk=1,tower_kmax
-          DO ii=1,tower_imax
-             tower_u(ip:ipm) = &
-                  v(tower_ipos(ii),1:tower_jmax:tower_jstride, tower_kpos(kk),1)
-             tower_v(ip:ipm) = &
-                  v(tower_ipos(ii),1:tower_jmax:tower_jstride, tower_kpos(kk),2)
-             tower_w(ip:ipm) = &
-                  v(tower_ipos(ii),1:tower_jmax:tower_jstride, tower_kpos(kk),3)
-             ip = ip + tower_jmax; ipm= ipm+tower_jmax
-          ENDDO
-       ENDDO
-       ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_um(ip:ipm),wrk1d(6*jmax))
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,2),tower_vm(ip:ipm),wrk1d(6*jmax))
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,3),tower_wm(ip:ipm),wrk1d(6*jmax))
+            ! HANDLE SCALARS
+        else if (index == 2) then
+            do kk = 1, tower_kmax
+                do ii = 1, tower_imax
+                    tower_s(ip:ipm) = &
+                        v(tower_ipos(ii), 1:tower_jmax:tower_jstride, tower_kpos(kk), 1)
+                    ip = ip + tower_jmax; ipm = ipm + tower_jmax
+                end do
+            end do
+            ip = 1 + (tower_accumulation - 1)*tower_jmax; ipm = ip + tower_jmax - 1
+            call TOWER_AVG_IK_V(imax, jmax, kmax, v(1, 1, 1, 1), tower_sm(ip:ipm), wrk1d(6*jmax))
 
-    ! HANDLE SCALARS
-    ELSE IF (index .EQ. 2 ) THEN
-       DO kk=1,tower_kmax
-          DO ii=1,tower_imax
-             tower_s(ip:ipm) = &
-                  v(tower_ipos(ii),1:tower_jmax:tower_jstride, tower_kpos(kk),1)
-             ip = ip + tower_jmax; ipm= ipm+tower_jmax
-          ENDDO
-       ENDDO
-       ip = 1+(tower_accumulation-1)*tower_jmax; ipm=ip+tower_jmax-1
-       CALL TOWER_AVG_IK_V(imax,jmax,kmax,v(1,1,1,1),tower_sm(ip:ipm),wrk1d(6*jmax))
+        end if
 
-    ENDIF
+        tower_mode_check = tower_mode_check + index
 
+        if (tower_mode_check == 7) then
+            tower_mode_check = 0
+            tower_accumulation = tower_accumulation + 1
+        else if (tower_mode_check > 7) then
+            write (*, *) 'ERROR - tower_mode_check GREATER THAN 7'
+            stop 'INTERNAL ERROR'
+        end if
 
-    tower_mode_check = tower_mode_check + index
-
-    IF ( tower_mode_check .EQ. 7 ) THEN
-       tower_mode_check = 0
-       tower_accumulation = tower_accumulation+1
-    ELSE IF ( tower_mode_check .GT. 7 ) THEN
-       WRITE(*,*) 'ERROR - tower_mode_check GREATER THAN 7'
-       STOP 'INTERNAL ERROR'
-    ENDIF
-
-  END SUBROUTINE DNS_TOWER_ACCUMULATE
-
+    end subroutine DNS_TOWER_ACCUMULATE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-  SUBROUTINE DNS_TOWER_WRITE(wrk3d)
+    subroutine DNS_TOWER_WRITE(wrk3d)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    USE DNS_LOCAL,     ONLY : nitera_save
-    USE TLAB_VARS,    ONLY : itime
-    USE TLab_Constants, ONLY : wfile
+        use DNS_LOCAL, only: nitera_save
+        use TLAB_VARS, only: itime
+        use TLab_Constants, only: wfile
 #ifdef USE_MPI
-    USE MPI
-    USE TLabMPI_VARS,   ONLY : ims_offset_i, ims_offset_j, ims_offset_k,ims_pro,ims_err
+        use MPI
+        use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro, ims_err
 #endif
 
 #ifdef USE_H5
-    USE HDF5
+        use HDF5
 #endif
-    IMPLICIT NONE
+        implicit none
 
 #ifdef USE_MPI
 #else
-    TINTEGER :: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
-    PARAMETER(ims_offset_i=0, ims_offset_j=0, ims_offset_k=0,ims_pro=-1)
+        integer(wi) :: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
+        parameter(ims_offset_i=0, ims_offset_j=0, ims_offset_k=0, ims_pro=-1)
 #endif
 
-    TREAL, DIMENSION(*), INTENT(INOUT) :: wrk3d
+        real(wp), dimension(*), intent(INOUT) :: wrk3d
 
-    TINTEGER :: it,ivar
-    CHARACTER(LEN=64) :: cdummy
+        integer(wi) :: it, ivar
+        character(LEN=64) :: cdummy
 
-    TINTEGER, POINTER :: tip
-    TINTEGER :: itower,ktower,ip_skp,ip_srt,ip_end,tower_count,op_srt,op_end
+        integer(wi), pointer :: tip
+        integer(wi) :: itower, ktower, ip_skp, ip_srt, ip_end, tower_count, op_srt, op_end
 #ifdef USE_H5
-    INTEGER                                            :: h5_err
-    INTEGER(HID_T)                                     :: h5_avgFileID, h5_Space1ID, h5_Space2ID, h5_avgDsetID,h5_avgTsetID,h5_avgIsetID
-    INTEGER(HID_T)                                     :: h5_dID_loc
-    INTEGER(HID_T), DIMENSION(tower_imax,tower_kmax)   :: h5_fileID
-    INTEGER(HSIZE_T), DIMENSION(2)                     :: h5_varDim
-    CHARACTER(LEN=64),DIMENSION(5)                     :: vname
-    CHARACTER(LEN=64),DIMENSION(2)                     :: vname1d
-    CHARACTER(LEN=128) :: vname_loc
+        integer :: h5_err
+        integer(HID_T) :: h5_avgFileID, h5_Space1ID, h5_Space2ID, h5_avgDsetID, h5_avgTsetID, h5_avgIsetID
+        integer(HID_T) :: h5_dID_loc
+        integer(HID_T), dimension(tower_imax, tower_kmax) :: h5_fileID
+        integer(HSIZE_T), dimension(2) :: h5_varDim
+        character(LEN=64), dimension(5) :: vname
+        character(LEN=64), dimension(2) :: vname1d
+        character(LEN=128) :: vname_loc
 #endif
-    TINTEGER :: i,include_global
+        integer(wi) :: include_global
 
-    tip => tower_isize_plane
+        tip => tower_isize_plane
 
-    IF ( tip .LT. 1 ) THEN
-       ! NOTHING TO DO FOR THIS TASK
-    ELSE
+        if (tip < 1) then
+            ! NOTHING TO DO FOR THIS TASK
+        else
 
-       IF  ( itime .NE. INT(tower_it(nitera_save)+1)  )  THEN
-          CALL TLAB_WRITE_ASCII(wfile,'tools/dns/dns_tower.f90 (DNS_TOWER_WRITE)')
-          CALL TLAB_WRITE_ASCII(wfile,'nitera_save for towers does not match current iteration')
-          !                          (But it should if the code is set-up properly)
-       ENDIF
+            if (itime /= int(tower_it(nitera_save) + 1)) then
+                call TLAB_WRITE_ASCII(wfile, 'tools/dns/dns_tower.f90 (DNS_TOWER_WRITE)')
+                call TLAB_WRITE_ASCII(wfile, 'nitera_save for towers does not match current iteration')
+                !                          (But it should if the code is set-up properly)
+            end if
 
 #ifdef USE_H5
-       h5_varDim = (/tower_jmax,nitera_save/)
-       vname  = (/'u','v','w','p','s'/)
-       vname1d= (/'time','iter'/)
+            h5_varDim = (/tower_jmax, nitera_save/)
+            vname = (/'u', 'v', 'w', 'p', 's'/)
+            vname1d = (/'time', 'iter'/)
 
-       CALL h5open_f(h5_err)
-       CALL h5screate_simple_f(2_4,h5_vardim(1:2),h5_Space2ID,h5_err)
-       CALL h5screate_simple_f(1_4,h5_vardim(2:), h5_Space1ID,h5_err)
+            call h5open_f(h5_err)
+            call h5screate_simple_f(2_4, h5_vardim(1:2), h5_Space2ID, h5_err)
+            call h5screate_simple_f(1_4, h5_vardim(2:), h5_Space1ID, h5_err)
 
-       WRITE(cdummy,993) INT(tower_it(1))+1,itime
-993    FORMAT('tower.mean','.',I6.6,'-',I6.6,'.h5')
-       CALL h5fcreate_f(cdummy,H5F_ACC_TRUNC_F, h5_avgFileID, h5_err)
-       CALL h5dcreate_f(h5_avgFileID,vname1D(1), H5T_NATIVE_DOUBLE,  h5_Space1ID,h5_dID_loc,h5_err)
-       CALL h5dwrite_f (h5_dID_loc,H5T_NATIVE_DOUBLE, tower_t (1:nitera_save),h5_vardim(2:),h5_err)
-       CALL h5dcreate_f(h5_avgFileID,vname1D(2), H5T_NATIVE_INTEGER, h5_Space1ID,h5_dID_loc,h5_err)
-       CALL h5dwrite_f (h5_dID_loc,H5T_NATIVE_INTEGER,INT(tower_it(1:nitera_save)),h5_vardim(2:),h5_err)
+            write (cdummy, 993) int(tower_it(1)) + 1, itime
+993         format('tower.mean', '.', I6.6, '-', I6.6, '.h5')
+            call h5fcreate_f(cdummy, H5F_ACC_TRUNC_F, h5_avgFileID, h5_err)
+            call h5dcreate_f(h5_avgFileID, vname1D(1), H5T_NATIVE_DOUBLE, h5_Space1ID, h5_dID_loc, h5_err)
+            call h5dwrite_f(h5_dID_loc, H5T_NATIVE_DOUBLE, tower_t(1:nitera_save), h5_vardim(2:), h5_err)
+            call h5dcreate_f(h5_avgFileID, vname1D(2), H5T_NATIVE_INTEGER, h5_Space1ID, h5_dID_loc, h5_err)
+            call h5dwrite_f(h5_dID_loc, H5T_NATIVE_INTEGER, int(tower_it(1:nitera_save)), h5_vardim(2:), h5_err)
 
-       DO itower=1,tower_imax
-          DO ktower=1,tower_kmax
-                WRITE(cdummy,994) &
-                     ims_offset_i+tower_ipos(itower), &
-                     ims_offset_k+tower_kpos(ktower),&
-                     INT(tower_it(1))+1,itime
-994             FORMAT('tower.',I6.6,'x',I6.6,'.',I6.6,'-',I6.6,'.h5')
-                CALL h5fcreate_f(cdummy,H5F_ACC_TRUNC_F, h5_fileID(itower,ktower), h5_err)
-          ENDDO
-       ENDDO
+            do itower = 1, tower_imax
+                do ktower = 1, tower_kmax
+                    write (cdummy, 994) &
+                        ims_offset_i + tower_ipos(itower), &
+                        ims_offset_k + tower_kpos(ktower), &
+                        int(tower_it(1)) + 1, itime
+994                 format('tower.', I6.6, 'x', I6.6, '.', I6.6, '-', I6.6, '.h5')
+                    call h5fcreate_f(cdummy, H5F_ACC_TRUNC_F, h5_fileID(itower, ktower), h5_err)
+                end do
+            end do
 #endif
-       DO ivar=1,tower_varcount
-          tower_count = 0
+            do ivar = 1, tower_varcount
+                tower_count = 0
 #ifdef USE_MPI
-          if ( ims_pro .EQ. 0 ) THEN
+                if (ims_pro == 0) then
 #endif
 #ifdef USE_H5
-             include_global=0
+                    include_global = 0
 #else
-             include_global=2
+                    include_global = 2
 #endif
-             op_srt=1; op_end=tower_jmax+include_global;
-             ip_skp = tower_jmax*1;
-             ip_srt = 1;
-             ip_end = ip_srt + tower_jmax - 1;
-
-             DO it=1,nitera_save
+                    op_srt = 1; op_end = tower_jmax + include_global; 
+                    ip_skp = tower_jmax*1; 
+                    ip_srt = 1; 
+                    ip_end = ip_srt + tower_jmax - 1; 
+                    do it = 1, nitera_save
 #ifndef USE_H5
-                wrk3d(op_srt) =  tower_t(it)
-                wrk3d(op_srt+1)= tower_it(it)
+                        wrk3d(op_srt) = tower_t(it)
+                        wrk3d(op_srt + 1) = tower_it(it)
 #endif
-                SELECT CASE(ivar)
-                CASE(1)
-                   wrk3d(op_srt+include_global:op_end) = tower_um(ip_srt:ip_end)
-                CASE(2)
-                   wrk3d(op_srt+include_global:op_end) = tower_vm(ip_srt:ip_end)
-                CASE(3)
-                   wrk3d(op_srt+include_global:op_end) = tower_wm(ip_srt:ip_end)
-                CASE(4)
-                   wrk3d(op_srt+include_global:op_end) = tower_pm(ip_srt:ip_end)
-                CASE(5)
-                   wrk3d(op_srt+include_global:op_end) = tower_sm(ip_srt:ip_end)
-                CASE DEFAULT
-                   ! ISSUE WARNING - NO MORE THAN ONE SCALAR
-                END SELECT
-                ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax+include_global
-                ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax+include_global
-             ENDDO
+                        select case (ivar)
+                        case (1)
+                            wrk3d(op_srt + include_global:op_end) = tower_um(ip_srt:ip_end)
+                        case (2)
+                            wrk3d(op_srt + include_global:op_end) = tower_vm(ip_srt:ip_end)
+                        case (3)
+                            wrk3d(op_srt + include_global:op_end) = tower_wm(ip_srt:ip_end)
+                        case (4)
+                            wrk3d(op_srt + include_global:op_end) = tower_pm(ip_srt:ip_end)
+                        case (5)
+                            wrk3d(op_srt + include_global:op_end) = tower_sm(ip_srt:ip_end)
+                        case DEFAULT
+                            ! ISSUE WARNING - NO MORE THAN ONE SCALAR
+                        end select
+                        ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax + include_global
+                        ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax + include_global
+                    end do
 #ifdef USE_H5
-             ! IMPLICIT Type casting -- saving the variable as real, but passing double values (see below)
-             CALL h5dcreate_f(h5_avgFileID,vname(ivar),H5T_NATIVE_REAL,h5_space2ID,h5_avgDsetID,h5_err)
-             CALL h5dwrite_f(h5_avgDsetID,             H5T_NATIVE_DOUBLE,wrk3d(1:tower_jmax*nitera_save),h5_vardim,h5_err)
+                    ! IMPLICIT Type casting -- saving the variable as real, but passing double values (see below)
+                    call h5dcreate_f(h5_avgFileID, vname(ivar), H5T_NATIVE_REAL, h5_space2ID, h5_avgDsetID, h5_err)
+                    call h5dwrite_f(h5_avgDsetID, H5T_NATIVE_DOUBLE, wrk3d(1:tower_jmax*nitera_save), h5_vardim, h5_err)
 #else
-             WRITE(cdummy,995) &
-                  INT(tower_it(1))+1,itime,ivar
-995          FORMAT('tower.mean','.',I6.6,'-',I6.6,'.',I1)
-             OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')
-             WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2))
-             CLOSE(73)
+                    write (cdummy, 995) &
+                        int(tower_it(1)) + 1, itime, ivar
+995                 format('tower.mean', '.', I6.6, '-', I6.6, '.', I1)
+                    open (73, FILE=trim(adjustl(cdummy)), ACCESS='STREAM', FORM='UNFORMATTED')
+                    write (73, POS=1) wrk3d(1:nitera_save*(tower_jmax + 2))
+                    close (73)
 #endif
 #ifdef USE_MPI
-          ENDIF
+                end if
 #endif
 
-          DO itower=1, tower_imax
-             DO ktower=1, tower_kmax
+                do itower = 1, tower_imax
+                    do ktower = 1, tower_kmax
 #ifdef USE_H5
-                include_global=0
+                        include_global = 0
 #else
-                include_global=2
+                        include_global = 2
 #endif
-                ip_skp = tower_jmax*tip;
-                ip_srt = tower_count*tower_jmax + 1;
-                ip_end = ip_srt + tower_jmax - 1;
-                op_srt=1; op_end=tower_jmax+include_global;
-                DO it=1,nitera_save
+                        ip_skp = tower_jmax*tip; 
+                        ip_srt = tower_count*tower_jmax + 1; 
+                        ip_end = ip_srt + tower_jmax - 1; 
+                        op_srt = 1; op_end = tower_jmax + include_global; 
+                        do it = 1, nitera_save
 #ifndef USE_H5
-                   wrk3d(op_srt) =  tower_t(it)
-                   wrk3d(op_srt+1)= tower_it(it)
+                            wrk3d(op_srt) = tower_t(it)
+                            wrk3d(op_srt + 1) = tower_it(it)
 #endif
-                   SELECT CASE(ivar)
-                   CASE(1)
-                      wrk3d(op_srt+include_global:op_end) = tower_u(ip_srt:ip_end)
-                   CASE(2)
-                      wrk3d(op_srt+include_global:op_end) = tower_v(ip_srt:ip_end)
-                   CASE(3)
-                      wrk3d(op_srt+include_global:op_end) = tower_w(ip_srt:ip_end)
-                   CASE(4)
-                      wrk3d(op_srt+include_global:op_end) = tower_p(ip_srt:ip_end)
-                   CASE(5)
-                      wrk3d(op_srt+include_global:op_end) = tower_s(ip_srt:ip_end)
-                   CASE DEFAULT
-                      ! COULD ISSUE WARNING SOMEWHERE - NO MORE THAN ONE SCALAR FOR TOWERS
-                   END SELECT
-                   ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax+include_global
-                   ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax+include_global
-                ENDDO
+                            select case (ivar)
+                            case (1)
+                                wrk3d(op_srt + include_global:op_end) = tower_u(ip_srt:ip_end)
+                            case (2)
+                                wrk3d(op_srt + include_global:op_end) = tower_v(ip_srt:ip_end)
+                            case (3)
+                                wrk3d(op_srt + include_global:op_end) = tower_w(ip_srt:ip_end)
+                            case (4)
+                                wrk3d(op_srt + include_global:op_end) = tower_p(ip_srt:ip_end)
+                            case (5)
+                                wrk3d(op_srt + include_global:op_end) = tower_s(ip_srt:ip_end)
+                            case DEFAULT
+                                ! COULD ISSUE WARNING SOMEWHERE - NO MORE THAN ONE SCALAR FOR TOWERS
+                            end select
+                            ip_srt = ip_srt + ip_skp; op_srt = op_srt + tower_jmax + include_global
+                            ip_end = ip_end + ip_skp; op_end = op_end + tower_jmax + include_global
+                        end do
 #ifdef USE_H5
-                CALL h5dcreate_f(h5_fileID(itower,ktower),vname(ivar),H5T_NATIVE_REAL,h5_Space2ID,h5_dID_loc,h5_err)
-                CALL h5dwrite_f(h5_dID_loc,H5T_NATIVE_DOUBLE,wrk3d(1:tower_jmax*nitera_save),h5_vardim,h5_err)
+                        call h5dcreate_f(h5_fileID(itower, ktower), vname(ivar), H5T_NATIVE_REAL, h5_Space2ID, h5_dID_loc, h5_err)
+                        call h5dwrite_f(h5_dID_loc, H5T_NATIVE_DOUBLE, wrk3d(1:tower_jmax*nitera_save), h5_vardim, h5_err)
 #else
-                WRITE(cdummy,997) &
-                     ims_offset_i+tower_ipos(itower), &
-                     ims_offset_k+tower_kpos(ktower),&
-                     INT(tower_it(1))+1,itime,ivar
-997             FORMAT('tower.',I6.6,'x',I6.6,'.',I6.6,'-',I6.6,'.',I1)
-                OPEN(73,FILE=TRIM(ADJUSTL(cdummy)),ACCESS='STREAM', FORM='UNFORMATTED')
-                WRITE(73,POS=1) wrk3d(1:nitera_save*(tower_jmax+2))
-                CLOSE(73)
+                        write (cdummy, 997) &
+                            ims_offset_i + tower_ipos(itower), &
+                            ims_offset_k + tower_kpos(ktower), &
+                            int(tower_it(1)) + 1, itime, ivar
+997                     format('tower.', I6.6, 'x', I6.6, '.', I6.6, '-', I6.6, '.', I1)
+                        open (73, FILE=trim(adjustl(cdummy)), ACCESS='STREAM', FORM='UNFORMATTED')
+                        write (73, POS=1) wrk3d(1:nitera_save*(tower_jmax + 2))
+                        close (73)
 #endif
-                tower_count = tower_count + 1
-             ENDDO
-          ENDDO
-       ENDDO
+                        tower_count = tower_count + 1
+                    end do
+                end do
+            end do
 
 #ifdef USE_H5
-       CALL h5fclose_f(h5_avgFileID,h5_err)
-       DO itower=1,tower_imax
-          DO ktower=1,tower_kmax
-             CALL h5fclose_f(h5_fileID(itower,ktower), h5_err)
-          ENDDO
-       ENDDO
-       CALL h5close_f(h5_err)
+            call h5fclose_f(h5_avgFileID, h5_err)
+            do itower = 1, tower_imax
+                do ktower = 1, tower_kmax
+                    call h5fclose_f(h5_fileID(itower, ktower), h5_err)
+                end do
+            end do
+            call h5close_f(h5_err)
 #endif
-    ENDIF
-    tower_accumulation = 1
+        end if
+        tower_accumulation = 1
 
-  END SUBROUTINE DNS_TOWER_WRITE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-  SUBROUTINE DNS_TOWER_FINALIZE
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    IMPLICIT NONE
-
-  END SUBROUTINE DNS_TOWER_FINALIZE
-
-
+    end subroutine DNS_TOWER_WRITE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-  SUBROUTINE TOWER_AVG_IK_V(imax, jmax, kmax, a, avg, wrk)
+    subroutine DNS_TOWER_FINALIZE
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        implicit none
+
+    end subroutine DNS_TOWER_FINALIZE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+    subroutine TOWER_AVG_IK_V(imax, jmax, kmax, a, avg, wrk)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef USE_MPI
-    USE MPI
-    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+        use MPI
+        use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
 
-    IMPLICIT NONE
+        implicit none
 
-    TINTEGER imax, jmax, kmax
-    TREAL a(imax, jmax, kmax)
-    TREAL avg(tower_jmax), wrk(tower_jmax)
+        integer(wi) imax, jmax, kmax
+        real(wp) a(imax, jmax, kmax)
+        real(wp) avg(tower_jmax), wrk(tower_jmax)
 #ifdef USE_MPI
-    INTEGER ims_err, len
+        integer ims_err, len
 #endif
 
-    TINTEGER i, j, k
+        integer(wi) i, j, k
 
-    DO j=1,tower_jmax
-       avg(j) = C_0_R
-    ENDDO
+        do j = 1, tower_jmax
+            avg(j) = 0.0_wp
+        end do
 
-    DO k = 1, kmax
-       DO j=1,tower_jmax
-          DO i = 1, imax
-             avg(j) = avg(j) + a(i,tower_jpos(j),k) 
-          ENDDO
-       ENDDO
-    ENDDO
+        do k = 1, kmax
+            do j = 1, tower_jmax
+                do i = 1, imax
+                    avg(j) = avg(j) + a(i, tower_jpos(j), k)
+                end do
+            end do
+        end do
 
-    DO j=1,tower_jmax
-        avg(j) = avg(j)/real(imax*kmax)
-    ENDDO
+        do j = 1, tower_jmax
+            avg(j) = avg(j)/real(imax*kmax)
+        end do
 #ifdef USE_MPI
-    CALL MPI_REDUCE(avg, wrk, tower_jmax, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
-    DO j=1,tower_jmax
-        avg(j) = wrk(j)/real(ims_npro_i*ims_npro_k)
-    ENDDO
+        call MPI_REDUCE(avg, wrk, tower_jmax, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
+        do j = 1, tower_jmax
+            avg(j) = wrk(j)/real(ims_npro_i*ims_npro_k)
+        end do
 #else
 #endif
 
-    RETURN
-  END SUBROUTINE TOWER_AVG_IK_V
+        return
+    end subroutine TOWER_AVG_IK_V
 
-END MODULE DNS_TOWER
+end module DNS_TOWER
