@@ -3,7 +3,7 @@
 
 module TLab_WorkFlow
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
-    use TLAB_VARS
+    use TLAB_VARS, only: imode_verbosity
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
@@ -12,9 +12,8 @@ module TLab_WorkFlow
     use TLabMPI_VARS, only: ims_pro, ims_npro, ims_time_max, ims_time_min, ims_time_trans, ims_err
 #endif
     implicit none
-
-    save
     private
+    save
 
     character*128 :: line
 

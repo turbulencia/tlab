@@ -97,7 +97,12 @@ end module TLab_Pointers_C
 
 module TLab_Memory
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
-    use TLAB_VARS
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: isize_field, inb_flow_array, inb_scal_array
+    use TLAB_VARS, only: isize_txc_field, inb_txc, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d
+    use TLAB_VARS, only: Dealiasing
+    use TLAB_VARS, only: imax, jmax, kmax
     use TLab_WorkFlow
     implicit none
     private
