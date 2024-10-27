@@ -324,7 +324,7 @@ program VISUALS
 
     call OPR_Elliptic_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE() ! Initialize thermodynamic quantities
+    call TLab_Initialize_Background() ! Initialize thermodynamic quantities
 
     if (fourier_on .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()

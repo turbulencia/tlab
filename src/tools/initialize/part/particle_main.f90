@@ -71,7 +71,7 @@ program INIPART
 
         ! problem if I enter with inb_scal_array = 0
         inb_scal_array = inb_scal
-        call FI_BACKGROUND_INITIALIZE()
+        call TLab_Initialize_Background()
         if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
 
         call Particle_Initialize_Fields()

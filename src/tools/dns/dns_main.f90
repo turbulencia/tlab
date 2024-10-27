@@ -80,7 +80,7 @@ program DNS
 
     call SpecialForcing_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
 
     call TLab_Allocate_Real(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
     call TLab_Allocate_Real(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')

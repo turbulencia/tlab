@@ -54,7 +54,7 @@ program INISCAL
 
     call Radiation_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
     do is = 1, size(IniS)
         if (IniS(is)%relative) IniS(is)%ymean = g(2)%nodes(1) + g(2)%scale*IniS(is)%ymean_rel
     end do

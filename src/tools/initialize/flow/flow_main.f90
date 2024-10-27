@@ -50,7 +50,7 @@ program INIFLOW
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
 
     ! Staggering of the pressure grid not implemented here

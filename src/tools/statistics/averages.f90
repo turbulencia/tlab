@@ -326,7 +326,7 @@ program AVERAGES
 
     call OPR_Elliptic_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
+    call TLab_Initialize_Background()  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))

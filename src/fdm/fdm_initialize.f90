@@ -426,7 +426,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
     g%rhoinv => x(:, ig)
 
-    g%anelastic = .false. ! Default; activated in FI_BACKGROUND_INITIALIZE
+    g%anelastic = .false. ! Default; activated in TLab_Initialize_Background
 
     ig = ig + 1
 

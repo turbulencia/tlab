@@ -279,7 +279,7 @@ program TRANSFIELDS
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
 
     ! Further allocation
     if (flow_on) call TLab_Allocate_Real(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
