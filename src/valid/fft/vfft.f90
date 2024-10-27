@@ -34,6 +34,7 @@ program VFFT
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
     isize_fft3d = isize_txc_dimz*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)

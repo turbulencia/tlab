@@ -23,6 +23,7 @@ program VTGVORTEX
     call DNS_START
 
     call TLab_Initialize_Parameters(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

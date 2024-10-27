@@ -77,6 +77,7 @@ program PARTICLE_TRAJEC
 #endif
     call Particle_Initialize_Parameters(ifile)
 
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 ! Get the local information from the tlab.ini
     call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)

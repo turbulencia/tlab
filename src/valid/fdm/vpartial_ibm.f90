@@ -40,6 +40,7 @@ program VPARTIAL
     ! call Particle_Initialize_Parameters(ifile)
     ! call DNS_READ_LOCAL(ifile)
     call IBM_READ_INI(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 ! Initialize
     

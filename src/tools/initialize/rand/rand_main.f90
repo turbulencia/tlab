@@ -33,6 +33,7 @@ program INIRAND
     call TLabMPI_Initialize()
 #endif
 
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
     call RAND_READ_LOCAL(ifile)

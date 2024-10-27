@@ -42,6 +42,7 @@ program VPOISSON
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
     inb_txc = 8
 
@@ -152,11 +153,11 @@ program VPOISSON
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
         lambda = 1.0
         do j = 1, jmax
-            a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+            a(:, j, :) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
             ! a(:,j,:) = exp(lambda*g(2)%nodes(j))
         end do
-        b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0 *a
-        c = (2.0_wp*pi_wp/g(2)%scale*lambda) *cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+        b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0*a
+        c = (2.0_wp*pi_wp/g(2)%scale*lambda)*cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
 
         ! -------------------------------------------------------------------
         ! DC level at lower boundary set to zero

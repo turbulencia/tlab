@@ -11,13 +11,14 @@ module TLAB_VARS
     integer :: imode_files              ! files format
     integer :: imode_precision_files    ! whether restart files in single or double precision
     integer :: imode_verbosity = 1      ! level of verbosity used in log files
-    integer :: imode_eqns               ! set of equations to be solved
-    integer :: iadvection, iviscous, idiffusion, itransport ! formulation
 
     logical :: flow_on = .true.         ! calculate flow parts of the code
     logical :: scal_on = .true.         ! calculate scal parts of the code
     logical :: fourier_on = .false.     ! using FFT libraries
     logical :: stagger_on = .false.     ! horizontal staggering of pressure
+
+    integer :: imode_eqns               ! set of equations to be solved
+    integer :: iadvection, iviscous, idiffusion, itransport ! formulation
 
 ! ###################################################################
 ! Iteration

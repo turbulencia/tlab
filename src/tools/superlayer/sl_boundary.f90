@@ -77,6 +77,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
     call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)

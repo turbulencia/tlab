@@ -29,6 +29,7 @@ program VPARTIAL3D
     call TLab_Start()
 
     call TLab_Initialize_Parameters(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
 
     inb_txc = 8
 

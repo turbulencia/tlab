@@ -100,6 +100,7 @@ program VISUALS
 #endif
     call Particle_Initialize_Parameters(ifile)
 
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)

@@ -42,6 +42,7 @@ program PARTICLE_BUILD_PDF
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters('tlab.ini')
 

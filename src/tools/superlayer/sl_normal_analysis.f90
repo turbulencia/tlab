@@ -70,6 +70,7 @@ program SL_NORMAL_ANALYSIS
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
     call ScanFile_Int(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)

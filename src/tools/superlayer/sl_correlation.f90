@@ -62,6 +62,7 @@ program SL_CORRELATION
     call TLabMPI_Initialize()
 #endif
 
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------

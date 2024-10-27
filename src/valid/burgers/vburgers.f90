@@ -37,6 +37,7 @@ program VBURGERS
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
     inb_txc = 4
 

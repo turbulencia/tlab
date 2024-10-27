@@ -36,6 +36,7 @@ program INIPART
 #endif
     call Particle_Initialize_Parameters(ifile)
 
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
     if (part%type /= PART_TYPE_NONE) then
