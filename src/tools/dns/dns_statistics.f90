@@ -2,7 +2,7 @@
 #include "dns_error.h"
 #include "avgij_map.h"
 
-module STATISTICS
+module DNS_STATISTICS
     use TLab_Constants, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
     implicit none
     save
@@ -14,13 +14,13 @@ module STATISTICS
 
     logical, public :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
 
-    public :: STATISTICS_INITIALIZE, STATISTICS_TEMPORAL, STATISTICS_SPATIAL
+    public :: DNS_STATISTICS_INITIALIZE, DNS_STATISTICS_TEMPORAL, DNS_STATISTICS_SPATIAL
 
 contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine STATISTICS_INITIALIZE()
+    subroutine DNS_STATISTICS_INITIALIZE()
 
         use TLAB_VARS, only: imode_sim, jmax, inb_scal
         use TLab_Spatial, only: nstatavg
@@ -35,11 +35,11 @@ contains
         end if
 
         return
-    end subroutine STATISTICS_INITIALIZE
+    end subroutine DNS_STATISTICS_INITIALIZE
 
     !########################################################################
     !########################################################################
-    subroutine STATISTICS_TEMPORAL()
+    subroutine DNS_STATISTICS_TEMPORAL()
 
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -222,11 +222,11 @@ contains
 #endif
 
         return
-    end subroutine STATISTICS_TEMPORAL
+    end subroutine DNS_STATISTICS_TEMPORAL
 
     ! ###################################################################
     ! ###################################################################
-    subroutine STATISTICS_SPATIAL()
+    subroutine DNS_STATISTICS_SPATIAL()
 
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -279,6 +279,6 @@ contains
 #endif
 
         return
-    end subroutine STATISTICS_SPATIAL
+    end subroutine DNS_STATISTICS_SPATIAL
 
-end module STATISTICS
+end module DNS_STATISTICS

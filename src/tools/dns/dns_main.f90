@@ -3,7 +3,7 @@
 
 program DNS
 
-    use TLab_Constants
+    use TLab_Constants, only: ifile, efile, wfile, lfile, gfile, tag_flow, tag_scal, tag_part, tag_traj
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow
@@ -28,7 +28,7 @@ program DNS
     use BOUNDARY_INFLOW
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
-    use STATISTICS
+    use DNS_STATISTICS, only: DNS_STATISTICS_INITIALIZE, DNS_STATISTICS_SPATIAL, DNS_STATISTICS_TEMPORAL, mean_flow, mean_scal
     use ParticleTrajectories
     use AVG_SCAL_ZT
     use IO_FIELDS
@@ -61,7 +61,7 @@ program DNS
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
-    ! call TLab_Consistency_Check() ! TBD
+    call TLab_Consistency_Check()
 
     call DNS_READ_LOCAL(ifile)
 #ifdef USE_PSFFT
@@ -89,7 +89,7 @@ program DNS
     call Particle_Initialize_Memory(__FILE__)
     call TLab_Allocate_DOUBLE(__FILE__, l_hq, [isize_part, inb_part], 'part-rhs')
 
-    call STATISTICS_INITIALIZE()
+    call DNS_STATISTICS_INITIALIZE()
 
     call PLANES_INITIALIZE()
 
@@ -272,8 +272,8 @@ program DNS
         end if
 
         if (mod(itime - nitera_first, nitera_stats) == 0) then      ! Calculate statistics
-            if (imode_sim == DNS_MODE_TEMPORAL) call STATISTICS_TEMPORAL()
-            if (imode_sim == DNS_MODE_SPATIAL) call STATISTICS_SPATIAL()
+            if (imode_sim == DNS_MODE_TEMPORAL) call DNS_STATISTICS_TEMPORAL()
+            if (imode_sim == DNS_MODE_SPATIAL) call DNS_STATISTICS_SPATIAL()
         end if
 
         if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files

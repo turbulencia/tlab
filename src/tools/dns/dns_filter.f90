@@ -13,7 +13,7 @@ subroutine DNS_FILTER()
     use OPR_FILTERS
     use DNS_LOCAL, only: DNS_BOUNDS_LIMIT
     use DNS_LOCAL, only: nitera_stats_spa, nitera_first, nitera_stats
-    use STATISTICS
+    use DNS_STATISTICS, only: mean_flow, mean
     use Averages, only: AVG_IK_V
 
     implicit none

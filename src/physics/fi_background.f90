@@ -226,7 +226,6 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     ! -------------------------------------------------------------------
     integer(wi) iter, niter, j, jcenter
     real(wp) dummy
-    integer, parameter :: i1 = 1
 
     ! ###################################################################
     ! Get the center

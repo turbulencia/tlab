@@ -15,14 +15,9 @@ subroutine DNS_READ_LOCAL(inifile)
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use BOUNDARY_INFLOW
-    use STATISTICS
+    use DNS_STATISTICS, only: stats_averages, stats_pdfs, stats_intermittency
     use PLANES
-    use IBM_VARS
-    ! needed for the last part; should be moved to TLab_Consistency_Check
-    use Radiation
-    use Microphysics
-    use Chemistry
-    use SpecialForcing
+    use IBM_VARS, only: imode_ibm, ibm_geo
 
     implicit none
 
@@ -706,25 +701,6 @@ subroutine DNS_READ_LOCAL(inifile)
                 call TLAB_STOP(DNS_ERROR_UNDEVELOP)
             end if
         end do
-
-        !   should be moved to TLab_Consistency_Check
-        if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for incompressible mode.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-        if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM only implemented for convective advection scheme.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
-
-        if ((infraredProps%type /= EQNS_NONE) .or. &
-            (sedimentationProps%type /= EQNS_NONE) .or. &
-            (infraredProps%type /= EQNS_NONE) .or. &
-            (chemistryProps%type /= EQNS_NONE) .or. &
-            (subsidence%type /= EQNS_NONE)) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_READ_INI. IBM. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
-        end if
 
     end if
 
