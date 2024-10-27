@@ -68,14 +68,14 @@ contains
         elseif (trim(adjustl(sRes)) == 'eulerian') then; imode_traj = TRAJ_TYPE_EULERIAN
         elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
-            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+            call TLab_Write_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
+            call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
         end if
 
         call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
-            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+            call TLab_Write_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
+            call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
         end if
         if (isize_traj <= 0) imode_traj = TRAJ_TYPE_NONE
         if (part%type == PART_TYPE_NONE) imode_traj = TRAJ_TYPE_NONE
@@ -117,8 +117,8 @@ contains
                 l_traj_tags(j) = 1 + (j - 1)*stride
             end do
             if (l_traj_tags(isize_traj) > isize_part_total) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Tags of trajectories out of range.')
-                call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+                call TLab_Write_ASCII(efile, __FILE__//'. Tags of trajectories out of range.')
+                call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
             end if
 
         case default                ! track the ones given in a file

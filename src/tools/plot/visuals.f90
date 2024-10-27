@@ -92,7 +92,7 @@ program VISUALS
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -110,8 +110,8 @@ program VISUALS
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
-        call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLab_Write_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
     ! -------------------------------------------------------------------
@@ -178,8 +178,8 @@ program VISUALS
     call LIST_INTEGER(sRes, iopt_size, opt_vec)
 
     if (opt_vec(1) < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'VISUALS. Missing input [PostProcessing.ParamVisuals] in tlab.ini.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'VISUALS. Missing input [PostProcessing.ParamVisuals] in tlab.ini.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     ! -------------------------------------------------------------------
@@ -371,7 +371,7 @@ program VISUALS
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))//'.'
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (scal_on .and. iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
@@ -397,7 +397,7 @@ program VISUALS
         end if
 
         write (sRes, 100) rtime; sRes = 'Physical time '//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         ! -------------------------------------------------------------------
         ! Calculate intermittency
@@ -413,7 +413,7 @@ program VISUALS
                 opt_cond_scal = inb_scal_array
             end if
 
-            call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
+            call TLab_Write_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                          imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
         end if
@@ -505,7 +505,7 @@ program VISUALS
                                               + txc(1:isize_field, 4)*q(1:isize_field, 3))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
 
-                    call TLAB_WRITE_ASCII(lfile, 'Computing pressure-strain correlation...')
+                    call TLab_Write_ASCII(lfile, 'Computing pressure-strain correlation...')
                     txc(1:isize_field, 2) = txc(1:isize_field, 1); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(1, 2))
 
                     plot_file = 'PressureStrainX'//time_str(1:MaskSize)
@@ -624,13 +624,13 @@ program VISUALS
                         else; diff = visc/schmidt(is)
                         end if
 
-                        call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient production...')
+                        call TLab_Write_ASCII(lfile, 'Computing scalar gradient production...')
                         plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
                         call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s(1, is), q(1, 1), q(1, 2), q(1, 3), &
                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
-                        call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient diffusion...')
+                        call TLab_Write_ASCII(lfile, 'Computing scalar gradient diffusion...')
                         plot_file = trim(adjustl(str))//'GradientDiffusion'//time_str(1:MaskSize)
                         call FI_GRADIENT_DIFFUSION(imax, jmax, kmax, s(1, is), &
                                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -682,13 +682,13 @@ program VISUALS
             end if
 
             if (opt_vec(iv) == iscal_offset + 6) then ! EnstrophyEquation
-                call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy production...')
+                call TLab_Write_ASCII(lfile, 'Computing enstrophy production...')
                 plot_file = 'EnstrophyProduction'//time_str(1:MaskSize)
                 call FI_VORTICITY_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                              txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
-                call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy diffusion...')
+                call TLab_Write_ASCII(lfile, 'Computing enstrophy diffusion...')
                 plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)
                 call FI_VORTICITY_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                             txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -716,11 +716,11 @@ program VISUALS
             end if
 
             if (opt_vec(iv) == iscal_offset + 9) then ! StrainEquation (I need the pressure)
-                call TLAB_WRITE_ASCII(lfile, 'Computing strain pressure...')
+                call TLab_Write_ASCII(lfile, 'Computing strain pressure...')
                 plot_file = 'StrainPressure'//time_str(1:MaskSize)
                 if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                    call TLAB_WRITE_ASCII(efile, 'VISUALS. Strain eqn for incompressible undeveloped.')
-                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                    call TLab_Write_ASCII(efile, 'VISUALS. Strain eqn for incompressible undeveloped.')
+                    call TLab_Stop(DNS_ERROR_UNDEVELOP)
                 else
                     txc(:, 6) = q(:, 6)
                 end if
@@ -729,14 +729,14 @@ program VISUALS
                 txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
-                call TLAB_WRITE_ASCII(lfile, 'Computing strain production...')
+                call TLab_Write_ASCII(lfile, 'Computing strain production...')
                 plot_file = 'StrainProduction'//time_str(1:MaskSize)
                 call FI_STRAIN_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
                                           txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 1)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
-                call TLAB_WRITE_ASCII(lfile, 'Computing strain diffusion...')
+                call TLab_Write_ASCII(lfile, 'Computing strain diffusion...')
                 plot_file = 'StrainDiffusion'//time_str(1:MaskSize)
                 call FI_STRAIN_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -766,8 +766,8 @@ program VISUALS
             ! Partition
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 11) then
-                call TLAB_WRITE_ASCII(efile, 'VISUALS. Partition undevelop.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'VISUALS. Partition undevelop.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             ! ###################################################################
@@ -960,7 +960,7 @@ program VISUALS
     end do
 
 100 format(G_FORMAT_R)
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 
 contains
 !########################################################################

@@ -307,8 +307,8 @@ contains
 
 ! ###################################################################
         if (bcs(1, 2) + bcs(2, 2) > 0) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Only developed for biased BCs.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Only developed for biased BCs.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity

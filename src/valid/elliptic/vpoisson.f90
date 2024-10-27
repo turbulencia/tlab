@@ -36,7 +36,7 @@ program VPOISSON
     integer ibc
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -65,11 +65,11 @@ program VPOISSON
 
 ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
+        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
         stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
+        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
     end if
 
     bcs = 0

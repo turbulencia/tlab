@@ -37,13 +37,13 @@ contains
 ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Particles'
-        call TLAB_WRITE_ASCII(lfile, 'Reading '//trim(adjustl(block))//' input data.')
+        call TLab_Write_ASCII(lfile, 'Reading '//trim(adjustl(block))//' input data.')
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Number=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#MemoryFactor=<value>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Number=<value>')
+        call TLab_Write_ASCII(bakfile, '#MemoryFactor=<value>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; part%type = PART_TYPE_NONE
@@ -53,8 +53,8 @@ contains
         else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; part%type = PART_TYPE_BIL_CLOUD_4
         else if (trim(adjustl(sRes)) == 'tiniaone') then; part%type = PART_TYPE_TINIA_1
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         isize_part = 0
@@ -91,8 +91,8 @@ contains
         if (trim(adjustl(sRes)) == 'yes') then; residence_reset = 1
         elseif (trim(adjustl(sRes)) == 'no') then; residence_reset = 0
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. ResidenceReset must be yes or no')
-            call TLAB_STOP(DNS_ERROR_RESIDENCERESET)
+            call TLab_Write_ASCII(efile, __FILE__//'. ResidenceReset must be yes or no')
+            call TLab_Stop(DNS_ERROR_RESIDENCERESET)
         end if
 
 ! ###################################################################

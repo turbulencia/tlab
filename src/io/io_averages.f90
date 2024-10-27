@@ -41,7 +41,7 @@ subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, group
 #endif
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Writing '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Writing '//trim(adjustl(fname))//'...')
 
 #ifdef USE_MPI
     if (ims_pro == 0) then
@@ -89,8 +89,8 @@ subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, group
 #define L_AVGMAX 250
 
         if (L_AVGMAX < nv) then
-            call TLAB_WRITE_ASCII(efile, 'IO_WRITE_AVERAGES. Not enough space in format definition.')
-            call TLAB_STOP(DNS_ERROR_AVGTMP)
+            call TLab_Write_ASCII(efile, 'IO_WRITE_AVERAGES. Not enough space in format definition.')
+            call TLab_Stop(DNS_ERROR_AVGTMP)
         end if
 
 #define LOC_UNIT_ID 23
@@ -139,8 +139,8 @@ subroutine NC_CHECK(status)
     integer, intent(IN) :: status
 
     if (status /= nf90_noerr) then
-        call TLAB_WRITE_ASCII(efile, 'NETCDF error signal '//trim(adjustl(NF90_STRERROR(status))))
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, 'NETCDF error signal '//trim(adjustl(NF90_STRERROR(status))))
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end if
 
     return

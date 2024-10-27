@@ -7,7 +7,7 @@
 !########################################################################
 module FDM_PROCS
     use TLab_Constants
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
@@ -1002,13 +1002,13 @@ contains
 
         ! For A_22, we need idl >= idr -1
         if (idl < idr - 1) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. LHS array is too small.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. LHS array is too small.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         ! For b_21, we need idr >= idl
         if (idr < idl) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. RHS array is too small.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. RHS array is too small.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! -------------------------------------------------------------------
@@ -1127,8 +1127,8 @@ contains
             ! reduced array B^R_{22}
             if (present(rhs_b)) then
                 if (size(rhs_b, 1) < max(idl, idr + 1) .or. size(rhs_b, 2) < max(ndl, ndr)) then
-                    call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_b array is too small.')
-                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                    call TLab_Write_ASCII(efile, __FILE__//'. rhs_b array is too small.')
+                    call TLab_Stop(DNS_ERROR_UNDEVELOP)
                 end if
 
                 rhs_b(1:max(idl, idr + 1), 1:ndr) = rhs(1:max(idl, idr + 1), 1:ndr)
@@ -1161,8 +1161,8 @@ contains
             ! reduced array B^R_{11}
             if (present(rhs_t)) then
                 if (size(rhs_t, 1) < max(idl, idr + 1) .or. size(rhs_t, 2) < max(ndl, ndr)) then
-                    call TLAB_WRITE_ASCII(efile, __FILE__//'. rhs_t array is too small.')
-                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                    call TLab_Write_ASCII(efile, __FILE__//'. rhs_t array is too small.')
+                    call TLab_Stop(DNS_ERROR_UNDEVELOP)
                 end if
 
                 rhs_t(nx_t - max(idl, idr + 1) + 1:nx_t, 1:ndr) = rhs(nx - max(idl, idr + 1) + 1:nx, 1:ndr)

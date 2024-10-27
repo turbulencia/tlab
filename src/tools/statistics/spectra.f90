@@ -119,7 +119,7 @@ program SPECTRA
 !########################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -136,8 +136,8 @@ program SPECTRA
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
 ! -------------------------------------------------------------------
@@ -190,18 +190,18 @@ program SPECTRA
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in tlab.ini.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in tlab.ini.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     if (opt_block < 1) then
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     if (opt_time /= SPEC_SINGLE .and. opt_time /= SPEC_AVERAGE) then
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     ! -------------------------------------------------------------------
@@ -314,7 +314,7 @@ program SPECTRA
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
+        call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
         id = TLabMPI_K_AUX2
         call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
                             ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
@@ -329,11 +329,11 @@ program SPECTRA
 
     write (str, *) nfield; line = 'Allocating array outr  of size '//trim(adjustl(str))//'x'
     write (str, *) isize_spec2dr; line = trim(adjustl(line))//trim(adjustl(str))
-    call TLAB_WRITE_ASCII(lfile, line)
+    call TLab_Write_ASCII(lfile, line)
     allocate (outr(isize_spec2dr, nfield), stat=ierr)
     if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
+        call TLab_Stop(DNS_ERROR_ALLOC)
     end if
 
     if (flag_mode == 2) then
@@ -343,21 +343,21 @@ program SPECTRA
     if (opt_ffmt == 1) then ! need additional space for 2d spectra
         write (str, *) nfield; line = 'Allocating array out2d of size '//trim(adjustl(str))//'x'
         write (str, *) isize_out2d; line = trim(adjustl(line))//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
         allocate (out2d(isize_out2d, nfield), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
+            call TLab_Write_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
+            call TLab_Stop(DNS_ERROR_ALLOC)
         end if
     end if
 
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         write (str, *) isize_txc_field; line = 'Allocating array p_aux of size '//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
         allocate (p_aux(isize_txc_field), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for p_aux.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
+            call TLab_Write_ASCII(efile, 'SPECTRA. Not enough memory for p_aux.')
+            call TLab_Stop(DNS_ERROR_ALLOC)
         end if
     end if
 
@@ -460,8 +460,8 @@ program SPECTRA
     end if
 
     if (nfield_ref /= iv) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! Define pairs
@@ -501,15 +501,15 @@ program SPECTRA
             !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
             ! ENDIF
         else
-            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
-            call TLAB_STOP(DNS_ERROR_INVALOPT)
+            call TLab_Write_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
+            call TLab_Stop(DNS_ERROR_INVALOPT)
         end if
 
     end if
 
     if (nfield /= iv) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
     do iv = 1, nfield ! define variable names
@@ -523,7 +523,7 @@ program SPECTRA
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
@@ -647,7 +647,7 @@ program SPECTRA
                 write (line, 100) maxval(abs(wrk1d(1:ip, 4) - wrk1d(1:ip, 1)))
                 write (str, *) maxloc(abs(wrk1d(1:ip, 4) - wrk1d(1:ip, 1)))
                 line = 'Checking Parseval: Maximum residual '//trim(adjustl(line))//' at level '//trim(adjustl(str))//'.'
-                call TLAB_WRITE_ASCII(lfile, line)
+                call TLab_Write_ASCII(lfile, line)
 
 ! Accumulate 2D information, if needed
                 if (opt_ffmt == 1) out2d(1:isize_out2d, iv) = out2d(1:isize_out2d, iv) + wrk3d(1:isize_out2d)
@@ -774,5 +774,5 @@ program SPECTRA
     end do ! Loop in itime
 
 100 format(G_FORMAT_R)
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SPECTRA

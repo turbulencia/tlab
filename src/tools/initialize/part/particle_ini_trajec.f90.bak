@@ -79,7 +79,7 @@ program PARTICLE_INI_TRAJEC
     TLONGINTEGER dummy
 #endif
 
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
@@ -205,5 +205,5 @@ program PARTICLE_INI_TRAJEC
     call IO_WRITE_PARTICLE('part2traj.ics', l_g, l_q)
 
 #endif
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program PARTICLE_INI_TRAJEC

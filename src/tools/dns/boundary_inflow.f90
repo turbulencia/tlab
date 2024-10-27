@@ -79,14 +79,14 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_INIT')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_INIT')
 #endif
 
 #ifdef USE_MPI
         ! I/O routines not yet developed for this particular case
         if (ims_npro_i > 1) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INIT. I/O routines undeveloped.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_INIT. I/O routines undeveloped.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 #endif
 
@@ -110,7 +110,7 @@ contains
         ! #######################################################################
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
-            call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for inflow filter.')
+            call TLab_Write_ASCII(lfile, 'Initialize MPI types for inflow filter.')
             id = TLabMPI_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
             call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
@@ -121,8 +121,8 @@ contains
 
         iwrk_size = g_inf(1)%size*g_inf(2)%size*kmax
         if (imax*jmax*kmax < iwrk_size) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INFLOW_INIT. Not enough space in array txc.')
-            call TLAB_STOP(DNS_ERROR_WRKSIZE)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_INFLOW_INIT. Not enough space in array txc.')
+            call TLab_Stop(DNS_ERROR_WRKSIZE)
         end if
 
         ! ###################################################################
@@ -135,8 +135,8 @@ contains
                 jglobal = joffset + j
                 dy = abs(g(2)%nodes(jglobal) - g_inf(2)%nodes(j))
                 if (dy > tolerance) then
-                    call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INFLOW. Inflow domain does not match.')
-                    call TLAB_STOP(DNS_ERROR_INFLOWDOMAIN)
+                    call TLab_Write_ASCII(efile, 'BOUNDARY_INFLOW. Inflow domain does not match.')
+                    call TLab_Stop(DNS_ERROR_INFLOWDOMAIN)
                 end if
             end do
 
@@ -149,7 +149,7 @@ contains
                 fname = trim(adjustl(fname))//trim(adjustl(str))
                 sname = trim(adjustl(sname))//trim(adjustl(str))
                 line = 'Reading InflowFile '//trim(adjustl(str))
-                call TLAB_WRITE_ASCII(lfile, line)
+                call TLab_Write_ASCII(lfile, line)
             end if
 
             rtimetmp = rtime
@@ -190,7 +190,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_INIT')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_INIT')
 #endif
 
         return
@@ -210,7 +210,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_BROADBAND')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_BROADBAND')
 #endif
 
         ! Transient factor
@@ -310,7 +310,7 @@ contains
         end do
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_BROADBAND')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_BROADBAND')
 #endif
         return
     end subroutine BOUNDARY_INFLOW_BROADBAND
@@ -336,7 +336,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_DISCRETE')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_DISCRETE')
 #endif
 
         ! Define pointers
@@ -432,7 +432,7 @@ contains
         end do
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_DISCRETE')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_DISCRETE')
 #endif
 
         return
@@ -460,9 +460,9 @@ contains
 
         ! ###################################################################
         ! #######################################################################
-        call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+        call TLab_Write_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
         ! FilterInflow needs to be initiliazed
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         ! Define pointers
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then

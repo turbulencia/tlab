@@ -16,16 +16,16 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     character(LEN=512) sRes
 
 ! -------------------------------------------------------------------
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Discrete]')
-    call TLAB_WRITE_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
-    call TLAB_WRITE_ASCII(bakfile, '#Aplitude=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#ModeX=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#ModeZ=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#PhaseX=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#PhaseZ=<value>')
-    call TLAB_WRITE_ASCII(bakfile, '#Broadening=<value>')
-!    CALL TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
+    call TLab_Write_ASCII(bakfile, '#')
+    call TLab_Write_ASCII(bakfile, '#[Discrete]')
+    call TLab_Write_ASCII(bakfile, '#Type=<Varicose/Sinuous/Gaussian/Step>')
+    call TLab_Write_ASCII(bakfile, '#Aplitude=<value>')
+    call TLab_Write_ASCII(bakfile, '#ModeX=<value>')
+    call TLab_Write_ASCII(bakfile, '#ModeZ=<value>')
+    call TLab_Write_ASCII(bakfile, '#PhaseX=<value>')
+    call TLab_Write_ASCII(bakfile, '#PhaseZ=<value>')
+    call TLab_Write_ASCII(bakfile, '#Broadening=<value>')
+!    CALL TLab_Write_ASCII(bakfile, '#Parameters=<values>')
 
     call SCANINICHAR(bakfile, inifile, block, 'Amplitude', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') &        ! backwards compatilibity
@@ -40,8 +40,8 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         idummy = MAX_MODES
         call LIST_INTEGER(sRes, idummy, var%modex)
         if (idummy /= var%size) then
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeX.')
-            call TLAB_STOP(DNS_ERROR_INFDISCR)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeX.')
+            call TLab_Stop(DNS_ERROR_INFDISCR)
         end if
     end if
 
@@ -52,8 +52,8 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         idummy = MAX_MODES
         call LIST_INTEGER(sRes, idummy, var%modez)
         if (idummy /= var%size) then
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeZ.')
-            call TLAB_STOP(DNS_ERROR_INFDISCR)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.ModeZ.')
+            call TLab_Stop(DNS_ERROR_INFDISCR)
         end if
     end if
 
@@ -66,8 +66,8 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         idummy = MAX_MODES
         call LIST_REAL(sRes, idummy, var%phasex)
         if (idummy /= var%size) then
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseX.')
-            call TLAB_STOP(DNS_ERROR_INFDISCR)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseX.')
+            call TLab_Stop(DNS_ERROR_INFDISCR)
         end if
     end if
 
@@ -78,8 +78,8 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         idummy = MAX_MODES
         call LIST_REAL(sRes, idummy, var%phasez)
         if (idummy /= var%size) then
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseZ.')
-            call TLAB_STOP(DNS_ERROR_INFDISCR)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_GLOBAL. Inconsistent Discrete.PhaseZ.')
+            call TLab_Stop(DNS_ERROR_INFDISCR)
         end if
     end if
 
@@ -90,8 +90,8 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     elseif (TRIM(ADJUSTL(sRes)) == 'gaussian') then; var%type = PROFILE_GAUSSIAN
     elseif (TRIM(ADJUSTL(sRes)) == 'step') then; var%type = PROFILE_TANH_COS
     else
-        call TLAB_WRITE_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
-        call TLAB_STOP(DNS_ERROR_INFDISCR)
+        call TLab_Write_ASCII(efile, 'FLOW_READ_GLOBAL. Error in Discrete.Type.')
+        call TLab_Stop(DNS_ERROR_INFDISCR)
     end if
 
     var%parameters(:) = 0.0_wp

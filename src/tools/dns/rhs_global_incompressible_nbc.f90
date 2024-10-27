@@ -88,7 +88,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     target h1, h2, h3
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+    call TLab_Write_ASCII(tfile, 'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
 
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
@@ -689,7 +689,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     ptime = ptime + MPI_WTime()
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+    call TLab_Write_ASCII(tfile, 'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
     return
 end subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC

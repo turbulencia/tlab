@@ -10,7 +10,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     use TLab_Constants, only: wi, wp
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
@@ -32,7 +32,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
     bcs = 0
@@ -143,7 +143,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
     return

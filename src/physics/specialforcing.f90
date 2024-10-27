@@ -4,7 +4,7 @@
 module SpecialForcing
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLab_Types, only: term_dt, grid_dt
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_DOUBLE
     use TLab_Arrays, only: wrk1d
     implicit none
@@ -64,12 +64,12 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'SpecialForcing'
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#Wave#=<amplitude,wavenumber,angle,frequency>')
-        call TLAB_WRITE_ASCII(bakfile, '#Envelope=<x,y,z,size>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<values>')
+        call TLab_Write_ASCII(bakfile, '#Wave#=<amplitude,wavenumber,angle,frequency>')
+        call TLab_Write_ASCII(bakfile, '#Envelope=<x,y,z,size>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; forcingProps%type = TYPE_NONE
@@ -78,8 +78,8 @@ contains
         elseif (trim(adjustl(sRes)) == 'sinusoidal') then; forcingProps%type = TYPE_SINUSOIDAL; 
         elseif (trim(adjustl(sRes)) == 'wavemaker') then; forcingProps%type = TYPE_WAVEMAKER; 
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in SpecialForcing.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Error in SpecialForcing.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         forcingProps%active(:) = .false.
@@ -104,8 +104,8 @@ contains
                         idummy = 4
                         call LIST_REAL(sRes, idummy, dummy)
                         if (idummy /= 4) then
-                            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Wave.')
-                            call TLAB_STOP(DNS_ERROR_OPTION)
+                            call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Wave.')
+                            call TLab_Stop(DNS_ERROR_OPTION)
                         end if
                         dummy(3) = dummy(3)*pi_wp/180._wp                   ! from degree to radians
                         wavenumber(1, nwaves) = dummy(2)*cos(dummy(3))      ! x-wavenumber
@@ -165,8 +165,8 @@ contains
         ! Check with previous version; to be removed
         call SCANINICHAR(bakfile, inifile, 'Main', 'TermRandom', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update TermRandom to [SpecialForcing].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Update TermRandom to [SpecialForcing].')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         return

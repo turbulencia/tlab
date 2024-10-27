@@ -4,7 +4,7 @@
 module Profiles
     use TLab_Types,     only: profiles_dt
     use TLab_Constants, only: wp, pi_wp, efile, wfile
-    use TLab_WorkFlow,     only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow,     only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
@@ -47,15 +47,15 @@ contains
         real(wp) derivative
 
         ! -------------------------------------------------------------------
-        call TLAB_WRITE_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
-        call TLAB_WRITE_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#YMean'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#YMeanRelative'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Diam'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Thick'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Delta'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#LowerSlope'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#UpperSlope'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
+        call TLab_Write_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#YMean'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#YMeanRelative'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Diam'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Thick'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Delta'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#LowerSlope'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#UpperSlope'//trim(adjustl(tag))//'=<value>')
 
         ! -------------------------------------------------------------------
         if (present(default)) then
@@ -84,8 +84,8 @@ contains
         else if (trim(adjustl(sRes)) == 'mixedlayer') then;            var%type = PROFILE_MIXEDLAYER
         else if (trim(adjustl(sRes)) == 'gaussiantanhsymmetric') then; var%type = PROFILE_GAUSSIAN_TANH_SYM
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call SCANINICHAR(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), 'void', sRes)
@@ -103,7 +103,7 @@ contains
             call SCANINICHAR(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
                 call SCANINIREAL(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), '0.5', var%ymean_rel)
-                call TLAB_WRITE_ASCII(wfile, 'Update tag YCoor to YMeanRelative.')
+                call TLab_Write_ASCII(wfile, 'Update tag YCoor to YMeanRelative.')
             end if
         else
             var%relative = .false.
@@ -287,8 +287,8 @@ contains
             var%parameters(3) = -var%parameters(4)/derivative/thick_ratio
 
         case default
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         end select
 
@@ -318,8 +318,8 @@ contains
             var%parameters(4) = -var%parameters(3)*derivative*thick_ratio
 
         case default
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         end select
 

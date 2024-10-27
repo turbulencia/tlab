@@ -338,8 +338,8 @@ contains
         else
 
             if (itime /= int(tower_it(nitera_save) + 1)) then
-                call TLAB_WRITE_ASCII(wfile, 'tools/dns/dns_tower.f90 (DNS_TOWER_WRITE)')
-                call TLAB_WRITE_ASCII(wfile, 'nitera_save for towers does not match current iteration')
+                call TLab_Write_ASCII(wfile, 'tools/dns/dns_tower.f90 (DNS_TOWER_WRITE)')
+                call TLab_Write_ASCII(wfile, 'nitera_save for towers does not match current iteration')
                 !                          (But it should if the code is set-up properly)
             end if
 

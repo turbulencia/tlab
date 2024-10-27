@@ -30,7 +30,7 @@ program INIGRID
     g(2)%name = 'y'
     g(3)%name = 'z'
 
-    call TLAB_START()
+    call TLab_Start()
 
     do idir = 1, 3
         call GRID_READBLOCK(bakfile, ifile, block(idir), g_build(idir), g(idir)%periodic)
@@ -148,14 +148,14 @@ program INIGRID
         ! #######################################################################
         ! Writing data
         ! #######################################################################
-        call TLAB_WRITE_ASCII(lfile, 'Writing grid.')
+        call TLab_Write_ASCII(lfile, 'Writing grid.')
   call IO_WRITE_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
 
 #ifdef USE_MPI
     end if
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 
 1000 format(a25, e12.5)
 2000 format(a25, i5)
@@ -175,11 +175,11 @@ contains
         character(LEN=512) sRes, str
 
 ! #######################################################################
-        call TLAB_WRITE_ASCII(bakfile, '['//block//']')
-        call TLAB_WRITE_ASCII(bakfile, 'segments=<number of segments>')
-        call TLAB_WRITE_ASCII(bakfile, 'periodic=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, 'fixed_scale=<value>')
+        call TLab_Write_ASCII(bakfile, '['//block//']')
+        call TLab_Write_ASCII(bakfile, 'segments=<number of segments>')
+        call TLab_Write_ASCII(bakfile, 'periodic=<yes/no>')
+        call TLab_Write_ASCII(bakfile, 'mirrored=<yes/no>')
+        call TLab_Write_ASCII(bakfile, 'fixed_scale=<value>')
 
         call SCANINIINT(bakfile, inifile, block, 'segments', '1', var%nseg)
 
@@ -194,8 +194,8 @@ contains
         call SCANINIREAL(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
 
         if (periodic .and. var%mirrored) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Periodicity with mirroring is not supported.')
-            call TLAB_STOP(DNS_ERROR_GRID_SCALE)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Periodicity with mirroring is not supported.')
+            call TLab_Stop(DNS_ERROR_GRID_SCALE)
         end if
 
 ! -------------------------------------------------------------------
@@ -204,11 +204,11 @@ contains
         do iseg = 1, var%nseg
             write (str, *) iseg
 
-            call TLAB_WRITE_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)))
-            call TLAB_WRITE_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
-            call TLAB_WRITE_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
-            call TLAB_WRITE_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
-            call TLAB_WRITE_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
+            call TLab_Write_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)))
+            call TLab_Write_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
+            call TLab_Write_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
+            call TLab_Write_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
+            call TLab_Write_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
 
             call SCANINIINT(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
             call SCANINIREAL(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))

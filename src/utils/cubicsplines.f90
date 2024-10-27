@@ -127,36 +127,36 @@ subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, xint, dx)
   ! ###################################################################
   ! check data
   if ( norg < 3 ) then 
-    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. At least three data points needed for cubic spline interpolation.')
-    call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+    call TLab_Write_ASCII(efile, 'CUBIC SPLINE. At least three data points needed for cubic spline interpolation.')
+    call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
   end if 
   if ( (xint(1) < xorg(1)) .or. (xint(nint) > xorg(norg)) ) then
-    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. No extrapolation, just interpolation - check borders of xint.')
-    call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+    call TLab_Write_ASCII(efile, 'CUBIC SPLINE. No extrapolation, just interpolation - check borders of xint.')
+    call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
   end if
   do i = 1, norg-1
     if ( dx(i) < 0 ) then
-      call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. x must be strictly increasing.')
-      call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+      call TLab_Write_ASCII(efile, 'CUBIC SPLINE. x must be strictly increasing.')
+      call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
     end if
   end do
 
   ! check boundary conditions
   if (( bc(1) < 0 .or. bc(1) > 5 ) .or. ( bc(2) < 0 .or. bc(2) > 5 )) then
-    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. Wrong choice of boundary conditions.')
-    call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+    call TLab_Write_ASCII(efile, 'CUBIC SPLINE. Wrong choice of boundary conditions.')
+    call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
   end if 
   if (( bc(1) == CS_BCS_PERIODIC .and. bc(2) /= CS_BCS_PERIODIC ) .or. &
       ( bc(2) == CS_BCS_PERIODIC .and. bc(1) /= CS_BCS_PERIODIC )) then
-    call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. Periodic boundary conditions only possible for both endpoints.')
-    call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+    call TLab_Write_ASCII(efile, 'CUBIC SPLINE. Periodic boundary conditions only possible for both endpoints.')
+    call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
   end if 
   do i = 1,2
     if (( bc(i) == CS_BCS_PERIODIC .and. bcval(i) /= 0 ) .or. &
         ( bc(i) == CS_BCS_CLAMPED  .and. bcval(i) /= 0 ) .or. &
         ( bc(i) == CS_BCS_NATURAL  .and. bcval(i) /= 0 )) then
-      call TLAB_WRITE_ASCII(efile, 'CUBIC SPLINE. Wrong choice of combination of boundary condition and derivative values.')
-      call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+      call TLab_Write_ASCII(efile, 'CUBIC SPLINE. Wrong choice of combination of boundary condition and derivative values.')
+      call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
     endif
   end do
 

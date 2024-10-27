@@ -71,16 +71,16 @@ contains
         ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
+        call TLab_Write_ASCII(lfile, 'Reading local input data')
 
         ! ###################################################################
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[IniFields]')
-        call TLAB_WRITE_ASCII(bakfile, '#Velocity=<VelocityDiscrete/VelocityBroadband/PotentialBroadband/VorticityBroadband>')
-        call TLAB_WRITE_ASCII(bakfile, '#Temperature=<option>')
-        call TLAB_WRITE_ASCII(bakfile, '#ForceDilatation=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, '#NormalizeK=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#NormalizeP=<value>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[IniFields]')
+        call TLab_Write_ASCII(bakfile, '#Velocity=<VelocityDiscrete/VelocityBroadband/PotentialBroadband/VorticityBroadband>')
+        call TLab_Write_ASCII(bakfile, '#Temperature=<option>')
+        call TLab_Write_ASCII(bakfile, '#ForceDilatation=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#NormalizeK=<value>')
+        call TLab_Write_ASCII(bakfile, '#NormalizeP=<value>')
 
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'Velocity', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_u = PERT_NONE
@@ -89,8 +89,8 @@ contains
         else if (trim(adjustl(sRes)) == 'vorticitybroadband') then; flag_u = PERT_BROADBAND_VORTICITY
         else if (trim(adjustl(sRes)) == 'potentialbroadband') then; flag_u = PERT_BROADBAND_POTENTIAL
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         RemoveDilatation = .true.
@@ -99,8 +99,8 @@ contains
 
         call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniK', IniK)
         if (.not. any(IniKvalid == IniK%type)) then
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Undeveloped IniK type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. Undeveloped IniK type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
         IniK%delta = 1.0_wp
         IniK%mean = 0.0_wp
@@ -115,16 +115,16 @@ contains
         else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmin = DNS_BCS_DIRICHLET; flag_wall = flag_wall + 1
         else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmin = DNS_BCS_NEUMANN
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
-            call TLAB_STOP(DNS_ERROR_IBC)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
+            call TLab_Stop(DNS_ERROR_IBC)
         end if
         call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
         if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmax = DNS_BCS_NONE
         else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmax = DNS_BCS_DIRICHLET; flag_wall = flag_wall + 2
         else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmax = DNS_BCS_NEUMANN
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
-            call TLAB_STOP(DNS_ERROR_IBC)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
+            call TLab_Stop(DNS_ERROR_IBC)
         end if
 
         ! In compressible formulation
@@ -133,8 +133,8 @@ contains
         else if (trim(adjustl(sRes)) == 'planediscrete') then; flag_t = PERT_DISCRETE
         else if (trim(adjustl(sRes)) == 'planebroadband') then; flag_t = PERT_BROADBAND
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         ! Discrete Forcing

@@ -402,7 +402,7 @@ subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
             name = trim(adjustl(fname))
             if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
 
-            call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+            call TLab_Write_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 
 #include "dns_open_file.h"
             write (LOC_UNIT_ID) SNGL(pow(1:nxy, iv))

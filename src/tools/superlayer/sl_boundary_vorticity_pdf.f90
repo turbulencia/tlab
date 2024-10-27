@@ -33,14 +33,14 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     jmax_loc = min(jmax, jmax - 2*ibuffer_npy + 1)
 
     if (nfield < L_NFIELDS_MAX) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Samples array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_PDF. Samples array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     else
         nfield = L_NFIELDS_MAX
     end if
     if (itxc_size < imax*jmax*kmax*6) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Txc array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_PDF. Txc array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! Offset to be used in SL_BOUNDARY_SAMPLE

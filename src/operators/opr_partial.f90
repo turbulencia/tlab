@@ -7,7 +7,7 @@
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
     use TLab_Types, only: grid_dt
-    use TLab_WorkFlow, only: TLAB_STOP, TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm
     use IBM_VARS, only: nobi, nobj, nobk
@@ -324,8 +324,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
 ! Interpolation, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
@@ -336,8 +336,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
         end if
 
@@ -366,8 +366,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
 ! 1st interpolatory derivative, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
@@ -378,8 +378,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
         end if
 

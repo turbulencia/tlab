@@ -65,7 +65,7 @@ program APRIORI
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -206,7 +206,7 @@ program APRIORI
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
@@ -331,5 +331,5 @@ program APRIORI
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program APRIORI

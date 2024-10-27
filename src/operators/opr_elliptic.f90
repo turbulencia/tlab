@@ -112,8 +112,8 @@ contains
         else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
         else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         select case (imode_elliptic)
@@ -800,8 +800,8 @@ contains
 
 !         ! #######################################################################
 !         if (ibc /= 0) then ! So far only implemented for Dirichlet BCs
-!             call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
-!             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+!             call TLab_Write_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
+!             call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !         end if
 
 !         call c_f_pointer(c_loc(tmp1), c_tmp1_n, shape=[isize_txc_dimz/2, nz, nfield])

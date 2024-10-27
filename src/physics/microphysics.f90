@@ -5,7 +5,7 @@ module Microphysics
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLab_Types, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
     use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use OPR_ODES
@@ -38,16 +38,16 @@ contains
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[Sedimentation]')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Exponent=<value>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[Sedimentation]')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
+        call TLab_Write_ASCII(bakfile, '#Exponent=<value>')
 
         call SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)                 ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) /= 'void') then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Deprecated block [Transport]. Update to [Sedimentation].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Deprecated block [Transport]. Update to [Sedimentation].')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call SCANINICHAR(bakfile, inifile, 'Sedimentation', 'Type', 'None', sRes)
@@ -57,8 +57,8 @@ contains
         elseif (trim(adjustl(sRes)) == 'airwater') then; sedimentationProps%type = TYPE_SED_AIRWATER
         elseif (trim(adjustl(sRes)) == 'airwatersimplified') then; sedimentationProps%type = TYPE_SED_AIRWATERSIMPLIFIED
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Sedimentation.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Error in Sedimentation.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         sedimentationProps%active = .false.
@@ -88,8 +88,8 @@ contains
             if (settling > 0.0_wp) then
                 sedimentationProps%parameters = sedimentationProps%parameters*settling ! adding the settling number in the parameter definitions
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Settling number must be nonzero if sedimentation is retained.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Settling number must be nonzero if sedimentation is retained.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
 

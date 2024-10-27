@@ -197,15 +197,15 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_SPATIAL_LAYER')
+    call TLab_Write_ASCII(tfile, 'ENTERING AVG_SCAL_SPATIAL_LAYER')
 #endif
 
     c13 = 1.0_wp/3.0_wp
     r05 = 0.5_wp
 
     if (nstatavg_points == 0) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_SCAL_SPATIAL_LAYER: Zero number of points')
-        call TLAB_STOP(DNS_ERROR_STATZERO)
+        call TLab_Write_ASCII(efile, 'AVG_SCAL_SPATIAL_LAYER: Zero number of points')
+        call TLab_Stop(DNS_ERROR_STATZERO)
     else
         pts = 1.0_wp/real(nstatavg_points, wp)
     end if
@@ -213,8 +213,8 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
     eps = visc/schmidt(is)
 
     if (itxc < nstatavg*jmax*LAST_INDEX) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_SCAL_SPATIAL_LAYER: Not enough space in stat')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'AVG_SCAL_SPATIAL_LAYER: Not enough space in stat')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! ###################################################################
@@ -748,7 +748,7 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
     close (i23)
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_SPATIAL_LAYER')
+    call TLab_Write_ASCII(tfile, 'LEAVING AVG_SCAL_SPATIAL_LAYER')
 #endif
 
     return

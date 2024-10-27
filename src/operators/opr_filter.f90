@@ -35,7 +35,7 @@ contains
         use TLab_Constants, only: efile, wp, MAX_PARS
         use TLab_Types, only: filter_dt
         use TLAB_VARS, only: g
-        use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         implicit none
 
         character(len=*) bakfile, inifile, tag
@@ -47,15 +47,15 @@ contains
         integer idummy, ig
 
 !########################################################################
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(tag))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<none/compact/helmholtz/SpectralBand/SpectralErf/tophat>')
-        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#ActiveX=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, '#ActiveY=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, '#ActiveZ=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
-        call TLAB_WRITE_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(tag))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<none/compact/helmholtz/SpectralBand/SpectralErf/tophat>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<values>')
+        call TLab_Write_ASCII(bakfile, '#ActiveX=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ActiveY=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ActiveZ=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
+        call TLab_Write_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
 
         variable(:)%size = g(:)%size
         variable(:)%periodic = g(:)%periodic
@@ -92,8 +92,8 @@ contains
         else if (trim(adjustl(sRes)) == 'helmholtz') then; variable(:)%type = DNS_FILTER_HELMHOLTZ
             variable(:)%parameters(1) = 1.0_wp    ! default filter size
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//'Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//'Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         ! Boundary conditions correction
@@ -113,8 +113,8 @@ contains
         else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMin = DNS_FILTER_BCS_NEUMANN
         else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMin = DNS_FILTER_BCS_ZERO
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmin.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmin.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'BcsJmax', trim(adjustl(default)), sRes)
@@ -126,8 +126,8 @@ contains
         else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMax = DNS_FILTER_BCS_NEUMANN
         else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMax = DNS_FILTER_BCS_ZERO
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmax.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmax.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'Parameters', 'void', sRes)
@@ -145,8 +145,8 @@ contains
         if (idummy > 0) then
             variable(:)%repeat = idummy
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Entry Filter.Repeat must be positive.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Entry Filter.Repeat must be positive.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveX', 'yes', sRes)
@@ -165,8 +165,8 @@ contains
 
             if (variable(ig)%type == DNS_FILTER_TOPHAT) then
                 if (mod(int(variable(ig)%parameters(1)), 2) /= 0) then
-                    call TLAB_WRITE_ASCII(efile, __FILE__//'. Tophat filter size must be even.')
-                    call TLAB_STOP(DNS_ERROR_PARAMETER)
+                    call TLab_Write_ASCII(efile, __FILE__//'. Tophat filter size must be even.')
+                    call TLab_Stop(DNS_ERROR_PARAMETER)
                 end if
                 variable(ig)%inb_filter = int(variable(ig)%parameters(1)) + 1
             end if

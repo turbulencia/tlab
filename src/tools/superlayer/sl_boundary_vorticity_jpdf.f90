@@ -32,14 +32,14 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
     jmax_loc = min(jmax, jmax - 2*ibuffer_npy + 1)
 
     if (nfield < L_NFIELDS_MAX) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Samples array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_JPDF. Samples array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     else
         nfield = L_NFIELDS_MAX
     end if
     if (itxc_size < imax*jmax*kmax*6) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Txc array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_JPDF. Txc array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! ###################################################################
@@ -51,9 +51,9 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! txc2 ....: second invariant Q
 ! -------------------------------------------------------------------
     if (iopt == 3) then
-        call TLAB_WRITE_ASCII(lfile, 'Computing invariant R...')
+        call TLab_Write_ASCII(lfile, 'Computing invariant R...')
         call FI_INVARIANT_R(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-        call TLAB_WRITE_ASCII(lfile, 'Computing invariant Q...')
+        call TLab_Write_ASCII(lfile, 'Computing invariant Q...')
         call FI_INVARIANT_Q(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         suffix = 'RQ '
 
@@ -63,9 +63,9 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! txc2 ....: strain 2 s_ij s_ij
 ! -------------------------------------------------------------------
     else if (iopt == 4) then
-        call TLAB_WRITE_ASCII(lfile, 'Computing vorticity...')
+        call TLab_Write_ASCII(lfile, 'Computing vorticity...')
         call FI_VORTICITY(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3))
-        call TLAB_WRITE_ASCII(lfile, 'Computing strain...')
+        call TLab_Write_ASCII(lfile, 'Computing strain...')
         call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4))
         do ij = 1, imax*jmax*kmax
             txc(ij, 2) = C_2_R*txc(ij, 2)

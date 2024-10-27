@@ -19,7 +19,7 @@
 
 module IO_FIELDS
     use TLab_Constants, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
-    use TLab_WorkFlow, only: TLAB_STOP, TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use TLab_Arrays, only: wrk3d
 #ifdef USE_MPI
     use MPI
@@ -189,7 +189,7 @@ contains
         write (name, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(name))
         write (name, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))
         write (name, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
         select case (imode_files)
@@ -266,8 +266,8 @@ contains
             ! process header info
             isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
             if (isize > isize_max) then
-                call TLAB_WRITE_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
-                call TLAB_STOP(DNS_ERROR_ALLOC)
+                call TLab_Write_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
+                call TLab_Stop(DNS_ERROR_ALLOC)
             end if
 
             rtime = params(1)
@@ -314,7 +314,7 @@ contains
         write (str, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(str))
         write (str, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))
         write (str, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #ifdef USE_MPI
         subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_INTEGER1)
@@ -413,7 +413,7 @@ contains
         write (name, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(name))
         write (name, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))
         write (name, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
         select case (imode_files)
@@ -450,8 +450,8 @@ contains
             end if
 
             if (isize > isize_max) then
-                call TLAB_WRITE_ASCII(efile, 'IO_WRITE_FIELDS. Parameters array size error.')
-                call TLAB_STOP(DNS_ERROR_ALLOC)
+                call TLab_Write_ASCII(efile, 'IO_WRITE_FIELDS. Parameters array size error.')
+                call TLab_Stop(DNS_ERROR_ALLOC)
             end if
 
             header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
@@ -539,7 +539,7 @@ contains
         write (str, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(str))
         write (str, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))
         write (str, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -607,12 +607,12 @@ contains
 
         ! Check
         if (nx /= nx_loc .or. ny /= ny_loc .or. nz /= nz_loc) then
-            call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
-            call TLAB_STOP(DNS_ERROR_DIMGRID)
+            call TLab_Write_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
+            call TLab_Stop(DNS_ERROR_DIMGRID)
         end if
 
         if (nt /= nt_loc) then
-            call TLAB_WRITE_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
+            call TLab_Write_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
             !     nt = nt_loc
         end if
 
@@ -623,8 +623,8 @@ contains
         elseif (isize == 0) then
             continue ! no params to read; header format is correct
         else
-            call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
-            call TLAB_STOP(DNS_ERROR_RECLEN)
+            call TLab_Write_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
+            call TLab_Stop(DNS_ERROR_RECLEN)
         end if
 
         return
@@ -690,7 +690,7 @@ contains
             do iv = 1, sizes(5)
                 name = trim(adjustl(fname))
                 if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
-                call TLAB_WRITE_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
+                call TLab_Write_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
@@ -769,7 +769,7 @@ contains
             do iv = 1, sizes(5)
                 name = trim(adjustl(fname))
                 if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
-                call TLAB_WRITE_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
+                call TLab_Write_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
@@ -844,7 +844,7 @@ contains
 !         if (ims_npro_i > 1) then
 !             ! We always initialize types here. For the general field files, we could
 !             ! use TLabMPI_I_PARTIAL, but we use this routine for other files.
-!             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
+!             call TLab_Write_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
 !             id = TLabMPI_I_AUX1
 !             npage = nz*ny
 !             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
@@ -917,7 +917,7 @@ contains
 !         if (ims_npro_i > 1) then
 !             ! We always initialize types here. For the general field files, we could
 !             ! use TLabMPI_I_PARTIAL, but we use this routine for other files.
-!             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
+!             call TLab_Write_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
 !             id = TLabMPI_I_AUX1
 !             npage = nz*ny
 !             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &

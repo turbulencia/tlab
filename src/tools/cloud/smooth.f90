@@ -17,7 +17,7 @@ program SMOOTH
     integer(wi) opt
 
 ! ###################################################################
-    call TLAB_START
+    call TLab_Start
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.

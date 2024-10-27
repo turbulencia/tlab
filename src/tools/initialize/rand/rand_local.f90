@@ -83,8 +83,8 @@ contains
         ! ###################################################################
         if (g(3)%size > 1) then
             if (Rxz /= 0.0_wp .or. Ryz /= 0.0_wp) then ! only 2D case developed
-                call TLAB_WRITE_ASCII(efile, 'Terms Rxz and Ryz not developed yet.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'Terms Rxz and Ryz not developed yet.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             call RAND_NORMALIZE(Rzz, w)

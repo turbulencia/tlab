@@ -29,7 +29,7 @@ program VFFT
     err_count = i0
     case_count = i0
 
-    call TLAB_START()
+    call TLab_Start()
     call IO_READ_GLOBAL('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize()
@@ -90,5 +90,5 @@ program VFFT
     end if
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VFFT

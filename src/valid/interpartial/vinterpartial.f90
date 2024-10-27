@@ -48,7 +48,7 @@ program VINTERPARTIAL
     TINTEGER bcs(2, 2)
     TREAL dummy, error
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL('tlab.ini')
 #ifdef USE_MPI
@@ -59,8 +59,8 @@ program VINTERPARTIAL
 ! Check input
 ! -------------------------------------------------------------------
     if (.not. stagger_on) then
-        call TLAB_WRITE_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in tlab.ini!')
-        call TLAB_STOP(0)
+        call TLab_Write_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in tlab.ini!')
+        call TLab_Stop(0)
     end if
 
 ! -------------------------------------------------------------------
@@ -202,5 +202,5 @@ program VINTERPARTIAL
 
 ! ###################################################################
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VINTERPARTIAL

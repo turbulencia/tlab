@@ -14,7 +14,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     use TLab_Constants, only: efile, wi, wp
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
@@ -33,7 +33,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_EXPLICIT')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_EXPLICIT')
 #endif
 
     bcs = 0
@@ -98,7 +98,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     hq(:, 3) = hq(:, 3) + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_EXPLICIT')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_EXPLICIT')
 #endif
 
     return

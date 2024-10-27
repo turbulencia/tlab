@@ -33,8 +33,8 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
     if (imax_loc /= imax .or. jmax_loc /= jmax .or. kmax_loc /= kmax) then
         close (50)
         write (line, 100) imax_loc, jmax_loc, kmax_loc
-        call TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
-        call TLAB_STOP(DNS_ERROR_DIMGRID)
+        call TLab_Write_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
+        call TLab_Stop(DNS_ERROR_DIMGRID)
     end if
 
     ! -----------------------------------------------------------------------

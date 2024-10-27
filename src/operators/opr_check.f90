@@ -64,13 +64,13 @@ subroutine OPR_CHECK()
         write (line, 100) residual
         line = 'Checking MPI transposition for Ox derivatives: Residual ' &
                //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         if (ims_npro_i > ims_sizBlock_i) then
             line = ''
             write (line, *) ims_sizBlock_i
             line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLabMPI_TRP<F,B>_I'
-            call TLAB_WRITE_ASCII(lfile, line)
+            call TLab_Write_ASCII(lfile, line)
         end if
     end if
 #endif
@@ -99,13 +99,13 @@ subroutine OPR_CHECK()
         write (line, 100) residual
         line = 'Checking MPI transposition for Oz derivatives: Residual ' &
                //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         if (ims_npro_k > ims_sizBlock_k) then
             line = ''
             write (line, *) ims_sizBlock_k
             line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLabMPI_TRP<F,B>_K'
-            call TLAB_WRITE_ASCII(lfile, line)
+            call TLab_Write_ASCII(lfile, line)
         end if
     end if
 #endif
@@ -147,7 +147,7 @@ subroutine OPR_CHECK()
         write (line, 100) residual
         line = 'Checking FFT routines: Residual ' &
                //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
     end if
 

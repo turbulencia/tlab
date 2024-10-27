@@ -27,7 +27,7 @@ program INISCAL
     integer(wi) is, inb_scal_loc
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -64,7 +64,7 @@ program INISCAL
     s = 0.0_wp
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Initializing scalars.')
+    call TLab_Write_ASCII(lfile, 'Initializing scalars.')
 
     inb_scal_loc = inb_scal
     if (imixture == MIXT_TYPE_AIRWATER) then
@@ -118,5 +118,5 @@ program INISCAL
     ! ###################################################################
     call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program INISCAL

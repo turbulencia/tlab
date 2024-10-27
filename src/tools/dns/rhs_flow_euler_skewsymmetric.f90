@@ -10,7 +10,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     use TLab_Constants, only: wp, wi
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal, imode_eqns
     use TLAB_VARS, only: g, buoyancy
@@ -28,7 +28,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_EULER_SKEWSYMMETRIC')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_EULER_SKEWSYMMETRIC')
 #endif
 
     bcs = 0
@@ -240,7 +240,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     hq(:,3) = hq(:,3) - 0.5_wp*rho*(u*tmp2 + v*tmp3 + w*tmp4)
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_EULER_SKEWSYMMETRIC')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_EULER_SKEWSYMMETRIC')
 #endif
 
     return

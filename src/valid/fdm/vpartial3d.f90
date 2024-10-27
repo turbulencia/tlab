@@ -26,7 +26,7 @@ program VPARTIAL3D
     integer(wi) type_of_problem
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 

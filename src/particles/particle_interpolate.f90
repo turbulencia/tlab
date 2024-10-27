@@ -39,8 +39,8 @@ contains
 
 !#######################################################################
         if (size(data_in) > inb_part_interp) then
-            call TLAB_WRITE_ASCII(efile, 'FIELD_TO_PARTICLE. Not enough memory.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'FIELD_TO_PARTICLE. Not enough memory.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
 ! -------------------------------------------------------------------

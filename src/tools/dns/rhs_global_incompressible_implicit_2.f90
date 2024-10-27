@@ -62,7 +62,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
             BcsScalJmax%SfcType(is) == DNS_SFC_STATIC) then
             continue
         else
-            call TLAB_WRITE_ASCII(efile, 'Only static surface implemented in implicit mode')
+            call TLab_Write_ASCII(efile, 'Only static surface implemented in implicit mode')
         end if
     end do
 

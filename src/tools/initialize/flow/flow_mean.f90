@@ -137,21 +137,21 @@ contains
                     end do
 
                 case default
-                    call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Mixture case undeveloped.')
-                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                    call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Mixture case undeveloped.')
+                    call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
                 end select
 
             end if
 
             if (tbg%type /= PROFILE_NONE) then
-                call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Temperature case undeveloped.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Temperature case undeveloped.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             if (rbg%type /= PROFILE_NONE) then
-                call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
         end if
@@ -159,8 +159,8 @@ contains
         ! Control
         call MINMAX(imax, jmax, kmax, p, pmin, pmax)
         if (pmin < 0.0_wp .or. pmax < 0.0_wp) then
-            call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
-            call TLAB_STOP(DNS_ERROR_NEGPRESS)
+            call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
+            call TLab_Stop(DNS_ERROR_NEGPRESS)
         end if
 
         return

@@ -157,7 +157,7 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
 ! -------------------------------------------------------------------
         if (lfilexist) then
             line = 'Reading field '//trim(adjustl(name))//'...'
-            call TLAB_WRITE_ASCII(lfile, line)
+            call TLab_Write_ASCII(lfile, line)
 
 #include "dns_open_file.h"
             rewind (LOC_UNIT_ID)
@@ -178,7 +178,7 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
             rstattimeorg = rtime
             mean_flow = 0.0_wp
             mean_scal = 0.0_wp
-            call TLAB_WRITE_ASCII(lfile, 'Statistics have been initialized.')
+            call TLab_Write_ASCII(lfile, 'Statistics have been initialized.')
         end if
 
 #ifdef USE_MPI
@@ -252,23 +252,23 @@ subroutine RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg, &
 ! #####################
 
     if (iterdum /= iter) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (iter mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (iter mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     end if
 
     if (jmaxdum /= jmax) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (jmax mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (jmax mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     end if
 
     if (nstatavgdum /= nstatavg) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (nstatavg mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (nstatavg mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     end if
 
     if (nstatdum /= nstat) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (nstat mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (nstat mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     else
         nstat = nstatdum
     end if

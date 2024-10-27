@@ -17,15 +17,15 @@ module TLab_WorkFlow
 
     character*128 :: line
 
-    public :: TLAB_START
-    public :: TLAB_STOP
-    public :: TLAB_WRITE_ASCII
+    public :: TLab_Start
+    public :: TLab_Stop
+    public :: TLab_Write_ASCII
 
 contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine TLAB_START()
+    subroutine TLab_Start()
         use TLab_OpenMP
         
         character*10 clock(2)
@@ -36,9 +36,9 @@ contains
 #ifdef USE_PSFFT
         call MPI_INIT_THREAD(MPI_THREAD_SERIALIZED, ims_nb_thrsupp_provided, ims_err)
         if (ims_nb_thrsupp_provided < MPI_THREAD_SERIALIZED) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//". MPI Library is missing the needed level of thread support for nonblocking communication.")
-            call TLAB_WRITE_ASCII(efile, __FILE__//". Try MPI_THREAD_FUNNELED after reading the documentation.")
-            call TLAB_STOP(DNS_ERROR_PSFFT)
+            call TLab_Write_ASCII(efile, __FILE__//". MPI Library is missing the needed level of thread support for nonblocking communication.")
+            call TLab_Write_ASCII(efile, __FILE__//". Try MPI_THREAD_FUNNELED after reading the documentation.")
+            call TLab_Stop(DNS_ERROR_PSFFT)
         end if
 #else
         call MPI_INIT(ims_err)
@@ -57,22 +57,22 @@ contains
         ! First output
         call date_and_time(clock(1), clock(2))
         line = 'Starting on '//trim(adjustl(clock(1) (1:8)))//' at '//trim(adjustl(clock(2)))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         line = 'Git-hash '//GITHASH
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         line = 'Git-branch '//GITBRANCH
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #ifdef USE_MPI
         write (line, *) ims_npro
         line = 'Number of MPI tasks '//trim(adjustl(line))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         if (ims_npro == 0) then
-            call TLAB_WRITE_ASCII(efile, 'DNS_START. Number of processors is zero.')
-            call TLAB_STOP(DNS_ERROR_MINPROC)
+            call TLab_Write_ASCII(efile, 'DNS_START. Number of processors is zero.')
+            call TLab_Stop(DNS_ERROR_MINPROC)
         end if
 #endif
 
@@ -82,7 +82,7 @@ contains
         TLab_OMP_numThreads = omp_get_max_threads()
         write (line, *) TLab_OMP_numThreads
         line = 'Number of OMP threads '//trim(adjustl(line))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #else
         TLab_OMP_numThreads = 1
@@ -90,11 +90,11 @@ contains
 #endif
 
         return
-    end subroutine TLAB_START
+    end subroutine TLab_Start
 
     ! ###################################################################
     ! ###################################################################
-    subroutine TLAB_STOP(error_code)
+    subroutine TLab_Stop(error_code)
 
         integer, intent(in) :: error_code
 
@@ -114,7 +114,7 @@ contains
         if (error_code /= 0) then
             write (line, *) error_code
             line = 'Error code '//trim(adjustl(line))//'.'
-            call TLAB_WRITE_ASCII(efile, line)
+            call TLab_Write_ASCII(efile, line)
         end if
 
         call GETARG(0, line)
@@ -124,25 +124,25 @@ contains
         else
             line = trim(adjustl(line))//' abnormally. Check '//trim(adjustl(efile))
         end if
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #ifdef USE_MPI
         ims_time_max = MPI_WTIME()
         write (line, 1000) ims_time_max - ims_time_min
         line = 'Time elapse ....................: '//trim(adjustl(line))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #ifdef PROFILE_ON
         write (line, 1000) ims_time_trans
         line = 'Time in array transposition ....: '//trim(ADJUST(line))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 #endif
 
 1000    format(G_FORMAT_R)
 
 #endif
 
-        call TLAB_WRITE_ASCII(lfile, '########################################')
+        call TLab_Write_ASCII(lfile, '########################################')
 
 #ifdef USE_MPI
         if (error_code == 0) then
@@ -152,11 +152,11 @@ contains
         end if
 #endif
         return
-    end subroutine TLAB_STOP
+    end subroutine TLab_Stop
 
     ! ###################################################################
     ! ###################################################################
-    subroutine TLAB_WRITE_ASCII(file, lineloc, flag_all)
+    subroutine TLab_Write_ASCII(file, lineloc, flag_all)
 
         character*(*), intent(in) :: file, lineloc
         logical, intent(in), optional :: flag_all
@@ -193,6 +193,6 @@ contains
 #endif
 
         return
-    end subroutine TLAB_WRITE_ASCII
+    end subroutine TLab_Write_ASCII
 
 end module TLab_WorkFlow

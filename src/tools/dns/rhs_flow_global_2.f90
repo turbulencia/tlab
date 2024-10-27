@@ -14,7 +14,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: g, buoyancy
@@ -39,7 +39,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_GLOBAL_2')
 #endif
 
     bcs = 0
@@ -353,7 +353,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end parallel
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_GLOBAL_2')
 #endif
 
     return

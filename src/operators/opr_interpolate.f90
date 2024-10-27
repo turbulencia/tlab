@@ -56,7 +56,7 @@ contains
 ! This should be OPR_INTERPOLATE_INITIALIZE
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
+            call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
             id = TLabMPI_I_AUX1
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
@@ -66,7 +66,7 @@ contains
             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
-            call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
+            call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
             id = TLabMPI_I_AUX2
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
@@ -78,13 +78,13 @@ contains
         end if
 
         if (ims_npro_k > 1) then
-            call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
+            call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
             id = TLabMPI_K_AUX1
             npage = nx_dst*ny_dst
             call TLabMPI_TYPE_K(ims_npro_k, nz, npage, 1, 1, 1, 1, &
                                  ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
-            call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
+            call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
             id = TLabMPI_K_AUX2
             npage = nx_dst*ny_dst
             call TLabMPI_TYPE_K(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, &
@@ -337,8 +337,8 @@ contains
         ! #######################################################################
 
         if (size(wrk1d) < 12*imax + 1) then
-            call TLAB_WRITE_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
-            call TLAB_STOP(DNS_ERROR_CURFIT)
+            call TLab_Write_ASCII(efile, 'INTERPOLATE_1D. Temporary Array not large enough')
+            call TLab_Stop(DNS_ERROR_CURFIT)
         end if
         !------------------------------------------! the periodic case
         if (periodic) then                    !

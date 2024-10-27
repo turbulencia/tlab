@@ -43,7 +43,7 @@ contains
 
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
-        use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+        use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
         use TLab_Types, only: pointers_dt
         use TLAB_VARS, only: g
@@ -73,7 +73,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER')
 #endif
 
         stats_buoyancy = .false.  ! default
@@ -218,7 +218,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER')
 #endif
 
         return
@@ -230,7 +230,7 @@ contains
 
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
-        use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+        use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
         use TLAB_VARS
         use TLab_Arrays
@@ -247,7 +247,7 @@ contains
 
         ! #######################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER')
 #endif
 
         ! #######################################################################
@@ -275,7 +275,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER')
 #endif
 
         return

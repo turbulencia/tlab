@@ -52,12 +52,12 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 
     ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_ZT_REDUCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING AVG_FLOW_ZT_REDUCE')
 #endif
 
     if (imax < nstatavg) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_FLOW_ZT_REDUCE. Not enough space in available arrays.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, 'AVG_FLOW_ZT_REDUCE. Not enough space in available arrays.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end if
 
     nstatavg_points = nstatavg_points + g(3)%size
@@ -3246,7 +3246,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING DNS_SAVE_AVGIJ')
+    call TLab_Write_ASCII(tfile, 'LEAVING DNS_SAVE_AVGIJ')
 #endif
 
     ! ############

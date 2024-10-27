@@ -146,7 +146,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
 ! -----------------------------------------------------------------------
 ! Anelastic density correction term in burgers operator
     if (imode_eqns == DNS_EQNS_ANELASTIC) then
-        call TLAB_WRITE_ASCII(lfile, 'Initialize anelastic density correction in burgers operator.')
+        call TLab_Write_ASCII(lfile, 'Initialize anelastic density correction in burgers operator.')
 
 ! Density correction term in the burgers operator along X
         g(1)%anelastic = .true.
@@ -385,7 +385,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
 
 ! Final check
         if (ier == 1) then
-            call TLAB_WRITE_ASCII(wfile, 'FLOW_SPATIAL: nmax reached.')
+            call TLab_Write_ASCII(wfile, 'FLOW_SPATIAL: nmax reached.')
         end if
         do j = 1, jmax
             rho_vo(i, j) = rho_aux(j)
@@ -460,7 +460,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
 ! -------------------------------------------------------------------
     xi_tr = 0.5_wp/jet_u_a - jet_u_b
     if (xi_tr < 0.0_wp) then
-        call TLAB_WRITE_ASCII(wfile, 'FLOW_SPATIAL_VELOCITY. xi_tr negative.')
+        call TLab_Write_ASCII(wfile, 'FLOW_SPATIAL_VELOCITY. xi_tr negative.')
     end if
     dxi_tr = xi_tr/8.0_wp
 
@@ -626,7 +626,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
 ! -------------------------------------------------------------------
     xi_tr = 0.5_wp*diam_z/diam_u/jet_z_a - jet_z_b
     if (xi_tr < 0.0_wp) then
-        call TLAB_WRITE_ASCII(wfile, 'FLOW_SPATIAL_VELOCITY. xi_tr negative.')
+        call TLab_Write_ASCII(wfile, 'FLOW_SPATIAL_VELOCITY. xi_tr negative.')
     end if
     dxi_tr = xi_tr/8.0_wp
 

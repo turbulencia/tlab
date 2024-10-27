@@ -31,7 +31,7 @@ program VBURGERS
     real(wp) dummy, error
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -150,5 +150,5 @@ program VBURGERS
 
     end if
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VBURGERS

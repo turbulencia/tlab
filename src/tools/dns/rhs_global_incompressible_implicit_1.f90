@@ -100,15 +100,15 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
                 BcsScalJmin%ref(1:imax, k, is) = s(ip_b:ip_b + imax - 1, is)
                 BcsScalJmax%ref(1:imax, k, is) = s(ip_t:ip_t + imax - 1, is)
             else  ! Only Dirichlet BCs implemented for scalar
-                call TLAB_WRITE_ASCII(efile, 'Only Dirichlet BCs implemented for scalar in implicit mode')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'Only Dirichlet BCs implemented for scalar in implicit mode')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             if (BcsScalJmin%SfcType(is) == DNS_SFC_STATIC .and. &
                 BcsScalJmax%SfcType(is) == DNS_SFC_STATIC) then
                 ! Nothing to do
             else
-                call TLAB_WRITE_ASCII(efile, 'Only static surface implemented in implicit mode')
+                call TLab_Write_ASCII(efile, 'Only static surface implemented in implicit mode')
             end if
         end do
     end do

@@ -36,7 +36,7 @@ program PARTICLE_BUILD_PDF
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START
+    call TLab_Start
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -106,5 +106,5 @@ program PARTICLE_BUILD_PDF
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

@@ -62,8 +62,8 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (ims_size_i(TLabMPI_I_POISSON1) /= ims_size_i(TLabMPI_I_POISSON2)) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
         end if
 #endif
@@ -176,8 +176,8 @@ contains
         end if
 
 #else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
 #endif
 

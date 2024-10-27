@@ -19,15 +19,15 @@ subroutine RAND_READ_LOCAL(inifile)
 ! ###################################################################
     bakfile = TRIM(ADJUSTL(inifile))//'.bak'
 
-    call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
+    call TLab_Write_ASCII(lfile, 'Reading local input data')
 ! ###################################################################
-    call TLAB_WRITE_ASCII(bakfile, '#')
-    call TLAB_WRITE_ASCII(bakfile, '#[Broadband]')
-    call TLAB_WRITE_ASCII(bakfile, '#Spectrum=<none/uniform/quartic/quadratic/gaussian>')
-    call TLAB_WRITE_ASCII(bakfile, '#f0=<frequencies>')
-    call TLAB_WRITE_ASCII(bakfile, '#Distribution=<none/uniform/gaussian>')
-    call TLAB_WRITE_ASCII(bakfile, '#Covariance=<Rxx,Ryy,Rzz,Rxy,Rxz,Ryz>')
-    call TLAB_WRITE_ASCII(bakfile, '#Seed=<random seed>')
+    call TLab_Write_ASCII(bakfile, '#')
+    call TLab_Write_ASCII(bakfile, '#[Broadband]')
+    call TLab_Write_ASCII(bakfile, '#Spectrum=<none/uniform/quartic/quadratic/gaussian>')
+    call TLab_Write_ASCII(bakfile, '#f0=<frequencies>')
+    call TLab_Write_ASCII(bakfile, '#Distribution=<none/uniform/gaussian>')
+    call TLab_Write_ASCII(bakfile, '#Covariance=<Rxx,Ryy,Rzz,Rxy,Rxz,Ryz>')
+    call TLab_Write_ASCII(bakfile, '#Seed=<random seed>')
 
     call SCANINIINT(bakfile, inifile, 'Broadband', 'Seed', '7', seed)
 
@@ -51,8 +51,8 @@ subroutine RAND_READ_LOCAL(inifile)
     else if (TRIM(ADJUSTL(sRes)) == 'uniform') then; ipdf = 1
     else if (TRIM(ADJUSTL(sRes)) == 'gaussian') then; ipdf = 2
     else
-        call TLAB_WRITE_ASCII(efile, 'RAND_READ_LOCAL. Broadband: Distribution type unknown.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLab_Write_ASCII(efile, 'RAND_READ_LOCAL. Broadband: Distribution type unknown.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
     ucov(1:3) = 1.0_wp ! diagonal terms
@@ -63,14 +63,14 @@ subroutine RAND_READ_LOCAL(inifile)
         call LIST_REAL(sRes, idummy, rdummy)
         if (idummy == 6) then; ucov(1:6) = rdummy(1:6)
         else
-            call TLAB_WRITE_ASCII(efile, 'RAND_READ_LOCAL. Broadband: Incorrect number of variances.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'RAND_READ_LOCAL. Broadband: Incorrect number of variances.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
     end if
-    ! CALL TLAB_WRITE_ASCII(bakfile,'Covariance matrix:')
-    ! WRITE(sRes,'(3E11.4)') ucov(1), ucov(4), ucov(5); CALL TLAB_WRITE_ASCII(bakfile,sRes)
-    ! WRITE(sRes,'(3E11.4)') ucov(4), ucov(2), ucov(6); CALL TLAB_WRITE_ASCII(bakfile,sRes)
-    ! WRITE(sRes,'(3E11.4)') ucov(5), ucov(6), ucov(3); CALL TLAB_WRITE_ASCII(bakfile,sRes)
+    ! CALL TLab_Write_ASCII(bakfile,'Covariance matrix:')
+    ! WRITE(sRes,'(3E11.4)') ucov(1), ucov(4), ucov(5); CALL TLab_Write_ASCII(bakfile,sRes)
+    ! WRITE(sRes,'(3E11.4)') ucov(4), ucov(2), ucov(6); CALL TLab_Write_ASCII(bakfile,sRes)
+    ! WRITE(sRes,'(3E11.4)') ucov(5), ucov(6), ucov(3); CALL TLab_Write_ASCII(bakfile,sRes)
 
     return
 end subroutine RAND_READ_LOCAL

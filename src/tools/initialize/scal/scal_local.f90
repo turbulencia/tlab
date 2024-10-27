@@ -66,14 +66,14 @@ contains
         ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
+        call TLab_Write_ASCII(lfile, 'Reading local input data')
 
         ! ###################################################################
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[IniFields]')
-        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<option>')
-        call TLAB_WRITE_ASCII(bakfile, '#NormalizeS=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#Mixture=<string>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[IniFields]')
+        call TLab_Write_ASCII(bakfile, '#Scalar=<option>')
+        call TLab_Write_ASCII(bakfile, '#NormalizeS=<values>')
+        call TLab_Write_ASCII(bakfile, '#Mixture=<string>')
 
         call SCANINICHAR(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_s = 0
@@ -86,8 +86,8 @@ contains
         else if (trim(adjustl(sRes)) == 'fluxbroadband')  then; flag_s = PERT_FLUX_BROADBAND
         else if (trim(adjustl(sRes)) == 'fluxdiscrete')   then; flag_s = PERT_FLUX_DISCRETE
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Scalar forcing type unknown')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Scalar forcing type unknown')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniS', IniS(1), 'gaussiansurface')      ! if IniS, valid for all
@@ -101,8 +101,8 @@ contains
         end if
         do is = 1, inb_scal
             if (.not. any(IniSvalid == IniS(is)%type)) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped IniS type.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped IniS type.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end do
         IniS(:)%delta = 1.0_wp
@@ -114,10 +114,10 @@ contains
         if (idummy /= inb_scal) then            ! Consistency check
             if (idummy == 1) then
                 norm_ini_s(2:) = norm_ini_s(1)
-                call TLAB_WRITE_ASCII(wfile, __FILE__//'. Using NormalizeS(1) for all scalars.')
+                call TLab_Write_ASCII(wfile, __FILE__//'. Using NormalizeS(1) for all scalars.')
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. NormalizeS size does not match number of scalars.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. NormalizeS size does not match number of scalars.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
 

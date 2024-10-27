@@ -69,7 +69,7 @@ program PARTICLE_TRAJEC
 !  INTEGER(8) test4(50)
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -262,5 +262,5 @@ program PARTICLE_TRAJEC
 !CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 !print*, 'here2', ims_pro
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

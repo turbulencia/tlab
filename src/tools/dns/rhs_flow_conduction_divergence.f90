@@ -15,7 +15,7 @@ subroutine RHS_FLOW_CONDUCTION_DIVERGENCE()
     use TLab_Constants, only: wi, wp
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
@@ -36,7 +36,7 @@ subroutine RHS_FLOW_CONDUCTION_DIVERGENCE()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_DIVERGENCE')
 #endif
 
     bcs = 0
@@ -79,7 +79,7 @@ subroutine RHS_FLOW_CONDUCTION_DIVERGENCE()
     hq(:,4) = hq(:,4) + tmp2 + tmp3 + tmp4
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_DIVERGENCE')
 #endif
 
     return

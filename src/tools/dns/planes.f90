@@ -57,7 +57,7 @@ contains
         character(len=512) sRes
 
         ! -------------------------------------------------------------------
-        call TLAB_WRITE_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
 
         var%n = 0
 
@@ -67,8 +67,8 @@ contains
         elseif (trim(adjustl(sRes)) == 'cbl') then; var%type = PLANES_CBL
         elseif (trim(adjustl(sRes)) == 'log') then; var%type = PLANES_LOG
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Planes.Type.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Planes.Type.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         call SCANINICHAR(bakfile, inifile, block, tag, 'void', sRes)
@@ -118,22 +118,22 @@ contains
         end if
 
         if (iplanes%size > imax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is insufficient.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is insufficient.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (jplanes%size > jmax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is insufficient.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is insufficient.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (kplanes%size > kmax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is insufficient.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is insufficient.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then
             if (scal_on) then
                 if ((inb_scal_array + 4) > inb_txc) then
-                    call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Not enough memory for log(grad(scal)) [inb_txc too small].')
-                    call TLAB_STOP(DNS_ERROR_ALLOC)
+                    call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Not enough memory for log(grad(scal)) [inb_txc too small].')
+                    call TLab_Stop(DNS_ERROR_ALLOC)
                 end if
             end if
         end if
@@ -141,20 +141,20 @@ contains
         ! Check [ijk]planes%nodes
         if (iplanes%type /= PLANES_NONE) then
             if (any(iplanes%nodes(:iplanes%n) < 1) .or. any(iplanes%nodes(:iplanes%n) > g(1)%size)) then
-                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Iplane nodes deceed/exeed grid in x-direction.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Iplane nodes deceed/exeed grid in x-direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
         if (jplanes%type /= PLANES_NONE) then
             if (any(jplanes%nodes(:jplanes%n) < 1) .or. any(jplanes%nodes(:jplanes%n) > g(2)%size)) then
-                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Jplane nodes deceed/exeed grid in y-direction.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Jplane nodes deceed/exeed grid in y-direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
         if (kplanes%type /= PLANES_NONE) then
             if (any(kplanes%nodes(:kplanes%n) < 1) .or. any(kplanes%nodes(:kplanes%n) > g(3)%size)) then
-                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Kplane nodes deceed/exeed grid in z-direction.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Kplane nodes deceed/exeed grid in z-direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
 
@@ -281,7 +281,7 @@ contains
             do iv = 1, kplanes%n
                 write (fname, *) kplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
             end do
-            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+            call TLab_Write_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
 
             offset = 0
             do iv = 1, nvars
@@ -299,7 +299,7 @@ contains
             do iv = 1, jplanes%n
                 write (fname, *) jplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
             end do
-            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+            call TLab_Write_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
 
             offset = 0
             do iv = 1, nvars
@@ -325,7 +325,7 @@ contains
             do iv = 1, iplanes%n
                 write (fname, *) iplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
             end do
-            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+            call TLab_Write_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
 
             offset = 0
             do iv = 1, nvars

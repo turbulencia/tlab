@@ -17,12 +17,12 @@ subroutine TLab_Consistency_Check()
 ! ###################################################################
     if (imode_ibm == 1) then
         if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. IBM only implemented for incompressible mode.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. IBM only implemented for incompressible mode.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. IBM only implemented for convective advection scheme.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. IBM only implemented for convective advection scheme.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         if ((infraredProps%type /= EQNS_NONE) .or. &
@@ -30,8 +30,8 @@ subroutine TLab_Consistency_Check()
             (infraredProps%type /= EQNS_NONE) .or. &
             (chemistryProps%type /= EQNS_NONE) .or. &
             (subsidence%type /= EQNS_NONE)) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
     end if
 

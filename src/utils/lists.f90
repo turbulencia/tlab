@@ -46,7 +46,7 @@ end subroutine LIST_STRING
 !########################################################################
 subroutine LIST_INTEGER(line, n, a)
     use TLab_Constants, only: wp, wi
-    use TLab_WorkFlow, only: TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Stop
     implicit none
 
     character*(*), intent(IN) :: line
@@ -94,7 +94,7 @@ subroutine LIST_INTEGER(line, n, a)
                         i = i + 1
                         ! check the array is big enough
                         if (i > n) then
-                            call TLAB_STOP(DNS_ERROR_PARAMETER)
+                            call TLab_Stop(DNS_ERROR_PARAMETER)
                         end if
                         read (line(lfirst:ilast), *) a(i)
                         lfirst = lloc
@@ -116,7 +116,7 @@ subroutine LIST_INTEGER(line, n, a)
         l1 = lloc + 1
         lloc = index(line(l1:l2), ':')
         if (lloc == 0) then
-            call TLAB_STOP(DNS_ERROR_PARAMETER)
+            call TLab_Stop(DNS_ERROR_PARAMETER)
         end if
         lloc = l1 + lloc - 1
         read (line(l1:lloc - 1), *) incr
@@ -125,7 +125,7 @@ subroutine LIST_INTEGER(line, n, a)
 
         ! check the array is big enough
         if ((itmax - a(1))/incr + 1 > n) then
-            call TLAB_STOP(DNS_ERROR_PARAMETER)
+            call TLab_Stop(DNS_ERROR_PARAMETER)
         else
             n = (itmax - a(1))/incr + 1
         end if
@@ -144,7 +144,7 @@ end subroutine LIST_INTEGER
 !########################################################################
 subroutine LIST_REAL(line, n, a)
     use TLab_Constants, only: wp, wi
-    use TLab_WorkFlow, only: TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Stop
     implicit none
 
     character*(*), intent(IN) :: line
@@ -192,7 +192,7 @@ subroutine LIST_REAL(line, n, a)
                         i = i + 1
                         ! check the array is big enough
                         if (i > n) then
-                            call TLAB_STOP(DNS_ERROR_PARAMETER)
+                            call TLab_Stop(DNS_ERROR_PARAMETER)
                         end if
                         read (line(lfirst:ilast), *) a(i)
                         lfirst = lloc
@@ -214,7 +214,7 @@ subroutine LIST_REAL(line, n, a)
         l1 = lloc + 1
         lloc = index(line(l1:l2), ':')
         if (lloc == 0) then
-            call TLAB_STOP(DNS_ERROR_PARAMETER)
+            call TLab_Stop(DNS_ERROR_PARAMETER)
         end if
         lloc = l1 + lloc - 1
         read (line(l1:lloc - 1), *) aincr
@@ -223,7 +223,7 @@ subroutine LIST_REAL(line, n, a)
 
         ! check the array is big enough
         if (int((amax - a(1))/aincr) + 1 > n) then
-            call TLAB_STOP(DNS_ERROR_PARAMETER)
+            call TLab_Stop(DNS_ERROR_PARAMETER)
         else
             n = int((amax - a(1))/aincr) + 1
         end if

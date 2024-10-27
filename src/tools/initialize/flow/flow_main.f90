@@ -26,7 +26,7 @@ program INIFLOW
     implicit none
 
     !########################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -55,11 +55,11 @@ program INIFLOW
 
     ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
+        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
         stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
+        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
     end if
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
@@ -69,8 +69,8 @@ program INIFLOW
             call OPR_FOURIER_INITIALIZE()
 
         else
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. CG routines needed.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. CG routines needed.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
     end if
@@ -80,7 +80,7 @@ program INIFLOW
     q = 0.0_wp
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Initializing velocity.')
+    call TLab_Write_ASCII(lfile, 'Initializing velocity.')
 
     call VELOCITY_MEAN(q(1, 1), q(1, 2), q(1, 3))
 
@@ -98,7 +98,7 @@ program INIFLOW
     ! ###################################################################
     ! Compressible formulation
     if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        call TLAB_WRITE_ASCII(lfile, 'Initializing pressure and density.')
+        call TLab_Write_ASCII(lfile, 'Initializing pressure and density.')
 
         call PRESSURE_MEAN(p, T, s)
         call DENSITY_MEAN(rho, p, T, s, txc)
@@ -125,5 +125,5 @@ program INIFLOW
     ! ###################################################################
     call IO_WRITE_FIELDS(trim(adjustl(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program INIFLOW

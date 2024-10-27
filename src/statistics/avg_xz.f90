@@ -33,7 +33,7 @@ subroutine AVG_N_XZ(fname, itime, rtime, nx, ny, nz, nv, nm, vars, igate, gate, 
     character*250 varname(1)  ! to be reduce to just 1 group in the future
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do j = 1, ny
         do iv = 1, nv
@@ -129,7 +129,7 @@ subroutine INTER_N_XZ(fname, itime, rtime, nx, ny, nz, np, parname, gate, y, int
     character*250 varname(1)  ! to be reduce to just 1 group in the future
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do j = 1, ny
         do ip = 1, np

@@ -26,7 +26,7 @@ program INIRAND
     integer(wi) iq, is
 
     ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -49,7 +49,7 @@ program INIRAND
     call FI_BACKGROUND_INITIALIZE()
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Initializing random fiels.')
+    call TLab_Write_ASCII(lfile, 'Initializing random fiels.')
 
 #ifdef USE_MPI
     seed = seed + ims_pro         ! seed for random generator
@@ -77,5 +77,5 @@ program INIRAND
     end do
     call IO_WRITE_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program INIRAND

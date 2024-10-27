@@ -67,7 +67,7 @@ program PARTICLE_POS_TRAJEC
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -170,5 +170,5 @@ program PARTICLE_POS_TRAJEC
 
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

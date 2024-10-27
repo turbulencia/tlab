@@ -234,5 +234,5 @@ program SL_NORMAL_ANALYSIS
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SL_NORMAL_ANALYSIS

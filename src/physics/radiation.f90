@@ -6,7 +6,7 @@ module Radiation
     use TLab_Types, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
     use TLab_Arrays, only: wrk2d, wrk3d
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_DOUBLE
     use Thermodynamics, only: imixture
     use OPR_ODES
@@ -87,13 +87,13 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Infrared'
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#AbsorptionComponent#=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#BoundaryConditions=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#BetaCoefficient=<values>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Scalar=<value>')
+        call TLab_Write_ASCII(bakfile, '#AbsorptionComponent#=<values>')
+        call TLab_Write_ASCII(bakfile, '#BoundaryConditions=<values>')
+        call TLab_Write_ASCII(bakfile, '#BetaCoefficient=<values>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
@@ -104,8 +104,8 @@ contains
         else if (trim(adjustl(sRes)) == 'band') then; infraredProps%type = TYPE_IR_BAND
         else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infraredProps%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         infraredProps%active = .false.
@@ -128,8 +128,8 @@ contains
                     idummy = nbands_max
                     call LIST_REAL(sRes, idummy, dummy)
                     if (idummy /= nbands) then
-                        call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.AbsorptionComponent.')
-                        call TLAB_STOP(DNS_ERROR_OPTION)
+                        call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.AbsorptionComponent.')
+                        call TLab_Stop(DNS_ERROR_OPTION)
                     end if
                     kappa(ncomps, 1:nbands) = dummy(1:nbands)
                 else
@@ -148,8 +148,8 @@ contains
                     idummy = nbands_max
                     call LIST_REAL(sRes, idummy, dummy)
                     if (idummy /= nbands - 1) then
-                        call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.BetaCoefficient.')
-                        call TLAB_STOP(DNS_ERROR_OPTION)
+                        call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.BetaCoefficient.')
+                        call TLab_Stop(DNS_ERROR_OPTION)
                     end if
                     beta(ic, 1:nbands) = dummy(1:nbands)
                 end if
@@ -171,8 +171,8 @@ contains
                 ! third radiatively active scalar is a homogeneous field, e.g., CO2
 
             case default
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Infrared only derived for airwater mixture.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Infrared only derived for airwater mixture.')
+                call TLab_Stop(DNS_ERROR_OPTION)
 
             end select
 
@@ -217,8 +217,8 @@ contains
         ! Check with previous version; to be removed
         call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         return

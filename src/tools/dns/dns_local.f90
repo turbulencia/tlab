@@ -141,14 +141,14 @@ contains
             ! Check density
             call MINMAX(imax, jmax, kmax, q(:, 5), r_min_loc, r_max_loc)
             if (r_min_loc < bound_r%min .or. r_max_loc > bound_r%max) then
-                call TLAB_WRITE_ASCII(efile, 'DNS_CONTROL. Density out of bounds.')
+                call TLab_Write_ASCII(efile, 'DNS_CONTROL. Density out of bounds.')
                 logs_data(1) = DNS_ERROR_NEGDENS
             end if
 
             ! Check pressure
             call MINMAX(imax, jmax, kmax, q(:, 6), p_min_loc, p_max_loc)
             if (p_min_loc < bound_p%min .or. p_max_loc > bound_p%max) then
-                call TLAB_WRITE_ASCII(efile, 'DNS_CONTROL. Pressure out of bounds.')
+                call TLab_Write_ASCII(efile, 'DNS_CONTROL. Pressure out of bounds.')
                 logs_data(1) = DNS_ERROR_NEGPRESS
             end if
 
@@ -185,7 +185,7 @@ contains
             d_min_loc = -d_min_loc; d_max_loc = -d_max_loc
 
             if (max(abs(d_min_loc), abs(d_min_loc)) > bound_d%max) then
-                call TLAB_WRITE_ASCII(efile, 'DNS_CONTROL. Dilatation out of bounds.')
+                call TLab_Write_ASCII(efile, 'DNS_CONTROL. Dilatation out of bounds.')
                 logs_data(1) = DNS_ERROR_DILATATION
 
                 ! Locating the points where the maximum dilatation occurs
@@ -203,7 +203,7 @@ contains
                     write (str, *) idummy(1); line = trim(adjustl(line))//' at grid node '//trim(adjustl(str))
                     write (str, *) idummy(2); line = trim(adjustl(line))//':'//trim(adjustl(str))
                     write (str, *) idummy(3); line = trim(adjustl(line))//':'//trim(adjustl(str))//'.'
-                    call TLAB_WRITE_ASCII(lfile, line, .true.)
+                    call TLab_Write_ASCII(lfile, line, .true.)
                 end if
 
                 dummy = minval(wrk3d)
@@ -217,7 +217,7 @@ contains
                     write (str, *) idummy(1); line = trim(adjustl(line))//' at grid node '//trim(adjustl(str))
                     write (str, *) idummy(2); line = trim(adjustl(line))//':'//trim(adjustl(str))
                     write (str, *) idummy(3); line = trim(adjustl(line))//':'//trim(adjustl(str))//'.'
-                    call TLAB_WRITE_ASCII(lfile, line, .true.)
+                    call TLab_Write_ASCII(lfile, line, .true.)
                 end if
 
             end if

@@ -186,8 +186,8 @@ contains
                 end do
 
             else
-                call TLAB_WRITE_ASCII(efile, 'THERMO_CALORIC_TEMPERATURE. General case undeveloped.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'THERMO_CALORIC_TEMPERATURE. General case undeveloped.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
             end if
 

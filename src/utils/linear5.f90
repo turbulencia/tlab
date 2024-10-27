@@ -339,8 +339,8 @@ subroutine PENTADPFS(nmax, a, b, c, d, e, f, g)
     m4 = d(nmax)*g(1) + e(nmax)*g(2) + a(1)*g(nmax) + 1.0_wp
     ! Check if M is invertible (eq. 2.9)
     if ((m1*m4 - m2*m3) < 1e-8) then
-        call TLAB_WRITE_ASCII(efile, 'FDM_INITIALIZE. Pendad - matrix M not invertible.')
-        call TLAB_STOP(DNS_ERROR_PENTADP)
+        call TLab_Write_ASCII(efile, 'FDM_INITIALIZE. Pendad - matrix M not invertible.')
+        call TLab_Stop(DNS_ERROR_PENTADP)
     end if
 
     return

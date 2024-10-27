@@ -429,8 +429,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! -----------------------------------------------------------------------
     nv = ig(ng) + sg(ng) - 1
     if (MAX_AVG_TEMPORAL < nv) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_FLOW_XZ. Not enough space in local arrays.')
-        call TLAB_STOP(DNS_ERROR_AVGTMP)
+        call TLab_Write_ASCII(efile, 'AVG_FLOW_XZ. Not enough space in local arrays.')
+        call TLab_Stop(DNS_ERROR_AVGTMP)
     end if
     mean2d(:, 1:nv) = 0.0_wp
 
@@ -439,7 +439,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
     ! #######################################################################
     write (line1, *) itime; line1 = 'Calculating flow statistics at It'//trim(adjustl(line1))//'...'
-    call TLAB_WRITE_ASCII(lfile, line1)
+    call TLab_Write_ASCII(lfile, line1)
 
     ! #######################################################################
     ! Preliminary for IBM usage
@@ -453,7 +453,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Averages (do not overwrite dudz; it contains p for incompressible case)
     ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
+    call TLab_Write_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 2')
 #endif
 
     ! Velocity
@@ -992,7 +992,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! # dwdz = d W / d z
     ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 3')
+    call TLab_Write_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 3')
 #endif
 
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, dudx)
@@ -1035,7 +1035,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Derivatives Fluctuations
     ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
+    call TLab_Write_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 11')
 #endif
 
     ! -------------------------------------------------------------------

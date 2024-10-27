@@ -73,8 +73,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     else if (ibm_geo%name == 'box') then
       call IBM_GENERATE_GEOMETRY_BOX(wrk3d)
     else 
-      call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
-      call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+      call TLab_Write_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
+      call TLab_Stop(DNS_ERROR_IBM_MISS_GEO)
     end if 
   end if
 
@@ -98,8 +98,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
       else if (ibm_geo%name == 'valley') then; continue
       else if (ibm_geo%name == 'box')    then; continue
       else
-        call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
-        call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+        call TLab_Write_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
+        call TLab_Stop(DNS_ERROR_IBM_MISS_GEO)
       end if
     end if
   end if

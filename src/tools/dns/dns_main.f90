@@ -44,7 +44,7 @@ program DNS
     integer, parameter :: i0 = 0, i1 = 1
 
     ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     call IO_READ_GLOBAL(ifile)
 #ifdef USE_MPI
@@ -150,7 +150,7 @@ program DNS
     flag_viscosity = .false.
     if (visc /= visc_stop) then
         write (str, *) visc
-        call TLAB_WRITE_ASCII(lfile, 'Changing original viscosity '//trim(adjustl(str))//' to new value.')
+        call TLab_Write_ASCII(lfile, 'Changing original viscosity '//trim(adjustl(str))//' to new value.')
         if (visc_time > 0.0_wp) then
             visc_rate = (visc_stop - visc)/visc_time
             visc_time = rtime + visc_time                 ! Stop when this time is reached
@@ -216,7 +216,7 @@ program DNS
     itime = nitera_first
 
     write (str, *) itime
-    call TLAB_WRITE_ASCII(lfile, 'Starting time integration at It'//trim(adjustl(str))//'.')
+    call TLab_Write_ASCII(lfile, 'Starting time integration at It'//trim(adjustl(str))//'.')
 
     do
         if (itime >= nitera_last) exit
@@ -317,14 +317,14 @@ program DNS
         if (wall_time > nruntime_sec) then
             write (str, *) wall_time
             ! write to efile so that job is not resubmitted
-            call TLAB_WRITE_ASCII(efile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
+            call TLab_Write_ASCII(efile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
             exit
         end if
 
     end do
 
     ! ###################################################################
-    call TLAB_STOP(int(logs_data(1)))
+    call TLab_Stop(int(logs_data(1)))
 
 contains
 
@@ -339,8 +339,8 @@ contains
 
         select case (env_status)
         case (-1)
-            call TLAB_WRITE_ASCII(efile, "DNS_START. The environment variable  is too long and cannot be handled in the foreseen array.")
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, "DNS_START. The environment variable  is too long and cannot be handled in the foreseen array.")
+            call TLab_Stop(DNS_ERROR_OPTION)
         case (0)
             if (.not. logger_path(path_len:path_len) == '/') then
                 logger_path = trim(adjustl(logger_path))//'/'
@@ -406,9 +406,9 @@ contains
         end if
 
         line1 = line1(1:ip - 1)//'#'
-        call TLAB_WRITE_ASCII(ofile, repeat('#', len_trim(line1)))
-        call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
-        call TLAB_WRITE_ASCII(ofile, repeat('#', len_trim(line1)))
+        call TLab_Write_ASCII(ofile, repeat('#', len_trim(line1)))
+        call TLab_Write_ASCII(ofile, trim(adjustl(line1)))
+        call TLab_Write_ASCII(ofile, repeat('#', len_trim(line1)))
 
     end subroutine DNS_LOGS_INITIALIZE
 
@@ -451,7 +451,7 @@ contains
             line1 = trim(line1)//trim(line2)
         end if
 
-        call TLAB_WRITE_ASCII(ofile, trim(adjustl(line1)))
+        call TLab_Write_ASCII(ofile, trim(adjustl(line1)))
 
     end subroutine DNS_LOGS
 
@@ -490,9 +490,9 @@ contains
         end select
 
         line1 = line1(1:ip - 1)//'#'
-        call TLAB_WRITE_ASCII(vfile, repeat('#', len_trim(line1)))
-        call TLAB_WRITE_ASCII(vfile, trim(adjustl(line1)))
-        call TLAB_WRITE_ASCII(vfile, repeat('#', len_trim(line1)))
+        call TLab_Write_ASCII(vfile, repeat('#', len_trim(line1)))
+        call TLab_Write_ASCII(vfile, trim(adjustl(line1)))
+        call TLab_Write_ASCII(vfile, repeat('#', len_trim(line1)))
 
     end subroutine DNS_OBS_INITIALIZE
 
@@ -522,7 +522,7 @@ contains
             end if
         end select
 
-        call TLAB_WRITE_ASCII(vfile, trim(adjustl(line1)))
+        call TLab_Write_ASCII(vfile, trim(adjustl(line1)))
 
     end subroutine DNS_OBS
 

@@ -32,7 +32,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     integer, parameter :: i1 = 1
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'Entering '//__FILE__)
+    call TLab_Write_ASCII(tfile, 'Entering '//__FILE__)
 #endif
 
 ! ###################################################################
@@ -46,7 +46,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
 
     if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-        call TLAB_WRITE_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+        call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
     if (g%size > 1) then
@@ -57,8 +57,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     end if
     ! print *, abs((scale_loc - g%scale)/scale_loc)
     if (abs((scale_loc - g%scale)/scale_loc) > roundoff_wp) then
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Unmathed domain scale.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLab_Write_ASCII(efile, __FILE__//'. Unmathed domain scale.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
 ! ###################################################################
@@ -361,8 +361,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         end if
 
         if (g%nb_diag_2(1) /= 3) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         if (g%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
@@ -434,12 +434,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! Check array sizes
 ! ###################################################################
     if (ig >= g%inb_grid) then
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Grid size incorrect.')
-        call TLAB_STOP(DNS_ERROR_DIMGRID)
+        call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
+        call TLab_Stop(DNS_ERROR_DIMGRID)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'Leaving '//__FILE__)
+    call TLab_Write_ASCII(tfile, 'Leaving '//__FILE__)
 #endif
 
     return

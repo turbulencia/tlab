@@ -62,7 +62,7 @@ program INTERPOL
     read (*, *) test_type
     if (test_type < 1 .or. test_type > 4) then
         write (*, *) 'ERROR, STOP. Chose value between 1 and 4.'
-        call TLAB_STOP(0)
+        call TLab_Stop(0)
     end if
     write (*, *) 'Testing     periodic schemes = 0'
     write (*, *) 'Testing non-periodic schemes = 1'
@@ -70,7 +70,7 @@ program INTERPOL
     read (*, *) periodic
     if (periodic /= 0 .and. periodic /= 1) then
         write (*, *) 'ERROR, STOP. Chose value between 0 and 1.'
-        call TLAB_STOP(0)
+        call TLab_Stop(0)
     end if
     if (periodic == 0) then
         g%periodic = .true.

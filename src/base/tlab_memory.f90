@@ -145,8 +145,8 @@ contains
 
 ! loop counters over the whole domain are integer*4
         if (isize_txc_field > huge(imax)) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         call TLab_Allocate_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
@@ -282,8 +282,8 @@ contains
         rank (4)
             allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
         rank default
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Rank too large while allocating memory space for '//trim(adjustl(s))//'.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Rank too large while allocating memory space for '//trim(adjustl(s))//'.')
+            call TLab_Stop(DNS_ERROR_ALLOC)
         end select
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
 
@@ -563,7 +563,7 @@ contains
         do id = 2, size(dims)
             write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
         end do
-        call TLAB_WRITE_ASCII(log_file, line)
+        call TLab_Write_ASCII(log_file, line)
     end subroutine TLAB_ALLOCATE_LOG
 
     ! ###################################################################
@@ -572,8 +572,8 @@ contains
         character(len=*) :: C_FILE_LOC, log_file, s
 
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(log_file, C_FILE_LOC//'. Error while allocating memory space for'//trim(adjustl(s))//'.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
+            call TLab_Write_ASCII(log_file, C_FILE_LOC//'. Error while allocating memory space for'//trim(adjustl(s))//'.')
+            call TLab_Stop(DNS_ERROR_ALLOC)
         end if
 
     end subroutine TLAB_ALLOCATE_ERR

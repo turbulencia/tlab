@@ -19,7 +19,7 @@ program REVERSAL
     integer(wi) n, nmax, iopt, iup
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
@@ -411,7 +411,7 @@ program REVERSAL
 
     close (21)
 
-    call TLAB_STOP
+    call TLab_Stop
 
     stop
 1010 format(10(1x, G_FORMAT_R))

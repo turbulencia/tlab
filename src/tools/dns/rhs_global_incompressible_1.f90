@@ -57,7 +57,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #endif
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
+    call TLab_Write_ASCII(tfile, 'ENTERING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
 #endif
 
     ! #######################################################################
@@ -397,7 +397,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     end do
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
+    call TLab_Write_ASCII(tfile, 'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_1')
 #endif
 
     return

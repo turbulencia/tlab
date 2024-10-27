@@ -15,7 +15,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
@@ -41,7 +41,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_SCAL_GLOBAL_2')
 #endif
 
     if (idiffusion == EQNS_NONE) then; diff = 0.0_wp; cond = 0.0_wp
@@ -129,7 +129,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_SCAL_GLOBAL_2')
 #endif
 
     return

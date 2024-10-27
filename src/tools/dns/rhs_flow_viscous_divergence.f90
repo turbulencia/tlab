@@ -11,7 +11,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLab_Constants, only: wp, wi
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
@@ -30,7 +30,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
     bcs = 0
@@ -153,7 +153,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
     return

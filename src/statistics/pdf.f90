@@ -44,7 +44,7 @@ subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate
 #endif
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     plim = 1.0e-4_wp                 ! relative threshold in PDF analysis; adapt to sample sizeo
 
@@ -100,7 +100,7 @@ subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate
         do iv = 1, nv
             name = trim(adjustl(fname))
             if (u(iv)%tag /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(u(iv)%tag))
-            call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+            call TLab_Write_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 #include "dns_open_file.h"
             if (ny > 1) then
                 write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:, :, iv))
@@ -148,7 +148,7 @@ subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
 #endif
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do j = 1, ny               ! calculation in planes
         call PDF2V2D(nx, ny, nz, j, u, v, nbins, pdf(1, j), wrk2d)
@@ -166,7 +166,7 @@ subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
 #define LOC_UNIT_ID 21
 #define LOC_STATUS 'unknown'
         name = trim(adjustl(fname))
-        call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+        call TLab_Write_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 #include "dns_open_file.h"
         if (ny > 1) then
             write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(pdf(:, :))

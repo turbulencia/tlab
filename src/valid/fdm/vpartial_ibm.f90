@@ -35,7 +35,7 @@ program VPARTIAL
     integer, parameter :: i1 = 1, cases(4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
     call IO_READ_GLOBAL(ifile)
     ! call Particle_Initialize_Parameters(ifile)
     ! call DNS_READ_LOCAL(ifile)

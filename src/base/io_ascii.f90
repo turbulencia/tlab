@@ -18,10 +18,10 @@ subroutine SCANINIINT(ofile, ifile, title, name, default, value)
 
     character*(128) StrValue
 
-    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    call TLab_Read_ASCII(ifile, title, name, StrValue, default)
     read (StrValue, *) value
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
 end subroutine SCANINIINT
@@ -39,10 +39,10 @@ subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
 
     character*(128) StrValue
 
-    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    call TLab_Read_ASCII(ifile, title, name, StrValue, default)
     read (StrValue, *) value
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
 end subroutine SCANINILONGINT
@@ -60,10 +60,10 @@ subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
 
     character*(128) StrValue
 
-    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    call TLab_Read_ASCII(ifile, title, name, StrValue, default)
     read (StrValue, *) value
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
 end subroutine SCANINIREAL
@@ -79,9 +79,9 @@ subroutine SCANINICHAR(ofile, ifile, title, name, default, value)
     character*(*), intent(IN) :: ofile, ifile, title, name, default
     character*(*), intent(OUT) :: value
 
-    call IO_READ_ASCII(ifile, title, name, value, default)
+    call TLab_Read_ASCII(ifile, title, name, value, default)
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(value)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(value)))
 
     return
 end subroutine SCANINICHAR
@@ -89,7 +89,7 @@ end subroutine SCANINICHAR
 ! #######################################################################
 ! Scan file for a string
 ! #######################################################################
-subroutine IO_READ_ASCII(fname, title, name, value, default)
+subroutine TLab_Read_ASCII(fname, title, name, value, default)
     use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
@@ -167,12 +167,12 @@ subroutine IO_READ_ASCII(fname, title, name, value, default)
 #endif
 
     return
-end subroutine IO_READ_ASCII
+end subroutine TLab_Read_ASCII
 
 ! #######################################################################
 ! Write ASCII data; complete fields
 ! #######################################################################
-subroutine TLAB_WRITE_ASCII_FIELD(fname, imax, jmax, kmax, u)
+subroutine TLab_Write_ASCII_FIELD(fname, imax, jmax, kmax, u)
     use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
@@ -211,4 +211,4 @@ subroutine TLAB_WRITE_ASCII_FIELD(fname, imax, jmax, kmax, u)
     close (31)
 
     return
-end subroutine TLAB_WRITE_ASCII_FIELD
+end subroutine TLab_Write_ASCII_FIELD

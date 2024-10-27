@@ -5,7 +5,7 @@ module Chemistry
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLab_Types, only: term_dt
     use TLAB_VARS, only: inb_scal
-    use TLab_WorkFlow, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
@@ -42,10 +42,10 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Chemistry'
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<none/quadratic/layeredrelaxation/ozone>')
-        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<none/quadratic/layeredrelaxation/ozone>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
 
         call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; chemistryProps%type = TYPE_NONE
@@ -54,8 +54,8 @@ contains
         elseif (trim(adjustl(sRes)) == 'layeredrelaxation') then; chemistryProps%type = TYPE_LAYEREDRELAXATION; 
         elseif (trim(adjustl(sRes)) == 'ozone') then; chemistryProps%type = TYPE_OZONE; 
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Chemistry.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Error in Chemistry.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         if (chemistryProps%type /= EQNS_NONE) then

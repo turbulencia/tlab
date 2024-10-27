@@ -280,8 +280,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! -----------------------------------------------------------------------
     nv = ig(ng) + sg(ng) - 1
     if (MAX_AVG_TEMPORAL < nv) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_SCAL_XZ. Not enough space in local arrays.')
-        call TLAB_STOP(DNS_ERROR_AVGTMP)
+        call TLab_Write_ASCII(efile, 'AVG_SCAL_XZ. Not enough space in local arrays.')
+        call TLab_Stop(DNS_ERROR_AVGTMP)
     end if
     mean2d(:, 1:nv) = 0.0_wp
 
@@ -290,7 +290,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     ! #######################################################################
     write (line1, *) itime; line1 = 'Calculating scal statistics at It'//trim(adjustl(line1))//'...'
-    call TLAB_WRITE_ASCII(lfile, line1)
+    call TLab_Write_ASCII(lfile, line1)
 
     ! #######################################################################
     ! Preliminary for IBM usage
