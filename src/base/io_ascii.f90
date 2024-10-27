@@ -8,7 +8,7 @@
 ! #######################################################################
 ! Scan file for an integer value
 ! #######################################################################
-subroutine SCANINIINT(ofile, ifile, title, name, default, value)
+subroutine ScanFile_Int(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi
     use TLab_WorkFlow
     implicit none
@@ -24,12 +24,12 @@ subroutine SCANINIINT(ofile, ifile, title, name, default, value)
     call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
-end subroutine SCANINIINT
+end subroutine ScanFile_Int
 
 ! #######################################################################
 ! Scan file for an integer value
 ! #######################################################################
-subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
+subroutine ScanFile_LongInt(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi, longi
     use TLab_WorkFlow
     implicit none
@@ -45,12 +45,12 @@ subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
     call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
-end subroutine SCANINILONGINT
+end subroutine ScanFile_LongInt
 
 ! #######################################################################
 ! Scan file for an real value
 ! #######################################################################
-subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
+subroutine ScanFile_Real(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi
     use TLab_WorkFlow
     implicit none
@@ -66,12 +66,12 @@ subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
     call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
-end subroutine SCANINIREAL
+end subroutine ScanFile_Real
 
 ! #######################################################################
 ! Scan file for an char value
 ! #######################################################################
-subroutine SCANINICHAR(ofile, ifile, title, name, default, value)
+subroutine ScanFile_Char(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi
     use TLab_WorkFlow
     implicit none
@@ -84,7 +84,7 @@ subroutine SCANINICHAR(ofile, ifile, title, name, default, value)
     call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(value)))
 
     return
-end subroutine SCANINICHAR
+end subroutine ScanFile_Char
 
 ! #######################################################################
 ! Scan file for a string

@@ -181,17 +181,17 @@ contains
         call TLab_Write_ASCII(bakfile, 'mirrored=<yes/no>')
         call TLab_Write_ASCII(bakfile, 'fixed_scale=<value>')
 
-        call SCANINIINT(bakfile, inifile, block, 'segments', '1', var%nseg)
+        call ScanFile_Int(bakfile, inifile, block, 'segments', '1', var%nseg)
 
         periodic = .false.
-        call SCANINICHAR(bakfile, inifile, block, 'periodic', 'no', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'periodic', 'no', sRes)
         if (TRIM(ADJUSTL(sRes)) == 'yes') periodic = .true.
 
         var%mirrored = .false.
-        call SCANINICHAR(bakfile, inifile, block, 'mirrored', 'no', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'mirrored', 'no', sRes)
         if (TRIM(ADJUSTL(sRes)) == 'yes') var%mirrored = .true.
 
-        call SCANINIREAL(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
+        call ScanFile_Real(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
 
         if (periodic .and. var%mirrored) then
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Periodicity with mirroring is not supported.')
@@ -210,11 +210,11 @@ contains
             call TLab_Write_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
             call TLab_Write_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
 
-            call SCANINIINT(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
-            call SCANINIREAL(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))
+            call ScanFile_Int(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
+            call ScanFile_Real(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))
 
             var%opts(:, iseg) = 0
-            call SCANINICHAR(bakfile, inifile, block, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
             if (TRIM(ADJUSTL(sRes)) == 'uniform') then; var%opts(1, iseg) = GTYPE_UNIFORM
             else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; var%opts(1, iseg) = GTYPE_TANH
             else if (TRIM(ADJUSTL(sRes)) == 'exp') then; var%opts(1, iseg) = GTYPE_EXP
@@ -224,7 +224,7 @@ contains
             end if
 
             var%vals(:, iseg) = 0
-            call SCANINICHAR(bakfile, inifile, block, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
             idummy = MAX_PARAMES
             call LIST_REAL(sRes, idummy, var%vals(1, iseg))
 

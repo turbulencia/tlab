@@ -1,4 +1,4 @@
-  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Files', '-1', sRes)
+  CALL ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Files', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
 #ifdef PARALLEL

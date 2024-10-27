@@ -95,9 +95,9 @@ contains
         call TLab_Write_ASCII(bakfile, '#BoundaryConditions=<values>')
         call TLab_Write_ASCII(bakfile, '#BetaCoefficient=<values>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
-            call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
+            call ScanFile_Char(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; infraredProps%type = TYPE_NONE
         else if (trim(adjustl(sRes)) == 'grayliquid') then; infraredProps%type = TYPE_IR_GRAY_LIQUID
         else if (trim(adjustl(sRes)) == 'gray') then; infraredProps%type = TYPE_IR_GRAY
@@ -110,11 +110,11 @@ contains
 
         infraredProps%active = .false.
         if (infraredProps%type /= TYPE_NONE) then
-            call SCANINIINT(bakfile, inifile, block, 'Scalar', '1', idummy)         ! in which evolution equation radiation acts
+            call ScanFile_Int(bakfile, inifile, block, 'Scalar', '1', idummy)         ! in which evolution equation radiation acts
             infraredProps%active(idummy) = .true.
 
             infraredProps%auxiliar(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'BoundaryConditions', '1.0, 1.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'BoundaryConditions', '1.0, 1.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, infraredProps%auxiliar)
             epsilon = infraredProps%auxiliar(idummy)        ! last value is surface emissivity at ymin
@@ -123,7 +123,7 @@ contains
             kappa(:, :) = 0.0_wp
             do ncomps = 1, ncomps_max
                 write (sRes, *) ncomps
-                call SCANINICHAR(bakfile, inifile, block, 'AbsorptionComponent'//trim(adjustl(sRes)), 'void', sRes)
+                call ScanFile_Char(bakfile, inifile, block, 'AbsorptionComponent'//trim(adjustl(sRes)), 'void', sRes)
                 if (trim(adjustl(sRes)) /= 'void') then
                     idummy = nbands_max
                     call LIST_REAL(sRes, idummy, dummy)
@@ -143,7 +143,7 @@ contains
             beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp]  ! default coefficients for band 2
             do ic = 1, 3                                                ! so far, only 3 coefficients, 2. order polynomial
                 write (sRes, *) ic
-                call SCANINICHAR(bakfile, inifile, block, 'BetaCoefficient'//trim(adjustl(sRes)), 'void', sRes)
+                call ScanFile_Char(bakfile, inifile, block, 'BetaCoefficient'//trim(adjustl(sRes)), 'void', sRes)
                 if (trim(adjustl(sRes)) /= 'void') then
                     idummy = nbands_max
                     call LIST_REAL(sRes, idummy, dummy)
@@ -186,7 +186,7 @@ contains
                 infraredProps%type = TYPE_IR_GRAY_LIQUID
 
                 infraredProps%parameters(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, block, 'Parameters', 'void', sRes)    ! scaled absorption coefficients
+                call ScanFile_Char(bakfile, inifile, block, 'Parameters', 'void', sRes)    ! scaled absorption coefficients
                 idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, infraredProps%parameters)
 
@@ -215,7 +215,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! Check with previous version; to be removed
-        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             call TLab_Write_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
             call TLab_Stop(DNS_ERROR_OPTION)

@@ -79,8 +79,8 @@ program PARTICLE_TRAJEC
 
     call Thermodynamics_Initialize_Parameters(ifile)
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
+    call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
 
     call Particle_Initialize_Memory(C_FILE_LOC)
 

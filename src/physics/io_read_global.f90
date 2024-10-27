@@ -45,12 +45,12 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLab_Write_ASCII(bakfile, '#Major=<mayor version number>')
     call TLab_Write_ASCII(bakfile, '#Minor=<minor version number>')
 
-    call SCANINIINT(bakfile, inifile, 'Version', 'Major', '0', idummy)
+    call ScanFile_Int(bakfile, inifile, 'Version', 'Major', '0', idummy)
     if (MajorVersion /= idummy) then
         call TLab_Write_ASCII(efile, C_FILE_LOC//'. Major version error.')
         call TLab_Stop(DNS_ERROR_VERSION)
     end if
-    call SCANINIINT(bakfile, inifile, 'Version', 'Minor', '0', idummy)
+    call ScanFile_Int(bakfile, inifile, 'Version', 'Minor', '0', idummy)
     if (MinorVersion /= idummy) then
         write (sRes, '(I5)') MinorVersion
         call TLab_Write_ASCII(wfile, 'DNS_REAL_GLOBAL. Minor version warning. Expected : '//sRes)
@@ -84,7 +84,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLab_Write_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
     if (trim(adjustl(sRes)) == 'mpiio') then; imode_files = IO_MPIIO
     elseif (trim(adjustl(sRes)) == 'netcdf') then; imode_files = IO_NETCDF
     elseif (trim(adjustl(sRes)) == 'none') then; imode_files = IO_NOFILE
@@ -93,7 +93,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'FileType', 'Double', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'FileType', 'Double', sRes)
     if (trim(adjustl(sRes)) == 'double') then; imode_precision_files = IO_TYPE_DOUBLE
     elseif (trim(adjustl(sRes)) == 'single') then; imode_precision_files = IO_TYPE_SINGLE
     else
@@ -101,9 +101,9 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end if
 
-    call SCANINIINT(bakfile, inifile, 'Main', 'VerbosityLevel', '1', imode_verbosity)
+    call ScanFile_Int(bakfile, inifile, 'Main', 'VerbosityLevel', '1', imode_verbosity)
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'Type', 'temporal', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'Type', 'temporal', sRes)
     if (trim(adjustl(sRes)) == 'temporal') then; imode_sim = DNS_MODE_TEMPORAL
     elseif (trim(adjustl(sRes)) == 'spatial') then; imode_sim = DNS_MODE_SPATIAL
     else
@@ -111,7 +111,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_SIMTYPE)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'CalculateFlow', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'CalculateFlow', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; flow_on = .true.
     elseif (trim(adjustl(sRes)) == 'no') then; flow_on = .false.
     else
@@ -119,7 +119,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_CALCFLOW)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'CalculateScalar', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'CalculateScalar', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; scal_on = .true.
     elseif (trim(adjustl(sRes)) == 'no') then; scal_on = .false.
     else
@@ -128,7 +128,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
     if (trim(adjustl(sRes)) == 'total') then; imode_eqns = DNS_EQNS_TOTAL
     elseif (trim(adjustl(sRes)) == 'internal') then; imode_eqns = DNS_EQNS_INTERNAL
     elseif (trim(adjustl(sRes)) == 'incompressible') then; imode_eqns = DNS_EQNS_INCOMPRESSIBLE
@@ -140,7 +140,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     if (imode_sim == DNS_MODE_TEMPORAL) fourier_on = .true.
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermAdvection', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermAdvection', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; iadvection = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'divergence') then; iadvection = EQNS_DIVERGENCE
     else if (trim(adjustl(sRes)) == 'skewsymmetric') then; iadvection = EQNS_SKEWSYMMETRIC
@@ -150,7 +150,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermViscous', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermViscous', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; iviscous = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'divergence') then; iviscous = EQNS_DIVERGENCE
     else if (trim(adjustl(sRes)) == 'explicit') then; iviscous = EQNS_EXPLICIT
@@ -159,7 +159,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermDiffusion', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermDiffusion', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; idiffusion = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'divergence') then; idiffusion = EQNS_DIVERGENCE
     else if (trim(adjustl(sRes)) == 'explicit') then; idiffusion = EQNS_EXPLICIT
@@ -168,7 +168,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
     if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
     elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
     else; itransport = EQNS_NONE; end if
@@ -199,7 +199,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end select
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_EXPLICIT
     else if (trim(adjustl(sRes)) == 'normalized') then; coriolis%type = EQNS_COR_NORMALIZED
@@ -208,7 +208,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermSubsidence', 'None', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermSubsidence', 'None', sRes)
     if (trim(adjustl(sRes)) == 'none') then; subsidence%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'constantdivergencelocal') then; subsidence%type = EQNS_SUB_CONSTANT_LOCAL
     else if (trim(adjustl(sRes)) == 'constantdivergenceglobal') then; subsidence%type = EQNS_SUB_CONSTANT_GLOBAL
@@ -218,7 +218,7 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder', 'void', sRes)
     if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm1 = FDM_COM4_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6hyper') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_HYPER; 
@@ -232,7 +232,7 @@ subroutine IO_READ_GLOBAL(inifile)
     g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
 
 #ifdef USE_MPI
-    call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
     if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLabMPI_TRP_NONE
     elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLabMPI_TRP_ASYNCHRONOUS
     elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLabMPI_TRP_SENDRECV
@@ -241,7 +241,7 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
     if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLabMPI_TRP_NONE
     elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLabMPI_TRP_ASYNCHRONOUS
     elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLabMPI_TRP_SENDRECV
@@ -258,7 +258,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLab_Write_ASCII(bakfile, '#[Staggering]')
     call TLab_Write_ASCII(bakfile, '#StaggerHorizontalPressure=<yes/no>')
 
-    call SCANINICHAR(bakfile, inifile, 'Staggering', 'StaggerHorizontalPressure', 'no', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Staggering', 'StaggerHorizontalPressure', 'no', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; stagger_on = .true.; call TLab_Write_ASCII(lfile, 'Horizontal staggering of the pressure along Ox and Oz.')
     elseif (trim(adjustl(sRes)) == 'no') then; stagger_on = .false.
     else
@@ -299,9 +299,9 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLab_Write_ASCII(bakfile, '#Prandtl=<value>')
 
     ! Molecular transport
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Reynolds', '-1.0', reynolds)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Reynolds', '-1.0', reynolds)
     if (reynolds <= 0.0) then
-        call SCANINIREAL(bakfile, inifile, 'Parameters', 'Viscosity', '-1.0', dummy)
+        call ScanFile_Real(bakfile, inifile, 'Parameters', 'Viscosity', '-1.0', dummy)
         if (dummy <= 0.0) then
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Molecular transport coefficients need to be positive.')
             call TLab_Stop(DNS_ERROR_OPTION)
@@ -310,21 +310,21 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Parameters', 'Schmidt', '1.0', sRes)
     schmidt(:) = 0.0_wp; inb_scal = MAX_VARS
     call LIST_REAL(sRes, inb_scal, schmidt)
 
     ! Gravity
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Froude', '-1.0', froude)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Froude', '-1.0', froude)
     if (froude <= 0.0) then
-        call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gravity', '1.0', dummy)   ! default value
+        call ScanFile_Real(bakfile, inifile, 'Parameters', 'Gravity', '1.0', dummy)   ! default value
         froude = 1.0_wp/dummy
     end if
 
     ! Coriolis
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Rossby', '-1.0', rossby)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Rossby', '-1.0', rossby)
     if (rossby <= 0.0) then
-        call SCANINIREAL(bakfile, inifile, 'Parameters', 'Coriolis', '1.0', dummy)   ! default value
+        call ScanFile_Real(bakfile, inifile, 'Parameters', 'Coriolis', '1.0', dummy)   ! default value
         rossby = 1.0_wp/dummy
     end if
 
@@ -333,7 +333,7 @@ subroutine IO_READ_GLOBAL(inifile)
     do is = 2, inb_scal
         lstr = trim(adjustl(lstr))//',0.0'
     end do
-    call SCANINICHAR(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
+    call ScanFile_Char(bakfile, inifile, 'Parameters', 'Damkohler', lstr, sRes)
     damkohler(:) = 0.0_wp; idummy = MAX_VARS
     call LIST_REAL(sRes, idummy, damkohler)
     if (inb_scal /= idummy) then ! Consistency check
@@ -342,13 +342,13 @@ subroutine IO_READ_GLOBAL(inifile)
     end if
 
     ! Compressible flows
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
 
     ! Particle-laden flows
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Stokes', '0.0', stokes)
-    call SCANINIREAL(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Stokes', '0.0', stokes)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
 
     ! consistency check
     if (iviscous == EQNS_NONE) then
@@ -367,7 +367,7 @@ subroutine IO_READ_GLOBAL(inifile)
 ! Buoyancy
 ! ###################################################################
     ! I wonder if this should be part of [BodyForce] instead of [Main]
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
     if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
     else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
     else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
@@ -393,7 +393,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     buoyancy%vector = 0.0_wp; buoyancy%active = .false.
     if (buoyancy%type /= EQNS_NONE) then
-        call SCANINICHAR(bakfile, inifile, 'BodyForce', 'Vector', '0.0,-1.0,0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BodyForce', 'Vector', '0.0,-1.0,0.0', sRes)
         idummy = 3
         call LIST_REAL(sRes, idummy, buoyancy%vector)
 
@@ -409,7 +409,7 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
 
         buoyancy%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, buoyancy%parameters)
         buoyancy%scalar(1) = idummy
@@ -426,7 +426,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
     coriolis%vector(:) = 0.0_wp; coriolis%active = .false.
     if (coriolis%type /= EQNS_NONE) then
-        call SCANINICHAR(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
         idummy = 3
         call LIST_REAL(sRes, idummy, coriolis%vector)
 
@@ -442,7 +442,7 @@ subroutine IO_READ_GLOBAL(inifile)
         end if
 
         coriolis%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, coriolis%parameters)
 
@@ -473,7 +473,7 @@ subroutine IO_READ_GLOBAL(inifile)
         subsidence%active = .true.
 
         subsidence%parameters(:) = 0.0_wp
-        call SCANINICHAR(bakfile, inifile, 'Subsidence', 'Parameters', '0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Subsidence', 'Parameters', '0.0', sRes)
         idummy = MAX_PROF
         call LIST_REAL(sRes, idummy, subsidence%parameters)
 
@@ -502,7 +502,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
 
     ! backwards compatilibity; originally, all velocity data was contained in block 'Velocity' except for the mean value
-    call SCANINICHAR(bakfile, inifile, 'Flow', 'ProfileVelocity', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Flow', 'ProfileVelocity', 'void', sRes)
     if (trim(adjustl(sRes)) /= 'void') then
         call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Velocity', qbg(1))
         call TLab_Write_ASCII(wfile, 'Update tag Flow.Velocity to Flow.VelocityX.')
@@ -548,18 +548,18 @@ subroutine IO_READ_GLOBAL(inifile)
         call TLab_Write_ASCII(bakfile, '#FluxTemperature=<value>')
 
 ! Bradbury profile is the default (x0=a*b)
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'ThickAVelocity', '0.1235', qbg(1)%parameters(2))
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBVelocity', '-0.873', qbg(1)%parameters(3))
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'FluxVelocity', '0.96', qbg(1)%parameters(4))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickAVelocity', '0.1235', qbg(1)%parameters(2))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBVelocity', '-0.873', qbg(1)%parameters(3))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxVelocity', '0.96', qbg(1)%parameters(4))
 
 ! Ramaprian is the default (x0=a*b)
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'ThickADensity', '0.14', rbg%parameters(2))
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBDensity', '2.0', rbg%parameters(3))
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'FluxDensity', '0.94', rbg%parameters(4))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickADensity', '0.14', rbg%parameters(2))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBDensity', '2.0', rbg%parameters(3))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxDensity', '0.94', rbg%parameters(4))
 
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', tbg%parameters(2))
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0', tbg%parameters(3))
-        call SCANINIREAL(bakfile, inifile, 'Flow', 'FluxTemperature', '0.94', tbg%parameters(4))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', tbg%parameters(2))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0', tbg%parameters(3))
+        call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxTemperature', '0.94', tbg%parameters(4))
 
         ! Scalars
         call TLab_Write_ASCII(bakfile, '#ThickA=<value>')
@@ -568,11 +568,11 @@ subroutine IO_READ_GLOBAL(inifile)
 
         do is = 1, MAX_VARS
             write (lstr, *) is; lstr = 'ThickA'//trim(adjustl(lstr))
-            call SCANINIREAL(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
+            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
             write (lstr, *) is; lstr = 'ThickB'//trim(adjustl(lstr))
-            call SCANINIREAL(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
+            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
             write (lstr, *) is; lstr = 'Flux'//trim(adjustl(lstr))
-            call SCANINIREAL(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
+            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
         end do
 
     end if
@@ -594,9 +594,9 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLab_Write_ASCII(bakfile, '#YPeriodic=<yes/no>')
     call TLab_Write_ASCII(bakfile, '#ZPeriodic=<yes/no>')
 
-    call SCANINIINT(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
-    call SCANINIINT(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
-    call SCANINIINT(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
+    call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
+    call ScanFile_Int(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
+    call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
 
 ! default
     imax = g(1)%size
@@ -608,7 +608,7 @@ subroutine IO_READ_GLOBAL(inifile)
     g(3)%name = 'z'
 
     do ig = 1, 3
-        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
         if (trim(adjustl(sRes)) == 'yes') then; g(ig)%uniform = .true.
         else if (trim(adjustl(sRes)) == 'no') then; g(ig)%uniform = .false.
         else
@@ -616,7 +616,7 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLab_Stop(DNS_ERROR_UNIFORMX)
         end if
 
-        call SCANINICHAR(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
         if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
         else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
         else
@@ -647,7 +647,7 @@ subroutine IO_READ_GLOBAL(inifile)
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro > 1) then
-        call SCANINIINT(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
+        call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
         if (kmax > 0 .and. mod(g(3)%size, kmax) == 0) then
             ims_npro_k = g(3)%size/kmax
         else
@@ -655,7 +655,7 @@ subroutine IO_READ_GLOBAL(inifile)
             call TLab_Stop(DNS_ERROR_KMAXTOTAL)
         end if
 
-        call SCANINIINT(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
+        call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
         if (imax > 0 .and. mod(g(1)%size, imax) == 0) then
             ims_npro_i = g(1)%size/imax
         else
@@ -691,7 +691,7 @@ subroutine IO_READ_GLOBAL(inifile)
     FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin
     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
         all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
         if (trim(adjustl(sRes)) == 'noslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_DIRICHLET
         else if (trim(adjustl(sRes)) == 'freeslip') then; FilterDomainBcsFlow(1:3) = DNS_FILTER_BCS_NEUMANN
         else
@@ -702,7 +702,7 @@ subroutine IO_READ_GLOBAL(inifile)
 
         do is = 1, inb_scal
             write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))//'Jmin'
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'dirichlet') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_DIRICHLET
             else if (trim(adjustl(sRes)) == 'neumann') then; FilterDomainBcsScal(is) = DNS_FILTER_BCS_NEUMANN
             else
@@ -739,7 +739,7 @@ subroutine IO_READ_GLOBAL(inifile)
     call TLab_Write_ASCII(bakfile, '#[Statistics]')
     call TLab_Write_ASCII(bakfile, '#IAvera=<plane1,plane2,...>')
 
-    call SCANINICHAR(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
     nstatavg = MAX_STATS_SPATIAL
     call LIST_INTEGER(sRes, nstatavg, statavg)
 

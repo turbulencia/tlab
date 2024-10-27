@@ -93,7 +93,7 @@ program APRIORI
     opt_gate = 0
     opt_order = 1
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -110,7 +110,7 @@ program APRIORI
     end if
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
     if (sRes == '-1') then
 #ifdef USE_MPI

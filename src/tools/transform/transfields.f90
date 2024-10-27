@@ -87,7 +87,7 @@ program TRANSFIELDS
     opt_main = -1 ! default values
     opt_function = 0
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -111,7 +111,7 @@ program TRANSFIELDS
         opt_main = int(opt_vec(1))
     end if
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
     if (sRes == '-1') then
 #ifdef USE_MPI

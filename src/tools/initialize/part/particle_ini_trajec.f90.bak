@@ -92,8 +92,8 @@ program PARTICLE_INI_TRAJEC
     bakfile = trim(adjustl(ifile))//'.bak'
 
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

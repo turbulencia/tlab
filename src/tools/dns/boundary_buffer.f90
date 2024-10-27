@@ -98,10 +98,10 @@ contains
         ! ###################################################################
         variable%active(:) = .false.; variable%hard = .false.
         if (variable%size > 0) then
-            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BufferZone', 'Parameters'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 str = trim(adjustl(tag))
-                call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
+                call ScanFile_Char(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
             end if
             is = nfields + 1; call LIST_REAL(sRes, is, dummies)
             if (is == 1) then
@@ -121,7 +121,7 @@ contains
                 if (variable%strength(is) /= 0.0_wp) variable%active(is) = .true.
             end do
 
-            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValues'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BufferZone', 'HardValues'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
                 is = nfields; call LIST_REAL(sRes, is, variable%hardvalues)
                 if (is == nfields) then

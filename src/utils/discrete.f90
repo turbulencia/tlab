@@ -27,13 +27,13 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     call TLab_Write_ASCII(bakfile, '#Broadening=<value>')
 !    CALL TLab_Write_ASCII(bakfile, '#Parameters=<values>')
 
-    call SCANINICHAR(bakfile, inifile, block, 'Amplitude', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, block, 'Amplitude', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') &        ! backwards compatilibity
-        call SCANINICHAR(bakfile, inifile, block, '2DAmpl', '0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, block, '2DAmpl', '0.0', sRes)
     var%amplitude(:) = 0.0_wp; var%size = MAX_MODES
     call LIST_REAL(sRes, var%size, var%amplitude)
 
-    call SCANINICHAR(bakfile, inifile, block, 'ModeX', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, block, 'ModeX', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') then     ! Default
         do idummy = 1, var%size; var%modex(idummy) = idummy; end do
     else
@@ -45,7 +45,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         end if
     end if
 
-    call SCANINICHAR(bakfile, inifile, block, 'ModeZ', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, block, 'ModeZ', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') then     ! Default
         var%modez = 0
     else
@@ -57,9 +57,9 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         end if
     end if
 
-    call SCANINICHAR(bakfile, inifile, block, 'PhaseX', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, block, 'PhaseX', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') &        ! backwards compatilibity
-        call SCANINICHAR(bakfile, inifile, block, '2DPhi', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, '2DPhi', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') then     ! Default
         var%phasex = 0.0_wp
     else
@@ -71,7 +71,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         end if
     end if
 
-    call SCANINICHAR(bakfile, inifile, block, 'PhaseZ', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, block, 'PhaseZ', 'void', sRes)
     if (TRIM(ADJUSTL(sRes)) == 'void') then     ! Default
         var%phasez = 0.0_wp
     else
@@ -83,7 +83,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
         end if
     end if
 
-    call SCANINICHAR(bakfile, inifile, block, 'Type', 'none', sRes) ! Modulation type
+    call ScanFile_Char(bakfile, inifile, block, 'Type', 'none', sRes) ! Modulation type
     if (TRIM(ADJUSTL(sRes)) == 'none') then; var%type = PROFILE_NONE
     elseif (TRIM(ADJUSTL(sRes)) == 'varicose') then; var%type = PROFILE_GAUSSIAN_ANTISYM
     elseif (TRIM(ADJUSTL(sRes)) == 'sinuous') then; var%type = PROFILE_GAUSSIAN_SYM
@@ -95,7 +95,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     end if
 
     var%parameters(:) = 0.0_wp
-    call SCANINICHAR(bakfile, inifile, 'Discrete', 'Parameters', '-1.0,-1.0', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Discrete', 'Parameters', '-1.0,-1.0', sRes)
     idummy = MAX_PARS
     call LIST_REAL(sRes, idummy, var%parameters)
 

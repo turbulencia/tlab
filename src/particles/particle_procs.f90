@@ -45,7 +45,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#Number=<value>')
         call TLab_Write_ASCII(bakfile, '#MemoryFactor=<value>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; part%type = PART_TYPE_NONE
         else if (trim(adjustl(sRes)) == 'tracer') then; part%type = PART_TYPE_TRACER
         else if (trim(adjustl(sRes)) == 'inertia') then; part%type = PART_TYPE_INERTIA
@@ -64,30 +64,30 @@ contains
         part_bcs = PART_BCS_NONE
         if (part%type == PART_TYPE_INERTIA) part_bcs = PART_BCS_SPECULAR
         if (part%type == PART_TYPE_TINIA_1) part_bcs = PART_BCS_STICK
-        call SCANINICHAR(bakfile, inifile, block, 'BoundaryCondition', 'Void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'BoundaryCondition', 'Void', sRes)
         if (trim(adjustl(sRes)) == 'none') then; part_bcs = PART_BCS_NONE
         else if (trim(adjustl(sRes)) == 'specular') then; part_bcs = PART_BCS_SPECULAR
         else if (trim(adjustl(sRes)) == 'stick') then; part_bcs = PART_BCS_STICK
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS
         call LIST_REAL(sRes, idummy, part%parameters)
 
-        call SCANINILONGINT(bakfile, inifile, block, 'Number', '0', isize_part_total)
+        call ScanFile_LongInt(bakfile, inifile, block, 'Number', '0', isize_part_total)
 
 ! -------------------------------------------------------------------
         particle_pdf_calc = .false.
-        call SCANINICHAR(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)
         if (trim(adjustl(sRes)) == 'yes') particle_pdf_calc = .true.
 
-        call SCANINICHAR(bakfile, inifile, block, 'PdfSubdomain', '-1', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'PdfSubdomain', '-1', sRes)
         particle_pdf_subdomain = 0.0_wp; idummy = 6
         call LIST_REAL(sRes, idummy, particle_pdf_subdomain)
-        call SCANINIREAL(bakfile, inifile, block, 'PdfMax', '10', particle_pdf_max)
-        call SCANINIREAL(bakfile, inifile, block, 'PdfInterval', '0.5', particle_pdf_interval)
+        call ScanFile_Real(bakfile, inifile, block, 'PdfMax', '10', particle_pdf_max)
+        call ScanFile_Real(bakfile, inifile, block, 'PdfInterval', '0.5', particle_pdf_interval)
 
-        call SCANINICHAR(bakfile, inifile, block, 'ResidenceReset', 'yes', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'ResidenceReset', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'yes') then; residence_reset = 1
         elseif (trim(adjustl(sRes)) == 'no') then; residence_reset = 0
         else
@@ -134,7 +134,7 @@ contains
         end select
 
 #ifdef USE_MPI
-        call SCANINIREAL(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
+        call ScanFile_Real(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
         isize_part = int(isize_part_total/int(ims_npro, longi))
         if (mod(isize_part_total, int(ims_npro, longi)) /= 0) then ! All PEs with equal memory
             isize_part = isize_part + 1

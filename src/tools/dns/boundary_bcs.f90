@@ -59,7 +59,7 @@ contains
         do is = 1, inb_scal
             write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))
 
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'none') then; var%type(is) = DNS_BCS_NONE
             else if (trim(adjustl(sRes)) == 'dirichlet') then; var%type(is) = DNS_BCS_DIRICHLET
             else if (trim(adjustl(sRes)) == 'neumann') then; var%type(is) = DNS_BCS_NEUMANN
@@ -68,7 +68,7 @@ contains
                 call TLab_Stop(DNS_ERROR_JBC)
             end if
 
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
             if (sRes == 'static') then
                 var%SfcType(is) = DNS_SFC_STATIC
             elseif (sRes == 'linear') then
@@ -78,7 +78,7 @@ contains
                 call TLab_Stop(DNS_ERROR_JBC)
             end if
 
-            call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
+            call ScanFile_Real(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
 
         end do
 
@@ -106,7 +106,7 @@ contains
             itangential = [1, 2]
         end select
 
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'Velocity'//trim(adjustl(tag)), 'freeslip', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'Velocity'//trim(adjustl(tag)), 'freeslip', sRes)
         if (trim(adjustl(sRes)) == 'none') then; var%type(1:3) = DNS_BCS_NONE
         else if (trim(adjustl(sRes)) == 'noslip') then; var%type(1:3) = DNS_BCS_DIRICHLET
         else if (trim(adjustl(sRes)) == 'freeslip') then; var%type(inormal) = DNS_BCS_DIRICHLET

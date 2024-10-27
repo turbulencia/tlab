@@ -107,7 +107,7 @@ program PDFS
     gate_level = 0
     opt_bins = 16
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_INTEGER(sRes, iopt_size, opt_vec)
 

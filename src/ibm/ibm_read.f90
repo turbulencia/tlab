@@ -44,7 +44,7 @@ subroutine IBM_READ_INI(inifile)
   call TLab_Write_ASCII(bakfile, '#')
   call TLab_Write_ASCII(bakfile, '#[IBMParameter]')
   call TLab_Write_ASCII(bakfile, '#Status=<on/off>')
-  call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
+  call ScanFile_Char(bakfile, inifile, 'IBMParameter', 'Status', 'off', sRes)
   if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
   else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
   else
@@ -63,7 +63,7 @@ subroutine IBM_READ_INI(inifile)
     call TLab_Write_ASCII(bakfile, '#MaxNumberObj=<value>')
     call TLab_Write_ASCII(bakfile, '#FluidPoints=<value>')
 
-    call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'IBMScalar', 'off', sRes)
+    call ScanFile_Char(bakfile, inifile, 'IBMParameter', 'IBMScalar', 'off', sRes)
     if      (TRIM(ADJUSTL(sRes)) == 'off') then; imode_ibm_scal = 0
     else if (TRIM(ADJUSTL(sRes)) == 'on' ) then; imode_ibm_scal = 1
     else
@@ -71,7 +71,7 @@ subroutine IBM_READ_INI(inifile)
       call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
+    call ScanFile_Char(bakfile, inifile, 'IBMParameter', 'RestartGeometry', 'no', sRes)
     if      ( TRIM(ADJUSTL(sRes)) == 'yes' ) then; ibm_restart = .true.
     else if ( TRIM(ADJUSTL(sRes)) == 'no'  ) then; ibm_restart = .false.
     else
@@ -79,7 +79,7 @@ subroutine IBM_READ_INI(inifile)
       call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'IBMParameter', 'DataTypeGeometry', 'int', sRes)
+    call ScanFile_Char(bakfile, inifile, 'IBMParameter', 'DataTypeGeometry', 'int', sRes)
     if      ( TRIM(ADJUSTL(sRes)) == 'real' ) then; ibm_io = IBM_IO_REAL
     else if ( TRIM(ADJUSTL(sRes)) == 'int'  ) then; ibm_io = IBM_IO_INT
     else if ( TRIM(ADJUSTL(sRes)) == 'bit'  ) then; ibm_io = IBM_IO_BIT
@@ -88,9 +88,9 @@ subroutine IBM_READ_INI(inifile)
       call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINIINT(bakfile, inifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
+    call ScanFile_Int(bakfile, inifile, 'IBMParameter', 'MaxNumberObj', '0', nob_max)
 
-    call SCANINIINT(bakfile, inifile, 'IBMParameter', 'FluidPoints', '3', nflu)
+    call ScanFile_Int(bakfile, inifile, 'IBMParameter', 'FluidPoints', '3', nflu)
 
     ! read geometry parameters
     call TLab_Write_ASCII(bakfile, '#')
@@ -102,7 +102,7 @@ subroutine IBM_READ_INI(inifile)
     call TLab_Write_ASCII(bakfile, '#Width=<value>')
     call TLab_Write_ASCII(bakfile, '#Alpha=<value>')
     
-    call SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Type', 'none', sRes)
+    call ScanFile_Char(bakfile, inifile, 'IBMGeometry', 'Type', 'none', sRes)
     if ( TRIM(ADJUSTL(sRes)) == 'none' )  then
       if ( .not. ibm_restart ) then
         call TLab_Write_ASCII(efile, 'IBM_READ_INI. No IBM geometry available.')
@@ -118,13 +118,13 @@ subroutine IBM_READ_INI(inifile)
       call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
+    call ScanFile_Char(bakfile, inifile, 'IBMGeometry', 'Mirrored', 'no', sRes)
     if      ( TRIM(ADJUSTL(sRes)) == 'yes' ) then; ibm_geo%mirrored = .true.
     else if ( TRIM(ADJUSTL(sRes)) == 'no'  ) then; ibm_geo%mirrored = .false.; end if
-    call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Number', '0', ibm_geo%number)
-    call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Height', '0', ibm_geo%height)
-    call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Width',  '0', ibm_geo%width)
-    call SCANINIINT(bakfile, inifile, 'IBMGeometry', 'Alpha',  '0', ibm_geo%hill_slope)
+    call ScanFile_Int(bakfile, inifile, 'IBMGeometry', 'Number', '0', ibm_geo%number)
+    call ScanFile_Int(bakfile, inifile, 'IBMGeometry', 'Height', '0', ibm_geo%height)
+    call ScanFile_Int(bakfile, inifile, 'IBMGeometry', 'Width',  '0', ibm_geo%width)
+    call ScanFile_Int(bakfile, inifile, 'IBMGeometry', 'Alpha',  '0', ibm_geo%hill_slope)
   end if
 
   return

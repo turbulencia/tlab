@@ -115,9 +115,9 @@ contains
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Mixture', 'None', sRes)
+            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
-                call SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)               ! backwards compatibility, to be removed
+                call ScanFile_Char(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)               ! backwards compatibility, to be removed
             if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
             else if (trim(adjustl(sRes)) == 'air') then; imixture = MIXT_TYPE_AIR
             else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
@@ -130,19 +130,19 @@ contains
 
             if (imixture /= EQNS_NONE) then
                 thermo_param(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
+                call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
                 idummy = MAX_PROF
                 call LIST_REAL(sRes, idummy, thermo_param)
 
             end if
 
-            call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
+            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
 
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
+                call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
             end if
 
-            call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
+            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
             if (trim(adjustl(sRes)) == 'yes') then; nondimensional = .true.
             else if (trim(adjustl(sRes)) == 'no') then; nondimensional = .false.
             else

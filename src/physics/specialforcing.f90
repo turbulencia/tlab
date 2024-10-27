@@ -71,7 +71,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#Wave#=<amplitude,wavenumber,angle,frequency>')
         call TLab_Write_ASCII(bakfile, '#Envelope=<x,y,z,size>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; forcingProps%type = TYPE_NONE
         elseif (trim(adjustl(sRes)) == 'homogeneous') then; forcingProps%type = TYPE_HOMOGENEOUS; 
         elseif (trim(adjustl(sRes)) == 'random') then; forcingProps%type = TYPE_RAND_MULTIPLICATIVE; 
@@ -87,11 +87,11 @@ contains
             forcingProps%active(1:3) = .true.       ! default is active in x, y, z momentum equations
 
             forcingProps%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0, 1.0, 0.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Parameters', '1.0, 1.0, 0.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, forcingProps%parameters)
 
-            call SCANINICHAR(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
             idummy = 3
             call LIST_REAL(sRes, idummy, forcingProps%vector)
 
@@ -99,7 +99,7 @@ contains
             case (TYPE_WAVEMAKER)
                 do nwaves = 1, nwaves_max
                     write (sRes, *) nwaves
-                    call SCANINICHAR(bakfile, inifile, block, 'Wave'//trim(adjustl(sRes)), 'void', sRes)
+                    call ScanFile_Char(bakfile, inifile, block, 'Wave'//trim(adjustl(sRes)), 'void', sRes)
                     if (trim(adjustl(sRes)) /= 'void') then
                         idummy = 4
                         call LIST_REAL(sRes, idummy, dummy)
@@ -120,7 +120,7 @@ contains
                 nwaves = nwaves - 1                                         ! correct for the increment in the loop
 
                 envelope(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, block, 'Envelope', '1.0,1.0,1.0, 1.0', sRes) ! position and size
+                call ScanFile_Char(bakfile, inifile, block, 'Envelope', '1.0,1.0,1.0, 1.0', sRes) ! position and size
                 idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, envelope)
                 envelope(4) = abs(envelope(4))                              ! make sure the size parameter is positive
@@ -163,7 +163,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! Check with previous version; to be removed
-        call SCANINICHAR(bakfile, inifile, 'Main', 'TermRandom', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Main', 'TermRandom', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             call TLab_Write_ASCII(efile, __FILE__//'. Update TermRandom to [SpecialForcing].')
             call TLab_Stop(DNS_ERROR_OPTION)

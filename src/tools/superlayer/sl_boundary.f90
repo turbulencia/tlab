@@ -79,8 +79,8 @@ program SL_BOUNDARY
 #endif
     call Thermodynamics_Initialize_Parameters(ifile)
 
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
@@ -100,7 +100,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
             read (*, '(A512)') sRes
@@ -120,7 +120,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'ParamSuperlayer', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'ParamSuperlayer', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 

@@ -61,7 +61,7 @@ contains
 
         var%n = 0
 
-        call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
+        call ScanFile_Char(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
         if (trim(adjustl(sRes)) == 'none') then; var%type = PLANES_NONE
         elseif (trim(adjustl(sRes)) == 'fix') then; var%type = PLANES_FIX
         elseif (trim(adjustl(sRes)) == 'cbl') then; var%type = PLANES_CBL
@@ -71,12 +71,12 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, tag, 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, tag, 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             var%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, var%n, var%nodes)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Values', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, trim(adjustl(tag))//'Values', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             var%n = MAX_SAVEPLANES; call LIST_REAL(sRes, var%n, var%values)
         end if

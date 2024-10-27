@@ -72,7 +72,7 @@ program SL_NORMAL_ANALYSIS
 #endif
     call Thermodynamics_Initialize_Parameters(ifile)
 
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 
     itxc_size = imax*jmax*kmax*7
 
@@ -101,7 +101,7 @@ program SL_NORMAL_ANALYSIS
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
             read (*, '(A512)') sRes
@@ -121,7 +121,7 @@ program SL_NORMAL_ANALYSIS
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'Superlayer', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Superlayer', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 

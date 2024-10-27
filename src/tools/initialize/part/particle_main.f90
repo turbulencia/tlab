@@ -46,7 +46,7 @@ program INIPART
         bakfile = trim(adjustl(ifile))//'.bak'
 
         call Profiles_ReadBlock(bakfile, ifile, 'Particles', 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
-        call SCANINICHAR(bakfile, ifile, 'Particles', 'ProfileIniP', 'None', sRes)
+        call ScanFile_Char(bakfile, ifile, 'Particles', 'ProfileIniP', 'None', sRes)
         if (trim(adjustl(sRes)) == 'scalar') IniP%type = PART_INITYPE_SCALAR
         if (trim(adjustl(sRes)) == 'hardcoded') IniP%type = PART_INITYPE_HARDCODED
 

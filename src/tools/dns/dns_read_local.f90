@@ -53,7 +53,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#TermDivergence=<none/remove>')
     call TLab_Write_ASCII(bakfile, '#RhsMode=<split/combined/nonblocking>')
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TimeOrder', 'dummy', sRes)
     if (trim(adjustl(sRes)) == 'rungekuttaexplicit3') then; rkm_mode = RKM_EXP3; lstr = '0.6'; 
     elseif (trim(adjustl(sRes)) == 'rungekuttaexplicit4') then; rkm_mode = RKM_EXP4; lstr = '1.2'; 
     elseif (trim(adjustl(sRes)) == 'rungekuttadiffusion3') then; rkm_mode = RKM_IMP3_DIFFUSION; lstr = '0.6'; 
@@ -64,15 +64,15 @@ subroutine DNS_READ_LOCAL(inifile)
     end if
 
     ! Default cfla value set in lstr while reading TimeOrder
-    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeCFL', trim(adjustl(lstr)), cfla)
+    call ScanFile_Real(bakfile, inifile, 'Main', 'TimeCFL', trim(adjustl(lstr)), cfla)
     write (lstr, *) 0.25_wp*cfla ! Default value for diffusive CFL
-    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', trim(adjustl(lstr)), cfld)
+    call ScanFile_Real(bakfile, inifile, 'Main', 'TimeDiffusiveCFL', trim(adjustl(lstr)), cfld)
     write (lstr, *) 0.5_wp*cfla ! Default value for reactive CFL
-    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeReactiveCFL', trim(adjustl(lstr)), cflr)
-    call SCANINIREAL(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
+    call ScanFile_Real(bakfile, inifile, 'Main', 'TimeReactiveCFL', trim(adjustl(lstr)), cflr)
+    call ScanFile_Real(bakfile, inifile, 'Main', 'TimeStep', '0.05', dtime)
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'TermDivergence', 'remove', sRes)
     if (trim(adjustl(sRes)) == 'none') then; remove_divergence = .false.
     else if (trim(adjustl(sRes)) == 'remove') then; remove_divergence = .true.
     else
@@ -80,7 +80,7 @@ subroutine DNS_READ_LOCAL(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'Main', 'RhsMode', 'combined', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'RhsMode', 'combined', sRes)
     if (trim(adjustl(sRes)) == 'split') then; imode_rhs = EQNS_RHS_SPLIT
     else if (trim(adjustl(sRes)) == 'combined') then; imode_rhs = EQNS_RHS_COMBINED
 #ifdef USE_PSFFT
@@ -106,22 +106,22 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#Runtime=<seconds>')
     call TLab_Write_ASCII(bakfile, '#ObsLog=<None/Ekman>')
 
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'Start', '0', nitera_first)
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'End', '0', nitera_last)
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'Restart', '50', nitera_save)
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'IteraLog', '10', nitera_log)
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln)
-    call SCANINIREAL(bakfile, inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'End', '0', nitera_last)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'Restart', '50', nitera_save)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'Statistics', '50', nitera_stats)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'IteraLog', '10', nitera_log)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'Saveplanes', '-1', nitera_pln)
+    call ScanFile_Real(bakfile, inifile, 'Iteration', 'Runtime', '10000000', nruntime_sec)
 
 ! Accumulate statistics in spatial mode
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'SaveStats', '-1', nitera_stats_spa)
 
 ! Domain Filter (Should we move it to Iteration?)
-    call SCANINIINT(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
+    call ScanFile_Int(bakfile, inifile, 'Filter', 'Step', '0', nitera_filter)
     if (nitera_filter == 0) FilterDomain(:)%type = DNS_FILTER_NONE
 
-    call SCANINICHAR(bakfile, inifile, 'Iteration', 'ObsLog', 'none', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Iteration', 'ObsLog', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; dns_obs_log = OBS_TYPE_NONE
     else if (trim(adjustl(sRes)) == 'ekman') then; dns_obs_log = OBS_TYPE_EKMAN
     else
@@ -145,22 +145,22 @@ subroutine DNS_READ_LOCAL(inifile)
 
     bound_r%active = .false.
     bound_p%active = .false.
-    call SCANINICHAR(bakfile, inifile, 'Control', 'FlowLimit', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Control', 'FlowLimit', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then
         bound_r%active = .true.
         bound_p%active = .true.
     end if
 ! Final check in last section of the routine
-    call SCANINIREAL(bakfile, inifile, 'Control', 'MinPressure', '-1.0', bound_p%min)
-    call SCANINIREAL(bakfile, inifile, 'Control', 'MaxPressure', '-1.0', bound_p%max)
-    call SCANINIREAL(bakfile, inifile, 'Control', 'MinDensity', '-1.0', bound_r%min)
-    call SCANINIREAL(bakfile, inifile, 'Control', 'MaxDensity', '-1.0', bound_r%max)
+    call ScanFile_Real(bakfile, inifile, 'Control', 'MinPressure', '-1.0', bound_p%min)
+    call ScanFile_Real(bakfile, inifile, 'Control', 'MaxPressure', '-1.0', bound_p%max)
+    call ScanFile_Real(bakfile, inifile, 'Control', 'MinDensity', '-1.0', bound_r%min)
+    call ScanFile_Real(bakfile, inifile, 'Control', 'MaxDensity', '-1.0', bound_r%max)
 
     bound_d%active = .false.
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         bound_d%active = .true.
         bound_d%max = big_wp ! default
-        call SCANINICHAR(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             idummy = 1
             call LIST_REAL(sRes, idummy, dummy)
@@ -169,14 +169,14 @@ subroutine DNS_READ_LOCAL(inifile)
     end if
 
     bound_s(:)%active = .false.
-    call SCANINICHAR(bakfile, inifile, 'Control', 'ScalLimit', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Control', 'ScalLimit', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then
         bound_s(:)%active = .true.
     end if
 
     bound_s(:)%min = 0.0_wp; inb_scal_local1 = MAX_VARS
     if (any(bound_s(:)%active)) then
-        call SCANINICHAR(bakfile, inifile, 'Control', 'MinScalar', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Control', 'MinScalar', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             call LIST_REAL(sRes, inb_scal_local1, dummy)
             if (inb_scal_local1 /= inb_scal) then ! Consistency check
@@ -190,7 +190,7 @@ subroutine DNS_READ_LOCAL(inifile)
 
     bound_s%max = 1.0_wp; inb_scal_local1 = MAX_VARS
     if (any(bound_s(:)%active)) then
-        call SCANINICHAR(bakfile, inifile, 'Control', 'MaxScalar', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Control', 'MaxScalar', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             call LIST_REAL(sRes, inb_scal_local1, dummy)
             if (inb_scal_local1 /= inb_scal) then ! Consistency check
@@ -258,7 +258,7 @@ subroutine DNS_READ_LOCAL(inifile)
 ! -------------------------------------------------------------------
 ! Viscous terms, used only t odefine bcs_inf and bcs_out
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
+    call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'ViscousI', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; bcs_visc_imin = 0; bcs_visc_imax = 0
     else if (trim(adjustl(sRes)) == 'inflow') then; bcs_visc_imin = 1; bcs_visc_imax = 2
     else if (trim(adjustl(sRes)) == 'outflow') then; bcs_visc_imin = 2; bcs_visc_imax = 2
@@ -267,7 +267,7 @@ subroutine DNS_READ_LOCAL(inifile)
         call TLab_Stop(DNS_ERROR_IVSICBC)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousJ', 'none', sRes)
+    call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'ViscousJ', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; bcs_visc_jmin = 0; bcs_visc_jmax = 0
     else if (trim(adjustl(sRes)) == 'inflow') then; bcs_visc_jmin = 1; bcs_visc_jmax = 2
     else if (trim(adjustl(sRes)) == 'outflow') then; bcs_visc_jmin = 2; bcs_visc_jmax = 2
@@ -276,7 +276,7 @@ subroutine DNS_READ_LOCAL(inifile)
         call TLab_Stop(DNS_ERROR_JVSICBC)
     end if
 
-    call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'ViscousK', 'none', sRes)
+    call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'ViscousK', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; bcs_visc_kmin = 0; bcs_visc_kmax = 0
     else if (trim(adjustl(sRes)) == 'inflow') then; bcs_visc_kmin = 1; bcs_visc_kmax = 2
     else if (trim(adjustl(sRes)) == 'outflow') then; bcs_visc_kmin = 2; bcs_visc_kmax = 2
@@ -291,7 +291,7 @@ subroutine DNS_READ_LOCAL(inifile)
     BcsDrift = .false.
 
 ! Inflow terms
-    call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
+    call ScanFile_Real(bakfile, inifile, 'BoundaryConditions', 'SigmaInf', '-1.0', dummy(1))
     if (dummy(1) >= 0.0_wp) BcsDrift = .true.
     BcsFlowImin%cinf = dummy(1); BcsFlowImax%cinf = dummy(1) ! so far, all of them the same
     BcsFlowJmin%cinf = dummy(1); BcsFlowJmax%cinf = dummy(1)
@@ -301,7 +301,7 @@ subroutine DNS_READ_LOCAL(inifile)
     BcsScalKmin%cinf = dummy(1); BcsScalKmax%cinf = dummy(1)
 
 ! Outflow terms
-    call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
+    call ScanFile_Real(bakfile, inifile, 'BoundaryConditions', 'SigmaOut', '-1.0', dummy(1))
     if (dummy(1) >= 0.0_wp) BcsDrift = .true.
     BcsFlowImin%cout = dummy(1); BcsFlowImax%cout = dummy(1) ! so far, all of them the same
     BcsFlowJmin%cout = dummy(1); BcsFlowJmax%cout = dummy(1)
@@ -311,7 +311,7 @@ subroutine DNS_READ_LOCAL(inifile)
     BcsScalKmin%cout = dummy(1); BcsScalKmax%cout = dummy(1)
 
 ! Transverse terms
-    call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
+    call ScanFile_Real(bakfile, inifile, 'BoundaryConditions', 'BetaTransverse', '-1.0', dummy(1))
     if (dummy(1) >= 0.0_wp) BcsDrift = .true.
     BcsFlowImin%ctan = dummy(1); BcsFlowImax%ctan = dummy(1) ! so far, all of them the same
     BcsFlowJmin%ctan = dummy(1); BcsFlowJmax%ctan = dummy(1)
@@ -341,7 +341,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#HardValuesImin=<values>')
     call TLab_Write_ASCII(bakfile, '#HardValuesImax=<values>')
 
-    call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Type', 'none', sRes)
+    call ScanFile_Char(bakfile, inifile, 'BufferZone', 'Type', 'none', sRes)
     if (trim(adjustl(sRes)) == 'none') then; BuffType = DNS_BUFFER_NONE
     else if (trim(adjustl(sRes)) == 'relaxation') then; BuffType = DNS_BUFFER_RELAX
     else if (trim(adjustl(sRes)) == 'filter') then; BuffType = DNS_BUFFER_FILTER
@@ -352,21 +352,21 @@ subroutine DNS_READ_LOCAL(inifile)
     end if
 
 ! Load buffer if used also by BCs
-    call SCANINICHAR(bakfile, inifile, 'BufferZone', 'LoadBuffer', 'no', sRes)
+    call ScanFile_Char(bakfile, inifile, 'BufferZone', 'LoadBuffer', 'no', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; BuffLoad = .true.
     else; BuffLoad = .false.
     end if
 
 ! Sizes; read always because allocation checks if # points is zero
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImin', '0', BuffFlowImin%size)
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUImax', '0', BuffFlowImax%size)
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', BuffFlowJmin%size)
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', BuffFlowJmax%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsUImin', '0', BuffFlowImin%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsUImax', '0', BuffFlowImax%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsUJmin', '0', BuffFlowJmin%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsUJmax', '0', BuffFlowJmax%size)
 
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImin', '0', BuffScalImin%size)
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSImax', '0', BuffScalImax%size)
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmin', '0', BuffScalJmin%size)
-    call SCANINIINT(bakfile, inifile, 'BufferZone', 'PointsSJmax', '0', BuffScalJmax%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsSImin', '0', BuffScalImin%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsSImax', '0', BuffScalImax%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsSJmin', '0', BuffScalJmin%size)
+    call ScanFile_Int(bakfile, inifile, 'BufferZone', 'PointsSJmax', '0', BuffScalJmax%size)
 
     BuffScalImin%type = BuffType; BuffFlowImin%type = BuffType ! So far, all the same
     BuffScalImax%type = BuffType; BuffFlowImax%type = BuffType
@@ -400,7 +400,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#[ViscChange]')
     call TLab_Write_ASCII(bakfile, '#Time=<time>')
 
-    call SCANINIREAL(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
+    call ScanFile_Real(bakfile, inifile, 'ViscChange', 'Time', '0.0', visc_time)
 
 ! ###################################################################
 ! Save planes to disk
@@ -419,7 +419,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#[SaveTowers]')
     call TLab_Write_ASCII(bakfile, 'Stride=<value_i,value_j,value_k>')
 
-    call SCANINICHAR(bakfile, inifile, 'SaveTowers', 'Stride', '0,0,0', sRes)
+    call ScanFile_Char(bakfile, inifile, 'SaveTowers', 'Stride', '0,0,0', sRes)
     idummy = 3; call LIST_INTEGER(sRes, idummy, tower_stride)
     if (idummy /= 3) then
         tower_stride(:) = 0
@@ -436,15 +436,15 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#Pdfs=<yes/no>')
     call TLab_Write_ASCII(bakfile, '#Intermittency=<yes/no>')
 
-    call SCANINICHAR(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Statistics', 'Averages', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; stats_averages = .true.
     else; stats_averages = .false.; end if
 
-    call SCANINICHAR(bakfile, inifile, 'Statistics', 'Pdfs', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Statistics', 'Pdfs', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; stats_pdfs = .true.
     else; stats_pdfs = .false.; end if
 
-    call SCANINICHAR(bakfile, inifile, 'Statistics', 'Intermittency', 'yes', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Statistics', 'Intermittency', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; stats_intermittency = .true.
     else; stats_intermittency = .false.; end if
 
@@ -459,7 +459,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call TLab_Write_ASCII(bakfile, '#Jmax=<jmax>')
     call TLab_Write_ASCII(bakfile, '#Kmax=<kmax>')
 
-    call SCANINICHAR(bakfile, inifile, 'Inflow', 'Type', 'None', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Inflow', 'Type', 'None', sRes)
     if (trim(adjustl(sRes)) == 'none') then; inflow_mode = 0
     elseif (trim(adjustl(sRes)) == 'discrete') then; inflow_mode = 1
     elseif (trim(adjustl(sRes)) == 'broadbandperiodic') then; inflow_mode = 2
@@ -470,28 +470,28 @@ subroutine DNS_READ_LOCAL(inifile)
         call TLab_Stop(DNS_ERROR_INFTYPE)
     end if
 
-    call SCANINIREAL(bakfile, inifile, 'Inflow', 'Adapt', '0.0', inflow_adapt)
+    call ScanFile_Real(bakfile, inifile, 'Inflow', 'Adapt', '0.0', inflow_adapt)
 
 ! Broadband forcing: Grid size of the inflow domain
     g_inf(:)%size = 1       ! default
     g_inf(:)%periodic = g(:)%periodic
     g_inf(:)%uniform = g(:)%uniform
     if (inflow_mode == 2 .or. inflow_mode == 3 .or. inflow_mode == 4) then
-        call SCANINIINT(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
+        call ScanFile_Int(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
         if (idummy > 0) then; g_inf(1)%size = idummy
         else
             call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Imax.')
             call TLab_Stop(DNS_ERROR_INFTYPE)
         end if
 
-        call SCANINIINT(bakfile, inifile, 'Inflow', 'Jmax', '0', idummy)
+        call ScanFile_Int(bakfile, inifile, 'Inflow', 'Jmax', '0', idummy)
         if (idummy > 0) then; g_inf(2)%size = idummy
         else
             call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Jmax.')
             call TLab_Stop(DNS_ERROR_INFTYPE)
         end if
 
-        call SCANINIINT(bakfile, inifile, 'Inflow', 'Kmax', '0', idummy)
+        call ScanFile_Int(bakfile, inifile, 'Inflow', 'Kmax', '0', idummy)
         if (idummy == g(3)%size) then; g_inf(3)%size = idummy
         else
             call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Error in Inflow.Kmax.')

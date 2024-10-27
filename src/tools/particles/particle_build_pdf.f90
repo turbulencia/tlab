@@ -48,9 +48,9 @@ program PARTICLE_BUILD_PDF
 !  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

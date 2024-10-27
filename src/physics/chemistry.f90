@@ -47,7 +47,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#Type=<none/quadratic/layeredrelaxation/ozone>')
         call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; chemistryProps%type = TYPE_NONE
         elseif (trim(adjustl(sRes)) == 'quadratic') then; chemistryProps%type = TYPE_QUADRATIC; 
         elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistryProps%type = TYPE_QUADRATIC3; 
@@ -60,7 +60,7 @@ contains
 
         if (chemistryProps%type /= EQNS_NONE) then
             chemistryProps%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Parameters', '1.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, chemistryProps%parameters)
 

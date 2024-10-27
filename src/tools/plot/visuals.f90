@@ -106,7 +106,7 @@ program VISUALS
     call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+    call ScanFile_Char(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
@@ -128,7 +128,7 @@ program VISUALS
     else; iscal_offset = 9 + NSP
     end if
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamVisuals', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamVisuals', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_INTEGER(sRes, iopt_size, opt_vec)
 
@@ -230,7 +230,7 @@ program VISUALS
     end if
 
     ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
     if (sRes == '-1') then
 #ifdef USE_MPI
@@ -249,7 +249,7 @@ program VISUALS
     end if
 
     ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Format', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Format', '-1', sRes)
 
     if (sRes == '-1') then
 #ifdef USE_MPI

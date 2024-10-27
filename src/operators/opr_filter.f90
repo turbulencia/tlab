@@ -63,7 +63,7 @@ contains
         variable(:)%inb_filter = 0          ! default array size
         default = 'biased'                  ! default boundary condition
 
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'Type', 'none', sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'Type', 'none', sRes)
         if (trim(adjustl(sRes)) == 'none') then; variable(:)%type = DNS_FILTER_NONE
         else if (trim(adjustl(sRes)) == 'compact') then; variable(:)%type = DNS_FILTER_COMPACT
             variable(:)%parameters(1) = 0.49 ! default alpha value
@@ -104,7 +104,7 @@ contains
             end if
         end do
 
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'BcsJmin', trim(adjustl(default)), sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'BcsJmin', trim(adjustl(default)), sRes)
         if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
         else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMin = DNS_FILTER_BCS_BIASED
         else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMin = DNS_FILTER_BCS_FREE
@@ -117,7 +117,7 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'BcsJmax', trim(adjustl(default)), sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'BcsJmax', trim(adjustl(default)), sRes)
         if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
         else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMax = DNS_FILTER_BCS_BIASED
         else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMax = DNS_FILTER_BCS_FREE
@@ -130,7 +130,7 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'Parameters', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'Parameters', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, variable(1)%parameters(:))
@@ -141,7 +141,7 @@ contains
             end do
         end if
 
-        call SCANINIINT(bakfile, inifile, trim(adjustl(tag)), 'Repeat', '1', idummy)
+        call ScanFile_Int(bakfile, inifile, trim(adjustl(tag)), 'Repeat', '1', idummy)
         if (idummy > 0) then
             variable(:)%repeat = idummy
         else
@@ -149,11 +149,11 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveX', 'yes', sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveX', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'no') variable(1)%type = DNS_FILTER_NONE
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveY', 'yes', sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveY', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'no') variable(2)%type = DNS_FILTER_NONE
-        call SCANINICHAR(bakfile, inifile, trim(adjustl(tag)), 'ActiveZ', 'yes', sRes)
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveZ', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'no') variable(3)%type = DNS_FILTER_NONE
 
         ! Further control

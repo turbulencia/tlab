@@ -44,15 +44,15 @@ contains
         call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
         call TLab_Write_ASCII(bakfile, '#Exponent=<value>')
 
-        call SCANINICHAR(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)                 ! backwards compatibility, to be removed
+        call ScanFile_Char(bakfile, inifile, 'Transport', 'Parameters', 'void', sRes)                 ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) /= 'void') then
             call TLab_Write_ASCII(efile, __FILE__//'. Deprecated block [Transport]. Update to [Sedimentation].')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        call SCANINICHAR(bakfile, inifile, 'Sedimentation', 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Sedimentation', 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
-            call SCANINICHAR(bakfile, inifile, 'Main', 'TermTransport', 'None', sRes)               ! backwards compatibility, to be removed
+            call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; sedimentationProps%type = TYPE_NONE
         elseif (trim(adjustl(sRes)) == 'airwater') then; sedimentationProps%type = TYPE_SED_AIRWATER
         elseif (trim(adjustl(sRes)) == 'airwatersimplified') then; sedimentationProps%type = TYPE_SED_AIRWATERSIMPLIFIED
@@ -68,14 +68,14 @@ contains
             end if
 
             sedimentationProps%parameters(:) = 1.0_wp        ! default values
-            call SCANINICHAR(bakfile, inifile, 'Sedimentation', 'Parameters', 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'Sedimentation', 'Parameters', 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
                 idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, sedimentationProps%parameters)
             end if
 
             if (any([MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR] == imixture)) then
-                call SCANINIREAL(bakfile, inifile, 'Sedimentation', 'Exponent', '0.0', sedimentationProps%auxiliar(1))
+                call ScanFile_Real(bakfile, inifile, 'Sedimentation', 'Exponent', '0.0', sedimentationProps%auxiliar(1))
             end if
 
         end if

@@ -63,7 +63,7 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Particles'
 
-        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'TrajType', 'basic', sRes)
         if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
         elseif (trim(adjustl(sRes)) == 'eulerian') then; imode_traj = TRAJ_TYPE_EULERIAN
         elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
@@ -72,7 +72,7 @@ contains
             call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
         end if
 
-        call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
+        call ScanFile_Int(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
             call TLab_Write_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
             call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
@@ -82,7 +82,7 @@ contains
 
         if (imode_traj == TRAJ_TYPE_NONE) return
 
-        call SCANINICHAR(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
+        call ScanFile_Char(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
 
         ! -------------------------------------------------------------------
         inb_traj = inb_part             ! save particle prognostic properties

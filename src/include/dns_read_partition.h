@@ -1,4 +1,4 @@
-  CALL SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Partition', '-1', sRes)
+  CALL ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Partition', '-1', sRes)
   iopt_size = iopt_size_max
   CALL LIST_REAL(sRes, iopt_size, opt_vec2)
 

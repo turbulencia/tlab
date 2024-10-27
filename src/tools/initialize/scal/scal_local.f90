@@ -75,7 +75,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#NormalizeS=<values>')
         call TLab_Write_ASCII(bakfile, '#Mixture=<string>')
 
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_s = 0
         else if (trim(adjustl(sRes)) == 'layerbroadband') then; flag_s = PERT_LAYER_BROADBAND
         else if (trim(adjustl(sRes)) == 'layerdiscrete')  then; flag_s = PERT_LAYER_DISCRETE
@@ -108,7 +108,7 @@ contains
         IniS(:)%delta = 1.0_wp
         IniS(:)%mean = 0.0_wp
 
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
         norm_ini_s(:) = 0.0_wp; idummy = inb_scal
         call LIST_REAL(sRes, idummy, norm_ini_s)
         if (idummy /= inb_scal) then            ! Consistency check
@@ -121,10 +121,10 @@ contains
             end if
         end if
 
-        call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeR', '0.0', norm_ini_radiation) ! Radiation field
+        call ScanFile_Real(bakfile, inifile, 'IniFields', 'NormalizeR', '0.0', norm_ini_radiation) ! Radiation field
 
         ! Additional parameters
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Mixture', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'Mixture', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_mixture = 0
         else if (trim(adjustl(sRes)) == 'equilibrium') then; flag_mixture = 1
         else if (trim(adjustl(sRes)) == 'loadfields') then; flag_mixture = 2
@@ -133,8 +133,8 @@ contains
 ! Discrete Forcing
         call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
 !   specific for this tool
-        call SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
-        call SCANINIREAL(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
+        call ScanFile_Real(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
+        call ScanFile_Real(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
 
         return
     end subroutine SCAL_READ_LOCAL

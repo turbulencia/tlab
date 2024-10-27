@@ -89,7 +89,7 @@ program SL_CORRELATION
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR &
+        call ScanFile_Char &
             (lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
@@ -110,7 +110,7 @@ program SL_CORRELATION
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 

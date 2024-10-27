@@ -61,7 +61,7 @@ contains
         if (present(default)) then
             sRes = trim(adjustl(default))
         else
-            call SCANINICHAR(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
         end if
         if (trim(adjustl(sRes)) == 'none') then;                       var%type = PROFILE_NONE
         else if (trim(adjustl(sRes)) == 'tanh') then;                  var%type = PROFILE_TANH
@@ -88,59 +88,59 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') then ! Backwards compatibility
-            call SCANINIREAL(bakfile, inifile, block, trim(adjustl(tag)), '0.0', var%mean)
+            call ScanFile_Real(bakfile, inifile, block, trim(adjustl(tag)), '0.0', var%mean)
         else
-            call SCANINIREAL(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), '0.0', var%mean)
+            call ScanFile_Real(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), '0.0', var%mean)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') then
             var%relative = .true.
-            call SCANINIREAL(bakfile, inifile, block, 'YMeanRelative'//trim(adjustl(tag)), '0.5', var%ymean_rel)    ! Position in relative coordinates
+            call ScanFile_Real(bakfile, inifile, block, 'YMeanRelative'//trim(adjustl(tag)), '0.5', var%ymean_rel)    ! Position in relative coordinates
             ! Backwards compatibility
-            call SCANINICHAR(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
-                call SCANINIREAL(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), '0.5', var%ymean_rel)
+                call ScanFile_Real(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), '0.5', var%ymean_rel)
                 call TLab_Write_ASCII(wfile, 'Update tag YCoor to YMeanRelative.')
             end if
         else
             var%relative = .false.
-            call SCANINIREAL(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), '0.0', var%ymean)         ! Position in absolute coordinates
+            call ScanFile_Real(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), '0.0', var%ymean)         ! Position in absolute coordinates
         end if
 
-        call SCANINIREAL(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), '0.0', var%thick)
-        call SCANINIREAL(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), '0.0', var%delta)
+        call ScanFile_Real(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), '0.0', var%thick)
+        call ScanFile_Real(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), '0.0', var%delta)
         ! alternative to provide the variable thick in terms of the maximum derivative
-        call SCANINICHAR(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call SCANINIREAL(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), '0.0', derivative)
-            call SCANINICHAR(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Real(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), '0.0', derivative)
+            call ScanFile_Char(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToThick(derivative, var)
             end if
-            call SCANINICHAR(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToDelta(derivative, var)
             end if
         end if
 
-        call SCANINIREAL(bakfile, inifile, block, 'LowerSlope'//trim(adjustl(tag)), '0.0', var%lslope)
-        call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//trim(adjustl(tag)), '0.0', var%uslope)
-        call SCANINIREAL(bakfile, inifile, block, 'Diam'//trim(adjustl(tag)), '0.0', var%diam)
+        call ScanFile_Real(bakfile, inifile, block, 'LowerSlope'//trim(adjustl(tag)), '0.0', var%lslope)
+        call ScanFile_Real(bakfile, inifile, block, 'UpperSlope'//trim(adjustl(tag)), '0.0', var%uslope)
+        call ScanFile_Real(bakfile, inifile, block, 'Diam'//trim(adjustl(tag)), '0.0', var%diam)
 
-        call SCANINIREAL(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), '1.0', var%parameters(3))
-        call SCANINIREAL(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), '0.0', var%parameters(4))
+        call ScanFile_Real(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), '1.0', var%parameters(3))
+        call ScanFile_Real(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), '0.0', var%parameters(4))
         ! alternative to provide the variable thick in terms of the maximum derivative
-        call SCANINICHAR(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call SCANINIREAL(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), '0.0', derivative)
-            call SCANINICHAR(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Real(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), '0.0', derivative)
+            call ScanFile_Char(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToThick(derivative, var)
             end if
-            call SCANINICHAR(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToDelta(derivative, var)
             end if
