@@ -16,7 +16,7 @@ subroutine FI_BACKGROUND_INITIALIZE()
     use Thermodynamics, only: imixture, GRATIO, RRATIO, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
-    use Profiles
+    use Profiles, only: PROFILE_NONE, Profiles_Calculate
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
 #ifdef USE_MPI
     use TLabMPI_VARS

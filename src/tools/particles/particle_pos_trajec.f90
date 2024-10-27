@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -90,10 +89,10 @@ program PARTICLE_POS_TRAJEC
     allocate (l_traj(3, isize_traj))
     allocate (all_l_traj(3, isize_traj))
 
-    l_traj(:, :) = C_0_R
-    all_l_traj(:, :) = C_0_R
-    dummy_proc(:) = C_0_R
-    all_dummy_proc(:) = C_0_R
+    l_traj(:, :) = 0.0_wp
+    all_l_traj(:, :) = 0.0_wp
+    dummy_proc(:) = 0.0_wp
+    all_dummy_proc(:) = 0.0_wp
 
 !#######################################################################
 !READ THE (FIRST) FILE

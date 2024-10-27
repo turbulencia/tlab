@@ -79,18 +79,20 @@ message(STATUS "Git branch " ${GITBRANCH})
 add_definitions(-DGITHASH="${GITHASH}")
 add_definitions(-DGITBRANCH="${GITBRANCH}")
 
-# produce mod files
+# produce base library
 add_subdirectory(base)
 
 # produce libraries
 add_subdirectory(utils)
 add_subdirectory(io)
 add_subdirectory(thermodynamics)
+add_subdirectory(ibm)
 add_subdirectory(fdm)
 add_subdirectory(filters)
-add_subdirectory(ibm)
 add_subdirectory(operators)
 add_subdirectory(mappings)
+add_subdirectory(physics)
+add_subdirectory(statistics)
 add_subdirectory(particles)
 
 # produce executables
