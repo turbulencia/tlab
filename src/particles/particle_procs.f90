@@ -169,8 +169,8 @@ contains
         allocate (ims_np_all(ims_npro))
 #endif
 
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, l_q, [isize_part, inb_part_array], 'l_q')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
+        call TLab_Allocate_Real(C_FILE_LOC, l_q, [isize_part, inb_part_array], 'l_q')
+        call TLab_Allocate_Real(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
 
         ! Work array
         isize_l_work = (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp  ! halos for particle_interpolate
@@ -180,7 +180,7 @@ contains
         idummy = int(isize_part/4*(inb_part_array*2 + 1))                       ! transfer particles between MPI tasks
         isize_l_work = max(isize_l_work, 2*idummy)
 #endif
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, l_work, [isize_l_work], 'l_work')
+        call TLab_Allocate_Real(C_FILE_LOC, l_work, [isize_l_work], 'l_work')
 
 #ifdef USE_MPI
         p_buffer_1 => l_work(1:idummy)

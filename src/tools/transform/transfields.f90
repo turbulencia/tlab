@@ -13,7 +13,7 @@ program TRANSFIELDS
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow
-    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_DOUBLE
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS
@@ -282,8 +282,8 @@ program TRANSFIELDS
     call FI_BACKGROUND_INITIALIZE()
 
     ! Further allocation
-    if (flow_on) call TLab_Allocate_DOUBLE(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
-    if (scal_on) call TLab_Allocate_DOUBLE(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
+    if (flow_on) call TLab_Allocate_Real(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
+    if (scal_on) call TLab_Allocate_Real(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
 
     if (opt_main == 3) then
         allocate (x_dst(g_dst(1)%size))
@@ -388,9 +388,9 @@ program TRANSFIELDS
         isize_wrk3d = max(isize_wrk3d,isize_txc_field)
 
         deallocate (txc, wrk1d, wrk3d)
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
+        call TLab_Allocate_Real(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
         txc_aux(1:imax, 1:jmax_aux, 1:kmax) => txc(1:imax*jmax_aux*kmax, 1)
 
         allocate (x_aux(g(1)%size + 1))         ! need extra space in cubic splines

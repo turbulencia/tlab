@@ -5,7 +5,7 @@ module SpecialForcing
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLab_Types, only: term_dt, grid_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use TLab_Memory, only: TLab_Allocate_DOUBLE
+    use TLab_Memory, only: TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d
     implicit none
     private
@@ -133,8 +133,8 @@ contains
 
         !########################################################################
         ! Local allocation
-        call TLab_Allocate_DOUBLE(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
-        call TLab_Allocate_DOUBLE(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
+        call TLab_Allocate_Real(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
+        call TLab_Allocate_Real(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
 
         select case (forcingProps%type)
         case (TYPE_WAVEMAKER)

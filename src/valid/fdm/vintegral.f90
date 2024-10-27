@@ -6,7 +6,7 @@ program VINTEGRAL
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
-    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_DOUBLE
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d, txc, x!, wrk2d!, wrk3d
     use FDM_ComX_Direct
     use FDM_Integrate
@@ -66,7 +66,7 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
-    call TLab_Allocate_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
+    call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     g%periodic = .false.
 

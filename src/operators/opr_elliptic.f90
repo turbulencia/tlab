@@ -9,7 +9,7 @@ module OPR_ELLIPTIC
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
     use TLab_WorkFlow
-    use TLab_Memory, only: TLab_Allocate_DOUBLE
+    use TLab_Memory, only: TLab_Allocate_Real
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
@@ -140,7 +140,7 @@ contains
         ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
             isize_line = imax/2 + 1
 
-            call TLab_Allocate_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
+            call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
 
             do k = 1, kmax
 #ifdef USE_MPI

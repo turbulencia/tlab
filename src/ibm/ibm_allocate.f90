@@ -86,14 +86,14 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   ! allocate here all ibm related arrays
 
   ! eps          (geometry fields)
-  call TLab_Allocate_DOUBLE(C_FILE_LOC,   eps,     [isize_field], 'eps'    )
+  call TLab_Allocate_Real(C_FILE_LOC,   eps,     [isize_field], 'eps'    )
 
   if ( stagger_on ) then
-    call TLab_Allocate_DOUBLE(C_FILE_LOC, epsp,    [isize_field], 'epsp'   )
+    call TLab_Allocate_Real(C_FILE_LOC, epsp,    [isize_field], 'epsp'   )
   end if
 
   ! fld_ibm      (copy modified field)
-  call TLab_Allocate_DOUBLE(C_FILE_LOC,   fld_ibm, [isize_field], 'fld_ibm')
+  call TLab_Allocate_Real(C_FILE_LOC,   fld_ibm, [isize_field], 'fld_ibm')
 
   ! nob(i/j/k)   (number of objects)
   call TLab_Allocate_INT(C_FILE_LOC, nobi,   [isize_nobi],    'nobi'  )
@@ -111,20 +111,20 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
   call TLab_Allocate_INT(C_FILE_LOC, nobk_e, [isize_nobk_be], 'nobk_e')
   
   ! xa, ya (spline arrays input)
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, xa, [nspl],            'xa')
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, ya, [nspl],            'ya')
+  call TLab_Allocate_Real(C_FILE_LOC, xa, [nspl],            'xa')
+  call TLab_Allocate_Real(C_FILE_LOC, ya, [nspl],            'ya')
 
   ! xb, yb (spline arrays output)
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, xb, [isize_wrk1d_ibm], 'xb')
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, yb, [isize_wrk1d_ibm], 'yb')
+  call TLab_Allocate_Real(C_FILE_LOC, xb, [isize_wrk1d_ibm], 'xb')
+  call TLab_Allocate_Real(C_FILE_LOC, yb, [isize_wrk1d_ibm], 'yb')
 
   ! gammas for conditional averages
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, dy,       [jmax-1], 'dy'   )
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, facu,     [jmax-2], 'facu' )
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, facl,     [jmax-2], 'facl' )
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, gamma_0,  [jmax],   'eps_0')
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, gamma_1,  [jmax],   'eps_1')
-  call TLab_Allocate_DOUBLE(C_FILE_LOC, scal_bcs, [jmax, inb_scal], 'scal_bcs')
+  call TLab_Allocate_Real(C_FILE_LOC, dy,       [jmax-1], 'dy'   )
+  call TLab_Allocate_Real(C_FILE_LOC, facu,     [jmax-2], 'facu' )
+  call TLab_Allocate_Real(C_FILE_LOC, facl,     [jmax-2], 'facl' )
+  call TLab_Allocate_Real(C_FILE_LOC, gamma_0,  [jmax],   'eps_0')
+  call TLab_Allocate_Real(C_FILE_LOC, gamma_1,  [jmax],   'eps_1')
+  call TLab_Allocate_Real(C_FILE_LOC, scal_bcs, [jmax, inb_scal], 'scal_bcs')
 
   ! IBM case
   call TLab_Allocate_INT(C_FILE_LOC, ibm_case_x, [isize_nobi_be], 'ibm_case_x')

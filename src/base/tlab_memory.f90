@@ -116,9 +116,9 @@ module TLab_Memory
         module procedure TLab_Allocate_SINGLE1, TLab_Allocate_SINGLE2, TLab_Allocate_SINGLE3, TLab_Allocate_SINGLE4
     end interface TLab_Allocate_SINGLE
 
-    interface TLab_Allocate_DOUBLE
-        module procedure TLab_Allocate_DOUBLE1, TLab_Allocate_DOUBLE2, TLab_Allocate_DOUBLE3, TLab_Allocate_DOUBLE4
-    end interface TLab_Allocate_DOUBLE
+    interface TLab_Allocate_Real
+        module procedure TLab_Allocate_Real1, TLab_Allocate_Real2, TLab_Allocate_Real3, TLab_Allocate_Real4
+    end interface TLab_Allocate_Real
 
     interface TLab_Allocate_INT
         module procedure TLab_Allocate_INT1, TLab_Allocate_INT2, TLab_Allocate_INT3, TLab_Allocate_INT4
@@ -131,7 +131,7 @@ module TLab_Memory
 
     public :: TLab_Initialize_Memory
     public :: TLab_Allocate_SINGLE
-    public :: TLab_Allocate_DOUBLE
+    public :: TLab_Allocate_Real
     public :: TLab_Allocate_INT
     public :: TLab_Allocate_LONG_INT
 contains
@@ -149,20 +149,20 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
+        call TLab_Allocate_Real(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
+        call TLab_Allocate_Real(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
+        call TLab_Allocate_Real(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
 
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')
+        call TLab_Allocate_Real(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
+        call TLab_Allocate_Real(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')
 
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
-        call TLab_Allocate_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
+        call TLab_Allocate_Real(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
 
         if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then
-            call TLab_Allocate_DOUBLE(C_FILE_LOC, wrkdea, [isize_field, 2], 'wrk-dealiasing')
+            call TLab_Allocate_Real(C_FILE_LOC, wrkdea, [isize_field, 2], 'wrk-dealiasing')
         end if
 
         call TLab_Set_Pointers()
@@ -262,7 +262,7 @@ contains
     ! ######################################################################
     ! ######################################################################
 #ifndef NO_ASSUMED_RANKS
-    subroutine TLab_Allocate_DOUBLE(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_Real(C_FILE_LOC, a, dims, s)
 
         character(len=*), intent(in) :: C_FILE_LOC
         real(wp), allocatable, intent(inout) :: a(..)
@@ -287,7 +287,7 @@ contains
         end select
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
 
-    end subroutine TLab_Allocate_DOUBLE
+    end subroutine TLab_Allocate_Real
 
     ! ######################################################################
     ! ######################################################################
@@ -364,7 +364,7 @@ contains
     ! ### SINGLE ALLOCATION ROUTINES
     subroutine TLab_Allocate_SINGLE1(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(4), allocatable, intent(inout) :: a(:)
+        real(sp), allocatable, intent(inout) :: a(:)
         integer(wi), intent(in) :: dims(:)
         integer id
         !#####################################################################
@@ -375,7 +375,7 @@ contains
 
     subroutine TLab_Allocate_SINGLE2(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(4), allocatable, intent(inout) :: a(:, :)
+        real(sp), allocatable, intent(inout) :: a(:, :)
         integer(wi), intent(in) :: dims(2)
         integer id
         !#####################################################################
@@ -386,7 +386,7 @@ contains
 
     subroutine TLab_Allocate_SINGLE3(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(4), allocatable, intent(inout) :: a(:, :, :)
+        real(sp), allocatable, intent(inout) :: a(:, :, :)
         integer(wi), intent(in) :: dims(3)
         integer id
         !#####################################################################
@@ -397,7 +397,7 @@ contains
 
     subroutine TLab_Allocate_SINGLE4(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(4), allocatable, intent(inout) :: a(:, :, :, :)
+        real(sp), allocatable, intent(inout) :: a(:, :, :, :)
         integer(wi), intent(in) :: dims(4)
         integer id
         !#####################################################################
@@ -407,49 +407,49 @@ contains
     end subroutine TLab_Allocate_SINGLE4
 
     ! ### DOUBLE ALLOCATION ROUTINES
-    subroutine TLab_Allocate_DOUBLE1(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_Real1(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(8), allocatable, intent(inout) :: a(:)
+        real(wp), allocatable, intent(inout) :: a(:)
         integer(wi), intent(in) :: dims(:)
         integer id
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLab_Allocate_DOUBLE1
+    end subroutine TLab_Allocate_Real1
 
-    subroutine TLab_Allocate_DOUBLE2(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_Real2(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(8), allocatable, intent(inout) :: a(:, :)
+        real(wp), allocatable, intent(inout) :: a(:, :)
         integer(wi), intent(in) :: dims(2)
         integer id
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLab_Allocate_DOUBLE2
+    end subroutine TLab_Allocate_Real2
 
-    subroutine TLab_Allocate_DOUBLE3(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_Real3(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(8), allocatable, intent(inout) :: a(:, :, :)
+        real(wp), allocatable, intent(inout) :: a(:, :, :)
         integer(wi), intent(in) :: dims(3)
         integer id
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLab_Allocate_DOUBLE3
+    end subroutine TLab_Allocate_Real3
 
-    subroutine TLab_Allocate_DOUBLE4(C_FILE_LOC, a, dims, s)
+    subroutine TLab_Allocate_Real4(C_FILE_LOC, a, dims, s)
         character(len=*), intent(in) :: C_FILE_LOC, s
-        real(8), allocatable, intent(inout) :: a(:, :, :, :)
+        real(wp), allocatable, intent(inout) :: a(:, :, :, :)
         integer(wi), intent(in) :: dims(4)
         integer id
         !#####################################################################
         call TLAB_ALLOCATE_LOG(lfile, dims, s)
         allocate (a(dims(1), dims(2), dims(3), dims(4)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLab_Allocate_DOUBLE4
+    end subroutine TLab_Allocate_Real4
 
     ! # INTEGER ALLOCATION ROUTINES
     subroutine TLab_Allocate_INT1(C_FILE_LOC, a, dims, s)
