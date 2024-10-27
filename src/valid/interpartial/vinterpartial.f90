@@ -50,7 +50,7 @@ program VINTERPARTIAL
 ! ###################################################################
     call TLab_Start()
 
-    call IO_READ_GLOBAL('tlab.ini')
+    call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif

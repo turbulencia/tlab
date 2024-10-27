@@ -16,7 +16,7 @@ program VEFILTER2
 ! ###################################################################
     call DNS_START
 
-    call IO_READ_GLOBAL('tlab.ini')
+    call TLab_Initialize_Parameters('tlab.ini')
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

@@ -29,7 +29,7 @@ program VFFTW
 ! ###################################################################
     call DNS_START
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

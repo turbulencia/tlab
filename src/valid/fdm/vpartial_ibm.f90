@@ -36,7 +36,7 @@ program VPARTIAL
 
 ! ###################################################################
     call TLab_Start()
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
     ! call Particle_Initialize_Parameters(ifile)
     ! call DNS_READ_LOCAL(ifile)
     call IBM_READ_INI(ifile)

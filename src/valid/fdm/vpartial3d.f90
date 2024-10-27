@@ -28,7 +28,7 @@ program VPARTIAL3D
 ! ###################################################################
     call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 
     inb_txc = 8
 

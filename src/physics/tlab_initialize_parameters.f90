@@ -4,13 +4,15 @@
 #include "dns_const_mpi.h"
 #endif
 
-#define C_FILE_LOC "IO_READ_GLOBAL"
+#define C_FILE_LOC "TLab_Initialize_Parameters"
+
+! To be split into TLab_Initialize_Parameters and Physics_Initialite_Parameters...
 
 !########################################################################
 !# Reading general data from file tlab.ini, setting up general parameters
 !# and doing cross-check of these general data.
 !########################################################################
-subroutine IO_READ_GLOBAL(inifile)
+subroutine TLab_Initialize_Parameters(inifile)
 
     use TLab_Constants, only: wp, wi, lfile, efile, lfile, wfile, MajorVersion, MinorVersion, MAX_PROF
     use TLAB_VARS
@@ -847,4 +849,4 @@ subroutine IO_READ_GLOBAL(inifile)
     end do
 
     return
-end subroutine IO_READ_GLOBAL
+end subroutine TLab_Initialize_Parameters
