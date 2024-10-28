@@ -532,7 +532,7 @@ contains
     !# assuming p/rho^\gamma0 constant(Homentropic conditions)
     ! ###################################################################
     subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4)
-        use TLAB_VARS, only: gama0
+        use Thermodynamics, only: gama0
         
         real(wp), dimension(imax, jmax, kmax), intent(in) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: rho, p, pprime

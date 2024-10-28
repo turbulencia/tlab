@@ -10,8 +10,7 @@
 module THERMO_CALORIC
     use TLab_Constants, only: wp, wi, efile
     use TLab_WorkFlow
-    use TLAB_VARS, only: gama0
-    use Thermodynamics, only: imixture, CRATIO_INV, THERMO_R, MAX_NSP, NSP
+    use Thermodynamics, only: imixture, gama0, CRATIO_INV, THERMO_R, MAX_NSP, NSP
     use Thermodynamics, only: NCP, THERMO_AI, THERMO_TLIM
     use Thermodynamics, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
     use THERMO_AIRWATER

@@ -375,8 +375,9 @@ contains
     subroutine IO_WRITE_FIELDS(fname, iheader, nx, ny, nz, nfield, a)
         use TLAB_VARS, only: imode_files, imode_precision_files, imode_eqns
         use TLAB_VARS, only: itime, rtime
-        use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach, gama0
+        use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach
         use TLAB_VARS, only: schmidt
+        use Thermodynamics, only: gama0
 
         character(len=*) fname
         integer, intent(in) :: iheader         ! Scalar or Flow headers

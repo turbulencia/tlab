@@ -66,7 +66,6 @@ module TLAB_VARS
 ! ###################################################################
     real(wp) :: visc, prandtl, schmidt(MAX_VARS)    ! molecular transport
     real(wp) :: mach                                ! compressibility
-    real(wp) :: gama0                               ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
     real(wp) :: damkohler(MAX_VARS)                 ! reaction
     real(wp) :: froude                              ! gravity force
     real(wp) :: rossby                              ! Coriolis force

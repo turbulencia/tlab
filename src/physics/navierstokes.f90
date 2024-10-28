@@ -8,10 +8,11 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
     use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
-    use TLAB_VARS, only: visc, prandtl, schmidt, mach, gama0, damkohler, froude, rossby, stokes, settling
+    use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
     use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: g, stagger_on
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
+    use Thermodynamics, only: gama0
     use TLab_Spatial
     use TLab_WorkFlow
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V

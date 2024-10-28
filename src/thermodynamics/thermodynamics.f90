@@ -30,7 +30,7 @@ module Thermodynamics
     real(wp), public :: THERMO_PSAT(MAX_NPSAT), NEWTONRAPHSON_ERROR
 
     ! Compressible formulation, different combinations of parameters \gamma0 and mach to save calculations
-    ! real(wp) :: gama0                                 ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0), defined in tlab_vars because it is global in basic formulation
+    real(wp), public :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0), defined in tlab_vars because it is global in basic formulation
     ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
     ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
     real(wp), public :: RRATIO                          ! 1/(gama0 mach^2) = R0/(U0^2/T0)
@@ -78,7 +78,7 @@ contains
     subroutine Thermodynamics_Initialize_Parameters(inifile)
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: inb_scal, inb_scal_array
-        use TLAB_VARS, only: gama0, mach, schmidt, damkohler
+        use TLAB_VARS, only: mach, schmidt, damkohler
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         ! use THERMO_ANELASTIC, only: scaleheight
 

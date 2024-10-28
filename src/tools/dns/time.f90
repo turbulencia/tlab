@@ -14,7 +14,16 @@ module TIME
     use OMP_LIB
 #endif
     use TLab_Constants, only: efile, wp, wi, big_wp
-    use TLAB_VARS
+    use TLAB_VARS, only: imode_sim, imode_files, imode_precision_files, imode_verbosity
+    use TLAB_VARS, only: flow_on, scal_on, fourier_on, stagger_on
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
+    use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: rtime
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLAB_VARS, only: visc, prandtl, schmidt
     use TLab_WorkFlow
     use TLab_OpenMP
     use PARTICLE_VARS
@@ -326,6 +335,7 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
+        use Thermodynamics, only: gama0
         use TLab_Pointers_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
