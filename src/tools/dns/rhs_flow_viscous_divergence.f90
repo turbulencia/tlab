@@ -8,15 +8,15 @@
 !# Total energy eqn formulation does 21 derivatives.
 !########################################################################
 subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
-    use TLAB_POINTERS
+    use TLab_Pointers
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV
     use BOUNDARY_BCS
@@ -30,7 +30,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
     bcs = 0
@@ -153,7 +153,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_VISCOUS_DIVERGENCE')
 #endif
 
     return

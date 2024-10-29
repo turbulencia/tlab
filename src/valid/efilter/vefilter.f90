@@ -2,7 +2,7 @@
 #include "dns_const.h"
 
 program VEFILTER
-    use TLAB_TYPES, only: filter_dt, grid_dt
+    use TLab_Types, only: filter_dt, grid_dt
     use TLAB_VARS, only: visc, schmidt
     USE OPR_FILTERS
 

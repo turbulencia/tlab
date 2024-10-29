@@ -17,7 +17,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     use OMP_LIB, only: omp_get_thread_num
 
-    use TLAB_CONSTANTS, only: lfile, wfile, efile, tfile
+    use TLab_Constants, only: lfile, wfile, efile, tfile
     !
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_eqns
@@ -89,7 +89,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     target h1, h2, h3
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+    call TLab_Write_ASCII(tfile, 'ENTERING SUBROUTINE, RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
 
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
@@ -213,9 +213,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 call NB3DFFT_R2R_XUNPACK(bt1, tmp11, info(FUYX), t_tmp); t_comp = t_comp + t_tmp
                 !
                 t_tmp = -MPI_WTime()
-                call DNS_TRANSPOSE(bt1, g(1)%size, nyz_trans, g(1)%size, tmpu, nyz_trans)
+                call TLab_Transpose(bt1, g(1)%size, nyz_trans, g(1)%size, tmpu, nyz_trans)
                 call OPR_BURGERS_1D(0, nyz_trans, bcs, g(1), tmpu, tmpu, tmp11)
-                call DNS_TRANSPOSE(tmp11, nyz_trans, g(1)%size, nyz_trans, bt1, g(1)%size)
+                call TLab_Transpose(tmp11, nyz_trans, g(1)%size, nyz_trans, bt1, g(1)%size)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
                 call NB3DFFT_R2R_XYCOMM(bt1, bt1, tmp12, tmp11, info(BUXY), t_tmp); t_comp = t_comp + t_tmp
@@ -243,9 +243,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 call NB3DFFT_R2R_XUNPACK(bt3, tmp31, info(FWYX), t_tmp); t_comp = t_comp + t_tmp; 
                 !
                 t_tmp = -MPI_WTime()
-                call DNS_TRANSPOSE(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
+                call TLab_Transpose(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
                 call OPR_BURGERS_1D(0, nyz_trans, bcs, g(1), tmp31, tmpu, tmp32)
-                call DNS_TRANSPOSE(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
+                call TLab_Transpose(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
                 call NB3DFFT_R2R_XYCOMM(bt3, bt3, tmp32, tmp31, info(BWXY), t_tmp); t_comp = t_comp + t_tmp; 
@@ -320,9 +320,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 call NB3DFFT_R2R_XUNPACK(bt1, tmp11, info(FVYX), t_tmp); t_comp = t_comp + t_tmp; 
                 !
                 t_tmp = -MPI_WTime()
-                call DNS_TRANSPOSE(bt1, g(1)%size, nyz_trans, g(1)%size, tmp11, nyz_trans)
+                call TLab_Transpose(bt1, g(1)%size, nyz_trans, g(1)%size, tmp11, nyz_trans)
                 call OPR_BURGERS_1D(0, nyz_trans, bcs, g(1), tmp11, tmpu, tmp12)
-                call DNS_TRANSPOSE(tmp12, nyz_trans, g(1)%size, nyz_trans, bt1, g(1)%size)
+                call TLab_Transpose(tmp12, nyz_trans, g(1)%size, nyz_trans, bt1, g(1)%size)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
                 call NB3DFFT_R2R_XYCOMM(bt1, bt1, tmp12, tmp11, info(BVXY), t_tmp); t_comp = t_comp + t_tmp; 
@@ -344,9 +344,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 call NB3DFFT_R2R_XUNPACK(bt3, tmp31, info(F1YX), t_tmp); t_comp = t_comp + t_tmp; 
                 !
                 t_tmp = -MPI_WTime()
-                call DNS_TRANSPOSE(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
+                call TLab_Transpose(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
                 call OPR_BURGERS_1D(0, nyz_trans, bcs, g(1), tmp31, tmpu, tmp32)
-                call DNS_TRANSPOSE(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
+                call TLab_Transpose(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
                 call NB3DFFT_R2R_XYCOMM(bt3, bt3, tmp32, tmp31, info(B1XY), t_tmp); t_comp = t_comp + t_tmp; 
@@ -455,9 +455,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                     call NB3DFFT_R2R_XUNPACK(bt1, tmp11, info(F2YX), t_tmp); t_comp = t_comp + t_tmp; 
                     !
                     t_tmp = -MPI_WTime()
-                    call DNS_TRANSPOSE(bt1, g(1)%size, nyz_trans, g(1)%size, tmp11, nyz_trans)
+                    call TLab_Transpose(bt1, g(1)%size, nyz_trans, g(1)%size, tmp11, nyz_trans)
                     call OPR_BURGERS_1D(0, nyz_trans, bcs, g(1), tmp11, tmpu, tmp12)
-                    call DNS_TRANSPOSE(tmp12, nyz_trans, g(1)%size, nyz_trans, bt1, g(1)%size)
+                    call TLab_Transpose(tmp12, nyz_trans, g(1)%size, nyz_trans, bt1, g(1)%size)
                     t_ser = t_ser + (t_tmp + MPI_WTime())
                     !
                     call NB3DFFT_R2R_XYCOMM(bt1, bt1, tmp12, tmp11, info(B2XY), t_tmp); t_comp = t_comp + t_tmp; 
@@ -481,9 +481,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 call NB3DFFT_R2R_XUNPACK(bt3, tmp31, info(FPYX), t_tmp); t_comp = t_comp + t_tmp; 
                 !
                 t_tmp = -MPI_WTime()
-                call DNS_TRANSPOSE(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
+                call TLab_Transpose(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
                 call OPR_PARTIAL1(nyz_trans, bcs, g(1), tmp31, tmp32, wrk2d)
-                call DNS_TRANSPOSE(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
+                call TLab_Transpose(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
                 call NB3DFFT_R2R_XYCOMM(bt3, bt3, tmp32, tmp31, info(BPXY), t_tmp); t_comp = t_comp + t_tmp; 
@@ -694,7 +694,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     ptime = ptime + MPI_WTime()
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
+    call TLab_Write_ASCII(tfile, 'LEAVING SUBROUTINE RHS_GLOBAL_INCOMPRESSIBLE_NBC')
 #endif
     return
 end subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC

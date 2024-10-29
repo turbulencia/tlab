@@ -9,13 +9,13 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: visc
     use TLAB_VARS, only: stagger_on
-    use TLAB_ARRAYS, only: q
-    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
+    use TLab_Arrays, only: q
+    use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
     use IBM_VARS, only: imode_ibm, ibm_partial

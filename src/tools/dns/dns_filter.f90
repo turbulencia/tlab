@@ -8,13 +8,13 @@ subroutine DNS_FILTER()
     use TLAB_VARS, only: imode_eqns, imode_sim
     use TLAB_VARS, only: itime, rtime
     use TLAB_VARS, only: FilterDomain
-    use TLAB_VARS, only: g, area
-    use TLAB_ARRAYS
+    use TLAB_VARS, only: g
+    use TLab_Arrays
     use OPR_FILTERS
     use DNS_LOCAL, only: DNS_BOUNDS_LIMIT
     use DNS_LOCAL, only: nitera_stats_spa, nitera_first, nitera_stats
-    use STATISTICS
-    use AVGS, only: AVG_IK_V
+    use DNS_STATISTICS, only: mean_flow, mean
+    use Averages, only: AVG_IK_V
 
     implicit none
 
@@ -40,9 +40,9 @@ subroutine DNS_FILTER()
 
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
         call FI_RTKE(imax, jmax, kmax, q, wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tke0(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, Tke0(1), wrk1d)
         call FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5))
-        call AVG_IK_V(imax, jmax, kmax, jmax, txc, g(1)%jac, g(3)%jac, Eps0(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, txc, Eps0(1), wrk1d)
     end if
 
     ! -------------------------------------------------------------------
@@ -87,9 +87,9 @@ subroutine DNS_FILTER()
     ! statistics
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
         call FI_RTKE(imax, jmax, kmax, q, wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, g(1)%jac, g(3)%jac, Tke1(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, Tke1(1), wrk1d)
         call FI_DISSIPATION(i1, imax,jmax,kmax, q(1,1),q(1,2),q(1,3), txc(1,1), txc(1,2),txc(1,3),txc(1,4),txc(1,5))
-        call AVG_IK_V(imax, jmax, kmax, jmax, txc, g(1)%jac, g(3)%jac, Eps1(1), wrk1d, area)
+        call AVG_IK_V(imax, jmax, kmax, jmax, txc, Eps1(1), wrk1d)
 
         write (fname, *) itime; fname = 'kin'//trim(adjustl(fname))
         call IO_WRITE_AVERAGES(fname, itime, rtime, jmax, 4, 1, g(2)%nodes, varnames, groupnames, mean)

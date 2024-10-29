@@ -8,9 +8,9 @@
 ! #######################################################################
 ! Scan file for an integer value
 ! #######################################################################
-subroutine SCANINIINT(ofile, ifile, title, name, default, value)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS
+subroutine ScanFile_Int(ofile, ifile, title, name, default, value)
+    use TLab_Constants, only: wp, wi
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -18,20 +18,20 @@ subroutine SCANINIINT(ofile, ifile, title, name, default, value)
 
     character*(128) StrValue
 
-    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    call TLab_Read_ASCII(ifile, title, name, StrValue, default)
     read (StrValue, *) value
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
-end subroutine SCANINIINT
+end subroutine ScanFile_Int
 
 ! #######################################################################
 ! Scan file for an integer value
 ! #######################################################################
-subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
-    use TLAB_CONSTANTS, only: wp, wi, longi
-    use TLAB_PROCS
+subroutine ScanFile_LongInt(ofile, ifile, title, name, default, value)
+    use TLab_Constants, only: wp, wi, longi
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -39,20 +39,20 @@ subroutine SCANINILONGINT(ofile, ifile, title, name, default, value)
 
     character*(128) StrValue
 
-    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    call TLab_Read_ASCII(ifile, title, name, StrValue, default)
     read (StrValue, *) value
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
-end subroutine SCANINILONGINT
+end subroutine ScanFile_LongInt
 
 ! #######################################################################
 ! Scan file for an real value
 ! #######################################################################
-subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS
+subroutine ScanFile_Real(ofile, ifile, title, name, default, value)
+    use TLab_Constants, only: wp, wi
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -60,37 +60,37 @@ subroutine SCANINIREAL(ofile, ifile, title, name, default, value)
 
     character*(128) StrValue
 
-    call IO_READ_ASCII(ifile, title, name, StrValue, default)
+    call TLab_Read_ASCII(ifile, title, name, StrValue, default)
     read (StrValue, *) value
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(StrValue)))
 
     return
-end subroutine SCANINIREAL
+end subroutine ScanFile_Real
 
 ! #######################################################################
 ! Scan file for an char value
 ! #######################################################################
-subroutine SCANINICHAR(ofile, ifile, title, name, default, value)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_PROCS
+subroutine ScanFile_Char(ofile, ifile, title, name, default, value)
+    use TLab_Constants, only: wp, wi
+    use TLab_WorkFlow
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
     character*(*), intent(OUT) :: value
 
-    call IO_READ_ASCII(ifile, title, name, value, default)
+    call TLab_Read_ASCII(ifile, title, name, value, default)
 
-    call TLAB_WRITE_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(value)))
+    call TLab_Write_ASCII(ofile, trim(adjustl(name))//'='//trim(adjustl(value)))
 
     return
-end subroutine SCANINICHAR
+end subroutine ScanFile_Char
 
 ! #######################################################################
 ! Scan file for a string
 ! #######################################################################
-subroutine IO_READ_ASCII(fname, title, name, value, default)
-    use TLAB_CONSTANTS, only: wp, wi
+subroutine TLab_Read_ASCII(fname, title, name, value, default)
+    use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
     use MPI
@@ -167,13 +167,13 @@ subroutine IO_READ_ASCII(fname, title, name, value, default)
 #endif
 
     return
-end subroutine IO_READ_ASCII
+end subroutine TLab_Read_ASCII
 
 ! #######################################################################
 ! Write ASCII data; complete fields
 ! #######################################################################
-subroutine TLAB_WRITE_ASCII_FIELD(fname, imax, jmax, kmax, u)
-    use TLAB_CONSTANTS, only: wp, wi
+subroutine TLab_Write_ASCII_FIELD(fname, imax, jmax, kmax, u)
+    use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro, ims_offset_i, ims_offset_k
@@ -211,4 +211,4 @@ subroutine TLAB_WRITE_ASCII_FIELD(fname, imax, jmax, kmax, u)
     close (31)
 
     return
-end subroutine TLAB_WRITE_ASCII_FIELD
+end subroutine TLab_Write_ASCII_FIELD

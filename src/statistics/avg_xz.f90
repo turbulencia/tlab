@@ -8,10 +8,10 @@
 !#
 !########################################################################
 subroutine AVG_N_XZ(fname, itime, rtime, nx, ny, nz, nv, nm, vars, igate, gate, y, avg)
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
-    use TLAB_TYPES, only: pointers_dt
-    use TLAB_PROCS
-    use AVGS, only: AVG1V2d, AVG1V2D1G
+    use TLab_Constants, only: efile, lfile, wp, wi
+    use TLab_Types, only: pointers_dt
+    use TLab_WorkFlow
+    use Averages, only: AVG1V2d, AVG1V2D1G
 
     implicit none
 
@@ -33,7 +33,7 @@ subroutine AVG_N_XZ(fname, itime, rtime, nx, ny, nz, nv, nm, vars, igate, gate, 
     character*250 varname(1)  ! to be reduce to just 1 group in the future
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do j = 1, ny
         do iv = 1, nv
@@ -70,7 +70,7 @@ end subroutine AVG_N_XZ
 
 ! ###################################################################
 subroutine RAW_TO_CENTRAL(nm, moments)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     integer(wi), intent(IN) :: nm
@@ -107,9 +107,9 @@ end subroutine RAW_TO_CENTRAL
 !#
 !########################################################################
 subroutine INTER_N_XZ(fname, itime, rtime, nx, ny, nz, np, parname, gate, y, inter)
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
-    use TLAB_PROCS
-    use AVGS, only: INTER1V2D
+    use TLab_Constants, only: efile, lfile, wp, wi
+    use TLab_WorkFlow
+    use Averages, only: INTER1V2D
 
     implicit none
 
@@ -129,7 +129,7 @@ subroutine INTER_N_XZ(fname, itime, rtime, nx, ny, nz, np, parname, gate, y, int
     character*250 varname(1)  ! to be reduce to just 1 group in the future
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do j = 1, ny
         do ip = 1, np

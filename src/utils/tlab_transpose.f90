@@ -11,8 +11,9 @@
 !# routine trans below is faster than TRANSPOSE routine from f90
 !#
 !########################################################################
-subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
-    use TLAB_CONSTANTS
+subroutine TLab_Transpose(a, nra, nca, ma, b, mb)
+    use TLab_Constants, only: wp, wi
+    use TLab_OpenMP
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -44,7 +45,7 @@ subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-    call DNS_OMP_PARTITION(nca, srt, end, siz)
+    call TLab_OMP_PARTITION(nca, srt, end, siz)
 
     kk = 1; jj = 1
 
@@ -78,12 +79,13 @@ subroutine DNS_TRANSPOSE(a, nra, nca, ma, b, mb)
 #endif
 
     return
-end subroutine DNS_TRANSPOSE
+end subroutine TLab_Transpose
 
 !########################################################################
 !########################################################################
-subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
-    use TLAB_CONSTANTS
+subroutine TLab_Transpose_INT1(a, nra, nca, ma, b, mb)
+    use TLab_Constants, only: wp, wi
+    use TLab_OpenMP
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -107,7 +109,7 @@ subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-    call DNS_OMP_PARTITION(nca, srt, end, siz)
+    call TLab_OMP_PARTITION(nca, srt, end, siz)
 
     kk = 1; jj = 1
 
@@ -139,12 +141,13 @@ subroutine DNS_TRANSPOSE_INT1(a, nra, nca, ma, b, mb)
 !$omp end parallel
 
     return
-end subroutine DNS_TRANSPOSE_INT1
+end subroutine TLab_Transpose_INT1
 
 !########################################################################
 !########################################################################
-subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
-    use TLAB_CONSTANTS
+subroutine TLab_Transpose_COMPLEX(a, nra, nca, ma, b, mb)
+    use TLab_Constants, only: wp, wi
+    use TLab_OpenMP
     implicit none
 
     integer(wi), intent(in) :: nra      ! Number of rows in a
@@ -172,7 +175,7 @@ subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
 !$omp private(k,j,jj,kk,srt,end,siz,last_k,last_j) &
 !$omp shared(a,b,nca,nra)
 
-    call DNS_OMP_PARTITION(nca, srt, end, siz)
+    call TLab_OMP_PARTITION(nca, srt, end, siz)
 
     kk = 1; jj = 1
 
@@ -204,5 +207,5 @@ subroutine DNS_TRANSPOSE_COMPLEX(a, nra, nca, ma, b, mb)
 !$omp end parallel
 
     return
-end subroutine DNS_TRANSPOSE_COMPLEX
+end subroutine TLab_Transpose_COMPLEX
 

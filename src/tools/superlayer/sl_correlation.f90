@@ -57,12 +57,13 @@ program SL_CORRELATION
 ! ###################################################################
     call DNS_START
 
-    call IO_READ_GLOBAL('tlab.ini')
-    call Thermodynamics_Initialize_Parameters(ifile)
-
+    call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
@@ -89,7 +90,7 @@ program SL_CORRELATION
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR &
+        call ScanFile_Char &
             (lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
@@ -110,7 +111,7 @@ program SL_CORRELATION
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'ParamSlCorr', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -137,7 +138,7 @@ program SL_CORRELATION
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -173,5 +174,5 @@ program SL_CORRELATION
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SL_CORRELATION

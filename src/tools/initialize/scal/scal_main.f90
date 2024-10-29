@@ -5,10 +5,11 @@
 
 program INISCAL
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
     use TLabMPI_PROCS
@@ -26,12 +27,13 @@ program INISCAL
     integer(wi) is, inb_scal_loc
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
     call SCAL_READ_LOCAL(ifile)
@@ -46,14 +48,14 @@ program INISCAL
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
     call Radiation_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
     do is = 1, size(IniS)
         if (IniS(is)%relative) IniS(is)%ymean = g(2)%nodes(1) + g(2)%scale*IniS(is)%ymean_rel
     end do
@@ -63,7 +65,7 @@ program INISCAL
     s = 0.0_wp
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Initializing scalars.')
+    call TLab_Write_ASCII(lfile, 'Initializing scalars.')
 
     inb_scal_loc = inb_scal
     if (imixture == MIXT_TYPE_AIRWATER) then
@@ -117,5 +119,5 @@ program INISCAL
     ! ###################################################################
     call IO_WRITE_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, s)
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program INISCAL

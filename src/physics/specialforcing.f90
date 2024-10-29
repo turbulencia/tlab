@@ -2,10 +2,11 @@
 #include "dns_error.h"
 
 module SpecialForcing
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, MAX_PARS
-    use TLAB_TYPES, only: term_dt, grid_dt
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
-    use TLAB_ARRAYS, only: wrk1d
+    use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
+    use TLab_Types, only: term_dt, grid_dt
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Memory, only: TLab_Allocate_Real
+    use TLab_Arrays, only: wrk1d
     implicit none
     private
 
@@ -63,22 +64,22 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'SpecialForcing'
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Parameters=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#Wave#=<amplitude,wavenumber,angle,frequency>')
-        call TLAB_WRITE_ASCII(bakfile, '#Envelope=<x,y,z,size>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<values>')
+        call TLab_Write_ASCII(bakfile, '#Wave#=<amplitude,wavenumber,angle,frequency>')
+        call TLab_Write_ASCII(bakfile, '#Envelope=<x,y,z,size>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; forcingProps%type = TYPE_NONE
         elseif (trim(adjustl(sRes)) == 'homogeneous') then; forcingProps%type = TYPE_HOMOGENEOUS; 
         elseif (trim(adjustl(sRes)) == 'random') then; forcingProps%type = TYPE_RAND_MULTIPLICATIVE; 
         elseif (trim(adjustl(sRes)) == 'sinusoidal') then; forcingProps%type = TYPE_SINUSOIDAL; 
         elseif (trim(adjustl(sRes)) == 'wavemaker') then; forcingProps%type = TYPE_WAVEMAKER; 
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in SpecialForcing.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Error in SpecialForcing.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         forcingProps%active(:) = .false.
@@ -86,11 +87,11 @@ contains
             forcingProps%active(1:3) = .true.       ! default is active in x, y, z momentum equations
 
             forcingProps%parameters(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'Parameters', '1.0, 1.0, 0.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Parameters', '1.0, 1.0, 0.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, forcingProps%parameters)
 
-            call SCANINICHAR(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Vector', '0.0,1.0,0.0', sRes)
             idummy = 3
             call LIST_REAL(sRes, idummy, forcingProps%vector)
 
@@ -98,13 +99,13 @@ contains
             case (TYPE_WAVEMAKER)
                 do nwaves = 1, nwaves_max
                     write (sRes, *) nwaves
-                    call SCANINICHAR(bakfile, inifile, block, 'Wave'//trim(adjustl(sRes)), 'void', sRes)
+                    call ScanFile_Char(bakfile, inifile, block, 'Wave'//trim(adjustl(sRes)), 'void', sRes)
                     if (trim(adjustl(sRes)) /= 'void') then
                         idummy = 4
                         call LIST_REAL(sRes, idummy, dummy)
                         if (idummy /= 4) then
-                            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Wave.')
-                            call TLAB_STOP(DNS_ERROR_OPTION)
+                            call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Wave.')
+                            call TLab_Stop(DNS_ERROR_OPTION)
                         end if
                         dummy(3) = dummy(3)*pi_wp/180._wp                   ! from degree to radians
                         wavenumber(1, nwaves) = dummy(2)*cos(dummy(3))      ! x-wavenumber
@@ -119,7 +120,7 @@ contains
                 nwaves = nwaves - 1                                         ! correct for the increment in the loop
 
                 envelope(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, block, 'Envelope', '1.0,1.0,1.0, 1.0', sRes) ! position and size
+                call ScanFile_Char(bakfile, inifile, block, 'Envelope', '1.0,1.0,1.0, 1.0', sRes) ! position and size
                 idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, envelope)
                 envelope(4) = abs(envelope(4))                              ! make sure the size parameter is positive
@@ -132,8 +133,8 @@ contains
 
         !########################################################################
         ! Local allocation
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
+        call TLab_Allocate_Real(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
+        call TLab_Allocate_Real(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
 
         select case (forcingProps%type)
         case (TYPE_WAVEMAKER)
@@ -162,10 +163,10 @@ contains
 
         ! -------------------------------------------------------------------
         ! Check with previous version; to be removed
-        call SCANINICHAR(bakfile, inifile, 'Main', 'TermRandom', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Main', 'TermRandom', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update TermRandom to [SpecialForcing].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Update TermRandom to [SpecialForcing].')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         return
@@ -249,7 +250,7 @@ contains
     ! Velocity field with no-slip
     !########################################################################
     subroutine Forcing_Sinusoidal_NoSlip(nx, ny, nz, time, visc, g, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use TLAB_TYPES, only: grid_dt
+        use TLab_Types, only: grid_dt
         use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
 
         integer(wi) nx, ny, nz

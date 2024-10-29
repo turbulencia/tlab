@@ -23,7 +23,7 @@
 !#
 !########################################################################
 module FDM_Com2_Jacobian
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp
+    use TLab_Constants, only: wp, wi, pi_wp
     implicit none
     private
 

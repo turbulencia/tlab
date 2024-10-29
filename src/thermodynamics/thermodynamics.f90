@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module Thermodynamics
-    use TLAB_CONSTANTS, only: MAX_PROF, wp, wi, efile, lfile
+    use TLab_Constants, only: MAX_PROF, wp, wi, efile, lfile
     implicit none
     private
 
@@ -30,7 +30,7 @@ module Thermodynamics
     real(wp), public :: THERMO_PSAT(MAX_NPSAT), NEWTONRAPHSON_ERROR
 
     ! Compressible formulation, different combinations of parameters \gamma0 and mach to save calculations
-    ! real(wp) :: gama0                                 ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0), defined in tlab_vars because it is global in basic formulation
+    real(wp), public :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0), defined in tlab_vars because it is global in basic formulation
     ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
     ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
     real(wp), public :: RRATIO                          ! 1/(gama0 mach^2) = R0/(U0^2/T0)
@@ -76,9 +76,10 @@ contains
     !#
     !########################################################################
     subroutine Thermodynamics_Initialize_Parameters(inifile)
-        use TLAB_VARS, only: inb_scal, inb_scal_array, imode_eqns
-        use TLAB_VARS, only: gama0, mach, schmidt, damkohler
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+        use TLAB_VARS, only: imode_eqns
+        use TLAB_VARS, only: inb_scal, inb_scal_array
+        use TLAB_VARS, only: mach, schmidt, damkohler
+        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         ! use THERMO_ANELASTIC, only: scaleheight
 
         character(len=*), intent(in), optional :: inifile
@@ -108,51 +109,51 @@ contains
         if (present(inifile)) then
             bakfile = trim(adjustl(inifile))//'.bak'
 
-            call TLAB_WRITE_ASCII(bakfile, '#')
-            call TLAB_WRITE_ASCII(bakfile, '#[Thermodynamics]')
-            call TLAB_WRITE_ASCII(bakfile, '#Mixture=<value>')
-            call TLAB_WRITE_ASCII(bakfile, '#Parameters=<value>')
-            call TLAB_WRITE_ASCII(bakfile, '#Nondimensional=<yes,no>')
+            call TLab_Write_ASCII(bakfile, '#')
+            call TLab_Write_ASCII(bakfile, '#[Thermodynamics]')
+            call TLab_Write_ASCII(bakfile, '#Mixture=<value>')
+            call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
+            call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Mixture', 'None', sRes)
+            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
-                call SCANINICHAR(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)               ! backwards compatibility, to be removed
+                call ScanFile_Char(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)               ! backwards compatibility, to be removed
             if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
             else if (trim(adjustl(sRes)) == 'air') then; imixture = MIXT_TYPE_AIR
             else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
             else if (trim(adjustl(sRes)) == 'airwater') then; imixture = MIXT_TYPE_AIRWATER
             else if (trim(adjustl(sRes)) == 'airwaterlinear') then; imixture = MIXT_TYPE_AIRWATER_LINEAR
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Thermodynamics.Type.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Type.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
             if (imixture /= EQNS_NONE) then
                 thermo_param(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
+                call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
                 idummy = MAX_PROF
                 call LIST_REAL(sRes, idummy, thermo_param)
 
             end if
 
-            call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
+            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
 
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call SCANINIREAL(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
+                call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
             end if
 
-            call SCANINICHAR(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
+            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
             if (trim(adjustl(sRes)) == 'yes') then; nondimensional = .true.
             else if (trim(adjustl(sRes)) == 'no') then; nondimensional = .false.
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in Thermodynamics.Nondimensional')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Nondimensional')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
             ! -------------------------------------------------------------------
             if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Incorrect mixture type.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
             select case (imixture)
@@ -165,8 +166,8 @@ contains
                 ! if (all([damkohler(1:2)] == 0.0_wp)) then
                 !     damkohler(1:2) = damkohler(3)
                 ! else
-                !     call TLAB_WRITE_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
-                !     call TLAB_STOP(DNS_ERROR_OPTION)
+                !     call TLab_Write_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
+                !     call TLab_Stop(DNS_ERROR_OPTION)
                 ! end if
 
             end select
@@ -301,8 +302,8 @@ contains
         end select
 
         if (inb_scal_loc /= inb_scal) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Incorrect number of Schmidt numbers.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Incorrect number of Schmidt numbers.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         ! ###################################################################
@@ -521,8 +522,8 @@ contains
 
         ! Nondimensionalization
         if (imixture == MIXT_TYPE_NONE .and. .not. nondimensional) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         RRATIO = 1.0_wp                                 ! Compressible formulation uses RRATIO, CRATIO_INV
@@ -593,25 +594,25 @@ contains
         ! Output
         ! -------------------------------------------------------------------
         if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in tlab.ini
-            call TLAB_WRITE_ASCII(lfile, 'Thermodynamic properties have been initialized.')
+            call TLab_Write_ASCII(lfile, 'Thermodynamic properties have been initialized.')
             do is = 1, NSP
                 write (str, *) is; str = 'Setting Species'//trim(adjustl(str))//'='//trim(adjustl(THERMO_SPNAME(is)))
-                call TLAB_WRITE_ASCII(lfile, str)
+                call TLab_Write_ASCII(lfile, str)
             end do
             write (str, 1010) 'Setting RREF = ', RREF
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
             write (str, 1010) 'Setting TREF = ', TREF
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
             write (str, 1010) 'Setting PREF = ', PREF
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
             if (NPSAT > 0) then
                 write (str, 1010) 'Setting RHOREF = ', PREF/(RREF*TREF)
-                call TLAB_WRITE_ASCII(lfile, str)
+                call TLab_Write_ASCII(lfile, str)
             end if
             write (str, 1020) 'Setting CPREF = ', CPREF
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
             write (str, 1020) 'Setting Gama0 = ', gama0
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
         end if
 
         return
@@ -650,17 +651,17 @@ contains
 
             ! Read Header
             read (i23, *) line
-            call TLAB_WRITE_ASCII(lfile, line)
+            call TLab_Write_ASCII(lfile, line)
 
             if (trim(adjustl(line)) /= 'THERMO') then
-                call TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
-                call TLAB_STOP(DNS_ERROR_THERMOFORMAT)
+                call TLab_Write_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
+                call TLab_Stop(DNS_ERROR_THERMOFORMAT)
             end if
 
             ! Read Temperature ranges
             read (i23, *) T1, T2, T3
             write (wline, *) T1, T2, T3
-            call TLAB_WRITE_ASCII(lfile, wline(1:80))
+            call TLab_Write_ASCII(lfile, wline(1:80))
 
             ! Remove comments
             frun = .true.
@@ -686,10 +687,10 @@ contains
                 !    Process lines
                 do is = 1, NSP
                     if (trim(adjustl(token)) == THERMO_SPNAME(is)) then
-                        call TLAB_WRITE_ASCII(lfile, line)
-                        call TLAB_WRITE_ASCII(lfile, line1)
-                        call TLAB_WRITE_ASCII(lfile, line2)
-                        call TLAB_WRITE_ASCII(lfile, line3)
+                        call TLab_Write_ASCII(lfile, line)
+                        call TLab_Write_ASCII(lfile, line1)
+                        call TLab_Write_ASCII(lfile, line2)
+                        call TLab_Write_ASCII(lfile, line3)
 
                         !          Required species found, process information
                         !          Get limit temperatures
@@ -720,8 +721,8 @@ contains
 
             do is = 1, NSP
                 if (THERMO_FLAG(is) == 0) then
-                    call TLAB_WRITE_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
-                    call TLAB_STOP(DNS_ERROR_THERMOCONT)
+                    call TLab_Write_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
+                    call TLab_Stop(DNS_ERROR_THERMOCONT)
                 end if
             end do
 

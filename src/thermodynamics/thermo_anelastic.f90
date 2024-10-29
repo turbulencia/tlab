@@ -12,7 +12,7 @@
 !########################################################################
 
 module THERMO_ANELASTIC
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use Thermodynamics, only: imixture, GRATIO, scaleheight
     use Thermodynamics, only: THERMO_PSAT, NPSAT
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
@@ -952,7 +952,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
-        use TLAB_TYPES, only: grid_dt
+        use TLab_Types, only: grid_dt
         use Integration, only: Int_Simpson
 
         integer(wi), intent(in) :: nx, ny, nz

@@ -9,11 +9,12 @@
 !#
 !########################################################################
 subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
-    use TLAB_CONSTANTS, only: efile, tfile, wp, wi, big_wp
+    use TLab_Constants, only: efile, tfile, wp, wi, big_wp
     use TLAB_VARS
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, wrk2d
-    use Thermodynamics, only: RRATIO_INV
+    use TLab_Spatial
+    use TLab_WorkFlow
+    use TLab_Arrays, only: wrk1d, wrk2d
+    use Thermodynamics, only: RRATIO_INV, gama0
     use OPR_PARTIAL
     use Integration, only: Int_Simpson
     implicit none
@@ -337,7 +338,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_SPATIAL_LAYER')
+    call TLab_Write_ASCII(tfile, 'ENTERING AVG_FLOW_SPATIAL_LAYER')
 #endif
 
     bcs = 0
@@ -349,8 +350,8 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     zero = 1.0e-6_wp
 
     if (nstatavg_points == 0) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_FLOW_SPATIAL_LAYER: Zero number of points')
-        call TLAB_STOP(DNS_ERROR_STATZERO)
+        call TLab_Write_ASCII(efile, 'AVG_FLOW_SPATIAL_LAYER: Zero number of points')
+        call TLab_Stop(DNS_ERROR_STATZERO)
     else
         pts = 1.0_wp/real(nstatavg_points, wp)
     end if
@@ -361,8 +362,8 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     R2 = rbg%mean - 0.5_wp*rbg%delta
 
     if (itxc < nstatavg*jmax*LAST_INDEX) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_FLOW_SPATIAL_LAYER: Not enough space in stat')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'AVG_FLOW_SPATIAL_LAYER: Not enough space in stat')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
     nj = jmax_loc - jmin_loc + 1
@@ -1634,7 +1635,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
 #undef simrc
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING AVG_FLOW_SPATIAL_LAYER')
+    call TLab_Write_ASCII(tfile, 'LEAVING AVG_FLOW_SPATIAL_LAYER')
 #endif
 
     return

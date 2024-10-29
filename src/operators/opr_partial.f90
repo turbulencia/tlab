@@ -5,9 +5,9 @@
 #endif
 
 module OPR_PARTIAL
-    use TLAB_CONSTANTS, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
-    use TLAB_TYPES, only: grid_dt
-    use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
+    use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
+    use TLab_Types, only: grid_dt
+    use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm
     use IBM_VARS, only: nobi, nobj, nobk
@@ -39,7 +39,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1(nlines, bcs, g, u, result)
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
@@ -175,7 +175,7 @@ contains
 ! ###################################################################################
     subroutine OPR_PARTIAL2(is, nlines, bcs, g, u, result, du)
         ! bcs(*, 2) are not used, need to be updated
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
 
         integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
         !                                       -1            factor 1, pure derivative
@@ -305,7 +305,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL0_INT(dir, nlines, g, u, result)
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
@@ -324,8 +324,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
 ! Interpolation, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
@@ -336,8 +336,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
         end if
 
@@ -347,7 +347,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1_INT(dir, nlines, g, u, result)
-        use TLAB_ARRAYS, only: wrk2d
+        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: dir      ! scalar direction flag
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
@@ -366,8 +366,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
 ! 1st interpolatory derivative, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
@@ -378,8 +378,8 @@ contains
                 end select
                 call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
             else
-                call TLAB_WRITE_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
-                call TLAB_STOP(DNS_ERROR_NOTIMPL)
+                call TLab_Write_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
         end if
 
@@ -389,7 +389,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1)
-        use TLAB_ARRAYS, only: wrk3d
+        use TLab_Arrays, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1         1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
@@ -449,7 +449,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, g%size, g%size, nyz, p_b, nyz)
 #else
-        call DNS_TRANSPOSE(p_a, g%size, nyz, g%size, p_b, nyz)
+        call TLab_Transpose(p_a, g%size, nyz, g%size, p_b, nyz)
 #endif
 
 ! ###################################################################
@@ -494,14 +494,14 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_c, nyz, nyz, g%size, p_b, g%size)
 #else
-        call DNS_TRANSPOSE(p_c, nyz, g%size, nyz, p_b, g%size)
+        call TLab_Transpose(p_c, nyz, g%size, nyz, p_b, g%size)
 #endif
 
         if (type == OPR_P2_P1) then
 #ifdef USE_ESSL
             call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
 #else
-            call DNS_TRANSPOSE(p_d, nyz, g%size, nyz, p_c, g%size)
+            call TLab_Transpose(p_d, nyz, g%size, nyz, p_c, g%size)
 #endif
         end if
 
@@ -524,7 +524,7 @@ contains
 !########################################################################
     subroutine OPR_PARTIAL_Z(type, nx, ny, nz, bcs, g, u, result, tmp1)
 #ifdef USE_MPI
-        use TLAB_ARRAYS, only: wrk3d
+        use TLab_Arrays, only: wrk3d
 #endif
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
@@ -642,7 +642,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_PARTIAL_Y(type, nx, ny, nz, bcs, g, u, result, tmp1)
-        use TLAB_ARRAYS, only: wrk3d
+        use TLab_Arrays, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1           1.order derivative
         !                                   OPR_P2           2.order derivative
         !                                   OPR_P2_P1        2. and 1.order derivatives (1. in tmp1)
@@ -679,7 +679,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(u, nxy, nxy, nz, result, nz)
 #else
-                call DNS_TRANSPOSE(u, nxy, nz, nxy, result, nz)
+                call TLab_Transpose(u, nxy, nz, nxy, result, nz)
 #endif
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
@@ -741,13 +741,13 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(p_b, nz, nz, nxy, result, nxy)
 #else
-                call DNS_TRANSPOSE(p_b, nz, nxy, nz, result, nxy)
+                call TLab_Transpose(p_b, nz, nxy, nz, result, nxy)
 #endif
                 if (type == OPR_P2_P1) then
 #ifdef USE_ESSL
                     call DGETMO(p_c, nz, nz, nxy, tmp1, nxy)
 #else
-                    call DNS_TRANSPOSE(p_c, nz, nxy, nz, tmp1, nxy)
+                    call TLab_Transpose(p_c, nz, nxy, nz, tmp1, nxy)
 #endif
                 end if
             end if

@@ -9,7 +9,7 @@ program VFFT
 
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_txc_dimz
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use OPR_FOURIER
 #ifdef USE_MPI
     use MPI
@@ -29,11 +29,12 @@ program VFFT
     err_count = i0
     case_count = i0
 
-    call TLAB_START()
-    call IO_READ_GLOBAL('tlab.ini')
+    call TLab_Start()
+    call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
     isize_fft3d = isize_txc_dimz*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)
@@ -90,5 +91,5 @@ program VFFT
     end if
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VFFT

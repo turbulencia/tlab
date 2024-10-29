@@ -28,10 +28,10 @@
 subroutine IBM_VERIFY_GEOMETRY()
 
   use IBM_VARS 
-  use TLAB_PROCS
+  use TLab_WorkFlow
   use TLAB_VARS,      only : g, scal_on
   use TLAB_VARS,      only : imax, jmax, kmax
-  use TLAB_CONSTANTS, only : efile, wp, wi
+  use TLab_Constants, only : efile, wp, wi
 #ifdef USE_MPI
   use MPI
   use TLabMPI_VARS,  only : ims_size_i, ims_size_k, ims_err
@@ -86,8 +86,8 @@ subroutine IBM_VERIFY_GEOMETRY()
   ! check if "MaxNumberObj" in tlab.ini is set correctly
   dummi = maxval((/nobi_max, nobj_max, nobk_max/))
   if ( dummi > nob_max ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. MaxNumberObj too small in tlab.ini.')
-    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+    call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. MaxNumberObj too small in tlab.ini.')
+    call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
   end if
   
   ! check if any objects are present
@@ -97,8 +97,8 @@ subroutine IBM_VERIFY_GEOMETRY()
   call MPI_ALLREDUCE(dummy, ob_min, 1, MPI_REAL8, MPI_SUM, MPI_COMM_WORLD, ims_err)
 #endif
   if ( ob_min == 0 ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects in flow.')
-    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+    call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. No objects in flow.')
+    call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
   endif
 
   ! check all objects in each direction
@@ -127,9 +127,9 @@ end subroutine IBM_VERIFY_GEOMETRY
 subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
   use IBM_VARS,       only : nflu
-  use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_TYPES,     only : grid_dt
-  use TLAB_PROCS
+  use TLab_Constants, only : efile, wp, wi
+  use TLab_Types,     only : grid_dt
+  use TLab_WorkFlow
 
   implicit none
   
@@ -158,44 +158,44 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
         if ( iob == 1 ) then                   ! left [either start obj. at first grid node or supply enough fluid points (>=2),
           fp_l = nob_b(ip+ii) - 1              !       interface from last object can't be taken]
           if ( fp_l < fp_min .and. fp_l /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left border and first object. Check also MaxNumberObj in tlab.ini.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+            call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between left border and first object. Check also MaxNumberObj in tlab.ini.')
+            call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if 
         if ( iob < nob(ii) ) then               ! in between objects
           ipp = ip + nlines                     ! next obj
           fp_inter = nob_b(ipp+ii) - nob_e(ip+ii) - 1
           if ( fp_inter < fp_min ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects. Check also MaxNumberObj in tlab.ini.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+            call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between objects. Check also MaxNumberObj in tlab.ini.')
+            call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
           end if
         else if ( iob == nob(ii) ) then         ! right (c.f. explanation first object)
           fp_r = g%size - nob_e(ip+ii)          
           if ( fp_r < fp_min .and. fp_r /= 0 ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right border and first object. Check also MaxNumberObj in tlab.ini.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+            call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Not enough fluid points between right border and first object. Check also MaxNumberObj in tlab.ini.')
+            call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if
         ! ================================================================== !
         ! check number of solid points of object
         if ((nob_e(ip+ii) < 0) .and. (nob_e(ip+ii) > g%size)) then
-          call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Memory error, check array generation')
-          call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+          call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Memory error, check array generation')
+          call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
         else if ((nob_b(ip+ii) < 0) .and. (nob_b(ip+ii) > g%size)) then
-          call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Memory error, check array generation')
-          call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+          call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Memory error, check array generation')
+          call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
         end if
         if (g%periodic .eqv. .true.) sp_ob = abs(nob_e(ip+ii) - nob_b(ip+ii) + 1)
         if (g%periodic .eqv. .false.) sp_ob = nob_e(ip+ii) - nob_b(ip+ii) + 1
         if ((nob_b(ip+ii) /= 1) .and. (nob_e(ip+ii) /= g%size)) then
           if ( sp_ob < sp_min )then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in tlab.ini.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+            call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in tlab.ini.')
+            call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
           end if
         else if (((nob_b(ip+ii) == 1) .or. (nob_e(ip+ii) == g%size)) .and. (g%periodic .eqv. .true.)) then
           if ( sp_ob < sp_min )then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in tlab.ini.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+            call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Not enough solid points in objects. Check also MaxNumberObj in tlab.ini.')
+            call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
           end if
         end if
         ! ================================================================== !        
@@ -207,8 +207,8 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
           fp_l = nob_b(ii)                          ! begin of first object
           fp_r = nob_e((nob(ii) - 1) * nlines + ii) ! end of last object
           if ( (fp_r - fp_l + 1) == g%size ) then
-            call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Overlapping objects are not allowed. Check also MaxNumberObj in tlab.ini.')
-            call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+            call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Overlapping objects are not allowed. Check also MaxNumberObj in tlab.ini.')
+            call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
           end if 
         end if
       end if
@@ -224,8 +224,8 @@ subroutine IBM_VERIFY_UP(eps)
 
   use IBM_VARS,       only : ibm_objup, max_height_objlo, max_height_objup
   use TLAB_VARS,      only : isize_field, imax,jmax,kmax
-  use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_PROCS
+  use TLab_Constants, only : efile, wp, wi
+  use TLab_WorkFlow
 #ifdef USE_MPI
   use MPI
   use TLabMPI_VARS,  only : ims_err
@@ -259,8 +259,8 @@ subroutine IBM_VERIFY_UP(eps)
   elseif ( top == 0 ) then
     ibm_objup = .false.
   else
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. Problem with objects on upper domain boundary.')
-    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+    call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. Problem with objects on upper domain boundary.')
+    call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
   endif
 
   ! if so, check height of upper and lower objects
@@ -306,8 +306,8 @@ subroutine IBM_VERIFY_SCAL()
 
   use IBM_VARS,       only : max_height_objlo, max_height_objup, imode_ibm_scal
   use TLAB_VARS,      only : g
-  use TLAB_CONSTANTS, only : efile
-  use TLAB_PROCS
+  use TLab_Constants, only : efile
+  use TLab_WorkFlow
 #ifdef USE_MPI
   use MPI
   use TLabMPI_VARS,  only : ims_err
@@ -318,14 +318,14 @@ subroutine IBM_VERIFY_SCAL()
   ! ================================================================== !
 
   if ( imode_ibm_scal == 1 ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No objects on upper domain allowed if IBM is turned on for scalars.')
-    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+    call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. No objects on upper domain allowed if IBM is turned on for scalars.')
+    call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
   end if
 
   ! no overlapping in vertical direction allowed
   if ( (g(2)%size-max_height_objup) < max_height_objlo ) then
-    call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY. No overlapping of objects in vertical direction if scalars is on.')
-    call TLAB_STOP(DNS_ERROR_IBM_GEOMETRY)
+    call TLab_Write_ASCII(efile, 'IBM_GEOMETRY. No overlapping of objects in vertical direction if scalars is on.')
+    call TLab_Stop(DNS_ERROR_IBM_GEOMETRY)
   end if 
 
   return

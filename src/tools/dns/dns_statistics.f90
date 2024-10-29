@@ -2,8 +2,8 @@
 #include "dns_error.h"
 #include "avgij_map.h"
 
-module STATISTICS
-    use TLAB_CONSTANTS, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
+module DNS_STATISTICS
+    use TLab_Constants, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
     implicit none
     save
     private
@@ -14,16 +14,17 @@ module STATISTICS
 
     logical, public :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
 
-    public :: STATISTICS_INITIALIZE, STATISTICS_TEMPORAL, STATISTICS_SPATIAL
+    public :: DNS_STATISTICS_INITIALIZE, DNS_STATISTICS_TEMPORAL, DNS_STATISTICS_SPATIAL
 
 contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine STATISTICS_INITIALIZE()
+    subroutine DNS_STATISTICS_INITIALIZE()
 
-        use TLAB_VARS, only: imode_sim, jmax, inb_scal, nstatavg
-
+        use TLAB_VARS, only: imode_sim, jmax, inb_scal
+        use TLab_Spatial, only: nstatavg
+        
         if (imode_sim == DNS_MODE_TEMPORAL) then
             allocate (mean(jmax, MAX_AVG_TEMPORAL))
 
@@ -34,24 +35,24 @@ contains
         end if
 
         return
-    end subroutine STATISTICS_INITIALIZE
+    end subroutine DNS_STATISTICS_INITIALIZE
 
     !########################################################################
     !########################################################################
-    subroutine STATISTICS_TEMPORAL()
+    subroutine DNS_STATISTICS_TEMPORAL()
 
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+        use TLab_Constants, only: tfile
+        use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-        use TLAB_TYPES, only: pointers_dt
+        use TLab_Types, only: pointers_dt
         use TLAB_VARS, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
         use TLAB_VARS, only: buoyancy, imode_eqns, scal_on
         use TLAB_VARS, only: froude
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: schmidt
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use THERMO_ANELASTIC
         use DNS_ARRAYS
         use Thermodynamics, only: imixture
@@ -72,7 +73,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER')
 #endif
 
         stats_buoyancy = .false.  ! default
@@ -217,22 +218,22 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'LEAVING STATS_TEMPORAL_LAYER')
 #endif
 
         return
-    end subroutine STATISTICS_TEMPORAL
+    end subroutine DNS_STATISTICS_TEMPORAL
 
     ! ###################################################################
     ! ###################################################################
-    subroutine STATISTICS_SPATIAL()
+    subroutine DNS_STATISTICS_SPATIAL()
 
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+        use TLab_Constants, only: tfile
+        use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
         use TLAB_VARS
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use DNS_LOCAL
         use BOUNDARY_BUFFER
 #ifdef USE_MPI
@@ -246,7 +247,7 @@ contains
 
         ! #######################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'ENTERING STATS_SPATIAL_LAYER')
 #endif
 
         ! #######################################################################
@@ -274,10 +275,10 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER')
+        call TLab_Write_ASCII(tfile, 'LEAVING STATS_SPATIAL_LAYER')
 #endif
 
         return
-    end subroutine STATISTICS_SPATIAL
+    end subroutine DNS_STATISTICS_SPATIAL
 
-end module STATISTICS
+end module DNS_STATISTICS

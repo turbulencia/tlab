@@ -4,10 +4,10 @@
 
 module TLabMPI_PROCS
     use MPI
-    use TLAB_CONSTANTS, only: lfile, efile, wp, wi
+    use TLab_Constants, only: lfile, efile, wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: fourier_on
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLabMPI_VARS
     implicit none
     save
@@ -92,7 +92,7 @@ contains
         end do
 
         ! #######################################################################
-        call TLAB_WRITE_ASCII(lfile, 'Initializing MPI communicators.')
+        call TLab_Write_ASCII(lfile, 'Initializing MPI communicators.')
 
         ! the first index in the grid corresponds to k, the second to i
         dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
@@ -120,7 +120,7 @@ contains
         ! Main
         ! #######################################################################
         if (ims_npro_i > 1) then
-            call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox derivatives.')
+            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Ox derivatives.')
             id = TLabMPI_I_PARTIAL
             npage = kmax*jmax
             call TLabMPI_TYPE_I(ims_npro_i, imax, npage, 1, 1, 1, 1, &
@@ -128,7 +128,7 @@ contains
         end if
 
         if (ims_npro_k > 1) then
-            call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Oz derivatives.')
+            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Oz derivatives.')
             id = TLabMPI_K_PARTIAL
             npage = imax*jmax
             call TLabMPI_TYPE_K(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
@@ -137,13 +137,13 @@ contains
 
         ! -----------------------------------------------------------------------
         if (ims_npro_i > 1 .and. fourier_on) then
-            call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
+            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
             call TLabMPI_TYPE_I(ims_npro_i, imax, npage, 1, 1, 1, 1, &
                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
-            call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
+            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON2 ! isize_txc_field/(imax+2)
             npage = isize_txc_dimx
             call TLabMPI_TYPE_I(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, &
@@ -152,7 +152,7 @@ contains
         end if
 
         if (ims_npro_k > 1 .and. fourier_on) then
-            call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for Oz FFTW in Poisson solver.')
+            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Oz FFTW in Poisson solver.')
             id = TLabMPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax
             call TLabMPI_TYPE_K(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
@@ -188,7 +188,7 @@ contains
         ! Auxiliar depending on simmode
         ! #######################################################################
         ! IF ( imode_sim == DNS_MODE_TEMPORAL ) THEN
-        ! CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for spectra/correlations.')
+        ! CALL TLab_Write_ASCII(lfile,'Initializing MPI types for spectra/correlations.')
         ! id = TLabMPI_K_SHEAR
         ! CALL TLabMPI_TYPE_K(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
         !      ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
@@ -242,8 +242,8 @@ contains
         if (mod(npage, npro_i) == 0) then
             nsize = npage/npro_i
         else
-            call TLAB_WRITE_ASCII(efile, 'TLabMPI_TYPE_I. Ratio npage/npro_i not an integer.')
-            call TLAB_STOP(DNS_ERROR_PARPARTITION)
+            call TLab_Write_ASCII(efile, 'TLabMPI_TYPE_I. Ratio npage/npro_i not an integer.')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
         ! Calculate Displacements in Forward Send/Receive
@@ -275,8 +275,8 @@ contains
             line = 'Send size '//trim(adjustl(str))//'differs from recv size '//trim(adjustl(line))
             write (str, *) 1  ! i
             line = trim(adjustl(line))//' in message '//trim(adjustl(str))
-            call TLAB_WRITE_ASCII(efile, line)
-            call TLAB_STOP(DNS_ERROR_MPITYPECHECK)
+            call TLab_Write_ASCII(efile, line)
+            call TLab_Stop(DNS_ERROR_MPITYPECHECK)
         end if
 
         return
@@ -302,8 +302,8 @@ contains
         if (mod(npage, npro_k) == 0) then
             nsize = npage/npro_k
         else
-            call TLAB_WRITE_ASCII(efile, 'TLabMPI_TYPE_K. Ratio npage/npro_k not an integer.')
-            call TLAB_STOP(DNS_ERROR_PARPARTITION)
+            call TLab_Write_ASCII(efile, 'TLabMPI_TYPE_K. Ratio npage/npro_k not an integer.')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
         ! Calculate Displacements in Forward Send/Receive
@@ -334,7 +334,7 @@ contains
             print *, 'Message   : ', 1, ' size is wrong' ! i
             print *, 'Send size : ', ims_ss
             print *, 'Recv size : ', ims_rs
-            call TLAB_STOP(DNS_ERROR_MPITYPECHECK)
+            call TLab_Stop(DNS_ERROR_MPITYPECHECK)
         end if
 
         return
@@ -537,10 +537,10 @@ contains
         integer error_local, error_len
 
         call MPI_Error_String(mpi_error_code, error_string, error_len, error_local)
-        call TLAB_WRITE_ASCII(efile, 'MPI-ERROR: Source file'//trim(adjustl(LOCATION)), .true.)
-        call TLAB_WRITE_ASCII(efile, error_string, .true.)
+        call TLab_Write_ASCII(efile, 'MPI-ERROR: Source file'//trim(adjustl(LOCATION)), .true.)
+        call TLab_Write_ASCII(efile, error_string, .true.)
 
-        call TLAB_STOP(mpi_error_code)
+        call TLab_Stop(mpi_error_code)
         ! Not supposed to return from this subroutine
 
     end subroutine TLabMPI_PANIC
@@ -656,8 +656,8 @@ contains
 
             ! Careful in case only 2 PEs
             if (ims_npro == 2) then
-                call TLAB_WRITE_ASCII(efile, 'TLabMPI_COPYPLN_1. Undeveloped for 2 PEs.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'TLabMPI_COPYPLN_1. Undeveloped for 2 PEs.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             ! left and right PEs
@@ -706,8 +706,8 @@ contains
 
             ! Careful in case only 2 PEs
             if (ims_npro == 2) then
-                call TLAB_WRITE_ASCII(efile, 'TLabMPI_COPYPLN_2. Undeveloped for 2 PEs.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'TLabMPI_COPYPLN_2. Undeveloped for 2 PEs.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             ! -----------------------------------------------------------------------
@@ -779,7 +779,7 @@ contains
 
         ! #######################################################################
 #ifdef USE_PSFFT
-        call TLAB_WRITE_ASCII(lfile, 'Initialize nonblocking communication.')
+        call TLab_Write_ASCII(lfile, 'Initialize nonblocking communication.')
 
         ims_nb_proc_grid = (/ims_npro_i, ims_npro_k/)
         call NB3DFFT_SETUP(ims_nb_proc_grid, g(1)%size, g(2)%size, g(3)%size, &
@@ -793,8 +793,8 @@ contains
             .and. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(TLabMPI_I_PARTIAL)) then
             ! Decomp standing in X okay
         else
-            call TLAB_WRITE_ASCII(efile, 'Decomp standing in X-BAD')
-            call TLAB_STOP(DNS_ERROR_PARPARTITION)
+            call TLab_Write_ASCII(efile, 'Decomp standing in X-BAD')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
         if (ims_nb_ysrt(1) == ims_offset_i + 1 &
@@ -804,25 +804,25 @@ contains
             .and. ims_nb_ysiz(2) == jmax &
             .and. ims_nb_ysiz(3) == kmax) then
         else
-            call TLAB_WRITE_ASCII(efile, 'Decomp standing in Y--BAD')
-            call TLAB_STOP(DNS_ERROR_PARPARTITION)
+            call TLab_Write_ASCII(efile, 'Decomp standing in Y--BAD')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
         if (ims_nb_zsrt(3) == 1 .and. ims_nb_zend(3) == g(3)%size &
             .and. ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(TLabMPI_K_PARTIAL)) then
             ! Decomp standing in Z okay
         else
-            call TLAB_WRITE_ASCII(efile, 'Decomp standing in Z--BAD')
-            call TLAB_STOP(DNS_ERROR_PARPARTITION)
+            call TLab_Write_ASCII(efile, 'Decomp standing in Z--BAD')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
-        call TLAB_WRITE_ASCII(lfile, 'Checking that NB3DFFT and DNS domain decompositions agree.')
+        call TLab_Write_ASCII(lfile, 'Checking that NB3DFFT and DNS domain decompositions agree.')
 
         call nb3dfft_test_setup()
 
 #else
-        call TLAB_WRITE_ASCII(efile, 'Compiler flag USE_PSFFT needs to be used.')
-        call TLAB_STOP(DNS_ERROR_PARPARTITION)
+        call TLab_Write_ASCII(efile, 'Compiler flag USE_PSFFT needs to be used.')
+        call TLab_Stop(DNS_ERROR_PARPARTITION)
 
 #endif
 

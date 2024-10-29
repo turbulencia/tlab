@@ -57,14 +57,14 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     jmax_loc = min(jmax, jmax - 2*ibuffer_npy + 1)
 
     if (nfield < L_NFIELDS_MAX) then
-        call TLAB_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Profiles array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_NORMAL_VORTICITY. Profiles array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     else
         nfield = L_NFIELDS_MAX
     end if
     if (itxc_size < imax*jmax*kmax*7) then
-        call TLAB_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Txc array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_NORMAL_VORTICITY. Txc array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! Calculate vorticiy field w_iw_i
@@ -80,7 +80,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
     else if (ith == 2) then
         ij = jmax/2
-        vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz, area)
+        vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz)
         vmin = threshold*threshold*vmean
     end if
 ! upper or lower depending on flag isl

@@ -2,14 +2,14 @@
 #include "dns_error.h"
 
 module FLOW_MEAN
-    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, efile
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: coriolis, buoyancy
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk3d
-    use TLAB_PROCS
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk1d, p_wrk3d
+    use TLab_WorkFlow
     use Thermodynamics, only: imixture
     use THERMO_THERMAL
     use THERMO_AIRWATER
@@ -137,21 +137,21 @@ contains
                     end do
 
                 case default
-                    call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Mixture case undeveloped.')
-                    call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                    call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Mixture case undeveloped.')
+                    call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
                 end select
 
             end if
 
             if (tbg%type /= PROFILE_NONE) then
-                call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Temperature case undeveloped.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Temperature case undeveloped.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             if (rbg%type /= PROFILE_NONE) then
-                call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
         end if
@@ -159,8 +159,8 @@ contains
         ! Control
         call MINMAX(imax, jmax, kmax, p, pmin, pmax)
         if (pmin < 0.0_wp .or. pmax < 0.0_wp) then
-            call TLAB_WRITE_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
-            call TLAB_STOP(DNS_ERROR_NEGPRESS)
+            call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Negative pressure.')
+            call TLab_Stop(DNS_ERROR_NEGPRESS)
         end if
 
         return

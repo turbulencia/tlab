@@ -2,11 +2,12 @@
 #include "dns_error.h"
 
 module Radiation
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
-    use TLAB_TYPES, only: term_dt, grid_dt
+    use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
+    use TLab_Types, only: term_dt, grid_dt
     use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP, TLAB_ALLOCATE_ARRAY_DOUBLE
+    use TLab_Arrays, only: wrk2d, wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Memory, only: TLab_Allocate_Real
     use Thermodynamics, only: imixture
     use OPR_ODES
     use Integration
@@ -86,34 +87,34 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Infrared'
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#AbsorptionComponent#=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#BoundaryConditions=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#BetaCoefficient=<values>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Scalar=<value>')
+        call TLab_Write_ASCII(bakfile, '#AbsorptionComponent#=<values>')
+        call TLab_Write_ASCII(bakfile, '#BoundaryConditions=<values>')
+        call TLab_Write_ASCII(bakfile, '#BetaCoefficient=<values>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
-            call SCANINICHAR(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
+            call ScanFile_Char(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; infraredProps%type = TYPE_NONE
         else if (trim(adjustl(sRes)) == 'grayliquid') then; infraredProps%type = TYPE_IR_GRAY_LIQUID
         else if (trim(adjustl(sRes)) == 'gray') then; infraredProps%type = TYPE_IR_GRAY
         else if (trim(adjustl(sRes)) == 'band') then; infraredProps%type = TYPE_IR_BAND
         else if (trim(adjustl(sRes)) == 'bulk1dlocal') then; infraredProps%type = TYPE_BULK1DLOCAL    ! backwards compatibility, to be removed
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         infraredProps%active = .false.
         if (infraredProps%type /= TYPE_NONE) then
-            call SCANINIINT(bakfile, inifile, block, 'Scalar', '1', idummy)         ! in which evolution equation radiation acts
+            call ScanFile_Int(bakfile, inifile, block, 'Scalar', '1', idummy)         ! in which evolution equation radiation acts
             infraredProps%active(idummy) = .true.
 
             infraredProps%auxiliar(:) = 0.0_wp
-            call SCANINICHAR(bakfile, inifile, block, 'BoundaryConditions', '1.0, 1.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'BoundaryConditions', '1.0, 1.0', sRes)
             idummy = MAX_PARS
             call LIST_REAL(sRes, idummy, infraredProps%auxiliar)
             epsilon = infraredProps%auxiliar(idummy)        ! last value is surface emissivity at ymin
@@ -122,13 +123,13 @@ contains
             kappa(:, :) = 0.0_wp
             do ncomps = 1, ncomps_max
                 write (sRes, *) ncomps
-                call SCANINICHAR(bakfile, inifile, block, 'AbsorptionComponent'//trim(adjustl(sRes)), 'void', sRes)
+                call ScanFile_Char(bakfile, inifile, block, 'AbsorptionComponent'//trim(adjustl(sRes)), 'void', sRes)
                 if (trim(adjustl(sRes)) /= 'void') then
                     idummy = nbands_max
                     call LIST_REAL(sRes, idummy, dummy)
                     if (idummy /= nbands) then
-                        call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.AbsorptionComponent.')
-                        call TLAB_STOP(DNS_ERROR_OPTION)
+                        call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.AbsorptionComponent.')
+                        call TLab_Stop(DNS_ERROR_OPTION)
                     end if
                     kappa(ncomps, 1:nbands) = dummy(1:nbands)
                 else
@@ -142,13 +143,13 @@ contains
             beta(1:3, 2) = [-2.2993e-2_wp, 8.7439e-5_wp, 1.4744e-7_wp]  ! default coefficients for band 2
             do ic = 1, 3                                                ! so far, only 3 coefficients, 2. order polynomial
                 write (sRes, *) ic
-                call SCANINICHAR(bakfile, inifile, block, 'BetaCoefficient'//trim(adjustl(sRes)), 'void', sRes)
+                call ScanFile_Char(bakfile, inifile, block, 'BetaCoefficient'//trim(adjustl(sRes)), 'void', sRes)
                 if (trim(adjustl(sRes)) /= 'void') then
                     idummy = nbands_max
                     call LIST_REAL(sRes, idummy, dummy)
                     if (idummy /= nbands - 1) then
-                        call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.BetaCoefficient.')
-                        call TLAB_STOP(DNS_ERROR_OPTION)
+                        call TLab_Write_ASCII(efile, __FILE__//'. Error in '//trim(adjustl(block))//'.BetaCoefficient.')
+                        call TLab_Stop(DNS_ERROR_OPTION)
                     end if
                     beta(ic, 1:nbands) = dummy(1:nbands)
                 end if
@@ -170,8 +171,8 @@ contains
                 ! third radiatively active scalar is a homogeneous field, e.g., CO2
 
             case default
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Infrared only derived for airwater mixture.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Infrared only derived for airwater mixture.')
+                call TLab_Stop(DNS_ERROR_OPTION)
 
             end select
 
@@ -185,7 +186,7 @@ contains
                 infraredProps%type = TYPE_IR_GRAY_LIQUID
 
                 infraredProps%parameters(:) = 0.0_wp
-                call SCANINICHAR(bakfile, inifile, block, 'Parameters', 'void', sRes)    ! scaled absorption coefficients
+                call ScanFile_Char(bakfile, inifile, block, 'Parameters', 'void', sRes)    ! scaled absorption coefficients
                 idummy = MAX_PARS
                 call LIST_REAL(sRes, idummy, infraredProps%parameters)
 
@@ -210,14 +211,14 @@ contains
         !########################################################################
         ! Local allocation
         allocate (bcs_ht(imax*kmax), bcs_hb(imax*kmax), t_ht(imax*kmax))
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
+        call TLab_Allocate_Real(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
 
         ! -------------------------------------------------------------------
         ! Check with previous version; to be removed
-        call SCANINICHAR(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Radiation', 'Parameters', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Update [Radiation] to [Infrared].')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         return
@@ -269,7 +270,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, p_source, nz)
 #endif
 
             bcs_ht = localProps%auxiliar(1)                     ! downward flux at domain top
@@ -291,7 +292,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_b, nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_b, nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, p_b, nz)
 #endif
 
             wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1)) + kappa(2, 1)*(s(:, 2) - s(:, localProps%scalar(1))) + kappa(3, 1) ! absorption coefficient
@@ -301,7 +302,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, p_source, nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, p_source, nz)
 #endif
 
             bcs_ht = localProps%auxiliar(1)                     ! downward flux at domain top
@@ -326,7 +327,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 1), nz)
 #else
-            call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 1), nz)
+            call TLab_Transpose(wrk3d, nxy, nz, nxy, tmp_rad(:, 1), nz)
 #endif
             t_ht(1:nxz) = tmp_rad(nxz*(ny - 1) + 1:nxz*ny, 1)           ! save T at the top boundary
 
@@ -345,7 +346,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 3), nz)
 #else
-                call DNS_TRANSPOSE(wrk3d, nxy, nz, nxy, tmp_rad(:, 3), nz)
+                call TLab_Transpose(wrk3d, nxy, nz, nxy, tmp_rad(:, 3), nz)
 #endif
 
                 bcs_ht(1:nxz) = localProps%auxiliar(iband)
@@ -378,11 +379,11 @@ contains
             call DGETMO(p_flux_down, nz, nz, nxy, flux, nxy)
         end if
 #else
-        call DNS_TRANSPOSE(p_source, nz, nxy, nz, source, nxy)
+        call TLab_Transpose(p_source, nz, nxy, nz, source, nxy)
         if (present(flux)) then
             p_flux_down = p_flux_up - p_flux_down
-            call DNS_TRANSPOSE(p_flux_up, nz, nxy, nz, b, nxy)
-            call DNS_TRANSPOSE(p_flux_down, nz, nxy, nz, flux, nxy)
+            call TLab_Transpose(p_flux_up, nz, nxy, nz, b, nxy)
+            call TLab_Transpose(p_flux_down, nz, nxy, nz, flux, nxy)
         end if
 #endif
 

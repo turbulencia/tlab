@@ -38,10 +38,10 @@
 !########################################################################
 program PARTICLE_INI_TRAJEC
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err
@@ -79,9 +79,10 @@ program PARTICLE_INI_TRAJEC
     TLONGINTEGER dummy
 #endif
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
 
@@ -92,8 +93,8 @@ program PARTICLE_INI_TRAJEC
     bakfile = trim(adjustl(ifile))//'.bak'
 
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -125,7 +126,7 @@ program PARTICLE_INI_TRAJEC
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -205,5 +206,5 @@ program PARTICLE_INI_TRAJEC
     call IO_WRITE_PARTICLE('part2traj.ics', l_g, l_q)
 
 #endif
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program PARTICLE_INI_TRAJEC

@@ -5,10 +5,10 @@
 !#
 !########################################################################
 subroutine CAVG1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, a, y, avg)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
-    use TLAB_TYPES, only: pointers_dt
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_PROCS
+    use TLab_Constants, only: lfile, wp, wi
+    use TLab_Types, only: pointers_dt
+    use TLab_Arrays, only: wrk1d
+    use TLab_WorkFlow
     use PDFS
 #ifdef USE_MPI
     use MPI
@@ -36,7 +36,7 @@ subroutine CAVG1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igat
 #endif
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do iv = 1, nv
 
@@ -70,7 +70,7 @@ subroutine CAVG1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igat
         do iv = 1, nv
             name = trim(adjustl(fname))
             if (u(iv)%tag /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(u(iv)%tag))
-            call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+            call TLab_Write_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 #include "dns_open_file.h"
             if (ny > 1) then
                 write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:, :, iv))
@@ -91,9 +91,9 @@ end subroutine CAVG1V_N
 !########################################################################
 !########################################################################
 subroutine CAVG2V(fname, time, nx, ny, nz, nbins, u, v, a, y, avg)
-    use TLAB_CONSTANTS, only: lfile, wp, wi
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk2d
+    use TLab_Constants, only: lfile, wp, wi
+    use TLab_WorkFlow
+    use TLab_Arrays, only: wrk2d
     use PDFS
 #ifdef USE_MPI
     use MPI
@@ -118,7 +118,7 @@ subroutine CAVG2V(fname, time, nx, ny, nz, nbins, u, v, a, y, avg)
 #endif
 
     ! ###################################################################
-    call TLAB_WRITE_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Calculating '//trim(adjustl(fname))//'...')
 
     do j = 1, ny             ! calculation in planes
         call PDF2V2D(nx, ny, nz, j, u, v, nbins, avg(1, j), wrk2d, a, wrk2d(1, 2))
@@ -138,7 +138,7 @@ subroutine CAVG2V(fname, time, nx, ny, nz, nbins, u, v, a, y, avg)
 #define LOC_UNIT_ID 21
 #define LOC_STATUS 'unknown'
         name = trim(adjustl(fname))
-        call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
+        call TLab_Write_ASCII(lfile, 'Writing field '//trim(adjustl(name))//'...')
 #include "dns_open_file.h"
         if (ny > 1) then
             write (LOC_UNIT_ID) SNGL(time), ny, nbins, SNGL(y(:)), SNGL(avg(:, :))

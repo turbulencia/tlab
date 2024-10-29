@@ -15,7 +15,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
                      wrk2d)
 
     use TLAB_VARS, only: g, imax, jmax, kmax
-    use TLAB_CONSTANTS, only: lfile
+    use TLab_Constants, only: lfile
     use TLAB_VARS, only: isize_txc_dimx, isize_txc_dimz
     use OPR_FOURIER
 #ifdef USE_MPI
@@ -83,7 +83,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     case (3)
         label = 'fft_check:   random'
     case DEFAULT
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end select
 
 #ifdef USE_MPI
@@ -134,7 +134,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
         end if
 1000    format(a, 1x, a6, ' Transform-check.    Max. Residual: ', G13.6)
         case_count = case_count + 1
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #ifdef USE_MPI
     end if
@@ -193,7 +193,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
         case_count = case_count + 1
 
 1017    format(a, 1x, a6, 1x, 'PSD check.    Max. Residual:', G13.8)
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 #ifdef USE_MPI
     end if
 #endif
@@ -239,7 +239,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
         end if
         case_count = case_count + 1
 
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 1001    format(a, 1x, a6, 1x, 'PARSEVAL-Identity check. Residual:', &
                1x, G13.8, ' Field:', G13.8, ' Spectrum: ', G13.8)
 
@@ -273,7 +273,7 @@ contains
         case (3) ! random check
             call random_number(SETUP_CHECK)
         case default
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end select
 
     end function SETUP_CHECK

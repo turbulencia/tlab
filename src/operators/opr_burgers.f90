@@ -5,8 +5,8 @@
 #endif
 
 module OPR_BURGERS
-    use TLAB_CONSTANTS, only: efile, wp, wi
-    use TLAB_TYPES, only: grid_dt, filter_dt
+    use TLab_Constants, only: efile, wp, wi
+    use TLab_Types, only: grid_dt, filter_dt
     use IBM_VARS, only: ibm_burgers
     use TLAB_VARS, only: Dealiasing, subsidence
 #ifdef USE_MPI
@@ -16,8 +16,8 @@ module OPR_BURGERS
     use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_PROCS
 #endif
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLab_WorkFlow
+    use TLab_Arrays, only: wrk2d, wrk3d
     use OPR_FILTERS
     use OPR_PARTIAL
     implicit none
@@ -92,7 +92,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, g%size, g%size, nyz, p_b, nyz)
 #else
-        call DNS_TRANSPOSE(p_a, g%size, nyz, g%size, p_b, nyz)
+        call TLab_Transpose(p_a, g%size, nyz, g%size, p_b, nyz)
 #endif
 
 ! ###################################################################
@@ -103,7 +103,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
 #else
-        call DNS_TRANSPOSE(p_d, nyz, g%size, nyz, p_c, g%size)
+        call TLab_Transpose(p_d, nyz, g%size, nyz, p_c, g%size)
 #endif
 
 #ifdef USE_MPI
@@ -157,7 +157,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(s, nxy, nxy, nz, tmp1, nz)
 #else
-                call DNS_TRANSPOSE(s, nxy, nz, nxy, tmp1, nz)
+                call TLab_Transpose(s, nxy, nz, nxy, tmp1, nz)
 #endif
                 p_org => tmp1
                 p_dst1(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
@@ -190,7 +190,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(p_dst2, nz, nz, nxy, result, nxy)
 #else
-                call DNS_TRANSPOSE(p_dst2, nz, nxy, nz, result, nxy)
+                call TLab_Transpose(p_dst2, nz, nxy, nz, result, nxy)
 #endif
             end if
 
@@ -289,7 +289,7 @@ contains
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !########################################################################
     subroutine OPR_BURGERS_1D(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
-        use TLAB_ARRAYS, only : wrkdea
+        use TLab_Arrays, only : wrkdea
         integer,     intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -307,8 +307,8 @@ contains
 
 ! ###################################################################
         if (bcs(1, 2) + bcs(2, 2) > 0) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Only developed for biased BCs.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Only developed for biased BCs.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity

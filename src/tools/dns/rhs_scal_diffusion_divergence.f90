@@ -7,16 +7,16 @@
 !# in the routine RHS_FLOW_CONDUCTION.
 !########################################################################
 subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
-    use TLAB_CONSTANTS, only: wi, wp
+    use TLab_Constants, only: wi, wp
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
-    use TLAB_POINTERS
-    use TLAB_ARRAYS, only: s
+    use TLab_Pointers
+    use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use OPR_PARTIAL
@@ -32,7 +32,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
     bcs = 0
@@ -143,7 +143,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_DIVERGENCE')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_DIVERGENCE')
 #endif
 
     return

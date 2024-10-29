@@ -1,5 +1,5 @@
-module TLAB_TYPES
-    use TLAB_CONSTANTS
+module TLab_Types
+    use TLab_Constants
     implicit none
     save
 
@@ -103,4 +103,4 @@ module TLAB_TYPES
         character(32) :: type
     end type phaseavg_dt
 
-end module TLAB_TYPES
+end module TLab_Types

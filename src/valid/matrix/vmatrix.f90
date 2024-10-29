@@ -56,7 +56,7 @@ program VMATRIX
 
     print *, 'Inverse of U'
     call TRIDINV(nmax, a_d(1), wrk2d)
-    call DNS_TRANSPOSE(wrk2d, nmax, nmax, nmax, d, nmax)
+    call TLab_Transpose(wrk2d, nmax, nmax, nmax, d, nmax)
     do n = 1, nmax
         write (*, '(6F10.5)') (d(n, ij), ij=1, nmax)
     end do

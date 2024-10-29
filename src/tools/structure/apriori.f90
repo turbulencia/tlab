@@ -9,12 +9,13 @@
 
 program APRIORI
 
-    use TLAB_TYPES, only: pointers_dt
-    use TLAB_TYPES, only: filter_dt
-    use TLAB_CONSTANTS
+    use TLab_Types, only: pointers_dt
+    use TLab_Types, only: filter_dt
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
@@ -64,12 +65,13 @@ program APRIORI
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
@@ -92,7 +94,7 @@ program APRIORI
     opt_gate = 0
     opt_order = 1
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamStructure', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -109,7 +111,7 @@ program APRIORI
     end if
 
 ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
     if (sRes == '-1') then
 #ifdef USE_MPI
@@ -170,7 +172,7 @@ program APRIORI
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -205,7 +207,7 @@ program APRIORI
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
@@ -330,5 +332,5 @@ program APRIORI
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program APRIORI

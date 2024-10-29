@@ -5,11 +5,12 @@
 
 program PDFS
 
-    use TLAB_CONSTANTS, only: wp, wi, small_wp, ifile, efile, lfile, gfile, tag_flow, tag_scal
-    use TLAB_TYPES, only: pointers_dt
+    use TLab_Constants, only: wp, wi, small_wp, ifile, efile, lfile, gfile, tag_flow, tag_scal
+    use TLab_Types, only: pointers_dt
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
@@ -81,14 +82,15 @@ program PDFS
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
-    call Thermodynamics_Initialize_Parameters(ifile)
 
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -106,7 +108,7 @@ program PDFS
     gate_level = 0
     opt_bins = 16
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamPdfs', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_INTEGER(sRes, iopt_size, opt_vec)
 
@@ -151,13 +153,13 @@ program PDFS
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in tlab.ini.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'PDFS. Missing input [ParamPdfs] in tlab.ini.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     if (opt_block < 1) then
-        call TLAB_WRITE_ASCII(efile, 'PDFS. Invalid value of opt_block.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'PDFS. Invalid value of opt_block.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     ! -------------------------------------------------------------------
@@ -246,14 +248,14 @@ program PDFS
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
     call OPR_Elliptic_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
+    call TLab_Initialize_Background()  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
@@ -281,7 +283,7 @@ program PDFS
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
@@ -309,7 +311,7 @@ program PDFS
                 opt_cond_scal = inb_scal_array
             end if
 
-            call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
+            call TLab_Write_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                          imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
 
@@ -356,7 +358,7 @@ program PDFS
             ! Scalar gradient equation
             ! ###################################################################
         case (2)
-            call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient equation...')
+            call TLab_Write_ASCII(lfile, 'Computing scalar gradient equation...')
 
             call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s, q(1, 1), q(1, 2), q(1, 3), &
                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -377,7 +379,7 @@ program PDFS
             ! Enstrophy equation
             ! ###################################################################
         case (3)
-            call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy equation...')
+            call TLab_Write_ASCII(lfile, 'Computing enstrophy equation...')
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 if (buoyancy%type == EQNS_NONE) then
@@ -432,7 +434,7 @@ program PDFS
             ! Strain equation
             ! ###################################################################
         case (4)
-            call TLAB_WRITE_ASCII(lfile, 'Computing strain equation...')
+            call TLab_Write_ASCII(lfile, 'Computing strain equation...')
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
@@ -466,7 +468,7 @@ program PDFS
             ! Velocity gradient invariants
             ! ###################################################################
         case (5)
-            call TLAB_WRITE_ASCII(lfile, 'Computing velocity gradient invariants...')
+            call TLab_Write_ASCII(lfile, 'Computing velocity gradient invariants...')
 
             call FI_INVARIANT_R(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
@@ -490,7 +492,7 @@ program PDFS
             ! Chi flamelet equation PDF
             ! ###################################################################
         case (6)
-            call TLAB_WRITE_ASCII(lfile, 'Computing flamelet equation...')
+            call TLab_Write_ASCII(lfile, 'Computing flamelet equation...')
 
             call FI_STRAIN_A(imax, jmax, kmax, s, q(1, 1), q(1, 2), q(1, 3), &
                              txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -502,7 +504,7 @@ program PDFS
             ! Joint PDF W^2 and 2S^2
             ! ###################################################################
         case (7)
-            call TLAB_WRITE_ASCII(lfile, 'Computing enstrophy-strain pdf...')
+            call TLab_Write_ASCII(lfile, 'Computing enstrophy-strain pdf...')
 
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
             call FI_STRAIN(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 2), txc(1, 3), txc(1, 4))
@@ -522,7 +524,7 @@ program PDFS
             ! Joint PDF Scalar and Scalar Gradient
             ! ###################################################################
         case (9)
-            call TLAB_WRITE_ASCII(lfile, 'Computing scalar-scalar--gradient pdf...')
+            call TLab_Write_ASCII(lfile, 'Computing scalar-scalar--gradient pdf...')
 
             call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
             txc(1:isize_field, 2) = log(txc(1:isize_field, 1))
@@ -553,7 +555,7 @@ program PDFS
             ! Scalar gradient components
             ! ###################################################################
         case (10)
-            call TLAB_WRITE_ASCII(lfile, 'Computing scalar gradient components...')
+            call TLab_Write_ASCII(lfile, 'Computing scalar gradient components...')
 
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 1))
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s, txc(1, 2))
@@ -578,7 +580,7 @@ program PDFS
             ! eigenvalues of rate-of-strain tensor
             ! ###################################################################
         case (11)
-            call TLAB_WRITE_ASCII(lfile, 'Computing eigenvalues of Sij...')
+            call TLab_Write_ASCII(lfile, 'Computing eigenvalues of Sij...')
 
             call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
@@ -591,7 +593,7 @@ program PDFS
             ! eigenframe of rate-of-strain tensor
             ! ###################################################################
         case (12)
-            call TLAB_WRITE_ASCII(lfile, 'Computing eigenframe of Sij...')
+            call TLab_Write_ASCII(lfile, 'Computing eigenframe of Sij...')
 
             call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             call TENSOR_EIGENVALUES(imax, jmax, kmax, txc(1, 1), txc(1, 7)) ! txc7-txc9
@@ -635,7 +637,7 @@ program PDFS
             ! Longitudinal velocity derivatives
             ! ###################################################################
         case (13)
-            call TLAB_WRITE_ASCII(lfile, 'Computing longitudinal velocity derivatives...')
+            call TLab_Write_ASCII(lfile, 'Computing longitudinal velocity derivatives...')
 
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(1, 1), txc(1, 1))
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 2))
@@ -649,7 +651,7 @@ program PDFS
             ! Potential vorticity
             ! ###################################################################
         case (14)
-            call TLAB_WRITE_ASCII(lfile, 'Computing potntial vorticity...')
+            call TLab_Write_ASCII(lfile, 'Computing potntial vorticity...')
 
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             txc(1:isize_field, 6) = txc(1:isize_field, 1)**2 + txc(1:isize_field, 2)**2 + txc(1:isize_field, 3)**2 ! Enstrophy
@@ -677,7 +679,7 @@ program PDFS
             ! Analysis of B and V
             ! ###################################################################
         case (15)
-            call TLAB_WRITE_ASCII(lfile, 'Computing analysis of B and V...')
+            call TLab_Write_ASCII(lfile, 'Computing analysis of B and V...')
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'b'; ibc(ifield) = 1
             if (buoyancy%type == EQNS_EXPLICIT) then
@@ -783,8 +785,8 @@ program PDFS
         ! ###################################################################
         if (ifield > 0) then
             if (nfield < ifield) then
-                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
-                call TLAB_STOP(DNS_ERROR_WRKSIZE)
+                call TLab_Write_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
+                call TLab_Stop(DNS_ERROR_WRKSIZE)
             end if
 
             if (jmax_aux*opt_block /= g(2)%size .and. reduce_data) then
@@ -801,5 +803,5 @@ program PDFS
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program PDFS

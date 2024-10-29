@@ -1,12 +1,13 @@
 #include "dns_const.h"
 
 program VPARTIAL
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only:  grid_dt
+    use TLab_Constants
+    use TLab_Types, only:  grid_dt
     use TLAB_VARS, only: g, imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt, area
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, txc, x, y, z, wrk3d
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
+    use TLab_Arrays, only: wrk1d, wrk2d, txc, x, y, z, wrk3d
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_Com1_Jacobian
@@ -34,12 +35,13 @@ program VPARTIAL
     integer, parameter :: i1 = 1, cases(4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
 
 ! ###################################################################
-    call TLAB_START()
-    call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
+    call TLab_Start()
+    call TLab_Initialize_Parameters(ifile)
     ! call Particle_Initialize_Parameters(ifile)
     ! call DNS_READ_LOCAL(ifile)
     call IBM_READ_INI(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 ! Initialize
     
     len = jmax*kmax
@@ -77,7 +79,7 @@ program VPARTIAL
     ! Valid settings
     test_type = 1
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)

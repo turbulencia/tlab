@@ -20,9 +20,9 @@
 !########################################################################
 program VINTERPARTIAL
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use IO_FIELDS
 #ifdef USE_MPI
     use MPI
@@ -48,19 +48,20 @@ program VINTERPARTIAL
     TINTEGER bcs(2, 2)
     TREAL dummy, error
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL('tlab.ini')
+    call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! Check input
 ! -------------------------------------------------------------------
     if (.not. stagger_on) then
-        call TLAB_WRITE_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in tlab.ini!')
-        call TLAB_STOP(0)
+        call TLab_Write_ASCII(efile, 'VINTERPARTIAL. Set "StaggerGrid=yes" in tlab.ini!')
+        call TLab_Stop(0)
     end if
 
 ! -------------------------------------------------------------------
@@ -75,7 +76,7 @@ program VINTERPARTIAL
     allocate (b(imax, jmax, kmax), c(imax, jmax, kmax), d(imax*jmax*kmax))
     allocate (tmp1(isize_txc_field), wrk3d(isize_wrk3d))
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -202,5 +203,5 @@ program VINTERPARTIAL
 
 ! ###################################################################
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VINTERPARTIAL

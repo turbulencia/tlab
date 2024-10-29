@@ -6,7 +6,7 @@
 ! eigenvalues: it assumes that no eigenvalue is zero, i.e. no zero determinant
 !########################################################################
 subroutine TENSOR_EIGENVALUES(nx, ny, nz, tensor, result)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     integer(wi) nx, ny, nz
@@ -79,7 +79,7 @@ end subroutine TENSOR_EIGENVALUES
 ! Global orientation is positive Ox for the first one, positive Oy for the second one.
 !########################################################################
 subroutine TENSOR_EIGENFRAME(nx, ny, nz, tensor, lambda)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 
     implicit none
 

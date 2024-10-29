@@ -21,7 +21,7 @@
 
 module FI_TOTAL_STRESS
     
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS,      only: g, visc
     use IBM_VARS,       only: imode_ibm, ibm_partial
     use OPR_PARTIAL

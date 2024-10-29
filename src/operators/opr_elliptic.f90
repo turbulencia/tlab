@@ -2,13 +2,14 @@
 #include "dns_error.h"
 
 module OPR_ELLIPTIC
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
-    use TLAB_POINTERS_3D, only: p_wrk1d
-    use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
-    use TLAB_PROCS
+    use TLab_Pointers_3D, only: p_wrk1d
+    use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Allocate_Real
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
@@ -24,8 +25,8 @@ module OPR_ELLIPTIC
     pointer :: OPR_Poisson_dt
     interface
         subroutine OPR_Poisson_dt(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
-            use TLAB_CONSTANTS, only: wi, wp
-            use TLAB_TYPES, only: grid_dt
+            use TLab_Constants, only: wi, wp
+            use TLab_Types, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -41,8 +42,8 @@ module OPR_ELLIPTIC
     pointer :: OPR_Helmholtz_dt
     interface
         subroutine OPR_Helmholtz_dt(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
-            use TLAB_CONSTANTS, only: wi, wp
-            use TLAB_TYPES, only: grid_dt
+            use TLab_Constants, only: wi, wp
+            use TLab_Types, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -61,7 +62,7 @@ module OPR_ELLIPTIC
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) lambda, norm
     real(wp), allocatable :: lhs(:, :), rhs(:, :)
-    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLAB_ARRAYS?
+    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
 
     procedure(OPR_Poisson_dt), pointer :: OPR_Poisson
     procedure(OPR_Helmholtz_dt), pointer :: OPR_Helmholtz
@@ -106,13 +107,13 @@ contains
 ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call SCANINICHAR(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
+        call ScanFile_Char(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
         if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
         else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
         else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         select case (imode_elliptic)
@@ -139,7 +140,7 @@ contains
         ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
             isize_line = imax/2 + 1
 
-            call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
+            call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
 
             do k = 1, kmax
 #ifdef USE_MPI
@@ -201,7 +202,7 @@ contains
 !# The global variable isize_txc_field defines the size of array txc equal
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
-!# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see tlab_procs%define_pointers_c)
+!# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see TLab_WorkFlow%define_pointers_c)
 !#
 !########################################################################
     subroutine OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
@@ -773,7 +774,7 @@ contains
 ! ! Same, but for n fields
 ! ! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
 !     subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
-!         use TLAB_TYPES, only: pointers_dt
+!         use TLab_Types, only: pointers_dt
 
 !         integer(wi), intent(in) :: nx, ny, nz, nfield
 !         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
@@ -799,8 +800,8 @@ contains
 
 !         ! #######################################################################
 !         if (ibc /= 0) then ! So far only implemented for Dirichlet BCs
-!             call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
-!             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+!             call TLab_Write_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
+!             call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !         end if
 
 !         call c_f_pointer(c_loc(tmp1), c_tmp1_n, shape=[isize_txc_dimz/2, nz, nfield])

@@ -279,7 +279,7 @@ subroutine TLabMPI_Initialize()
     i1 = 1
 
     if (ims_npro_i > 1) then
-!  CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
+!  CALL TLab_Write_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
         id = TLabMPI_I_PARTIAL
         npage = kmax*jmax
         call TLabMPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
@@ -287,7 +287,7 @@ subroutine TLabMPI_Initialize()
     end if
 
     if (ims_npro_k > 1) then
-!  CALL TLAB_WRITE_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
+!  CALL TLab_Write_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
         id = TLabMPI_K_PARTIAL
         npage = imax*jmax
         call TLabMPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &

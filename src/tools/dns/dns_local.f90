@@ -2,8 +2,8 @@
 #include "dns_const.h"
 
 module DNS_LOCAL
-    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
-    use TLAB_CONSTANTS, only: MAX_PATH_LENGTH
+    use TLab_Constants, only: MAX_VARS, wp, wi, sp
+    use TLab_Constants, only: MAX_PATH_LENGTH
 #ifdef USE_PSFFT
     use NB3DFFT, only: NB3DFFT_SCHEDLTYPE
 #endif
@@ -65,7 +65,7 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_LIMIT()
         use TLAB_VARS, only: inb_scal
-        use TLAB_ARRAYS
+        use TLab_Arrays
 
         ! -------------------------------------------------------------------
         integer(wi) is
@@ -91,11 +91,11 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
-        use TLAB_CONSTANTS, only: efile, lfile
+        use TLab_Constants, only: efile, lfile
         use TLAB_VARS, only: imode_eqns, stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
-        use TLAB_ARRAYS
-        use TLAB_PROCS
+        use TLab_Arrays
+        use TLab_WorkFlow
         use THERMO_ANELASTIC
         use IBM_VARS, only: imode_ibm
 #ifdef USE_MPI
@@ -141,14 +141,14 @@ contains
             ! Check density
             call MINMAX(imax, jmax, kmax, q(:, 5), r_min_loc, r_max_loc)
             if (r_min_loc < bound_r%min .or. r_max_loc > bound_r%max) then
-                call TLAB_WRITE_ASCII(efile, 'DNS_CONTROL. Density out of bounds.')
+                call TLab_Write_ASCII(efile, 'DNS_CONTROL. Density out of bounds.')
                 logs_data(1) = DNS_ERROR_NEGDENS
             end if
 
             ! Check pressure
             call MINMAX(imax, jmax, kmax, q(:, 6), p_min_loc, p_max_loc)
             if (p_min_loc < bound_p%min .or. p_max_loc > bound_p%max) then
-                call TLAB_WRITE_ASCII(efile, 'DNS_CONTROL. Pressure out of bounds.')
+                call TLab_Write_ASCII(efile, 'DNS_CONTROL. Pressure out of bounds.')
                 logs_data(1) = DNS_ERROR_NEGPRESS
             end if
 
@@ -185,7 +185,7 @@ contains
             d_min_loc = -d_min_loc; d_max_loc = -d_max_loc
 
             if (max(abs(d_min_loc), abs(d_min_loc)) > bound_d%max) then
-                call TLAB_WRITE_ASCII(efile, 'DNS_CONTROL. Dilatation out of bounds.')
+                call TLab_Write_ASCII(efile, 'DNS_CONTROL. Dilatation out of bounds.')
                 logs_data(1) = DNS_ERROR_DILATATION
 
                 ! Locating the points where the maximum dilatation occurs
@@ -203,7 +203,7 @@ contains
                     write (str, *) idummy(1); line = trim(adjustl(line))//' at grid node '//trim(adjustl(str))
                     write (str, *) idummy(2); line = trim(adjustl(line))//':'//trim(adjustl(str))
                     write (str, *) idummy(3); line = trim(adjustl(line))//':'//trim(adjustl(str))//'.'
-                    call TLAB_WRITE_ASCII(lfile, line, .true.)
+                    call TLab_Write_ASCII(lfile, line, .true.)
                 end if
 
                 dummy = minval(wrk3d)
@@ -217,7 +217,7 @@ contains
                     write (str, *) idummy(1); line = trim(adjustl(line))//' at grid node '//trim(adjustl(str))
                     write (str, *) idummy(2); line = trim(adjustl(line))//':'//trim(adjustl(str))
                     write (str, *) idummy(3); line = trim(adjustl(line))//':'//trim(adjustl(str))//'.'
-                    call TLAB_WRITE_ASCII(lfile, line, .true.)
+                    call TLab_Write_ASCII(lfile, line, .true.)
                 end if
 
             end if
@@ -232,11 +232,11 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_OBS_CONTROL()
-        use TLAB_VARS, only: imax, jmax, kmax, g, area
+        use TLAB_VARS, only: imax, jmax, kmax, g
         use TLAB_VARS, only: scal_on, inb_scal
         use FI_VORTICITY_EQN, only: FI_VORTICITY
-        use TLAB_ARRAYS
-        use AVGS
+        use TLab_Arrays
+        use Averages
         use Integration, only: Int_Simpson
 
         integer(wi) :: ip, is
@@ -257,8 +257,8 @@ contains
 
         case (OBS_TYPE_EKMAN)
             ! ubulk, wbulk
-            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 1), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
-            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 3), g(1)%jac, g(3)%jac, wrk1d(:, 3), wrk1d(:, 4), area)
+            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 1), wrk1d(:, 1), wrk1d(:, 2))
+            call AVG_IK_V(imax, jmax, kmax, jmax, q(1, 3), wrk1d(:, 3), wrk1d(:, 4))
             ubulk = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax))
             wbulk = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 3), g(2)%nodes(1:jmax))
 
@@ -272,12 +272,12 @@ contains
 
             ! integrated entstrophy
             call FI_VORTICITY(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3))
-            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1, 1), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+            call AVG_IK_V(imax, jmax, kmax, jmax, txc(1, 1), wrk1d(:, 1), wrk1d(:, 2))
             int_ent = (1.0_wp/g(2)%nodes(g(2)%size))*Int_Simpson(wrk1d(1:jmax, 1), g(2)%nodes(1:jmax))
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call AVG_IK_V(imax, jmax, kmax, jmax, s(1, is), g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
+                    call AVG_IK_V(imax, jmax, kmax, jmax, s(1, is), wrk1d(:, 1), wrk1d(:, 2))
                     obs_data(ip + is) = (wrk1d(2, 1) - wrk1d(1, 1))/g(2)%nodes(2)
                 end do
             end if
@@ -291,7 +291,7 @@ contains
 end module DNS_LOCAL
 !########################################################################
 module DNS_ARRAYS
-    use TLAB_CONSTANTS, only: wp
+    use TLab_Constants, only: wp
     implicit none
     save
     private

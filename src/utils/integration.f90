@@ -1,5 +1,5 @@
 module Integration
-    use TLAB_CONSTANTS, only: wp, wi, BCS_MIN, BCS_MAX !, pi_wp
+    use TLab_Constants, only: wp, wi, BCS_MIN, BCS_MAX !, pi_wp
     implicit none
     private
 

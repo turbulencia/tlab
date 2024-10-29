@@ -5,9 +5,10 @@
 
 module ParticleTrajectories
 
-    use TLAB_CONSTANTS, only: efile, lfile, wp, sp, wi, longi, sizeofint
+    use TLab_Constants, only: efile, lfile, wp, sp, wi, longi, sizeofint
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
-    use TLAB_PROCS
+    use TLab_WorkFlow
+    use TLab_Memory
     use PARTICLE_VARS, only: inb_part, isize_part_total, inb_part_interp, inb_part_txc, part, PART_TYPE_NONE
     use DNS_LOCAL, only: nitera_save
 #ifdef USE_MPI
@@ -62,26 +63,26 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Particles'
 
-        call SCANINICHAR(bakfile, inifile, block, 'TrajType', 'basic', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'TrajType', 'basic', sRes)
         if (trim(adjustl(sRes)) == 'basic') then; imode_traj = TRAJ_TYPE_BASIC
         elseif (trim(adjustl(sRes)) == 'eulerian') then; imode_traj = TRAJ_TYPE_EULERIAN
         elseif (trim(adjustl(sRes)) == 'vorticity') then; imode_traj = TRAJ_TYPE_VORTICITY
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
-            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+            call TLab_Write_ASCII(efile, __FILE__//'. Invalid option in TrajectoryType')
+            call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
         end if
 
-        call SCANINIINT(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
+        call ScanFile_Int(bakfile, inifile, block, 'TrajNumber', '0', isize_traj)
         if (isize_traj > isize_part_total) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
-            call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+            call TLab_Write_ASCII(efile, __FILE__//'. Number of trajectories must be less or equal than number of particles.')
+            call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
         end if
         if (isize_traj <= 0) imode_traj = TRAJ_TYPE_NONE
         if (part%type == PART_TYPE_NONE) imode_traj = TRAJ_TYPE_NONE
 
         if (imode_traj == TRAJ_TYPE_NONE) return
 
-        call SCANINICHAR(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
+        call ScanFile_Char(bakfile, inifile, block, 'TrajFileName', 'void', traj_filename)
 
         ! -------------------------------------------------------------------
         inb_traj = inb_part             ! save particle prognostic properties
@@ -101,10 +102,10 @@ contains
         inb_part_interp = max(inb_part_interp, inb_traj)
 
         !#######################################################################
-        call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
-        call TLAB_ALLOCATE_ARRAY_LONG_INT(__FILE__, l_traj_tags, [isize_traj], 'l_traj_tags')
+        call TLab_Allocate_SINGLE(__FILE__, l_traj, [isize_traj + 1, nitera_save, inb_traj], 'l_traj')
+        call TLab_Allocate_LONG_INT(__FILE__, l_traj_tags, [isize_traj], 'l_traj_tags')
 #ifdef USE_MPI
-        call TLAB_ALLOCATE_ARRAY_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
+        call TLab_Allocate_SINGLE(__FILE__, mpi_tmp, [isize_traj + 1, nitera_save], 'mpi_tmp')
 #endif
 
         !#######################################################################
@@ -116,8 +117,8 @@ contains
                 l_traj_tags(j) = 1 + (j - 1)*stride
             end do
             if (l_traj_tags(isize_traj) > isize_part_total) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Tags of trajectories out of range.')
-                call TLAB_STOP(DNS_ERROR_CALCTRAJECTORIES)
+                call TLab_Write_ASCII(efile, __FILE__//'. Tags of trajectories out of range.')
+                call TLab_Stop(DNS_ERROR_CALCTRAJECTORIES)
             end if
 
         case default                ! track the ones given in a file
@@ -153,11 +154,11 @@ contains
     !#######################################################################
     !#######################################################################
     subroutine ParticleTrajectories_Accumulate()
-        use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+        use TLab_Types, only: pointers_dt, pointers3d_dt
         use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rtime
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use FI_VECTORCALCULUS
         use DNS_ARRAYS
         use PARTICLE_ARRAYS

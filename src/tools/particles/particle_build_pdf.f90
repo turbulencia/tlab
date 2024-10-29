@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -11,10 +10,10 @@
 !########################################################################
 program PARTICLE_BUILD_PDF
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
     use IO_FIELDS
 #ifdef USE_MPI
     use TLabMPI_PROCS
@@ -37,21 +36,22 @@ program PARTICLE_BUILD_PDF
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START
+    call TLab_Start
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters('tlab.ini')
 
 !  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -79,7 +79,7 @@ program PARTICLE_BUILD_PDF
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -107,5 +107,5 @@ program PARTICLE_BUILD_PDF
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

@@ -73,14 +73,15 @@ program SL_BOUNDARY
 
     call DNS_START
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
@@ -100,7 +101,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
             read (*, '(A512)') sRes
@@ -120,7 +121,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'ParamSuperlayer', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'ParamSuperlayer', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -193,7 +194,7 @@ program SL_BOUNDARY
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -246,7 +247,7 @@ program SL_BOUNDARY
 
 ! Based on vorticity
             else if (iint == 2) then
-                call TLAB_WRITE_ASCII(lfile, 'Calculating vorticity...')
+                call TLab_Write_ASCII(lfile, 'Calculating vorticity...')
                 call FI_VORTICITY(imax, jmax, kmax, u, v, w, field, txc(1), txc(1 + isize_field))
                 if (ith == 1) then ! relative to max
                     call MINMAX(imax, jmax, kmax, field, vmin, vmax)
@@ -260,11 +261,11 @@ program SL_BOUNDARY
 
 ! Based on scalar gradient
             else if (iint == 3) then
-                call TLAB_WRITE_ASCII(lfile, 'Calculating scalar gradient...')
+                call TLab_Write_ASCII(lfile, 'Calculating scalar gradient...')
                 call FI_GRADIENT(imax, jmax, kmax, s, field, txc)
                 call MINMAX(imax, jmax, kmax, field, vmin, vmax)
                 write (str, '(E22.15E3,E22.15E3)') vmin, vmax; str = 'Bounds '//trim(adjustl(str))
-                call TLAB_WRITE_ASCII(lfile, str)
+                call TLab_Write_ASCII(lfile, str)
                 if (ith == 1) then ! relative to max
                     call MINMAX(imax, jmax, kmax, field, vmin, vmax)
                     vmin = threshold*threshold*vmax
@@ -279,15 +280,15 @@ program SL_BOUNDARY
 
 ! write threshold
             write (str, '(E22.15E3)') vmin; str = 'Threshold '//trim(adjustl(str))
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
 
 ! save surfaces w/o header
             write (fname, *) itime; fname = 'sl'//trim(adjustl(fname))
             ! idummy = g(2)%size; g(2)%size = 1
             ! CALL DNS_WRITE_FIELDS(fname, i0, imax,i1,kmax, i2, isize_field, sl, wrk3d)
             ! g(2)%size = idummy
-            call TLAB_WRITE_ASCII(efile, 'SL_BOUNDARY. To be written in terms of IO_SUBARRAY as in averages.x')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'SL_BOUNDARY. To be written in terms of IO_SUBARRAY as in averages.x')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
 ! save scalar dissipation as scalar field
             ! WRITE(fname,*) itime; fname = 'chi'//TRIM(ADJUSTL(fname))
@@ -311,5 +312,5 @@ program SL_BOUNDARY
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SL_BOUNDARY

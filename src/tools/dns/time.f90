@@ -13,9 +13,19 @@ module TIME
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
-    use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_Constants, only: efile, wp, wi, big_wp
+    use TLAB_VARS, only: imode_sim, imode_files, imode_precision_files, imode_verbosity
+    use TLAB_VARS, only: flow_on, scal_on, fourier_on, stagger_on
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
+    use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: rtime
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLAB_VARS, only: visc, prandtl, schmidt
+    use TLab_WorkFlow
+    use TLab_OpenMP
     use PARTICLE_VARS
 #ifdef USE_MPI
     use MPI
@@ -142,7 +152,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine TIME_RUNGEKUTTA()
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use PARTICLE_ARRAYS
         use DNS_LOCAL
         use DNS_ARRAYS
@@ -229,7 +239,7 @@ contains
 !$omp private (i,   ij_srt,ij_end,ij_siz,alpha,is)
 #endif
 
-                call DNS_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
+                call TLab_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
 #ifdef USE_BLAS
                 ij_len = ij_siz
 #endif
@@ -277,13 +287,13 @@ contains
             if (ims_pro == 0) then
                 write (time_string, 999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0_wp/PROC_CYCLES/ims_npro
 999             format(I5.5, ' (ims_npro_i X ims_npro_k:', I4.4, 'x', I4.4, 1x, ') RK-Substep', I1, ':', E13.5, 's')
-                call TLAB_WRITE_ASCII(lfile, time_string)
+                call TLab_Write_ASCII(lfile, time_string)
             end if
 #else
             t_dif = idummy
             write (time_string, 999) rkm_substep, t_dif/1.0_wp/PROC_CYCLES/ims_npro
 999         format('RK-Substep', I1, ':', E13.5, 's')
-            call TLAB_WRITE_ASCII(lfile, time_string)
+            call TLab_Write_ASCII(lfile, time_string)
 #endif
 
 #endif
@@ -325,7 +335,8 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-        use TLAB_POINTERS_3D, only: u, v, w, p_wrk3d, p, rho, vis
+        use Thermodynamics, only: gama0
+        use TLab_Pointers_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
         integer(wi) ipmax, k_glo
@@ -517,7 +528,7 @@ contains
 !#
 !########################################################################
     subroutine TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
-        use TLAB_ARRAYS, only: q, s, txc
+        use TLab_Arrays, only: q, s, txc
         use PARTICLE_ARRAYS
         use DNS_ARRAYS, only: hq, hs
         use DNS_LOCAL, only: imode_rhs
@@ -579,8 +590,8 @@ contains
                                                    txc(1, 11), txc(1, 12), txc(1, 13), txc(1, 14), &
                                                    hq(1, 1), hq(1, 2), hq(1, 3), hs(1, 1))
 #else
-                call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
-                call TLAB_STOP(DNS_ERROR_PSFFT)
+                call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
+                call TLab_Stop(DNS_ERROR_PSFFT)
 #endif
             end select
         end select
@@ -602,7 +613,7 @@ contains
 #endif
 #endif
 
-        call DNS_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
+        call TLab_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
 #ifdef USE_BLAS
         ij_len = ij_siz
 #endif
@@ -643,8 +654,8 @@ contains
             !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
             !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8))
         else
-            call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         end if
 
@@ -654,8 +665,8 @@ contains
 !########################################################################
 !########################################################################
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
-        use TLAB_ARRAYS
-        use TLAB_POINTERS
+        use TLab_Arrays
+        use TLab_Pointers
         use THERMO_CALORIC, only: THERMO_GAMMA
         use Thermodynamics, only: CRATIO_INV
         use DNS_ARRAYS
@@ -706,8 +717,8 @@ contains
             ! viscous terms
             ! -------------------------------------------------------------------
             if (itransport /= 1) then
-                call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             if (iviscous == EQNS_DIVERGENCE) then

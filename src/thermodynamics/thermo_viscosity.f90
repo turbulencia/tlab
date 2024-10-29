@@ -5,7 +5,7 @@
 !# on the given flag itransport:
 !########################################################################
 subroutine THERMO_VISCOSITY(ijmax, T, mu)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: itransport
     implicit none
 

@@ -7,17 +7,17 @@
 !# Using 2nd order derivative finite difference operators
 !########################################################################
 subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
-    use TLAB_POINTERS
-    use TLAB_ARRAYS, only: s
+    use TLab_Pointers
+    use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs, hq
     use OPR_PARTIAL
     implicit none
@@ -30,7 +30,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_EXPLICIT')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_SCAL_DIFFUSION_EXPLICIT')
 #endif
 
     bcs = 0
@@ -77,7 +77,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_EXPLICIT')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_SCAL_DIFFUSION_EXPLICIT')
 #endif
 
     return

@@ -1,9 +1,9 @@
 #include "dns_const.h"
 
 program STATE
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use Thermodynamics
     use THERMO_THERMAL
     use THERMO_ANELASTIC
@@ -17,7 +17,7 @@ program STATE
     integer(wi) iopt
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
     imixture = MIXT_TYPE_AIRWATER
     nondimensional = .false.
