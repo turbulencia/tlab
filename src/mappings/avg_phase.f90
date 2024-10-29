@@ -262,7 +262,7 @@ CONTAINS
       write(start, '(I10)') (avg_start)
       write(end,   '(I10)') itime
     else
-      write(start, '(I10)') (itime - it_save*phAvg%stride)
+      write(start, '(I10)') (itime - it_save*phAvg%stride + 1)
       write(end,   '(I10)') itime
     end if
     do ifld = 1, nfield
