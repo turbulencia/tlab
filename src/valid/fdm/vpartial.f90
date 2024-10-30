@@ -10,6 +10,7 @@ program VPARTIAL
     use TLab_Arrays, only: wrk1d, wrk2d, txc, x!, wrk3d
     use FDM_ComX_Direct
     use FDM_PROCS
+    use FDM_MatMul
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use OPR_PARTIAL

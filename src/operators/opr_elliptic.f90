@@ -14,7 +14,7 @@ module OPR_ELLIPTIC
     use OPR_ODES
     use OPR_PARTIAL
     use FDM_Integrate
-    use FDM_PROCS
+    use FDM_MatMul
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif

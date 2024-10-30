@@ -11,6 +11,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
     use FDM_PROCS
+    use FDM_MatMul
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
