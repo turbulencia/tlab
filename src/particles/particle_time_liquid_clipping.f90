@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
@@ -16,7 +15,7 @@
 !#
 !########################################################################
 subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
-
+    use TLab_Constants, only: wp, wi
     use TLab_Types, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use PARTICLE_VARS, only: isize_part, inb_part_array
@@ -26,12 +25,12 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
     
     implicit none
 
-    TREAL, dimension(isize_field, *), target :: s
-    TREAL, dimension(isize_part, *) :: l_q
-    TREAL, dimension(isize_part), target :: l_txc
+    real(wp), dimension(isize_field, *), target :: s
+    real(wp), dimension(isize_part, *) :: l_q
+    real(wp), dimension(isize_part), target :: l_txc
 
 ! -------------------------------------------------------------------
-    TINTEGER is, i, nvar
+    integer(wi) is, i, nvar
     type(pointers3d_dt), dimension(1) :: data
     type(pointers_dt), dimension(1) :: data_out
 
@@ -40,8 +39,8 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
 ! ###################################################################
     do is = 4, inb_part_array
         do i = 1, l_g%np
-            if (l_q(i, is) < C_0_R) then
-                l_q(i, is) = C_0_R
+            if (l_q(i, is) < 0.0_wp) then
+                l_q(i, is) = 0.0_wp
             end if
         end do
     end do
@@ -51,13 +50,13 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
 ! ###################################################################
     nvar = 0
     nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, inb_scal_array); data_out(nvar)%field => l_txc(:)
-    l_txc = C_0_R
+    l_txc = 0.0_wp
     call FIELD_TO_PARTICLE(data(1:nvar), data_out(1:nvar), l_g, l_q)
 
     do i = 1, l_g%np
         if (l_txc(i) < 0.00001) then
             do is = 4, inb_part_array
-                l_q(i, is) = C_0_R
+                l_q(i, is) = 0.0_wp
             end do
         end if
     end do

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 
@@ -11,8 +10,8 @@
 !#
 !########################################################################
 subroutine PARTICLE_MPI_SORT(x_or_z, l_g, l_q, l_hq, &
-                         nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
-
+                             nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, kmax
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use TLAB_VARS, only: g
@@ -23,18 +22,18 @@ subroutine PARTICLE_MPI_SORT(x_or_z, l_g, l_q, l_hq, &
 
     implicit none
 
-    TINTEGER nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north, x_or_z
+    integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north, x_or_z
     type(particle_dt) :: l_g
-    TREAL, dimension(isize_part, *) :: l_q
-    TREAL, dimension(isize_part, *) :: l_hq
+    real(wp), dimension(isize_part, *) :: l_q
+    real(wp), dimension(isize_part, *) :: l_hq
 
 ! -------------------------------------------------------------------
-    TREAL dx_grid, dz_grid
-    TREAL dummy, lower_limit, upper_limit
-    TINTEGER nzone_west_south, nzone_east_north
-    TINTEGER counter_swap, idummy
-    integer(8) idummy8
-    TINTEGER i, j, k
+    real(wp) dx_grid, dz_grid
+    real(wp) dummy, lower_limit, upper_limit
+    integer(wi) nzone_west_south, nzone_east_north
+    integer(wi) counter_swap, idummy
+    integer(longi) idummy8
+    integer(wi) i, j, k
 
 !#######################################################################
     nzone_west_south = 0
@@ -48,15 +47,15 @@ subroutine PARTICLE_MPI_SORT(x_or_z, l_g, l_q, l_hq, &
     dz_grid = g(3)%nodes(2) - g(3)%nodes(1)
 
     select case (x_or_z)
-    
-    case(1) !Sort in West-East direction
+
+    case (1) !Sort in West-East direction
         lower_limit = g(1)%nodes(ims_offset_i + 1)              !lower_limit is West
         upper_limit = g(1)%nodes(ims_offset_i + imax) + dx_grid !upper_limit is East
-    case(3) !Sort in South-North direction
+    case (3) !Sort in South-North direction
         lower_limit = g(3)%nodes(ims_offset_k + 1)              !lower_limit is south
         upper_limit = g(3)%nodes(ims_offset_k + kmax) + dz_grid !upper_limit is north
     end select
-    
+
 !#######################################################################
 !Sorting structure grid-west-east or grid-south-north
 !First Algorythm sorts all grid-particle into first part of particle

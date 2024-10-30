@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -12,17 +11,17 @@
 !#
 !########################################################################
 subroutine PARTICLE_TIME_RESIDENCE(dtime, particle_number, l_q)
-
+    use TLab_Constants, only: wp, wi
     use PARTICLE_VARS, only: isize_part, inb_part_array
     use PARTICLE_VARS, only: l_y_lambda, l_y_base
 
     implicit none
 
-    TREAL dtime
-    TINTEGER particle_number
-    TREAL, dimension(isize_part, *) :: l_q
+    real(wp) dtime
+    integer(wi) particle_number
+    real(wp), dimension(isize_part, *) :: l_q
 
-    TINTEGER i
+    integer(wi) i
 
     do i = 1, particle_number
         if (l_q(i, 2) > l_y_lambda) then
@@ -31,8 +30,8 @@ subroutine PARTICLE_TIME_RESIDENCE(dtime, particle_number, l_q)
         if (l_q(i, 2) > l_y_base) then
             l_q(i, inb_part_array) = l_q(i, inb_part_array) + dtime   !time cloud droplets spend in intermediate 2/3 of cloud
         elseif (l_q(i, 2) <= l_y_base) then
-            l_q(i, inb_part_array - 1) = C_0_R   !cloud droplets loose memory when "leaving" cloud
-            l_q(i, inb_part_array) = C_0_R   !cloud droplets loose memory when "leaving" cloud
+            l_q(i, inb_part_array - 1) = 0.0_wp   !cloud droplets loose memory when "leaving" cloud
+            l_q(i, inb_part_array) = 0.0_wp   !cloud droplets loose memory when "leaving" cloud
         end if
     end do
 
@@ -42,7 +41,7 @@ end subroutine PARTICLE_TIME_RESIDENCE
 !########################################################################
 !########################################################################
 subroutine PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
-
+    use TLab_Constants, only: wp, wi, longi
     use PARTICLE_VARS, only: isize_part, inb_part_array
 #ifdef USE_MPI
     use MPI
@@ -52,17 +51,17 @@ subroutine PARTICLE_RESIDENCE_PDF(fname, particle_number, l_q)
     implicit none
 
     character*(*) fname
-    TINTEGER particle_number
-    TREAL, dimension(isize_part, *) :: l_q
+    integer(wi) particle_number
+    real(wp), dimension(isize_part, *) :: l_q
 
 ! -------------------------------------------------------------------
-    TLONGINTEGER, dimension(:, :), allocatable :: residence_bins
-    TREAL, dimension(:), allocatable :: residence_counter_interval
-    TINTEGER i, j
-    TINTEGER residence_tmax, residence_nbins
-    TREAL residence_pdf_interval
+    integer(longi), dimension(:, :), allocatable :: residence_bins
+    real(wp), dimension(:), allocatable :: residence_counter_interval
+    integer(wi) i, j
+    integer(wi) residence_tmax, residence_nbins
+    real(wp) residence_pdf_interval
 #ifdef USE_MPI
-    TLONGINTEGER, dimension(:, :), allocatable :: residence_bins_local
+    integer(longi), dimension(:, :), allocatable :: residence_bins_local
 #endif
 
 ! #####################################################################

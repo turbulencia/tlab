@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -8,7 +7,7 @@
 !########################################################################
 !########################################################################
 subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
-
+    use TLab_Constants, only: wp, wi, longi
     use TLab_Types, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
     use TLAB_VARS, only: g
@@ -24,25 +23,25 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
     implicit none
 
     character*(*) fname
-    TREAL, dimension(isize_field, *), target :: s
+    real(wp), dimension(isize_field, *), target :: s
 
     type(particle_dt) :: l_g
-    TREAL, dimension(isize_part, *) :: l_q
-    TREAL, dimension(isize_part, 1), target :: l_txc
+    real(wp), dimension(isize_part, *) :: l_q
+    real(wp), dimension(isize_part, 1), target :: l_txc
 
 ! -------------------------------------------------------------------
-    TINTEGER nvar, number_of_bins
+    integer(wi) nvar, number_of_bins
     type(pointers3d_dt), dimension(1) :: data
     type(pointers_dt), dimension(1) :: data_out
 
-    TREAL, dimension(:), allocatable :: counter_interval
-    TLONGINTEGER, dimension(:, :), allocatable :: particle_bins
+    real(wp), dimension(:), allocatable :: counter_interval
+    integer(longi), dimension(:, :), allocatable :: particle_bins
 #ifdef USE_MPI
-    TLONGINTEGER, dimension(:, :), allocatable :: particle_bins_local
+    integer(longi), dimension(:, :), allocatable :: particle_bins_local
 #endif
 
-    TINTEGER i, j, is
-    TREAL particle_pdf_min
+    integer(wi) i, j, is
+    real(wp) particle_pdf_min
 
 !########################################################################
     number_of_bins = int(particle_pdf_max/particle_pdf_interval)
@@ -57,13 +56,13 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
 
     nvar = 0
     nvar = nvar + 1; data(nvar)%field(1:imax, 1:jmax, 1:kmax) => s(:, inb_scal_array); data_out(nvar)%field => l_txc(:, 1)
-    l_txc(:, 1) = C_0_R
+    l_txc(:, 1) = 0.0_wp
     call FIELD_TO_PARTICLE(data(1:nvar), data_out(1:nvar), l_g, l_q)
 
 !########################################################################
 ! Calculating
 !########################################################################
-    particle_pdf_min = C_0_R  !if needed for future
+    particle_pdf_min = 0.0_wp  !if needed for future
 
     particle_bins = 0
 
@@ -107,7 +106,7 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
 
         open (unit=116, file=fname)
         do i = 1, number_of_bins
-       write (116, '(F6.3, I20.1, I20.1, I20.1)') counter_interval(i), particle_bins(i, 1), particle_bins(i, 2), particle_bins(i, 3)
+            write (116, '(F6.3, I20.1, I20.1, I20.1)') counter_interval(i), particle_bins(i, 1), particle_bins(i, 2), particle_bins(i, 3)
         end do
         close (116)
 #ifdef USE_MPI
