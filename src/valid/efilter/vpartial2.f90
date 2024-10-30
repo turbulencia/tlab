@@ -1,7 +1,7 @@
 
 program VPARTIAL2
     use TLab_Constants, only: wp, wi
-    use FDM, only: grid_dt
+    use TLab_Types, only: grid_dt
     use OPR_PARTIAL
     implicit none
 

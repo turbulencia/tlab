@@ -20,8 +20,8 @@
 
 program INTERPOL
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: grid_dt, FDM_Initialize
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Types, only: grid_dt
+    use TLab_WorkFlow
 
     implicit none
 
@@ -29,15 +29,16 @@ program INTERPOL
     integer(wi) :: jmax, kmax, i, l, test_type, periodic
     real(wp) :: lambda, error, sol
 
-    integer(wi), parameter :: imax = 32, len = 10
+    integer(wi), parameter :: imax = 32, len = 10, inb_grid = 57
     integer(wi), parameter :: imaxp = imax - 1
 
-    real(wp), allocatable :: x(:,:), x_pre(:,:)
-    
+    real(wp), dimension(imax, inb_grid) :: x
+    real(wp), dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
+
     real(wp), dimension(imax) :: x_int, x_aux
     real(wp), dimension(len, imax) :: u, u_int, u_aux, u_a, u_b
     real(wp), dimension(len, imax) :: dudx, dudx_int, dudx_aux
-    real(wp), dimension(imax, 18) :: wrk1d
+    real(wp), dimension(imax, 5) :: wrk1d
     real(wp), dimension(len) :: wrk2d
 
 ! ###################################################################
@@ -82,13 +83,11 @@ program INTERPOL
 ! Initialize grid
     if (g%periodic) then
         do i = 1, imax
-            ! x(i, 1) = real(i - 1)/real(imax)*g%scale
-            wrk1d(i, 1) = real(i - 1)/real(imax)*g%scale
+            x(i, 1) = real(i - 1)/real(imax)*g%scale
         end do
     else
         do i = 1, imax
-            ! x(i, 1) = real(i - 1)/real(imax - 1)*g%scale
-            wrk1d(i, 1) = real(i - 1)/real(imax - 1)*g%scale
+            x(i, 1) = real(i - 1)/real(imax - 1)*g%scale
         end do
     end if
 

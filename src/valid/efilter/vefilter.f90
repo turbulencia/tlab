@@ -2,8 +2,7 @@
 
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
-    use TLab_Types, only: filter_dt
-    use FDM, only: grid_dt, FDM_Initialize
+    use TLab_Types, only: filter_dt, grid_dt
     use TLAB_VARS, only: visc, schmidt
     USE OPR_FILTERS
 
@@ -11,9 +10,8 @@ program VEFILTER
 
     integer(wi) imax, i, ik, i1bc
     parameter(imax=257)
-    real(wp), allocatable :: x(:,:)
-    real(wp) u(imax), uf(imax)
-    real(wp) wrk1d(imax, 18)! , wrk2d(imax), wrk3d(imax) YOU NEED TO USE NEW MEM MANAGEMENT
+    real(wp) x(imax, 50), u(imax), uf(imax)
+    real(wp) wrk1d(imax, 10)! , wrk2d(imax), wrk3d(imax) YOU NEED TO USE NEW MEM MANAGEMENT
     type(filter_dt) filter
     type(grid_dt) g
 
@@ -33,8 +31,7 @@ program VEFILTER
         filter%bcsmin = DNS_FILTER_BCS_PERIODIC
         filter%bcsmax = DNS_FILTER_BCS_PERIODIC
         do i = 1, imax
-            wrk1d(i, 1) = real(i - 1)/real(imax)*g%scale
-            ! x(i, 1) = real(i - 1)/real(imax)*g%scale
+            x(i, 1) = real(i - 1)/real(imax)*g%scale
         end do
     else
         g%periodic = .false.
@@ -42,8 +39,7 @@ program VEFILTER
         filter%bcsmin = DNS_FILTER_BCS_ZERO
         filter%bcsmax = DNS_FILTER_BCS_ZERO
         do i = 1, imax
-            wrk1d(i, 1) = real(i - 1)/real(imax-1)*g%scale
-            ! x(i, 1) = real(i - 1)/real(imax-1)*g%scale
+            x(i, 1) = real(i - 1)/real(imax-1)*g%scale
         end do
         ! open (21, file='y.dat')
         ! do i = 1, imax
