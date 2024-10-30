@@ -12,8 +12,9 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, inb_scal, imode_eqns
-    use TLAB_VARS, only: g, buoyancy
+    use TLAB_VARS, only: imax, jmax, kmax, inb_scal
+    use TLAB_VARS, only: imode_eqns, buoyancy
+    use TLAB_VARS, only: g
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hq, hs

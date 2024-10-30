@@ -4,7 +4,8 @@
 module PLANES
     use TLab_Constants, only: efile, lfile, wp, wi, fmt_r, small_wp
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
-    use TLAB_VARS, only: g, scal_on
+    use TLAB_VARS, only: scal_on
+    use TLAB_VARS, only: g
     use TLAB_VARS, only: itime, rtime
     use TLab_Arrays, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use IBM_VARS, only: imode_ibm, ibm_partial
