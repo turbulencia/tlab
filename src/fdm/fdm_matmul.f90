@@ -6,8 +6,7 @@
 ! Calculation of RHS for different stencil lengths and bcs (periodic|biased)
 !########################################################################
 module FDM_MatMul
-    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use TLab_Constants, only: efile
+    use TLab_Constants
     implicit none
     private
 
