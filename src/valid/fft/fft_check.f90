@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #ifdef USE_MPI
 #include "dns_const_mpi.h"
@@ -16,7 +15,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
 
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLab_Constants, only: lfile
+    use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: isize_txc_dimx, isize_txc_dimz
     use OPR_FOURIER
 #ifdef USE_MPI
@@ -26,19 +25,19 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
 
     implicit none
 
-    TINTEGER, intent(IN) :: check_mode
-    TINTEGER, intent(INOUT) :: err_count, case_count
-    TREAL, dimension((imax + 2)*(jmax + 2)*kmax) :: tmp1, tmp2, tmp3, tmp4, wrk2d, wrk3d
-    TREAL, dimension(imax*jmax*kmax) :: trans, trans_ref
+    integer(wi), intent(IN) :: check_mode
+    integer(wi), intent(INOUT) :: err_count, case_count
+    real(wp), dimension((imax + 2)*(jmax + 2)*kmax) :: tmp1, tmp2, tmp3, tmp4, wrk2d, wrk3d
+    real(wp), dimension(imax*jmax*kmax) :: trans, trans_ref
 
-    TREAL :: scalex, scaley, dummy, field_variance
-    TREAL, dimension(jmax) :: spec_variance, dummy_variance
+    real(wp) :: scalex, scaley, dummy, field_variance
+    real(wp), dimension(jmax) :: spec_variance, dummy_variance
 
-    TINTEGER :: i, j, k, iv, ip, ip_ref, bad_count, good_count, bad, nxz
-    TINTEGER :: good_planes, bad_planes
-    TINTEGER :: isize_fft3d, isize_wrk3d, isize_trn3d
-    TINTEGER :: isize_page_ij, isize_line_i
-    TREAL :: norm, residual, re, im, arg
+    integer(wi) :: i, j, k, iv, ip, ip_ref, bad_count, good_count, bad, nxz
+    integer(wi) :: good_planes, bad_planes
+    integer(wi) :: isize_fft3d, isize_wrk3d, isize_trn3d
+    integer(wi) :: isize_page_ij, isize_line_i
+    real(wp) :: norm, residual, re, im, arg
     character :: fname*32, line*256, check_name*32, label*32
 
     isize_page_ij = imax*jmax
@@ -252,11 +251,11 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
 
 contains
 
-    TREAL function SETUP_CHECK(check_mode, i, j, k)
+    real(wp) function SETUP_CHECK(check_mode, i, j, k)
 
         implicit none
 
-        TINTEGER, intent(IN) :: check_mode, i, j, k
+        integer(wi), intent(IN) :: check_mode, i, j, k
 
         select case (check_mode)
         case (1) ! delta check
@@ -279,11 +278,11 @@ contains
 
     end function SETUP_CHECK
 
-    TREAL function POWER_CHECK(check_mode, i, j, k)
+    real(wp) function POWER_CHECK(check_mode, i, j, k)
 
-        TINTEGER, intent(IN) :: check_mode, i, j, k
+        integer(wi), intent(IN) :: check_mode, i, j, k
 
-        TREAL arg, re, im
+        real(wp) arg, re, im
 
         select case (check_mode)
         case (1)  ! delta-function check

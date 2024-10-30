@@ -10,24 +10,22 @@
 !########################################################################
 !# DESCRIPTION
 !#
-!# Multiplication of pentadiagonal arrays A and B to give the 
+!# Multiplication of pentadiagonal arrays A and B to give the
 !# nonadiadonal matrix C=AB
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !########################################################################
-SUBROUTINE PENTADMT(nmax, a, b, c)
+subroutine PENTADMT(nmax, a, b, c)
+    use TLab_Constants, only: wp, wi
+    implicit none
 
-  IMPLICIT NONE
-
-#include "types.h"
-
-  TINTEGER nmax
-  TREAL a(nmax,5), b(nmax,5), c(nmax,9)
+    integer(wi) nmax
+    real(wp) a(nmax, 5), b(nmax, 5), c(nmax, 9)
 
 ! -----------------------------------------------------------------------
-  TINTEGER n
+    integer(wi) n
 
 ! #######################################################################
 #define A_a(n) a(n,1)
@@ -52,105 +50,105 @@ SUBROUTINE PENTADMT(nmax, a, b, c)
 #define C_h(n) c(n,8)
 #define C_i(n) c(n,9)
 
-  n=1
-  C_a(n) = C_0_R ! padding
-  C_b(n) = C_0_R ! padding
-  C_c(n) = C_0_R ! padding
-  C_d(n) = C_0_R ! padding
-  C_e(n) =                                   A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-  C_f(n) =                                   A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-  C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-  C_h(n) =                                                  A_d(n)*B_e(n+1) +A_e(n)*B_d(n+2)
-  C_i(n) =                                                                   A_e(n)*B_e(n+2)
+    n = 1
+    C_a(n) = C_0_R ! padding
+    C_b(n) = C_0_R ! padding
+    C_c(n) = C_0_R ! padding
+    C_d(n) = C_0_R ! padding
+    C_e(n) = A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+    C_f(n) = A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+    C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+    C_h(n) = A_d(n)*B_e(n + 1) + A_e(n)*B_d(n + 2)
+    C_i(n) = A_e(n)*B_e(n + 2)
 
-  n=2
-  C_a(n) = C_0_R ! padding
-  C_b(n) = C_0_R ! padding
-  C_c(n) = C_0_R ! padding
-  C_d(n) =                  A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-  C_e(n) =                  A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-  C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-  C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-  C_h(n) =                                                  A_d(n)*B_e(n+1) +A_e(n)*B_d(n+2)
-  C_i(n) =                                                                   A_e(n)*B_e(n+2)
+    n = 2
+    C_a(n) = C_0_R ! padding
+    C_b(n) = C_0_R ! padding
+    C_c(n) = C_0_R ! padding
+    C_d(n) = A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+    C_e(n) = A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+    C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+    C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+    C_h(n) = A_d(n)*B_e(n + 1) + A_e(n)*B_d(n + 2)
+    C_i(n) = A_e(n)*B_e(n + 2)
 
-  n=3
-  C_a(n) = C_0_R ! padding
-  C_b(n) = C_0_R ! padding
-  C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-  C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-  C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-  C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-  C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-  C_h(n) =                                                  A_d(n)*B_e(n+1) +A_e(n)*B_d(n+2)
-  C_i(n) =                                                                   A_e(n)*B_e(n+2)
+    n = 3
+    C_a(n) = C_0_R ! padding
+    C_b(n) = C_0_R ! padding
+    C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+    C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+    C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+    C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+    C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+    C_h(n) = A_d(n)*B_e(n + 1) + A_e(n)*B_d(n + 2)
+    C_i(n) = A_e(n)*B_e(n + 2)
 
-  n=4
-  C_a(n) = C_0_R ! padding
-  C_b(n) = A_a(n)*B_b(n-2) +A_b(n)*B_a(n-1) 
-  C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-  C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-  C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-  C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-  C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-  C_h(n) =                                                  A_d(n)*B_e(n+1) +A_e(n)*B_d(n+2)
-  C_i(n) =                                                                   A_e(n)*B_e(n+2)
+    n = 4
+    C_a(n) = C_0_R ! padding
+    C_b(n) = A_a(n)*B_b(n - 2) + A_b(n)*B_a(n - 1)
+    C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+    C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+    C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+    C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+    C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+    C_h(n) = A_d(n)*B_e(n + 1) + A_e(n)*B_d(n + 2)
+    C_i(n) = A_e(n)*B_e(n + 2)
 
-  DO n = 5,nmax-4
-     C_a(n) = A_a(n)*B_a(n-2) 
-     C_b(n) = A_a(n)*B_b(n-2) +A_b(n)*B_a(n-1) 
-     C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-     C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-     C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-     C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-     C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-     C_h(n) =                                                  A_d(n)*B_e(n+1) +A_e(n)*B_d(n+2)
-     C_i(n) =                                                                   A_e(n)*B_e(n+2)
-  ENDDO
+    do n = 5, nmax - 4
+        C_a(n) = A_a(n)*B_a(n - 2)
+        C_b(n) = A_a(n)*B_b(n - 2) + A_b(n)*B_a(n - 1)
+        C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+        C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+        C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+        C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+        C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+        C_h(n) = A_d(n)*B_e(n + 1) + A_e(n)*B_d(n + 2)
+        C_i(n) = A_e(n)*B_e(n + 2)
+    end do
 
-  n=nmax-3
-  C_a(n) = A_a(n)*B_a(n-2) 
-  C_b(n) = A_a(n)*B_b(n-2) +A_b(n)*B_a(n-1) 
-  C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-  C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-  C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-  C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-  C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-  C_h(n) =                                                  A_d(n)*B_e(n+1) +A_e(n)*B_d(n+2)
-  C_i(n) = C_0_R ! padding
+    n = nmax - 3
+    C_a(n) = A_a(n)*B_a(n - 2)
+    C_b(n) = A_a(n)*B_b(n - 2) + A_b(n)*B_a(n - 1)
+    C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+    C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+    C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+    C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+    C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+    C_h(n) = A_d(n)*B_e(n + 1) + A_e(n)*B_d(n + 2)
+    C_i(n) = C_0_R ! padding
 
-  n=nmax-2
-  C_a(n) = A_a(n)*B_a(n-2) 
-  C_b(n) = A_a(n)*B_b(n-2) +A_b(n)*B_a(n-1) 
-  C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-  C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-  C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) +A_e(n)*B_a(n+2)
-  C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) +A_e(n)*B_b(n+2)
-  C_g(n) =                                   A_c(n)*B_e(n) +A_d(n)*B_d(n+1) +A_e(n)*B_c(n+2)
-  C_h(n) = C_0_R ! padding
-  C_i(n) = C_0_R ! padding
+    n = nmax - 2
+    C_a(n) = A_a(n)*B_a(n - 2)
+    C_b(n) = A_a(n)*B_b(n - 2) + A_b(n)*B_a(n - 1)
+    C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+    C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+    C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1) + A_e(n)*B_a(n + 2)
+    C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1) + A_e(n)*B_b(n + 2)
+    C_g(n) = A_c(n)*B_e(n) + A_d(n)*B_d(n + 1) + A_e(n)*B_c(n + 2)
+    C_h(n) = C_0_R ! padding
+    C_i(n) = C_0_R ! padding
 
-  n=nmax-1
-  C_a(n) = A_a(n)*B_a(n-2) 
-  C_b(n) = A_a(n)*B_b(n-2) +A_b(n)*B_a(n-1) 
-  C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-  C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n) +A_d(n)*B_a(n+1) 
-  C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n) +A_d(n)*B_b(n+1) 
-  C_f(n) =                  A_b(n)*B_e(n-1) +A_c(n)*B_d(n) +A_d(n)*B_c(n+1) 
-  C_g(n) = C_0_R ! padding
-  C_h(n) = C_0_R ! padding
-  C_i(n) = C_0_R ! padding
+    n = nmax - 1
+    C_a(n) = A_a(n)*B_a(n - 2)
+    C_b(n) = A_a(n)*B_b(n - 2) + A_b(n)*B_a(n - 1)
+    C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+    C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n) + A_d(n)*B_a(n + 1)
+    C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n) + A_d(n)*B_b(n + 1)
+    C_f(n) = A_b(n)*B_e(n - 1) + A_c(n)*B_d(n) + A_d(n)*B_c(n + 1)
+    C_g(n) = C_0_R ! padding
+    C_h(n) = C_0_R ! padding
+    C_i(n) = C_0_R ! padding
 
-  n=nmax
-  C_a(n) = A_a(n)*B_a(n-2) 
-  C_b(n) = A_a(n)*B_b(n-2) +A_b(n)*B_a(n-1) 
-  C_c(n) = A_a(n)*B_c(n-2) +A_b(n)*B_b(n-1) +A_c(n)*B_a(n) 
-  C_d(n) = A_a(n)*B_d(n-2) +A_b(n)*B_c(n-1) +A_c(n)*B_b(n)
-  C_e(n) = A_a(n)*B_e(n-2) +A_b(n)*B_d(n-1) +A_c(n)*B_c(n)
-  C_f(n) = C_0_R ! padding
-  C_g(n) = C_0_R ! padding
-  C_h(n) = C_0_R ! padding
-  C_i(n) = C_0_R ! padding
+    n = nmax
+    C_a(n) = A_a(n)*B_a(n - 2)
+    C_b(n) = A_a(n)*B_b(n - 2) + A_b(n)*B_a(n - 1)
+    C_c(n) = A_a(n)*B_c(n - 2) + A_b(n)*B_b(n - 1) + A_c(n)*B_a(n)
+    C_d(n) = A_a(n)*B_d(n - 2) + A_b(n)*B_c(n - 1) + A_c(n)*B_b(n)
+    C_e(n) = A_a(n)*B_e(n - 2) + A_b(n)*B_d(n - 1) + A_c(n)*B_c(n)
+    C_f(n) = C_0_R ! padding
+    C_g(n) = C_0_R ! padding
+    C_h(n) = C_0_R ! padding
+    C_i(n) = C_0_R ! padding
 
-  RETURN
-END SUBROUTINE PENTADMT
+    return
+end subroutine PENTADMT

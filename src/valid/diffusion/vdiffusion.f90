@@ -1,20 +1,19 @@
-#include "types.h"
 #include "dns_const.h"
 
 program VDIFFUSION
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
 
     implicit none
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :), allocatable :: q, s, s_r
-    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable :: q, s, s_r
+    real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
-    TINTEGER i, j, ij, iopt
-    TINTEGER isize_wrk3d
-    TREAL dummy, error, pi_loc, factor, wavenumber, x_loc
+    integer(wi) i, j, ij, iopt
+    integer(wi) isize_wrk3d
+    real(wp) dummy, error, pi_loc, factor, wavenumber, x_loc
     character*(32) fname
 
 ! ###################################################################

@@ -1,8 +1,7 @@
-#include "types.h"
 #include "dns_const.h"
 
 program VTGVORTEX
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
     use OPR_FOURIER
@@ -11,12 +10,12 @@ program VTGVORTEX
 
     implicit none
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :), allocatable :: txc, q
-    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable :: txc, q
+    real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
-    TINTEGER ij, iv, iopt
-    TREAL dummy, error
+    integer(wi) ij, iv, iopt
+    real(wp) dummy, error
     character*(32) fname
 
 ! ###################################################################
@@ -115,14 +114,14 @@ subroutine FLOW_TAYLORGREEN(nx, ny, nz, rtime, visc, x, y, z, u, v, w, p)
 
     implicit none
 
-    TINTEGER nx, ny, nz
-    TREAL rtime, visc
-    TREAL, dimension(*) :: x, y, z
-    TREAL, dimension(nx, ny, nz) :: u, v, w, p
+    integer(wi) nx, ny, nz
+    real(wp) rtime, visc
+    real(wp), dimension(*) :: x, y, z
+    real(wp), dimension(nx, ny, nz) :: u, v, w, p
 
 ! -----------------------------------------------------------------------
-    TINTEGER i, j, k
-    TREAL pi_loc, omega, factor, sigma
+    integer(wi) i, j, k
+    real(wp) pi_loc, omega, factor, sigma
 
 ! #######################################################################
     pi_loc = acos(-C_1_R); omega = C_2_R*pi_loc

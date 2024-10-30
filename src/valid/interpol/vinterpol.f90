@@ -16,36 +16,35 @@
 !# ARGUMENTS
 !#
 !########################################################################
-#include "types.h"
 #include "dns_const.h"
 
 program INTERPOL
-
+    use TLab_Constants, only: wp, wi, pi_wp
     use TLab_Types, only: grid_dt
     use TLab_WorkFlow
 
     implicit none
 
     type(grid_dt) :: g, g_pre
-    TINTEGER :: jmax, kmax, i, l, test_type, periodic
-    TREAL :: lambda, error, sol
+    integer(wi) :: jmax, kmax, i, l, test_type, periodic
+    real(wp) :: lambda, error, sol
 
-    TINTEGER, parameter :: imax = 32, len = 10, inb_grid = 57
-    TINTEGER, parameter :: imaxp = imax - 1
+    integer(wi), parameter :: imax = 32, len = 10, inb_grid = 57
+    integer(wi), parameter :: imaxp = imax - 1
 
-    TREAL, dimension(imax, inb_grid) :: x
-    TREAL, dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
+    real(wp), dimension(imax, inb_grid) :: x
+    real(wp), dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
 
-    TREAL, dimension(imax) :: x_int, x_aux
-    TREAL, dimension(len, imax) :: u, u_int, u_aux, u_a, u_b
-    TREAL, dimension(len, imax) :: dudx, dudx_int, dudx_aux
-    TREAL, dimension(imax, 5) :: wrk1d
-    TREAL, dimension(len) :: wrk2d
+    real(wp), dimension(imax) :: x_int, x_aux
+    real(wp), dimension(len, imax) :: u, u_int, u_aux, u_a, u_b
+    real(wp), dimension(len, imax) :: dudx, dudx_int, dudx_aux
+    real(wp), dimension(imax, 5) :: wrk1d
+    real(wp), dimension(len) :: wrk2d
 
 ! ###################################################################
 ! Initialize
     g%size = imax
-    g%scale = C_1_R
+    g%scale = 1.0_wp
     g%uniform = .true.
     jmax = 1
     kmax = 1
@@ -84,11 +83,11 @@ program INTERPOL
 ! Initialize grid
     if (g%periodic) then
         do i = 1, imax
-            x(i, 1) = M_REAL(i - 1)/M_REAL(imax)*g%scale
+            x(i, 1) = real(i - 1)/real(imax)*g%scale
         end do
     else
         do i = 1, imax
-            x(i, 1) = M_REAL(i - 1)/M_REAL(imax - 1)*g%scale
+            x(i, 1) = real(i - 1)/real(imax - 1)*g%scale
         end do
     end if
 
@@ -104,7 +103,7 @@ program INTERPOL
         do i = 1, imaxp
             x_int(i) = g%nodes(i) + 0.5*g%jac(i, 1)
         end do
-        x_int(imax) = C_0_R
+        x_int(imax) = 0.0_wp
     end if
     x_aux(:) = x_int(:)
 
@@ -119,13 +118,13 @@ program INTERPOL
     do i = 1, imax
         do l = 1, len
             u(l, i) = &
-                sin(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))
+                sin(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))
             u_int(l, i) = &
-                sin(C_2_R*C_PI_R/g%scale*lambda*x_int(i))
-            dudx(l, i) = (C_2_R*C_PI_R/g%scale*lambda) &
-                         *cos(C_2_R*C_PI_R/g%scale*lambda*g%nodes(i))
-            dudx_int(l, i) = (C_2_R*C_PI_R/g%scale*lambda) &
-                             *cos(C_2_R*C_PI_R/g%scale*lambda*x_int(i))
+                sin(2.0_wp*pi_wp/g%scale*lambda*x_int(i))
+            dudx(l, i) = (2.0_wp*pi_wp/g%scale*lambda) &
+                         *cos(2.0_wp*pi_wp/g%scale*lambda*g%nodes(i))
+            dudx_int(l, i) = (2.0_wp*pi_wp/g%scale*lambda) &
+                             *cos(2.0_wp*pi_wp/g%scale*lambda*x_int(i))
             u_aux(l, i) = u_int(l, i)
             dudx_aux(l, i) = dudx_int(l, i)
         end do
@@ -230,15 +229,15 @@ program INTERPOL
 ! IO - Error and function values
     if (g%periodic .neqv. .true.) then
         if (test_type == 1 .or. test_type == 3) then
-            u_a(:, imax) = C_0_R
-            u_int(:, imax) = C_0_R
-            u(:, imax) = C_0_R
+            u_a(:, imax) = 0.0_wp
+            u_int(:, imax) = 0.0_wp
+            u(:, imax) = 0.0_wp
         end if
     end if
 
     open (20, file='interpol.dat')
-    error = C_0_R
-    sol = C_0_R
+    error = 0.0_wp
+    sol = 0.0_wp
     do i = 1, imax
         do l = 1, len
             write (20, 1000) x(i, 1), x_int(i), u(l, i), u_int(l, i), u_a(l, i), u_a(l, i) - u_int(l, i)
@@ -249,9 +248,9 @@ program INTERPOL
     end do
     close (20)
 
-    write (*, 2000) 'Solution L2-norm ...........:', sqrt(g%jac(1, 1)*sol/M_REAL(len))
-    if (sol == C_0_R) stop
-    write (*, 2000) 'Error L2-norm ..............:', sqrt(g%jac(1, 1)*error/M_REAL(len))
+    write (*, 2000) 'Solution L2-norm ...........:', sqrt(g%jac(1, 1)*sol/real(len))
+    if (sol == 0.0_wp) stop
+    write (*, 2000) 'Error L2-norm ..............:', sqrt(g%jac(1, 1)*error/real(len))
     write (*, 2000) 'Error Linf-norm ............:', maxval(u_b(1, 1:imax))
     write (*, 2000) 'Relative error .............:', sqrt(error)/sqrt(sol)
 

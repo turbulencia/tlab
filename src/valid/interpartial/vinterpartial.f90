@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 !########################################################################
 !# Valid
@@ -19,7 +18,6 @@
 !#
 !########################################################################
 program VINTERPARTIAL
-
     use TLab_Constants
     use TLAB_VARS
     use TLab_WorkFlow
@@ -34,19 +32,19 @@ program VINTERPARTIAL
     implicit none
 
 #ifdef USE_MPI
-    TREAL error2, dummy2
+    real(wp) error2, dummy2
 #else
-    TINTEGER, parameter :: ims_pro = 0
+    integer(wi), parameter :: ims_pro = 0
 #endif
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :, :), allocatable :: a, a_int, a_dif
-    TREAL, dimension(:, :, :), allocatable :: b, c
-    TREAL, dimension(:, :), allocatable :: wrk1d, wrk2d
-    TREAL, dimension(:), allocatable :: wrk3d, tmp1, d
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :, :), allocatable :: a, a_int, a_dif
+    real(wp), dimension(:, :, :), allocatable :: b, c
+    real(wp), dimension(:, :), allocatable :: wrk1d, wrk2d
+    real(wp), dimension(:), allocatable :: wrk3d, tmp1, d
 
-    TINTEGER bcs(2, 2)
-    TREAL dummy, error
+    integer(wi) bcs(2, 2)
+    real(wp) dummy, error
 ! ###################################################################
     call TLab_Start()
 

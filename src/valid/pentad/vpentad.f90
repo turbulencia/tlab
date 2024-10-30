@@ -1,15 +1,13 @@
 program VPENTAD
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-#include "types.h"
+    integer(wi), parameter :: nmax = 32, len = 5
+    real(wp), dimension(nmax, 5) :: a, b, c
+    real(wp), dimension(len, nmax) :: x, f
 
-    TINTEGER, parameter :: nmax = 32, len = 5
-    TREAL, dimension(nmax, 5) :: a, b, c
-    TREAL, dimension(len, nmax) :: x, f
-
-    TINTEGER n, ij, seed, im2, im1, ip1, ip2
-    TREAL RAN0, error, sol
+    integer(wi) n, ij, seed, im2, im1, ip1, ip2
+    real(wp) RAN0, error, sol
 
 ! ###################################################################
 #define a_a(n) a(n,1)

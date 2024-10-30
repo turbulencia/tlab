@@ -1,7 +1,6 @@
-#include "types.h"
 
 program VFFTW
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
     use OPR_PARTIAL
@@ -12,10 +11,10 @@ program VFFTW
 #include "fftw3.f"
 #endif
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :, :), pointer :: a, b, c
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :, :), pointer :: a, b, c
     TCOMPLEX, dimension(:, :, :), pointer :: a1, a2, a3
-    TREAL, dimension(:), pointer :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:), pointer :: wrk1d, wrk2d, wrk3d
 
     TCOMPLEX :: Img
 
@@ -23,8 +22,8 @@ program VFFTW
     integer(8) fft_plan_fx, fft_plan_fz
     integer(8) fft_plan_bx, fft_plan_bz
 
-!  TREAL fft_data_x, fft_data_z
-    TREAL dummy, error
+!  real(wp) fft_data_x, fft_data_z
+    real(wp) dummy, error
 
 ! ###################################################################
     call DNS_START

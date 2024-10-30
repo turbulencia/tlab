@@ -1,17 +1,15 @@
 program VEFILTER2
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
     use OPR_FILTERS
 
     implicit none
 
-#include "types.h"
-
-    TREAL, dimension(:, :), allocatable :: x, y, z
-    TREAL, dimension(:), allocatable :: a, cx, cy, cz
-    TREAL, dimension(:, :), allocatable :: wrk3d
-    TINTEGER :: i
+    real(wp), dimension(:, :), allocatable :: x, y, z
+    real(wp), dimension(:), allocatable :: a, cx, cy, cz
+    real(wp), dimension(:, :), allocatable :: wrk3d
+    integer(wi) :: i
 
 ! ###################################################################
     call DNS_START

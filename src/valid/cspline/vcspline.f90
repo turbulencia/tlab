@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -28,27 +27,27 @@ program CSPLINE
 
     ! define spline parameters here
     type(grid_dt) :: g, g_int                            ! original and refined grid
-    TINTEGER, parameter :: inb_grid = 57
-    TINTEGER, parameter :: imax = 11                       ! number of data points
-    TINTEGER, parameter :: mesh = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
-    TINTEGER, parameter :: imax_int = (imax + (mesh - 1)*(imax - 1)) ! number of spline data points
-    TINTEGER :: i
-    TREAL :: xb, xe, lambda, r
-    TREAL :: res_2, res_inf
+    integer(wi), parameter :: inb_grid = 57
+    integer(wi), parameter :: imax = 11                       ! number of data points
+    integer(wi), parameter :: mesh = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
+    integer(wi), parameter :: imax_int = (imax + (mesh - 1)*(imax - 1)) ! number of spline data points
+    integer(wi) :: i
+    real(wp) :: xb, xe, lambda, r
+    real(wp) :: res_2, res_inf
     logical :: periodic, random, uniform
     ! data arrays
-    TREAL, dimension(imax, inb_grid) :: x
-    TREAL, dimension(imax_int, inb_grid) :: x_int
-    TREAL, dimension(imax) :: y
-    TREAL, dimension(imax_int) :: y_sp, y_int, delta
-    TREAL, dimension(imax_int) :: dydx, ddydx
+    real(wp), dimension(imax, inb_grid) :: x
+    real(wp), dimension(imax_int, inb_grid) :: x_int
+    real(wp), dimension(imax) :: y
+    real(wp), dimension(imax_int) :: y_sp, y_int, delta
+    real(wp), dimension(imax_int) :: dydx, ddydx
     ! boundary conditions
-    TINTEGER, dimension(2) :: bc    ! boundary condition for both endpoints
-    TREAL, dimension(2) :: bcval ! boundary values of 1st or 2nd deriv. at endpoints
+    integer(wi), dimension(2) :: bc    ! boundary condition for both endpoints
+    real(wp), dimension(2) :: bcval ! boundary values of 1st or 2nd deriv. at endpoints
     ! working arrays
-    TREAL, dimension(11*imax) :: wrk
-    TREAL, dimension(imax, 5) :: wrk1d
-    TREAL, dimension(imax_int, 5) :: wrk1d_int
+    real(wp), dimension(11*imax) :: wrk
+    real(wp), dimension(imax, 5) :: wrk1d
+    real(wp), dimension(imax_int, 5) :: wrk1d_int
 
     integer, parameter :: i0 = 0, i1 = 1
 
