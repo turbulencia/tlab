@@ -1,9 +1,8 @@
-#include "types.h"
 #include "dns_error.h"
 
 subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
                                       threshold, ibuffer_npy, u, v, w, sl, samples, txc, wrk1d, wrk2d, wrk3d)
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -13,16 +12,16 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 
 #define L_NFIELDS_MAX 4
 
-    TREAL threshold
-    TINTEGER iopt, isl, ith, nfield, itxc_size, np, ibuffer_npy
-    TREAL u(*), v(*), w(*), sl(imax*kmax, *)
-    TREAL samples(L_NFIELDS_MAX*imax*kmax)
-    TREAL txc(imax*jmax*kmax, 6)
-    TREAL wrk1d(*), wrk2d(imax*kmax, *), wrk3d(*)
+    real(wp) threshold
+    integer(wi) iopt, isl, ith, nfield, itxc_size, np, ibuffer_npy
+    real(wp) u(*), v(*), w(*), sl(imax*kmax, *)
+    real(wp) samples(L_NFIELDS_MAX*imax*kmax)
+    real(wp) txc(imax*jmax*kmax, 6)
+    real(wp) wrk1d(*), wrk2d(imax*kmax, *), wrk3d(*)
 
 ! -------------------------------------------------------------------
-    TREAL vmin, vmax, vmean, AVG_IK
-    TINTEGER ij, ikmax, nfield_loc, isize, jmin_loc, jmax_loc
+    real(wp) vmin, vmax, vmean, AVG_IK
+    integer(wi) ij, ikmax, nfield_loc, isize, jmin_loc, jmax_loc
     integer(1) igate
     character*32 fname
     character*16 suffix

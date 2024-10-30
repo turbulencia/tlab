@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -20,7 +19,7 @@
 !########################################################################
 subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size, &
                                threshold, ibuffer_npy, u, v, w, p, z1, a, sl, profiles, txc, mean, wrk1d, wrk2d, wrk3d)
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
@@ -35,20 +34,20 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
 #define L_NFIELDS_MAX 13
 
-    TINTEGER isl, ith, nmax, istep, kstep, nfield, itxc_size, iavg, ibuffer_npy
-    TREAL threshold
-    TREAL u(*), v(*), w(*), p(*), z1(*), a(*), sl(imax, kmax)
-    TREAL profiles(L_NFIELDS_MAX, nmax, imax/istep, kmax/kstep)
-    TREAL mean(L_NFIELDS_MAX, nmax, 2)
-    TREAL txc(imax*jmax*kmax, 7)
-    TREAL wrk1d(*), wrk2d(3, imax, kmax), wrk3d(*)
+    integer(wi) isl, ith, nmax, istep, kstep, nfield, itxc_size, iavg, ibuffer_npy
+    real(wp) threshold
+    real(wp) u(*), v(*), w(*), p(*), z1(*), a(*), sl(imax, kmax)
+    real(wp) profiles(L_NFIELDS_MAX, nmax, imax/istep, kmax/kstep)
+    real(wp) mean(L_NFIELDS_MAX, nmax, 2)
+    real(wp) txc(imax*jmax*kmax, 7)
+    real(wp) wrk1d(*), wrk2d(3, imax, kmax), wrk3d(*)
 
 ! -------------------------------------------------------------------
-    TREAL vmin, vmax, vmean, AVG_IK, diff, normal_factor, dn_u, norm
-    TINTEGER ij, i, k, n, ifield, nfield_loc, ipfield, jmin_loc, jmax_loc
+    real(wp) vmin, vmax, vmean, AVG_IK, diff, normal_factor, dn_u, norm
+    integer(wi) ij, i, k, n, ifield, nfield_loc, ipfield, jmin_loc, jmax_loc
     character*32 fname
 #ifdef USE_MPI
-    TINTEGER ioffset, ip
+    integer(wi) ioffset, ip
     integer mpio_ip, mpio_locsize
     integer status(MPI_STATUS_SIZE)
 #endif

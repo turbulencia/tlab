@@ -1,8 +1,8 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
 program SL_NORMAL_ANALYSIS
+    use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
 #ifdef USE_MPI
@@ -15,51 +15,51 @@ program SL_NORMAL_ANALYSIS
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
 
 ! Flow variables
-    TREAL, dimension(:, :), pointer :: q
+    real(wp), dimension(:, :), pointer :: q
 
 ! Pointers to existing allocated space
-    TREAL, dimension(:), pointer :: u, v, w, p
+    real(wp), dimension(:), pointer :: u, v, w, p
 
-    TREAL z1(:)
+    real(wp) z1(:)
     allocatable z1
-    TREAL field(:)
+    real(wp) field(:)
     allocatable field
-    TREAL sl(:)
+    real(wp) sl(:)
     allocatable sl
-    TREAL txc(:)
+    real(wp) txc(:)
     allocatable txc
-    TREAL profiles(:)
+    real(wp) profiles(:)
     allocatable profiles
-    TREAL mean(:)
+    real(wp) mean(:)
     allocatable mean
-    TREAL wrk1d(:)
+    real(wp) wrk1d(:)
     allocatable wrk1d
-    TREAL wrk2d(:)
+    real(wp) wrk2d(:)
     allocatable wrk2d
-    TREAL wrk3d(:)
+    real(wp) wrk3d(:)
     allocatable wrk3d
 
-    TINTEGER iopt, isl, ith, itxc_size, iavg
-    TREAL threshold
-    TINTEGER ibuffer_npy
-    TINTEGER nmax, istep, kstep, nprof_size, nfield
+    integer(wi) iopt, isl, ith, itxc_size, iavg
+    real(wp) threshold
+    integer(wi) ibuffer_npy
+    integer(wi) nmax, istep, kstep, nprof_size, nfield
     character*32 fname, bakfile
 
-    TINTEGER itime_size_max, itime_size, i
+    integer(wi) itime_size_max, itime_size, i
     parameter(itime_size_max=128)
-    TINTEGER itime_vec(itime_size_max)
-    TINTEGER iopt_size_max, iopt_size
+    integer(wi) itime_vec(itime_size_max)
+    integer(wi) iopt_size_max, iopt_size
     parameter(iopt_size_max=10)
-    TREAL opt_vec(iopt_size_max)
+    real(wp) opt_vec(iopt_size_max)
     character*512 sRes
 #ifdef USE_MPI
     integer icount
 #endif
 
-    TREAL, dimension(:, :), pointer :: dx, dy, dz
+    real(wp), dimension(:, :), pointer :: dx, dy, dz
 
 ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'

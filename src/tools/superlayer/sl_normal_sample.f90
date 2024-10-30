@@ -1,14 +1,4 @@
 !########################################################################
-!# Tool/Library SUPERLAYER
-!#
-!########################################################################
-!# HISTORY
-!#
-!# 2007/09/01 - J.P. Mellado
-!#              Created
-!#
-!########################################################################
-!# DESCRIPTION
 !#
 !# The array b, with a number ofields set by nfields, is sampled along
 !# direction (nx,ny,nz) and the obtained profiles are stored in array c.
@@ -22,8 +12,7 @@
 !########################################################################
 subroutine SL_NORMAL_SAMPLE(imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
                             scalex, scalez, factor, x, y, z, sl, b, c, nx, ny, nz)
-
-#include "types.h"
+    use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
     use TLabMPI_VARS
@@ -31,21 +20,21 @@ subroutine SL_NORMAL_SAMPLE(imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nf
 
     implicit none
 
-    TINTEGER imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield
-    TREAL scalex, scalez, factor
-    TREAL x(*), y(*), z(*)
-    TREAL sl(imax, kmax)
-    TREAL b(imax, jmax, kmax, nfield_loc)
-    TREAL c(nfield, nmax, *)
-    TREAL nx(imax, jmax, kmax), ny(imax, jmax, kmax), nz(imax, jmax, kmax)
+    integer(wi) imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield
+    real(wp) scalex, scalez, factor
+    real(wp) x(*), y(*), z(*)
+    real(wp) sl(imax, kmax)
+    real(wp) b(imax, jmax, kmax, nfield_loc)
+    real(wp) c(nfield, nmax, *)
+    real(wp) nx(imax, jmax, kmax), ny(imax, jmax, kmax), nz(imax, jmax, kmax)
 
 ! -------------------------------------------------------------------
-    TINTEGER i, k, n, ifield
-    TINTEGER im, jm, km, ip, jp, kp
-    TINTEGER iprofile
-    TREAL dx_u, dy_u, dz_u, dn_u
-    TREAL x_loc, y_loc, z_loc, nx_loc, ny_loc, nz_loc, norm, dy_loc, dn_loc
-    TREAL xr, yr, zr, xrc, yrc, zrc
+    integer(wi) i, k, n, ifield
+    integer(wi) im, jm, km, ip, jp, kp
+    integer(wi) iprofile
+    real(wp) dx_u, dy_u, dz_u, dn_u
+    real(wp) x_loc, y_loc, z_loc, nx_loc, ny_loc, nz_loc, norm, dy_loc, dn_loc
+    real(wp) xr, yr, zr, xrc, yrc, zrc
 
 ! ###################################################################
 ! mean value of grid spacing

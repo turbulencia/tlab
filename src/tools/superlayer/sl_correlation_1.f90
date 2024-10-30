@@ -1,7 +1,6 @@
-#include "types.h"
-
 subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
                             strain, vorticity, gradient, tmp1, tmp2, wrk1d, wrk2d, wrk3d)
+                            use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
     use OPR_PARTIAL
@@ -11,28 +10,28 @@ subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
 
     implicit none
 
-    TINTEGER ilog
-    TREAL u(imax, jmax, kmax)
-    TREAL v(imax, jmax, kmax)
-    TREAL w(imax, jmax, kmax)
-    TREAL z1(imax, jmax, kmax)
-    TREAL strain(imax, jmax, kmax)
-    TREAL vorticity(imax, jmax, kmax)
-    TREAL gradient(imax, jmax, kmax)
+    integer(wi) ilog
+    real(wp) u(imax, jmax, kmax)
+    real(wp) v(imax, jmax, kmax)
+    real(wp) w(imax, jmax, kmax)
+    real(wp) z1(imax, jmax, kmax)
+    real(wp) strain(imax, jmax, kmax)
+    real(wp) vorticity(imax, jmax, kmax)
+    real(wp) gradient(imax, jmax, kmax)
 
-    TREAL tmp1(imax, jmax, kmax)
-    TREAL tmp2(imax, jmax, kmax)
+    real(wp) tmp1(imax, jmax, kmax)
+    real(wp) tmp2(imax, jmax, kmax)
 
-    TREAL corr(jmax, *)
+    real(wp) corr(jmax, *)
 
-    TREAL wrk1d(jmax, *)
-    TREAL wrk2d(imax, kmax, *)
-    TREAL wrk3d(imax, jmax, kmax)
+    real(wp) wrk1d(jmax, *)
+    real(wp) wrk2d(imax, kmax, *)
+    real(wp) wrk3d(imax, jmax, kmax)
 
 ! -------------------------------------------------------------------
-    TINTEGER j, bcs(2, 2)
-    TREAL mean_1, mean_2, var_1, var_2, delta_w
-    TREAL AVG1V2D, COV2V2D
+    integer(wi) j, bcs(2, 2)
+    real(wp) mean_1, mean_2, var_1, var_2, delta_w
+    real(wp) AVG1V2D, COV2V2D
 
     character*32 fname
     character*250 line1

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -13,6 +12,7 @@
 !#
 !########################################################################
 program SL_BOUNDARY
+    use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
 #ifdef USE_MPI
@@ -26,47 +26,47 @@ program SL_BOUNDARY
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
 
 ! Flow variables
-    TREAL, dimension(:, :), allocatable, target :: q
-    TREAL, dimension(:), allocatable :: s, field
+    real(wp), dimension(:, :), allocatable, target :: q
+    real(wp), dimension(:), allocatable :: s, field
 
 ! Work arrays
-    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
 ! Surface arrays
-    TREAL, dimension(:, :), allocatable :: sl, samples
+    real(wp), dimension(:, :), allocatable :: sl, samples
 
-    TREAL txc(:)
+    real(wp) txc(:)
     allocatable txc
 
-    TREAL pdf(:)
+    real(wp) pdf(:)
     allocatable pdf
 
 ! Pointers to existing allocated space
-    TREAL, dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: u, v, w
 
-    TINTEGER iopt, iint, isl, ith, itxc_size, nfield, np
-    TINTEGER jmin_loc, jmax_loc, idummy
+    integer(wi) iopt, iint, isl, ith, itxc_size, nfield, np
+    integer(wi) jmin_loc, jmax_loc, idummy
     logical iread_flow, iread_scal
-    TREAL threshold, vmin, vmax
-    TINTEGER buff_nps_u_jmin, buff_nps_u_jmax
+    real(wp) threshold, vmin, vmax
+    integer(wi) buff_nps_u_jmin, buff_nps_u_jmax
     character*64 str
     character*32 fname, bakfile
 
-    TINTEGER itime_size_max, itime_size, i
+    integer(wi) itime_size_max, itime_size, i
     parameter(itime_size_max=128)
-    TINTEGER itime_vec(itime_size_max)
-    TINTEGER iopt_size_max, iopt_size
+    integer(wi) itime_vec(itime_size_max)
+    integer(wi) iopt_size_max, iopt_size
     parameter(iopt_size_max=10)
-    TREAL opt_vec(iopt_size_max)
+    real(wp) opt_vec(iopt_size_max)
     character*512 sRes
 #ifdef USE_MPI
     integer icount
 #endif
 
-    TREAL, dimension(:, :), pointer :: dx, dy, dz
+    real(wp), dimension(:, :), pointer :: dx, dy, dz
 
 ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'

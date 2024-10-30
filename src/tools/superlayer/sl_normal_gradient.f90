@@ -1,8 +1,8 @@
-#include "types.h"
 #include "dns_const.h"
 
 subroutine SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
                               u, v, w, z1, a, sl, profiles, txc, wrk1d, wrk2d, wrk3d)
+                              use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
     use OPR_PARTIAL
@@ -12,15 +12,15 @@ subroutine SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
 
 #define L_NFIELDS_MAX 1
 
-    TINTEGER isl, nmax, istep, kstep, ibuffer_npy
-    TREAL u(*), v(*), w(*), z1(*), a(*), sl(*)
-    TREAL profiles(L_NFIELDS_MAX, nmax, imax/istep, kmax/kstep)
-    TREAL txc(imax*jmax*kmax, *)
-    TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+    integer(wi) isl, nmax, istep, kstep, ibuffer_npy
+    real(wp) u(*), v(*), w(*), z1(*), a(*), sl(*)
+    real(wp) profiles(L_NFIELDS_MAX, nmax, imax/istep, kmax/kstep)
+    real(wp) txc(imax*jmax*kmax, *)
+    real(wp) wrk1d(*), wrk2d(*), wrk3d(*)
 
 ! -------------------------------------------------------------------
-    TREAL vmin, vmax
-    TINTEGER ij, i, k, n, ifield, nfield, jmin_loc, jmax_loc
+    real(wp) vmin, vmax
+    integer(wi) ij, i, k, n, ifield, nfield, jmin_loc, jmax_loc
     character*32 fname
 
 ! ###################################################################
