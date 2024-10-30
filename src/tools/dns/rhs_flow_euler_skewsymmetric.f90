@@ -14,7 +14,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: imode_eqns, buoyancy
-    use FDM, only: g
+    use TLAB_VARS, only: g
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hq, hs
