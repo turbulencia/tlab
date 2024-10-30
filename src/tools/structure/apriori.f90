@@ -8,9 +8,9 @@
 
 program APRIORI
     use TLab_Constants, only: wp, wi
-    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
-    use TLab_Pointers, only: pointers_dt
-    use TLab_Constants, only: wp, wi
+    use TLab_Types, only: pointers_dt
+    use TLab_Types, only: filter_dt
+    use TLab_Constants
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
