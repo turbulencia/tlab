@@ -5,17 +5,19 @@
 
 module AVG_PHASE
   
-  USE TLAB_PROCS
+  USE TLab_WorkFlow
   USE TLAB_TYPES
   use TLAB_CONSTANTS, only : wp, wi
   use TLAB_VARS,      only : imax, jmax, kmax, g
   use TLAB_VARS,      only : rtime
-  use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach, gama0
+  use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach
+  use Thermodynamics, only: gama0
   use TLAB_VARS,      only : imode_eqns
   use TLAB_VARS,      only : inb_flow, inb_scal
   use TLAB_VARS,      only : phAvg
   use TLAB_CONSTANTS, only : sizeofint, sizeofreal
   use IO_FIELDS
+  use TLab_Memory, only: Tlab_Allocate_Real_Long
 
   implicit none
 
@@ -24,15 +26,16 @@ module AVG_PHASE
   end interface PhaseAvg_Space
 
 
-  real(wp),   dimension(:),       allocatable, target   :: avg_flow, avg_stress, avg_p, avg_scal
-  integer(wi)                                           :: nxy, nxz, nyz, nz_total
-  integer(wi)                                           :: avg_planes
-  character(len=32), parameter                          :: avgu_name       = 'avg_flow'
-  character(len=32), parameter                          :: avgstr_name     = 'avg_stress'
-  character(len=32), parameter                          :: avgp_name       = 'avg_p'
-  character(len=32), parameter                          :: avgs_name       = 'avg_scal'
+  real(wp), dimension(:), allocatable, target :: avg_flow, avg_stress, avg_p, avg_scal
+  integer(wi) :: nxy, nxz, nyz, nz_total
+  integer(wi) :: avg_planes
+  character(len=32), parameter :: avgu_name = 'avg_flow'
+  character(len=32), parameter :: avgstr_name = 'avg_stress'
+  character(len=32), parameter :: avgp_name = 'avg_p'
+  character(len=32), parameter :: avgs_name = 'avg_scal'
 
   public :: PhaseAvg_Space
+  public :: avg_flow, avg_p, avg_scal, avg_stress, avg_planes
 CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -45,9 +48,9 @@ CONTAINS
 #endif
 
     implicit none
-    character(len=*), intent(in)    :: C_FILE_LOC
-    integer(wi)     , intent(in)    :: restart
-    integer(longi)                  :: alloc_size
+    character(len=*), intent(in) :: C_FILE_LOC
+    integer(wi), intent(in)    :: restart
+    integer(longi) :: alloc_size
       ! ================================================================== !
 
     nxy = imax*jmax
@@ -67,10 +70,10 @@ CONTAINS
     if (ims_pro_k == 0) then
 #endif
       alloc_size = imax*jmax*(avg_planes+1)
-      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_flow,      [alloc_size*inb_flow], 'avgflow.')
-      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_stress,    [alloc_size*       6], 'avgstr.' ) ! allocated not yet coded
-      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_p,         [alloc_size*       1], 'avgp.'   )
-      call TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC,   avg_scal,      [alloc_size*inb_scal], 'avgscal.')
+      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_flow,      [alloc_size*inb_flow], 'avgflow.')
+      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_stress,    [alloc_size*       6], 'avgstr.' ) ! allocated not yet coded
+      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_p,         [alloc_size*       1], 'avgp.'   )
+      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_scal,      [alloc_size*inb_scal], 'avgscal.')
       
       avg_flow(:)   = 0.0_wp
       avg_stress(:) = 0.0_wp
@@ -83,31 +86,31 @@ CONTAINS
     return
   end subroutine PhaseAvg_Initialize_Memory
 
-  subroutine PhaseAvg_Space_FieldPtr(localsum, nfield, itime, it_first, it_save, field)
+  subroutine PhaseAvg_Space_FieldPtr(localsum, nfield, itr, it_first, it_save, field)
     implicit none
-    real(wp), dimension(imax, jmax)                           , intent(inout)        :: localsum
-    integer(wi)                                               , intent(in)           :: nfield
-    integer(wi)                                               , intent(in)           :: itime, it_first, it_save
-    real(wp), pointer                                         , intent(in)           :: field(:)
+    real(wp), dimension(imax, jmax), intent(inout) :: localsum
+    integer(wi), intent(in) :: nfield
+    integer(wi), intent(in) :: itr, it_first, it_save
+    real(wp), pointer, intent(in) :: field(:)
   
     integer :: index_loc = 4 ! Index needs to be set to appropriate value for pressure. Needed later for if statement
 
-    call PhaseAvg_Space_Exec(localsum, nfield, itime, it_first, it_save, index_loc, field)
+    call PhaseAvg_Space_Exec(localsum, nfield, itr, it_first, it_save, index_loc, field)
   end subroutine PhaseAvg_Space_FieldPtr
 
 
-  subroutine PhaseAvg_Space_index(localsum, nfield, itime, it_first, it_save, index)
+  subroutine PhaseAvg_Space_index(localsum, nfield, itr, it_first, it_save, index)
     implicit none
-    real(wp), dimension(imax,jmax)                            , intent(inout)        :: localsum
-    integer(wi)                                               , intent(in)           :: nfield
-    integer(wi)                                               , intent(in)           :: itime, it_first, it_save, index
-    real(wp), pointer                                                                :: field_loc(:) => null()
+    real(wp), dimension(imax,jmax), intent(inout) :: localsum
+    integer(wi), intent(in) :: nfield
+    integer(wi), intent(in) :: itr, it_first, it_save, index
+    real(wp), pointer :: field_loc(:) => null()
 
-    call PhaseAvg_Space_Exec(localsum, nfield, itime, it_first, it_save, index, field_loc)    
+    call PhaseAvg_Space_Exec(localsum, nfield, itr, it_first, it_save, index, field_loc)    
   end subroutine PhaseAvg_Space_index
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_Space_Exec(localsum, nfield, itime, it_first, it_save, index, field)
+  subroutine PhaseAvg_Space_Exec(localsum, nfield, itr, it_first, it_save, index, field)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_VARS, only : imax, jmax, kmax, isize_field
 #ifdef USE_MPI 
@@ -118,19 +121,19 @@ CONTAINS
     use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
 
     implicit none
-    real(wp), dimension(imax*jmax)                            , intent(inout)        :: localsum
-    integer(wi)                                               , intent(in)           :: nfield
-    integer(wi)                                               , intent(in)           :: itime, it_first, it_save, index
-    real(wp), dimension(imax, jmax, kmax, 1), target          , intent(in)           :: field
+    real(wp), dimension(imax*jmax), intent(inout) :: localsum
+    integer(wi) , intent(in) :: nfield
+    integer(wi) , intent(in) :: itr, it_first, it_save, index
+    real(wp), dimension(imax, jmax, kmax, 1), target, intent(in) :: field
 
-    integer(wi)                                               :: k, ifld, plane_id
-    real(wp), dimension(:), pointer                           :: avg_type
-    real(wp), dimension(:), pointer                           :: loc_field
-    integer(wi)                                               :: ipl_srt, ipl_end, iavg_srt, iavg_end, lpl_srt, lpl_end
+    integer(wi) :: k, ifld, plane_id
+    real(wp), dimension(:), pointer :: avg_type
+    real(wp), dimension(:), pointer :: loc_field
+    integer(wi) :: ipl_srt, ipl_end, iavg_srt, iavg_end, lpl_srt, lpl_end
       ! ================================================================== !
       ! Calculation of the plane id to write the spatial average 
     plane_id = 1
-    if (it_save /= 0) plane_id = mod((itime-1) - (it_first), it_save) + 1
+    if (it_save /= 0) plane_id = mod((itr-1) - (it_first), it_save) + 1
 
       ! Determing the tendency to be written
     if (index == 1) then
@@ -159,6 +162,7 @@ CONTAINS
           ! Computing the start and end of the plane in field
           ipl_srt = (ifld - 1)*isize_field + nxy*(k-1) + 1
           ipl_end = (ifld - 1)*isize_field + nxy*k
+
           localsum = localsum + loc_field(ipl_srt:ipl_end) / g(3)%size !loc_field(:,:,k,ifld)/g(3)%size
         end do
         
@@ -190,146 +194,88 @@ CONTAINS
   return
   end subroutine PhaseAvg_Space_Exec
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_Write(nfield, iheader, it_save, basename, index, avg_start)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    use IO_FIELDS
-    use TLAB_VARS, only : imax, jmax
-    use TLAB_VARS, only : rtime, itime
-    use TLAB_VARS, only : visc, froude, rossby, prandtl, mach, gama0
-    use TLAB_VARS, only : imode_eqns
-    use TLAB_CONSTANTS, only : sizeofint, sizeofreal
-#ifdef USE_MPI 
-    use MPI
-    use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
-#endif
-    implicit none
-    integer(wi),                                          intent(in)          :: nfield
-    integer(wi),                                          intent(in)          :: it_save
-    character(len=*),                                     intent(in)          :: basename
-    integer(wi),                                          intent(in)          :: index
-    integer(wi),                                          intent(in),optional :: avg_start
+  subroutine PhaseAvg_Stress(q, itr, it_first, it_save)
+    real(wp), dimension(:,:), intent(in) :: q
+    integer(wi), intent(in) :: itr
+    integer(wi) , intent(in) :: it_first
+    integer(wi) , intent(in) :: it_save
 
-    real(wp), dimension(:), pointer                 :: avg_type
-    character(len=128)                              :: name
-    character(len=32)                               :: varname(1)
-    integer(wi),       parameter                    :: isize_max = 20
-    real(wp)                                        :: params(isize_max)
-    integer(wi)                                     :: isize, iheader, ifld, ifld_srt, ifld_end
-    character(len=10)                               :: start, end, fld_id
-    integer(wi)                                     :: arr_planes, header_offset, ioffset_local
-    character(len=100)                              :: filename
+    real(wp), dimension(:), pointer :: u,v,w
+    integer(wi) :: plane_id
 
-#ifdef USE_MPI
-    integer(kind=MPI_OFFSET_KIND)                   :: f_offset
-    integer                                         :: f_handle, ftype, mtype, status(MPI_STATUS_SIZE)
-#endif
+    target q
 
-    if (index == 1) then
-      avg_type => avg_flow
-    elseif (index == 2) then
-      avg_type => avg_scal
-    elseif (index == 4) then
-      avg_type => avg_p
-    elseif (index == 5) then
-      avg_type => avg_stress
-    else
-      call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in PhaseAvg_Write')
-      call TLAB_STOP(DNS_ERROR_PHASEAVG)
-    end if
+    u => q(:, 1)
+    v => q(:, 2)
+    w => q(:, 3)
 
-    nz_total = it_save + 1
+    ! uu 1
+    ! uv 2
+    ! uw 5
+    ! vv 3
+    ! vw 4
+    ! ww 6
 
-    isize = 0
-    isize = isize + 1; params(isize) = rtime
-    isize = isize + 1; params(isize) = visc ! inverse of reynolds
-    if (iheader == IO_SCAL) then
-        isize = isize + 1 + 1                     ! prepare space for schmidt and damkohler
+    plane_id = 1
+    if (it_save /= 0) plane_id = mod((itr-1) - (it_first), it_save) + 1
 
-    else if (iheader == IO_FLOW) then
-        isize = isize + 1; params(isize) = froude
-        isize = isize + 1; params(isize) = rossby
-        if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
-          isize = isize + 1; params(isize) = gama0
-          isize = isize + 1; params(isize) = prandtl
-          isize = isize + 1; params(isize) = mach
-        end if
-    end if
-    ! INITIALIZATION OF MPI TYPES SHOULD ONLY BE CARRIED OUT ONCE *AND* DURING INITIALIZATION
-    header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
+    call PhaseAvg_Calc_Stress(u, u, 1, plane_id)
+    call PhaseAvg_Calc_Stress(u, v, 2, plane_id)
+    call PhaseAvg_Calc_Stress(v, v, 4, plane_id)
+    call PhaseAvg_Calc_Stress(v, w, 5, plane_id)
+    call PhaseAvg_Calc_Stress(u, w, 3, plane_id)
+    call PhaseAvg_Calc_Stress(w, w, 6, plane_id)
 
-    if (present(avg_start)) then
-      write(start, '(I10)') (avg_start)
-      write(end,   '(I10)') itime
-    else
-      write(start, '(I10)') (itime - it_save*phAvg%stride)
-      write(end,   '(I10)') itime
-    end if
-    do ifld = 1, nfield
-        ifld_srt = (ifld-1)*nxy*(avg_planes+1) + 1
-        ifld_end = ifld*nxy*(avg_planes+1)
-        write(fld_id,   '(I10)') ifld
-        varname(1) = ''
-        if (start == end) then ! write single iteration
-          name =  trim(adjustl(basename)) // trim(adjustl(start)) // '.' // trim(adjustl(fld_id))
-        else ! write multiple iteration including phase average
-          name =  trim(adjustl(basename)) // trim(adjustl(start)) &
-          // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
-        end if
+  end subroutine PhaseAvg_Stress
 
-        arr_planes = (jmax * (avg_planes+1))
-        ! Define the array size for planes and file offset
-#ifdef USE_MPI
-        f_offset = header_offset + ims_pro_i * imax * 8 
-#endif
+  subroutine PhaseAvg_Calc_Stress(field1, field2, stress_id, plane_id)
+    use TLab_Arrays, only: wrk2d, wrk3d
+
+    real(wp), pointer, intent(in) :: field1(:)
+    real(wp), pointer, intent(in) :: field2(:)
+    ! real(wp), intent(inout) :: avg_stress(:)
+    integer(wi), intent(in) :: stress_id
+    integer(wi), intent(in) :: plane_id
+
+    integer(wi) :: k, ipl_srt, ipl_end, iavg_srt, iavg_end, lpl_srt, lpl_end
+
+    wrk3d(:) = 0.0_wp
+    wrk2d(:,:) = 0.0_wp 
+
+    wrk3d(:) = field1(:)*field2(:)
+
+    do k = 1, kmax
+      ipl_srt = nxy*(k-1) + 1
+      ipl_end = nxy*k
+
+      wrk2d(:,1) = wrk2d(:,1) + (wrk3d(ipl_srt:ipl_end))/g(3)%size
+    end do
+
+    iavg_srt = (stress_id -1)*nxy*(avg_planes+1) + nxy*(plane_id - 1) + 1
+    iavg_end = (stress_id -1)*nxy*(avg_planes+1) + nxy*(plane_id)
 
 #ifdef USE_MPI
-        if (ims_pro == 0) then
-#endif
-#define LOC_STATUS "unknown"
-#define LOC_UNIT_ID 75
-#include "dns_open_file.h"
-          call IO_WRITE_HEADER(LOC_UNIT_ID, isize, g(1)%size, g(2)%size, nz_total, itime, params)
-          close(LOC_UNIT_ID)
-#ifdef USE_MPI
-        end if
-#endif
-
-#ifdef USE_MPI
-        call MPI_BARRIER(MPI_COMM_WORLD,ims_err)
         if (ims_pro_k == 0) then
-            ! Create the MPI derived data types for the file view and contiguous blocks
-            call MPI_TYPE_VECTOR(arr_planes, imax, imax * ims_npro_i, MPI_REAL8, ftype, ims_err)
-            call MPI_TYPE_COMMIT(ftype, ims_err)
-            call MPI_TYPE_CONTIGUOUS(imax, MPI_REAL8, mtype, ims_err)
-            call MPI_TYPE_COMMIT(mtype, ims_err)
-
-            ! Open the file for writing
-            call MPI_FILE_OPEN(ims_comm_x, name, IOR(MPI_MODE_CREATE, MPI_MODE_WRONLY), MPI_INFO_NULL, f_handle, ims_err)
-
-            ! Set the file view
-            call MPI_File_set_view(f_handle, f_offset, MPI_REAL8, ftype, 'native', MPI_INFO_NULL, ims_err)
-
-            ! Write the data to the file
-            call MPI_FILE_WRITE_ALL(f_handle, avg_type(ifld_srt), arr_planes, mtype, status, ims_err)
-
-            ! Close the file
-            call MPI_FILE_CLOSE(f_handle, ims_err)
-
-            ! Free the MPI derived data types
-            call MPI_TYPE_FREE(ftype, ims_err)
-            call MPI_TYPE_FREE(mtype, ims_err)
+          call MPI_Reduce(wrk2d, avg_stress(iavg_srt:iavg_end), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err) ! avg_type(imax*jmax*restarts*fld)
+        else
+          call MPI_Reduce(wrk2d, MPI_IN_PLACE,                nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
         end if
 #else
-#include "dns_open_file.h"
-            ioffset_local = header_offset + 1
-            write (LOC_UNIT_ID, POS=ioffset_local) avg_type(ifld_srt:ifld_end)
-            close (LOC_UNIT_ID)
+        avg_stress(iavg_srt:iavg_end) = wrk2d(:,1)
 #endif
-    end do
-    return
-  end subroutine PhaseAvg_Write
 
+    lpl_srt = (stress_id -1)*nxy*(avg_planes+1) + nxy*avg_planes + 1
+    lpl_end = (stress_id)*nxy*(avg_planes+1)
+
+#ifdef USE_MPI
+        if (ims_pro_k == 0) then
+#endif
+          avg_stress(lpl_srt:lpl_end) = avg_stress(lpl_srt:lpl_end) + avg_stress(iavg_srt:iavg_end)/avg_planes
+#ifdef USE_MPI 
+        endif 
+#endif 
+    
+  end subroutine PhaseAvg_Calc_Stress
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine PhaseAvg_ResetVariable()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -350,24 +296,4 @@ CONTAINS
     end if
 #endif
   end subroutine PhaseAvg_ResetVariable
-
-  subroutine IO_WRITE_HEADER(unit, isize, nx, ny, nz, nt, params)
-        integer, intent(in) :: unit, isize
-        integer(wi), intent(in) :: nx, ny, nz, nt
-        real(wp), intent(in) :: params(isize)
-
-        ! -------------------------------------------------------------------
-        integer(wi) offset
-
-        !########################################################################
-        offset = 5*SIZEOFINT + isize*SIZEOFREAL
-
-        write (unit) offset, nx, ny, nz, nt
-
-        if (isize > 0) then   ! do not write params to file if there are none
-            write (unit) params(1:isize)
-        end if
-
-        return
-    end subroutine IO_WRITE_HEADER
 end module

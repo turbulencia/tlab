@@ -121,12 +121,7 @@ module TLab_Memory
     character*128 :: str, line
     integer :: ierr
 
-    public :: TLAB_START
-    public :: TLAB_STOP
-    public :: TLAB_WRITE_ASCII
-    public :: TLab_Initialize_Memory
-
-    interface  TLAB_ALLOCATE_LOG
+    interface TLAB_ALLOCATE_LOG
         module procedure TLAB_ALLOCATE_LOG_SHORT, TLAB_ALLOCATE_LOG_LONG
     end interface TLAB_ALLOCATE_LOG
 
@@ -147,11 +142,13 @@ module TLab_Memory
         module procedure TLab_Allocate_LONG_INT1, TLab_Allocate_LONG_INT2, TLab_Allocate_LONG_INT3, TLab_Allocate_LONG_INT4
     end interface TLab_Allocate_LONG_INT
 #endif
-    public :: TLAB_ALLOCATE_ARRAY_SINGLE
-    public :: TLAB_ALLOCATE_ARRAY_DOUBLE
-    public :: TLAB_ALLOCATE_ARRAY_INT
-    public :: TLAB_ALLOCATE_ARRAY_LONG_INT
-    public :: TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG
+
+    public :: TLab_Initialize_Memory
+    public :: TLab_Allocate_SINGLE
+    public :: TLab_Allocate_Real
+    public :: TLab_Allocate_INT
+    public :: TLab_Allocate_LONG_INT
+    public :: Tlab_Allocate_Real_Long
 contains
 
     ! ###################################################################
@@ -304,7 +301,7 @@ contains
     end subroutine TLab_Allocate_Real
 
 ! ### DOUBLE ALLOCATION ROUTINES FOR LARGE 1D ARRAYS
-    subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG(C_FILE_LOC, a, dims, s)
+    subroutine Tlab_Allocate_Real_Long(C_FILE_LOC, a, dims, s)
       character(len=*), intent(in) :: C_FILE_LOC,s
       real(8), allocatable, intent(inout) :: a(:)
       integer(8), intent(in) :: dims(1)
@@ -313,7 +310,7 @@ contains
       call TLAB_ALLOCATE_LOG_LONG(lfile,dims,s)
       allocate (a(dims(1)), stat=ierr)
       call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine TLAB_ALLOCATE_ARRAY_DOUBLE1_LONG
+    end subroutine Tlab_Allocate_Real_Long
 
     ! ######################################################################
     ! ######################################################################
@@ -570,6 +567,8 @@ contains
 
 #endif
 
+    ! ###################################################################
+    ! ###################################################################
     subroutine TLAB_ALLOCATE_LOG_SHORT(log_file, dims, s)
         integer(wi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
@@ -607,11 +606,11 @@ contains
         do id = 2, size(dims)
             write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
         end do
-        call TLAB_WRITE_ASCII(log_file, line)
+        call TLab_Write_ASCII(log_file, line)
     end subroutine TLAB_ALLOCATE_LOG_SHORT
 
     subroutine TLAB_ALLOCATE_LOG_LONG(log_file, dims, s)
-        integer(8), intent(IN) :: dims(:)
+        integer(longi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
         integer id
         !#####################################################################
@@ -627,7 +626,7 @@ contains
         do id = 2, size(dims)
             write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
         end do
-        call TLAB_WRITE_ASCII(log_file, line)
+        call TLab_Write_ASCII(log_file, line)
     end subroutine TLAB_ALLOCATE_LOG_LONG
 
     ! ###################################################################

@@ -1,7 +1,6 @@
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt, phaseavg_dt
-    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
-    use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
+    use TLab_Types, only: grid_dt, filter_dt, term_dt, profiles_dt, phaseavg_dt
+    use TLab_Constants, only: MAX_VARS, wp, wi, sp
     implicit none
     save
 
