@@ -19,7 +19,7 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
+    use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter, phAvg
     use TLab_Spatial
     use TLab_WorkFlow
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
@@ -304,7 +304,7 @@ subroutine TLab_Initialize_Parameters(inifile)
 ! ###################################################################
 ! Phase Averaging
 ! ###################################################################
-    call SCANINIINT(bakfile, inifile, 'Iteration', 'PhaseAvg', '0' , phAvg%stride)
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'PhaseAvg', '0' , phAvg%stride)
     if ( phAvg%stride .GT. 0 ) phAvg%active = .true.
 
 ! ###################################################################

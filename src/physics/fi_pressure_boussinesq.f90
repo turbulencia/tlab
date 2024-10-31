@@ -5,12 +5,14 @@
 !# Calculate the pressure field from a divergence free velocity field and a body force.
 !#
 !########################################################################
-subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
+subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_txc
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: PressureFilter, stagger_on
+    use TLAB_VARS, only: buoyancy, coriolis, subsidence
+    use TLAB_ARRAYS, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d
     use THERMO_ANELASTIC
     use IBM_VARS, only: imode_ibm, ibm_burgers
@@ -175,13 +177,13 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp)
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
                     end if
 
-                    call DNS_OMP_PARTITION(isize_field, srt, end, siz)
+                    ! call DNS_OMP_PARTITION(isize_field, srt, end, siz)
                     dummy = buoyancy%vector(iq)
 #ifdef USE_BLAS
                     ILEN = isize_field
                     call DAXPY(ILEN, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
 #else
-                    do i = srt, end
+                    do i = 1, isize_field
                             tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
                     end do
 #endif

@@ -1,5 +1,5 @@
 module TLAB_VARS
-    use TLab_Types, only: grid_dt, filter_dt, term_dt, profiles_dt
+    use TLab_Types, only: grid_dt, filter_dt, term_dt, profiles_dt, phaseavg_dt
     use TLab_Constants, only: MAX_VARS, wp, wi, sp
     implicit none
     save
@@ -81,6 +81,11 @@ module TLAB_VARS
 
     type(filter_dt) :: Dealiasing(3)
     type(filter_dt) :: PressureFilter(3)
+
+! ###################################################################
+! Phase Average
+! ###################################################################
+    type(phaseavg_dt) :: phAvg
 
 end module TLAB_VARS
 

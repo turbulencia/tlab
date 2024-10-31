@@ -268,13 +268,13 @@ program DNS
                 call PhaseAvg_Space(wrk2d, inb_flow, itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 1)
                 call PhaseAvg_Space(wrk2d, inb_scal, itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 2)
                 ! Pressure is taken from the RHS subroutine
-                call PhaseAvg_Space(wrk2d, 6       , itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 5)
-
+                ! call PhaseAvg_Space(wrk2d, 6       , itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride, 8)
+                call PhaseAvg_Stress(q, itime/phAvg%stride, nitera_first, nitera_save/phAvg%stride)
                 if (mod(itime - nitera_first, nitera_save) == 0) then
-                    call PhaseAvg_Write(inb_flow, IO_FLOW, nitera_save/phAvg%stride, avgu_name  , 1)
-                    call PhaseAvg_Write(inb_scal, IO_SCAL, nitera_save/phAvg%stride, avgs_name  , 2)
-                    call PhaseAvg_Write(1       , IO_SCAL, nitera_save/phAvg%stride, avgp_name  , 4)
-                    call PhaseAvg_Write(6       , IO_FLOW, nitera_save/phAvg%stride, avgstr_name, 5)
+                    call IO_Write_PhaseAvg(avg_planes, inb_flow, IO_FLOW, nitera_save/phAvg%stride, avgu_name  , 1, avg_flow)
+                    call IO_Write_PhaseAvg(avg_planes, inb_scal, IO_SCAL, nitera_save/phAvg%stride, avgs_name  , 2, avg_scal)
+                    call IO_Write_PhaseAvg(avg_planes, 1       , IO_SCAL, nitera_save/phAvg%stride, avgp_name  , 4, avg_p)
+                    call IO_Write_PhaseAvg(avg_planes, 6       , IO_FLOW, nitera_save/phAvg%stride, avgstr_name, 8, avg_stress)
 
                     call PhaseAvg_ResetVariable()
                 end if
