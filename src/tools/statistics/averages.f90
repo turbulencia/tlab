@@ -17,7 +17,7 @@ program AVERAGES
     use MPI
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
