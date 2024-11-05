@@ -8,8 +8,8 @@
 
 program TRANSFIELDS
 
-    use TLab_Constants, only: wp, wi
-    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use TLab_Constants
+    use TLab_Types, only: filter_dt
     use FDM, only: grid_dt
     use TLAB_VARS
     use TLab_Arrays
@@ -19,7 +19,7 @@ program TRANSFIELDS
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g,  FDM_Initialize
+    use FDM, only: g, x, y, z, FDM_Initialize
     use IO_FIELDS
     use Thermodynamics
     use THERMO_ANELASTIC
@@ -278,9 +278,9 @@ program TRANSFIELDS
     call TLab_Initialize_Memory(C_FILE_LOC)
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call FDM_INITIALIZE(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_INITIALIZE(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_INITIALIZE(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call TLab_Initialize_Background()
 

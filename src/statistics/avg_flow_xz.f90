@@ -19,7 +19,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLab_Constants, only: efile, lfile, wp, wi
     use TLAB_VARS
     use FDM, only: g
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_WorkFlow
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
     use Thermodynamics, only: imixture, itransport, CRATIO_INV, RRATIO

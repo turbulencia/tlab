@@ -9,7 +9,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLab_Constants, only: efile, wp, wi
     use TLAB_VARS
     use FDM, only: g
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_WorkFlow
     use Thermodynamics, only: imixture, CRATIO_INV, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS

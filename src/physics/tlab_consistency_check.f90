@@ -8,7 +8,6 @@ subroutine TLab_Consistency_Check()
     use TLAB_VARS, only: imode_eqns, iadvection, subsidence
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on, PressureFilter
-    use TLAB_VARS, only: schmidt
     use FDM, only: g
     use IBM_VARS, only: imode_ibm
     use Thermodynamics, only: imixture, itransport

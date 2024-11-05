@@ -8,8 +8,7 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-    use TLab_Types, only: filter_dt
-    use TLab_Types, only: discrete_dt
+    use TLab_Types, only: filter_dt, discrete_dt
     use FDM, only: grid_dt
     use TLab_Constants, only: efile, lfile, wp, wi
 #ifdef TRACE_ON
@@ -17,7 +16,7 @@ module BOUNDARY_INFLOW
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
     use TLAB_VARS, only: imode_eqns, itransport
-    use TLAB_VARS, only: g
+    use FDM, only: g, FDM_INITIALIZE
     use TLAB_VARS, only: rtime, itime
     use TLAB_VARS, only: visc, damkohler, qbg
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
@@ -92,18 +91,17 @@ contains
         end if
 #endif
 
-        g_inf(:)%periodic = g(:)%periodic
-        g_inf(:)%uniform = g(:)%uniform
-        if (inflow_mode == 2) then
-            g_inf(1)%periodic = .true.
-            g_inf(1)%uniform = .true.
-        end if
-        if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
-            call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
-                              g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-            call FDM_Initialize(x_inf, g_inf(1), wrk1d(:, 1), wrk1d(:, 4))
-            call FDM_Initialize(y_inf, g_inf(2), wrk1d(:, 2), wrk1d(:, 4))
-            call FDM_Initialize(z_inf, g_inf(3), wrk1d(:, 3), wrk1d(:, 4))
+        ! if (.not. allocated(x_inf)) allocate (x_inf(g_inf(1)%size, g_inf(1)%inb_grid))
+        if (.not. allocated(y_inf)) allocate (y_inf(g_inf(2)%size, g_inf(2)%inb_grid))
+        if (.not. allocated(z_inf)) allocate (z_inf(g_inf(3)%size, g_inf(3)%inb_grid))
+
+        if (g_inf(1)%size > 1) then ! Inflow fields for spatial simulations
+            if (.not. associated(g_inf(1)%nodes)) &
+                call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
+                                  g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+            call FDM_INITIALIZE(x_inf, g_inf(1), wrk1d(:, 1), wrk1d(:, 4))
+            if (.not. associated(g_inf(2)%nodes)) g_inf(2)%nodes => y_inf(:, 1)
+            if (.not. associated(g_inf(3)%nodes)) g_inf(3)%nodes => z_inf(:, 1)
         end if
 
         if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))

@@ -5,7 +5,7 @@ module FLOW_LOCAL
     use TLab_Constants, only: efile, lfile, wp, wi, pi_wp
     use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: qbg, tbg, hbg
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
