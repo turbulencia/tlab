@@ -68,8 +68,6 @@ program VPARTIAL
     du2_n2(1:len, 1:imax) => txc(1:imax*jmax*kmax, 8)
     du2_n3(1:len, 1:imax) => txc(1:imax*jmax*kmax, 9)
 
-    ! call TLab_Allocate_Real(__FILE__, g%nodes, [g%size, g%inb_grid], g%name)
-
     ! Valid settings
     test_type = 1
 

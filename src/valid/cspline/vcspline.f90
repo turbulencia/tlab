@@ -20,14 +20,13 @@
 !########################################################################
 
 program CSPLINE
-
+    use TLab_Constants, only: wp, wi
     use FDM, only: grid_dt
 
     implicit none
 
     ! define spline parameters here
     type(grid_dt) :: g, g_int                            ! original and refined grid
-    integer(wi), parameter :: inb_grid = 57
     integer(wi), parameter :: imax = 11                       ! number of data points
     integer(wi), parameter :: mesh = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
     integer(wi), parameter :: imax_int = (imax + (mesh - 1)*(imax - 1)) ! number of spline data points
@@ -36,8 +35,7 @@ program CSPLINE
     real(wp) :: res_2, res_inf
     logical :: periodic, random, uniform
     ! data arrays
-    real(wp), dimension(imax, inb_grid) :: x
-    real(wp), dimension(imax_int, inb_grid) :: x_int
+    real(wp) :: x(:,:), x_int(:,:)
     real(wp), dimension(imax) :: y
     real(wp), dimension(imax_int) :: y_sp, y_int, delta
     real(wp), dimension(imax_int) :: dydx, ddydx
@@ -46,8 +44,8 @@ program CSPLINE
     real(wp), dimension(2) :: bcval ! boundary values of 1st or 2nd deriv. at endpoints
     ! working arrays
     real(wp), dimension(11*imax) :: wrk
-    real(wp), dimension(imax, 5) :: wrk1d
-    real(wp), dimension(imax_int, 5) :: wrk1d_int
+    real(wp), dimension(imax, 18) :: wrk1d
+    real(wp), dimension(imax_int, 18) :: wrk1d_int
 
     integer, parameter :: i0 = 0, i1 = 1
 
@@ -117,8 +115,8 @@ program CSPLINE
     end if
 
 ! initialize grids for fdm calls
-    call FDM_INITIALIZE(g, wrk1d)
-    call FDM_INITIALIZE(x_int, g_int, wrk1d_int)
+    call FDM_INITIALIZE(x, g, wrk1d(:,1), wrk1(:,4))
+    call FDM_INITIALIZE(x_int, g_int, wrk1d_int, wrk1(:,4))
 
 ! cubic spline function
     call CUBIC_SPLINE(bc, bcval, imax, imax_int, g%nodes, y, g_int%nodes, y_sp, wrk)
