@@ -230,7 +230,11 @@ CONTAINS
 
   subroutine PhaseAvg_Calc_Stress(field1, field2, stress_id, plane_id)
     use TLab_Arrays, only: wrk2d, wrk3d
-
+#ifdef USE_MPI 
+    use MPI
+    use TLabMPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
+#endif
+    use TLAB_ARRAYS, only: q, s
     real(wp), pointer, intent(in) :: field1(:)
     real(wp), pointer, intent(in) :: field2(:)
     ! real(wp), intent(inout) :: avg_stress(:)
