@@ -24,7 +24,7 @@ module BOUNDARY_BUFFER
 #endif
     use TLAB_VARS, only: imode_eqns, imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: itime
     use TLab_WorkFlow
     use Thermodynamics, only: CRATIO_INV

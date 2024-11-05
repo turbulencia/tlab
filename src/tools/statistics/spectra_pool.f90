@@ -9,7 +9,7 @@
 subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
                               spec_2d, data_x, data_z, spec_r, tmp_x, tmp_z, wrk2d)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: g
+    use FDM, only: g
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err

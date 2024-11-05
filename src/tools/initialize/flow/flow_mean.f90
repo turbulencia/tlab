@@ -3,7 +3,7 @@
 
 module FLOW_MEAN
     use TLab_Constants, only: wp, wi, efile
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: coriolis, buoyancy

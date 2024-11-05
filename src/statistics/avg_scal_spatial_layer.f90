@@ -19,6 +19,7 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
     use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS
+    use FDM, only: g
     use TLab_Spatial
     use TLab_WorkFlow
     use TLab_Arrays, only: wrk1d

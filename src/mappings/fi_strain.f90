@@ -7,7 +7,7 @@
 !########################################################################
 module FI_STRAIN_EQN
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use OPR_PARTIAL
 
     implicit none

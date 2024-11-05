@@ -10,7 +10,7 @@
 !# which calls in turn the routines from the library spline
 !########################################################################
 module OPR_INTERPOLATORS
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
     use TLab_Constants, only: efile, wp, wi
     use TLAB_VARS, only: isize_txc_field
     use TLab_WorkFlow

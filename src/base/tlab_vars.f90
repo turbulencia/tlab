@@ -1,5 +1,5 @@
 module TLAB_VARS
-    use TLab_Types, only: grid_dt, filter_dt, term_dt, profiles_dt
+    use TLab_Types, only: filter_dt, term_dt, profiles_dt
     use TLab_Constants, only: MAX_VARS, wp, wi, sp
     implicit none
     save
@@ -43,9 +43,6 @@ module TLAB_VARS
     integer(wi) :: isize_wrk3d                      ! 3D scratch array (only 1)
     integer(wi) :: isize_txc_field, inb_txc         ! 3D arrays for intermediate calculations
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
-
-! ###################################################################
-    type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
 
 ! ###################################################################
 ! information to set up bcs, ics, and reference background profiles

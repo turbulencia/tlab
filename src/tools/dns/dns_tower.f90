@@ -67,7 +67,7 @@ contains
 
 #ifdef USE_MPI
         use MPI
-        use TLAB_VARS, only: g
+        use FDM, only: g
         use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
 #endif
 

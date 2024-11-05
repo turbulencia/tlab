@@ -2,12 +2,12 @@
 
 program VPARTIAL
     use TLab_Constants
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt, x, FDM_INITIALIZE
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, wrk2d, txc, x!, wrk3d
+    use TLab_Arrays, only: wrk1d, wrk2d, txc
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_MatMul
@@ -69,7 +69,7 @@ program VPARTIAL
     du2_n2(1:len, 1:imax) => txc(1:imax*jmax*kmax, 8)
     du2_n3(1:len, 1:imax) => txc(1:imax*jmax*kmax, 9)
 
-    call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
+    ! call TLab_Allocate_Real(__FILE__, g%nodes, [g%size, g%inb_grid], g%name)
 
     ! Valid settings
     test_type = 1
@@ -86,11 +86,13 @@ program VPARTIAL
 
     if (g%periodic) then
         do i = 1, imax
-            x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            ! x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            wrk1d(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
         do i = 1, imax
-            x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
+            ! x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
+            wrk1d(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
         end do
         ! open (21, file='y.dat')
         ! do i = 1, imax
@@ -100,7 +102,7 @@ program VPARTIAL
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_INITIALIZE(x, g, wrk1d)
+    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,4))
 
 ! Bcs
     bcs_aux = 0
@@ -181,9 +183,9 @@ program VPARTIAL
         call check(u, du1_a, du1_n, 'partial.dat')
 
         ! Direct metrics
-        call FDM_C1N4_Direct(g%size, x, g%lu1, g%rhs1, g%nb_diag_1)
+        call FDM_C1N4_Direct(g%size, g%nodes, g%lu1, g%rhs1, g%nb_diag_1)
 
-        call FDM_C1N6_Direct(g%size, x, g%lu1, g%rhs1, g%nb_diag_1)
+        call FDM_C1N6_Direct(g%size, g%nodes, g%lu1, g%rhs1, g%nb_diag_1)
 
         ! -------------------------------------------------------------------
         !   Testing the reduction routines
@@ -416,14 +418,14 @@ program VPARTIAL
 
         ! Direct metrics
         print *, '2. order, Direct 4'
-        call FDM_C2N4_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2)
+        call FDM_C2N4_Direct(imax, g%nodes, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2)
         call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), u, du2_n2)
         call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
         print *, '2. order, Direct 6'
-        call FDM_C2N6_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2)
+        call FDM_C2N6_Direct(imax, g%nodes, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2)
         call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
         call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), u, du2_n2)
         call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)

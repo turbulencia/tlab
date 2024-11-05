@@ -232,8 +232,9 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_OBS_CONTROL()
-        use TLAB_VARS, only: imax, jmax, kmax, g
-        use TLAB_VARS, only: scal_on, inb_scal
+        use TLAB_VARS, only: imax, jmax, kmax, inb_scal
+        use TLAB_VARS, only: scal_on
+        use FDM, only: g
         use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLab_Arrays
         use Averages

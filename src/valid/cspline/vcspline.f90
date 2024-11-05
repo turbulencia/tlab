@@ -21,7 +21,7 @@
 
 program CSPLINE
 
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
 
     implicit none
 
@@ -114,7 +114,7 @@ program CSPLINE
     end if
 
 ! initialize grids for fdm calls
-    call FDM_INITIALIZE(x, g, wrk1d)
+    call FDM_INITIALIZE(g, wrk1d)
     call FDM_INITIALIZE(x_int, g_int, wrk1d_int)
 
 ! cubic spline function

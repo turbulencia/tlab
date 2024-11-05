@@ -6,7 +6,8 @@
 
 module OPR_BURGERS
     use TLab_Constants, only: efile, wp, wi
-    use TLab_Types, only: grid_dt, filter_dt
+    use FDM, only: grid_dt
+    use TLAB_TYPES, only: filter_dt
     use IBM_VARS, only: ibm_burgers
     use TLAB_VARS, only: Dealiasing, subsidence
 #ifdef USE_MPI

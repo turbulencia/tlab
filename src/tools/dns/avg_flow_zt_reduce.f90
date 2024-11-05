@@ -29,7 +29,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: itransport, visc
     use TLab_Spatial
     use TLab_Arrays, only: wrk2d

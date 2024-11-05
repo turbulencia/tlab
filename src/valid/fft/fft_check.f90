@@ -13,7 +13,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
                      wrk3d, &
                      wrk2d)
 
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: isize_txc_dimx, isize_txc_dimz

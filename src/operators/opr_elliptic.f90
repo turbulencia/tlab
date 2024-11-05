@@ -3,7 +3,7 @@
 
 module OPR_ELLIPTIC
     use TLab_Constants
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
     use TLab_Pointers_3D, only: p_wrk1d
@@ -26,7 +26,7 @@ module OPR_ELLIPTIC
     interface
         subroutine OPR_Poisson_dt(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
             use TLab_Constants, only: wi, wp
-            use TLab_Types, only: grid_dt
+            use FDM, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -43,7 +43,7 @@ module OPR_ELLIPTIC
     interface
         subroutine OPR_Helmholtz_dt(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
             use TLab_Constants, only: wi, wp
-            use TLab_Types, only: grid_dt
+            use FDM, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -92,7 +92,7 @@ contains
 ! #######################################################################
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_Elliptic_Initialize(inifile)
-        use TLAB_VARS, only: g
+        use FDM, only: g
         use FDM_ComX_Direct
 
         character(len=*), intent(in) :: inifile

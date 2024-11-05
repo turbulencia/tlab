@@ -6,7 +6,7 @@ subroutine RHS_PART_1()
 
     use TLab_Types, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: visc, settling, stokes
     use TLab_Arrays
     use DNS_ARRAYS

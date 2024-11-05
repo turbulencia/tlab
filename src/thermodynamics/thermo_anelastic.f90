@@ -952,7 +952,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
-        use TLab_Types, only: grid_dt
+        use FDM, only: grid_dt
         use Integration, only: Int_Simpson
 
         integer(wi), intent(in) :: nx, ny, nz

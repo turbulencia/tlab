@@ -128,7 +128,7 @@ contains
 #endif
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
-        use TLAB_VARS, only: g
+        use FDM, only: g
         use TLAB_VARS, only: pbg, qbg
         use Thermodynamics, only: CRATIO_INV
         use THERMO_THERMAL
@@ -392,7 +392,7 @@ contains
 !# Routine format extracted from OPR_PARTIAL_Y
 !########################################################################
     subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, tmp1)
-        use TLab_Types, only: grid_dt
+        use FDM, only: grid_dt
 
         integer(wi), intent(in) :: ibc     ! BCs at jmin/jmax: 1, for Neumann/-
         !                                                   2, for -      /Neumann
@@ -510,9 +510,10 @@ contains
         use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
         use TLab_Constants, only: lfile
-        use TLAB_VARS, only: imax, jmax, kmax, g
+        use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: isize_field
         use TLAB_VARS, only: visc, schmidt
+        use FDM, only: g
         use Averages, only: AVG1V2D
         use OPR_PARTIAL
 

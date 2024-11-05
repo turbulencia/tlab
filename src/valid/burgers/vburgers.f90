@@ -13,6 +13,7 @@ program VBURGERS
     use TLabMPI_PROCS
     use TLabMPI_VARS
 #endif
+    use FDM, only: g, x, y, z, FDM_Initialize
     use IO_FIELDS
     use OPR_PARTIAL
     use OPR_BURGERS
@@ -49,10 +50,10 @@ program VBURGERS
 
     visc = 1.0_wp/big_wp    ! inviscid
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_INITIALIZE(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_INITIALIZE(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_INITIALIZE(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call TLab_Initialize_Background()
 

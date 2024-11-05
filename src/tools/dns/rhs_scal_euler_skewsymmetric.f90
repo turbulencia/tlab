@@ -8,7 +8,7 @@
 subroutine RHS_SCAL_EULER_SKEWSYMMETRIC(is)
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs

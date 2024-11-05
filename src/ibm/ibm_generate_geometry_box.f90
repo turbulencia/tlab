@@ -25,7 +25,8 @@
 subroutine IBM_GENERATE_GEOMETRY_BOX(wrk3d)
 
   use IBM_VARS
-  use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field
+  use FDM,      only : g
+  use TLAB_VARS,      only : imax, jmax, kmax, isize_field
   use IO_FIELDS
   use TLab_Constants, only : wi, wp, pi_wp
   use TLAB_VARS,      only : stagger_on

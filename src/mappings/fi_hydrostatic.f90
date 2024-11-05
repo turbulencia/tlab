@@ -7,7 +7,7 @@
 !########################################################################
 subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use TLab_Constants, only: wp, wi, BCS_MIN, BCS_BOTH
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
     use Thermodynamics, only: imixture, scaleheight

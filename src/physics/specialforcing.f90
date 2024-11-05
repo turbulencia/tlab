@@ -3,7 +3,8 @@
 
 module SpecialForcing
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
-    use TLab_Types, only: term_dt, grid_dt
+    use TLab_Types, only: term_dt
+    use FDM, only: grid_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d
@@ -49,7 +50,8 @@ contains
     !########################################################################
     !########################################################################
     subroutine SpecialForcing_Initialize(inifile)
-        use TLAB_VARS, only: imax, jmax, kmax, g
+        use TLAB_VARS, only: imax, jmax, kmax
+        use FDM, only: g
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
@@ -250,7 +252,7 @@ contains
     ! Velocity field with no-slip
     !########################################################################
     subroutine Forcing_Sinusoidal_NoSlip(nx, ny, nz, time, visc, g, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use TLab_Types, only: grid_dt
+        use FDM, only: grid_dt
         use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
 
         integer(wi) nx, ny, nz

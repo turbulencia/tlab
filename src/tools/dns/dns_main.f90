@@ -5,6 +5,7 @@ program DNS
 
     use TLab_Constants, only: ifile, efile, wfile, lfile, gfile, tag_flow, tag_scal, tag_part, tag_traj
     use TLAB_VARS
+    use FDM, only: g, x, y, z, FDM_Initialize
     use TLab_Arrays
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
@@ -74,10 +75,10 @@ program DNS
     ! #######################################################################
     call TLab_Initialize_Memory(__FILE__)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_INITIALIZE(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_INITIALIZE(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_INITIALIZE(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call SpecialForcing_Initialize(ifile)
 

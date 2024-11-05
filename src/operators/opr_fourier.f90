@@ -7,7 +7,7 @@ module OPR_FOURIER
     use TLab_Constants, only: wp, wi, efile
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_C, only: c_wrk3d
     use TLab_WorkFlow

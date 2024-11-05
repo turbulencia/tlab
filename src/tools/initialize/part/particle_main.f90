@@ -12,6 +12,7 @@ program INIPART
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g, x, y, z, FDM_Initialize
     use Thermodynamics
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
@@ -65,10 +66,10 @@ program INIPART
         ! -------------------------------------------------------------------
         ! Read the grid
         ! -------------------------------------------------------------------
-        call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-        call FDM_INITIALIZE(x, g(1), wrk1d)
-        call FDM_INITIALIZE(y, g(2), wrk1d)
-        call FDM_INITIALIZE(z, g(3), wrk1d)
+        call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+        call FDM_INITIALIZE(x, g(1), wrk1d(:,1), wrk1d(:,4))
+        call FDM_INITIALIZE(y, g(2), wrk1d(:,2), wrk1d(:,4))
+        call FDM_INITIALIZE(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
         ! problem if I enter with inb_scal_array = 0
         inb_scal_array = inb_scal
@@ -96,7 +97,7 @@ contains
         use TLab_Types, only: pointers_dt, pointers3d_dt, wp, wi, longi
         use TLAB_VARS, only: imax, jmax, kmax, inb_scal
         use TLAB_VARS, only: sbg
-        use TLAB_VARS, only: g
+        use FDM, only: g
         use PARTICLE_TYPES, only: particle_dt
         use PARTICLE_VARS
         use PARTICLE_INTERPOLATE

@@ -2,8 +2,8 @@
 
 program VPARTIAL
     use TLab_Constants
-    use TLab_Types, only:  grid_dt
-    use TLAB_VARS, only: g
+    use FDM, only:  grid_dt
+    use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt, area
     use TLab_WorkFlow
@@ -80,10 +80,10 @@ program VPARTIAL
     ! Valid settings
     test_type = 1
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_INITIALIZE(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_INITIALIZE(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_INITIALIZE(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA

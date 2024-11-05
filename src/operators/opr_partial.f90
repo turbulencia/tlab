@@ -6,7 +6,7 @@
 
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm

@@ -20,7 +20,7 @@
 
 program INTERPOL
     use TLab_Constants, only: wp, wi, pi_wp
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt, x, FDM_INITIALIZE
     use TLab_WorkFlow
 
     implicit none
@@ -32,9 +32,10 @@ program INTERPOL
     integer(wi), parameter :: imax = 32, len = 10, inb_grid = 57
     integer(wi), parameter :: imaxp = imax - 1
 
-    real(wp), dimension(imax, inb_grid) :: x
-    real(wp), dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
-
+    ! real(wp), dimension(imax, inb_grid) :: x
+    ! real(wp), dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
+    real(wp), allocatable :: x_pre(:,:)
+    
     real(wp), dimension(imax) :: x_int, x_aux
     real(wp), dimension(len, imax) :: u, u_int, u_aux, u_a, u_b
     real(wp), dimension(len, imax) :: dudx, dudx_int, dudx_aux
@@ -83,16 +84,18 @@ program INTERPOL
 ! Initialize grid
     if (g%periodic) then
         do i = 1, imax
-            x(i, 1) = real(i - 1)/real(imax)*g%scale
+            ! x(i, 1) = real(i - 1)/real(imax)*g%scale
+            wrk1d(i, 1) = real(i - 1)/real(imax)*g%scale
         end do
     else
         do i = 1, imax
-            x(i, 1) = real(i - 1)/real(imax - 1)*g%scale
+            ! x(i, 1) = real(i - 1)/real(imax - 1)*g%scale
+            wrk1d(i, 1) = real(i - 1)/real(imax - 1)*g%scale
         end do
     end if
 
 ! Velocity grid
-    call FDM_INITIALIZE(x, g, wrk1d)
+    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,2))
 
 ! Initialize grids (interpolation grid on midpoints)
     if (g%periodic) then
@@ -109,10 +112,13 @@ program INTERPOL
 
 ! Initialize pressure grid (only needed for non-periodic case)
 ! (here: periodic case implies the usage of uniform grids!)
-    do i = 1, imaxp; x_pre(i, 1) = x_int(i); end do
+    do i = 1, imaxp; 
+        ! x_pre(i, 1) = x_int(i); 
+        wrk1d(i, 1) = x_int(i); 
+    end do
     g_pre%size = imaxp; g_pre%scale = x_int(imaxp); g_pre%uniform = g%uniform
     g_pre%mode_fdm1 = g%mode_fdm1; g_pre%periodic = .false.
-    call FDM_INITIALIZE(x_pre, g_pre, wrk1d)
+    call FDM_INITIALIZE(x_pre, g_pre, wrk1d, wrk1d(:,2))
 
 ! Define the function + deriv. on both grids
     do i = 1, imax

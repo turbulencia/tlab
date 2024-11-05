@@ -11,7 +11,7 @@
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TLab_Constants
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: visc
     use TLAB_VARS, only: stagger_on
     use TLab_Arrays, only: q

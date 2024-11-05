@@ -19,7 +19,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
     use TLab_Constants, only: lfile, wfile, efile, tfile
     !
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: inb_flow, inb_scal, inb_scal_array
     use TLAB_VARS, only: isize_field, isize_wrk1d, imax, jmax, kmax

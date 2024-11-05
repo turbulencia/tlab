@@ -4,8 +4,8 @@
 #define C_FILE_LOC "INIGRID"
 
 program INIGRID
-    use TLab_Types, only: grid_dt, wp
-    use TLab_Constants, only: gfile, ifile, lfile, efile
+    use FDM, only: grid_dt
+    use TLab_Constants, only: wp, gfile, ifile, lfile, efile
     use TLab_WorkFlow
     use GRID_LOCAL
 #ifdef USE_MPI

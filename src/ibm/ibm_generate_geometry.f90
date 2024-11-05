@@ -30,7 +30,8 @@
 subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
   use IBM_VARS
-  use TLAB_VARS,      only : g, isize_field, imax, jmax, kmax
+  use FDM,      only : g
+  use TLAB_VARS,      only : isize_field, imax, jmax, kmax
   use TLab_Constants, only : wi, wp
 #ifdef USE_MPI
   use MPI

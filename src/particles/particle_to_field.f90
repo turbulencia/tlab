@@ -60,7 +60,7 @@ end subroutine PARTICLE_TO_FIELD
 subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use PARTICLE_VARS, only: isize_part
     use PARTICLE_ARRAYS, only: l_g
 #ifdef USE_MPI

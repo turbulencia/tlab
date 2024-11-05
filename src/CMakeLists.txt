@@ -84,10 +84,10 @@ add_subdirectory(base)
 
 # produce libraries
 add_subdirectory(utils)
+add_subdirectory(fdm)
 add_subdirectory(thermodynamics)
 add_subdirectory(io)
 add_subdirectory(ibm)
-add_subdirectory(fdm)
 add_subdirectory(filters)
 add_subdirectory(operators)
 add_subdirectory(mappings)

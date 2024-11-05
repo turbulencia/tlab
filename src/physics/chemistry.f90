@@ -28,7 +28,8 @@ contains
     !########################################################################
     subroutine Chemistry_Initialize(inifile)
         use TLab_Types, only: profiles_dt
-        use TLAB_VARS, only: damkohler, sbg, g
+        use TLAB_VARS, only: damkohler, sbg
+        use FDM, only: g
         use Profiles
         character(len=*), intent(in) :: inifile
 

@@ -2,12 +2,13 @@
 
 program VINTEGRAL
     use TLab_Constants
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt, x, FDM_INITIALIZE
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, txc, x!, wrk2d!, wrk3d
+    use TLab_Arrays, only: wrk1d, txc
+    ! use FDM, only: x
     use FDM_ComX_Direct
     use FDM_Integrate
     use FDM_MatMul
@@ -66,7 +67,7 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
-    call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
+    ! call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     g%periodic = .false.
 
@@ -77,10 +78,10 @@ program VINTEGRAL
     test_type = 1
 
     ! ###################################################################
-
     if (g%periodic) then
         do i = 1, imax
-            x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            ! x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            wrk1d(i,1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
         ! do i = 1, imax
@@ -88,16 +89,16 @@ program VINTEGRAL
         ! end do
         open (21, file='y.dat')
         do i = 1, imax
-            read (21, *) x(i, 1)
+            read (21, *) wrk1d(i,1) !x(i, 1)
         end do
         close (21)
-        g%scale = x(imax, 1) - x(1, 1)
+        ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_INITIALIZE(x, g, wrk1d)
+    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,4))
 
     bcs_aux = 0
 

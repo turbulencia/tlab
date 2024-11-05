@@ -5,7 +5,7 @@ module TLab_Arrays
     implicit none
     save
 
-    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)     ! Grid and associated arrays
+    real(wp), allocatable :: xtest
     real(wp), allocatable :: q(:, :)                       ! Eulerian fields, flow vartiables
     real(wp), allocatable :: s(:, :)                       ! Eulerian fields, scalar variables
     real(wp), allocatable :: txc(:, :)                     ! Temporary space for Eulerian fields
@@ -14,7 +14,6 @@ module TLab_Arrays
     real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
     real(wp), allocatable :: wrkdea(:, :)                   ! Work arrays for dealiasing (scratch space)
 
-    target x, y, z
     target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
 
 end module TLab_Arrays
@@ -97,7 +96,6 @@ end module TLab_Pointers_C
 
 module TLab_Memory
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
-    use TLAB_VARS, only: g
     use TLAB_VARS, only: isize_field, inb_flow_array, inb_scal_array
     use TLAB_VARS, only: isize_txc_field, inb_txc, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d
@@ -148,10 +146,6 @@ contains
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-
-        call TLab_Allocate_Real(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
-        call TLab_Allocate_Real(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
-        call TLab_Allocate_Real(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
 
         call TLab_Allocate_Real(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
         call TLab_Allocate_Real(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')

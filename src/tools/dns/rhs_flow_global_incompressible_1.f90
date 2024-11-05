@@ -16,7 +16,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     use OMP_LIB
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: visc
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use TLab_OpenMP

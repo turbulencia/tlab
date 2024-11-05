@@ -14,7 +14,7 @@ subroutine PARTICLE_MPI_SORT(x_or_z, l_g, l_q, l_hq, &
     use TLab_Constants, only: wp, wi, longi
     use TLAB_VARS, only: imax, kmax
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k

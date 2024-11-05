@@ -10,7 +10,7 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
     use TLab_Constants, only: wp, wi, longi
     use TLab_Types, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use PARTICLE_TYPES, only: particle_dt
     use PARTICLE_VARS, only: isize_part
     use PARTICLE_VARS, only: particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval

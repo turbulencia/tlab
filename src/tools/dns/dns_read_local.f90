@@ -7,6 +7,7 @@ subroutine DNS_READ_LOCAL(inifile)
     use TLab_Types, only: MAX_MODES
     use TLab_Constants, only: wp, wi, big_wp, efile, lfile, wfile
     use TLAB_VARS
+    use FDM, only: g
     use TLab_Spatial, only: nstatavg
     use TLab_WorkFlow
     use PARTICLE_VARS

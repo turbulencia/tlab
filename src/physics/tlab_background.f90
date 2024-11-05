@@ -7,7 +7,7 @@
 subroutine TLab_Initialize_Background()
     use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: buoyancy

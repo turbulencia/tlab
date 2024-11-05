@@ -6,7 +6,7 @@
 !########################################################################
 subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: visc
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
