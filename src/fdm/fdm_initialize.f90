@@ -43,30 +43,30 @@ module FDM
 
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
 
-    public :: grid_dt, g, FDM_INITIALIZE
+    public :: grid_dt, g, FDM_Initialize
 
 contains
-    subroutine FDM_INITIALIZE(x, g, wrk1d_in, wrk1d)
-        use TLab_Constants, only: wp, wi, pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
+    subroutine FDM_Initialize(x, g, nodes, wrk1d)
+        use TLab_Constants, only: pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
 #endif
-        use TLAB_VARS, only: inb_scal, stagger_on
+        use TLAB_VARS, only: stagger_on
+        use TLAB_VARS, only: inb_scal
         use TLAB_VARS, only: visc, schmidt
-        use TLab_WorkFlow
+        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         use TLab_Memory, only: TLab_Allocate_Real
-        use FDM_PROCS
+        use FDM_PROCS, only: FDM_Bcs_Neumann
         use FDM_MatMul
         use FDM_ComX_Direct
         use FDM_Com1_Jacobian
         use FDM_Com2_Jacobian
         use FDM_Integrate
 
-        implicit none
-
-        type(grid_dt), intent(inout) :: g
-        real(wp), allocatable, intent(inout) :: x(:, :)
-        real(wp), intent(inout) :: wrk1d_in(g%size), wrk1d(g%size, 12)
+        type(grid_dt), intent(inout) :: g                   ! grid structure
+        real(wp), allocatable, intent(inout) :: x(:, :)     ! memory space
+        real(wp), intent(in) :: nodes(g%size)               ! positions of the grid nodes
+        real(wp), intent(inout) :: wrk1d(g%size, 12)
 
         target x
 
@@ -97,7 +97,7 @@ contains
         end if
 
         if (g%size > 1) then
-            scale_loc = wrk1d_in(g%size) - wrk1d_in(1)
+            scale_loc = nodes(g%size) - nodes(1)
             if (g%periodic) scale_loc = scale_loc*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
         else
             scale_loc = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
@@ -149,17 +149,18 @@ contains
         ! ###################################################################
         ! Setting pointers and filling FDM data
         ! ###################################################################
-        nx = g%size     ! For clarity below
+        nx = g%size                     ! node number, for clarity below
 
-        ig = 1 ! Accumulating counter to define pointers inside array x
+        ig = 1                          ! Initialize counter to define pointers inside array x
 
         ! ###################################################################
         ! Node positions
         ! ###################################################################
-        g%nodes => x(:, ig)
-        g%nodes(:) = wrk1d_in(1:nx)
+        g%nodes => x(:, ig)             ! Define pointer inside x
 
-        ig = ig + 1
+        g%nodes(:) = nodes(1:nx)     ! Calculate data
+
+        ig = ig + 1                     ! Advance counter
 
         ! ###################################################################
         ! Jacobians: computational grid is uniform
@@ -533,6 +534,6 @@ contains
 #endif
 
         return
-    end subroutine FDM_INITIALIZE
+    end subroutine FDM_Initialize
 
 end module FDM
