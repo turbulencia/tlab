@@ -18,7 +18,7 @@ program VPOISSON
     use MPI
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER

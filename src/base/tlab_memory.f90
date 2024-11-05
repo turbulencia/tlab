@@ -5,7 +5,7 @@ module TLab_Arrays
     implicit none
     save
 
-    real(wp), allocatable :: xtest
+    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)     ! Grid and associated arrays
     real(wp), allocatable :: q(:, :)                       ! Eulerian fields, flow vartiables
     real(wp), allocatable :: s(:, :)                       ! Eulerian fields, scalar variables
     real(wp), allocatable :: txc(:, :)                     ! Temporary space for Eulerian fields

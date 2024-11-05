@@ -46,7 +46,7 @@ program SPECTRA
     use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use FI_SOURCES, only: FI_BUOYANCY
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC

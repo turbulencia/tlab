@@ -14,7 +14,7 @@ program PDFS
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use FI_SOURCES, only: bbackground, FI_BUOYANCY
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC

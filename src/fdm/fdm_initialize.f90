@@ -43,9 +43,7 @@ module FDM
 
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
 
-    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)     ! Grid and associated arrays
-
-    public :: grid_dt, g, x, y, z, FDM_INITIALIZE
+    public :: grid_dt, g, FDM_INITIALIZE
 
 contains
     subroutine FDM_INITIALIZE(x, g, wrk1d_in, wrk1d)
@@ -67,7 +65,6 @@ contains
         implicit none
 
         type(grid_dt), intent(inout) :: g
-        ! real(wp), intent(inout) :: x(g%size, g%inb_grid)
         real(wp), allocatable, intent(inout) :: x(:, :)
         real(wp), intent(inout) :: wrk1d_in(g%size), wrk1d(g%size, 12)
 

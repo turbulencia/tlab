@@ -13,7 +13,7 @@ program VBURGERS
     use TLabMPI_PROCS
     use TLabMPI_VARS
 #endif
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
     use OPR_PARTIAL
     use OPR_BURGERS

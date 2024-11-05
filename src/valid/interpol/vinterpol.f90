@@ -20,7 +20,7 @@
 
 program INTERPOL
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: grid_dt, x, FDM_INITIALIZE
+    use FDM, only: grid_dt, FDM_INITIALIZE
     use TLab_WorkFlow
 
     implicit none
@@ -34,12 +34,12 @@ program INTERPOL
 
     ! real(wp), dimension(imax, inb_grid) :: x
     ! real(wp), dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
-    real(wp), allocatable :: x_pre(:,:)
+    real(wp), allocatable :: x(:,:), x_pre(:,:)
     
     real(wp), dimension(imax) :: x_int, x_aux
     real(wp), dimension(len, imax) :: u, u_int, u_aux, u_a, u_b
     real(wp), dimension(len, imax) :: dudx, dudx_int, dudx_aux
-    real(wp), dimension(imax, 5) :: wrk1d
+    real(wp), dimension(imax, 18) :: wrk1d
     real(wp), dimension(len) :: wrk2d
 
 ! ###################################################################
