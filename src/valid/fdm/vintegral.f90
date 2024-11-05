@@ -65,8 +65,6 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
-    ! call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
-
     g%periodic = .false.
 
     wk = 1.0_wp ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
