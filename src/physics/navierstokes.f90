@@ -481,42 +481,5 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     inb_wrk2d = 2
     if (imode_sim == DNS_MODE_SPATIAL) inb_wrk2d = max(11, inb_wrk2d)
 
-! grid array
-    do is = 1, 3
-        g(is)%inb_grid = 1                          ! Nodes
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 2 &                      ! Jacobians of first- and second-order derivatives
-                         + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
-
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 5 &                      ! max # of diagonals in LHS for 1. order derivative
-                         + 7 &                      ! max # of diagonals in RHS for 1. order derivative
-                         + 5 &                      ! max # of diagonals in LHS for 2. order derivative
-                         + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
-                         + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
-        if (g(is)%periodic) then
-            g(is)%inb_grid = g(is)%inb_grid &
-                             + 5 + 2 &                      ! LU decomposition 1. order
-                             + 5 + 2 &                      ! LU decomposition 2. order
-                             + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
-                             + 2                            ! modified wavenumbers
-        else
-            g(is)%inb_grid = g(is)%inb_grid &
-                             + 5*4 &                ! LU decomposition 1. order, 4 bcs
-                             + 5 &                  ! LU decomposition 2. order, 1bcs
-                             + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
-        end if
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 1                        ! Density correction in anelastic mode
-        if ((stagger_on) .and. g(is)%periodic) then
-            g(is)%inb_grid = g(is)%inb_grid &
-                             + 5 &                  ! LU decomposition interpolation
-                             + 5                    ! LU decomposition 1. order interpolatory
-        end if
-
-    end do
-
     return
 end subroutine NavierStokes_Initialize_Parameters

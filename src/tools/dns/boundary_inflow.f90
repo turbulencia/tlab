@@ -91,17 +91,12 @@ contains
         end if
 #endif
 
-        ! if (.not. allocated(x_inf)) allocate (x_inf(g_inf(1)%size, g_inf(1)%inb_grid))
-        if (.not. allocated(y_inf)) allocate (y_inf(g_inf(2)%size, g_inf(2)%inb_grid))
-        if (.not. allocated(z_inf)) allocate (z_inf(g_inf(3)%size, g_inf(3)%inb_grid))
-
-        if (g_inf(1)%size > 1) then ! Inflow fields for spatial simulations
-            if (.not. associated(g_inf(1)%nodes)) &
+        if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Inflow fields for spatial simulations
                 call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
                                   g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
             call FDM_INITIALIZE(x_inf, g_inf(1), wrk1d(:, 1), wrk1d(:, 4))
-            if (.not. associated(g_inf(2)%nodes)) g_inf(2)%nodes => y_inf(:, 1)
-            if (.not. associated(g_inf(3)%nodes)) g_inf(3)%nodes => z_inf(:, 1)
+            call FDM_INITIALIZE(y_inf, g_inf(2), wrk1d(:, 2), wrk1d(:, 4))
+            call FDM_INITIALIZE(z_inf, g_inf(3), wrk1d(:, 3), wrk1d(:, 4))
         end if
 
         if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))

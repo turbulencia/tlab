@@ -25,10 +25,6 @@ program VDIFFUSION
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (wrk1d(isize_wrk1d*inb_wrk1d))
     allocate (wrk2d(isize_wrk2d*inb_wrk2d))
     allocate (wrk3d(isize_wrk3d))

@@ -43,7 +43,6 @@ program VPARTIAL
     visc = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
-    g%inb_grid = 99
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
@@ -68,8 +67,6 @@ program VPARTIAL
     du2_n1(1:len, 1:imax) => txc(1:imax*jmax*kmax, 7)
     du2_n2(1:len, 1:imax) => txc(1:imax*jmax*kmax, 8)
     du2_n3(1:len, 1:imax) => txc(1:imax*jmax*kmax, 9)
-
-    ! call TLab_Allocate_Real(__FILE__, g%nodes, [g%size, g%inb_grid], g%name)
 
     ! Valid settings
     test_type = 1

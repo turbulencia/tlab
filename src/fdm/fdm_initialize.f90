@@ -81,13 +81,9 @@ contains
         call TLab_Write_ASCII(tfile, 'Entering '//__FILE__)
 #endif
 
-! ###################################################################
-        call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
-
-        x(1:g%size, 1) = wrk1d_in(1:g%size)
-
-! ###################################################################
-! Consistency check
+        ! ###################################################################
+        ! Consistency check
+        ! ###################################################################
         if (g%periodic .and. g%mode_fdm1 == FDM_COM4_DIRECT) g%mode_fdm1 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm1 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm2 == FDM_COM4_DIRECT) g%mode_fdm2 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
@@ -97,34 +93,77 @@ contains
         if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
 
         if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-    call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+            call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
 
         if (g%size > 1) then
-            scale_loc = x(g%size, 1) - x(1, 1)
+            scale_loc = wrk1d_in(g%size) - wrk1d_in(1)
             if (g%periodic) scale_loc = scale_loc*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
         else
             scale_loc = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
         end if
-        ! print *, abs((scale_loc - g%scale)/scale_loc)
+! print *, abs((scale_loc - g%scale)/scale_loc)
         if (abs((scale_loc - g%scale)/scale_loc) > roundoff_wp) then
             call TLab_Write_ASCII(efile, __FILE__//'. Unmathed domain scale.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-! ###################################################################
-        nx = g%size
+        ! ###################################################################
+        ! Memory allocation
+        ! ###################################################################
+        g%inb_grid = 1                          ! Nodes
+        g%inb_grid = g%inb_grid &
+                     + 2 &                      ! Jacobians of first- and second-order derivatives
+                     + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
+
+        g%inb_grid = g%inb_grid &
+                     + 5 &                      ! max # of diagonals in LHS for 1. order derivative
+                     + 7 &                      ! max # of diagonals in RHS for 1. order derivative
+                     + 5 &                      ! max # of diagonals in LHS for 2. order derivative
+                     + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
+        g%inb_grid = g%inb_grid &
+                     + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
+                     + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
+        if (g%periodic) then
+            g%inb_grid = g%inb_grid &
+                         + 5 + 2 &                      ! LU decomposition 1. order
+                         + 5 + 2 &                      ! LU decomposition 2. order
+                         + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
+                         + 2                            ! modified wavenumbers
+        else
+            g%inb_grid = g%inb_grid &
+                         + 5*4 &                ! LU decomposition 1. order, 4 bcs
+                         + 5 &                  ! LU decomposition 2. order, 1bcs
+                         + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
+        end if
+        g%inb_grid = g%inb_grid &
+                     + 1                        ! Density correction in anelastic mode
+        if ((stagger_on) .and. g%periodic) then
+            g%inb_grid = g%inb_grid &
+                         + 5 &                  ! LU decomposition interpolation
+                         + 5                    ! LU decomposition 1. order interpolatory
+        end if
+
+        call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
+
+        ! ###################################################################
+        ! Setting pointers and filling FDM data
+        ! ###################################################################
+        nx = g%size     ! For clarity below
 
         ig = 1 ! Accumulating counter to define pointers inside array x
 
-! ###################################################################
+        ! ###################################################################
+        ! Node positions
+        ! ###################################################################
         g%nodes => x(:, ig)
+        g%nodes(:) = wrk1d_in(1:nx)
 
         ig = ig + 1
 
-! ###################################################################
-! Jacobians: computational grid is uniform
-! ###################################################################
+        ! ###################################################################
+        ! Jacobians: computational grid is uniform
+        ! ###################################################################
         g%jac => x(:, ig:)
 
         if (nx == 1) then
@@ -175,7 +214,7 @@ contains
 
         case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
             call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
-        call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
+         call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
 
         end select
 
@@ -295,7 +334,7 @@ contains
                 case (3)
                     call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
                 case (5)
-                   call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
                 end select
 
                 ig = ig + 5
@@ -381,7 +420,7 @@ contains
             ! modified wavenumbers
             g%mwn2 => x(:, ig)
 
-  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+            g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                         /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
             g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver

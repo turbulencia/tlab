@@ -42,7 +42,6 @@ program VINTEGRAL
     visc = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
-    g%inb_grid = 99
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
@@ -65,8 +64,6 @@ program VINTEGRAL
     du1_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 4)
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
-
-    ! call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     g%periodic = .false.
 

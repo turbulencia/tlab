@@ -29,11 +29,9 @@ program INTERPOL
     integer(wi) :: jmax, kmax, i, l, test_type, periodic
     real(wp) :: lambda, error, sol
 
-    integer(wi), parameter :: imax = 32, len = 10, inb_grid = 57
+    integer(wi), parameter :: imax = 32, len = 10
     integer(wi), parameter :: imaxp = imax - 1
 
-    ! real(wp), dimension(imax, inb_grid) :: x
-    ! real(wp), dimension(imaxp, inb_grid) :: x_pre ! pressure grid (for non-periodic case)
     real(wp), allocatable :: x(:,:), x_pre(:,:)
     
     real(wp), dimension(imax) :: x_int, x_aux

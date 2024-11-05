@@ -68,10 +68,6 @@ program SL_CORRELATION
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (q(imax*jmax*kmax, 3))
     allocate (z1(imax*jmax*kmax))
     allocate (tmp1(imax*jmax*kmax))

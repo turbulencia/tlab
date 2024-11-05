@@ -80,10 +80,6 @@ program SL_NORMAL_ANALYSIS
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (u(imax*jmax*kmax))
     allocate (v(imax*jmax*kmax))
     allocate (w(imax*jmax*kmax))

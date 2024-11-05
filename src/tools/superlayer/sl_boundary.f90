@@ -86,10 +86,6 @@ program SL_BOUNDARY
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (sl(imax*kmax, 6))
     allocate (wrk1d(isize_wrk1d*5))
     allocate (wrk2d(isize_wrk2d*10))

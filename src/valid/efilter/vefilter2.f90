@@ -20,10 +20,6 @@ program VEFILTER2
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (wrk3d(imax*jmax*kmax, 2), a(imax*jmax*kmax))
     allocate (cx(imax*5), cy(jmax*5), cz(kmax_total*5))
 

@@ -50,7 +50,6 @@ program VPARTIAL
     visc = 1.0_wp   ! Needed in FDM_INITIALIZE
     schmidt = 1.0_wp
 
-    ! g%inb_grid = 16
     ! g%size = imax
     ! g%scale = 1.0_wp
     ! g%uniform = .false.
