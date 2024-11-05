@@ -2,13 +2,12 @@
 
 program VINTEGRAL
     use TLab_Constants
-    use FDM, only: grid_dt, x, FDM_INITIALIZE
+    use FDM, only: grid_dt, FDM_INITIALIZE
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, txc
-    ! use FDM, only: x
+    use TLab_Arrays, only: wrk1d, txc, x
     use FDM_ComX_Direct
     use FDM_Integrate
     use FDM_MatMul

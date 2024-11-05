@@ -5,7 +5,7 @@ program DNS
 
     use TLab_Constants, only: ifile, efile, wfile, lfile, gfile, tag_flow, tag_scal, tag_part, tag_traj
     use TLAB_VARS
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use TLab_Arrays
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real

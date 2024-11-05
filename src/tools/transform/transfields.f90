@@ -19,7 +19,7 @@ program TRANSFIELDS
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
     use Thermodynamics
     use THERMO_ANELASTIC

@@ -9,7 +9,7 @@ program INIRAND
     use TLab_Arrays
     use TLab_WorkFlow
     use TLab_Memory, only: TLab_Initialize_Memory
-    use FDM, only: g, x, y, z, FDM_Initialize
+    use FDM, only: g,  FDM_Initialize
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
