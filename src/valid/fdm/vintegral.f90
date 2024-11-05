@@ -2,7 +2,7 @@
 
 program VINTEGRAL
     use TLab_Constants
-    use FDM, only: grid_dt, FDM_INITIALIZE
+    use FDM, only: grid_dt, FDM_Initialize
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow
@@ -39,7 +39,7 @@ program VINTEGRAL
     kmax = 1
     len = jmax*kmax
 
-    visc = 1.0_wp   ! Needed in FDM_INITIALIZE
+    visc = 1.0_wp   ! Needed in FDM_Initialize
     schmidt = 1.0_wp
 
     g%size = imax
@@ -94,7 +94,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,4))
+    call FDM_Initialize(x, g, wrk1d, wrk1d(:,4))
 
     bcs_aux = 0
 

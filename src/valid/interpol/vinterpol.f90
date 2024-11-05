@@ -20,7 +20,7 @@
 
 program INTERPOL
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: grid_dt, FDM_INITIALIZE
+    use FDM, only: grid_dt, FDM_Initialize
     use TLab_WorkFlow
 
     implicit none
@@ -93,7 +93,7 @@ program INTERPOL
     end if
 
 ! Velocity grid
-    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,2))
+    call FDM_Initialize(x, g, wrk1d, wrk1d(:,2))
 
 ! Initialize grids (interpolation grid on midpoints)
     if (g%periodic) then
@@ -116,7 +116,7 @@ program INTERPOL
     end do
     g_pre%size = imaxp; g_pre%scale = x_int(imaxp); g_pre%uniform = g%uniform
     g_pre%mode_fdm1 = g%mode_fdm1; g_pre%periodic = .false.
-    call FDM_INITIALIZE(x_pre, g_pre, wrk1d, wrk1d(:,2))
+    call FDM_Initialize(x_pre, g_pre, wrk1d, wrk1d(:,2))
 
 ! Define the function + deriv. on both grids
     do i = 1, imax

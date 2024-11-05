@@ -3,7 +3,7 @@
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
     use TLab_Types, only: filter_dt
-    use FDM, only: grid_dt, FDM_INITIALIZE
+    use FDM, only: grid_dt, FDM_Initialize
     use TLAB_VARS, only: visc, schmidt
     USE OPR_FILTERS
 
@@ -53,7 +53,7 @@ program VEFILTER
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,2))
+    call FDM_Initialize(x, g, wrk1d, wrk1d(:,2))
 
     ! ###################################################################
 

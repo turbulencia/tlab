@@ -6,7 +6,7 @@
 !########################################################################
 
 module FDM_Integrate
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_PROCS
     implicit none
@@ -72,7 +72,7 @@ contains
         end if
 
         ! -------------------------------------------------------------------
-        ! new rhs diagonals (array A), independent of lambda; this could be moved to fdm_initialize
+        ! new rhs diagonals (array A), independent of lambda; this could be moved to FDM_Initialize
         rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
 
         call FDM_Bcs_Reduce(ibc, rhs_int(:, 1:ndl), rhs(:, 1:ndr), rhsr_b, rhsr_t)

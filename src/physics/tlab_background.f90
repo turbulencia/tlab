@@ -167,7 +167,7 @@ subroutine TLab_Initialize_Background()
             g(1)%rhoinv(j) = ribackground(ip)
         end do
 
-! Density correction term in the burgers operator along Y; see fdm_initialize
+! Density correction term in the burgers operator along Y; see FDM_Initialize
 ! implemented directly in the tridiagonal system
         ip = 0
         do is = 0, inb_scal ! case 0 for the velocity
