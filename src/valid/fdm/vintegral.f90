@@ -1,14 +1,14 @@
 #include "dns_const.h"
 
 program VINTEGRAL
-    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use TLab_Constants, only: efile
-    use FDM, only: grid_dt, FDM_Initialize
+    use TLab_Constants
+    use FDM, only: grid_dt, x, FDM_INITIALIZE
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, txc, x
+    use TLab_Arrays, only: wrk1d, txc
+    ! use FDM, only: x
     use FDM_ComX_Direct
     use FDM_Integrate
     use FDM_MatMul
@@ -66,6 +66,8 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
+    ! call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
+
     g%periodic = .false.
 
     wk = 1.0_wp ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
@@ -95,7 +97,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(x, g, wrk1d, wrk1d(:,4))
+    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,4))
 
     bcs_aux = 0
 

@@ -1,7 +1,7 @@
 
 program VPARTIAL2
     use TLab_Constants, only: wp, wi
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
     use OPR_PARTIAL
     implicit none
 
@@ -40,7 +40,7 @@ program VPARTIAL2
         g%scale = g%nodes(imax) - g%nodes(1)
     end if
 
-    call FDM_Initialize(g, wrk1d)
+    call FDM_INITIALIZE(g, wrk1d)
 
 ! ###################################################################
 ! Define the function

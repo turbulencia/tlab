@@ -11,7 +11,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
     use TLAB_VARS, only: imode_sim, stagger_on
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     use TLab_Spatial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

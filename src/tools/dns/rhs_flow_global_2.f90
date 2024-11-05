@@ -17,7 +17,7 @@ subroutine RHS_FLOW_GLOBAL_2()
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, buoyancy
     use TLab_Arrays, only: s
     use TLab_Pointers

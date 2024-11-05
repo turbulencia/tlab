@@ -1,13 +1,13 @@
 #include "dns_const.h"
 
 program VPARTIAL
-    use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use FDM, only: grid_dt, FDM_Initialize
+    use TLab_Constants
+    use FDM, only: grid_dt, x, FDM_INITIALIZE
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, wrk2d, txc, x
+    use TLab_Arrays, only: wrk1d, wrk2d, txc
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_MatMul
@@ -68,6 +68,8 @@ program VPARTIAL
     du2_n2(1:len, 1:imax) => txc(1:imax*jmax*kmax, 8)
     du2_n3(1:len, 1:imax) => txc(1:imax*jmax*kmax, 9)
 
+    ! call TLab_Allocate_Real(__FILE__, g%nodes, [g%size, g%inb_grid], g%name)
+
     ! Valid settings
     test_type = 1
 
@@ -99,7 +101,7 @@ program VPARTIAL
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_Initialize(x, g, wrk1d, wrk1d(:,4))
+    call FDM_INITIALIZE(x, g, wrk1d, wrk1d(:,4))
 
 ! Bcs
     bcs_aux = 0

@@ -14,7 +14,7 @@
 subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     use TLab_Constants, only: wp, wi, longi, lfile, efile, sizeofint, sizeofreal, sizeoflongint
     use FDM, only: g
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_WorkFlow
     use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
