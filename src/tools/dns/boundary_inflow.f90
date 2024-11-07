@@ -8,7 +8,8 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-    use TLab_Types, only: filter_dt, discrete_dt
+    use TLab_Types, only: filter_dt
+    use TLab_Types, only: discrete_dt
     use FDM, only: grid_dt
     use TLab_Constants, only: efile, lfile, wp, wi
 #ifdef TRACE_ON

@@ -5,12 +5,12 @@
 #endif
 
 module OPR_FILTERS
-    use TLab_Constants, only: wp, wi
-    use FDM, only: grid_dt, g
+    use TLab_Constants, only: wp, wi, MAX_PARS
+    use FDM, only: grid_dt
     use TLab_Types, only: filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Filters_Compact
     use Filters_Explicit
     use Filters_Tophat
@@ -33,12 +33,8 @@ contains
     !###################################################################
     !###################################################################
     subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
-        use TLab_Constants, only: efile, wp, MAX_PARS
-        use TLab_Types, only: filter_dt
+        use TLab_Constants, only: efile
         use FDM, only: g
-        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-        implicit none
-
         character(len=*) bakfile, inifile, tag
         type(filter_dt) variable(3)
 
@@ -231,6 +227,7 @@ contains
     ! Filter of u (I-nplace operation)
     !###################################################################
     subroutine OPR_FILTER(nx, ny, nz, f, u, txc)
+        use FDM, only: g
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
         integer(wi), intent(in) :: nx, ny, nz
@@ -597,6 +594,7 @@ contains
     !Spectral band filter
     !########################################################################
     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
+        use FDM, only: g
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
@@ -654,6 +652,7 @@ contains
     !#
     !########################################################################
     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
+        use FDM, only: g
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)

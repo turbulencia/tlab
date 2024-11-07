@@ -12,7 +12,6 @@ program VPARTIAL3D
 #endif
     use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
-    use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
