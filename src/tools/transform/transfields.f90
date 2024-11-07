@@ -9,7 +9,6 @@
 program TRANSFIELDS
 
     use TLab_Constants
-    use TLab_Types, only: filter_dt
     use FDM, only: grid_dt
     use TLAB_VARS
     use TLab_Arrays

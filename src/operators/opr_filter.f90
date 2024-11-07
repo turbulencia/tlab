@@ -5,8 +5,8 @@
 #endif
 
 module OPR_FILTERS
-    use TLab_Constants, only: wp, wi
-    use FDM, only: grid_dt, g
+    use TLab_Constants, only: wp, wi, MAX_PARS
+    use FDM, only: grid_dt
     use TLab_Types, only: filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
@@ -33,12 +33,8 @@ contains
     !###################################################################
     !###################################################################
     subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
-        use TLab_Constants, only: efile, wp, MAX_PARS
-        use TLab_Types, only: filter_dt
+        use TLab_Constants, only: efile
         use FDM, only: g
-        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-        implicit none
-
         character(len=*) bakfile, inifile, tag
         type(filter_dt) variable(3)
 
