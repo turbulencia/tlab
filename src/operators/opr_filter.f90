@@ -197,7 +197,7 @@ contains
             call FLT_E4_COEFFS(f%size, f%periodic, g%scale, g%nodes, f%coeffs)
 
         case (DNS_FILTER_TOPHAT)
-            call FLT_T1_COEFFS(g%scale, g%nodes, f, wrk1d)
+            call FLT_T1_COEFFS(f%size, f%bcsmin, f%bcsmax, int(f%parameters(1)), f%periodic, g%scale, g%nodes, f%coeffs, wrk1d)
 
         case (DNS_FILTER_COMPACT)
             call FLT_C4_LHS(f%size, f%bcsmin, f%bcsmax, f%parameters(1), f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
