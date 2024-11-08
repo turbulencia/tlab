@@ -95,7 +95,7 @@ contains
         character(len=512) sRes
         integer(wi) idummy
 
-        real(wp) WGHT(MAX_NSP), WGHT_INV(MAX_NSP), WREF     ! Molar masses
+        real(wp) WGHT(MAX_NSP)                              ! Molar masses
         real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
         integer(wi) icp, is, im, inb_scal_loc
         real(wp) WRK1D_LOC(MAX_NPSAT)
@@ -104,7 +104,7 @@ contains
         character*46 str
         logical :: molar_data = .true.
 
-        real(wp), parameter :: RGAS = 8314_wp               ! J /kg /K, universal gas constant, 
+        real(wp), parameter :: RGAS = 8314_wp               ! J /kg /K, universal gas constant,
         ! Reference values for the nondimensionalization; in principle, these could be changed, if desired.
         real(wp), parameter :: TREF = 298.0_wp              ! K, reference temperature T_0
         real(wp), parameter :: PREF = 1e5_wp                ! Pa, reference pressure p_0
@@ -112,7 +112,7 @@ contains
         real(wp) CPREF, RREF                                ! Reference cp, referece gas constant R_0
         !                                                     Reference density results from rho_0=p_0/(T_0R_0)
         ! Reference to calculate potential temperatures. Global variable.
-        PREF_1000 = 1e5_wp                                  ! 1000 hPa, 
+        PREF_1000 = 1e5_wp                                  ! 1000 hPa,
 
         !########################################################################
         if (present(inifile)) then
@@ -499,18 +499,16 @@ contains
         ! ###################################################################
         ! Final calculations
         ! ###################################################################
-        WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
+        THERMO_R(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
+        RREF = THERMO_R(ISPREF)                 ! Reference value R_0
 
-        ! -------------------------------------------------------------------
-        ! reference heat capacity Cp0 and gas constant R_0
-        WREF = WGHT(ISPREF)                     ! kg /kmol
-        RREF = RGAS/WREF                        ! J /kg /K
-        CPREF = 0.0_wp                          ! J /kg /K
+        CPREF = 0.0_wp                          ! Reference heat capacity Cp0, J /kg /K
         do icp = NCP, 1, -1
             CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
         end do
-        if (imixture /= MIXT_TYPE_NONE) then    ! othewise, gama0 is read in tlab.ini
-            gama0 = CPREF/(CPREF - RREF)        ! Specific heat capacity ratio
+
+        if (imixture /= MIXT_TYPE_NONE) then    ! Reference heat capacity ratio; othewise, gama0 is read in tlab.ini
+            gama0 = CPREF/(CPREF - RREF)
         end if
 
         ! -------------------------------------------------------------------
@@ -524,14 +522,15 @@ contains
         CRATIO_INV = 1.0_wp
         GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
         if (nondimensional) then
-            ! Parameters in the governing equations
+            ! Parameters in the evolution equations
             if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
                 RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
             end if
             GRATIO = (gama0 - 1.0_wp)/gama0             ! R_0/C_{p,0}
+
             ! Thermal equation of state
-            WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)  ! normalized gas constants (Inverse of molar masses)
+            THERMO_R(:) = THERMO_R(:)/RREF              ! normalized gas constants (Inverse of molar masses)
 
             ! Caloric equations of state
             do is = 1, NSP
@@ -545,22 +544,24 @@ contains
             end do
             THERMO_TLIM = THERMO_TLIM/TREF              ! Temperature limis for polynomial fits to cp
 
-            PREF_1000 = PREF_1000/PREF*RRATIO           ! 1000 hPa, reference to calculate potential temperatures
+            ! Pressures
+            PREF_1000 = PREF_1000/PREF                  ! 1000 hPa, reference to calculate potential temperatures
 
-            ! Saturation vapor pressure
+            THERMO_PSAT(:) = THERMO_PSAT(:)/PREF        ! Saturation vapor pressure
             do ipsat = 1, NPSAT
-                THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)/PREF*RRATIO         ! Scaling by rho_0U_0^2 as total pressure
                 THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
             end do
 
         end if
 
         ! Derived parameters to save operations
-        THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0, or RREF
+        PREF_1000 = PREF_1000*RRATIO                    ! scaling by dynamic reference pressure U0^2/T0 for compressible mode
+        THERMO_PSAT(:) = THERMO_PSAT(:)*RRATIO          ! this assumes that RRATIO is 1 in anelastic, incompressible mode
+        THERMO_R(:) = THERMO_R(:)*RRATIO
         RRATIO_INV = 1.0_wp/RRATIO
 
         ! -------------------------------------------------------------------
-        ! definitions for clarity in the thermodynamics code
+        ! Definitions for clarity in the thermodynamics code
         select case (imixture)
         case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
             Rv = THERMO_R(1)
