@@ -30,7 +30,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use FDM, only: g
-    use TLAB_VARS, only: itransport, visc
+    use TLAB_VARS, only: visc
+    use Thermodynamics, only: itransport
     use TLab_Spatial
     use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

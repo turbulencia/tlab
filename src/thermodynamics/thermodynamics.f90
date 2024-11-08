@@ -143,7 +143,9 @@ contains
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
-            call ScanFile_Char(bakfile, inifile, block, 'Transport', 'None', sRes)
+            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Transport', 'None', sRes)
+            if (trim(adjustl(sRes)) == 'none') &
+                call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)     ! backwards compatibility, to be removed
             if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
             elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
             else; itransport = EQNS_NONE; end if
@@ -167,6 +169,28 @@ contains
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Nondimensional')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
+
+            ! -------------------------------------------------------------------
+            if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
+
+            select case (imixture)
+                ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
+                !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
+
+            case (MIXT_TYPE_AIRWATER)
+                if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
+
+                ! if (all([damkohler(1:2)] == 0.0_wp)) then
+                !     damkohler(1:2) = damkohler(3)
+                ! else
+                !     call TLab_Write_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
+                !     call TLab_Stop(DNS_ERROR_OPTION)
+                ! end if
+
+            end select
 
         end if
 
@@ -506,6 +530,7 @@ contains
         do icp = NCP, 1, -1
             CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
         end do
+        PREF_1000 = 1e5_wp                     ! 1000 hPa, reference to calculate potential temperatures
 
         if (imixture /= MIXT_TYPE_NONE) then    ! Reference heat capacity ratio; othewise, gama0 is read in tlab.ini
             gama0 = CPREF/(CPREF - RREF)
