@@ -3,14 +3,13 @@
 
 subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_PROF, MAX_VARS
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
+    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
     use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
-    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     use TLab_Spatial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

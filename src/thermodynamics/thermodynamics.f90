@@ -2,11 +2,6 @@
 #include "dns_error.h"
 
 !########################################################################
-!# Dimensional and nondimensional formulations. In the latter case:
-!# - Compressible formulations use p nondimensionalized by reference dynamic pressure rho_0 U_0^2
-!# - Incompressible and anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
-!#
-!# Mixture:
 !# inb_scal          # of scalars transported during the simulation and saved
 !# inb_scal_array    # of scalars in array s (normally = inb_scal)
 !# NSP               # of species in the mixture (NSP>=inb_scal)
@@ -104,15 +99,9 @@ contains
         character*46 str
         logical :: molar_data = .true.
 
-        real(wp), parameter :: RGAS = 8314_wp               ! J /kg /K, universal gas constant,
-        ! Reference values for the nondimensionalization; in principle, these could be changed, if desired.
-        real(wp), parameter :: TREF = 298.0_wp              ! K, reference temperature T_0
-        real(wp), parameter :: PREF = 1e5_wp                ! Pa, reference pressure p_0
-        integer, parameter :: ISPREF = 2                    ! Species 2 is taken as reference species for CPREF and RREF
-        real(wp) CPREF, RREF                                ! Reference cp, referece gas constant R_0
+        real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
+        real(wp) :: TREF, PREF, RREF                        ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
         !                                                     Reference density results from rho_0=p_0/(T_0R_0)
-        ! Reference to calculate potential temperatures. Global variable.
-        PREF_1000 = 1e5_wp                                  ! 1000 hPa,
 
         !########################################################################
         if (present(inifile)) then
@@ -127,8 +116,8 @@ contains
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)      ! needed in compressible formulation
-            call ScanFile_Real(bakfile, inifile, block, 'ScaleHeight', '0.0', scaleheight)      ! needed in anelastic formulation
+            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)
+            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)   ! needed in anelastic formulation
 
             call ScanFile_Char(bakfile, inifile, block, 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
@@ -143,9 +132,7 @@ contains
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
-            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Transport', 'None', sRes)
-            if (trim(adjustl(sRes)) == 'none') &
-                call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)     ! backwards compatibility, to be removed
+            call ScanFile_Char(bakfile, inifile, block, 'Transport', 'None', sRes)
             if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
             elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
             else; itransport = EQNS_NONE; end if
@@ -169,28 +156,6 @@ contains
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Nondimensional')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
-
-            ! -------------------------------------------------------------------
-            if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
-                call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
-                call TLab_Stop(DNS_ERROR_OPTION)
-            end if
-
-            select case (imixture)
-                ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
-                !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
-
-            case (MIXT_TYPE_AIRWATER)
-                if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
-
-                ! if (all([damkohler(1:2)] == 0.0_wp)) then
-                !     damkohler(1:2) = damkohler(3)
-                ! else
-                !     call TLab_Write_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
-                !     call TLab_Stop(DNS_ERROR_OPTION)
-                ! end if
-
-            end select
 
         end if
 
@@ -547,13 +512,15 @@ contains
         CRATIO_INV = 1.0_wp
         GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
         if (nondimensional) then
-            ! Parameters in the evolution equations
+            ! Parameters in the governing equations
+            ! compressible formulation
             if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
                 RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+                ! anelastic and incompressible formulation
+            else
+                GRATIO = (gama0 - 1.0_wp)/gama0         ! R_0/C_{p,0}
             end if
-            GRATIO = (gama0 - 1.0_wp)/gama0             ! R_0/C_{p,0}
-
             ! Thermal equation of state
             THERMO_R(:) = THERMO_R(:)/RREF              ! normalized gas constants (Inverse of molar masses)
 

@@ -8,9 +8,10 @@ subroutine TLab_Consistency_Check()
     use TLAB_VARS, only: imode_eqns, iadvection, subsidence
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on, PressureFilter
+    use TLAB_VARS, only: schmidt
     use FDM, only: g
     use IBM_VARS, only: imode_ibm
-    use Thermodynamics, only: itransport
+    use Thermodynamics, only: imixture, itransport
     use Radiation
     use Microphysics
     use Chemistry
@@ -79,6 +80,28 @@ subroutine TLab_Consistency_Check()
 
     ! ###################################################################
     if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for viscosity
+
+    ! ###################################################################
+    if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
+        call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
+        call TLab_Stop(DNS_ERROR_OPTION)
+    end if
+
+    select case (imixture)
+        ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
+        !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
+
+    case (MIXT_TYPE_AIRWATER)
+        if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
+
+        ! if (all([damkohler(1:2)] == 0.0_wp)) then
+        !     damkohler(1:2) = damkohler(3)
+        ! else
+        !     call TLab_Write_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
+        !     call TLab_Stop(DNS_ERROR_OPTION)
+        ! end if
+
+    end select
 
     return
 end subroutine TLab_Consistency_Check
