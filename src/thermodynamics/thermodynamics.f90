@@ -2,6 +2,11 @@
 #include "dns_error.h"
 
 !########################################################################
+!# Dimensional and nondimensional formulations. In the latter case:
+!# - Compressible formulations use p nondimensionalized by reference dynamic pressure rho_0 U_0^2
+!# - Incompressible and anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
+!#
+!# Mixture:
 !# inb_scal          # of scalars transported during the simulation and saved
 !# inb_scal_array    # of scalars in array s (normally = inb_scal)
 !# NSP               # of species in the mixture (NSP>=inb_scal)
@@ -513,14 +518,11 @@ contains
         GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
         if (nondimensional) then
             ! Parameters in the governing equations
-            ! compressible formulation
             if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
                 RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-                ! anelastic and incompressible formulation
-            else
-                GRATIO = (gama0 - 1.0_wp)/gama0         ! R_0/C_{p,0}
             end if
+            GRATIO = (gama0 - 1.0_wp)/gama0             ! R_0/C_{p,0}
             ! Thermal equation of state
             THERMO_R(:) = THERMO_R(:)/RREF              ! normalized gas constants (Inverse of molar masses)
 
