@@ -95,7 +95,7 @@ contains
         character(len=512) sRes
         integer(wi) idummy
 
-        real(wp) WGHT(MAX_NSP)                              ! Molar masses
+        real(wp) WGHT(MAX_NSP), WGHT_INV(MAX_NSP), WREF     ! Molar masses
         real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
         integer(wi) icp, is, im, inb_scal_loc
         real(wp) WRK1D_LOC(MAX_NPSAT)
@@ -104,9 +104,15 @@ contains
         character*46 str
         logical :: molar_data = .true.
 
-        real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
-        real(wp) :: TREF, PREF, RREF                        ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
+        real(wp), parameter :: RGAS = 8314_wp               ! J /kg /K, universal gas constant, 
+        ! Reference values for the nondimensionalization; in principle, these could be changed, if desired.
+        real(wp), parameter :: TREF = 298.0_wp              ! K, reference temperature T_0
+        real(wp), parameter :: PREF = 1e5_wp                ! Pa, reference pressure p_0
+        integer, parameter :: ISPREF = 2                    ! Species 2 is taken as reference species for CPREF and RREF
+        real(wp) CPREF, RREF                                ! Reference cp, referece gas constant R_0
         !                                                     Reference density results from rho_0=p_0/(T_0R_0)
+        ! Reference to calculate potential temperatures. Global variable.
+        PREF_1000 = 1e5_wp                                  ! 1000 hPa, 
 
         !########################################################################
         if (present(inifile)) then
@@ -121,8 +127,8 @@ contains
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)
-            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)   ! needed in anelastic formulation
+            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)      ! needed in compressible formulation
+            call ScanFile_Real(bakfile, inifile, block, 'ScaleHeight', '0.0', scaleheight)      ! needed in anelastic formulation
 
             call ScanFile_Char(bakfile, inifile, block, 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
@@ -496,14 +502,16 @@ contains
         THERMO_R(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
         RREF = THERMO_R(ISPREF)                 ! Reference value R_0
 
-        CPREF = 0.0_wp                          ! Reference heat capacity Cp0, J /kg /K
+        ! -------------------------------------------------------------------
+        ! reference heat capacity Cp0 and gas constant R_0
+        WREF = WGHT(ISPREF)                     ! kg /kmol
+        RREF = RGAS/WREF                        ! J /kg /K
+        CPREF = 0.0_wp                          ! J /kg /K
         do icp = NCP, 1, -1
             CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
         end do
-        PREF_1000 = 1e5_wp                     ! 1000 hPa, reference to calculate potential temperatures
-
-        if (imixture /= MIXT_TYPE_NONE) then    ! Reference heat capacity ratio; othewise, gama0 is read in tlab.ini
-            gama0 = CPREF/(CPREF - RREF)
+        if (imixture /= MIXT_TYPE_NONE) then    ! othewise, gama0 is read in tlab.ini
+            gama0 = CPREF/(CPREF - RREF)        ! Specific heat capacity ratio
         end if
 
         ! -------------------------------------------------------------------
@@ -549,13 +557,11 @@ contains
         end if
 
         ! Derived parameters to save operations
-        PREF_1000 = PREF_1000*RRATIO                    ! scaling by dynamic reference pressure U0^2/T0 for compressible mode
-        THERMO_PSAT(:) = THERMO_PSAT(:)*RRATIO          ! this assumes that RRATIO is 1 in anelastic, incompressible mode
-        THERMO_R(:) = THERMO_R(:)*RRATIO
+        THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0, or RREF
         RRATIO_INV = 1.0_wp/RRATIO
 
         ! -------------------------------------------------------------------
-        ! Definitions for clarity in the thermodynamics code
+        ! definitions for clarity in the thermodynamics code
         select case (imixture)
         case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
             Rv = THERMO_R(1)
