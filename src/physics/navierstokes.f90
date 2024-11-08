@@ -3,15 +3,14 @@
 
 subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_PROF, MAX_VARS
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
+    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
-    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
-    use Thermodynamics, only: gama0
     use TLab_Spatial
     use TLab_WorkFlow
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
@@ -133,7 +132,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#Stokes=<value>')
     call TLab_Write_ASCII(bakfile, '#Settling=<value>')
     call TLab_Write_ASCII(bakfile, '#Mach=<value>')
-    call TLab_Write_ASCII(bakfile, '#Gama=<value>')
     call TLab_Write_ASCII(bakfile, '#Prandtl=<value>')
 
     ! Molecular transport
@@ -166,7 +164,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         rossby = 1.0_wp/dummy
     end if
 
-    ! Chemistry
+    ! Additional source terms; this can be used to control input in chemistry, radiation, microphysics.... Still needed?
     lstr = '0.0'
     do is = 2, inb_scal
         lstr = trim(adjustl(lstr))//',0.0'
@@ -180,8 +178,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     end if
 
     ! Compressible flows
-    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
-    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)   ! molecular transport, but only appearing in compressible formulation
     call ScanFile_Real(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
 
     ! Particle-laden flows
@@ -328,8 +325,21 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
     do is = 1, MAX_VARS
         write (lstr, *) is
-        call Profiles_ReadBlock(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
+        call Profiles_ReadBlock(bakfile, inifile, block, 'Scalar'//trim(adjustl(lstr)), sbg(is))
     end do
+
+    if (imode_sim == DNS_MODE_SPATIAL) then
+        call TLab_Write_ASCII(bakfile, '#ThickA=<value>')
+        call TLab_Write_ASCII(bakfile, '#ThickB=<value>')
+        call TLab_Write_ASCII(bakfile, '#Flux=<value>')
+
+        do is = 1, MAX_VARS
+            write (lstr, *) is
+            call ScanFile_Real(bakfile, inifile, block, 'ThickA'//trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
+            call ScanFile_Real(bakfile, inifile, block, 'ThickB'//trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
+            call ScanFile_Real(bakfile, inifile, block, 'Flux'//trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
+        end do
+    end if
 
 ! ###################################################################
     block = 'Flow'
@@ -371,11 +381,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     !     end if
     ! end if
 
-! -------------------------------------------------------------------
-! Spatial case
-! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
-! -------------------------------------------------------------------
-    if (imode_sim == DNS_MODE_SPATIAL) then
+    if (imode_sim == DNS_MODE_SPATIAL) then     ! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
         call TLab_Write_ASCII(bakfile, '#ThickAVelocity=<value>')
         call TLab_Write_ASCII(bakfile, '#ThickBVelocity=<value>')
         call TLab_Write_ASCII(bakfile, '#FluxVelocity=<value>')
@@ -399,20 +405,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', tbg%parameters(2))
         call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0', tbg%parameters(3))
         call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxTemperature', '0.94', tbg%parameters(4))
-
-        ! Scalars
-        call TLab_Write_ASCII(bakfile, '#ThickA=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickB=<value>')
-        call TLab_Write_ASCII(bakfile, '#Flux=<value>')
-
-        do is = 1, MAX_VARS
-            write (lstr, *) is; lstr = 'ThickA'//trim(adjustl(lstr))
-            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
-            write (lstr, *) is; lstr = 'ThickB'//trim(adjustl(lstr))
-            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
-            write (lstr, *) is; lstr = 'Flux'//trim(adjustl(lstr))
-            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
-        end do
 
     end if
 

@@ -1,8 +1,27 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
+!########################################################################
+!# inb_scal          # of scalars transported during the simulation and saved
+!# inb_scal_array    # of scalars in array s (normally = inb_scal)
+!# NSP               # of species in the mixture (NSP>=inb_scal)
+!#
+!# The code handles reactive/non-reactive, multiple/single species:
+!# 1. Non-reactive + general multispecies retains NSP-1 species, in scalar
+!#    array s (the last one is obtained by sum Y_i=1), i.e., Y_i=s_i, w/o additional conserved scalar.
+!# 2. Reactive => Multispecies.
+!# 3. Reactive + general multispecies retains NSP-1 species in scalar
+!#    array s (the last one is obtained by sum Y_i=1), i.e., Y_i=s_i, and an additional conserved scalar, i.e. inb_scal=NSP.
+!# 4. Multispecies admits the case Y_i=f_i(s_j), s_j could be conserved scalar, e.g. using total water or mixture fraction
+!#
+!# Multispecies implies that reference T_0 in non-dimensionalization is 298 K.
+!#
+!# Saturation pressure implies that reference R_0 in non-dimensionalization is such that reference pressure is 1 bar.
+!#
+!########################################################################
 module Thermodynamics
-    use TLab_Constants, only: MAX_PROF, wp, wi, efile, lfile
+    use TLab_Constants, only: wp, wi, efile, lfile, MAX_PROF
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
@@ -58,37 +77,16 @@ module Thermodynamics
 
 contains
     !########################################################################
-    !# inb_scal          # of scalars transported during the simulation and saved
-    !# inb_scal_array    # of scalars in array s (normally = inb_scal)
-    !# NSP               # of species in the mixture (NSP>=inb_scal)
-    !#
-    !# The code handles reactive/non-reactive, multiple/single species:
-    !# 1. Non-reactive + general multispecies retains NSP-1 species, in scalar
-    !#    array s (the last one is obtained by sum Y_i=1), i.e., Y_i=s_i, w/o additional conserved scalar.
-    !# 2. Reactive => Multispecies.
-    !# 3. Reactive + general multispecies retains NSP-1 species in scalar
-    !#    array s (the last one is obtained by sum Y_i=1), i.e., Y_i=s_i, and an additional conserved scalar, i.e. inb_scal=NSP.
-    !# 4. Multispecies admits the case Y_i=f_i(s_j), s_j could be conserved scalar, e.g. using total water or mixture fraction
-    !#
-    !# Multispecies implies that reference T_0 in non-dimensionalization is 298 K.
-    !#
-    !# Saturation pressure implies that reference R_0 in non-dimensionalization is such that reference pressure is 1 bar.
-    !#
-    !# gama0 has alread been read in tlab.ini.
-    !# If needed, the new reference value of gamma0 is calculated here based on the reference species
-    !#
     !########################################################################
     subroutine Thermodynamics_Initialize_Parameters(inifile)
-        use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: inb_scal, inb_scal_array
-        use TLAB_VARS, only: mach, schmidt, damkohler
-        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-        ! use THERMO_ANELASTIC, only: scaleheight
+        use TLAB_VARS, only: mach, imode_eqns
+        ! use THERMO_ANELASTIC, only: scaleheight, GRATIO
 
         character(len=*), intent(in), optional :: inifile
 
         ! -------------------------------------------------------------------
-        character(len=32) bakfile
+        character(len=32) bakfile, block
         character(len=512) sRes
         integer(wi) idummy
 
@@ -104,24 +102,28 @@ contains
         logical :: molar_data = .true.
 
         real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
-
         real(wp) :: TREF, PREF, RREF                        ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
-        !                                                   Reference density results from rho_0=p_0/(T_0R_0)
+        !                                                     Reference density results from rho_0=p_0/(T_0R_0)
 
         !########################################################################
         if (present(inifile)) then
             bakfile = trim(adjustl(inifile))//'.bak'
+            block = 'Thermodynamics'
 
             call TLab_Write_ASCII(bakfile, '#')
-            call TLab_Write_ASCII(bakfile, '#[Thermodynamics]')
+            call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+            call TLab_Write_ASCII(bakfile, '#Gama=<value>')
             call TLab_Write_ASCII(bakfile, '#Mixture=<value>')
             call TLab_Write_ASCII(bakfile, '#Transport=<constant/powerlaw/sutherland>')
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Mixture', 'None', sRes)
+            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)
+            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)   ! needed in anelastic formulation
+
+            call ScanFile_Char(bakfile, inifile, block, 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
-                call ScanFile_Char(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)               ! backwards compatibility, to be removed
+                call ScanFile_Char(bakfile, inifile, 'Main', 'Mixture', 'None', sRes)                   ! backwards compatibility, to be removed
             if (trim(adjustl(sRes)) == 'none') then; imixture = MIXT_TYPE_NONE
             else if (trim(adjustl(sRes)) == 'air') then; imixture = MIXT_TYPE_AIR
             else if (trim(adjustl(sRes)) == 'airvapor') then; imixture = MIXT_TYPE_AIRVAPOR
@@ -132,9 +134,7 @@ contains
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
-            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Transport', 'None', sRes)
-            if (trim(adjustl(sRes)) == 'none') &
-                call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)     ! backwards compatibility, to be removed
+            call ScanFile_Char(bakfile, inifile, block, 'Transport', 'None', sRes)
             if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
             elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
             else; itransport = EQNS_NONE; end if
@@ -147,8 +147,6 @@ contains
 
             end if
 
-            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)
-
             if (imixture == MIXT_TYPE_AIRWATER) then
                 call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
             end if
@@ -160,28 +158,6 @@ contains
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Nondimensional')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
-
-            ! -------------------------------------------------------------------
-            if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
-                call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
-                call TLab_Stop(DNS_ERROR_OPTION)
-            end if
-
-            select case (imixture)
-                ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
-                !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
-
-            case (MIXT_TYPE_AIRWATER)
-                if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
-
-                ! if (all([damkohler(1:2)] == 0.0_wp)) then
-                !     damkohler(1:2) = damkohler(3)
-                ! else
-                !     call TLab_Write_ASCII(efile, __FILE__//'. AirWater requires at least first 2 Damkholer numbers zero.')
-                !     call TLab_Stop(DNS_ERROR_OPTION)
-                ! end if
-
-            end select
 
         end if
 
@@ -269,7 +245,7 @@ contains
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIRVAPOR)
             NSP = 2
-            inb_scal = max(inb_scal, NSP) ! using inb_scal read in the inifile
+            inb_scal = max(inb_scal, NSP)
             inb_scal_array = inb_scal
 
             THERMO_SPNAME(1) = 'H2O'; WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
@@ -283,7 +259,8 @@ contains
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIRWATER)
             NSP = 3
-            if (damkohler(3) <= 0.0_wp) inb_scal_array = inb_scal + 1 ! using inb_scal read in the inifile
+            inb_scal_array = min(NSP, inb_scal + 1)
+            inb_scal_array = max(inb_scal, inb_scal_array)
 
             THERMO_SPNAME(1) = 'H2Ov'; WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
             THERMO_SPNAME(2) = 'AIR '; WGHT(2) = 28.9644_wp
@@ -542,13 +519,14 @@ contains
         GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO
         if (nondimensional) then
             ! Parameters in the governing equations
+            ! compressible formulation
             if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
                 RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+                ! anelastic and incompressible formulation
             else
                 GRATIO = (gama0 - 1.0_wp)/gama0         ! R_0/C_{p,0}
             end if
-
             ! Thermal equation of state
             WGHT_INV(:) = WGHT_INV(:)/WGHT_INV(ISPREF)  ! normalized gas constants (Inverse of molar masses)
 
@@ -631,116 +609,114 @@ contains
 1010    format(A14, 1x, G_FORMAT_R)
 1020    format(A15, 1x, G_FORMAT_R)
 
-    contains
-        !########################################################################
-        ! Read chemkin mixtures ! To be checked
-        !########################################################################
-        subroutine THERMO_READ_CHEMKIN(name)
-            character(len=*), intent(in) :: name
+    end subroutine Thermodynamics_Initialize_Parameters
 
-            ! -----------------------------------------------------------------------
-            real(wp) T1, T2, T3
-            integer(wi) il
-            logical frun
-            character*15 token
-            character*225 wline
-            character*80 line, line1, line2, line3
-            integer(wi) THERMO_FLAG(MAX_NSP)
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_READ_CHEMKIN(name)    ! Read chemkin mixtures ! To be checked
+        character(len=*), intent(in) :: name
 
-            integer, parameter :: i23 = 23
+        ! -----------------------------------------------------------------------
+        real(wp) T1, T2, T3
+        integer(wi) il, i, is
+        logical frun
+        character*15 token
+        character*225 wline
+        character*80 line, line1, line2, line3
+        integer(wi) THERMO_FLAG(MAX_NSP)
 
-            ! #######################################################################
-            ! Initialize thermodynamic data structure
-            do is = 1, NSP
-                THERMO_FLAG(is) = 0
-            end do
+        integer, parameter :: i23 = 23
 
-            ! Read Thermodynamic file
-            open (i23, file=name, status='old')
+        ! #######################################################################
+        ! Initialize thermodynamic data structure
+        do is = 1, NSP
+            THERMO_FLAG(is) = 0
+        end do
 
-            rewind (i23)
+        ! Read Thermodynamic file
+        open (i23, file=name, status='old')
 
-            ! Read Header
-            read (i23, *) line
-            call TLab_Write_ASCII(lfile, line)
+        rewind (i23)
 
-            if (trim(adjustl(line)) /= 'THERMO') then
-                call TLab_Write_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
-                call TLab_Stop(DNS_ERROR_THERMOFORMAT)
+        ! Read Header
+        read (i23, *) line
+        call TLab_Write_ASCII(lfile, line)
+
+        if (trim(adjustl(line)) /= 'THERMO') then
+            call TLab_Write_ASCII(efile, 'THERMO_READ_CHEMKIN. Thermodynamic file format error')
+            call TLab_Stop(DNS_ERROR_THERMOFORMAT)
+        end if
+
+        ! Read Temperature ranges
+        read (i23, *) T1, T2, T3
+        write (wline, *) T1, T2, T3
+        call TLab_Write_ASCII(lfile, wline(1:80))
+
+        ! Remove comments
+        frun = .true.
+        do while (frun)
+            read (i23, '(A80)', end=50) line
+            if (line(1:1) /= '!') frun = .false.
+        end do
+
+        frun = .true.
+        do while (frun)
+            !    Check for end of file
+            read (line, '(A15)', end=50) token
+            if (trim(adjustl(token)) == 'END') then
+                frun = .false.
+                goto 50
             end if
 
-            ! Read Temperature ranges
-            read (i23, *) T1, T2, T3
-            write (wline, *) T1, T2, T3
-            call TLab_Write_ASCII(lfile, wline(1:80))
+            !    Read all relevant information
+            read (i23, '(A80)', end=50) line1
+            read (i23, '(A80)', end=50) line2
+            read (i23, '(A80)', end=50) line3
 
-            ! Remove comments
-            frun = .true.
-            do while (frun)
-                read (i23, '(A80)', end=50) line
-                if (line(1:1) /= '!') frun = .false.
-            end do
-
-            frun = .true.
-            do while (frun)
-                !    Check for end of file
-                read (line, '(A15)', end=50) token
-                if (trim(adjustl(token)) == 'END') then
-                    frun = .false.
-                    goto 50
-                end if
-
-                !    Read all relevant information
-                read (i23, '(A80)', end=50) line1
-                read (i23, '(A80)', end=50) line2
-                read (i23, '(A80)', end=50) line3
-
-                !    Process lines
-                do is = 1, NSP
-                    if (trim(adjustl(token)) == THERMO_SPNAME(is)) then
-                        call TLab_Write_ASCII(lfile, line)
-                        call TLab_Write_ASCII(lfile, line1)
-                        call TLab_Write_ASCII(lfile, line2)
-                        call TLab_Write_ASCII(lfile, line3)
-
-                        !          Required species found, process information
-                        !          Get limit temperatures
-                        do i = 1, 225
-                            wline(i:i) = ' '
-                        end do
-                        wline = line(46:75)
-                        read (wline, *) (THERMO_TLIM(i, is), i=1, 3)
-
-                        !          Concatenate lines so read is simpler
-                        wline = line1(1:75)//line2(1:75)//line3(1:75)
-
-                        do i = 1, 14
-                            il = (i - 1)*15 + 1
-                            read (wline(il:il + 14), *) THERMO_AI(i, 1, is)
-                        end do
-
-                        THERMO_FLAG(is) = 1
-                    end if
-                end do
-
-                !    Read next line
-                read (i23, '(A80)', end=50) line
-
-            end do
-
-50          close (i23)
-
+            !    Process lines
             do is = 1, NSP
-                if (THERMO_FLAG(is) == 0) then
-                    call TLab_Write_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
-                    call TLab_Stop(DNS_ERROR_THERMOCONT)
+                if (trim(adjustl(token)) == THERMO_SPNAME(is)) then
+                    call TLab_Write_ASCII(lfile, line)
+                    call TLab_Write_ASCII(lfile, line1)
+                    call TLab_Write_ASCII(lfile, line2)
+                    call TLab_Write_ASCII(lfile, line3)
+
+                    !          Required species found, process information
+                    !          Get limit temperatures
+                    do i = 1, 225
+                        wline(i:i) = ' '
+                    end do
+                    wline = line(46:75)
+                    read (wline, *) (THERMO_TLIM(i, is), i=1, 3)
+
+                    !          Concatenate lines so read is simpler
+                    wline = line1(1:75)//line2(1:75)//line3(1:75)
+
+                    do i = 1, 14
+                        il = (i - 1)*15 + 1
+                        read (wline(il:il + 14), *) THERMO_AI(i, 1, is)
+                    end do
+
+                    THERMO_FLAG(is) = 1
                 end if
             end do
 
-            return
-        end subroutine THERMO_READ_CHEMKIN
+            !    Read next line
+            read (i23, '(A80)', end=50) line
 
-    end subroutine Thermodynamics_Initialize_Parameters
+        end do
+
+50      close (i23)
+
+        do is = 1, NSP
+            if (THERMO_FLAG(is) == 0) then
+                call TLab_Write_ASCII(efile, 'THERMO_READ_CHEMKIN. Not all thermodynamic data contained in thermo file')
+                call TLab_Stop(DNS_ERROR_THERMOCONT)
+            end if
+        end do
+
+        return
+    end subroutine THERMO_READ_CHEMKIN
 
     ! ###################################################################
     ! ###################################################################

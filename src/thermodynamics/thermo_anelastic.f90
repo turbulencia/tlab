@@ -13,7 +13,8 @@
 
 module THERMO_ANELASTIC
     use TLab_Constants, only: wp, wi
-    use Thermodynamics, only: imixture, GRATIO, scaleheight
+    use Thermodynamics, only: imixture
+    use Thermodynamics, only: GRATIO, scaleheight   ! anelastic parameters
     use Thermodynamics, only: THERMO_PSAT, NPSAT
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
     implicit none
@@ -21,6 +22,8 @@ module THERMO_ANELASTIC
 
     integer(wi) ij, i, j, jk, is, ipsat
     real(wp) RMEAN, P_LOC, E_LOC, T_LOC, R_LOC, R_LOC_INV, psat
+
+    ! real(wp), public :: scaleheight, GRATIO
 
     public :: THERMO_ANELASTIC_BUOYANCY
     public :: THERMO_ANELASTIC_DENSITY
