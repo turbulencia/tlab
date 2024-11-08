@@ -21,7 +21,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use FDM, only: g
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
-    use Thermodynamics, only: imixture, thermo_param
+    use Thermodynamics, only: imixture, thermo_param, itransport
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1, scal_bcs

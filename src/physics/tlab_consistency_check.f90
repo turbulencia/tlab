@@ -6,10 +6,11 @@
 subroutine TLab_Consistency_Check()
     use TLab_Constants, only: efile, lfile, MAX_VARS
     use TLAB_VARS, only: imode_eqns, iadvection, subsidence
-    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on, PressureFilter
     use FDM, only: g
     use IBM_VARS, only: imode_ibm
+    use Thermodynamics, only: itransport
     use Radiation
     use Microphysics
     use Chemistry
@@ -75,6 +76,9 @@ subroutine TLab_Consistency_Check()
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
     end if
+
+    ! ###################################################################
+    if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for viscosity
 
     return
 end subroutine TLab_Consistency_Check

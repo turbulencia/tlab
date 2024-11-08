@@ -30,13 +30,13 @@ module Thermodynamics
     real(wp), public :: THERMO_PSAT(MAX_NPSAT), NEWTONRAPHSON_ERROR
 
     ! Compressible formulation, different combinations of parameters \gamma0 and mach to save calculations
-    real(wp), public :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0), defined in tlab_vars because it is global in basic formulation
-    ! In case of imixture=NONE, I only need gama0 and it is set in tlab.ini
-    ! In case of mixture, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
+    real(wp), public :: gama0                           ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
+    !                                                     For imixture=NONE, I only need gama0 and it is set in tlab.ini
+    !                                                     Otherwise, I need the thermodynamic data that is given in thermo_initialize, and gama0 is derived.
     real(wp), public :: RRATIO                          ! 1/(gama0 mach^2) = R0/(U0^2/T0)
     real(wp), public :: CRATIO_INV                      ! (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
     real(wp), public :: RRATIO_INV                      ! gama0 mach^2 = (U0^2/T0)/R0, inverse of RRATIO to save computational time in some routines
-    ! Anelastic and incompressible formulation 
+    ! Anelastic and incompressible formulation
     real(wp), public :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
     real(wp), public :: scaleheight                     ! Equivalent to Fr*RRATIO in compressible formulation
 
@@ -49,6 +49,9 @@ module Thermodynamics
 
     ! Derived parameters, for clarity in airwater formulation
     real(wp), public :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, rd_ov_cd, PREF_1000
+
+    ! Transport phenomena
+    integer, public :: itransport                       ! variable viscosity
 
     public :: Thermodynamics_Initialize_Parameters
     public :: Thermo_Psat_Polynomial, Thermo_dPsat_Polynomial
@@ -112,6 +115,7 @@ contains
             call TLab_Write_ASCII(bakfile, '#')
             call TLab_Write_ASCII(bakfile, '#[Thermodynamics]')
             call TLab_Write_ASCII(bakfile, '#Mixture=<value>')
+            call TLab_Write_ASCII(bakfile, '#Transport=<constant/powerlaw/sutherland>')
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
@@ -127,6 +131,13 @@ contains
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Type.')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
+
+            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Transport', 'None', sRes)
+            if (trim(adjustl(sRes)) == 'none') &
+                call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)     ! backwards compatibility, to be removed
+            if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
+            elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
+            else; itransport = EQNS_NONE; end if
 
             if (imixture /= EQNS_NONE) then
                 thermo_param(:) = 0.0_wp
@@ -157,8 +168,8 @@ contains
             end if
 
             select case (imixture)
-            ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
-            !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
+                ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
+                !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
 
             case (MIXT_TYPE_AIRWATER)
                 if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
@@ -514,7 +525,7 @@ contains
         do icp = NCP, 1, -1
             CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
         end do
-        PREF_1000 =  1e5_wp                     ! 1000 hPa, reference to calculate potential temperatures
+        PREF_1000 = 1e5_wp                     ! 1000 hPa, reference to calculate potential temperatures
 
         if (imixture /= MIXT_TYPE_NONE) then    ! othewise, gama0 is read in tlab.ini
             gama0 = CPREF/(CPREF - RREF)        ! Specific heat ratio

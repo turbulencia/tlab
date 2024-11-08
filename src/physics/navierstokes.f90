@@ -3,14 +3,13 @@
 
 subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_PROF, MAX_VARS
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
     use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
-    use TLAB_VARS, only: imode_sim, stagger_on
-    use FDM, only: g
+    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     use Thermodynamics, only: gama0
     use TLab_Spatial
@@ -39,7 +38,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
     call TLab_Write_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
     call TLab_Write_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
-    call TLab_Write_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
     !
     call TLab_Write_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLab_Write_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
@@ -84,23 +82,12 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
-    if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
-    elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
-    else; itransport = EQNS_NONE; end if
-
     ! consistency check
     select case (imode_eqns)
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-        if (itransport == EQNS_TRANS_POWERLAW) then
-            call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
-
-        if (imode_eqns == DNS_EQNS_TOTAL) then
-            call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
+    case (DNS_EQNS_INTERNAL)
+    case (DNS_EQNS_TOTAL)
+        call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         if (iviscous /= EQNS_EXPLICIT) then
@@ -468,7 +455,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
         inb_flow = 5                            ! space for u, v, w, e, rho
         inb_flow_array = inb_flow + 2           ! space for p, T
-        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for viscosity
 
     end select
 

@@ -17,8 +17,8 @@ module TLAB_VARS
     logical :: fourier_on = .false.     ! using FFT libraries
     logical :: stagger_on = .false.     ! horizontal staggering of pressure
 
-    integer :: imode_eqns               ! set of equations to be solved
-    integer :: iadvection, iviscous, idiffusion, itransport ! formulation
+    integer :: imode_eqns                       ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
+    integer :: iadvection, iviscous, idiffusion ! formulation of the Burgers operator
 
 ! ###################################################################
 ! Iteration

@@ -581,7 +581,7 @@ contains
         end if
 
         ! An amplification factor norm_ini_p is allowed as in previous versions
-        rho = (norm_ini_p*pprime/p/gama0 + 1.0_wp)*rho
+        rho = (norm_ini_p*pprime/p/gama0 + 1.0_wp)*rho  ! isentropic relation p'/p = \gamma \rho'/rho
         p = norm_ini_p*pprime + p
 
         return

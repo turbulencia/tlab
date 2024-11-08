@@ -6,7 +6,7 @@
 !########################################################################
 subroutine THERMO_VISCOSITY(ijmax, T, mu)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: itransport
+    use Thermodynamics, only: itransport
     implicit none
 
     integer(wi) ijmax

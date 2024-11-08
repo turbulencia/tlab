@@ -39,26 +39,28 @@ and
     p  = (\gamma_0 \Ma^2)^{-1}\rho T \;.
     \label{eq:state}
 \end{equation}
-The variables in these equations are normalized by the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$, which represent a length, a velocity, a density, and a temperature, respectively. The pressure is normalized by $\rho_0U_0^2$. Thermal energy variables are normalized with $C_{p0}T_0$, where $C_{p0}$ is a reference specific heat capacity at constant pressure. $R_0$ is the specific gas constant of the gas under consideration. The dimensionless numbers are defined by
+The variables in these equations are normalized by the reference scales $\mathrm{L}_0$, $\mathrm{U}_0$, $\rho_0$ and $\mathrm{T}_0$, which represent a length, a velocity, a density, and a temperature, respectively. The pressure is normalized by $\rho_0U_0^2$. Thermal energy variables are normalized with $C_{p0}T_0$, where $C_{p0}$ is a reference specific heat capacity at constant pressure. The dimensionless numbers are defined by
 \begin{equation}
     \Re \equiv \frac{\rho_0 \mathrm{U}_0 \mathrm{L}_0}{\mu_0}\;, \qquad
     \Pr \equiv \frac{\mu_0}{(\lambda_0/C_{p0})}\;, \qquad
     \Sc_i \equiv \frac{\mu_0}{\rho_0 D_{i0}}\;,
 \end{equation}
-and
+as diffusion parameters, by
+\begin{equation}
+    \Fr \equiv \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} \;,\qquad \Ro \equiv \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;,
+\end{equation}
+as non-inertial parameters, and by
 \begin{equation}
     \Ma  \equiv \frac{\mathrm{U}_0}{\sqrt{\gamma_0 R_0 \mathrm{T}_0}}\;, \qquad
     \gamma_0 \equiv \frac{C_{p0}}{C_{p0}-R_0}\;,
 \end{equation}
-and
-\begin{equation}
-    \Fr \equiv \frac{\mathrm{U}_0^2}{g\mathrm{L}_0} \qquad \Ro \equiv \frac{\mathrm{U}_0}{\mathrm{L}_0f} \;.
-\end{equation}
-Although $\gamma_0$ and $\Ma$ are the input parameters, the governing equations depend on $(\gamma_0\Ma^2)^{-1}$ and $(\gamma_0-1)\Ma^2$, which suggests to introduce the derived set of parameters
+as thermodynamic parameters, where $R_0$ is the specific gas constant. Although $\Ma$ and $\gamma_0$ are the input parameters, the equations above depend on $(\gamma_0\Ma^2)^{-1}$ and $(\gamma_0-1)\Ma^2$, which suggests to use
 \begin{equation}
     (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation (names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively). They can be interpreted as a normalized gas constant, and a normalized heat capacity. We also define $\gamma_0\Ma^2=U_0^2/(R_0T_0)$ as \texttt{RRATIO\_INV}, to save operations. The values of these parameters are defined in the procedure \texttt{Thermodynamics\_Initialize}.
+instead of $\Ma$ and $\gamma_0$ to save computational time and facilitate the consideration of a dimensional formulation (see below). The names are \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively. They can be interpreted as a normalized gas constant, and a normalized heat capacity. 
+%We also define $\gamma_0\Ma^2=U_0^2/(R_0T_0)$ as \texttt{RRATIO\_INV}, to save operations. 
+The values of these parameters are defined in the procedure \texttt{Thermodynamics\_Initialize}.
 
 %The body force is expressed in terms of the body force function $b^e(\rho,e,\zeta_j)$ and needs to be provided; the simplest case, $b^e=1$. 
 The vectors $g_i$ and $f_i$ need to be provided and should be unitary, so that the magnitude of the term is completely determined by the corresponding nondimensional number. In this compressible case, the centrifugal term should probably be included; not yet studied.
@@ -104,40 +106,38 @@ and
     p = (\gamma_0 \mathrm{\bf Ma}^2)^{-1}\rho T R \;,\qquad
     R =\sum^N_1 R_iY_i\;.
 \end{equation}
-Each species has a specific heat capacity $C_{pi}$ and a specific gas constant $R_i=\mathcal{R}/W_i$,  where  $\mathcal{R}$ is the universal gas constant and $W_i$ the molar mass of the species. They are defined in the procedure \texttt{Thermodynamics\_Initialize}. They are nondimensionalized by the reference values $C_{p0}$ and $R_0=\mathcal{R}/W_0$, which are the values of one of the species. $R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$. $W=1/R$ is the mean molecular weight nondimensionalized by $W_0$, but we do not use this variable if the current implementation. 
+Each species has a specific heat capacity $C_{pi}$ and a specific gas constant $R_i=\mathcal{R}/W_i$,  where  $\mathcal{R}$ is the universal gas constant and $W_i$ the molar mass of the species. They are nondimensionalized by the reference values $C_{p0}$ and $R_0=\mathcal{R}/W_0$, respectively, which are the values of one of the species. They are defined in the procedure \texttt{Thermodynamics\_Initialize}. %$R$ is the specific gas constant of the gas mixture nondimensionalized by $R_0$. %$W=1/R$ is the mean molecular weight nondimensionalized by $W_0$, but we do not use this variable if the current implementation. 
 
-Note that $\gamma_0$ is no longer an independent input parameter but is determined by the mixture in {Thermodynamics\_Initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. As in the single species case, it proves convenient to introduce the derived parameters
+Note that $\gamma_0$ is no longer an independent input parameter but is calculated in {Thermodynamics\_Initialize} as $\gamma_0=C_{p0}/(C_{p0}-R_0)$. As in the single species case, it proves convenient to use
 \begin{equation}
     (\gamma_0\Ma^2)^{-1}=\frac{R_0}{U^2_0/T_0}\;,\qquad (\gamma_0-1)\Ma^2 =\frac{U_0^2/T_0}{C_{p0}} \;,
 \end{equation}
-in the code implementation (names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively) and use 
+in the code implementation (names \texttt{RRATIO} and \texttt{CRATIO\_INV}, respectively), to save computational time and facilitate the consideration of a dimensional formulation in addition to the default nondimensional formulation (see below). We then use
 \begin{equation}
     \tilde{R}\equiv (\gamma_0\Ma^2)^{-1}R=\sum_1^NY_i\,\tilde{R}_i\;,\qquad\tilde{R}_i\equiv (\gamma_0\Ma^2)^{-1}R_i
-    \;,
+    \;.
 \end{equation}
-to save computation time and facilitate the consideration of a dimensional formulation in addition to the default nondimensional formulation here described (see below). 
-
-Note that the specific heat ratio
+The specific heat ratio is obtained by
 \begin{equation}
-    \gamma=\frac{C_p}{C_p-(\gamma_0-1)\Ma^2\tilde{R}}
+    \gamma=\frac{C_p}{C_p-(\gamma_0-1)\Ma^2\tilde{R}} \;,
 \end{equation}
-depends on the composition of the mixture and it is a derived (diagnostic) quantity.
+and the code uses \texttt{RRATIO} and \texttt{CRATIO\_INV} instead of $\Ma$ and $\gamma_0$.
 
 \subsubsection{Dimensional Formulation}
 
-In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the block \texttt{[Thermodynamics]} of the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. 
+In this case of a multi-species, a dimensional formulation can be considered by setting the input parameter \texttt{nondimensional} equal to \texttt{.false.} in the block \texttt{[Thermodynamics]} of the input file (by default, \texttt{tlab.ini}). The boundary and initial conditions defined in the input file should then be given in dimensional form. The code sets the parameters \texttt{RRATIO} and \texttt{CRATIO\_INV} equal to 1, and the equations above correspond to those of the dimensional formulation. We still need to retain the value of $\gamma_0$.
 
 The input parameters \texttt{Reynolds}, \texttt{Froude} and \texttt{Rossby} are then substituted by \texttt{Viscosity}, \texttt{Gravity} and \texttt{Coriolis}.
 
 \subsubsection{On the difference between the species and the prognostic scalars}
 
-The functions $Y_i^e(\rho,e,\zeta_j)$ need to be provided. We assume that $\sum_1^NY_i=1$ and use this relation to use $Y_N=1-\sum_1^N$ in the expressions above. For instance,
+The functions $Y_i(\rho,e,\zeta_j)$ need to be provided. From $\sum_1^NY_i=1$, we calculate the mass fraction of the last species by $Y_N=1-\sum_1^{N-1}Y_i$ and use it in the expressions above, e.g.,
 \begin{equation}
     \tilde{R}=\sum_1^{N-1}Y_i(\tilde{R}_i-\tilde{R}_N) \;.
 \end{equation}
-It is then clear that we do not need $Y_N$ as prognostic variable. More generally, the total number of species is $N$, need not be equal to the total number of scalars with an evolution equation. The former can be considered as part of the diagnostic variables and the latter as part of the prognostic variables. This includes the simplest possible case of $Y_i^e = \zeta_i$ for $i=1,\ldots,N-1$. 
+It is then clear that we do not need $Y_N$ as prognostic variable. More generally, the total number of species, $N$, need not be equal to the total number of scalars with an evolution equation. The former can be considered as part of the diagnostic variables and the latter as part of the prognostic variables. This includes the simplest possible case of $Y_i = \zeta_i$ for $i=1,\ldots,N-1$. 
 
-Another case is equilibrium, e.g. Burke-Schumann approximation, where mass fraction of all species is related to the mixture fraction variable, $\zeta$.  In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
+Another case is equilibrium, e.g., the Burke-Schumann approximation in non-premixed combustion (chemical equilibrium). In the latter case, the mass fractions of all species are related to the mixture fraction variable, $\zeta$. In this case, the functions $Y_i^e(Z)$ are smoothed around $Z_s$ to reduce the strength of the discontinuity \citep{Higuera:1994}. The restriction of unity Lewis number add the extra conditions $n_\mu=n_\kappa=n_D$ and $Sc=Pr$. These relationships are obtained by assuming equal diffusivity of all species and a single-step infinitely fast chemical reaction.  For further discussion on the formulation see \cite{Williams:1985}.
 
 Another possible case is phase equilibrium (saturation adjustment), as considered for an mixture of air and water, where only the total water content is a prognostic variables and the partition into liquid and vapor is done assuming phase equilibrium. 
 

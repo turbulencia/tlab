@@ -274,7 +274,7 @@ contains
 !     DO ij = 1,ijmax
 !#define MACRO_ZINPUT s(ij,inb_scal)
 !#include "dns_chem_mass.h"
-!        cp(ij) = gama(ij)*GRATIO/((gama(ij)-1.0_wp)*WMEAN)
+!        cp(ij) = gama(ij)*CRATIO_INV*RMEAN/(gama(ij) - 1.0_wp)
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)   ! s(1,2) contains liquid mass fraction
