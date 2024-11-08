@@ -12,7 +12,7 @@ subroutine TLab_Initialize_Background()
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: buoyancy
     use TLab_Pointers_3D, only: p_wrk1d
-    use TLab_WorkFlow, only: TLab_Write_ASCII
+    use TLab_WorkFlow
     use Thermodynamics, only: imixture, RRATIO, GRATIO, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
