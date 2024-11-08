@@ -21,7 +21,7 @@ module TIME
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: rtime
     use FDM, only: g
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: visc, prandtl, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

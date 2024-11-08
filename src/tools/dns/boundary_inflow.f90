@@ -16,12 +16,12 @@ module BOUNDARY_INFLOW
     use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
-    use TLAB_VARS, only: imode_eqns, itransport
+    use TLAB_VARS, only: imode_eqns
     use FDM, only: g, FDM_Initialize
     use TLAB_VARS, only: rtime, itime
     use TLAB_VARS, only: visc, damkohler, qbg
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_WorkFlow
     use Thermodynamics, only: imixture, itransport
     use THERMO_THERMAL
     use THERMO_CALORIC
