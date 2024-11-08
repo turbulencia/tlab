@@ -96,19 +96,23 @@ contains
         integer(wi) idummy
 
         real(wp) WGHT(MAX_NSP), WGHT_INV(MAX_NSP), WREF     ! Molar masses
-        integer(wi) icp, is, im, inb_scal_loc
         real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
-        integer(wi) ISPREF                                  ! reference species for CPREF and RREF
-        real(wp) CPREF
+        integer(wi) icp, is, im, inb_scal_loc
         real(wp) WRK1D_LOC(MAX_NPSAT)
         integer(wi) ipsat, i, j
         real(wp) tmp1, tmp2
         character*46 str
         logical :: molar_data = .true.
 
-        real(wp), parameter :: RGAS = 8314_wp               ! Universal gas constant, J /kg /K
-        real(wp) :: TREF, PREF, RREF                        ! Reference values of T, p and specific gas constant R; together with gama0, they contain all information
+        real(wp), parameter :: RGAS = 8314_wp               ! J /kg /K, universal gas constant, 
+        ! Reference values for the nondimensionalization; in principle, these could be changed, if desired.
+        real(wp), parameter :: TREF = 298.0_wp              ! K, reference temperature T_0
+        real(wp), parameter :: PREF = 1e5_wp                ! Pa, reference pressure p_0
+        integer, parameter :: ISPREF = 2                    ! Species 2 is taken as reference species for CPREF and RREF
+        real(wp) CPREF, RREF                                ! Reference cp, referece gas constant R_0
         !                                                     Reference density results from rho_0=p_0/(T_0R_0)
+        ! Reference to calculate potential temperatures. Global variable.
+        PREF_1000 = 1e5_wp                                  ! 1000 hPa, 
 
         !########################################################################
         if (present(inifile)) then
@@ -123,8 +127,8 @@ contains
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
 
-            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)
-            call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'ScaleHeight', '0.0', scaleheight)   ! needed in anelastic formulation
+            call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)      ! needed in compressible formulation
+            call ScanFile_Real(bakfile, inifile, block, 'ScaleHeight', '0.0', scaleheight)      ! needed in anelastic formulation
 
             call ScanFile_Char(bakfile, inifile, block, 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &
@@ -146,17 +150,17 @@ contains
 
             if (imixture /= EQNS_NONE) then
                 thermo_param(:) = 0.0_wp
-                call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Parameters', '1.0', sRes)
+                call ScanFile_Char(bakfile, inifile, block, 'Parameters', '1.0', sRes)
                 idummy = MAX_PROF
                 call LIST_REAL(sRes, idummy, thermo_param)
 
             end if
 
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call ScanFile_Real(bakfile, inifile, 'Thermodynamics', 'SmoothFactor', '0.1', dsmooth)
+                call ScanFile_Real(bakfile, inifile, block, 'SmoothFactor', '0.1', dsmooth)
             end if
 
-            call ScanFile_Char(bakfile, inifile, 'Thermodynamics', 'Nondimensional', 'yes', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Nondimensional', 'yes', sRes)
             if (trim(adjustl(sRes)) == 'yes') then; nondimensional = .true.
             else if (trim(adjustl(sRes)) == 'no') then; nondimensional = .false.
             else
@@ -497,22 +501,19 @@ contains
         ! ###################################################################
         WGHT_INV(:) = RGAS/WGHT(:)              ! Specific gas constants, J /kg /K
 
-        ! Reference values; in principle, these could be changed, if desired.
-        TREF = 298.0_wp                         ! K
-        PREF = 1e5_wp                           ! Pa
-        ISPREF = 2                              ! Species 2 is taken as reference
+        ! -------------------------------------------------------------------
+        ! reference heat capacity Cp0 and gas constant R_0
         WREF = WGHT(ISPREF)                     ! kg /kmol
         RREF = RGAS/WREF                        ! J /kg /K
         CPREF = 0.0_wp                          ! J /kg /K
         do icp = NCP, 1, -1
             CPREF = CPREF*TREF + THERMO_AI(icp, 2, ISPREF)
         end do
-        PREF_1000 = 1e5_wp                     ! 1000 hPa, reference to calculate potential temperatures
-
         if (imixture /= MIXT_TYPE_NONE) then    ! othewise, gama0 is read in tlab.ini
-            gama0 = CPREF/(CPREF - RREF)        ! Specific heat ratio
+            gama0 = CPREF/(CPREF - RREF)        ! Specific heat capacity ratio
         end if
 
+        ! -------------------------------------------------------------------
         ! Nondimensionalization
         if (imixture == MIXT_TYPE_NONE .and. .not. nondimensional) then
             call TLab_Write_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
@@ -555,10 +556,11 @@ contains
         end if
 
         ! Derived parameters to save operations
-        THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0
+        THERMO_R(:) = WGHT_INV(:)*RRATIO                ! gas constants normalized by dynamic reference value U0^2/T0, or RREF
         RRATIO_INV = 1.0_wp/RRATIO
 
         ! -------------------------------------------------------------------
+        ! definitions for clarity in the thermodynamics code
         select case (imixture)
         case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
             Rv = THERMO_R(1)
@@ -581,9 +583,9 @@ contains
 
         end select
 
-        ! -------------------------------------------------------------------
+        ! ###################################################################
         ! Output
-        ! -------------------------------------------------------------------
+        ! ###################################################################
         if (imixture /= MIXT_TYPE_NONE) then        ! othewise, gama0 is read in tlab.ini
             call TLab_Write_ASCII(lfile, 'Thermodynamic properties have been initialized.')
             do is = 1, NSP
