@@ -1,7 +1,7 @@
 #include "dns_const.h"
 
 module FI_VECTORCALCULUS
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, BCS_NN
     use FDM, only: g
     use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL

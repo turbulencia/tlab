@@ -1,7 +1,7 @@
 #include "dns_const.h"
 
 program VPARTIAL
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
     use FDM, only:  grid_dt
     use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
