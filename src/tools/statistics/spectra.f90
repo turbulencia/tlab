@@ -33,7 +33,7 @@
 program SPECTRA
 
     use TLab_Constants
-    use TLab_Types, only: pointers_dt
+    use TLab_Pointers, only: pointers_dt
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow

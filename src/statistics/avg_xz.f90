@@ -9,7 +9,7 @@
 !########################################################################
 subroutine AVG_N_XZ(fname, itime, rtime, nx, ny, nz, nv, nm, vars, igate, gate, y, avg)
     use TLab_Constants, only: efile, lfile, wp, wi
-    use TLab_Types, only: pointers_dt
+    use TLab_Pointers, only: pointers_dt
     use TLab_WorkFlow
     use Averages, only: AVG1V2d, AVG1V2D1G
 

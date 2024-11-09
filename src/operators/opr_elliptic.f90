@@ -774,7 +774,7 @@ contains
 ! ! Same, but for n fields
 ! ! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
 !     subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
-!         use TLab_Types, only: pointers_dt
+!         use TLab_Pointers, only: pointers_dt
 
 !         integer(wi), intent(in) :: nx, ny, nz, nfield
 !         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet

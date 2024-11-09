@@ -1,5 +1,6 @@
 module PARTICLE_ARRAYS
-    use TLab_Types, only: wp, wi, pointers3d_dt
+    use TLab_Types, only: wp, wi
+    use TLab_Pointers_3D, only: pointers3d_dt
     use PARTICLE_TYPES
     implicit none
     save

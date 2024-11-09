@@ -3,18 +3,6 @@ module TLab_Types
     implicit none
     save
 
-    type pointers_dt
-        sequence
-        character(len=32) :: tag
-        real(wp), pointer :: field(:)
-    end type pointers_dt
-
-    type pointers3d_dt
-        sequence
-        character(len=32) :: tag
-        real(wp), pointer :: field(:, :, :)
-    end type pointers3d_dt
-
     type term_dt
         sequence
         integer type

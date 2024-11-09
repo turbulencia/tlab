@@ -2,7 +2,8 @@
 
 module PARTICLE_INTERPOLATE
     use TLab_Constants, only: wp, wi, efile, lfile
-    use TLab_Types, only: pointers_dt, pointers3d_dt
+    use TLab_Pointers, only: pointers_dt
+    use TLab_Pointers_3D, only: pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use TLab_WorkFlow

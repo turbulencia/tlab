@@ -13,7 +13,7 @@
 !########################################################################
 subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate, gate, y, pdf)
     use TLab_Constants, only: lfile, wp, wi
-    use TLab_Types, only: pointers_dt
+    use TLab_Pointers, only: pointers_dt
     use TLab_Arrays, only: wrk1d
     use TLab_WorkFlow
     use PDFS
