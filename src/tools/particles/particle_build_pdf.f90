@@ -13,7 +13,7 @@ program PARTICLE_BUILD_PDF
     use TLab_Constants
     use TLAB_VARS
     use TLab_Arrays
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use IO_FIELDS
 #ifdef USE_MPI
     use TLabMPI_PROCS

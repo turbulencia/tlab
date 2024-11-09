@@ -10,7 +10,7 @@
 subroutine AVG_N_XZ(fname, itime, rtime, nx, ny, nz, nv, nm, vars, igate, gate, y, avg)
     use TLab_Constants, only: efile, lfile, wp, wi
     use TLab_Pointers, only: pointers_dt
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use Averages, only: AVG1V2d, AVG1V2D1G
 
     implicit none
@@ -108,7 +108,7 @@ end subroutine RAW_TO_CENTRAL
 !########################################################################
 subroutine INTER_N_XZ(fname, itime, rtime, nx, ny, nz, np, parname, gate, y, inter)
     use TLab_Constants, only: efile, lfile, wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use Averages, only: INTER1V2D
 
     implicit none

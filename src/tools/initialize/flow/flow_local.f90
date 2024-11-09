@@ -8,7 +8,7 @@ module FLOW_LOCAL
     use FDM, only: g
     use TLAB_VARS, only: qbg, tbg, hbg
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use THERMO_ANELASTIC

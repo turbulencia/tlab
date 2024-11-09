@@ -21,7 +21,7 @@ subroutine TLab_Initialize_Parameters(inifile)
     use FDM, only: g
     use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
     use TLab_Spatial
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
 #ifdef USE_MPI
     use TLabMPI_VARS

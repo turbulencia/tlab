@@ -372,7 +372,7 @@ end subroutine RADIAL_SAMPLESIZE
 subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: lfile
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro
 #endif

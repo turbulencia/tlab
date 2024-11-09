@@ -272,7 +272,7 @@ end subroutine PENTADSS2
 ! #######################################################################
 subroutine PENTADPFS(nmax, a, b, c, d, e, f, g)
     use TLab_Constants, only: wp, wi, efile
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 

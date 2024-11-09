@@ -8,7 +8,7 @@ module OPR_ELLIPTIC
     use TLAB_VARS, only: stagger_on
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use OPR_FOURIER
     use OPR_ODES

@@ -10,7 +10,7 @@ module OPR_FOURIER
     use FDM, only: g
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_C, only: c_wrk3d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k

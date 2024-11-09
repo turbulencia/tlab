@@ -28,7 +28,7 @@ program PARTICLE_TRAJEC
 
     use TLab_Constants
     use TLAB_VARS
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err

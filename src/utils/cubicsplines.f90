@@ -110,7 +110,7 @@ end subroutine CUBIC_SPLINE
 subroutine CUBIC_SPLINE_CHECK_INPUT(bc, bcval,norg, nint, xorg, xint, dx)
 
   use TLab_Constants, only: efile, wi, wp
-  use TLab_WorkFlow
+  use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
   
   implicit none
   

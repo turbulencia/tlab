@@ -4,7 +4,7 @@
 
 module BOUNDARY_BCS
     use TLab_Constants
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk3d
     use FDM_MatMul
     use FDM_Com1_Jacobian

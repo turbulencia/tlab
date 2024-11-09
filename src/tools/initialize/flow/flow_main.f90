@@ -8,7 +8,7 @@ program INIFLOW
     use TLAB_VARS
     use TLab_Arrays
     use TLab_Pointers, only: e, rho, p, T
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI

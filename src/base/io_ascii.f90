@@ -10,7 +10,7 @@
 ! #######################################################################
 subroutine ScanFile_Int(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -31,7 +31,7 @@ end subroutine ScanFile_Int
 ! #######################################################################
 subroutine ScanFile_LongInt(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi, longi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -52,7 +52,7 @@ end subroutine ScanFile_LongInt
 ! #######################################################################
 subroutine ScanFile_Real(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default
@@ -73,7 +73,7 @@ end subroutine ScanFile_Real
 ! #######################################################################
 subroutine ScanFile_Char(ofile, ifile, title, name, default, value)
     use TLab_Constants, only: wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     implicit none
 
     character*(*), intent(IN) :: ofile, ifile, title, name, default

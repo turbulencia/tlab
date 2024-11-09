@@ -7,7 +7,7 @@ program DNS
     use TLAB_VARS
     use FDM, only: g,  FDM_Initialize
     use TLab_Arrays
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
 #ifdef USE_MPI
     use TLabMPI_PROCS

@@ -6,7 +6,7 @@
 program INIGRID
     use FDM, only: grid_dt
     use TLab_Constants, only: wp, gfile, ifile, lfile, efile
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use GRID_LOCAL
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro
@@ -23,8 +23,8 @@ program INIGRID
     ! #######################################################################
     ! Initialize
     ! #######################################################################
-    sfile = TRIM(ADJUSTL(gfile))//'.sts'
-    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+    sfile = trim(adjustl(gfile))//'.sts'
+    bakfile = trim(adjustl(ifile))//'.bak'
 
     g(1)%name = 'x'
     g(2)%name = 'y'
@@ -37,7 +37,7 @@ program INIGRID
 
         g(idir)%size = g_build(idir)%size(1)                    ! Calculate total number of points
         do iseg = 2, g_build(idir)%nseg
-            g(idir)%size = g(idir)%size + g_build(idir)%SIZE(iseg) - 1
+            g(idir)%size = g(idir)%size + g_build(idir)%size(iseg) - 1
         end do
         if (g_build(idir)%mirrored) g(idir)%size = 2*g(idir)%size - 2
 
@@ -45,7 +45,7 @@ program INIGRID
 
     end do
 
-    isize_wrk1d = MAX(g(1)%size, MAX(g(2)%size, g(3)%size))
+    isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
     allocate (wrk1d(isize_wrk1d, 8))
 
     ! #######################################################################
@@ -118,7 +118,7 @@ program INIGRID
         open (20, file=sfile)
 
         do idir = 1, 3
-            write (20, 3000) '['//TRIM(ADJUSTL(g(idir)%name))//'-direction]'
+            write (20, 3000) '['//trim(adjustl(g(idir)%name))//'-direction]'
 
             if (g(idir)%size > 1) then
                 wrk1d(2, 1) = g(idir)%nodes(2) - g(idir)%nodes(1)
@@ -131,10 +131,10 @@ program INIGRID
                 write (20, 1000) 'origin .................: ', g(idir)%nodes(1)
                 write (20, 1000) 'end point ..............: ', g(idir)%nodes(g(idir)%size)
                 write (20, 1000) 'scale ..................: ', g(idir)%scale
-                write (20, 1000) 'minimum step ...........: ', MINVAL(wrk1d(2:g(idir)%size, 1))
-                write (20, 1000) 'maximum step ...........: ', MAXVAL(wrk1d(2:g(idir)%size, 1))
-                write (20, 1000) 'minimum stretching .....: ', MINVAL(wrk1d(3:g(idir)%size, 2))
-                write (20, 1000) 'maximum stretching .....: ', MAXVAL(wrk1d(3:g(idir)%size, 2))
+                write (20, 1000) 'minimum step ...........: ', minval(wrk1d(2:g(idir)%size, 1))
+                write (20, 1000) 'maximum step ...........: ', maxval(wrk1d(2:g(idir)%size, 1))
+                write (20, 1000) 'minimum stretching .....: ', minval(wrk1d(3:g(idir)%size, 2))
+                write (20, 1000) 'maximum stretching .....: ', maxval(wrk1d(3:g(idir)%size, 2))
 
             else
                 write (20, '(a7)') '2D case'
@@ -149,7 +149,7 @@ program INIGRID
         ! Writing data
         ! #######################################################################
         call TLab_Write_ASCII(lfile, 'Writing grid.')
-  call IO_WRITE_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
+        call IO_WRITE_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
 
 #ifdef USE_MPI
     end if
@@ -185,11 +185,11 @@ contains
 
         periodic = .false.
         call ScanFile_Char(bakfile, inifile, block, 'periodic', 'no', sRes)
-        if (TRIM(ADJUSTL(sRes)) == 'yes') periodic = .true.
+        if (trim(adjustl(sRes)) == 'yes') periodic = .true.
 
         var%mirrored = .false.
         call ScanFile_Char(bakfile, inifile, block, 'mirrored', 'no', sRes)
-        if (TRIM(ADJUSTL(sRes)) == 'yes') var%mirrored = .true.
+        if (trim(adjustl(sRes)) == 'yes') var%mirrored = .true.
 
         call ScanFile_Real(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
 
@@ -204,27 +204,27 @@ contains
         do iseg = 1, var%nseg
             write (str, *) iseg
 
-            call TLab_Write_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)))
-            call TLab_Write_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
-            call TLab_Write_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
-            call TLab_Write_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
-            call TLab_Write_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
+            call TLab_Write_ASCII(bakfile, 'Segment number '//trim(adjustl(str)))
+            call TLab_Write_ASCII(bakfile, 'scales_'//trim(adjustl(str))//'=<physical end of the segment>')
+            call TLab_Write_ASCII(bakfile, 'points_'//trim(adjustl(str))//'=<points in the segment>')
+            call TLab_Write_ASCII(bakfile, 'opts_'//trim(adjustl(str))//'=<option>')
+            call TLab_Write_ASCII(bakfile, 'vals_'//trim(adjustl(str))//'=<values>')
 
-            call ScanFile_Int(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
-            call ScanFile_Real(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))
+            call ScanFile_Int(bakfile, inifile, block, 'points_'//trim(adjustl(str)), '1', var%size(iseg))
+            call ScanFile_Real(bakfile, inifile, block, 'scales_'//trim(adjustl(str)), '-1.0', var%end(iseg))
 
             var%opts(:, iseg) = 0
-            call ScanFile_Char(bakfile, inifile, block, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
-            if (TRIM(ADJUSTL(sRes)) == 'uniform') then; var%opts(1, iseg) = GTYPE_UNIFORM
-            else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; var%opts(1, iseg) = GTYPE_TANH
-            else if (TRIM(ADJUSTL(sRes)) == 'exp') then; var%opts(1, iseg) = GTYPE_EXP
+            call ScanFile_Char(bakfile, inifile, block, 'opts_'//trim(adjustl(str)), '1', sRes)
+            if (trim(adjustl(sRes)) == 'uniform') then; var%opts(1, iseg) = GTYPE_UNIFORM
+            else if (trim(adjustl(sRes)) == 'tanh') then; var%opts(1, iseg) = GTYPE_TANH
+            else if (trim(adjustl(sRes)) == 'exp') then; var%opts(1, iseg) = GTYPE_EXP
             else
                 idummy = MAX_PARAMES
                 call LIST_INTEGER(sRes, idummy, var%opts(1, iseg))
             end if
 
             var%vals(:, iseg) = 0
-            call ScanFile_Char(bakfile, inifile, block, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'vals_'//trim(adjustl(str)), '1.0', sRes)
             idummy = MAX_PARAMES
             call LIST_REAL(sRes, idummy, var%vals(1, iseg))
 

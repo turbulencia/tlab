@@ -13,7 +13,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     use TLAB_VARS
     use FDM, only: g
     use TLab_Spatial
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk1d, wrk2d
     use Thermodynamics, only: RRATIO_INV, gama0
     use OPR_PARTIAL

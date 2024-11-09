@@ -17,7 +17,7 @@ module OPR_BURGERS
     use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_PROCS
 #endif
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk2d, wrk3d
     use OPR_FILTERS
     use OPR_PARTIAL
@@ -38,15 +38,15 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_BURGERS_X(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
-        integer,     intent(in) :: ivel
-        integer,     intent(in) :: is                       ! scalar index; if 0, then velocity
+        integer, intent(in) :: ivel
+        integer, intent(in) :: is                       ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2)                ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: s(nx*ny*nz), u(nx*ny*nz)
-        real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
-        real(wp),      intent(in), optional :: u_t(nx*ny*nz)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: s(nx*ny*nz), u(nx*ny*nz)
+        real(wp), intent(out) :: result(nx*ny*nz)
+        real(wp), intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
+        real(wp), intent(in), optional :: u_t(nx*ny*nz)
 
         target s, u, result, tmp1, u_t
 
@@ -81,11 +81,11 @@ contains
 #endif
 
 ! pointer to velocity
-        if (ivel == OPR_B_SELF) then    ! velocity is the scalar itself 
+        if (ivel == OPR_B_SELF) then    ! velocity is the scalar itself
             p_vel => p_b
         else                            ! transposed velocity is passed through argument
-            p_vel => u_t 
-        end if 
+            p_vel => u_t
+        end if
 
 ! -------------------------------------------------------------------
 ! Local transposition: make x-direction the last one
@@ -121,15 +121,15 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_BURGERS_Y(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
-        integer,     intent(in) :: ivel
-        integer,     intent(in) :: is           ! scalar index; if 0, then velocity
+        integer, intent(in) :: ivel
+        integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2) ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: s(nx*ny*nz), u(nx*ny*nz)
-        real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
-        real(wp),      intent(in), optional :: u_t(nx*ny*nz)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: s(nx*ny*nz), u(nx*ny*nz)
+        real(wp), intent(out) :: result(nx*ny*nz)
+        real(wp), intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
+        real(wp), intent(in), optional :: u_t(nx*ny*nz)
 
         target s, u, result, tmp1, u_t
 
@@ -166,13 +166,13 @@ contains
             end if
 
 ! pointer to velocity
-            if (ivel == OPR_B_SELF) then 
+            if (ivel == OPR_B_SELF) then
                 p_vel => p_org
             else
                 if (nz == 1) then  ! I do not need the transposed
                     p_vel => u
                 else               ! I do need the transposed
-                    p_vel => u_t 
+                    p_vel => u_t
                 end if
             end if
 
@@ -205,15 +205,15 @@ contains
 !########################################################################
 !########################################################################
     subroutine OPR_BURGERS_Z(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
-        integer,     intent(in) :: ivel
-        integer,     intent(in) :: is           ! scalar index; if 0, then velocity
+        integer, intent(in) :: ivel
+        integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2) ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in)    :: g
-        real(wp),      intent(in)    :: s(nx*ny*nz), u(nx*ny*nz)
-        real(wp),      intent(out)   :: result(nx*ny*nz)
-        real(wp),      intent(inout) :: tmp1(nx*ny*nz)
-        real(wp),      intent(in), optional :: u_t(nx*ny*nz)
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: s(nx*ny*nz), u(nx*ny*nz)
+        real(wp), intent(out) :: result(nx*ny*nz)
+        real(wp), intent(inout) :: tmp1(nx*ny*nz)
+        real(wp), intent(in), optional :: u_t(nx*ny*nz)
 
         target s, u, result, tmp1, u_t
 
@@ -290,17 +290,17 @@ contains
 !# Second derivative uses LE decomposition including diffusivity coefficient
 !########################################################################
     subroutine OPR_BURGERS_1D(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
-        use TLab_Arrays, only : wrkdea
-        integer,     intent(in) :: is           ! scalar index; if 0, then velocity
+        use TLab_Arrays, only: wrkdea
+        integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
-        type(grid_dt),   intent(in)    :: g
-        type(filter_dt), intent(in)    :: dealiasing
-        real(wp),        intent(in)    :: s(nlines, g%size), u(nlines, g%size)  ! argument field and velocity field
-        real(wp),        intent(out)   :: result(nlines, g%size)                ! N(u) applied to s
-        real(wp),        intent(inout) :: dsdx(nlines, g%size)                  ! dsdx
+        type(grid_dt), intent(in) :: g
+        type(filter_dt), intent(in) :: dealiasing
+        real(wp), intent(in) :: s(nlines, g%size), u(nlines, g%size)  ! argument field and velocity field
+        real(wp), intent(out) :: result(nlines, g%size)                ! N(u) applied to s
+        real(wp), intent(inout) :: dsdx(nlines, g%size)                  ! dsdx
 
 ! -------------------------------------------------------------------
         integer(wi) ij
@@ -323,8 +323,8 @@ contains
 ! Operation; diffusivity included in 2.-order derivative
 ! ###################################################################
         if (dealiasing%type /= DNS_FILTER_NONE) then
-            uf(1:nlines,1:g%size) => wrkdea(1:nlines*g%size,1)
-            dsf(1:nlines,1:g%size) => wrkdea(1:nlines*g%size,2)
+            uf(1:nlines, 1:g%size) => wrkdea(1:nlines*g%size, 1)
+            dsf(1:nlines, 1:g%size) => wrkdea(1:nlines*g%size, 2)
             call OPR_FILTER_1D(nlines, dealiasing, u, uf)
             call OPR_FILTER_1D(nlines, dealiasing, dsdx, dsf)
 
@@ -345,7 +345,7 @@ contains
 !$omp end parallel
             end if
 
-            nullify(uf, dsf)
+            nullify (uf, dsf)
 
         else
             if (g%anelastic) then

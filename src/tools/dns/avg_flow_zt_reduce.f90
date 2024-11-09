@@ -34,7 +34,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use Thermodynamics, only: itransport
     use TLab_Spatial
     use TLab_Arrays, only: wrk2d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Averages, only: SUM1V1D_V
     use OPR_PARTIAL
     implicit none

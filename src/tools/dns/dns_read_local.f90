@@ -9,7 +9,7 @@ subroutine DNS_READ_LOCAL(inifile)
     use TLAB_VARS
     use FDM, only: g
     use TLab_Spatial, only: nstatavg
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use PARTICLE_VARS
     use DNS_LOCAL
     use TIME, only: rkm_mode, dtime, cfla, cfld, cflr

@@ -21,7 +21,7 @@ module BOUNDARY_INFLOW
     use TLAB_VARS, only: rtime, itime
     use TLAB_VARS, only: visc, damkohler, qbg
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture, itransport
     use THERMO_THERMAL
     use THERMO_CALORIC

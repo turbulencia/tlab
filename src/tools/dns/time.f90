@@ -24,7 +24,7 @@ module TIME
     use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: visc, prandtl, schmidt
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_OpenMP
     use PARTICLE_VARS
 #ifdef USE_MPI

@@ -9,7 +9,7 @@ module FLOW_MEAN
     use TLAB_VARS, only: coriolis, buoyancy
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk3d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
     use THERMO_THERMAL
     use THERMO_AIRWATER

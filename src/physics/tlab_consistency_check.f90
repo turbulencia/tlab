@@ -16,7 +16,7 @@ subroutine TLab_Consistency_Check()
     use Microphysics
     use Chemistry
     use SpecialForcing
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
 
 ! ###################################################################

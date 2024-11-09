@@ -2,7 +2,7 @@
 
 subroutine RAND_READ_LOCAL(inifile)
     use TLab_Constants, only: efile, lfile
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use RAND_LOCAL
 
     implicit none

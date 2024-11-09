@@ -4,7 +4,7 @@
 !########################################################################
 subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
     use TLab_Constants, only: efile, wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 

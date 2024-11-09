@@ -34,7 +34,7 @@
 module DNS_TOWER
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 
     integer(wi) tower_imax, tower_jmax, tower_kmax, tower_isize_field
     integer(wi), target :: tower_isize_plane, tower_isize_plane_total
