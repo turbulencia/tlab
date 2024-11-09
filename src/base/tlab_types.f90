@@ -1,5 +1,5 @@
 module TLab_Types
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, i4_, longi, MAX_VARS, MAX_PARS, MAX_MODES
     implicit none
     save
 

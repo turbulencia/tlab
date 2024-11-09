@@ -93,8 +93,8 @@ contains
 
     ! ###################################################################
     subroutine Particle_Initialize_Variables(l_g, l_q, l_txc, txc)
-        use TLab_Constants, only: wp, wi
-        use TLab_Types, only: pointers_dt, pointers3d_dt, wp, wi, longi
+        use TLab_Constants, only: wp, wi, longi
+        use TLab_Types, only: pointers_dt, pointers3d_dt
         use TLAB_VARS, only: imax, jmax, kmax, inb_scal
         use TLAB_VARS, only: sbg
         use FDM, only: g
