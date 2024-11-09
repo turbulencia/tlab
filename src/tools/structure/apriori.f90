@@ -8,7 +8,7 @@
 
 program APRIORI
     use TLab_Constants, only: wp, wi
-    use TLab_Types, only: pointers_dt
+    use TLab_Pointers, only: pointers_dt
     use TLab_Constants
     use TLAB_VARS
     use TLab_Arrays
