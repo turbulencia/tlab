@@ -4,7 +4,7 @@
 subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     use TLab_Types, only: discrete_dt
     use TLab_Constants, only: wp, wi, efile, MAX_PARS, MAX_MODES
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_WorkFlow
     use Profiles
     implicit none
 
