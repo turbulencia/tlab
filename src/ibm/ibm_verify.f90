@@ -27,12 +27,12 @@
 
 subroutine IBM_VERIFY_GEOMETRY()
 
-  use IBM_VARS 
-  use TLab_WorkFlow
-    use FDM, only : g
-  use TLAB_VARS,      only : scal_on
-  use TLAB_VARS,      only : imax, jmax, kmax
-  use TLab_Constants, only : efile, wp, wi
+    use IBM_VARS
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use FDM, only: g
+    use TLAB_VARS, only: scal_on
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Constants, only: efile, wp, wi
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_size_i, ims_size_k, ims_err
@@ -127,10 +127,10 @@ end subroutine IBM_VERIFY_GEOMETRY
 
 subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
-  use IBM_VARS,       only : nflu
-  use TLab_Constants, only : efile, wp, wi
-  use FDM, only: grid_dt
-  use TLab_WorkFlow
+    use IBM_VARS, only: nflu
+    use TLab_Constants, only: efile, wp, wi
+    use FDM, only: grid_dt
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 
@@ -305,10 +305,10 @@ end subroutine IBM_VERIFY_UP
 
 subroutine IBM_VERIFY_SCAL()
 
-  use IBM_VARS,       only : max_height_objlo, max_height_objup, imode_ibm_scal
-  use FDM,      only : g
-  use TLab_Constants, only : efile
-  use TLab_WorkFlow
+    use IBM_VARS, only: max_height_objlo, max_height_objup, imode_ibm_scal
+    use FDM, only: g
+    use TLab_Constants, only: efile
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err
