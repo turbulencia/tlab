@@ -6,7 +6,7 @@ module PARTICLE_INTERPOLATE
     use TLab_Pointers_3D, only: pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use PARTICLE_VARS
     use PARTICLE_ARRAYS, only: halo_i, halo_k, halo_ik
     use PARTICLE_ARRAYS, only: p_halo_i, p_halo_k, p_halo_ik

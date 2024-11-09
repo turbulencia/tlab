@@ -35,12 +35,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
     use FDM, only: grid_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
-  use IBM_VARS,       only : xa, xb, ya, yb, ibmscaljmin
-  use TLAB_VARS,      only : isize_field
-  use TLab_Constants, only : efile, wp, wi
-  use TLab_Arrays,    only : wrk1d
-  use FDM, only: grid_dt
-  use TLab_WorkFlow
+    implicit none
 
     integer(wi), intent(in) :: is     ! scalar index; if 0, then velocity
     real(wp), dimension(isize_field), intent(in) :: fld
@@ -132,24 +127,11 @@ end subroutine IBM_SPLINE_XYZ
 
 subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane)
 
-  use IBM_VARS,       only : nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
-  use TLAB_VARS,      only : isize_field
-  use FDM, only: grid_dt
-  use TLab_Constants, only : wp, wi, efile
-  use TLab_WorkFlow
-   
-  implicit none
-  
-  integer(wi),                             intent(in ) :: is
-  integer(wi),                             intent(in ) :: case
-  real(wp),    dimension(isize_field),     intent(in ) :: fld 
-  type(grid_dt),                           intent(in ) :: g   
-  real(wp),    dimension(nspl),            intent(out) :: xa
-  real(wp),    dimension(nspl),            intent(out) :: ya  
-  real(wp),    dimension(isize_wrk1d_ibm), intent(out) :: xb  
-  integer(wi),                             intent(out) :: ia
-  integer(wi),                             intent(out) :: ib
-  integer(wi),                             intent(in ) :: ip_il, ip_ir, nlines, plane
+    use IBM_VARS, only: nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
+    use TLAB_VARS, only: isize_field
+    use FDM, only: grid_dt
+    use TLab_Constants, only: wp, wi, efile
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 

@@ -21,7 +21,7 @@
 program INTERPOL
     use TLab_Constants, only: wp, wi, pi_wp
     use FDM, only: grid_dt, FDM_Initialize
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 

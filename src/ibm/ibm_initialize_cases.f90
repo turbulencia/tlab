@@ -21,11 +21,11 @@
 !########################################################################
 
 subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, ibm_case)
-  
-  use IBM_VARS,       only : nflu
-  use TLab_Constants, only : efile, wp, wi
-  use FDM, only: grid_dt
-  use TLab_WorkFlow
+    use TLab_Constants, only: efile, wp, wi
+    use IBM_VARS, only: nflu
+    use FDM, only: grid_dt
+    use TLab_WorkFlow,     only: TLab_Write_ASCII, TLab_Stop
+    implicit none
 
     type(grid_dt), intent(in) :: g
     integer(wi), intent(in) :: isize_nob, isize_nob_be
@@ -145,9 +145,9 @@ end subroutine IBM_INITIALIZE_CASES
 
 subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, ibm_case, ii, ip)
 
-  use FDM, only: grid_dt
-  use TLab_Constants, only : efile, wp, wi
-  use TLab_WorkFlow
+    use FDM, only: grid_dt
+    use TLab_Constants, only: efile, wp, wi
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 

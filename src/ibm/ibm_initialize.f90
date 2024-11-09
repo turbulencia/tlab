@@ -31,14 +31,13 @@
 !#
 !########################################################################
 
-subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)  
-  
-  use IBM_VARS
-  use TLAB_VARS,      only : isize_field, inb_txc
-  use TLAB_VARS,      only : stagger_on
-  use FDM, only: g
-  use TLab_Constants, only : efile, wp
-  use TLab_WorkFlow
+subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
+    use TLab_Constants, only: efile, wp
+    use IBM_VARS
+    use TLAB_VARS, only: isize_field, inb_txc
+    use TLAB_VARS, only: stagger_on
+    use FDM, only: g
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 
