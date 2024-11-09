@@ -5,13 +5,13 @@ module TLab_Arrays
     implicit none
     save
 
-    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)     ! Grid and associated arrays
-    real(wp), allocatable :: q(:, :)                       ! Eulerian fields, flow vartiables
-    real(wp), allocatable :: s(:, :)                       ! Eulerian fields, scalar variables
-    real(wp), allocatable :: txc(:, :)                     ! Temporary space for Eulerian fields
-    real(wp), allocatable :: wrk1d(:, :)                   ! Work arrays (scratch space)
-    real(wp), allocatable :: wrk2d(:, :)                   ! Work arrays (scratch space)
-    real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
+    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)      ! Grid and associated arrays
+    real(wp), allocatable :: q(:, :)                        ! Eulerian fields, flow vartiables
+    real(wp), allocatable :: s(:, :)                        ! Eulerian fields, scalar variables
+    real(wp), allocatable :: txc(:, :)                      ! Temporary space for Eulerian fields
+    real(wp), allocatable :: wrk1d(:, :)                    ! Work arrays (scratch space)
+    real(wp), allocatable :: wrk2d(:, :)                    ! Work arrays (scratch space)
+    real(wp), allocatable :: wrk3d(:)                       ! Work arrays (scratch space)
     real(wp), allocatable :: wrkdea(:, :)                   ! Work arrays for dealiasing (scratch space)
 
     target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
@@ -108,6 +108,7 @@ end module TLab_Pointers_C
 
 module TLab_Memory
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
+    use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, inb_flow_array, inb_scal_array
     use TLAB_VARS, only: isize_txc_field, inb_txc, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d
