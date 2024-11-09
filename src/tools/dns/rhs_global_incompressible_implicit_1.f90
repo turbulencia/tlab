@@ -23,7 +23,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, BCS_NN, efile
     use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow

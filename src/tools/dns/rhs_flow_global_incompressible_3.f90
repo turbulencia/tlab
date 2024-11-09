@@ -9,7 +9,7 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use TLAB_VARS, only: visc

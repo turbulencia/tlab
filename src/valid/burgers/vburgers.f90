@@ -2,7 +2,7 @@
 
 program VBURGERS
 
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, big_wp, gfile, ifile
     use TLAB_VARS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory

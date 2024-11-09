@@ -4,7 +4,8 @@
 #define C_FILE_LOC "INIRAND"
 
 program INIRAND
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start

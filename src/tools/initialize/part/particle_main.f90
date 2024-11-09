@@ -3,7 +3,8 @@
 #define C_FILE_LOC "INIPART"
 
 program INIPART
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use TLab_Types, only: profiles_dt
     use TLAB_VARS
     use TLab_Arrays

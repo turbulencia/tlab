@@ -4,7 +4,8 @@
 #define C_FILE_LOC "INIFLOW"
 
 program INIFLOW
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
     use TLAB_VARS
     use TLab_Arrays
     use TLab_Pointers, only: e, rho, p, T
