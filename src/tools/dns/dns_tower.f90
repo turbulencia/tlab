@@ -329,7 +329,8 @@ contains
         character(LEN=128) :: vname_loc
 #endif
         integer(wi) :: include_global
-
+        integer(wi), pointer :: tip
+        
         tip => tower_isize_plane
 
         if (tip < 1) then
@@ -372,7 +373,6 @@ contains
 #endif
             do ivar = 1, tower_varcount
                 tower_count = 0
->>>>>>> 7bc7b3011a9d8212e1f7174012b25f1fe3f065d4
 #ifdef USE_MPI
                 if (ims_pro == 0) then
 #endif

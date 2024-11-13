@@ -594,7 +594,8 @@ contains
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     subroutine IO_Write_PhaseAvg(avg_planes, nfield, iheader, it_save, basename, index, avg_type, avg_start)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        use TLAB_VARS, only : imax, jmax, g
+        use TLAB_VARS, only : imax, jmax
+        use FDM, only : g
         use TLAB_VARS, only : rtime, itime
         use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
         use Thermodynamics, only: gama0

@@ -7,8 +7,9 @@ module AVG_PHASE
   
   USE TLab_WorkFlow
   USE TLAB_TYPES
-  use TLAB_CONSTANTS, only : wp, wi
-  use TLAB_VARS,      only : imax, jmax, kmax, g
+  use TLAB_CONSTANTS, only : efile, wp, wi
+  USE FDM,            only : g
+  use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_VARS,      only : rtime
   use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach
   use Thermodynamics, only: gama0
