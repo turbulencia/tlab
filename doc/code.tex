@@ -24,7 +24,7 @@ Directory {\tt examples} contains a few examples to get acquainted with using th
 \multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Simulation}\\
 %
 \tt dns.x &
-runs the simulation. Reads input from the file {\tt dns.ini} and needs initial flow and scalar fields, and a grid file. Examples are in {\tt examples}. Standard output is written to {\tt dns.log} and {\tt dns.out}, errors to {\tt dns.err} and warnings to {\tt dns.war}.\newline Sources in {\tt tools/dns}.\\
+runs the simulation. Reads input from the file {\tt tlab.ini} and needs initial flow and scalar fields, and a grid file. Examples are in {\tt examples}. Standard output is written to {\tt tlab.log} and {\tt dns.out}, errors to {\tt tlab.err} and warnings to {\tt tlab.war}.\newline Sources in {\tt tools/dns}.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,16 +35,16 @@ runs the simulation. Reads input from the file {\tt dns.ini} and needs initial f
 \multicolumn{2}{>{\columncolor{lightgreen}}c}{\rule{0pt}{11pt}\normalsize\bf Preprocessing}\\
 %
 \tt inigrid.x &
-Generates the grid from the parameters of the dns.ini file, section [IniGridOx], [IniGridOy] and [IniGridOz].\newline
+Generates the grid from the parameters of the tlab.ini file, section [IniGridOx], [IniGridOy] and [IniGridOz].\newline
 Sources in {\tt tools/initialize/grid}.\\
 \tt inirand.x &
-Generates the scal.rand and flow.rand files that contain pseudo-random, isotropic fields that are used to generate flow and scalar initial fields. The parameters are described in {\tt dns.ini}, section [Broadband].\newline Sources in {\tt tools/initialize/rand}\\
+Generates the scal.rand and flow.rand files that contain pseudo-random, isotropic fields that are used to generate flow and scalar initial fields. The parameters are described in {\tt tlab.ini}, section [Broadband].\newline Sources in {\tt tools/initialize/rand}\\
 \tt iniscal.x &
-Generates the scal.ics file from the parameters of the dns.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/scal.}\\
+Generates the scal.ics file from the parameters of the tlab.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/scal.}\\
 \tt iniflow.x &
-Generates the flow.ics file from the parameters of the dns.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/flow}.\\
+Generates the flow.ics file from the parameters of the tlab.ini file, section [IniFields].\newline Sources in {\tt tools/initialize/flow}.\\
 \tt inipart.x &
-Generates the part.ics file from the parameters of the dns.ini file, section [Particles]. Files *.id are equivalent to grid file; they contain the number of processors, the number of particles per processor, and the ordered tags of the particles.\newline Sources in {\tt tools/initialize/part}.\\
+Generates the part.ics file from the parameters of the tlab.ini file, section [Particles]. Files *.id are equivalent to grid file; they contain the number of processors, the number of particles per processor, and the ordered tags of the particles.\newline Sources in {\tt tools/initialize/part}.\\
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,9 +102,9 @@ Construct NetCDF files from a list of ASCII statistics files.\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Input file dns.ini}
+\section{Input file tlab.ini}
 
-The following tables describe the different blocks appearing in the input file {\tt dns.ini}. The first column contains the tag. The second column contains the possible values, the first one being the default one and the word {\it value} indicating that a numerical value needs to be provided. The third column describes the field. This data is read in the file {\tt *\_READ\_GLOBAL} and in the files {\tt *\_READ\_LOCAL} of each of the tools.
+The following tables describe the different blocks appearing in the input file {\tt tlab.ini}. The first column contains the tag. The second column contains the possible values, the first one being the default one and the word {\it value} indicating that a numerical value needs to be provided. The third column describes the field. This data is read in the file {\tt *\_READ\_GLOBAL} and in the files {\tt *\_READ\_LOCAL} of each of the tools.
 
 Data is case insensitive.
 
@@ -274,7 +274,7 @@ Data is case insensitive.
 \tt YMeanRelative*  & {\em value} & y-coordinate of profile reference point, relative to the total scale.\\
 \tt Thick*          & {\em value} & Reference profile thickness.\\
 \tt Delta*          & {\em value} & Reference profile difference.\\
-\tt BottomSlope*    & {\em value} & Slope of the linear variation below the reference point.\\
+\tt LowerSlope*    & {\em value} & Slope of the linear variation below the reference point.\\
 \tt UpperSlope*     & {\em value} & Slope of the linear variation above the reference point.\\
 \tt Diam*           & {\em value} & Reference profile diameter (jet mode).\\
 %

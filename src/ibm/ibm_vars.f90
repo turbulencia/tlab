@@ -16,12 +16,14 @@
 
 module IBM_VARS
 
-  use TLAB_CONSTANTS, only : MAX_NSP, wp, wi
+  use TLab_Constants, only : MAX_VARS, wp, wi
   use IBM_TYPES
 
   implicit none
 
   save 
+
+  integer :: imode_ibm                ! IBM mode
 
   ! ibm_scalar mode
   integer(wi)                                    :: imode_ibm_scal
@@ -39,7 +41,7 @@ module IBM_VARS
   real(wp),    dimension(:), allocatable, target :: fld_ibm                     ! with splines in solid regions
 
   ! boundary values of scalar fields 
-  real(wp),    dimension(MAX_NSP)                :: ibmscaljmin, ibmscaljmax 
+  real(wp),    dimension(MAX_VARS)                :: ibmscaljmin, ibmscaljmax 
 
   ! work array for splines
   real(wp),    dimension(:), allocatable         :: xa, xb, ya, yb

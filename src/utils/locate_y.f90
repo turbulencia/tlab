@@ -1,6 +1,6 @@
 ! Locate the closest node from below to a list of vertical coordinates
 subroutine LOCATE_Y(pmax, y_part, j_part, jmax, y_grid)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     integer(wi), intent(in)  :: pmax, jmax

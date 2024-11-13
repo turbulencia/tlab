@@ -11,13 +11,12 @@
 !#
 !########################################################################
 subroutine IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: lfile
-    use TLAB_VARS, only: istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
+    use TLab_Constants, only: lfile, wp, wi
+    use TLab_Spatial
     use TLAB_VARS, only: itime, rtime, jmax, inb_scal
 
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
 
     implicit none
@@ -59,7 +58,7 @@ subroutine WRT_STHD(unit, irec, &
                     iter, rtime, iterorg, rtimeorg, &
                     nstatavg, jmax, nstat, nstatavg_points, statavg)
 
-    use TLAB_CONSTANTS, only: wp, wi, sizeofint, sizeofreal
+    use TLab_Constants, only: wp, wi, sizeofint, sizeofreal
     implicit none
 
     integer(wi) unit, irec
@@ -124,15 +123,14 @@ end subroutine WRT_STHD
 #define LOC_STATUS 'old'
 
 subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: lfile
-    use TLAB_VARS, only: istattimeorg, rstattimeorg, nstatavg_points, nstatavg, statavg
+    use TLab_Constants, only: lfile, wp, wi
+    use TLab_Spatial
     use TLAB_VARS, only: itime, rtime, jmax, inb_scal
-    use TLAB_PROCS
+    use TLab_WorkFlow
 
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none
@@ -159,7 +157,7 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
 ! -------------------------------------------------------------------
         if (lfilexist) then
             line = 'Reading field '//trim(adjustl(name))//'...'
-            call TLAB_WRITE_ASCII(lfile, line)
+            call TLab_Write_ASCII(lfile, line)
 
 #include "dns_open_file.h"
             rewind (LOC_UNIT_ID)
@@ -180,7 +178,7 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
             rstattimeorg = rtime
             mean_flow = 0.0_wp
             mean_scal = 0.0_wp
-            call TLAB_WRITE_ASCII(lfile, 'Statistics have been initialized.')
+            call TLab_Write_ASCII(lfile, 'Statistics have been initialized.')
         end if
 
 #ifdef USE_MPI
@@ -194,8 +192,8 @@ end subroutine IO_READ_AVG_SPATIAL
 ! ###################################################################
 subroutine RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg, &
                    nstatavg, jmax, nstat, nstatavg_points, statavg)
-    use TLAB_CONSTANTS, only: efile, wp, wi
-    use TLAB_PROCS
+    use TLab_Constants, only: efile, wp, wi
+    use TLab_WorkFlow
 
     implicit none
 
@@ -254,23 +252,23 @@ subroutine RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg, &
 ! #####################
 
     if (iterdum /= iter) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (iter mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (iter mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     end if
 
     if (jmaxdum /= jmax) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (jmax mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (jmax mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     end if
 
     if (nstatavgdum /= nstatavg) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (nstatavg mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (nstatavg mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     end if
 
     if (nstatdum /= nstat) then
-        call TLAB_WRITE_ASCII(efile, 'Stat file error (nstat mismatch).')
-        call TLAB_STOP(DNS_ERROR_STFILE)
+        call TLab_Write_ASCII(efile, 'Stat file error (nstat mismatch).')
+        call TLab_Stop(DNS_ERROR_STFILE)
     else
         nstat = nstatdum
     end if

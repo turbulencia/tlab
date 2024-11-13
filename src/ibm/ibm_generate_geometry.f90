@@ -31,14 +31,14 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   
   use IBM_VARS
   use TLAB_VARS,      only : g, isize_field, imax, jmax, kmax
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 #ifdef USE_MPI
   use MPI
-  use TLAB_MPI_VARS,  only : ims_size_i, ims_size_k    
-  use TLAB_MPI_VARS,  only : ims_npro_i, ims_npro_k, ims_err 
-  use TLAB_MPI_PROCS
+  use TLabMPI_VARS,  only : ims_size_i, ims_size_k    
+  use TLabMPI_VARS,  only : ims_npro_i, ims_npro_k, ims_err 
+  use TLabMPI_PROCS
 #ifdef IBM_DEBUG
-  use TLAB_MPI_VARS,  only : ims_pro
+  use TLabMPI_VARS,  only : ims_pro
 #endif
 #endif
   
@@ -47,8 +47,8 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
   
 #ifdef USE_MPI 
-  integer(wi), parameter                       :: idi = TLAB_MPI_I_PARTIAL 
-  integer(wi), parameter                       :: idk = TLAB_MPI_K_PARTIAL 
+  integer(wi), parameter                       :: idi = TLabMPI_I_PARTIAL 
+  integer(wi), parameter                       :: idk = TLabMPI_K_PARTIAL 
 #endif
   integer(wi)                                  :: i, j, k, ij, ik, jk, ip, inum, rse
   integer(wi)                                  :: nyz, nxz, nxy
@@ -113,9 +113,13 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
           inum = 0
           rse = 0
           ! reverse loop to check the start of object on the boundary
-          do while ((epsi(nyz*(g(1)%size - 1) + jk - inum) /= 0) .and. ((nyz*(g(1)%size - 1) + jk - inum) >= jk ))
-            inum = inum + nyz
-            rse = rse + 1
+          do while  ((nyz*(g(1)%size - 1) + jk - inum) .GE. jk )
+            if (epsi(nyz*(g(1)%size - 1) + jk - inum) /= 0) then
+              inum = inum + nyz
+              rse = rse + 1
+            else
+              exit
+            end if
           end do
           nobi_b(jk) = g(1)%size - rse + 1
         end if
@@ -178,9 +182,13 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
           inum = 0
           rse = 0
           ! reverse loop to check the start of object on the boundary
-          do while ((epsj(nxz*(g(2)%size - 1) + ik - inum) /= 0.0_wp) .and. ((nxz*(g(2)%size - 1) + ik - inum) >= ik ))
-            inum = inum + nxz
-            rse = rse + 1
+          do while ((nxz*(g(2)%size - 1) + ik - inum) .GE. ik )
+            if (epsj(nxz*(g(2)%size - 1) + ik - inum) /= 0.0_wp) then
+              inum = inum + nxz
+              rse = rse + 1
+            else
+              exit
+            end if
           end do
           nobj_b(ik) = g(1)%size - rse + 1
         end if
@@ -243,9 +251,13 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
           inum = 0
           rse = 0
           ! reverse loop to check the start of object on the boundary
-          do while ((epsk(nxy*(g(3)%size - 1) + ij - inum) /= 0.0_wp) .and. ((nxy*(g(3)%size - 1) + ij - inum) >= ij))
-            inum = inum + nxy
-            rse = rse + 1
+          do while ((nxy*(g(3)%size - 1) + ij - inum) .GE. ij)
+            if (epsk(nxy*(g(3)%size - 1) + ij - inum) /= 0.0_wp) then
+              inum = inum + nxy
+              rse = rse + 1
+            else 
+              exit
+            end if
           end do
           nobk_b(ij) = g(3)%size - rse + 1
         end if

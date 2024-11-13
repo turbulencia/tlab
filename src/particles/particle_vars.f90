@@ -1,6 +1,6 @@
 module PARTICLE_VARS
-    use TLAB_CONSTANTS, only: wp, wi, longi, MAX_PARS, MAX_NSP
-    use TLAB_TYPES, only: profiles_dt, term_dt
+    use TLab_Constants, only: wp, wi, longi, MAX_VARS
+    use TLab_Types, only: term_dt
     use PARTICLE_TYPES
     implicit none
     save
@@ -12,16 +12,19 @@ module PARTICLE_VARS
     integer, parameter :: PART_TYPE_BIL_CLOUD_3 = 4
     integer, parameter :: PART_TYPE_BIL_CLOUD_4 = 5
     ! integer, parameter :: PART_TYPE_NEW_CASES = 6
-
-    ! Posible values of imode_traj
-    integer, parameter :: TRAJ_TYPE_NONE = 0
-    integer, parameter :: TRAJ_TYPE_BASIC = 1           ! save particle prognostic properties
-    integer, parameter :: TRAJ_TYPE_EULERIAN = 2        ! add the Eulerian prognostic properties
-    integer, parameter :: TRAJ_TYPE_VORTICITY = 3       ! add the Eulerian vorticity
+    integer, parameter :: PART_TYPE_TINIA_1 = 6
 
     type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
 
-    character(len=32) :: part_spname(MAX_NSP)
+    ! Possible values of part_bcs
+    integer, parameter :: PART_BCS_NONE = 0
+    integer, parameter :: PART_BCS_STICK = 1            ! particles remain at the surface (one limit case of inelastic)
+    integer, parameter :: PART_BCS_SPECULAR = 2         ! elastic, specular collision
+    ! integer, parameter :: PART_BCS_INELASTIC = 3        ! I guess this needs a coefficient for the energy loss in collision
+
+    integer            :: part_bcs
+
+    character(len=32) :: part_spname(MAX_VARS)
 
     integer(longi)    :: isize_part_total             ! total # of particles
     integer(wi)       :: isize_part                   ! maximum # of particles per processor (to allocate memory space)
@@ -29,17 +32,6 @@ module PARTICLE_VARS
     integer(wi)       :: inb_part                     ! # of particle properties in Runge-Kutta (prognostic)
     integer(wi)       :: inb_part_txc                 ! # of particle auxiliary properties for intermediate calculations
     integer(wi)       :: inb_part_interp              ! # of interpolated fields into lagrangian framework
-
-    ! Initialization
-    type(profiles_dt) :: IniP                           ! Information about the initialization 
-    integer, parameter :: PART_INITYPE_HARDCODED = 101  ! Special type of particle initialization for testing
-    integer, parameter :: PART_INITYPE_SCALAR = 102     ! Special type of particle initialization not included in default profile data
-
-    ! Trajectory
-    integer(wi)   :: imode_traj = TRAJ_TYPE_NONE      ! Type of trajectory information that is saved
-    integer(wi)   :: isize_traj                       ! # of saved trajectories
-    integer(wi)   :: inb_traj                         ! # of properties saved along trajectories
-    character(len=32) :: traj_filename                ! file with the particle tags to be tracked; if void, then the first isize_traj particles are used
 
     ! Calculation of residence times
     integer(wi)   :: residence_reset     !if residence l_q should be reset

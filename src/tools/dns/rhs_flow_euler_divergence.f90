@@ -4,12 +4,12 @@
 !# 15 first derivative operations.
 !########################################################################
 subroutine RHS_FLOW_EULER_DIVERGENCE()
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
     use TLAB_VARS, only: g, buoyancy
-    use TLAB_POINTERS
+    use TLab_Pointers
     use DNS_ARRAYS, only: hq
-    use THERMO_VARS, only: CRATIO_INV
+    use Thermodynamics, only: CRATIO_INV
     use OPR_PARTIAL
     implicit none
 

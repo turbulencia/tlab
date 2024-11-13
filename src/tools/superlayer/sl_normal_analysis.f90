@@ -7,7 +7,7 @@ program SL_NORMAL_ANALYSIS
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
 
@@ -66,16 +66,15 @@ program SL_NORMAL_ANALYSIS
 
     call DNS_START
 
-    call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
-
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 
-    isize_wrk3d = imax*jmax*kmax
     itxc_size = imax*jmax*kmax*7
 
 ! -------------------------------------------------------------------
@@ -103,7 +102,7 @@ program SL_NORMAL_ANALYSIS
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'dns.ini', 'PostProcessing', 'Files', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
             read (*, '(A512)') sRes
@@ -123,7 +122,7 @@ program SL_NORMAL_ANALYSIS
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'dns.ini', 'PostProcessing', 'Superlayer', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Superlayer', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -183,7 +182,7 @@ program SL_NORMAL_ANALYSIS
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -236,5 +235,5 @@ program SL_NORMAL_ANALYSIS
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SL_NORMAL_ANALYSIS

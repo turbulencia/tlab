@@ -12,15 +12,14 @@
 #define LOC_STATUS 'old'
 
 subroutine IO_READ_PARTICLE(fname, l_g, l_q)
-    use TLAB_CONSTANTS, only: wp, wi, longi, efile, sizeofint, sizeofreal, sizeoflongint
-    use TLAB_VARS, only: lfile
+    use TLab_Constants, only: wp, wi, longi, lfile, efile, sizeofint, sizeofreal, sizeoflongint
     use TLAB_VARS, only: g
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro, ims_err
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
 
@@ -42,7 +41,7 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     integer(wi) idummy
 #endif
 
-    call TLAB_WRITE_ASCII(lfile, 'Reading field '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Reading field '//trim(adjustl(fname))//'...')
 
 #ifdef USE_MPI
 !#######################################################################
@@ -62,8 +61,8 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
 ! Check
     call MPI_BCAST(ims_npro_loc, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ims_err)
     if (ims_npro /= ims_npro_loc) then
-        call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
-        call TLAB_STOP(DNS_ERROR_PARTICLE)
+        call TLab_Write_ASCII(efile, 'IO_PARTICLE. Number-of-processors mismatch.')
+        call TLab_Stop(DNS_ERROR_PARTICLE)
     end if
 
 ! Broadcast number of particles per processor
@@ -86,8 +85,8 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
         count = count + int(ims_np_all(i), longi)
     end do
     if (isize_part_total /= count) then
-        call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
-        call TLAB_STOP(DNS_ERROR_PARTICLE)
+        call TLab_Write_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+        call TLab_Stop(DNS_ERROR_PARTICLE)
     end if
 
 ! -------------------------------------------------------------------
@@ -119,9 +118,9 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     read (LOC_UNIT_ID) l_g%np
 ! Check
     if (isize_part_total /= int(l_g%np, longi)) then
-        call TLAB_WRITE_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
+        call TLab_Write_ASCII(efile, 'IO_PARTICLE. Number-of-particles mismatch.')
         close (LOC_UNIT_ID)
-        call TLAB_STOP(DNS_ERROR_PARTICLE)
+        call TLab_Stop(DNS_ERROR_PARTICLE)
     end if
     read (LOC_UNIT_ID) l_g%tags
     close (LOC_UNIT_ID)
@@ -154,14 +153,13 @@ end subroutine IO_READ_PARTICLE
 
 subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
-    use TLAB_CONSTANTS, only: wp, wi, longi, sizeofint, sizeoflongint
-    use TLAB_VARS,      only: lfile
+    use TLab_Constants, only: wp, wi, longi, lfile, sizeofint, sizeoflongint
     use PARTICLE_VARS,  only: isize_part, inb_part_array
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro, ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro, ims_err
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
 
@@ -182,7 +180,7 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
     integer(wi) idummy
 #endif
 
-    call TLAB_WRITE_ASCII(lfile, 'Writing field '//trim(adjustl(fname))//'...')
+    call TLab_Write_ASCII(lfile, 'Writing field '//trim(adjustl(fname))//'...')
 
 #ifdef USE_MPI
 !#######################################################################

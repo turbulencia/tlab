@@ -13,14 +13,23 @@ module TIME
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS, only: efile, wp, wi, big_wp
-    use TLAB_VARS
-    use THERMO_VARS, only: gama0, CRATIO_INV
-    use TLAB_PROCS
+    use TLab_Constants, only: efile, wp, wi, big_wp
+    use TLAB_VARS, only: imode_sim, imode_files, imode_precision_files, imode_verbosity
+    use TLAB_VARS, only: flow_on, scal_on, fourier_on, stagger_on
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
+    use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: rtime
+    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLAB_VARS, only: visc, prandtl, schmidt
+    use TLab_WorkFlow
+    use TLab_OpenMP
     use PARTICLE_VARS
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
     implicit none
     save
@@ -58,9 +67,9 @@ contains
         case (RKM_EXP3)             ! Runge-Kutta explicit 3th order from Williamson 1980
             rkm_endstep = 3
 
-            kdt(1:3)   = [ 1.0_wp/3.0_wp,  15.0_wp/16.0_wp, 8.0_wp/15.0_wp ]
-            ktime(1:3) = [ 0.0_wp,         1.0_wp/3.0_wp,   3.0_wp/4.0_wp ]
-            kco(1:2)   = [-5.0_wp/9.0_wp, -153.0_wp/128.0_wp ]
+            kdt(1:3) = [1.0_wp/3.0_wp, 15.0_wp/16.0_wp, 8.0_wp/15.0_wp]
+            ktime(1:3) = [0.0_wp, 1.0_wp/3.0_wp, 3.0_wp/4.0_wp]
+            kco(1:2) = [-5.0_wp/9.0_wp, -153.0_wp/128.0_wp]
 
         case (RKM_EXP4)             ! Runge-Kutta explicit 4th order 5 stages from Carpenter & Kennedy 1994
             rkm_endstep = 5
@@ -77,19 +86,19 @@ contains
             ktime(4) = 2006345519317.0_wp/3224310063776.0_wp !C_2006345519317_R/C_3224310063776_R
             ktime(5) = 2802321613138.0_wp/2924317926251.0_wp !C_2802321613138_R/C_2924317926251_R
 
-            kco(1) = - 567301805773.0_wp/1357537059087.0_wp     !C_567301805773_R/C_1357537059087_R
-            kco(2) = - 2404267990393.0_wp/2016746695238.0_wp    !C_2404267990393_R/C_2016746695238_R
-            kco(3) = - 3550918686646.0_wp/2091501179385.0_wp    !C_3550918686646_R/C_2091501179385_R
-            kco(4) = - 1275806237668.0_wp/842570457699.0_wp     !C_1275806237668_R/C_842570457699_R
+            kco(1) = -567301805773.0_wp/1357537059087.0_wp     !C_567301805773_R/C_1357537059087_R
+            kco(2) = -2404267990393.0_wp/2016746695238.0_wp    !C_2404267990393_R/C_2016746695238_R
+            kco(3) = -3550918686646.0_wp/2091501179385.0_wp    !C_3550918686646_R/C_2091501179385_R
+            kco(4) = -1275806237668.0_wp/842570457699.0_wp     !C_1275806237668_R/C_842570457699_R
 
         case (RKM_IMP3_DIFFUSION)   ! Runge-Kutta semi-implicit 3th order from Spalart, Moser & Rogers (1991)
             rkm_endstep = 3
 
-            kdt(1:3) = [8.0_wp/15.0_wp,     5.0_wp/12.0_wp,   3.0_wp/4.0_wp]
+            kdt(1:3) = [8.0_wp/15.0_wp, 5.0_wp/12.0_wp, 3.0_wp/4.0_wp]
 
-            kim(1:3) = [111.0_wp/256.0_wp,  1.0_wp/2.0_wp,    2.0_wp/9.0_wp]
-            kex(1:3) = [145.0_wp/256.0_wp, -9.0_wp/50.0_wp,   2.0_wp/9.0_wp]
-            kco(1:3) = [0.0_wp,            -17.0_wp/25.0_wp, -5.0_wp/9.0_wp]
+            kim(1:3) = [111.0_wp/256.0_wp, 1.0_wp/2.0_wp, 2.0_wp/9.0_wp]
+            kex(1:3) = [145.0_wp/256.0_wp, -9.0_wp/50.0_wp, 2.0_wp/9.0_wp]
+            kco(1:3) = [0.0_wp, -17.0_wp/25.0_wp, -5.0_wp/9.0_wp]
             ! TO DO - calculate ktime from coefficients  ktime
             ktime(1:3) = [0.0_wp, 0.0_wp, 0.0_wp]
 
@@ -143,7 +152,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine TIME_RUNGEKUTTA()
-        use TLAB_ARRAYS
+        use TLab_Arrays
         use PARTICLE_ARRAYS
         use DNS_LOCAL
         use DNS_ARRAYS
@@ -230,7 +239,7 @@ contains
 !$omp private (i,   ij_srt,ij_end,ij_siz,alpha,is)
 #endif
 
-                call DNS_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
+                call TLab_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
 #ifdef USE_BLAS
                 ij_len = ij_siz
 #endif
@@ -278,13 +287,13 @@ contains
             if (ims_pro == 0) then
                 write (time_string, 999) ims_npro, ims_npro_i, ims_npro_k, rkm_substep, t_dif/1.0_wp/PROC_CYCLES/ims_npro
 999             format(I5.5, ' (ims_npro_i X ims_npro_k:', I4.4, 'x', I4.4, 1x, ') RK-Substep', I1, ':', E13.5, 's')
-                call TLAB_WRITE_ASCII(lfile, time_string)
+                call TLab_Write_ASCII(lfile, time_string)
             end if
 #else
             t_dif = idummy
             write (time_string, 999) rkm_substep, t_dif/1.0_wp/PROC_CYCLES/ims_npro
 999         format('RK-Substep', I1, ':', E13.5, 's')
-            call TLAB_WRITE_ASCII(lfile, time_string)
+            call TLab_Write_ASCII(lfile, time_string)
 #endif
 
 #endif
@@ -326,7 +335,8 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-        use TLAB_POINTERS_3D, only: u, v, w, p_wrk3d, p, rho, vis
+        use Thermodynamics, only: gama0
+        use TLab_Pointers_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
         integer(wi) ipmax, k_glo
@@ -436,7 +446,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                          p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -518,7 +528,7 @@ contains
 !#
 !########################################################################
     subroutine TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
-        use TLAB_ARRAYS, only: q, s, txc
+        use TLab_Arrays, only: q, s, txc
         use PARTICLE_ARRAYS
         use DNS_ARRAYS, only: hq, hs
         use DNS_LOCAL, only: imode_rhs
@@ -542,7 +552,7 @@ contains
             call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
             call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
 
-            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
+            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             do is = 1, inb_scal
                 call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
             end do
@@ -551,7 +561,7 @@ contains
             call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
             call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
 
-            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
+            call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
             do is = 1, inb_scal
                 call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
             end do
@@ -562,26 +572,26 @@ contains
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
                 call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 
-                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
+                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 do is = 1, inb_scal
                     call RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
                 end do
 
             case (EQNS_RHS_COMBINED)
                 call FI_SOURCES_FLOW(q, s, hq, txc(1, 1))
-                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2))
+                call FI_SOURCES_SCAL(s, hs, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 call RHS_GLOBAL_INCOMPRESSIBLE_1()
 
             case (EQNS_RHS_NONBLOCKING)
 #ifdef USE_PSFFT
                 call RHS_GLOBAL_INCOMPRESSIBLE_NBC(q(1, 1), q(1, 2), q(1, 3), s(1, 1), &
                                                    txc(1, 1), txc(1, 2), &
-                                          txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), &
+                                                   txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), txc(1, 7), txc(1, 8), txc(1, 9), txc(1, 10), &
                                                    txc(1, 11), txc(1, 12), txc(1, 13), txc(1, 14), &
                                                    hq(1, 1), hq(1, 2), hq(1, 3), hs(1, 1))
 #else
-                call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
-                call TLAB_STOP(DNS_ERROR_PSFFT)
+                call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT. Need compiling flag -DUSE_PSFFT.')
+                call TLab_Stop(DNS_ERROR_PSFFT)
 #endif
             end select
         end select
@@ -603,7 +613,7 @@ contains
 #endif
 #endif
 
-        call DNS_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
+        call TLab_OMP_PARTITION(isize_field, ij_srt, ij_end, ij_siz)
 #ifdef USE_BLAS
         ij_len = ij_siz
 #endif
@@ -644,8 +654,8 @@ contains
             !      q, hq, q(:,1),q(:,2),q(:,3), hq(1,1),hq(1,2),hq(1,3), s,hs, &
             !      txc(1,1),txc(1,2),txc(1,3),txc(1,4),txc(1,5),txc(1,6),txc(1,7), txc(1,8))
         else
-            call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_INCOMPRESSIBLE_IMPLICIT. Undeveloped formulation.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         end if
 
@@ -655,9 +665,10 @@ contains
 !########################################################################
 !########################################################################
     subroutine TIME_SUBSTEP_COMPRESSIBLE()
-        use TLAB_ARRAYS
-        use TLAB_POINTERS
+        use TLab_Arrays
+        use TLab_Pointers
         use THERMO_CALORIC, only: THERMO_GAMMA
+        use Thermodynamics, only: CRATIO_INV
         use DNS_ARRAYS
         use BOUNDARY_BUFFER
         use BOUNDARY_BCS, only: BcsDrift
@@ -706,8 +717,8 @@ contains
             ! viscous terms
             ! -------------------------------------------------------------------
             if (itransport /= 1) then
-                call TLAB_WRITE_ASCII(efile, 'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             if (iviscous == EQNS_DIVERGENCE) then
@@ -887,9 +898,9 @@ contains
 
 #ifdef USE_MPI
         integer(wi) nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north
-#else
-        real(wp) x_right, z_right
 #endif
+        real(wp) x_right, z_right
+        real(wp) y_right
 
         !#####################################################################
         call RHS_PART_1()
@@ -909,44 +920,80 @@ contains
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv X-Direction
         ! -------------------------------------------------------------------
-        call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+        if (ims_npro_i > 1) then
+            call PARTICLE_MPI_SORT(1, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
-        if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
-            if (nzone_west /= 0) then
-                l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) = &
-                    l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + g(1)%scale
+            if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
+                if (nzone_west /= 0) then
+                    l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) = &
+                        l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + g(1)%scale
+                end if
             end if
-        end if
 
-        if (ims_pro_i == (ims_npro_i - 1)) then !Take care of periodic boundary conditions east
-            if (nzone_east /= 0) then
-                l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) = &
-                    l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - g(1)%scale
+            if (ims_pro_i == (ims_npro_i - 1)) then !Take care of periodic boundary conditions east
+                if (nzone_east /= 0) then
+                    l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) = &
+                        l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - g(1)%scale
+                end if
             end if
-        end if
 
-        call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_g%tags, l_g%np)
+            call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_g%tags, l_g%np)
+
+        else
+            x_right = g(1)%nodes(1) + g(1)%scale
+
+            do i = 1, l_g%np
+                if (l_q(i, 1) > x_right) then
+                    l_q(i, 1) = l_q(i, 1) - g(1)%scale
+
+                elseif (l_q(i, 1) < g(1)%nodes(1)) then
+                    l_q(i, 1) = l_q(i, 1) + g(1)%scale
+
+                end if
+
+            end do
+
+        end if
 
         ! -------------------------------------------------------------------
         ! Particle sorting for Send/Recv Z-Direction
         ! -------------------------------------------------------------------
-        call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
+        if (ims_npro_k > 1) then
+            call PARTICLE_MPI_SORT(3, l_g, l_q, l_hq, nzone_grid, nzone_west, nzone_east, nzone_south, nzone_north)
 
-        if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
-            if (nzone_south /= 0) then
-                l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) = &
-                    l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + g(3)%scale
+            if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
+                if (nzone_south /= 0) then
+                    l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) = &
+                        l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + g(3)%scale
+                end if
             end if
-        end if
 
-        if (ims_pro_k == (ims_npro_k - 1)) then !Take care of periodic boundary conditions north
-            if (nzone_north /= 0) then
-                l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) = &
-                    l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - g(3)%scale
+            if (ims_pro_k == (ims_npro_k - 1)) then !Take care of periodic boundary conditions north
+                if (nzone_north /= 0) then
+                    l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) = &
+                        l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - g(3)%scale
+                end if
             end if
-        end if
 
-        call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_g%tags, l_g%np)
+            call PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l_hq, l_g%tags, l_g%np)
+
+        else
+            call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+
+            z_right = g(3)%nodes(1) + g(3)%scale
+
+            do i = 1, l_g%np
+                if (l_q(i, 3) > z_right) then
+                    l_q(i, 3) = l_q(i, 3) - g(3)%scale
+
+                elseif (l_q(i, 3) < g(3)%nodes(1)) then
+                    l_q(i, 3) = l_q(i, 3) + g(3)%scale
+
+                end if
+
+            end do
+
+        end if
 
 #else
         !#######################################################################
@@ -970,9 +1017,34 @@ contains
                 l_q(i, 3) = l_q(i, 3) + g(3)%scale
 
             end if
+
         end do
 
 #endif
+
+        y_right = g(2)%nodes(1) + g(2)%scale
+        select case (part_bcs)
+        case (PART_BCS_SPECULAR)
+            do i = 1, l_g%np
+                if (l_q(i, 2) > y_right) then
+                    l_q(i, 2) = 2*y_right - l_q(i, 2)
+                    l_q(i, 5) = -l_q(i, 5)
+                elseif (l_q(i, 2) < g(2)%nodes(1)) then
+                    l_q(i, 2) = 2*g(2)%nodes(1) - l_q(i, 2)
+                    l_q(i, 5) = -l_q(i, 5)
+                end if
+            end do
+
+        case (PART_BCS_STICK)
+            do i = 1, l_g%np
+                if (l_q(i, 2) > y_right) then
+                    l_q(i, 2) = y_right
+                elseif (l_q(i, 2) < g(2)%nodes(1)) then
+                    l_q(i, 2) = g(2)%nodes(1)
+                end if
+            end do
+
+        end select
 
         !#######################################################################
         ! Recalculating closest node below in Y direction

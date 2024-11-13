@@ -13,8 +13,8 @@ shift
 
 EXEC=""
 
-if [ ! -f dns.ini ]; then
-    echo "Error: dns.ini does not exist"
+if [ ! -f tlab.ini ]; then
+    echo "Error: tlab.ini does not exist"
     exit 2
 fi
 

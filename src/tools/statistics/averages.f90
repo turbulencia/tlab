@@ -6,18 +6,22 @@
 
 program AVERAGES
 
-    use TLAB_TYPES, only: pointers_dt
-    use TLAB_CONSTANTS
+    use TLab_Types, only: pointers_dt
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
-    use THERMO_VARS, only: imixture
+    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
+    use Radiation
+    use Microphysics
+    use Chemistry
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -31,6 +35,7 @@ program AVERAGES
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use AVG_PHASE
 
     implicit none
 
@@ -82,7 +87,7 @@ program AVERAGES
     integer(wi) io_sizes(5), id
 
     ! Pointers to existing allocated space
-    real(wp), dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: u, v, w, p
 
     !########################################################################
     !########################################################################
@@ -90,26 +95,28 @@ program AVERAGES
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
-    call PARTICLE_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
+#ifdef USE_MPI
+    call TLabMPI_Initialize()
+#endif
+    call Particle_Initialize_Parameters(ifile)
+
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
+    call Radiation_Initialize(ifile)
+    call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
-    ! IBM status (before TLAB_MPI_INITIALIZE!)
-    ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+    call ScanFile_Char(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
-        call TLAB_WRITE_ASCII(efile, 'VISUALS. Wrong IBM Status option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLab_Write_ASCII(efile, 'AVERAGES. Wrong IBM Status option.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
-
-#ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
-#endif
 
     ! -------------------------------------------------------------------
     ! File names
@@ -124,7 +131,7 @@ program AVERAGES
     gate_level = 0
     opt_order = 1
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamAverages', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -149,6 +156,7 @@ program AVERAGES
         write (*, *) '15. Dissipation'
         write (*, *) '16. Third-order scalar covariances'
         write (*, *) '17. Potential vorticity'
+        write (*, *) '18. Phase Average'
         read (*, *) opt_main
 
         write (*, *) 'Planes block size ?'
@@ -171,13 +179,13 @@ program AVERAGES
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in dns.ini.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'AVERAGES. Missing input [ParamAverages] in tlab.ini.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     if (opt_block < 1) then
-        call TLAB_WRITE_ASCII(efile, 'AVERAGES. Invalid value of opt_block.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'AVERAGES. Invalid value of opt_block.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     ! -------------------------------------------------------------------
@@ -198,7 +206,7 @@ program AVERAGES
     case (4)
         nfield = 6 + inb_scal
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 3)
-        if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) inb_txc = max(inb_txc, 6)
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) inb_txc = max(inb_txc, 6)
     case (5) ! enstrophy
         nfield = 7
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 8)
@@ -210,7 +218,6 @@ program AVERAGES
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     case (8)
         nfield = 3
-
         iread_flow = .true.; inb_txc = max(inb_txc, 6)
     case (9)
         nfield = 5
@@ -239,6 +246,12 @@ program AVERAGES
     case (17) ! potential vorticity
         nfield = 2
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
+    case (18) ! Phase average
+        phAvg%active = .true. 
+        phAvg%stride = 1
+        nfield = 3
+        inb_txc = max(inb_txc, 9)
+        iread_flow = flow_on; iread_scal = scal_on 
     end select
 
     if (imode_ibm == 1) then ! check if enough memory is provided for the IBM
@@ -302,31 +315,30 @@ program AVERAGES
         allocate (mean(opt_order*nfield*(jmax_aux + 1)))
     end if
 
-    isize_wrk3d = max(isize_field, opt_order*nfield*jmax)
-    isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-    if (part%type /= PART_TYPE_NONE) then
-        isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    end if
+    isize_wrk3d = max(isize_wrk3d, opt_order*nfield*jmax)
 
-    call TLAB_ALLOCATE(C_FILE_LOC)
+    call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     if (imode_ibm == 1) then
         call IBM_ALLOCATE(C_FILE_LOC)
     end if
 
+    if (opt_main == 18) then
+        call AvgPhaseInitializeMemory(__FILE__, -1)
+    end if
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()  ! Initialize thermodynamic quantities
+    call TLab_Initialize_Background()  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
@@ -364,7 +376,7 @@ program AVERAGES
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
@@ -399,7 +411,7 @@ program AVERAGES
                 opt_cond_scal = inb_scal_array
             end if
 
-            call TLAB_WRITE_ASCII(lfile, 'Calculating partition...')
+            call TLab_Write_ASCII(lfile, 'Calculating partition...')
             call FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                          imax, jmax, kmax, igate_size, gate_threshold, q, s, txc, gate)
 
@@ -418,8 +430,8 @@ program AVERAGES
             ! Conventional statistics
             ! ###################################################################
         case (1)
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4), DCMP_TOTAL)
             end if
 
             if (scal_on) then
@@ -433,7 +445,7 @@ program AVERAGES
                 if (buoyancy%type == EQNS_BOD_QUADRATIC .or. buoyancy%type == EQNS_BOD_BILINEAR .or. &
                     imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, txc(1, 7))
+                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 7))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 7), wrk1d)
@@ -447,14 +459,14 @@ program AVERAGES
 
                 end if
 
-                if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
-                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, epbackground, pbackground, txc(1, 7))
-                        !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, epbackground, txc(1,7))
+                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, txc(1, 7))
+                        !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
-                                        txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
+                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
                     end if
                 end if
 
@@ -526,7 +538,7 @@ program AVERAGES
             ! ###################################################################
         case (3)
             write (fname, *) itime; fname = 'avgMom'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             ifield = ifield + 1; vars(ifield)%field => q(:, 1); vars(ifield)%tag = 'U'
@@ -570,15 +582,15 @@ program AVERAGES
             ! ###################################################################
         case (4)
             write (fname, *) itime; fname = 'avgMain'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             ifield = ifield + 1; vars(ifield)%field => u(:); vars(ifield)%tag = 'U'
             ifield = ifield + 1; vars(ifield)%field => v(:); vars(ifield)%tag = 'V'
             ifield = ifield + 1; vars(ifield)%field => w(:); vars(ifield)%tag = 'W'
 
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
             else
                 ifield = ifield + 1; vars(ifield)%field => q(:, 5); vars(ifield)%tag = 'R'
@@ -597,16 +609,16 @@ program AVERAGES
             ! ###################################################################
         case (5)
             write (fname, *) itime; fname = 'avgW2'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             ! result vector in txc4, txc5, txc6
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
                 if (buoyancy%type == EQNS_NONE) then
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, epbackground, pbackground, rbackground, wrk3d)
+                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
@@ -656,11 +668,11 @@ program AVERAGES
             ! ###################################################################
         case (6)
             write (fname, *) itime; fname = 'avgS2'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-            if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE .or. imode_eqns == DNS_EQNS_ANELASTIC) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             else
@@ -692,7 +704,7 @@ program AVERAGES
             ! ###################################################################
         case (7)
             write (fname, *) itime; fname = 'avgG2'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s, u, v, w, &
@@ -717,7 +729,7 @@ program AVERAGES
             ! ###################################################################
         case (8)
             write (fname, *) itime; fname = 'avgInv'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_INVARIANT_R(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -733,7 +745,7 @@ program AVERAGES
             ! ###################################################################
         case (9)
             write (fname, *) itime; fname = 'avgGi'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s, txc(1, 1))
@@ -756,7 +768,7 @@ program AVERAGES
             ! ###################################################################
         case (10)
             write (fname, *) itime; fname = 'avgEig'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -771,7 +783,7 @@ program AVERAGES
             ! ###################################################################
         case (11)
             write (fname, *) itime; fname = 'avgCos'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_STRAIN_TENSOR(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
@@ -816,7 +828,7 @@ program AVERAGES
             ! ###################################################################
         case (12)
             write (fname, *) itime; fname = 'avgDer'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, txc(1, 1))
@@ -833,7 +845,7 @@ program AVERAGES
         case (13)
             ifield = 0
             write (fname, *) itime; fname = 'avgFluxY'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, txc(:, 1))
@@ -873,14 +885,14 @@ program AVERAGES
             ! ###################################################################
         case (14)
             write (fname, *) itime; fname = 'avgP'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
 
             q = 0.0_wp
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), DCMP_TOTAL)
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Psta'
 
             txc(:, 3) = txc(:, 1) - txc(:, 2)
@@ -891,7 +903,7 @@ program AVERAGES
             ! ###################################################################
         case (15)
             write (fname, *) itime; fname = 'avgEps'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_DISSIPATION(i1, imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
@@ -903,7 +915,7 @@ program AVERAGES
             ! ###################################################################
         case (16)
             write (fname, *) itime; fname = 'avgSiCov'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, s(1, 1))
@@ -923,7 +935,7 @@ program AVERAGES
             ! ###################################################################
         case (17)
             write (fname, *) itime; fname = 'avgPV'//trim(adjustl(fname))
-            call TLAB_WRITE_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
+            call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
             call FI_CURL(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
@@ -947,12 +959,25 @@ program AVERAGES
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'PV'
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Cos'
 
+        case (18)
+            call AvgPhaseSpace(wrk2d, inb_flow, it, 0, 0, 1)
+            call IO_Write_PhaseAvg(1, inb_flow, IO_FLOW, 0, avgu_name, 1, avg_flow, itime_vec(it))
+            
+            call AvgPhaseSpace(wrk2d, inb_scal, it, 0, 0, 2)
+            call IO_Write_PhaseAvg(1, inb_scal, IO_SCAL, 0, avgp_name, 2,  avg_scal, itime_vec(it))
+            
+            p => txc(:,9) !makes sure to only pass the address, not the entire array 
+            call AvgPhaseSpace(wrk2d, 1, it, 0, 0 , p)
+            call IO_Write_PhaseAvg(1, 1       ,      IO_SCAL, 0, avgs_name, 4, avg_p, itime_vec(it))
+            
+            call AvgPhaseResetVariable()
+
         end select
 
         if (opt_main > 2) then
             if (nfield < ifield) then ! Check
-                call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
-                call TLAB_STOP(DNS_ERROR_WRKSIZE)
+                call TLab_Write_ASCII(efile, C_FILE_LOC//'. Array space nfield incorrect.')
+                call TLab_Stop(DNS_ERROR_WRKSIZE)
             end if
 
             if (jmax_aux*opt_block /= g(2)%size) then
@@ -968,5 +993,5 @@ program AVERAGES
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program AVERAGES

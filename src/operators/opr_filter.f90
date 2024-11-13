@@ -5,33 +5,186 @@
 #endif
 
 module OPR_FILTERS
-    use TLAB_CONSTANTS, only: wp, wi, efile, MAX_PROF
-    use TLAB_TYPES, only: grid_dt, filter_dt
+    use TLab_Constants, only: wp, wi
+    use TLab_Types, only: grid_dt, filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
-    use TLAB_PROCS
-    use FLT_COMPACT
-    use FLT_EXPLICIT
+    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
+    use TLab_WorkFlow
+    use Filters_Compact
+    use Filters_Explicit
+    use Filters_Tophat
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS
+    use TLabMPI_PROCS
 #endif
     implicit none
     private
 
-    public :: OPR_FILTER_INITIALIZE
+    public :: FILTER_READBLOCK, OPR_FILTER_INITIALIZE
     public :: OPR_FILTER
-    public :: OPR_FILTER_X,  OPR_FILTER_Y, OPR_FILTER_Z
+    public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
 
 contains
     !###################################################################
     !###################################################################
+    subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
+        use TLab_Constants, only: efile, wp, MAX_PARS
+        use TLab_Types, only: filter_dt
+        use TLAB_VARS, only: g
+        use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+        implicit none
+
+        character(len=*) bakfile, inifile, tag
+        type(filter_dt) variable(3)
+
+! -------------------------------------------------------------------
+        character(len=512) sRes
+        character(len=10) default
+        integer idummy, ig
+
+!########################################################################
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(tag))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<none/compact/helmholtz/SpectralBand/SpectralErf/tophat>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<values>')
+        call TLab_Write_ASCII(bakfile, '#ActiveX=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ActiveY=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ActiveZ=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
+        call TLab_Write_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
+
+        variable(:)%size = g(:)%size
+        variable(:)%periodic = g(:)%periodic
+        variable(:)%uniform = g(:)%uniform
+        variable(:)%inb_filter = 0          ! default array size
+        default = 'biased'                  ! default boundary condition
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'Type', 'none', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; variable(:)%type = DNS_FILTER_NONE
+        else if (trim(adjustl(sRes)) == 'compact') then; variable(:)%type = DNS_FILTER_COMPACT
+            variable(:)%parameters(1) = 0.49 ! default alpha value
+            variable(:)%inb_filter = 10
+        else if (trim(adjustl(sRes)) == 'explicit6') then; variable(:)%type = DNS_FILTER_6E
+        else if (trim(adjustl(sRes)) == 'explicit4') then; variable(:)%type = DNS_FILTER_4E
+            variable(:)%inb_filter = 5
+            ! else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
+            !     variable(:)%inb_filter = 5
+        else if (trim(adjustl(sRes)) == 'tophat') then; variable(:)%type = DNS_FILTER_TOPHAT
+            variable(:)%parameters(1) = 2    ! default filter size (in grid-step units)
+            default = 'free'
+        else if (trim(adjustl(sRes)) == 'compactcutoff') then; variable(:)%type = DNS_FILTER_COMPACT_CUTOFF
+            variable(:)%inb_filter = 7
+            variable(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
+            variable(2)%parameters(1) = 0.49
+            variable(2)%inb_filter = 10
+        else if (trim(adjustl(sRes)) == 'spectralcutoff') then; variable(:)%type = DNS_FILTER_BAND
+            ! The frequency interval is (Parameter1, Parameter2)
+        else if (trim(adjustl(sRes)) == 'spectralerf') then; variable(:)%type = DNS_FILTER_ERF
+            ! Parameter1 is the transition wavenumber in physical units:
+            ! >0: high-pass filter
+            ! <0; low-pass filter
+            ! Parameter2 is the characteristic width--in log units (relative to domain size)'
+            variable(:)%parameters(3) = 1.0_wp    ! used to normalise wavenumbers in z-direction
+        else if (trim(adjustl(sRes)) == 'helmholtz') then; variable(:)%type = DNS_FILTER_HELMHOLTZ
+            variable(:)%parameters(1) = 1.0_wp    ! default filter size
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//'Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        ! Boundary conditions correction
+        do ig = 1, 3
+            if (variable(ig)%periodic) then
+                variable(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+                variable(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+            end if
+        end do
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'BcsJmin', trim(adjustl(default)), sRes)
+        if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
+        else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMin = DNS_FILTER_BCS_BIASED
+        else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMin = DNS_FILTER_BCS_FREE
+        else if (trim(adjustl(sRes)) == 'solid') then; variable(2)%BcsMin = DNS_FILTER_BCS_SOLID
+        else if (trim(adjustl(sRes)) == 'dirichlet') then; variable(2)%BcsMin = DNS_FILTER_BCS_DIRICHLET
+        else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMin = DNS_FILTER_BCS_NEUMANN
+        else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMin = DNS_FILTER_BCS_ZERO
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmin.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'BcsJmax', trim(adjustl(default)), sRes)
+        if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
+        else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMax = DNS_FILTER_BCS_BIASED
+        else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMax = DNS_FILTER_BCS_FREE
+        else if (trim(adjustl(sRes)) == 'solid') then; variable(2)%BcsMax = DNS_FILTER_BCS_SOLID
+        else if (trim(adjustl(sRes)) == 'dirichlet') then; variable(2)%BcsMax = DNS_FILTER_BCS_DIRICHLET
+        else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMax = DNS_FILTER_BCS_NEUMANN
+        else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMax = DNS_FILTER_BCS_ZERO
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmax.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'Parameters', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            idummy = MAX_PARS
+            call LIST_REAL(sRes, idummy, variable(1)%parameters(:))
+            if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
+                variable(1)%parameters(idummy + 1:3) = variable(1)%parameters(idummy)
+            do ig = 2, 3
+                variable(ig)%parameters(1) = variable(1)%parameters(ig)
+            end do
+        end if
+
+        call ScanFile_Int(bakfile, inifile, trim(adjustl(tag)), 'Repeat', '1', idummy)
+        if (idummy > 0) then
+            variable(:)%repeat = idummy
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Entry Filter.Repeat must be positive.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveX', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') variable(1)%type = DNS_FILTER_NONE
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveY', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') variable(2)%type = DNS_FILTER_NONE
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveZ', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') variable(3)%type = DNS_FILTER_NONE
+
+        ! Further control
+        do ig = 1, 3
+            if (variable(ig)%size == 1) variable(ig)%type = DNS_FILTER_NONE
+
+            if (variable(ig)%type == DNS_FILTER_TOPHAT .and. &
+                variable(ig)%parameters(1) == 0) variable(ig)%type = DNS_FILTER_NONE
+
+            if (variable(ig)%type == DNS_FILTER_TOPHAT) then
+                if (mod(int(variable(ig)%parameters(1)), 2) /= 0) then
+                    call TLab_Write_ASCII(efile, __FILE__//'. Tophat filter size must be even.')
+                    call TLab_Stop(DNS_ERROR_PARAMETER)
+                end if
+                variable(ig)%inb_filter = int(variable(ig)%parameters(1)) + 1
+            end if
+
+        end do
+
+#ifdef USE_MPI
+        variable(1)%mpitype = TLabMPI_I_PARTIAL
+        variable(3)%mpitype = TLabMPI_K_PARTIAL
+#endif
+
+        return
+    end subroutine FILTER_READBLOCK
+
+    !###################################################################
+    !###################################################################
     subroutine OPR_FILTER_INITIALIZE(g, f)
-        type(grid_dt),   intent(in) :: g
+        type(grid_dt), intent(in) :: g
         type(filter_dt), intent(inout) :: f
 
         !###################################################################
@@ -43,7 +196,7 @@ contains
             call FLT_E4_COEFFS(f%size, f%periodic, g%scale, g%nodes, f%coeffs)
 
         case (DNS_FILTER_TOPHAT)
-            call FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
+            call FLT_T1_COEFFS(g%scale, g%nodes, f, wrk1d)
 
         case (DNS_FILTER_COMPACT)
             call FLT_C4_LHS(f%size, f%bcsmin, f%bcsmax, f%parameters(1), f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
@@ -79,14 +232,14 @@ contains
     subroutine OPR_FILTER(nx, ny, nz, f, u, txc)
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f(3)
-        real(wp),        intent(inout) :: u(nx, ny, nz)
-        real(wp),        intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
+        real(wp), intent(inout) :: u(nx, ny, nz)
+        real(wp), intent(inout) :: txc(isize_txc_field, 3)   ! size 1 if ADM
         !                                                           size 3 if SPECTRAL, HELMHOLTZ
         !-------------------------------------------------------------------
         real(wp) dummy
-        integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t, i2
+        integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t
 
         complex(wp), pointer :: c_tmp(:, :) => null()
         real(wp), dimension(:, :, :), pointer :: p_bcs
@@ -96,7 +249,6 @@ contains
         nxy = nx*ny
 
         bcs = 0  !Boundary conditions for derivative operator set to biased, non-zero
-        i2 = 2
 
         !Global filters
         select case (f(1)%type)
@@ -124,9 +276,10 @@ contains
             end if
 
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
-            call OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
-                                   txc(1, 1), txc(1, 2), txc(1, 3), &
-                                   p_bcs(:, :, 1), p_bcs(:, :, 2))
+            ! call OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
+            !                        txc(1, 1), txc(1, 2), txc(1, 3), &
+            !                        p_bcs(:, :, 1), p_bcs(:, :, 2))
+            call OPR_Helmholtz(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), txc(1, 1), txc(1, 2), txc(1, 3), p_bcs(:, :, 1), p_bcs(:, :, 2))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)
 
         case (DNS_FILTER_BAND)
@@ -178,10 +331,10 @@ contains
     !Filter kernel along one direction
     !###################################################################
     subroutine OPR_FILTER_1D(nlines, f, u, result)
-        integer(wi),     intent(in) :: nlines                  !# of lines to be solved
+        integer(wi), intent(in) :: nlines                  !# of lines to be solved
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(in) :: u(nlines, f%size)       !field to be filtered
-        real(wp),        intent(out) :: result(nlines, f%size)  !filtered filed
+        real(wp), intent(in) :: u(nlines, f%size)       !field to be filtered
+        real(wp), intent(out) :: result(nlines, f%size)  !filtered filed
 
         !-------------------------------------------------------------------
         integer(wi) delta
@@ -216,8 +369,8 @@ contains
         case (DNS_FILTER_4E)
             call FLT_E4(f%size, nlines, f%periodic, f%coeffs, u, result)
 
-        ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
-        !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
+            ! case (DNS_FILTER_ADM) ! I need wrk3d and was not using this procedure anyhow
+            !     call FLT_ADM(f%size, nlines, f%periodic, f%coeffs, u, result, wrk3d)
 
         case (DNS_FILTER_TOPHAT)
             if (f%periodic) then
@@ -250,9 +403,9 @@ contains
     !Filter in Ox direction
     !###################################################################
     subroutine OPR_FILTER_X(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nyz
@@ -265,7 +418,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLAB_MPI_I_PARTIAL
+        id = f%mpitype  !TLabMPI_I_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -273,7 +426,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
             p_a => wrk3d
             p_b => u
             nyz = ims_size_i(id)
@@ -292,7 +445,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, f%size, f%size, nyz, p_b, nyz)
 #else
-        call DNS_TRANSPOSE(p_a, f%size, nyz, f%size, p_b, nyz)
+        call TLab_Transpose(p_a, f%size, nyz, f%size, p_b, nyz)
 #endif
 
         !###################################################################
@@ -305,7 +458,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, nyz, nyz, f%size, p_b, f%size)
 #else
-        call DNS_TRANSPOSE(p_a, nyz, f%size, nyz, p_b, f%size)
+        call TLab_Transpose(p_a, nyz, f%size, nyz, p_b, f%size)
 #endif
 
         !-------------------------------------------------------------------
@@ -313,7 +466,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLAB_MPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 #endif
 
@@ -328,9 +481,9 @@ contains
     !Filter in Oy direction
     !###################################################################
     subroutine OPR_FILTER_Y(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-----------------------------------------------------------------------
         integer(wi) nxy, nxz
@@ -352,7 +505,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(u, nxy, nxy, nz, wrk3d, nz)
 #else
-            call DNS_TRANSPOSE(u, nxy, nz, nxy, wrk3d, nz)
+            call TLab_Transpose(u, nxy, nz, nxy, wrk3d, nz)
 #endif
             p_org => wrk3d
             p_dst => u
@@ -368,7 +521,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(p_dst, nz, nz, nxy, p_org, nxy)
 #else
-            call DNS_TRANSPOSE(p_dst, nz, nxy, nz, p_org, nxy)
+            call TLab_Transpose(p_dst, nz, nxy, nz, p_org, nxy)
 #endif
         end if
 
@@ -383,9 +536,9 @@ contains
     !Filter in Oz direction
     !###################################################################
     subroutine OPR_FILTER_Z(nx, ny, nz, f, u)
-        integer(wi),     intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz
         type(filter_dt), intent(in) :: f
-        real(wp),        intent(inout) :: u(nx*ny*nz)
+        real(wp), intent(inout) :: u(nx*ny*nz)
 
         !-------------------------------------------------------------------
         integer(wi) nxy
@@ -398,7 +551,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLAB_MPI_K_PARTIAL
+        id = f%mpitype  !TLabMPI_K_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -406,7 +559,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLAB_MPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             p_a => wrk3d
             p_b => u
             nxy = ims_size_k(id)
@@ -428,7 +581,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLAB_MPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 #endif
 
@@ -444,7 +597,7 @@ contains
     !########################################################################
     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp),    intent(in) :: spc_param(*)
+        real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------
@@ -501,7 +654,7 @@ contains
     !########################################################################
     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp),    intent(in) :: spc_param(*)
+        real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
         !-----------------------------------------------------------------------

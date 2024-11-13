@@ -2,24 +2,59 @@
 #include "dns_error.h"
 
 module OPR_ELLIPTIC
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
-    use TLAB_POINTERS_3D, only: p_wrk1d
-    use TLAB_POINTERS_C, only: c_wrk1d, c_wrk3d
-    use TLAB_PROCS
+    use TLab_Pointers_3D, only: p_wrk1d
+    use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Allocate_Real
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
     use FDM_Integrate
     use FDM_PROCS
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
+
+    pointer :: OPR_Poisson_dt
+    interface
+        subroutine OPR_Poisson_dt(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+            use TLab_Constants, only: wi, wp
+            use TLab_Types, only: grid_dt
+            use TLAB_VARS, only: isize_txc_dimz
+            integer(wi), intent(in) :: nx, ny, nz
+            integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
+            type(grid_dt), intent(in) :: g(3)
+            real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
+            real(wp), intent(inout), target :: tmp1(isize_txc_dimz, nz)     ! FFT of forcing term
+            real(wp), intent(inout), target :: tmp2(isize_txc_dimz, nz)     ! Aux array for FFT
+            real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)          ! Boundary-condition fields
+            real(wp), intent(out), optional :: dpdy(nx, ny, nz)             ! Vertical derivative of solution
+        end subroutine
+    end interface
+
+    pointer :: OPR_Helmholtz_dt
+    interface
+        subroutine OPR_Helmholtz_dt(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
+            use TLab_Constants, only: wi, wp
+            use TLab_Types, only: grid_dt
+            use TLAB_VARS, only: isize_txc_dimz
+            integer(wi), intent(in) :: nx, ny, nz
+            integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
+            type(grid_dt), intent(in) :: g(3)
+            real(wp), intent(in) :: alpha
+            real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
+            real(wp), intent(inout), target :: tmp1(isize_txc_dimz, nz)     ! FFT of forcing term
+            real(wp), intent(inout), target :: tmp2(isize_txc_dimz, nz)     ! Aux array for FFT
+            real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)          ! Boundary-condition fields
+        end subroutine
+    end interface
 
     complex(wp), target :: bcs(3)
     real(wp), pointer :: r_bcs(:) => null()
@@ -27,13 +62,19 @@ module OPR_ELLIPTIC
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) lambda, norm
     real(wp), allocatable :: lhs(:, :), rhs(:, :)
-    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLAB_ARRAYS?
+    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
 
-    public :: OPR_ELLIPTIC_INITIALIZE
-    public :: OPR_POISSON_FXZ
-    public :: OPR_POISSON_FXZ_D         ! Using direct formulation of FDM schemes
-    public :: OPR_HELMHOLTZ_FXZ
-    public :: OPR_HELMHOLTZ_FXZ_D       ! Using direct formulation of FDM schemes
+    procedure(OPR_Poisson_dt), pointer :: OPR_Poisson
+    procedure(OPR_Helmholtz_dt), pointer :: OPR_Helmholtz
+
+    public :: OPR_Elliptic_Initialize
+    public :: OPR_Poisson
+    public :: OPR_Helmholtz
+    ! public :: OPR_Poisson_FourierXZ_Factorize
+    ! public :: imode_elliptic
+    ! public :: OPR_Poisson_FourierXZ_Direct         ! Using direct formulation of FDM schemes
+    ! public :: OPR_Helmholtz_FourierXZ_Factorize
+    ! public :: OPR_Helmholtz_FourierXZ_Direct       ! Using direct formulation of FDM schemes
     ! public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields; no need if we use am initilization
 
 #define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
@@ -50,14 +91,31 @@ contains
 ! #######################################################################
 ! #######################################################################
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
-    subroutine OPR_ELLIPTIC_INITIALIZE()
-        use TLAB_VARS, only: g, imode_elliptic
+    subroutine OPR_Elliptic_Initialize(inifile)
+        use TLAB_VARS, only: g
         use FDM_ComX_Direct
 
-        integer ibc_loc, nb_diag(2)
-        integer, parameter :: i1 = 1, i2 = 2
+        character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
+        integer imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
+        integer ibc_loc, nb_diag(2)
+        integer, parameter :: i1 = 1
+        character*512 sRes
+        character*32 bakfile
+
+! ###################################################################
+        bakfile = trim(adjustl(inifile))//'.bak'
+
+        call ScanFile_Char(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
+        if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
+        else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
+        else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
         select case (imode_elliptic)
         case (FDM_COM4_DIRECT)
             allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
@@ -70,12 +128,19 @@ contains
         end select
 
         ! -----------------------------------------------------------------------
-        ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
         select case (imode_elliptic)
+        case (FDM_COM6_JACOBIAN)
+            OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
+            OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
+
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+            OPR_Poisson => OPR_Poisson_FourierXZ_Direct
+            OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
+
+        ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
             isize_line = imax/2 + 1
 
-            call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
+            call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
 
             do k = 1, kmax
 #ifdef USE_MPI
@@ -107,7 +172,7 @@ contains
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                     call FDM_Int2_Initialize(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                        lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
+                                             lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
 
                     ! LU decomposizion
                     ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
@@ -123,7 +188,7 @@ contains
         end select
 
         return
-    end subroutine OPR_ELLIPTIC_INITIALIZE
+    end subroutine OPR_Elliptic_Initialize
 
 !########################################################################
 !#
@@ -137,10 +202,10 @@ contains
 !# The global variable isize_txc_field defines the size of array txc equal
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
-!# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see tlab_procs%define_pointers_c)
+!# We use c_wrk1d and p_wrk1d for complex and real reference to same data (see TLab_WorkFlow%define_pointers_c)
 !#
 !########################################################################
-    subroutine OPR_POISSON_FXZ(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    subroutine OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -223,19 +288,19 @@ contains
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call OPR_ODE2_1_SINGULAR_NN(g(2)%mode_fdm1, ny, 2, &
-                                                 g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                                                    g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     else
                         call OPR_ODE2_1_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call OPR_ODE2_1_SINGULAR_DD(g(2)%mode_fdm1, ny, 2, &
-                                            g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                                                    g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     else
                         call OPR_ODE2_1_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     end if
 
                 end select
@@ -273,14 +338,14 @@ contains
         nullify (c_tmp1, c_tmp2, r_bcs)
 
         return
-    end subroutine OPR_POISSON_FXZ
+    end subroutine OPR_Poisson_FourierXZ_Factorize
 
 !########################################################################
 !########################################################################
 ! Same, but using the direct mode of FDM
 ! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
 ! and the last ones for the forcing and solution. The reason is the routine after this one.
-    subroutine OPR_POISSON_FXZ_D(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    subroutine OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -363,7 +428,7 @@ contains
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                     call FDM_Int2_Initialize(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                        p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
+                                             p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
                     call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
@@ -449,7 +514,7 @@ contains
         nullify (c_tmp1, c_tmp2)
 
         return
-    end subroutine OPR_POISSON_FXZ_D
+    end subroutine OPR_Poisson_FourierXZ_Direct
 
 !########################################################################
 !#
@@ -464,7 +529,7 @@ contains
 !# to (imax+2)*(jmax+2)*kmax, or larger if PARALLEL mode
 !#
 !########################################################################
-    subroutine OPR_HELMHOLTZ_FXZ(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+    subroutine OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -537,11 +602,11 @@ contains
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
                     call OPR_ODE2_1_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
-                                            g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                                               g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                 case (0) ! Dirichlet & Dirichlet BCs
                     call OPR_ODE2_1_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                            g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                                               g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                 end select
 
@@ -567,14 +632,14 @@ contains
         nullify (c_tmp1, c_tmp2, r_bcs)
 
         return
-    end subroutine OPR_HELMHOLTZ_FXZ
+    end subroutine OPR_Helmholtz_FourierXZ_Factorize
 
 !########################################################################
 !########################################################################
 ! Same, but using the direct mode of FDM
 ! Opposite to previous routine, here we use the first 8 wrk1d arrays for the diagonals of the LHS,
 ! and the last ones for the forcing and solution. The reason is the routine after this one.
-    subroutine OPR_HELMHOLTZ_FXZ_D(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+    subroutine OPR_Helmholtz_FourierXZ_Direct(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
         !                                                   1, for Neumann   & Dirichlet
@@ -585,7 +650,7 @@ contains
         real(wp), intent(inout) :: a(nx, ny, nz)                       ! Forcing term, and solution field p
         real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
         real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
-        real(wp), intent(inout) :: bcs_hb(nx, nz), bcs_ht(nx, nz)      ! Boundary-condition fields
+        real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)      ! Boundary-condition fields
 
         target tmp1, tmp2
 
@@ -648,7 +713,7 @@ contains
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
                 call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
-                                    p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
+                                         p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                 ! LU factorization
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
@@ -667,7 +732,7 @@ contains
 
                 c_wrk1d(:, 6) = c_wrk1d(:, 6) + bcs(1)*p_wrk1d(:, 6) + bcs(2)*p_wrk1d(:, 7)
 
-                    !   Corrections to the BCS_DD to account for Neumann
+                !   Corrections to the BCS_DD to account for Neumann
                 if (any([BCS_ND, BCS_NN] == ibc)) then
                     c_wrk1d(1, 6) = c_wrk1d(1, 6) + p_wrk1d(1, 3)*c_wrk1d(2, 6) &
                                     + p_wrk1d(1, 4)*c_wrk1d(3, 6) + p_wrk1d(1, 5)*c_wrk1d(4, 6) &
@@ -702,14 +767,14 @@ contains
         nullify (c_tmp1, c_tmp2)
 
         return
-    end subroutine OPR_HELMHOLTZ_FXZ_D
+    end subroutine OPR_Helmholtz_FourierXZ_Direct
 
 ! !########################################################################
 ! !########################################################################
 ! ! Same, but for n fields
 ! ! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
 !     subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
-!         use TLAB_TYPES, only: pointers_dt
+!         use TLab_Types, only: pointers_dt
 
 !         integer(wi), intent(in) :: nx, ny, nz, nfield
 !         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
@@ -735,8 +800,8 @@ contains
 
 !         ! #######################################################################
 !         if (ibc /= 0) then ! So far only implemented for Dirichlet BCs
-!             call TLAB_WRITE_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
-!             call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+!             call TLab_Write_ASCII(efile, 'OPR_HELMHOLT_FXZ_D. Undeveloped BCs.')
+!             call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !         end if
 
 !         call c_f_pointer(c_loc(tmp1), c_tmp1_n, shape=[isize_txc_dimz/2, nz, nfield])

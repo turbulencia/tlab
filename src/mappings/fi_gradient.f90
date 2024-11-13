@@ -6,9 +6,9 @@
 !# and terms in its evolution equation.
 !########################################################################
 module FI_GRADIENT_EQN
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: g, imode_ibm
-    use IBM_VARS, only: ibm_partial
+    use TLab_Constants, only: wp, wi
+    use TLAB_VARS, only: g
+    use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL
     implicit none
     private

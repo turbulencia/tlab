@@ -2,14 +2,14 @@
 #include "dns_error.h"
 
 subroutine FDM_INITIALIZE(x, g, wrk1d)
-    use TLAB_CONSTANTS, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
+    use TLab_Constants, only: wp, wi, pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: inb_scal, stagger_on
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use FDM_PROCS
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
@@ -27,13 +27,39 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! -------------------------------------------------------------------
     integer(wi) i, ib, ip, is, ig, nx, ndl, ndr
     integer(wi) nmin, nmax, nsize, bcs_cases(4)
-    real(wp) dummy, coef(5)
+    real(wp) dummy, coef(5), scale_loc
 
-    integer, parameter :: i0 = 0, i1 = 1
+    integer, parameter :: i1 = 1
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'Entering '//__FILE__)
+    call TLab_Write_ASCII(tfile, 'Entering '//__FILE__)
 #endif
+
+! ###################################################################
+! Consistency check
+    if (g%periodic .and. g%mode_fdm1 == FDM_COM4_DIRECT) g%mode_fdm1 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
+    if (g%periodic .and. g%mode_fdm1 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
+    if (g%periodic .and. g%mode_fdm2 == FDM_COM4_DIRECT) g%mode_fdm2 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
+    if (g%periodic .and. g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm2 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
+    if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm1)) g%mode_fdm1 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
+    if (any([FDM_COM6_JACOBIAN_PENTA] == g%mode_fdm2)) g%mode_fdm2 = FDM_COM6_JACOBIAN          ! undeveloped; I would need to read separately 1. and 2. order information
+    if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
+
+    if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
+        call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+    end if
+
+    if (g%size > 1) then
+        scale_loc = x(g%size, 1) - x(1, 1)
+        if (g%periodic) scale_loc = scale_loc*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
+    else
+        scale_loc = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
+    end if
+    ! print *, abs((scale_loc - g%scale)/scale_loc)
+    if (abs((scale_loc - g%scale)/scale_loc) > roundoff_wp) then
+        call TLab_Write_ASCII(efile, __FILE__//'. Unmathed domain scale.')
+        call TLab_Stop(DNS_ERROR_OPTION)
+    end if
 
 ! ###################################################################
     nx = g%size
@@ -235,26 +261,28 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
     g%rhsi => x(:, ig:)
     ig = ig + 5*2
 
-    bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
-    do ib = 1, 2
-        ip = (ib - 1)*g%nb_diag_1(2)
+    if (.not. g%periodic) then
+        bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+        do ib = 1, 2
+            ip = (ib - 1)*g%nb_diag_1(2)
 
-        call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
-                                 g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
-                                 g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
-        ! LU decomposition
-        select case (g%nb_diag_1(2))
-        case (3)
-            call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
-        case (5)
-            call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                          g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
-        case (7)
-            call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                          g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
-        end select
+            call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
+                                     g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
+                                     g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
+            ! LU decomposition
+            select case (g%nb_diag_1(2))
+            case (3)
+                call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
+            case (5)
+                call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                              g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
+            case (7)
+                call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
+                              g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
+            end select
 
-    end do
+        end do
+    end if
 
 ! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS
@@ -333,8 +361,8 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
         end if
 
         if (g%nb_diag_2(1) /= 3) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         if (g%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
@@ -398,7 +426,7 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! ###################################################################
     g%rhoinv => x(:, ig)
 
-    g%anelastic = .false. ! Default; activated in FI_BACKGROUND_INITIALIZE
+    g%anelastic = .false. ! Default; activated in TLab_Initialize_Background
 
     ig = ig + 1
 
@@ -406,12 +434,12 @@ subroutine FDM_INITIALIZE(x, g, wrk1d)
 ! Check array sizes
 ! ###################################################################
     if (ig >= g%inb_grid) then
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. Grid size incorrect.')
-        call TLAB_STOP(DNS_ERROR_DIMGRID)
+        call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
+        call TLab_Stop(DNS_ERROR_DIMGRID)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'Leaving '//__FILE__)
+    call TLab_Write_ASCII(tfile, 'Leaving '//__FILE__)
 #endif
 
     return

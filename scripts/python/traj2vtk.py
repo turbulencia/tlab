@@ -4,7 +4,7 @@ import numpy
 import struct
 import sys
 
-np = 0   # number of particles; if 0, then search dns.ini
+np = 0   # number of particles; if 0, then search tlab.ini
 
 # do not edit
 sizeofdata   = 4
@@ -16,7 +16,7 @@ if ( len(sys.argv) == 1 ):
     quit()
 
 if ( np == 0 ):
-    for line in open('dns.ini'):
+    for line in open('tlab.ini'):
         if "TrajNumber" in line.lower():
             np = int(line.split("=",1)[1])
 print("{} trajectories.".format(np))

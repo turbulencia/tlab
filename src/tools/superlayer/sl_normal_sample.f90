@@ -26,7 +26,7 @@ subroutine SL_NORMAL_SAMPLE(imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nf
 #include "types.h"
 
 #ifdef USE_MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none

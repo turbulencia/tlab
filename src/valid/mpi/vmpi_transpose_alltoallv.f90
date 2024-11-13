@@ -39,7 +39,7 @@ END MODULE DNS_MPI
 !########################################################################
 PROGRAM VMPI
 
-  USE TLAB_MPI_VARS
+  USE TLabMPI_VARS
   
   IMPLICIT NONE
   

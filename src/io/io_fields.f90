@@ -18,22 +18,21 @@
 !########################################################################
 
 module IO_FIELDS
-    use TLAB_CONSTANTS, only: wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
-    use TLAB_VARS, only: lfile
-    use TLAB_PROCS, only: TLAB_STOP, TLAB_WRITE_ASCII
-    use TLAB_ARRAYS, only: wrk3d
+    use TLab_Constants, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
+    use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
+    use TLab_Arrays, only: wrk3d
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_pro_i, ims_pro_k
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k
-    use TLAB_MPI_PROCS, only: TLAB_MPI_PANIC
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_pro_i, ims_pro_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k
+    use TLabMPI_PROCS, only: TLabMPI_PANIC
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
 
-    public :: IO_READ_FIELDS, IO_WRITE_FIELDS
+    public :: IO_READ_FIELDS, IO_WRITE_FIELDS, IO_Write_PhaseAvg
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
     integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
     integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
@@ -190,7 +189,7 @@ contains
         write (name, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(name))
         write (name, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))
         write (name, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
         select case (imode_files)
@@ -267,8 +266,8 @@ contains
             ! process header info
             isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
             if (isize > isize_max) then
-                call TLAB_WRITE_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
-                call TLAB_STOP(DNS_ERROR_ALLOC)
+                call TLab_Write_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
+                call TLab_Stop(DNS_ERROR_ALLOC)
             end if
 
             rtime = params(1)
@@ -315,7 +314,7 @@ contains
         write (str, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(str))
         write (str, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))
         write (str, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
 #ifdef USE_MPI
         subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_INTEGER1)
@@ -378,7 +377,7 @@ contains
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach
         use TLAB_VARS, only: schmidt
-        use THERMO_VARS, only: gama0
+        use Thermodynamics, only: gama0
 
         character(len=*) fname
         integer, intent(in) :: iheader         ! Scalar or Flow headers
@@ -415,7 +414,7 @@ contains
         write (name, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(name))
         write (name, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))
         write (name, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(name))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
         select case (imode_files)
@@ -452,8 +451,8 @@ contains
             end if
 
             if (isize > isize_max) then
-                call TLAB_WRITE_ASCII(efile, 'IO_WRITE_FIELDS. Parameters array size error.')
-                call TLAB_STOP(DNS_ERROR_ALLOC)
+                call TLab_Write_ASCII(efile, 'IO_WRITE_FIELDS. Parameters array size error.')
+                call TLab_Stop(DNS_ERROR_ALLOC)
             end if
 
             header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
@@ -541,7 +540,7 @@ contains
         write (str, *) nx_total; line = trim(adjustl(line))//' '//trim(adjustl(str))
         write (str, *) ny_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))
         write (str, *) nz_total; line = trim(adjustl(line))//'x'//trim(adjustl(str))//'...'
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -592,6 +591,143 @@ contains
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
 
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    subroutine IO_Write_PhaseAvg(avg_planes, nfield, iheader, it_save, basename, index, avg_type, avg_start)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        use TLAB_VARS, only : imax, jmax, g
+        use TLAB_VARS, only : rtime, itime
+        use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
+        use Thermodynamics, only: gama0
+        use TLAB_VARS, only : imode_eqns
+        use TLAB_VARS, only : phAvg
+        use TLAB_CONSTANTS, only : sizeofint, sizeofreal
+#ifdef USE_MPI 
+        use MPI
+        use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
+#endif
+        implicit none
+        integer(wi),                                          intent(in)          :: avg_planes
+        integer(wi),                                          intent(in)          :: nfield
+        integer(wi),                                          intent(in)          :: it_save
+        character(len=*),                                     intent(in)          :: basename
+        integer(wi),                                          intent(in)          :: index
+        real(wp),  dimension(:),                               intent(in)          :: avg_type
+        integer(wi),                                          intent(in),optional :: avg_start
+
+        character(len=128)                              :: name
+        character(len=32)                               :: varname(1)
+        integer(wi),       parameter                    :: isize_max = 20
+        real(wp)                                        :: params(isize_max)
+        integer(wi)                                     :: isize, iheader, ifld, ifld_srt, ifld_end
+        character(len=10)                               :: start, end, fld_id
+        integer(wi)                                     :: arr_planes, header_offset, ioffset_local
+        character(len=100)                              :: filename
+        integer(wi)                                  :: nxy
+
+#ifdef USE_MPI
+        integer(kind=MPI_OFFSET_KIND)                   :: f_offset
+        integer                                         :: f_handle, ftype, mtype, status(MPI_STATUS_SIZE)
+#endif
+        nxy = imax*jmax
+
+        if (index > 8 .or. index == 3 .or. index == 5 .or. index == 6 .or. index == 7) then
+            call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in PhaseAvg_Write')
+            call TLAB_STOP(DNS_ERROR_PHASEAVG)
+        end if
+
+        nz_total = it_save + 1
+
+        isize = 0
+        isize = isize + 1; params(isize) = rtime
+        isize = isize + 1; params(isize) = visc ! inverse of reynolds
+        if (iheader == IO_SCAL) then
+            isize = isize + 1 + 1                     ! prepare space for schmidt and damkohler
+
+        else if (iheader == IO_FLOW) then
+            isize = isize + 1; params(isize) = froude
+            isize = isize + 1; params(isize) = rossby
+            if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+            isize = isize + 1; params(isize) = gama0
+            isize = isize + 1; params(isize) = prandtl
+            isize = isize + 1; params(isize) = mach
+            end if
+        end if
+        ! INITIALIZATION OF MPI TYPES SHOULD ONLY BE CARRIED OUT ONCE *AND* DURING INITIALIZATION
+        header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
+
+        if (present (avg_start)) then
+            write(start, '(I10)') (avg_start)
+            write(end,   '(I10)') avg_start
+        else
+            write(start, '(I10)') (itime - it_save*phAvg%stride + 1)
+            write(end,   '(I10)') itime
+        end if
+
+        do ifld = 1, nfield
+            ifld_srt = (ifld-1)*nxy*(avg_planes+1) + 1
+            ifld_end = ifld*nxy*(avg_planes+1)
+            write(fld_id,   '(I10)') ifld
+            varname(1) = ''
+            if (start == end) then ! write single iteration
+                name =  trim(adjustl(basename)) // trim(adjustl(start)) // '.' // trim(adjustl(fld_id))
+            else ! write multiple iteration including phase average
+                name =  trim(adjustl(basename)) // trim(adjustl(start)) &
+                // '_' // trim(adjustl(end)) // '.' // trim(adjustl(fld_id))
+            end if
+
+            arr_planes = (jmax * (avg_planes+1))
+            ! Define the array size for planes and file offset
+#ifdef USE_MPI
+            f_offset = header_offset + ims_pro_i * imax * 8 
+#endif
+
+#ifdef USE_MPI
+            if (ims_pro == 0) then
+#endif
+#define LOC_STATUS "unknown"
+#define LOC_UNIT_ID 75
+#include "dns_open_file.h"
+            call IO_WRITE_HEADER(LOC_UNIT_ID, isize, g(1)%size, g(2)%size, nz_total, itime, params)
+            close(LOC_UNIT_ID)
+#ifdef USE_MPI
+            end if
+#endif
+
+#ifdef USE_MPI
+            call MPI_BARRIER(MPI_COMM_WORLD,ims_err)
+            if (ims_pro_k == 0) then
+                ! Create the MPI derived data types for the file view and contiguous blocks
+                call MPI_TYPE_VECTOR(arr_planes, imax, imax * ims_npro_i, MPI_REAL8, ftype, ims_err)
+                call MPI_TYPE_COMMIT(ftype, ims_err)
+                call MPI_TYPE_CONTIGUOUS(imax, MPI_REAL8, mtype, ims_err)
+                call MPI_TYPE_COMMIT(mtype, ims_err)
+
+                ! Open the file for writing
+                call MPI_FILE_OPEN(ims_comm_x, name, IOR(MPI_MODE_CREATE, MPI_MODE_WRONLY), MPI_INFO_NULL, f_handle, ims_err)
+
+                ! Set the file view
+                call MPI_File_set_view(f_handle, f_offset, MPI_REAL8, ftype, 'native', MPI_INFO_NULL, ims_err)
+
+                ! Write the data to the file
+                call MPI_FILE_WRITE_ALL(f_handle, avg_type(ifld_srt), arr_planes, mtype, status, ims_err)
+
+                ! Close the file
+                call MPI_FILE_CLOSE(f_handle, ims_err)
+
+                ! Free the MPI derived data types
+                call MPI_TYPE_FREE(ftype, ims_err)
+                call MPI_TYPE_FREE(mtype, ims_err)
+            end if
+#else
+#include "dns_open_file.h"
+                ioffset_local = header_offset + 1
+                write (LOC_UNIT_ID, POS=ioffset_local) avg_type(ifld_srt:ifld_end)
+                close (LOC_UNIT_ID)
+#endif
+        end do
+        return
+    end subroutine IO_Write_PhaseAvg
+    
     !########################################################################
     !########################################################################
     subroutine IO_READ_HEADER(unit, offset, nx, ny, nz, nt, params)
@@ -609,12 +745,12 @@ contains
 
         ! Check
         if (nx /= nx_loc .or. ny /= ny_loc .or. nz /= nz_loc) then
-            call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
-            call TLAB_STOP(DNS_ERROR_DIMGRID)
+            call TLab_Write_ASCII(efile, 'IO_READ_HEADER. Grid size mismatch.')
+            call TLab_Stop(DNS_ERROR_DIMGRID)
         end if
 
         if (nt /= nt_loc) then
-            call TLAB_WRITE_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
+            call TLab_Write_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
             !     nt = nt_loc
         end if
 
@@ -625,8 +761,8 @@ contains
         elseif (isize == 0) then
             continue ! no params to read; header format is correct
         else
-            call TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
-            call TLAB_STOP(DNS_ERROR_RECLEN)
+            call TLab_Write_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
+            call TLab_Stop(DNS_ERROR_RECLEN)
         end if
 
         return
@@ -692,27 +828,27 @@ contains
             do iv = 1, sizes(5)
                 name = trim(adjustl(fname))
                 if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
-                call TLAB_WRITE_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
+                call TLab_Write_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
                                    ior(MPI_MODE_WRONLY, MPI_MODE_CREATE), MPI_INFO_NULL, mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                 if (aux%precision == IO_TYPE_SINGLE) then
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                     s_wrk(1:isize) = real(data(sizes(2):sizes(3):sizes(4), iv), sp)
                     call MPI_File_write_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                 else
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                     wrk3d(1:isize) = data(sizes(2):sizes(3):sizes(4), iv)
                     call MPI_File_write_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                 end if
                 call MPI_File_close(mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
 
 #else
 #include "dns_open_file.h"
@@ -771,25 +907,25 @@ contains
             do iv = 1, sizes(5)
                 name = trim(adjustl(fname))
                 if (varname(iv) /= '') name = trim(adjustl(fname))//'.'//trim(adjustl(varname(iv)))
-                call TLAB_WRITE_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
+                call TLab_Write_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
                                    MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                 if (aux%precision == IO_TYPE_SINGLE) then
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                     call MPI_File_read_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                 else
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                     call MPI_File_read_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
                 end if
                 call MPI_File_close(mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLAB_MPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
 #else
 #include "dns_open_file.h"
                 ioffset_local = aux%offset + 1
@@ -822,8 +958,8 @@ contains
 
 !     subroutine IO_READ_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
 ! #ifdef USE_MPI
-!         use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLAB_MPI_PROCS
+!         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+!         use TLabMPI_PROCS
 ! #endif
 
 !         character(LEN=*) name
@@ -845,11 +981,11 @@ contains
 
 !         if (ims_npro_i > 1) then
 !             ! We always initialize types here. For the general field files, we could
-!             ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
-!             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
-!             id = TLAB_MPI_I_AUX1
+!             ! use TLabMPI_I_PARTIAL, but we use this routine for other files.
+!             call TLab_Write_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
+!             id = TLabMPI_I_AUX1
 !             npage = nz*ny
-!             call TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+!             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
 !             p_read => wrk
@@ -868,7 +1004,7 @@ contains
 !         call MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !         if (ims_npro_i > 1) then
-!             call TLAB_MPI_TRPB_I(p_read, a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+!             call TLabMPI_TRPB_I(p_read, a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 !         end if
 
 !         nullify (p_read)
@@ -893,8 +1029,8 @@ contains
 
 !     subroutine IO_WRITE_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
 ! #ifdef USE_MPI
-!         use TLAB_MPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLAB_MPI_PROCS
+!         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
+!         use TLabMPI_PROCS
 ! #endif
 
 !         character(LEN=*) name
@@ -918,14 +1054,14 @@ contains
 
 !         if (ims_npro_i > 1) then
 !             ! We always initialize types here. For the general field files, we could
-!             ! use TLAB_MPI_I_PARTIAL, but we use this routine for other files.
-!             call TLAB_WRITE_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
-!             id = TLAB_MPI_I_AUX1
+!             ! use TLabMPI_I_PARTIAL, but we use this routine for other files.
+!             call TLab_Write_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
+!             id = TLabMPI_I_AUX1
 !             npage = nz*ny
-!             call TLAB_MPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+!             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
-!             call TLAB_MPI_TRPF_I(a, wrk, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+!             call TLabMPI_TRPF_I(a, wrk, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 !             p_write => wrk
 
 !         else

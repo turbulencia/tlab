@@ -1,11 +1,11 @@
 #include "dns_error.h"
 
 module RAND_LOCAL
-    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, efile
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_txc_field
     use TLAB_VARS, only: g
-    use TLAB_PROCS
-    use AVGS, only: AVG1V2D
+    use TLab_WorkFlow
+    use Averages, only: AVG1V2D
     use OPR_FOURIER
     implicit none
     save
@@ -83,8 +83,8 @@ contains
         ! ###################################################################
         if (g(3)%size > 1) then
             if (Rxz /= 0.0_wp .or. Ryz /= 0.0_wp) then ! only 2D case developed
-                call TLAB_WRITE_ASCII(efile, 'Terms Rxz and Ryz not developed yet.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'Terms Rxz and Ryz not developed yet.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
 
             call RAND_NORMALIZE(Rzz, w)

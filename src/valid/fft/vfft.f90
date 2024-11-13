@@ -9,11 +9,11 @@ program VFFT
 
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_txc_dimz
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use OPR_FOURIER
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
 
     implicit none
@@ -29,11 +29,12 @@ program VFFT
     err_count = i0
     case_count = i0
 
-    call TLAB_START()
-    call IO_READ_GLOBAL('dns.ini')
+    call TLab_Start()
+    call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
     isize_fft3d = isize_txc_dimz*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)
@@ -85,10 +86,10 @@ program VFFT
     if (ims_pro == 0) then
 #endif
         write (*, 1000) err_count, case_count
-1000    format('fft-check completed. ', I3, ' Errors in ', I3, ' Checks. For details see file dns.log')
+1000    format('fft-check completed. ', I3, ' Errors in ', I3, ' Checks. For details see file tlab.log')
 #ifdef USE_MPI
     end if
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VFFT

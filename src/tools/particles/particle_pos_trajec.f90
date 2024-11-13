@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -31,15 +30,16 @@
 !########################################################################
 program PARTICLE_POS_TRAJEC
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS, only: ims_err
-    use TLAB_MPI_VARS, only: ims_pro, ims_npro
-    use TLAB_MPI_PROCS
+    use TLabMPI_VARS, only: ims_err
+    use TLabMPI_VARS, only: ims_pro, ims_npro
+    use TLabMPI_PROCS
 #endif
+    use Thermodynamics
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -49,37 +49,39 @@ program PARTICLE_POS_TRAJEC
 ! -------------------------------------------------------------------
 
 #ifdef USE_MPI
-    TINTEGER ierr, i, j, particle_pos
+    integer(wi) ierr, i, j, particle_pos
 
-    TINTEGER dummy_ims_npro
-    TINTEGER dummy_isize_traj
-    TINTEGER, dimension(:), allocatable :: dummy_proc, all_dummy_proc
+    integer(wi) dummy_ims_npro
+    integer(wi) dummy_isize_traj
+    integer(wi), dimension(:), allocatable :: dummy_proc, all_dummy_proc
     integer(8), dimension(:), allocatable :: l_traj_tags
-    TREAL, dimension(:), allocatable :: dummy_big_overall
-    TREAL, dimension(:, :), allocatable :: l_traj, all_l_traj
+    real(wp), dimension(:), allocatable :: dummy_big_overall
+    real(wp), dimension(:, :), allocatable :: l_traj, all_l_traj
 
-    TINTEGER nitera_first, nitera_last
+    integer(wi) nitera_first, nitera_last
+    integer(wi) :: isize_traj                       ! # of saved trajectories
 
     character*64 str, fname
     character*128 line
     character*32 bakfile
 
-    bakfile = TRIM(ADJUSTL(ifile))//'.bak'
+    bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
-    call PARTICLE_READ_GLOBAL('dns.ini')
-    
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call Particle_Initialize_Parameters(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
-! Get the local information from the dns.ini
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+! Get the local information from the tlab.ini
+    call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
+    call Particle_Initialize_Memory(C_FILE_LOC)
 
     allocate (dummy_proc(isize_traj))
     allocate (all_dummy_proc(isize_traj))
@@ -88,20 +90,20 @@ program PARTICLE_POS_TRAJEC
     allocate (l_traj(3, isize_traj))
     allocate (all_l_traj(3, isize_traj))
 
-    l_traj(:, :) = C_0_R
-    all_l_traj(:, :) = C_0_R
-    dummy_proc(:) = C_0_R
-    all_dummy_proc(:) = C_0_R
+    l_traj(:, :) = 0.0_wp
+    all_l_traj(:, :) = 0.0_wp
+    dummy_proc(:) = 0.0_wp
+    all_dummy_proc(:) = 0.0_wp
 
 !#######################################################################
 !READ THE (FIRST) FILE
 !#######################################################################
-    write (fname, *) nitera_first; fname = TRIM(ADJUSTL(tag_part))//TRIM(ADJUSTL(fname))
+    write (fname, *) nitera_first; fname = trim(adjustl(tag_part))//trim(adjustl(fname))
     call IO_READ_PARTICLE(fname, l_g, l_q)
 
     if (ims_pro == 0) then
         fname = 'largest_particle'
-        write (str, *) nitera_last; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+        write (str, *) nitera_last; str = trim(adjustl(fname))//"."//trim(adjustl(str)) ! name with the number for direction and scalar
         open (unit=117, file=str, access='stream', form='unformatted')
         read (117) dummy_ims_npro   !is a integer
         read (117, POS=SIZEOFINT + 1) dummy_isize_traj  !is an integer
@@ -143,7 +145,7 @@ program PARTICLE_POS_TRAJEC
 
     if (ims_pro == 0) then
         fname = 'pos_largest_particle_start'
-        write (str, *) nitera_first; str = TRIM(ADJUSTL(fname))//"."//TRIM(ADJUSTL(str)) ! name with the number for direction and scalar
+        write (str, *) nitera_first; str = trim(adjustl(fname))//"."//trim(adjustl(str)) ! name with the number for direction and scalar
         open (unit=15, file=str, access='stream', form='unformatted')
         inquire (UNIT=15, POS=particle_pos) !would be 1
         write (15) ims_npro  !header
@@ -169,5 +171,5 @@ program PARTICLE_POS_TRAJEC
 
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

@@ -15,10 +15,10 @@ if [ ! -f $DNSTAR ]; then
 
     LIST=`ls | grep '\.gz'`
     echo "Archiving statistic files into $DNSTAR"
-    tar cvf $DNSTAR $LIST dns.def dns.ini
+    tar cvf $DNSTAR $LIST tlab.ini
 
     if [ -f $DNSTAR ]; then
-	/bin/rm -f $LIST dns.def
+	/bin/rm -f $LIST
     fi
 else
     echo "$DNSTAR file exist. Aborting"

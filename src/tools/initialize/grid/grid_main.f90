@@ -4,13 +4,12 @@
 #define C_FILE_LOC "INIGRID"
 
 program INIGRID
-    use TLAB_TYPES, only: grid_dt, wp
-    use TLAB_CONSTANTS, only: gfile, ifile, efile
-    use TLAB_VARS, only: lfile
-    use TLAB_PROCS
+    use TLab_Types, only: grid_dt, wp
+    use TLab_Constants, only: gfile, ifile, lfile, efile
+    use TLab_WorkFlow
     use GRID_LOCAL
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_pro
+    use TLabMPI_VARS, only: ims_pro
 #endif
     implicit none
 
@@ -31,7 +30,7 @@ program INIGRID
     g(2)%name = 'y'
     g(3)%name = 'z'
 
-    call TLAB_START()
+    call TLab_Start()
 
     do idir = 1, 3
         call GRID_READBLOCK(bakfile, ifile, block(idir), g_build(idir), g(idir)%periodic)
@@ -149,14 +148,14 @@ program INIGRID
         ! #######################################################################
         ! Writing data
         ! #######################################################################
-        call TLAB_WRITE_ASCII(lfile, 'Writing grid.')
+        call TLab_Write_ASCII(lfile, 'Writing grid.')
   call IO_WRITE_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
 
 #ifdef USE_MPI
     end if
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 
 1000 format(a25, e12.5)
 2000 format(a25, i5)
@@ -176,27 +175,27 @@ contains
         character(LEN=512) sRes, str
 
 ! #######################################################################
-        call TLAB_WRITE_ASCII(bakfile, '['//block//']')
-        call TLAB_WRITE_ASCII(bakfile, 'segments=<number of segments>')
-        call TLAB_WRITE_ASCII(bakfile, 'periodic=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, 'mirrored=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, 'fixed_scale=<value>')
+        call TLab_Write_ASCII(bakfile, '['//block//']')
+        call TLab_Write_ASCII(bakfile, 'segments=<number of segments>')
+        call TLab_Write_ASCII(bakfile, 'periodic=<yes/no>')
+        call TLab_Write_ASCII(bakfile, 'mirrored=<yes/no>')
+        call TLab_Write_ASCII(bakfile, 'fixed_scale=<value>')
 
-        call SCANINIINT(bakfile, inifile, block, 'segments', '1', var%nseg)
+        call ScanFile_Int(bakfile, inifile, block, 'segments', '1', var%nseg)
 
         periodic = .false.
-        call SCANINICHAR(bakfile, inifile, block, 'periodic', 'no', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'periodic', 'no', sRes)
         if (TRIM(ADJUSTL(sRes)) == 'yes') periodic = .true.
 
         var%mirrored = .false.
-        call SCANINICHAR(bakfile, inifile, block, 'mirrored', 'no', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'mirrored', 'no', sRes)
         if (TRIM(ADJUSTL(sRes)) == 'yes') var%mirrored = .true.
 
-        call SCANINIREAL(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
+        call ScanFile_Real(bakfile, inifile, block, 'fixed_scale', '-1.0', var%fixed_scale)
 
         if (periodic .and. var%mirrored) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Periodicity with mirroring is not supported.')
-            call TLAB_STOP(DNS_ERROR_GRID_SCALE)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Periodicity with mirroring is not supported.')
+            call TLab_Stop(DNS_ERROR_GRID_SCALE)
         end if
 
 ! -------------------------------------------------------------------
@@ -205,17 +204,17 @@ contains
         do iseg = 1, var%nseg
             write (str, *) iseg
 
-            call TLAB_WRITE_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)))
-            call TLAB_WRITE_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
-            call TLAB_WRITE_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
-            call TLAB_WRITE_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
-            call TLAB_WRITE_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
+            call TLab_Write_ASCII(bakfile, 'Segment number '//TRIM(ADJUSTL(str)))
+            call TLab_Write_ASCII(bakfile, 'scales_'//TRIM(ADJUSTL(str))//'=<physical end of the segment>')
+            call TLab_Write_ASCII(bakfile, 'points_'//TRIM(ADJUSTL(str))//'=<points in the segment>')
+            call TLab_Write_ASCII(bakfile, 'opts_'//TRIM(ADJUSTL(str))//'=<option>')
+            call TLab_Write_ASCII(bakfile, 'vals_'//TRIM(ADJUSTL(str))//'=<values>')
 
-            call SCANINIINT(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
-            call SCANINIREAL(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))
+            call ScanFile_Int(bakfile, inifile, block, 'points_'//TRIM(ADJUSTL(str)), '1', var%size(iseg))
+            call ScanFile_Real(bakfile, inifile, block, 'scales_'//TRIM(ADJUSTL(str)), '-1.0', var%end(iseg))
 
             var%opts(:, iseg) = 0
-            call SCANINICHAR(bakfile, inifile, block, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'opts_'//TRIM(ADJUSTL(str)), '1', sRes)
             if (TRIM(ADJUSTL(sRes)) == 'uniform') then; var%opts(1, iseg) = GTYPE_UNIFORM
             else if (TRIM(ADJUSTL(sRes)) == 'tanh') then; var%opts(1, iseg) = GTYPE_TANH
             else if (TRIM(ADJUSTL(sRes)) == 'exp') then; var%opts(1, iseg) = GTYPE_EXP
@@ -225,7 +224,7 @@ contains
             end if
 
             var%vals(:, iseg) = 0
-            call SCANINICHAR(bakfile, inifile, block, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'vals_'//TRIM(ADJUSTL(str)), '1.0', sRes)
             idummy = MAX_PARAMES
             call LIST_REAL(sRes, idummy, var%vals(1, iseg))
 

@@ -1,12 +1,13 @@
 #include "dns_const.h"
 
 program VINTEGRAL
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants
+    use TLab_Types, only: grid_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk2d!, wrk3d
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
+    use TLab_Arrays, only: wrk1d, txc, x!, wrk2d!, wrk3d
     use FDM_ComX_Direct
     use FDM_Integrate
     use FDM_PROCS
@@ -55,7 +56,7 @@ program VINTEGRAL
     inb_wrk2d = 2
     inb_txc = 9
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     u(1:len, 1:imax) => txc(1:imax*jmax*kmax, 1)
     w_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 2)
@@ -65,7 +66,7 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
+    call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
 
     g%periodic = .false.
 

@@ -16,7 +16,7 @@ else
    echo "No log file to be used as reference for the timestamp; using default $LOGS_FILE."
 fi
 
-LIST=`ls dns.nqs.sh-[0-9]* dns.ini-[0-9]* dns.log-[0-9]* dns.out-[0-9]* mapping.txt-[0-9]* partinfos.txt-[0-9]* 2> /dev/null`
+LIST=`ls dns.nqs.sh-[0-9]* tlab.ini-[0-9]* tlab.log-[0-9]* dns.out-[0-9]* mapping.txt-[0-9]* partinfos.txt-[0-9]* 2> /dev/null`
 
 if [ -f $LOGS_FILE ]; then
    echo "File $LOGS_FILE exists. Aborting."
@@ -30,7 +30,7 @@ else
    echo "No log files to be archived."
 fi
 
-LIST=`ls dns.x.std* ll_* slurm_* dns.ini.bak* 2> /dev/null`
+LIST=`ls dns.x.std* ll_* slurm_* tlab.ini.bak* 2> /dev/null`
 
 if [ -n "$LIST" ]; then
    mv -f $LIST $TRASH_DIR

@@ -2,15 +2,16 @@
 
 program VBURGERS
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_PROCS
-    use TLAB_ARRAYS
-    use TLAB_POINTERS_3D, only: tmp1
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
+    use TLab_Arrays
+    use TLab_Pointers_3D, only: tmp1
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
-    use TLAB_MPI_VARS
+    use TLabMPI_PROCS
+    use TLabMPI_VARS
 #endif
     use IO_FIELDS
     use OPR_PARTIAL
@@ -30,17 +31,17 @@ program VBURGERS
     real(wp) dummy, error
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 4
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     a(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 2)
     b(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 3)
@@ -48,12 +49,12 @@ program VBURGERS
 
     visc = 1.0_wp/big_wp    ! inviscid
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
 
     bcs = 0
 
@@ -150,5 +151,5 @@ program VBURGERS
 
     end if
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VBURGERS

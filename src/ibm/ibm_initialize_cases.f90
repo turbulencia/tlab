@@ -23,9 +23,9 @@
 subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, ibm_case)
   
   use IBM_VARS,       only : nflu
-  use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_TYPES,     only : grid_dt
-  use TLAB_PROCS
+  use TLab_Constants, only : efile, wp, wi
+  use TLab_Types,     only : grid_dt
+  use TLab_WorkFlow
 
   implicit none
   
@@ -86,8 +86,8 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, i
             ! .............................................................. !
 
           else
-            call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Not enough fluid points right of the right interface.')
-            call TLAB_STOP(DNS_ERROR_IBM_SPLINE)
+            call TLab_Write_ASCII(efile, 'IBM_INITIALIZE. Not enough fluid points right of the right interface.')
+            call TLab_Stop(DNS_ERROR_IBM_SPLINE)
           end if
         ! ================================================================== !
         else if ( nob_b(ip+ii) >= (nflu+1) )  then
@@ -118,22 +118,22 @@ subroutine IBM_INITIALIZE_CASES(g, isize_nob, isize_nob_be, nob, nob_b, nob_e, i
             ! .............................................................. !
 
           else
-            call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Case not implemented.')
-            call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+            call TLab_Write_ASCII(efile, 'IBM_INITIALIZE. Case not implemented.')
+            call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
           end if
             ! .............................................................. !
 
         else
-          call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Invalid case number check ibm_case.')
-          call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+          call TLab_Write_ASCII(efile, 'IBM_INITIALIZE. Invalid case number check ibm_case.')
+          call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
         end if
         if ((ibm_case((iob-1)*nlines + ii) < 1) .or. (ibm_case((iob-1)*nlines + ii) > 9)) then
-          call TLAB_WRITE_ASCII(efile, 'IBM_INITIALIZE. Case number not between 2 to 8. Array overwritten')
-          call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+          call TLab_Write_ASCII(efile, 'IBM_INITIALIZE. Case number not between 2 to 8. Array overwritten')
+          call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
         end if
         if (ibm_case((iob-1)*nlines + ii) == 0) then
-          call TLAB_WRITE_ASCII(efile, 'The object should not exist. Incorrect assignment of IBM_Cases')
-          call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+          call TLab_Write_ASCII(efile, 'The object should not exist. Incorrect assignment of IBM_Cases')
+          call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
         end if
         ip = ip + nlines
       end do
@@ -147,9 +147,9 @@ end subroutine IBM_INITIALIZE_CASES
 
 subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, ibm_case, ii, ip)
 
-  use TLAB_TYPES,     only : grid_dt
-  use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_PROCS
+  use TLab_Types,     only : grid_dt
+  use TLab_Constants, only : efile, wp, wi
+  use TLab_WorkFlow
 
   implicit none
 
@@ -166,21 +166,21 @@ subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, ibm_cas
     if (abs(nob_e(ip+ii) - nob_b(ip+ii)+1) < 3) then
       write(line,*) ibm_case 
       line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. Less than 3 solid points. Check geometry.'
-      call TLAB_WRITE_ASCII(efile, line)
-      call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+      call TLab_Write_ASCII(efile, line)
+      call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
     end if
     if (abs(nob_e(ip+ii) - nob_b(ip+ii)) > (g%size-3)) then
       write(line,*) ibm_case 
       line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. There must be at least 3 fluid points. Check geometry.'
-      call TLAB_WRITE_ASCII(efile, line)
-      call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+      call TLab_Write_ASCII(efile, line)
+      call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
     end if
     if ((iob + 1) <= nob) then
       if (nob_b(ip + nlines + ii) - (nob_e(ip + ii)) < 3) then
         write(line,*) ibm_case 
         line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. Insufficient gap between 2 solid objects. Check geometry.'
-        call TLAB_WRITE_ASCII(efile, line)
-        call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+        call TLab_Write_ASCII(efile, line)
+        call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
       end if
     end if
   else if (ibm_case == 8) then
@@ -188,8 +188,8 @@ subroutine GEOMETRY_CHK(g, nob_e, nob_b, isize_nob_be, nlines, iob, nob, ibm_cas
       if ((nob_e(ip + ii) - nob_b(ip + nlines + ii)) < 3) then
         write(line,*) ibm_case 
         line = 'IBM_INITIALIZE_CASES: case = '//trim(adjustl(line))//'. Insufficient gap bewtween 2 solid objects. Check geometry.'
-        call TLAB_WRITE_ASCII(efile, line)
-        call TLAB_STOP(DNS_ERROR_IBM_INITIALIZE)
+        call TLab_Write_ASCII(efile, line)
+        call TLab_Stop(DNS_ERROR_IBM_INITIALIZE)
       end if
     end if
   end if

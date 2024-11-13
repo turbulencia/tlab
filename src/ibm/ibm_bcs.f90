@@ -23,7 +23,7 @@ subroutine IBM_INITIALIZE_SCAL(isbcs, s)
   
   use IBM_VARS,       only : eps, ibmscaljmin, ibmscaljmax, scal_bcs
   use TLAB_VARS,      only : imax, jmax, isize_field, inb_scal
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
 
@@ -64,7 +64,7 @@ subroutine IBM_BCS_SCAL(is,s,eps)
   
   use IBM_VARS,       only : ibmscaljmin, ibmscaljmax, ibm_objup, max_height_objup
   use TLAB_VARS,      only : imax, jmax, kmax
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
 
@@ -95,7 +95,7 @@ end subroutine IBM_BCS_SCAL
 subroutine IBM_BCS_FIELD_COMBINED(is,fld)
   
   use TLAB_VARS,      only : isize_field, inb_flow, inb_scal
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
   
@@ -125,7 +125,7 @@ subroutine IBM_BCS_FIELD(fld)
   
   use IBM_VARS,       only : eps
   use TLAB_VARS,      only : isize_field
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
   
@@ -148,7 +148,7 @@ subroutine IBM_BCS_FIELD_STAGGER(fld)
   
   use IBM_VARS,       only : epsp
   use TLAB_VARS,      only : isize_field
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
   
@@ -171,7 +171,7 @@ subroutine IBM_BCS_FIELD_INV(fld,tmp) ! not used so far
   
   use IBM_VARS,       only : eps
   use TLAB_VARS,      only : isize_field
-  use TLAB_CONSTANTS, only : wi, wp
+  use TLab_Constants, only : wi, wp
 
   implicit none
   

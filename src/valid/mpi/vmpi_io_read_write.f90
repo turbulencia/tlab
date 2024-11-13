@@ -29,7 +29,7 @@ END MODULE DNS_GLOBAL
 !########################################################################
 PROGRAM VMPI_IO
 
-  USE TLAB_MPI_VARS
+  USE TLabMPI_VARS
   USE TLAB_VARS
 
   IMPLICIT NONE
@@ -79,7 +79,7 @@ PROGRAM VMPI_IO
   call MPI_COMM_RANK(MPI_COMM_WORLD,ims_pro, ims_err)
 
 ! ###################################################################
-! from TLAB_MPI_INITIALIZE
+! from TLabMPI_Initialize()
   ims_pro_i = MOD(ims_pro,ims_npro_i) ! Starting at 0
   ims_pro_k =     ims_pro/ims_npro_i  ! Starting at 0
 
@@ -156,7 +156,7 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
 
   USE TLAB_VARS,ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS
+  USE TLabMPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -227,8 +227,8 @@ SUBROUTINE IO_READ_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wrk
   CALL MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
 
 !  IF ( ims_npro_i .GT. 1 ) THEN
-!     id  = TLAB_MPI_I_PARTIAL
-!     CALL TLAB_MPI_TRPB_I(p_read, a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!     id  = TLabMPI_I_PARTIAL
+!     CALL TLabMPI_TRPB_I(p_read, a, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
 !  ENDIF
 
   CALL MPI_FILE_CLOSE(mpio_fh, ims_err)
@@ -290,7 +290,7 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 
   USE TLAB_VARS, ONLY : imax_total,jmax_total,kmax_total
 #ifdef USE_MPI
-  USE TLAB_MPI_VARS
+  USE TLabMPI_VARS
 #endif
 
   IMPLICIT NONE
@@ -348,8 +348,8 @@ SUBROUTINE IO_WRITE_FIELDS_SPLIT(name, iheader, nx,ny,nz,nt, isize,params, a, wr
 ! fields
 ! -------------------------------------------------------------------
   IF ( ims_npro_i .GT. 1 ) THEN
-!     id  = TLAB_MPI_I_PARTIAL
-!     CALL TLAB_MPI_TRPF_I(a, wrk, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
+!     id  = TLabMPI_I_PARTIAL
+!     CALL TLabMPI_TRPF_I(a, wrk, ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
      p_write => wrk
   ELSE
      p_write => a
@@ -428,20 +428,20 @@ SUBROUTINE IO_READ_HEADER(unit, offset, nx,ny,nz,nt, params)
      READ(unit) params(1:isize)
 
 !  ELSE
-!     CALL TLAB_WRITE_ASCII(efile,'IO_READ_HEADER. Header format incorrect.')
-!     CALL TLAB_STOP(DNS_ERROR_RECLEN)
+!     CALL TLab_Write_ASCII(efile,'IO_READ_HEADER. Header format incorrect.')
+!     CALL TLab_Stop(DNS_ERROR_RECLEN)
 
 !  ENDIF
 
 ! Check
 !  IF ( nx .NE. nx_loc .OR. ny .NE. ny_loc .OR. nz .NE. nz_loc ) THEN
 !     CLOSE(unit)
-!     CALL TLAB_WRITE_ASCII(efile, 'IO_READ_HEADER: Grid size mismatch')
-!     CALL TLAB_STOP(DNS_ERROR_DIMGRID)
+!     CALL TLab_Write_ASCII(efile, 'IO_READ_HEADER: Grid size mismatch')
+!     CALL TLab_Stop(DNS_ERROR_DIMGRID)
 !  ENDIF
 
 !  IF ( nt .NE. nt_loc ) THEN
-!     CALL TLAB_WRITE_ASCII(wfile, 'IO_READ_HEADER: ItNumber size mismatch')
+!     CALL TLab_Write_ASCII(wfile, 'IO_READ_HEADER: ItNumber size mismatch')
 !     nt = nt_loc
 !  ENDIF
 

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -11,14 +10,15 @@
 !########################################################################
 program PARTICLE_BUILD_PDF
 
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow
     use IO_FIELDS
 #ifdef USE_MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
+    use Thermodynamics
     use THERMO_AIRWATER
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
@@ -28,44 +28,31 @@ program PARTICLE_BUILD_PDF
 
 ! -------------------------------------------------------------------
 
-    TINTEGER nitera_first, nitera_last, nitera_save
-    TINTEGER i
+    integer(wi) nitera_first, nitera_last, nitera_save
+    integer(wi) i
 
     character*64 fname
     character*32 bakfile
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START
+    call TLab_Start
 
-    call IO_READ_GLOBAL(ifile)
-    call THERMO_INITIALIZE()
-    call PARTICLE_READ_GLOBAL('dns.ini')
-
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
+    call Particle_Initialize_Parameters('tlab.ini')
+
 !  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 
-! Get the local information from the dns.ini
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
+! Get the local information from the tlab.ini
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Restart', '50', nitera_save)
 
-    inb_part_txc = 1
-
-    call PARTICLE_ALLOCATE(C_FILE_LOC)
-
-    isize_wrk3d = imax*jmax*kmax
-    isize_wrk3d = max(isize_wrk3d, (imax + 1)*jmax*(kmax + 1))
-    isize_wrk3d = max(isize_wrk3d, (jmax*(kmax + 1)*inb_part_interp*2))
-    isize_wrk3d = max(isize_wrk3d, (jmax*(imax + 1)*inb_part_interp*2))
-
-    isize_wrk2d = max(isize_wrk2d, jmax*inb_part_interp)
-
-    ! IF (jmax_part .EQ. 1) THEN
-    !    jmax_part   = jmax ! 1 by default
-    ! ENDIF
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
@@ -79,10 +66,20 @@ program PARTICLE_BUILD_PDF
         allocate (txc(isize_field, 3))
     end if
 
+    inb_part_txc = 1
+
+    call Particle_Initialize_Memory(C_FILE_LOC)
+
+    isize_wrk2d = max(isize_wrk2d, jmax*inb_part_interp)
+
+    ! IF (jmax_part .EQ. 1) THEN
+    !    jmax_part   = jmax ! 1 by default
+    ! ENDIF
+
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
@@ -110,5 +107,5 @@ program PARTICLE_BUILD_PDF
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

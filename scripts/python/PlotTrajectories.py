@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import rc
 
-np = 0   # total number of particles in the files; if 0, then search dns.ini
+np = 0   # total number of particles in the files; if 0, then search tlab.ini
 varnames=['x-coordinate','y-coordinate','z-coordinate']
 #          'x-velocity','y-velocity','z-velocity','scalar']
 #          'x-vorticity','y-vorticity','z-vorticity']
@@ -31,7 +31,7 @@ if ( len(sys.argv) == 1 ):
     quit()
 
 if ( np == 0 ):
-    for line in open('dns.ini'):
+    for line in open('tlab.ini'):
         if "trajnumber" in line.lower():
             np = int(line.split("=",1)[1])
 

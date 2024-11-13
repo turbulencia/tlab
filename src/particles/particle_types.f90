@@ -1,5 +1,5 @@
 module PARTICLE_TYPES
-    use TLAB_CONSTANTS, only: wp, wi, longi
+    use TLab_Constants, only: wp, wi, longi
     implicit none
     save
 

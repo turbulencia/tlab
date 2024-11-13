@@ -1,10 +1,9 @@
 #include "dns_const.h"
 
 module FI_VECTORCALCULUS
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: imode_ibm, imode_elliptic
-    use IBM_VARS, only: ibm_partial
+    use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL
     implicit none
     private
@@ -71,7 +70,7 @@ contains
 !#
 !########################################################################
     subroutine FI_SOLENOIDAL(nx, ny, nz, u, v, w, tmp1, tmp2, tmp3)
-        use TLAB_POINTERS_3D, only: p_wrk2d
+        use TLab_Pointers_3D, only: p_wrk2d
         use OPR_ELLIPTIC
 
         integer(wi), intent(IN) :: nx, ny, nz
@@ -79,31 +78,26 @@ contains
         real(wp), intent(INOUT) :: tmp1(nx, ny, nz), tmp2(nx, ny, nz), tmp3(nx, ny, nz)
 
 ! -------------------------------------------------------------------
-        integer(wi) ibc, bcs(2, 2)
+        integer(wi) bcs(2, 2)
 
 ! ###################################################################
         bcs = 0
-
-!  IF ( iwall .EQ. 1) THEN; ibc = 4
-!  ELSE;                    ibc = 3; ENDIF
-        ibc = 3
 
 ! -------------------------------------------------------------------
 ! Solve lap(phi) = - div(u)
 ! -------------------------------------------------------------------
         call FI_INVARIANT_P(nx, ny, nz, u, v, w, tmp1, tmp2)
 
-        if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
-            p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
-            call OPR_POISSON_FXZ(nx, ny, nz, g, ibc, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
+        ! select case (imode_elliptic)
+        ! case (FDM_COM6_JACOBIAN)
+        !     call OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
-        else                                          ! General treatment
-#ifdef USE_CGLOC
-! Need to define global variable with ipos,jpos,kpos,ci,cj,ck,
-            tmp2 = -tmp1            ! change of forcing term sign
-            call CGPOISSON(i1, nx, ny, nz, g(3)%size, tmp1, tmp2, tmp3, tmp4, ipos, jpos, kpos, ci, cj, ck, wrk2d)
-#endif
-        end if
+        ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        !     call OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        
+        ! end select
+        call OPR_Poisson(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
 
 ! -------------------------------------------------------------------
 ! Eliminate solenoidal part of u by adding grad(phi)

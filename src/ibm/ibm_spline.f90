@@ -31,10 +31,10 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
 
   use IBM_VARS,       only : xa, xb, ya, yb, ibmscaljmin
   use TLAB_VARS,      only : isize_field
-  use TLAB_CONSTANTS, only : efile, wp, wi
-  use TLAB_ARRAYS,    only : wrk1d
-  use TLAB_TYPES,     only : grid_dt
-  use TLAB_PROCS
+  use TLab_Constants, only : efile, wp, wi
+  use TLab_Arrays,    only : wrk1d
+  use TLab_Types,     only : grid_dt
+  use TLab_WorkFlow
 
   implicit none
   
@@ -98,8 +98,8 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
               else if ((iu_il + (l - 1) * nlines) >= (g%size * nlines)) then
                 fld_mod(ii + (l - n - 1) * nlines) = yb(l)
               else
-                call TLAB_WRITE_ASCII(efile, 'IBM SPLINE. Error in replacing spline in the solid.')
-                call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE)
+                call TLab_Write_ASCII(efile, 'IBM SPLINE. Error in replacing spline in the solid.')
+                call TLab_Stop(DNS_ERROR_CUBIC_SPLINE)
               end if
             end do
           else if (((nob_e(ip+ii)) == 1 + (nob_b(ip+ii )) ) .and. (g%periodic .eqv. .false.)) then ! condition for case 8 
@@ -130,9 +130,9 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
 
   use IBM_VARS,       only : nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
   use TLAB_VARS,      only : isize_field
-  use TLAB_TYPES,     only : grid_dt
-  use TLAB_CONSTANTS, only : wp, wi, efile
-  use TLAB_PROCS
+  use TLab_Types,     only : grid_dt
+  use TLab_Constants, only : wp, wi, efile
+  use TLab_WorkFlow
    
   implicit none
   
@@ -288,8 +288,8 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
       else if ((ip_il + gap) >= g%size) then
         xb(ib)  = g%nodes(gap - ip_ir) + g%scale + (g%scale-g%nodes(g%size)) ! g%scale Warning!!
       else
-        call TLAB_WRITE_ASCII(efile, 'IBM SPLINE_VECTOR. Check gap vector.')
-        call TLAB_STOP(DNS_ERROR_CUBIC_SPLINE) 
+        call TLab_Write_ASCII(efile, 'IBM SPLINE_VECTOR. Check gap vector.')
+        call TLab_Stop(DNS_ERROR_CUBIC_SPLINE) 
       end if
     end do
   case(8)

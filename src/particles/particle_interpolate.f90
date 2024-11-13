@@ -1,18 +1,17 @@
 #include "dns_error.h"
 
 module PARTICLE_INTERPOLATE
-    use TLAB_CONSTANTS, only: wp, wi, efile
-    use TLAB_VARS, only: lfile
-    use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+    use TLab_Constants, only: wp, wi, efile, lfile
+    use TLab_Types, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
-    use TLAB_PROCS
+    use TLab_WorkFlow
     use PARTICLE_VARS
     use PARTICLE_ARRAYS, only: halo_i, halo_k, halo_ik
     use PARTICLE_ARRAYS, only: p_halo_i, p_halo_k, p_halo_ik
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
     use PARTICLE_ARRAYS, only: halo_mpi_recv_i, halo_mpi_recv_k, halo_mpi_send_i, halo_mpi_send_k
 #endif
     implicit none
@@ -40,8 +39,8 @@ contains
 
 !#######################################################################
         if (size(data_in) > inb_part_interp) then
-            call TLAB_WRITE_ASCII(efile, 'FIELD_TO_PARTICLE. Not enough memory.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'FIELD_TO_PARTICLE. Not enough memory.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
 ! -------------------------------------------------------------------

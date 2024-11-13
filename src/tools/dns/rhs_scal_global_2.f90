@@ -12,18 +12,18 @@
 !########################################################################
 subroutine RHS_SCAL_GLOBAL_2(is)
 
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
-    use TLAB_ARRAYS, only: s
-    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, T, rho
+    use TLab_Arrays, only: s
+    use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, T, rho
     use DNS_ARRAYS, only: hs, hq
-    use THERMO_VARS, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
+    use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use BOUNDARY_BCS
     use OPR_PARTIAL
 
@@ -41,7 +41,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_SCAL_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_SCAL_GLOBAL_2')
 #endif
 
     if (idiffusion == EQNS_NONE) then; diff = 0.0_wp; cond = 0.0_wp
@@ -129,7 +129,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     end if
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_SCAL_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_SCAL_GLOBAL_2')
 #endif
 
     return

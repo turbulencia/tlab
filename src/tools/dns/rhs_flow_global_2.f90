@@ -11,17 +11,17 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_2()
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: g, buoyancy
     use TLAB_VARS, only: idiffusion, visc, prandtl
-    use TLAB_ARRAYS, only: s
-    use TLAB_POINTERS
-    use THERMO_VARS, only: CRATIO_INV
+    use TLab_Arrays, only: s
+    use TLab_Pointers
+    use Thermodynamics, only: CRATIO_INV
     use THERMO_CALORIC
     use DNS_ARRAYS
     use BOUNDARY_BCS
@@ -39,7 +39,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_GLOBAL_2')
 #endif
 
     bcs = 0
@@ -353,7 +353,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 !$omp end parallel
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_GLOBAL_2')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_GLOBAL_2')
 #endif
 
     return

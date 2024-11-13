@@ -28,9 +28,12 @@ PRJS=\
      Case26 \
      Case27 \
      Case28 \
+     Case29 \
+     Case30 \
      Case31 \
      Case32 \
      Case33 \
+     Case37 \
      Case41 \
      Case42 \
      Case44 \
@@ -46,7 +49,7 @@ PRJS=\
      # Case33 \
      # Case34 \
 
-FILES=avg* grid* flow* scal* dns.out dns.log dns.obs dns.err dns.war dns.def dns.ini.bak tower* part* traj* residence* eps*
+FILES=avg* grid* flow* scal* dns.out tlab.log dns.obs tlab.err tlab.war tlab.ini.bak tower* part* traj* residence* eps*
 
 ##########################################################################
 #   Directives

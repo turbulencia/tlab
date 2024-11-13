@@ -37,9 +37,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
   use TLAB_VARS,      only : isize_field, inb_txc
   use TLAB_VARS,      only : stagger_on
   use TLAB_VARS,      only : g
-  use TLAB_CONSTANTS, only : efile, wp
-  use IO_FIELDS
-  use TLAB_PROCS
+  use TLab_Constants, only : efile, wp
+  use TLab_WorkFlow
 
   implicit none
 
@@ -74,8 +73,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     else if (ibm_geo%name == 'box') then
       call IBM_GENERATE_GEOMETRY_BOX(wrk3d)
     else 
-      call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
-      call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+      call TLab_Write_ASCII(efile, 'IBM_GEOMETRY no objects in flow.')
+      call TLab_Stop(DNS_ERROR_IBM_MISS_GEO)
     end if 
   end if
 
@@ -99,8 +98,8 @@ subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
       else if (ibm_geo%name == 'valley') then; continue
       else if (ibm_geo%name == 'box')    then; continue
       else
-        call TLAB_WRITE_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
-        call TLAB_STOP(DNS_ERROR_IBM_MISS_GEO)
+        call TLab_Write_ASCII(efile, 'IBM_GEOMETRY epsp field is missing.')
+        call TLab_Stop(DNS_ERROR_IBM_MISS_GEO)
       end if
     end if
   end if
@@ -145,7 +144,7 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
   use IBM_VARS
   use TLAB_VARS,      only : imax,jmax,kmax, isize_field, imode_files
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLab_Constants, only : wp, wi
   use IO_FIELDS
   
   implicit none
@@ -191,7 +190,7 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
   use IBM_VARS
   use TLAB_VARS,      only : imax,jmax,kmax, isize_field, imode_files
-  use TLAB_CONSTANTS, only : wp, wi
+  use TLab_Constants, only : wp, wi
   use IO_FIELDS
   
   implicit none

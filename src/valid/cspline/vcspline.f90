@@ -22,7 +22,7 @@
 
 program CSPLINE
 
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Types, only: grid_dt
 
     implicit none
 

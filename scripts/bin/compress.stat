@@ -23,7 +23,7 @@ if [[ -d $DIR && ! -f $FILE ]]; then
        gzip $LIST 
     fi
 
-    LIST=`ls | egrep '\.gz|dns.def|dns.ini'`
+    LIST=`ls | egrep '\.gz|tlab.ini'`
     echo "Archiving statistic files into $FILE..."
     tar cvf ../$FILE $LIST
 

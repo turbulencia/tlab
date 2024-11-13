@@ -26,17 +26,17 @@
 
 module AVG_SCAL_ZT
 
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d, imode_eqns
     use TLAB_VARS, only: g
-    use TLAB_VARS, only: nstatavg, statavg
+    use TLab_Spatial
     use TLAB_VARS, only: itransport, visc
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
-    use AVGS, only: SUM1V1D_V
+    use TLab_Arrays, only: wrk2d, wrk3d
+    use Averages, only: SUM1V1D_V
     use OPR_PARTIAL
 
     implicit none
@@ -66,7 +66,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_SCAL_ZT_REDUCE')
+        call TLab_Write_ASCII(tfile, 'ENTERING AVG_SCAL_ZT_REDUCE')
 #endif
 
         bcs = 0
@@ -254,7 +254,7 @@ contains
 #undef m_p_z
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING AVG_SCAL_ZT_REDUCE')
+        call TLab_Write_ASCII(tfile, 'LEAVING AVG_SCAL_ZT_REDUCE')
 #endif
 
         return

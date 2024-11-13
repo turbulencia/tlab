@@ -2,21 +2,20 @@
 #include "dns_error.h"
 
 module FLOW_LOCAL
-    use TLAB_CONSTANTS, only: efile, wp, wi, pi_wp
-    use TLAB_TYPES, only: profiles_dt, discrete_dt
-    USE TLAB_VARS, only: lfile
+    use TLab_Constants, only: efile, lfile, wp, wi, pi_wp
+    use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: g, qbg, tbg, hbg
-    use TLAB_POINTERS_3D, only: p_wrk1d, p_wrk2d
-    use TLAB_PROCS
+    use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
+    use TLab_WorkFlow
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
     use IO_FIELDS
-    use AVGS, only: AVG1V2D
-    use PROFILES
+    use Averages, only: AVG1V2D
+    use Profiles
 #ifdef USE_MPI
-    use TLAB_MPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     use FI_VECTORCALCULUS
     use OPR_PARTIAL
@@ -72,77 +71,77 @@ contains
         ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
+        call TLab_Write_ASCII(lfile, 'Reading local input data')
 
         ! ###################################################################
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[IniFields]')
-        call TLAB_WRITE_ASCII(bakfile, '#Velocity=<VelocityDiscrete/VelocityBroadband/PotentialBroadband/VorticityBroadband>')
-        call TLAB_WRITE_ASCII(bakfile, '#Temperature=<option>')
-        call TLAB_WRITE_ASCII(bakfile, '#ForceDilatation=<yes/no>')
-        call TLAB_WRITE_ASCII(bakfile, '#NormalizeK=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#NormalizeP=<value>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[IniFields]')
+        call TLab_Write_ASCII(bakfile, '#Velocity=<VelocityDiscrete/VelocityBroadband/PotentialBroadband/VorticityBroadband>')
+        call TLab_Write_ASCII(bakfile, '#Temperature=<option>')
+        call TLab_Write_ASCII(bakfile, '#ForceDilatation=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#NormalizeK=<value>')
+        call TLab_Write_ASCII(bakfile, '#NormalizeP=<value>')
 
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Velocity', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'Velocity', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_u = PERT_NONE
         else if (trim(adjustl(sRes)) == 'velocitydiscrete') then; flag_u = PERT_DISCRETE
         else if (trim(adjustl(sRes)) == 'velocitybroadband') then; flag_u = PERT_BROADBAND
         else if (trim(adjustl(sRes)) == 'vorticitybroadband') then; flag_u = PERT_BROADBAND_VORTICITY
         else if (trim(adjustl(sRes)) == 'potentialbroadband') then; flag_u = PERT_BROADBAND_POTENTIAL
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. Velocity forcing type unknown')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         RemoveDilatation = .true.
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'ForceDilatation', 'yes', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'ForceDilatation', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'no') RemoveDilatation = .false.
 
-        call PROFILES_READBLOCK(bakfile, inifile, 'IniFields', 'IniK', IniK)
+        call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniK', IniK)
         if (.not. any(IniKvalid == IniK%type)) then
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Undeveloped IniK type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. Undeveloped IniK type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
         IniK%delta = 1.0_wp
         IniK%mean = 0.0_wp
 
-        call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)
-        call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeP', '-1.0', norm_ini_p)
+        call ScanFile_Real(bakfile, inifile, 'IniFields', 'NormalizeK', '-1.0', norm_ini_u)
+        call ScanFile_Real(bakfile, inifile, 'IniFields', 'NormalizeP', '-1.0', norm_ini_p)
 
         ! Boundary conditions
         flag_wall = 0
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
         if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmin = DNS_BCS_NONE
         else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmin = DNS_BCS_DIRICHLET; flag_wall = flag_wall + 1
         else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmin = DNS_BCS_NEUMANN
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
-            call TLAB_STOP(DNS_ERROR_IBC)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmin.')
+            call TLab_Stop(DNS_ERROR_IBC)
         end if
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
         if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmax = DNS_BCS_NONE
         else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmax = DNS_BCS_DIRICHLET; flag_wall = flag_wall + 2
         else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmax = DNS_BCS_NEUMANN
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
-            call TLAB_STOP(DNS_ERROR_IBC)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. BoundaryConditions.VelocityJmax.')
+            call TLab_Stop(DNS_ERROR_IBC)
         end if
 
         ! In compressible formulation
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Temperature', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'Temperature', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_t = 0
         else if (trim(adjustl(sRes)) == 'planediscrete') then; flag_t = PERT_DISCRETE
         else if (trim(adjustl(sRes)) == 'planebroadband') then; flag_t = PERT_BROADBAND
         else
-            call TLAB_WRITE_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, 'FLOW_READ_LOCAL. Temperature forcing type unknown')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         ! Discrete Forcing
         call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
         ! specific for this tool
-        call SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
-        call SCANINIREAL(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
+        call ScanFile_Real(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
+        call ScanFile_Real(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
 
         return
     end subroutine FLOW_READ_LOCAL
@@ -284,7 +283,8 @@ contains
             end if  ! NoSlip
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                call OPR_Poisson(imax, jmax, kmax, g, ibc, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
                 ! Undevelop
             end if
@@ -293,7 +293,8 @@ contains
             ibc = 0                                       ! No penetration
             if (g(1)%periodic .and. g(3)%periodic) then
                 p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                call OPR_Poisson(imax, jmax, kmax, g, ibc, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
             else                                          ! General treatment
                 ! Undevelop
             end if
@@ -305,7 +306,8 @@ contains
                 end if  ! NoSlip
                 if (g(1)%periodic .and. g(3)%periodic) then
                     p_wrk2d(:, :, 1:2) = 0.0_wp                      ! bcs
-                    call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                    ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                    call OPR_Poisson(imax, jmax, kmax, g, ibc, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
                 else                                          ! General treatment
                 ! Undevelop
                 end if
@@ -340,7 +342,7 @@ contains
 
         yn => g(2)%nodes
         do j = 1, jmax                               ! Wall-normal velocity
-            profs(j, 1) = PROFILES_CALCULATE(IniK, yn(j))
+            profs(j, 1) = Profiles_Calculate(IniK, yn(j))
         end do
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), profs(1, 1), profs(1, 2))
         profs(:, 2) = -profs(:, 2)                     ! Negative of the derivative of f, wall-parallel velocity
@@ -408,7 +410,7 @@ contains
     !########################################################################
     subroutine DENSITY_FLUCTUATION(s, p, rho, T, h)
         use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
-        use THERMO_VARS, only: imixture
+        use Thermodynamics, only: imixture
 
         real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
         real(wp), dimension(imax, jmax, kmax, *) :: s
@@ -488,7 +490,7 @@ contains
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + 0.5_wp*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                        T(i, j, k) = Profiles_Calculate(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -509,7 +511,7 @@ contains
                     prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = hbg%mean + 0.5_wp*(hbg%uslope + hbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        h(i, j, k) = PROFILES_CALCULATE(prof_loc, y(j))
+                        h(i, j, k) = Profiles_Calculate(prof_loc, y(j))
                     end do
                 end do
             end do
@@ -530,8 +532,8 @@ contains
     !# assuming p/rho^\gamma0 constant(Homentropic conditions)
     ! ###################################################################
     subroutine PRESSURE_FLUCTUATION(u, v, w, rho, p, pprime, txc1, txc2, txc3, txc4)
-        use THERMO_VARS, only: gama0
-
+        use Thermodynamics, only: gama0
+        
         real(wp), dimension(imax, jmax, kmax), intent(in) :: u, v, w
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: rho, p, pprime
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: txc1, txc2, txc3, txc4
@@ -571,7 +573,8 @@ contains
         if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
             p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
             pprime = -txc4          ! change of forcing term sign
-            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+            call OPR_Poisson(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
         else                                      ! General treatment
             ! Undevelop
         end if

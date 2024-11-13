@@ -33,14 +33,14 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     jmax_loc = min(jmax, jmax - 2*ibuffer_npy + 1)
 
     if (nfield < L_NFIELDS_MAX) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Samples array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_PDF. Samples array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     else
         nfield = L_NFIELDS_MAX
     end if
     if (itxc_size < imax*jmax*kmax*6) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_PDF. Txc array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_PDF. Txc array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! Offset to be used in SL_BOUNDARY_SAMPLE
@@ -63,7 +63,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
     else if (ith == 2) then
         ij = jmax/2
-        vmean = AVG_IK(imax, jmax, kmax, ij, a, g(1)%jac, g(3)%jac, area)
+        vmean = AVG_IK(imax, jmax, kmax, ij, a)
         vmin = threshold*threshold*vmean
     end if
 ! upper/lower/both depending on flag isl
@@ -180,7 +180,7 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
 ! transpose data from sample into txc space to have nfield as last index
 ! ioffset is equal to the number of fields
     ikmax = imax*kmax
-    call DNS_TRANSPOSE(samples, ioffset, ikmax, ioffset, txc, ikmax)
+    call TLab_Transpose(samples, ioffset, ikmax, ioffset, txc, ikmax)
 
     if (isl == 1 .or. isl == 2) then
         isize = 1

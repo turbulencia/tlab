@@ -25,15 +25,15 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLAB_VARS, only: scal_on, imode_elliptic
+    use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
-    use TLAB_ARRAYS
-    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
+    use TLab_WorkFlow
+    use TLab_Arrays
+    use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
     use DNS_ARRAYS
     use TIME, only: dte
     use BOUNDARY_BUFFER
@@ -62,7 +62,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
             BcsScalJmax%SfcType(is) == DNS_SFC_STATIC) then
             continue
         else
-            call TLAB_WRITE_ASCII(efile, 'Only static surface implemented in implicit mode')
+            call TLab_Write_ASCII(efile, 'Only static surface implemented in implicit mode')
         end if
     end do
 
@@ -117,7 +117,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp3)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp1, tmp2) ! tmp1 used for BCs below
         hq(:, iq) = -u*hq(:, iq) - v*tmp2 - w*tmp3      ! hq(:,iq) contains explicit nonlinear tendency
-
 
         ! Diffusion part of the BCs for intermediate velocity
         p_bcs(1:imax, 1:jmax, 1:kmax) => tmp1(1:imax*jmax*kmax)
@@ -216,7 +215,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! Explicit Time Stepping for scalar #is
 ! #######################################################################
             tmp4 = s(:, is)*aug + dte*(hs(:, is) + kco*tmp7)
-            
+
 ! -----------------------------------------------------------------------
 ! Remaining part of the BCs for intermediate scalar
 ! -----------------------------------------------------------------------
@@ -238,8 +237,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! #######################################################################
             beta = -1.0_wp/(alpha/schmidt(is))
 
-            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
-                                     tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4))
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
+            !                          tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4))
+            call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp4, tmp6, tmp7, bcs_locb(1, 1, 4), bcs_loct(1, 1, 4))
 
             s(:, is) = beta*tmp4 - kef*s(:, is)
 
@@ -251,12 +251,15 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 ! ################################################################################
     beta = -1.0_wp/alpha
 
-    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
-                             tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1))
-    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
-                             tmp2, tmp5, tmp6, bcs_locb(1, 1, 2), bcs_loct(1, 1, 2))
-    call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, beta, &
-                             tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3))
+    ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
+    !                                     tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1))
+    ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
+    !                                     tmp2, tmp5, tmp6, bcs_locb(1, 1, 2), bcs_loct(1, 1, 2))
+    ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, beta, &
+    !                                     tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3))
+    call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp1, tmp5, tmp6, bcs_locb(1, 1, 1), bcs_loct(1, 1, 1))
+    call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp2, tmp5, tmp6, bcs_locb(1, 1, 2), bcs_loct(1, 1, 2))
+    call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp3, tmp5, tmp6, bcs_locb(1, 1, 3), bcs_loct(1, 1, 3))
 
     u = beta*tmp1 - kef*u
     v = beta*tmp2 - kef*v
@@ -280,12 +283,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     BcsFlowJmax%ref(:, :, iq) = p_bcs(:, jmax, :)
 
 ! pressure in tmp1, Oy derivative in tmp3
-    select case (imode_elliptic)
-    case (FDM_COM6_JACOBIAN)
-        call OPR_POISSON_FXZ(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
-    case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-        call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
-    end select
+    ! select case (imode_elliptic)
+    ! case (FDM_COM6_JACOBIAN)
+    !     call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+    !     call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    ! end select
+    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)

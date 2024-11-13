@@ -8,44 +8,45 @@
 !       lap a = f, given a (constructing first f and then solving)
 
 program VPOISSON
-    use TLAB_CONSTANTS
+    use TLab_Constants
     use TLAB_VARS
-    use TLAB_PROCS
-    use TLAB_ARRAYS
+    use TLab_WorkFlow
+    use TLab_Memory, only: TLab_Initialize_Memory
+    use TLab_Arrays
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_PROCS
+    use TLabMPI_PROCS
 #endif
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use AVGS
+    use Averages
 
     implicit none
 
     real(wp), dimension(:, :), allocatable :: bcs_hb, bcs_ht
     real(wp), dimension(:, :, :), pointer :: a, b, c, d, e, f
     real(wp) mean, lambda
-    ! real(wp) SIMPSON_NU, delta
+    ! real(wp) Int_Simpson, delta
 
     integer(wi) i, j, k, ig, bcs(2, 2)
     integer(wi) type_of_operator, type_of_problem
     integer ibc
 
 ! ###################################################################
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLAB_MPI_INITIALIZE
+    call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
-    isize_wrk3d = isize_txc_field
     inb_txc = 8
 
-    call TLAB_ALLOCATE(__FILE__)
+    call TLab_Initialize_Memory(__FILE__)
 
     allocate (bcs_ht(imax, kmax), bcs_hb(imax, kmax))
 
@@ -56,20 +57,20 @@ program VPOISSON
     e(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 7)
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
     call FDM_INITIALIZE(x, g(1), wrk1d)
     call FDM_INITIALIZE(y, g(2), wrk1d)
     call FDM_INITIALIZE(z, g(3), wrk1d)
 
-    call OPR_ELLIPTIC_INITIALIZE()
+    call OPR_Elliptic_Initialize(ifile)
 
 ! Staggering of the pressure grid not implemented here
     if (stagger_on) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
-        stagger_on = .false. ! turn staggering off for OPR_POISSON_FXZ(...)
+        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not implemented here.')
+        stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
     end if
     if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
-        call TLAB_WRITE_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
+        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
     end if
 
     bcs = 0
@@ -102,19 +103,21 @@ program VPOISSON
         a = f
         bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
         ! For Neumann conditions, we need to satisfy the compatibility constraint dpdy_top-dpdy_bottom=int f
-        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb, g(1)%jac, g(3)%jac, area)
-        ! call AVG_IK_V(imax, jmax, kmax, jmax, a, g(1)%jac, g(3)%jac, wrk1d(:, 1), wrk1d(:, 2), area)
-        ! delta = mean + SIMPSON_NU(jmax, wrk1d, g(2)%nodes)
-        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht, g(1)%jac, g(3)%jac, area)
+        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb)
+        ! call AVG_IK_V(imax, jmax, kmax, jmax, a, wrk1d(:, 1), wrk1d(:, 2))
+        ! delta = mean + Int_Simpson(wrk1d(1:jmax,1), g(2)%nodes(1:jmax))
+        ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht)
         ! bcs_ht = bcs_ht - mean + delta
 
         if (type_of_operator == 1) then
-            call OPR_POISSON_FXZ(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
 
         end if
 
@@ -150,15 +153,15 @@ program VPOISSON
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
         lambda = 1.0
         do j = 1, jmax
-            a(:,j,:) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+            a(:, j, :) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
             ! a(:,j,:) = exp(lambda*g(2)%nodes(j))
         end do
-        b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0 *a
-        c = (2.0_wp*pi_wp/g(2)%scale*lambda) *cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+        b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0*a
+        c = (2.0_wp*pi_wp/g(2)%scale*lambda)*cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
 
         ! -------------------------------------------------------------------
         ! DC level at lower boundary set to zero
-        mean = AVG_IK(imax, jmax, kmax, 1, a, g(1)%jac, g(3)%jac, area)
+        mean = AVG_IK(imax, jmax, kmax, 1, a)
         a = a - mean
 
         ! ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
@@ -192,13 +195,15 @@ program VPOISSON
         end select
 
         if (type_of_operator == 1) then
-            ! call OPR_POISSON_FXZ(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            ! call OPR_POISSON_FXZ_D_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_POISSON_FXZ_D(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            ! call OPR_HELMHOLTZ_FXZ(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_HELMHOLTZ_FXZ_D(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
 
         end if

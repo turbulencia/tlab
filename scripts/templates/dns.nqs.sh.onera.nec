@@ -62,11 +62,11 @@ simulation $TIMESTAMP
 date
 
 # Abort on severall errors
-if [ -r dns.error ]; then
+if [ -r tlab.error ]; then
     ABORT="yes"
 fi
 	
-if [ -r dns.error.0 ]; then
+if [ -r tlab.error.0 ]; then
     ABORT="yes"
 fi
 
@@ -96,13 +96,13 @@ dns.stats dns-stat-$DATE.tar
 	    . $LOCALDIR/dns.nqs.new-vars
 	fi
 
-	if [ -r $LOCALDIR/dns.ini ]; then
+	if [ -r $LOCALDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{ 
 				if ( $1 == "End" ) 
 				    {
 				    print $2 
 				    }
-			    }' $LOCALDIR/dns.ini` 
+			    }' $LOCALDIR/tlab.ini` 
 	else
 	    echo "Error getting max time"
 	    exit 1

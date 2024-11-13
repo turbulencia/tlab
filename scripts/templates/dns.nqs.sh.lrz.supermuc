@@ -56,21 +56,21 @@ case $RUNMODE in
 esac
 
 # Abort on several errors
-if [ -f dns.err ]; then
+if [ -f tlab.err ]; then
     ABORT="yes"
 fi
 
-if [ -f dns.err.0 ]; then
+if [ -f tlab.err.0 ]; then
     ABORT="yes"
 fi
 
 stat -t core* >/dev/null 2>&1 && ABORT="yes"
 
 #clean
-if [ -f dns.ini ]; then
-    cp dns.ini dns.ini-$TIMESTAMP
+if [ -f tlab.ini ]; then
+    cp tlab.ini tlab.ini-$TIMESTAMP
 fi
-LOGFILES="dns.ini.bak dns.log dns.out dns.les partinfos.txt mapping.txt"
+LOGFILES="tlab.ini.bak tlab.log dns.out dns.les partinfos.txt mapping.txt"
 for FILE in $LOGFILES; do
     if [ -f $FILE ]; then
         mv $FILE $FILE-$TIMESTAMP
@@ -82,12 +82,8 @@ STATSDIR=stats-$TIMESTAMP
 if [ ! -e $STATSDIR ]; then
     mkdir $STATSDIR
 
-    if [ -f dns.ini ]; then
-	cp dns.ini $STATSDIR
-    fi
-
-    if [ -f dns.def ]; then
-       mv dns.def $STATSDIR
+    if [ -f tlab.ini ]; then
+	cp tlab.ini $STATSDIR
     fi
 
     LIST=`ls | egrep 'avg[a-zA-Z]*[0-9]|[xzr](sp|cr)[0-9]|pdf[0-9]|int[0-9]|kin[0-9]'`
@@ -120,13 +116,13 @@ if [ $RUNMODE = "simulation" ];then
 	    . $LOCALDIR/dns.nqs.new-vars
 	fi
 
-	if [ -f $LOCALDIR/dns.ini ]; then
+	if [ -f $LOCALDIR/tlab.ini ]; then
 	    ITIME=`awk -F"=" '{
 				if ( $1 == "End" )
 				    {
 				    print $2
 				    }
-			    }' $LOCALDIR/dns.ini`
+			    }' $LOCALDIR/tlab.ini`
 	else
 	    echo "Error getting max time"
 	    exit 1

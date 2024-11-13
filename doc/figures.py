@@ -3,17 +3,7 @@ import scipy.linalg
 from scipy import special
 import matplotlib.pyplot as plt
 import fdm
-
-from matplotlib import rc
-rc('text',  usetex=True)
-rc('font',  family='serif', size=11)
-# rc('axes',  titlesize='medium')
-rc('legend',fontsize='small')
-rc('axes',  grid=True)
-rc('grid',  color='0.9')
-rc('lines', solid_capstyle='round')
-# rc('figure',     dpi=100)
-rc('savefig',    dpi=100)
+from template import *
 
 FiguresToPlot = []
 # FiguresToPlot +=['profiles']

@@ -9,7 +9,7 @@
 !########################################################################
 subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
 
-    use TLAB_TYPES, only: pointers_dt, pointers3d_dt
+    use TLab_Types, only: pointers_dt, pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
     use TLAB_VARS, only: g
     use PARTICLE_TYPES, only: particle_dt
@@ -18,7 +18,7 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
     use PARTICLE_INTERPOLATE
 #ifdef USE_MPI
     use MPI
-    use TLAB_MPI_VARS
+    use TLabMPI_VARS
 #endif
 
     implicit none
