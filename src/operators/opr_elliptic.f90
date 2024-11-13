@@ -2,19 +2,20 @@
 #include "dns_error.h"
 
 module OPR_ELLIPTIC
-    use TLab_Constants
-    use TLab_Types, only: grid_dt
+    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
+    use TLab_Constants, only: efile
+    use FDM, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
     use TLAB_VARS, only: stagger_on
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
     use FDM_Integrate
-    use FDM_PROCS
+    use FDM_MatMul
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -26,7 +27,7 @@ module OPR_ELLIPTIC
     interface
         subroutine OPR_Poisson_dt(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
             use TLab_Constants, only: wi, wp
-            use TLab_Types, only: grid_dt
+            use FDM, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -43,7 +44,7 @@ module OPR_ELLIPTIC
     interface
         subroutine OPR_Helmholtz_dt(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
             use TLab_Constants, only: wi, wp
-            use TLab_Types, only: grid_dt
+            use FDM, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
@@ -92,7 +93,7 @@ contains
 ! #######################################################################
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_Elliptic_Initialize(inifile)
-        use TLAB_VARS, only: g
+        use FDM, only: g
         use FDM_ComX_Direct
 
         character(len=*), intent(in) :: inifile
@@ -774,7 +775,7 @@ contains
 ! ! Same, but for n fields
 ! ! I THINK THIS VERSION FIXES A PREVIOUS BUG BUT NEEDS TO BE TESTED
 !     subroutine OPR_HELMHOLTZ_FXZ_D_N(nx, ny, nz, nfield, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
-!         use TLab_Types, only: pointers_dt
+!         use TLab_Pointers, only: pointers_dt
 
 !         integer(wi), intent(in) :: nx, ny, nz, nfield
 !         integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet

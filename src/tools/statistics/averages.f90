@@ -6,16 +6,18 @@
 
 program AVERAGES
 
-    use TLab_Types, only: pointers_dt
-    use TLab_Constants
+    use TLab_Pointers, only: pointers_dt
+    use TLab_Constants, only: wp, wi, small_wp, MAX_AVG_TEMPORAL
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use TLAB_VARS
     use TLab_Arrays
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
@@ -331,10 +333,10 @@ program AVERAGES
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call OPR_Elliptic_Initialize(ifile)
 

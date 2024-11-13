@@ -22,7 +22,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: PressureFilter, stagger_on
     use TLAB_VARS, only: itime
     use TLab_Arrays

@@ -38,9 +38,9 @@ contains
 !########################################################################
     subroutine OPR_Integral1(nlines, g, f, result, ibc)
         use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
-        use TLab_Types, only: grid_dt
+        use FDM, only: grid_dt
         use TLab_Arrays, only: wrk2d
-        use FDM_PROCS
+        use FDM_MatMul
         integer(wi), intent(in) :: nlines
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: f(nlines, g%size)

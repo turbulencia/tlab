@@ -8,7 +8,7 @@ module FI_SOURCES
     use TLab_Types, only: term_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use TLAB_VARS, only: imode_eqns
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLab_OpenMP
     use THERMO_ANELASTIC

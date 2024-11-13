@@ -9,7 +9,7 @@
 subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt
     use IBM_VARS, only: imode_ibm, imode_ibm_scal, ibm_partial
     use TLab_Arrays, only: s

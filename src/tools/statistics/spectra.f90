@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -33,11 +32,12 @@
 !########################################################################
 program SPECTRA
 
-    use TLab_Constants
-    use TLab_Types, only: pointers_dt
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use TLab_Pointers, only: pointers_dt
     use TLAB_VARS
     use TLab_Arrays
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
@@ -46,6 +46,7 @@ program SPECTRA
     use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use FI_SOURCES, only: FI_BUOYANCY
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
@@ -253,10 +254,10 @@ program SPECTRA
     end if
 
     if (opt_main >= 5) then ! 3D spectrum
-!     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
+!     kr_total =  INT(SQRT(real( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
         kr_total = min(kx_total, min(ky_total, kz_total))
     else
-!     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
+!     kr_total =  INT(SQRT(real( (kx_total-1)**2 + (kz_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
         kr_total = min(kx_total, kz_total)
     end if
 
@@ -376,10 +377,10 @@ program SPECTRA
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call OPR_Elliptic_Initialize(ifile)
 
@@ -400,7 +401,7 @@ program SPECTRA
     y_aux(:) = 0
     do j = 1, jmax
         is = (j - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) + y(j, 1)/M_REAL(opt_block)
+        y_aux(is) = y_aux(is) + y(j, 1)/real(opt_block, wp)
     end do
 
 ! -------------------------------------------------------------------
@@ -422,14 +423,14 @@ program SPECTRA
 ! -------------------------------------------------------------------
 ! Initialize
 ! -------------------------------------------------------------------
-    outx = C_0_R; outz = C_0_R; outr = C_0_R
-    if (opt_ffmt == 1) out2d = C_0_R
+    outx = 0.0_wp; outz = 0.0_wp; outr = 0.0_wp
+    if (opt_ffmt == 1) out2d = 0.0_wp
 
 ! Normalization
     if (opt_main >= 5) then ! 3D spectra
-        norm = C_1_R/M_REAL(g(1)%size*g(3)%size*g(2)%size)
+        norm = 1.0_wp/real(g(1)%size*g(3)%size*g(2)%size, wp)
     else
-        norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
+        norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
     end if
 
 ! Define tags
@@ -496,7 +497,7 @@ program SPECTRA
             ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4
             ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4
             ! IF ( scal_on ) THEN ! aux array for u_iu_i/2
-            !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
+            !    s(:,1) = 0.5_wp*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
             !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5
             !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5
             !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
@@ -550,10 +551,10 @@ program SPECTRA
                 if (buoyancy%type == EQNS_EXPLICIT) then
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
                 else
-                    wrk1d(1:jmax, 1) = C_0_R
+                    wrk1d(1:jmax, 1) = 0.0_wp
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
                 end if
-                dummy = C_1_R/froude
+                dummy = 1.0_wp/froude
                 s(:, inb_scal_array) = s(:, inb_scal_array)*dummy
             end if
         end if
@@ -590,8 +591,8 @@ program SPECTRA
 
 ! reset if needed
         if (opt_time == SPEC_SINGLE) then
-            outx = C_0_R; outz = C_0_R; outr = C_0_R
-            if (opt_ffmt == 1) out2d = C_0_R
+            outx = 0.0_wp; outz = 0.0_wp; outr = 0.0_wp
+            if (opt_ffmt == 1) out2d = 0.0_wp
         end if
 
 ! ###################################################################
@@ -605,7 +606,7 @@ program SPECTRA
             do iv = 1, nfield
                 iv1 = p_pairs(iv, 1); iv2 = p_pairs(iv, 2)
 
-                wrk1d(:, 1:3) = C_0_R ! variance to normalize and check Parseval's relation
+                wrk1d(:, 1:3) = 0.0_wp ! variance to normalize and check Parseval's relation
                 do j = 1, jmax
                     wrk1d(j, 1) = COV2V2D(imax, jmax, kmax, j, vars(iv1)%field, vars(iv2)%field)
                     wrk1d(j, 2) = COV2V2D(imax, jmax, kmax, j, vars(iv1)%field, vars(iv1)%field)
@@ -626,7 +627,7 @@ program SPECTRA
                     txc(:, 1) = txc(:, 1)*norm*norm
 
 ! Reduce 2D spectra into array wrk3d
-                    wrk3d = C_0_R
+                    wrk3d = 0.0_wp
                     call REDUCE_SPECTRUM(imax, jmax, kmax, opt_block, &
                                          txc(1, 1), wrk3d, txc(1, 3), wrk1d(1, 4))
 
@@ -638,7 +639,7 @@ program SPECTRA
                     txc(:, 2) = txc(:, 2)*norm*norm
 
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
-                    wrk3d = C_0_R
+                    wrk3d = 0.0_wp
                     call REDUCE_CORRELATION(imax, jmax, kmax, opt_block, kr_total, &
                                             txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
                 end if
@@ -656,7 +657,7 @@ program SPECTRA
             end do
 
             if (flag_mode == 2 .and. icalc_radial == 1) then  ! Calculate sampling size for radial correlation
-                samplesize = C_0_R
+                samplesize = 0.0_wp
                 call RADIAL_SAMPLESIZE(imax, kmax, kr_total, samplesize)
             end if
 
@@ -668,7 +669,7 @@ program SPECTRA
 ! Normalizing accumulated spectra
                 ip = opt_block
                 if (opt_time == SPEC_AVERAGE) ip = ip*itime_size
-                dummy = C_1_R/M_REAL(ip)
+                dummy = 1.0_wp/real(ip, wp)
                 if (ip > 1) then
                     outx = outx*dummy; outz = outz*dummy; outr = outr*dummy
                     if (opt_ffmt == 1) out2d = out2d*dummy
@@ -693,7 +694,7 @@ program SPECTRA
 #endif
                     if (flag_mode == 2 .and. icalc_radial == 1) then
                         do iv1 = 1, kr_total
-                            if (samplesize(iv1) > C_0_R) samplesize(iv1) = C_1_R/samplesize(iv1)
+                            if (samplesize(iv1) > 0.0_wp) samplesize(iv1) = 1.0_wp/samplesize(iv1)
                         end do
 
                         do iv = 1, nfield

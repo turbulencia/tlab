@@ -135,7 +135,8 @@ end subroutine IBM_READ_INI
 subroutine IBM_READ_CONSISTENCY_CHECK()
 
   use TLab_Constants, only : efile, MAX_VARS, wi, wp
-  use TLAB_VARS,      only : imax, g
+  use TLAB_VARS,      only : imax
+  use FDM, only: g
   use TLab_WorkFlow,     only : TLab_Stop, TLab_Write_ASCII
   use IBM_VARS
   

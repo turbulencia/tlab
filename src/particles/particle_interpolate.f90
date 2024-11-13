@@ -2,10 +2,11 @@
 
 module PARTICLE_INTERPOLATE
     use TLab_Constants, only: wp, wi, efile, lfile
-    use TLab_Types, only: pointers_dt, pointers3d_dt
+    use TLab_Pointers, only: pointers_dt
+    use TLab_Pointers_3D, only: pointers3d_dt
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
-    use TLab_WorkFlow
+    use FDM, only: g
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use PARTICLE_VARS
     use PARTICLE_ARRAYS, only: halo_i, halo_k, halo_ik
     use PARTICLE_ARRAYS, only: p_halo_i, p_halo_k, p_halo_ik
@@ -28,10 +29,10 @@ contains
 !#######################################################################
 !#######################################################################
     subroutine FIELD_TO_PARTICLE(data_in, data_out, l_g, l_q)
-        type(pointers3d_dt), intent(in)    :: data_in(:)
-        type(pointers_dt),   intent(out)   :: data_out(:)
-        type(particle_dt),   intent(inout) :: l_g
-        real(wp),            intent(inout) :: l_q(isize_part, inb_part_array)
+        type(pointers3d_dt), intent(in) :: data_in(:)
+        type(pointers_dt), intent(out) :: data_out(:)
+        type(particle_dt), intent(inout) :: l_g
+        real(wp), intent(inout) :: l_q(isize_part, inb_part_array)
 
 ! -------------------------------------------------------------------
         integer(wi) np_in_grid, np_in_halo_x, np_in_halo_z, np_in_halo_xz
@@ -153,8 +154,8 @@ contains
 #ifdef USE_MPI
         else
             do iv = 1, nvar
-                halo_i(1, 1:jmax, 1:kmax, iv)         = data(iv)%field(imax, 1:jmax, 1:kmax)
-                halo_mpi_send_i(1:jmax, 1:kmax, iv)   = data(iv)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
+                halo_i(1, 1:jmax, 1:kmax, iv) = data(iv)%field(imax, 1:jmax, 1:kmax)
+                halo_mpi_send_i(1:jmax, 1:kmax, iv) = data(iv)%field(1, 1:jmax, 1:kmax)   ! data to be transfered
                 halo_mpi_send_i(1:jmax, kmax + 1, iv) = halo_k(1, 1:jmax, 2, iv)
             end do
 
@@ -183,12 +184,12 @@ contains
 !########################################################################
 !########################################################################
     subroutine Interpolate_Inside_Zones(zone, data_in, data_out, l_g, l_q, ip_start, ip_end)
-        character(len=*),    intent(in)  :: zone
-        type(pointers3d_dt), intent(in)  :: data_in(:)
-        type(pointers_dt),   intent(out) :: data_out(:)
-        type(particle_dt),   intent(in)  :: l_g
-        real(wp),            intent(in)  :: l_q(isize_part, 3)
-        integer(wi),         intent(in)  :: ip_start, ip_end
+        character(len=*), intent(in) :: zone
+        type(pointers3d_dt), intent(in) :: data_in(:)
+        type(pointers_dt), intent(out) :: data_out(:)
+        type(particle_dt), intent(in) :: l_g
+        real(wp), intent(in) :: l_q(isize_part, 3)
+        integer(wi), intent(in) :: ip_start, ip_end
 
 ! -------------------------------------------------------------------
         real(wp) length_g_p(6), cube_g_p(4)
@@ -274,14 +275,14 @@ contains
 ! -------------------------------------------------------------------
                 do iv = 1, nvar
                     data_out(iv)%field(i) = data_out(iv)%field(i) + &
-                                           ((cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), g_p(g5loc)) &
-                                             + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), g_p(g5loc)) &
-                                             + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), g_p(g5loc)) &
-                                             + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), g_p(g5loc)))*length_g_p(6)) &
-                                           + ((cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), g_p(g6loc)) &
-                                               + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), g_p(g6loc)) &
-                                               + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), g_p(g6loc)) &
-                                               + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), g_p(g6loc)))*length_g_p(5))
+                                            ((cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), g_p(g5loc)) &
+                                              + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), g_p(g5loc)) &
+                                              + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), g_p(g5loc)) &
+                                              + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), g_p(g5loc)))*length_g_p(6)) &
+                                            + ((cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), g_p(g6loc)) &
+                                                + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), g_p(g6loc)) &
+                                                + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), g_p(g6loc)) &
+                                                + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), g_p(g6loc)))*length_g_p(5))
                 end do
 
             end do
@@ -317,10 +318,10 @@ contains
 ! -------------------------------------------------------------------
                 do iv = 1, nvar
                     data_out(iv)%field(i) = data_out(iv)%field(i) + &
-                                           (cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), 1) &
-                                            + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), 1) &
-                                            + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), 1) &
-                                            + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), 1))
+                                            (cube_g_p(3)*data_in(iv)%field(g_p(g1loc), g_p(3), 1) &
+                                             + cube_g_p(4)*data_in(iv)%field(g_p(g1loc), g_p(4), 1) &
+                                             + cube_g_p(1)*data_in(iv)%field(g_p(g2loc), g_p(4), 1) &
+                                             + cube_g_p(2)*data_in(iv)%field(g_p(g2loc), g_p(3), 1))
                 end do
 
             end do
@@ -335,10 +336,10 @@ contains
 !########################################################################
     subroutine Sort_Into_Grid(l_g, l_q, data, ip_start, ip_end, counter)
         type(particle_dt), intent(inout) :: l_g
-        real(wp),          intent(inout) :: l_q(:, :)
+        real(wp), intent(inout) :: l_q(:, :)
         type(pointers_dt), intent(inout) :: data(:)
-        integer(wi),       intent(in)    :: ip_start, ip_end
-        integer(wi),       intent(out)   :: counter
+        integer(wi), intent(in) :: ip_start, ip_end
+        integer(wi), intent(out) :: counter
 
         ! -------------------------------------------------------------------
         real(wp) dummy, right_limit, upper_limit
@@ -367,7 +368,7 @@ contains
             if (l_q(i, 1) > right_limit .or. l_q(i, 3) > upper_limit) then          ! particle i is outside, look for particles inside to swap with
                 do
                     if (l_q(j, 1) > right_limit .or. l_q(j, 3) > upper_limit) then  ! particle j is outside, leave it here
-                        j = j - 1 
+                        j = j - 1
                         if (i >= j) exit                                            ! finished your upwards loop
 
                     else                                                            ! particle j is inside, so swap
@@ -412,12 +413,12 @@ contains
 !########################################################################
 !########################################################################
     subroutine Sort_Into_Halos(x_or_z, l_g, l_q, data, ip_start, ip_end, counter)
-        integer,           intent(in)    :: x_or_z
+        integer, intent(in) :: x_or_z
         type(particle_dt), intent(inout) :: l_g
-        real(wp),          intent(inout) :: l_q(:, :)
+        real(wp), intent(inout) :: l_q(:, :)
         type(pointers_dt), intent(inout) :: data(:)
-        integer(wi),       intent(in)    :: ip_start, ip_end
-        integer(wi),       intent(out)   :: counter
+        integer(wi), intent(in) :: ip_start, ip_end
+        integer(wi), intent(out) :: counter
 
         ! -------------------------------------------------------------------
         real(wp) dummy, limit

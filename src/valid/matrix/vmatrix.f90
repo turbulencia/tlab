@@ -2,15 +2,13 @@ program VMATRIX
 
     implicit none
 
-#include "types.h"
-
     TINTEGER, parameter :: nmax = 5, len = 1
-    TREAL, dimension(nmax, 5) :: a
-    TREAL, dimension(nmax, nmax) :: c, d, wrk2d
-!  TREAL, dimension(len,nmax)        :: x, f3, f5
+    real(wp), dimension(nmax, 5) :: a
+    real(wp), dimension(nmax, nmax) :: c, d, wrk2d
+!  real(wp), dimension(len,nmax)        :: x, f3, f5
 
     TINTEGER n, ij, seed
-    TREAL RAN0 !, error, sol
+    real(wp) RAN0 !, error, sol
 
 ! ###################################################################
 #define a_a(n) a(n,1)

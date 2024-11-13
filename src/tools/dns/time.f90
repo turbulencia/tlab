@@ -20,11 +20,11 @@ module TIME
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: rtime
-    use TLAB_VARS, only: g
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use FDM, only: g
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: visc, prandtl, schmidt
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_OpenMP
     use PARTICLE_VARS
 #ifdef USE_MPI
@@ -335,7 +335,7 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-        use Thermodynamics, only: gama0
+        use Thermodynamics, only: gama0, itransport
         use TLab_Pointers_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
@@ -697,9 +697,6 @@ contains
             ! Evaluate standard RHS of equations
             ! split formulation
             ! ###################################################################
-            ! -------------------------------------------------------------------
-            ! convective terms
-            ! -------------------------------------------------------------------
             if (iadvection == EQNS_DIVERGENCE) then
                 call RHS_FLOW_EULER_DIVERGENCE()
                 do is = 1, inb_scal
@@ -713,14 +710,6 @@ contains
                 end do
             end if
 
-            ! -------------------------------------------------------------------
-            ! viscous terms
-            ! -------------------------------------------------------------------
-            if (itransport /= 1) then
-                call TLab_Write_ASCII(efile, 'TIME_SUBSTEP_COMPRESSIBLE. Section requires to allocate array vis.')
-                call TLab_Stop(DNS_ERROR_UNDEVELOP)
-            end if
-
             if (iviscous == EQNS_DIVERGENCE) then
                 call RHS_FLOW_VISCOUS_DIVERGENCE()
 
@@ -729,9 +718,6 @@ contains
 
             end if
 
-            ! -------------------------------------------------------------------
-            ! diffusion/conduction terms
-            ! -------------------------------------------------------------------
             if (idiffusion == EQNS_DIVERGENCE) then
                 ! diffusion transport of enthalpy is accumulated in txc5:7 and used in RHS_FLOW_CONDUCTION
                 txc(:, 5:7) = 0.0_wp

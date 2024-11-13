@@ -18,179 +18,181 @@
 !# (https://doi.org/10.1002/fld.2520) table 6 (typos in Si2_5i and Si2_6i).
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# u    In    function to be interpolated
 !# d    Out   right-hand side vector of the linear system
 !#
 !########################################################################
-#include "types.h"
 
 ! #######################################################################
-! Left-hand side; tridiagonal matrix of the linear system  
+! Left-hand side; tridiagonal matrix of the linear system
 ! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C0INTVP6_LHS(imaxp, a,b,c)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INTVP6_LHS(imaxp, a, b, c)
+    use TLab_Constants, only: wp, wi
+    implicit none
 
-  TINTEGER,                   INTENT(IN ):: imaxp ! pressure grid (imaxp==imax-1)
-  TREAL,    DIMENSION(imaxp), INTENT(OUT):: a,b,c
+    integer(wi), intent(IN) :: imaxp ! pressure grid (imaxp==imax-1)
+    real(wp), dimension(imaxp), intent(OUT) :: a, b, c
 
 ! -------------------------------------------------------------------
-  TINTEGER                              :: i
+    integer(wi) :: i
 
 ! ###################################################################
 ! forth-order biased (implicit)
-  a(1)  = C_0_R
-  b(1)  = C_1_R
-  c(1)  = C_1_R
-  !
-  a(imaxp) = C_1_R
-  b(imaxp) = C_1_R
-  c(imaxp) = C_0_R
+    a(1) = 0.0_wp
+    b(1) = 1.0_wp
+    c(1) = 1.0_wp
+    !
+    a(imaxp) = 1.0_wp
+    b(imaxp) = 1.0_wp
+    c(imaxp) = 0.0_wp
 
 ! sixth-order (implicit)
-  DO i = 2,imaxp-1
-    a(i) = C_3_R / C_10_R
-    b(i) = C_1_R 
-    c(i) = C_3_R / C_10_R
-  ENDDO
+    do i = 2, imaxp - 1
+        a(i) = 3.0_wp/10.0_wp
+        b(i) = 1.0_wp
+        c(i) = 3.0_wp/10.0_wp
+    end do
 
-! ! forth-order (implicit) - for adjacent boundary nodes 
-!   a(2)      = C_1_R / C_6_R
-!   b(2)      = C_1_R 
-!   c(2)      = C_1_R / C_6_R
+! ! forth-order (implicit) - for adjacent boundary nodes
+!   a(2)      = 1.0_wp / 6.0_wp
+!   b(2)      = 1.0_wp
+!   c(2)      = 1.0_wp / 6.0_wp
 !   !
-!   a(imaxp-1) = C_1_R / C_6_R
-!   b(imaxp-1) = C_1_R
-!   c(imaxp-1) = C_1_R / C_6_R
-  
-  RETURN
-END SUBROUTINE FDM_C0INTVP6_LHS
+!   a(imaxp-1) = 1.0_wp / 6.0_wp
+!   b(imaxp-1) = 1.0_wp
+!   c(imaxp-1) = 1.0_wp / 6.0_wp
+
+    return
+end subroutine FDM_C0INTVP6_LHS
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system
 ! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C0INTPV6_LHS(imax, a,b,c)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INTPV6_LHS(imax, a, b, c)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                  INTENT(IN ):: imax ! velocity grid
-  TREAL,    DIMENSION(imax), INTENT(OUT):: a,b,c
+    implicit none
+
+    integer(wi), intent(IN) :: imax ! velocity grid
+    real(wp), dimension(imax), intent(OUT) :: a, b, c
 
 ! -------------------------------------------------------------------
-  TINTEGER                              :: i
+    integer(wi) :: i
 
 ! ###################################################################
 ! third-order biased (implicit)
-  a(1)  = C_0_R
-  b(1)  = C_1_R
-  c(1)  = C_3_R
-  !
-  a(imax) = C_3_R
-  b(imax) = C_1_R
-  c(imax) = C_0_R
-  
+    a(1) = 0.0_wp
+    b(1) = 1.0_wp
+    c(1) = 3.0_wp
+    !
+    a(imax) = 3.0_wp
+    b(imax) = 1.0_wp
+    c(imax) = 0.0_wp
+
 ! forth-order (implicit)
-  a(2)      = C_1_R / C_6_R
-  b(2)      = C_1_R 
-  c(2)      = C_1_R / C_6_R
-  !
-  a(imax-1) = C_1_R / C_6_R
-  b(imax-1) = C_1_R
-  c(imax-1) = C_1_R / C_6_R
+    a(2) = 1.0_wp/6.0_wp
+    b(2) = 1.0_wp
+    c(2) = 1.0_wp/6.0_wp
+    !
+    a(imax - 1) = 1.0_wp/6.0_wp
+    b(imax - 1) = 1.0_wp
+    c(imax - 1) = 1.0_wp/6.0_wp
 
 ! sixth-order (implicit)
-  DO i = 3,imax-2
-    a(i) = C_3_R / C_10_R
-    b(i) = C_1_R 
-    c(i) = C_3_R / C_10_R
-  ENDDO
+    do i = 3, imax - 2
+        a(i) = 3.0_wp/10.0_wp
+        b(i) = 1.0_wp
+        c(i) = 3.0_wp/10.0_wp
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C0INTPV6_LHS
+    return
+end subroutine FDM_C0INTPV6_LHS
 
 ! #######################################################################
 ! Right-hand side; forcing term
 ! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C0INTVP6_RHS(imax,imaxp,jkmax, u,d)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INTVP6_RHS(imax, imaxp, jkmax, u, d)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                         INTENT(IN ):: imax, imaxp, jkmax
-  TREAL,    DIMENSION(jkmax,imax),  INTENT(IN ):: u
-  TREAL,    DIMENSION(jkmax,imaxp), INTENT(OUT):: d
+    implicit none
+
+    integer(wi), intent(IN) :: imax, imaxp, jkmax
+    real(wp), dimension(jkmax, imax), intent(IN) :: u
+    real(wp), dimension(jkmax, imaxp), intent(OUT) :: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                     :: i, jk
-  TREAL                                        :: c0302, c0104, c0304, c0120 !, c0203
+    integer(wi) :: i, jk
+    real(wp) :: c0302, c0104, c0304, c0120 !, c0203
 
 ! #######################################################################
-  c0302 = C_3_R / C_2_R
-  c0104 = C_1_R / C_4_R
-  c0304 = C_3_R / C_4_R
-  c0120 = C_1_R / C_20_R
-  ! c0203 = C_2_R / C_3_R
+    c0302 = 3.0_wp/2.0_wp
+    c0104 = 1.0_wp/4.0_wp
+    c0304 = 3.0_wp/4.0_wp
+    c0120 = 1.0_wp/20.0_wp
+    ! c0203 = 2.0_wp / 3.0_wp
 
-  DO jk =1,jkmax
-    ! forth-order biased (implicit)
-    d(jk,1)       = c0302*u(jk,2)      + c0104*(u(jk,1)    + u(jk,3)     )
-    d(jk,imaxp)   = c0302*u(jk,imax-1) + c0104*(u(jk,imax) + u(jk,imax-2))
-    ! forth-order (implicit)
-    ! d(jk,2)       = c0203*(u(jk,3)      + u(jk,2)     )
-    ! d(jk,imaxp-1) = c0203*(u(jk,imax-2) + u(jk,imax-1))
-  ENDDO
-  
-! sixth-order (implicit)  
-  DO i = 2,imaxp-1
-  ! DO i = 3,imaxp-2 ! for forth order (implict)
-    DO jk = 1,jkmax
-      d(jk,i) = c0304*(u(jk,i+1) + u(jk,i)) + c0120*(u(jk,i+2) + u(jk,i-1))
-    ENDDO
-  ENDDO
+    do jk = 1, jkmax
+        ! forth-order biased (implicit)
+        d(jk, 1) = c0302*u(jk, 2) + c0104*(u(jk, 1) + u(jk, 3))
+        d(jk, imaxp) = c0302*u(jk, imax - 1) + c0104*(u(jk, imax) + u(jk, imax - 2))
+        ! forth-order (implicit)
+        ! d(jk,2)       = c0203*(u(jk,3)      + u(jk,2)     )
+        ! d(jk,imaxp-1) = c0203*(u(jk,imax-2) + u(jk,imax-1))
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C0INTVP6_RHS
+! sixth-order (implicit)
+    do i = 2, imaxp - 1
+        ! DO i = 3,imaxp-2 ! for forth order (implict)
+        do jk = 1, jkmax
+            d(jk, i) = c0304*(u(jk, i + 1) + u(jk, i)) + c0120*(u(jk, i + 2) + u(jk, i - 1))
+        end do
+    end do
+
+    return
+end subroutine FDM_C0INTVP6_RHS
 
 ! #######################################################################
 ! Right-hand side; forcing term
 ! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C0INTPV6_RHS(imax,imaxp,jkmax, u,d)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INTPV6_RHS(imax, imaxp, jkmax, u, d)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                         INTENT(IN ):: imax, imaxp, jkmax
-  TREAL,    DIMENSION(jkmax,imaxp), INTENT(IN ):: u
-  TREAL,    DIMENSION(jkmax,imax),  INTENT(OUT):: d
+    implicit none
+
+    integer(wi), intent(IN) :: imax, imaxp, jkmax
+    real(wp), dimension(jkmax, imaxp), intent(IN) :: u
+    real(wp), dimension(jkmax, imax), intent(OUT) :: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                     :: i, jk
-  TREAL                                        :: c0304, c0120, c0203
+    integer(wi) :: i, jk
+    real(wp) :: c0304, c0120, c0203
 
 ! #######################################################################
-  c0304 = C_3_R / C_4_R
-  c0120 = C_1_R / C_20_R
-  c0203 = C_2_R / C_3_R
+    c0304 = 3.0_wp/4.0_wp
+    c0120 = 1.0_wp/20.0_wp
+    c0203 = 2.0_wp/3.0_wp
 
-  DO jk =1,jkmax
-    ! forth-order biased (implicit)
-    d(jk,1)      = C_3_R*u(jk,1)      + u(jk,2)   
-    d(jk,imax)   = C_3_R*u(jk,imaxp)  + u(jk,imaxp-1)
-    ! forth-order (implicit)
-    d(jk,2)      = c0203*(u(jk,1)     + u(jk,2)      )
-    d(jk,imax-1) = c0203*(u(jk,imaxp) + u(jk,imaxp-1))
-  ENDDO
+    do jk = 1, jkmax
+        ! forth-order biased (implicit)
+        d(jk, 1) = 3.0_wp*u(jk, 1) + u(jk, 2)
+        d(jk, imax) = 3.0_wp*u(jk, imaxp) + u(jk, imaxp - 1)
+        ! forth-order (implicit)
+        d(jk, 2) = c0203*(u(jk, 1) + u(jk, 2))
+        d(jk, imax - 1) = c0203*(u(jk, imaxp) + u(jk, imaxp - 1))
+    end do
 
 ! sixth-order (implicit)
-  DO i = 3,imax-2
-    DO jk = 1,jkmax
-      d(jk,i) = c0304*(u(jk,i) + u(jk,i-1)) + c0120*(u(jk,i+1) + u(jk,i-2))
-    ENDDO
-  ENDDO
+    do i = 3, imax - 2
+        do jk = 1, jkmax
+            d(jk, i) = c0304*(u(jk, i) + u(jk, i - 1)) + c0120*(u(jk, i + 1) + u(jk, i - 2))
+        end do
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C0INTPV6_RHS
+    return
+end subroutine FDM_C0INTPV6_RHS

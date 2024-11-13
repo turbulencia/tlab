@@ -10,10 +10,10 @@
 !# which calls in turn the routines from the library spline
 !########################################################################
 module OPR_INTERPOLATORS
-    use TLab_Types, only: grid_dt
+    use FDM, only: grid_dt
     use TLab_Constants, only: efile, wp, wi
     use TLAB_VARS, only: isize_txc_field
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
     use TLab_Constants, only: lfile
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k

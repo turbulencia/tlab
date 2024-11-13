@@ -7,8 +7,9 @@ subroutine DNS_READ_LOCAL(inifile)
     use TLab_Types, only: MAX_MODES
     use TLab_Constants, only: wp, wi, big_wp, efile, lfile, wfile
     use TLAB_VARS
+    use FDM, only: g
     use TLab_Spatial, only: nstatavg
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use PARTICLE_VARS
     use DNS_LOCAL
     use TIME, only: rkm_mode, dtime, cfla, cfld, cflr
@@ -474,8 +475,6 @@ subroutine DNS_READ_LOCAL(inifile)
 
 ! Broadband forcing: Grid size of the inflow domain
     g_inf(:)%size = 1       ! default
-    g_inf(:)%periodic = g(:)%periodic
-    g_inf(:)%uniform = g(:)%uniform
     if (inflow_mode == 2 .or. inflow_mode == 3 .or. inflow_mode == 4) then
         call ScanFile_Int(bakfile, inifile, 'Inflow', 'Imax', '0', idummy)
         if (idummy > 0) then; g_inf(1)%size = idummy
@@ -498,14 +497,6 @@ subroutine DNS_READ_LOCAL(inifile)
             call TLab_Stop(DNS_ERROR_INFTYPE)
         end if
 
-    end if
-    g_inf(1)%inb_grid = g(1)%inb_grid
-    g_inf(2)%inb_grid = 1
-    g_inf(3)%inb_grid = 1
-
-    if (inflow_mode == 2) then
-        g_inf(1)%periodic = .true.
-        g_inf(1)%uniform = .true.
     end if
 
     idummy = max(g_inf(1)%size, max(g_inf(2)%size, g_inf(3)%size))
@@ -728,7 +719,7 @@ subroutine DNS_READ_LOCAL(inifile)
     if (imode_rhs == EQNS_RHS_NONBLOCKING) inb_txc = max(inb_txc, 15)
 #endif
 
-    isize_wrk3d = max(isize_wrk3d, g_inf(1)%size*g_inf(2)%size*kmax)
+    isize_wrk3d = max(isize_wrk3d, g_inf(1)%size*g_inf(2)%size*g_inf(3)%size)
     if (use_tower) then
         isize_wrk3d = max(isize_wrk3d, nitera_save*(g(2)%size + 2))
     end if

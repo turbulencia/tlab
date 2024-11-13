@@ -18,7 +18,7 @@ module TLab_Constants
     character(len=*), parameter :: lfile = 'tlab.log'
     character(len=*), parameter :: efile = 'tlab.err'
     character(len=*), parameter :: wfile = 'tlab.war'
-    character(len=*), parameter :: tfile = 'dns.trc'
+    character(len=*), parameter :: tfile = 'tlab.trc'
 
     character(len=*), parameter :: tag_flow = 'flow.'
     character(len=*), parameter :: tag_scal = 'scal.'

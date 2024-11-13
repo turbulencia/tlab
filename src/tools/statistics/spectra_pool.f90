@@ -9,7 +9,7 @@
 subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
                               spec_2d, data_x, data_z, spec_r, tmp_x, tmp_z, wrk2d)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: g
+    use FDM, only: g
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err
@@ -372,7 +372,7 @@ end subroutine RADIAL_SAMPLESIZE
 subroutine WRITE_SPECTRUM1D(fname, varname, nxy, nvar, pow)
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: lfile
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro
 #endif

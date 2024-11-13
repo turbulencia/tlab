@@ -4,11 +4,12 @@
 module PLANES
     use TLab_Constants, only: efile, lfile, wp, wi, fmt_r, small_wp
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
-    use TLAB_VARS, only: g, scal_on
+    use TLAB_VARS, only: scal_on
+    use FDM, only: g
     use TLAB_VARS, only: itime, rtime
     use TLab_Arrays, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use IBM_VARS, only: imode_ibm, ibm_partial
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
     use THERMO_ANELASTIC
     use IO_FIELDS
@@ -211,8 +212,8 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine PLANES_SAVE()
-        use TLab_Types
         use TLab_Pointers_3D, only: p_wrk2d
+        use TLab_Pointers_3D, only: pointers3d_dt
         use TLAB_VARS, only: sbg
         use Averages
         use Integration, only: Int_Simpson

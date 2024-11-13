@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
@@ -8,17 +7,18 @@
 #define C_FILE_LOC "APRIORI"
 
 program APRIORI
-
-    use TLab_Types, only: pointers_dt
-    use TLab_Types, only: filter_dt
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use TLab_Pointers, only: pointers_dt
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use TLab_Arrays
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use Thermodynamics
     use IO_FIELDS
     use OPR_FILTERS
@@ -28,13 +28,13 @@ program APRIORI
     implicit none
 
 ! Parameter definitions
-    TINTEGER, parameter :: itime_size_max = 512
-    TINTEGER, parameter :: iopt_size_max = 512
+    integer(wi), parameter :: itime_size_max = 512
+    integer(wi), parameter :: iopt_size_max = 512
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    TREAL, dimension(:, :), allocatable, save, target :: qf, sf
-    TREAL, dimension(:), allocatable, save :: mean, y_aux
+    real(wp), dimension(:, :), allocatable, save, target :: qf, sf
+    real(wp), dimension(:), allocatable, save :: mean, y_aux
     type(pointers_dt), dimension(16) :: vars
 
     integer, parameter :: i1 = 1
@@ -42,23 +42,23 @@ program APRIORI
 ! -------------------------------------------------------------------
 ! Local variables
 ! -------------------------------------------------------------------
-    TINTEGER opt_main, opt_block, opt_order, opt_format
-    TINTEGER iq, is, ig, ij, bcs(2, 2)
-    TINTEGER nfield, idummy, jmax_aux, MaskSize
+    integer(wi) opt_main, opt_block, opt_order, opt_format
+    integer(wi) iq, is, ig, ij, bcs(2, 2)
+    integer(wi) nfield, idummy, jmax_aux, MaskSize
     logical iread_flow, iread_scal
     character*32 fname, bakfile, flow_file, scal_file, plot_file, time_str
-    TINTEGER subdomain(6)
+    integer(wi) subdomain(6)
 
     integer(1) opt_gate
     integer(1), dimension(1) :: gate
 
 ! Reading variables
     character*512 sRes
-    TINTEGER itime_size, it
-    TINTEGER itime_vec(itime_size_max)
+    integer(wi) itime_size, it
+    integer(wi) itime_vec(itime_size_max)
 
-    TINTEGER iopt_size
-    TREAL opt_vec(iopt_size_max)
+    integer(wi) iopt_size
+    real(wp) opt_vec(iopt_size_max)
 
 ! ###################################################################
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
@@ -172,10 +172,10 @@ program APRIORI
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -183,7 +183,7 @@ program APRIORI
     y_aux(:) = 0
     do ij = 1, jmax
         is = (ij - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) + y(ij, 1)/M_REAL(opt_block)
+        y_aux(is) = y_aux(is) + y(ij, 1)/real(opt_block, wp)
     end do
 
 ! -------------------------------------------------------------------

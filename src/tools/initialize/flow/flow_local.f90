@@ -5,9 +5,10 @@ module FLOW_LOCAL
     use TLab_Constants, only: efile, lfile, wp, wi, pi_wp
     use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: g, qbg, tbg, hbg
+    use FDM, only: g
+    use TLAB_VARS, only: qbg, tbg, hbg
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
@@ -580,7 +581,7 @@ contains
         end if
 
         ! An amplification factor norm_ini_p is allowed as in previous versions
-        rho = (norm_ini_p*pprime/p/gama0 + 1.0_wp)*rho
+        rho = (norm_ini_p*pprime/p/gama0 + 1.0_wp)*rho  ! isentropic relation p'/p = \gamma \rho'/rho
         p = norm_ini_p*pprime + p
 
         return

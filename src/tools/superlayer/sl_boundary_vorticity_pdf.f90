@@ -1,8 +1,8 @@
-#include "types.h"
 #include "dns_error.h"
 
 subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold, ibuffer_npy, &
                                      u, v, w, z1, a, sl, samples, pdf, txc, wrk1d, wrk2d, wrk3d)
+                                     use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
     use TLAB_AVGS
@@ -10,21 +10,21 @@ subroutine SL_BOUNDARY_VORTICITY_PDF(isl, ith, np, nfield, itxc_size, threshold,
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
-    
+
     implicit none
 
 #define L_NFIELDS_MAX 5
 
-    TREAL threshold
-    TINTEGER isl, ith, nfield, itxc_size, np, ibuffer_npy
-    TREAL u(*), v(*), w(*), z1(*), a(*), sl(imax*kmax, 2)
-    TREAL samples(L_NFIELDS_MAX*imax*kmax*2), pdf(np, L_NFIELDS_MAX)
-    TREAL txc(imax*jmax*kmax, 6)
-    TREAL wrk1d(*), wrk2d(*), wrk3d(*)
+    real(wp) threshold
+    integer(wi) isl, ith, nfield, itxc_size, np, ibuffer_npy
+    real(wp) u(*), v(*), w(*), z1(*), a(*), sl(imax*kmax, 2)
+    real(wp) samples(L_NFIELDS_MAX*imax*kmax*2), pdf(np, L_NFIELDS_MAX)
+    real(wp) txc(imax*jmax*kmax, 6)
+    real(wp) wrk1d(*), wrk2d(*), wrk3d(*)
 
 ! -------------------------------------------------------------------
-    TREAL vmin, vmax, vmean
-    TINTEGER ij, ikmax, ipfield, nfield_loc, ioffset, isize, iv, ip, jmin_loc, jmax_loc
+    real(wp) vmin, vmax, vmean
+    integer(wi) ij, ikmax, ipfield, nfield_loc, ioffset, isize, iv, ip, jmin_loc, jmax_loc
     character*32 fname
     character*32 varname(L_NFIELDS_MAX)
 

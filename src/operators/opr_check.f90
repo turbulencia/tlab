@@ -6,9 +6,9 @@
 subroutine OPR_CHECK()
     use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow_array, inb_txc
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: fourier_on
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Arrays
     use OPR_FOURIER
 #ifdef USE_MPI

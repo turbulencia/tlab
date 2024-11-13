@@ -7,7 +7,7 @@
 !########################################################################
 module FI_GRADIENT_EQN
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL
     implicit none

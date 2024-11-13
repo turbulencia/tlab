@@ -126,7 +126,7 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
     use TLab_Constants, only: lfile, wp, wi
     use TLab_Spatial
     use TLAB_VARS, only: itime, rtime, jmax, inb_scal
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 
 #ifdef USE_MPI
     use MPI
@@ -193,7 +193,7 @@ end subroutine IO_READ_AVG_SPATIAL
 subroutine RD_STHD(unit, irec, iter, rtime, iterorg, rtimeorg, &
                    nstatavg, jmax, nstat, nstatavg_points, statavg)
     use TLab_Constants, only: efile, wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 

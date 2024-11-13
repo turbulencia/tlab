@@ -9,9 +9,9 @@
 !#
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: visc
     use TLab_Arrays, only: q
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6

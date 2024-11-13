@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -10,6 +9,7 @@
 !#
 !########################################################################
 program SL_CORRELATION
+    use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
 #ifdef USE_MPI
@@ -22,27 +22,27 @@ program SL_CORRELATION
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
 
 ! Flow variables
-    TREAL, dimension(:, :), allocatable :: q
+    real(wp), dimension(:, :), allocatable :: q
 
-    TREAL, dimension(:), allocatable :: z1
-    TREAL, dimension(:), allocatable :: tmp1, tmp2, tmp3, tmp4, tmp5
-    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
-    TREAL, dimension(:), allocatable :: profiles
+    real(wp), dimension(:), allocatable :: z1
+    real(wp), dimension(:), allocatable :: tmp1, tmp2, tmp3, tmp4, tmp5
+    real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:), allocatable :: profiles
 
     target q
 
-    TINTEGER ilog
+    integer(wi) ilog
     character*32 fname
 
-    TINTEGER itime_size_max, itime_size, i
+    integer(wi) itime_size_max, itime_size, i
     parameter(itime_size_max=128)
-    TINTEGER itime_vec(itime_size_max)
-    TINTEGER iopt_size_max, iopt_size
+    integer(wi) itime_vec(itime_size_max)
+    integer(wi) iopt_size_max, iopt_size
     parameter(iopt_size_max=10)
-    TREAL opt_vec(iopt_size_max)
+    real(wp) opt_vec(iopt_size_max)
     character*512 sRes
     character*32 line
 #ifdef USE_MPI
@@ -50,9 +50,9 @@ program SL_CORRELATION
 #endif
 
 ! Pointers to existing allocated space
-    TREAL, dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: u, v, w
 
-    TREAL, dimension(:, :), pointer :: dx, dy, dz
+    real(wp), dimension(:, :), pointer :: dx, dy, dz
 
 ! ###################################################################
     call DNS_START
@@ -68,10 +68,6 @@ program SL_CORRELATION
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (q(imax*jmax*kmax, 3))
     allocate (z1(imax*jmax*kmax))
     allocate (tmp1(imax*jmax*kmax))
@@ -138,10 +134,10 @@ program SL_CORRELATION
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
 ! ###################################################################
 ! Define pointers

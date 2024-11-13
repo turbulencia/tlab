@@ -7,7 +7,7 @@ module ParticleTrajectories
 
     use TLab_Constants, only: efile, lfile, wp, sp, wi, longi, sizeofint
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory
     use PARTICLE_VARS, only: inb_part, isize_part_total, inb_part_interp, inb_part_txc, part, PART_TYPE_NONE
     use DNS_LOCAL, only: nitera_save
@@ -154,7 +154,8 @@ contains
     !#######################################################################
     !#######################################################################
     subroutine ParticleTrajectories_Accumulate()
-        use TLab_Types, only: pointers_dt, pointers3d_dt
+        use TLab_Pointers, only: pointers_dt
+        use TLab_Pointers_3D, only: pointers3d_dt
         use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: rtime

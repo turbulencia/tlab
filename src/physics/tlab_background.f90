@@ -7,13 +7,13 @@
 subroutine TLab_Initialize_Background()
     use TLab_Constants, only: lfile, wp, wi
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: damkohler, froude, schmidt
     use TLAB_VARS, only: buoyancy
     use TLab_Pointers_3D, only: p_wrk1d
-    use TLab_WorkFlow
-    use Thermodynamics, only: imixture, GRATIO, RRATIO, scaleheight
+    use TLab_WorkFlow, only: TLab_Write_ASCII
+    use Thermodynamics, only: imixture, RRATIO, GRATIO, scaleheight
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use Profiles, only: PROFILE_NONE, Profiles_Calculate
@@ -167,7 +167,7 @@ subroutine TLab_Initialize_Background()
             g(1)%rhoinv(j) = ribackground(ip)
         end do
 
-! Density correction term in the burgers operator along Y; see fdm_initialize
+! Density correction term in the burgers operator along Y; see FDM_Initialize
 ! implemented directly in the tridiagonal system
         ip = 0
         do is = 0, inb_scal ! case 0 for the velocity
@@ -215,7 +215,7 @@ subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
                                 x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
     use TLab_Constants, only: wp, wi, wfile
     use TLab_Types, only: profiles_dt
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use THERMO_THERMAL
     use Profiles
     implicit none
@@ -311,7 +311,7 @@ subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
                                  jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
     use TLab_Types, only: profiles_dt
     use TLab_Constants, only: efile, wfile, wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use Profiles
     use Integration, only: Int_Simpson
     implicit none
@@ -485,7 +485,7 @@ subroutine FLOW_SPATIAL_SCALAR(imax, jmax, prof_loc, &
                                x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
     use TLab_Types, only: profiles_dt
     use TLab_Constants, only: wfile, wp, wi
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use Integration, only: Int_Simpson
     use Profiles
     implicit none

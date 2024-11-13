@@ -1,8 +1,7 @@
-#include "types.h"
 #include "dns_const.h"
 
 program VTGVORTEX
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
     use OPR_FOURIER
@@ -11,12 +10,12 @@ program VTGVORTEX
 
     implicit none
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :), allocatable :: txc, q
-    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable :: txc, q
+    real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
-    TINTEGER ij, iv, iopt
-    TREAL dummy, error
+    integer(wi) ij, iv, iopt
+    real(wp) dummy, error
     character*(32) fname
 
 ! ###################################################################
@@ -28,20 +27,16 @@ program VTGVORTEX
 ! -------------------------------------------------------------------
 ! Allocating memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (wrk1d(isize_wrk1d*inb_wrk1d))
     allocate (wrk2d(isize_wrk2d*inb_wrk2d))
     allocate (wrk3d(isize_wrk3d))
     allocate (q(isize_field, 4))
     allocate (txc(isize_txc_field, 4))
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call OPR_Elliptic_Initialize(ifile)
 
@@ -115,14 +110,14 @@ subroutine FLOW_TAYLORGREEN(nx, ny, nz, rtime, visc, x, y, z, u, v, w, p)
 
     implicit none
 
-    TINTEGER nx, ny, nz
-    TREAL rtime, visc
-    TREAL, dimension(*) :: x, y, z
-    TREAL, dimension(nx, ny, nz) :: u, v, w, p
+    integer(wi) nx, ny, nz
+    real(wp) rtime, visc
+    real(wp), dimension(*) :: x, y, z
+    real(wp), dimension(nx, ny, nz) :: u, v, w, p
 
 ! -----------------------------------------------------------------------
-    TINTEGER i, j, k
-    TREAL pi_loc, omega, factor, sigma
+    integer(wi) i, j, k
+    real(wp) pi_loc, omega, factor, sigma
 
 ! #######################################################################
     pi_loc = acos(-C_1_R); omega = C_2_R*pi_loc

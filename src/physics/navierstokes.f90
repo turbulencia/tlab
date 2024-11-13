@@ -3,18 +3,16 @@
 
 subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_PROF, MAX_VARS
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion, itransport
+    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
+    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
     use TLAB_VARS, only: buoyancy, coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
-    use TLAB_VARS, only: imode_sim
-    use TLAB_VARS, only: g, stagger_on
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
-    use Thermodynamics, only: gama0
     use TLab_Spatial
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
     implicit none
 
@@ -39,7 +37,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
     call TLab_Write_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
     call TLab_Write_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
-    call TLab_Write_ASCII(bakfile, '#TermTransport=<constant/powerlaw/sutherland>')
     !
     call TLab_Write_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLab_Write_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
@@ -84,23 +81,12 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'constant', sRes)
-    if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
-    elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
-    else; itransport = EQNS_NONE; end if
-
     ! consistency check
     select case (imode_eqns)
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
-        if (itransport == EQNS_TRANS_POWERLAW) then
-            call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. Only constant viscosity.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
-
-        if (imode_eqns == DNS_EQNS_TOTAL) then
-            call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
+    case (DNS_EQNS_INTERNAL)
+    case (DNS_EQNS_TOTAL)
+        call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         if (iviscous /= EQNS_EXPLICIT) then
@@ -146,7 +132,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#Stokes=<value>')
     call TLab_Write_ASCII(bakfile, '#Settling=<value>')
     call TLab_Write_ASCII(bakfile, '#Mach=<value>')
-    call TLab_Write_ASCII(bakfile, '#Gama=<value>')
     call TLab_Write_ASCII(bakfile, '#Prandtl=<value>')
 
     ! Molecular transport
@@ -179,7 +164,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         rossby = 1.0_wp/dummy
     end if
 
-    ! Chemistry
+    ! Additional source terms; this can be used to control input in chemistry, radiation, microphysics.... Still needed?
     lstr = '0.0'
     do is = 2, inb_scal
         lstr = trim(adjustl(lstr))//',0.0'
@@ -193,8 +178,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     end if
 
     ! Compressible flows
-    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Gama', '1.4', gama0)
-    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)
+    call ScanFile_Real(bakfile, inifile, 'Parameters', 'Prandtl', '1.0', prandtl)   ! molecular transport, but only appearing in compressible formulation
     call ScanFile_Real(bakfile, inifile, 'Parameters', 'Mach', '1.0', mach)
 
     ! Particle-laden flows
@@ -341,8 +325,21 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
     do is = 1, MAX_VARS
         write (lstr, *) is
-        call Profiles_ReadBlock(bakfile, inifile, 'Scalar', 'Scalar'//trim(adjustl(lstr)), sbg(is))
+        call Profiles_ReadBlock(bakfile, inifile, block, 'Scalar'//trim(adjustl(lstr)), sbg(is))
     end do
+
+    if (imode_sim == DNS_MODE_SPATIAL) then
+        call TLab_Write_ASCII(bakfile, '#ThickA=<value>')
+        call TLab_Write_ASCII(bakfile, '#ThickB=<value>')
+        call TLab_Write_ASCII(bakfile, '#Flux=<value>')
+
+        do is = 1, MAX_VARS
+            write (lstr, *) is
+            call ScanFile_Real(bakfile, inifile, block, 'ThickA'//trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
+            call ScanFile_Real(bakfile, inifile, block, 'ThickB'//trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
+            call ScanFile_Real(bakfile, inifile, block, 'Flux'//trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
+        end do
+    end if
 
 ! ###################################################################
     block = 'Flow'
@@ -384,11 +381,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     !     end if
     ! end if
 
-! -------------------------------------------------------------------
-! Spatial case
-! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
-! -------------------------------------------------------------------
-    if (imode_sim == DNS_MODE_SPATIAL) then
+    if (imode_sim == DNS_MODE_SPATIAL) then     ! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
         call TLab_Write_ASCII(bakfile, '#ThickAVelocity=<value>')
         call TLab_Write_ASCII(bakfile, '#ThickBVelocity=<value>')
         call TLab_Write_ASCII(bakfile, '#FluxVelocity=<value>')
@@ -412,20 +405,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', tbg%parameters(2))
         call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0', tbg%parameters(3))
         call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxTemperature', '0.94', tbg%parameters(4))
-
-        ! Scalars
-        call TLab_Write_ASCII(bakfile, '#ThickA=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickB=<value>')
-        call TLab_Write_ASCII(bakfile, '#Flux=<value>')
-
-        do is = 1, MAX_VARS
-            write (lstr, *) is; lstr = 'ThickA'//trim(adjustl(lstr))
-            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
-            write (lstr, *) is; lstr = 'ThickB'//trim(adjustl(lstr))
-            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
-            write (lstr, *) is; lstr = 'Flux'//trim(adjustl(lstr))
-            call ScanFile_Real(bakfile, inifile, 'Scalar', trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
-        end do
 
     end if
 
@@ -468,7 +447,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
         inb_flow = 5                            ! space for u, v, w, e, rho
         inb_flow_array = inb_flow + 2           ! space for p, T
-        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for viscosity
 
     end select
 
@@ -480,43 +458,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
 
     inb_wrk2d = 2
     if (imode_sim == DNS_MODE_SPATIAL) inb_wrk2d = max(11, inb_wrk2d)
-
-! grid array
-    do is = 1, 3
-        g(is)%inb_grid = 1                          ! Nodes
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 2 &                      ! Jacobians of first- and second-order derivatives
-                         + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
-
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 5 &                      ! max # of diagonals in LHS for 1. order derivative
-                         + 7 &                      ! max # of diagonals in RHS for 1. order derivative
-                         + 5 &                      ! max # of diagonals in LHS for 2. order derivative
-                         + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
-                         + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
-        if (g(is)%periodic) then
-            g(is)%inb_grid = g(is)%inb_grid &
-                             + 5 + 2 &                      ! LU decomposition 1. order
-                             + 5 + 2 &                      ! LU decomposition 2. order
-                             + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
-                             + 2                            ! modified wavenumbers
-        else
-            g(is)%inb_grid = g(is)%inb_grid &
-                             + 5*4 &                ! LU decomposition 1. order, 4 bcs
-                             + 5 &                  ! LU decomposition 2. order, 1bcs
-                             + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
-        end if
-        g(is)%inb_grid = g(is)%inb_grid &
-                         + 1                        ! Density correction in anelastic mode
-        if ((stagger_on) .and. g(is)%periodic) then
-            g(is)%inb_grid = g(is)%inb_grid &
-                             + 5 &                  ! LU decomposition interpolation
-                             + 5                    ! LU decomposition 1. order interpolatory
-        end if
-
-    end do
 
     return
 end subroutine NavierStokes_Initialize_Parameters

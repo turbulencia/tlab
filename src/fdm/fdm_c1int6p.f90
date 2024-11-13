@@ -16,123 +16,125 @@
 !# System multiplied by 62/63 to eliminate one multiplication in the RHS.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# u    In    function to be diferentiated
 !# d    Out   right-hand side vector of the linear system
 !#
 !########################################################################
-#include "types.h"
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system
 ! #######################################################################
-SUBROUTINE FDM_C1INT6P_LHS(imax, dx, a,b,c)
-  
-  IMPLICIT NONE
+subroutine FDM_C1INT6P_LHS(imax, dx, a, b, c)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                  INTENT(IN ):: imax
-  TREAL,    DIMENSION(imax), INTENT(IN ):: dx
-  TREAL,    DIMENSION(imax), INTENT(OUT):: a,b,c
+    implicit none
+
+    integer(wi), intent(IN) :: imax
+    real(wp), dimension(imax), intent(IN) :: dx
+    real(wp), dimension(imax), intent(OUT) :: a, b, c
 
 ! -------------------------------------------------------------------
-  TINTEGER i
+    integer(wi) i
 
 ! ###################################################################
-  DO i = 1,imax
-     a(i) = C_9_R  /  C_63_R ! 9/62
-     b(i) = C_62_R /  C_63_R ! 1
-     c(i) = C_9_R  /  C_63_R ! 9/62
-  ENDDO
+    do i = 1, imax
+        a(i) = 9.0_wp/63.0_wp ! 9/62
+        b(i) = 62.0_wp/63.0_wp ! 1
+        c(i) = 9.0_wp/63.0_wp ! 9/62
+    end do
 
 ! -------------------------------------------------------------------
 ! Jacobian Multiplication
 ! -------------------------------------------------------------------
-  c(imax) = c(imax)*dx(1)
-  b(1)    = b(1)   *dx(1)
-  a(2)    = a(2)   *dx(1)
+    c(imax) = c(imax)*dx(1)
+    b(1) = b(1)*dx(1)
+    a(2) = a(2)*dx(1)
 
-  DO i = 2,imax-1
-    c(i-1) = c(i-1)*dx(i)
-    b(i)   = b(i)  *dx(i)
-    a(i+1) = a(i+1)*dx(i)
-  ENDDO
+    do i = 2, imax - 1
+        c(i - 1) = c(i - 1)*dx(i)
+        b(i) = b(i)*dx(i)
+        a(i + 1) = a(i + 1)*dx(i)
+    end do
 
-  c(imax-1) = c(imax-1)*dx(imax)
-  b(imax)   = b(imax)  *dx(imax)
-  a(1)      = a(1)     *dx(imax)
+    c(imax - 1) = c(imax - 1)*dx(imax)
+    b(imax) = b(imax)*dx(imax)
+    a(1) = a(1)*dx(imax)
 
-  RETURN
-END SUBROUTINE FDM_C1INT6P_LHS
+    return
+end subroutine FDM_C1INT6P_LHS
 
 ! #######################################################################
-! Right-hand side; forcing term 
+! Right-hand side; forcing term
 ! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C1INTVP6P_RHS(imax,jkmax, u,d)
-  
-  IMPLICIT NONE
+subroutine FDM_C1INTVP6P_RHS(imax, jkmax, u, d)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                        INTENT(IN ):: imax, jkmax
-  TREAL,    DIMENSION(jkmax,imax), INTENT(IN ):: u
-  TREAL,    DIMENSION(jkmax,imax), INTENT(OUT):: d
+    implicit none
+
+    integer(wi), intent(IN) :: imax, jkmax
+    real(wp), dimension(jkmax, imax), intent(IN) :: u
+    real(wp), dimension(jkmax, imax), intent(OUT) :: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                    :: i, jk
-  TINTEGER                                    :: im1, ip1, ip2, imm1
-  TREAL                                       :: c17189
+    integer(wi) :: i, jk
+    integer(wi) :: im1, ip1, ip2, imm1
+    real(wp) :: c17189
 
 ! #######################################################################
 
-  c17189 = C_17_R / C_189_R
+    c17189 = 17.0_wp/189.0_wp
 
-  imm1 = imax - 1 
-  DO i = 1,imax
-     im1 = i-1; im1=im1+imm1; im1=MOD(im1,imax)+1
-     ip1 = i+1; ip1=ip1+imm1; ip1=MOD(ip1,imax)+1
-     ip2 = i+2; ip2=ip2+imm1; ip2=MOD(ip2,imax)+1
+    imm1 = imax - 1
+    do i = 1, imax
+        im1 = i - 1; im1 = im1 + imm1; im1 = MOD(im1, imax) + 1
+        ip1 = i + 1; ip1 = ip1 + imm1; ip1 = MOD(ip1, imax) + 1
+        ip2 = i + 2; ip2 = ip2 + imm1; ip2 = MOD(ip2, imax) + 1
 
-     DO jk = 1,jkmax
-        d(jk,i) = (u(jk,ip1) - u(jk,i)) + c17189*(u(jk,ip2) - u(jk,im1))
-     ENDDO
+        do jk = 1, jkmax
+            d(jk, i) = (u(jk, ip1) - u(jk, i)) + c17189*(u(jk, ip2) - u(jk, im1))
+        end do
 
-  ENDDO
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C1INTVP6P_RHS
+    return
+end subroutine FDM_C1INTVP6P_RHS
 
 ! #######################################################################
 ! Right-hand side; forcing term
 ! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C1INTPV6P_RHS(imax,jkmax, u,d)
-  
-  IMPLICIT NONE
+subroutine FDM_C1INTPV6P_RHS(imax, jkmax, u, d)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                        INTENT(IN ):: imax, jkmax
-  TREAL,    DIMENSION(jkmax,imax), INTENT(IN ):: u
-  TREAL,    DIMENSION(jkmax,imax), INTENT(OUT):: d
+    implicit none
+
+    integer(wi), intent(IN) :: imax, jkmax
+    real(wp), dimension(jkmax, imax), intent(IN) :: u
+    real(wp), dimension(jkmax, imax), intent(OUT) :: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                    :: i, jk
-  TINTEGER                                    :: im1, ip1, im2, imm1
-  TREAL                                       :: c17189
+    integer(wi) :: i, jk
+    integer(wi) :: im1, ip1, im2, imm1
+    real(wp) :: c17189
 
 ! #######################################################################
 
-  c17189 = C_17_R / C_189_R
+    c17189 = 17.0_wp/189.0_wp
 
-  imm1 = imax - 1 
-  DO i = 1,imax
-     im1 = i-1; im1=im1+imm1; im1=MOD(im1,imax)+1
-     im2 = i-2; im2=im2+imm1; im2=MOD(im2,imax)+1
-     ip1 = i+1; ip1=ip1+imm1; ip1=MOD(ip1,imax)+1
+    imm1 = imax - 1
+    do i = 1, imax
+        im1 = i - 1; im1 = im1 + imm1; im1 = MOD(im1, imax) + 1
+        im2 = i - 2; im2 = im2 + imm1; im2 = MOD(im2, imax) + 1
+        ip1 = i + 1; ip1 = ip1 + imm1; ip1 = MOD(ip1, imax) + 1
 
-     DO jk = 1,jkmax
-        d(jk,i) = (u(jk,i) - u(jk,im1)) + c17189*(u(jk,ip1) - u(jk,im2))
-     ENDDO
+        do jk = 1, jkmax
+            d(jk, i) = (u(jk, i) - u(jk, im1)) + c17189*(u(jk, ip1) - u(jk, im2))
+        end do
 
-  ENDDO
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C1INTPV6P_RHS
+    return
+end subroutine FDM_C1INTPV6P_RHS

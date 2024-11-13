@@ -16,105 +16,107 @@
 !# System multiplied by 4/3 to eliminate one multiplication in the RHS.
 !#
 !########################################################################
-!# ARGUMENTS 
+!# ARGUMENTS
 !#
 !# u    In    function to be interpolated
 !# d    Out   right-hand side vector of the linear system
 !#
 !########################################################################
-#include "types.h"
 
 ! #######################################################################
 ! Left-hand side; tridiagonal matrix of the linear system
 ! #######################################################################
-SUBROUTINE FDM_C0INT6P_LHS(imax, a,b,c)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INT6P_LHS(imax, a, b, c)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                  INTENT(IN ):: imax
-  TREAL,    DIMENSION(imax), INTENT(OUT):: a,b,c
+    implicit none
+
+    integer(wi), intent(IN) :: imax
+    real(wp), dimension(imax), intent(OUT) :: a, b, c
 
 ! -------------------------------------------------------------------
-  TINTEGER i
+    integer(wi) i
 
 ! ###################################################################
-  DO i = 1,imax
-     a(i) = C_2_R / C_5_R ! 3/10
-     b(i) = C_4_R / C_3_R ! 1
-     c(i) = C_2_R / C_5_R ! 3/10
-  ENDDO
+    do i = 1, imax
+        a(i) = 2.0_wp/5.0_wp ! 3/10
+        b(i) = 4.0_wp/3.0_wp ! 1
+        c(i) = 2.0_wp/5.0_wp ! 3/10
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C0INT6P_LHS
+    return
+end subroutine FDM_C0INT6P_LHS
 
 ! #######################################################################
 ! Right-hand side; forcing term
 ! ==> interpolation from velocity to pressure grid
 ! #######################################################################
-SUBROUTINE FDM_C0INTVP6P_RHS(imax,jkmax, u,d)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INTVP6P_RHS(imax, jkmax, u, d)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                        INTENT(IN ):: imax, jkmax
-  TREAL,    DIMENSION(jkmax,imax), INTENT(IN ):: u
-  TREAL,    DIMENSION(jkmax,imax), INTENT(OUT):: d
+    implicit none
+
+    integer(wi), intent(IN) :: imax, jkmax
+    real(wp), dimension(jkmax, imax), intent(IN) :: u
+    real(wp), dimension(jkmax, imax), intent(OUT) :: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                    :: i, jk
-  TINTEGER                                    :: im1, ip1, ip2, imm1
-  TREAL                                       :: c0115
+    integer(wi) :: i, jk
+    integer(wi) :: im1, ip1, ip2, imm1
+    real(wp) :: c0115
 
 ! #######################################################################
 
-  c0115 = C_1_R / C_15_R
+    c0115 = 1.0_wp/15.0_wp
 
-  imm1 = imax - 1 
-  DO i = 1,imax
-     im1 = i-1; im1=im1+imm1; im1=MOD(im1,imax)+1
-     ip1 = i+1; ip1=ip1+imm1; ip1=MOD(ip1,imax)+1
-     ip2 = i+2; ip2=ip2+imm1; ip2=MOD(ip2,imax)+1
+    imm1 = imax - 1
+    do i = 1, imax
+        im1 = i - 1; im1 = im1 + imm1; im1 = MOD(im1, imax) + 1
+        ip1 = i + 1; ip1 = ip1 + imm1; ip1 = MOD(ip1, imax) + 1
+        ip2 = i + 2; ip2 = ip2 + imm1; ip2 = MOD(ip2, imax) + 1
 
-     DO jk = 1,jkmax
-        d(jk,i) = u(jk,ip1) + u(jk,i) + c0115*(u(jk,ip2) + u(jk,im1))
-     ENDDO
+        do jk = 1, jkmax
+            d(jk, i) = u(jk, ip1) + u(jk, i) + c0115*(u(jk, ip2) + u(jk, im1))
+        end do
 
-  ENDDO
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C0INTVP6P_RHS
+    return
+end subroutine FDM_C0INTVP6P_RHS
 
 ! #######################################################################
-! Right-hand side; forcing term 
+! Right-hand side; forcing term
 ! ==> interpolation from pressure to velocity grid
 ! #######################################################################
-SUBROUTINE FDM_C0INTPV6P_RHS(imax,jkmax, u,d)
-  
-  IMPLICIT NONE
+subroutine FDM_C0INTPV6P_RHS(imax, jkmax, u, d)
+    use TLab_Constants, only: wp, wi
 
-  TINTEGER,                        INTENT(IN ):: imax, jkmax
-  TREAL,    DIMENSION(jkmax,imax), INTENT(IN ):: u
-  TREAL,    DIMENSION(jkmax,imax), INTENT(OUT):: d
+    implicit none
+
+    integer(wi), intent(IN) :: imax, jkmax
+    real(wp), dimension(jkmax, imax), intent(IN) :: u
+    real(wp), dimension(jkmax, imax), intent(OUT) :: d
 
 ! -------------------------------------------------------------------
-  TINTEGER                                    :: i, jk
-  TINTEGER                                    :: im1, ip1, im2, imm1
-  TREAL                                       :: c0115
+    integer(wi) :: i, jk
+    integer(wi) :: im1, ip1, im2, imm1
+    real(wp) :: c0115
 
 ! #######################################################################
 
-  c0115 = C_1_R / C_15_R
+    c0115 = 1.0_wp/15.0_wp
 
-  imm1 = imax - 1 
-  DO i = 1,imax
-     im1 = i-1; im1=im1+imm1; im1=MOD(im1,imax)+1
-     im2 = i-2; im2=im2+imm1; im2=MOD(im2,imax)+1
-     ip1 = i+1; ip1=ip1+imm1; ip1=MOD(ip1,imax)+1
+    imm1 = imax - 1
+    do i = 1, imax
+        im1 = i - 1; im1 = im1 + imm1; im1 = MOD(im1, imax) + 1
+        im2 = i - 2; im2 = im2 + imm1; im2 = MOD(im2, imax) + 1
+        ip1 = i + 1; ip1 = ip1 + imm1; ip1 = MOD(ip1, imax) + 1
 
-     DO jk = 1,jkmax
-        d(jk,i) = u(jk,i) + u(jk,im1) + c0115*(u(jk,ip1) + u(jk,im2))
-     ENDDO
+        do jk = 1, jkmax
+            d(jk, i) = u(jk, i) + u(jk, im1) + c0115*(u(jk, ip1) + u(jk, im2))
+        end do
 
-  ENDDO
+    end do
 
-  RETURN
-END SUBROUTINE FDM_C0INTPV6P_RHS
+    return
+end subroutine FDM_C0INTPV6P_RHS

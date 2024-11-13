@@ -25,13 +25,13 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLab_Constants
-    use TLAB_VARS, only: g
+    use TLab_Constants, only: wp, wi, BCS_NN, efile
+    use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Arrays
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
     use DNS_ARRAYS

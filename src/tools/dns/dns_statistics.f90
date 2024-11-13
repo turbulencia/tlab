@@ -45,8 +45,8 @@ contains
         use TLab_Constants, only: tfile
         use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-        use TLab_Types, only: pointers_dt
-        use TLAB_VARS, only: g
+        use TLab_Pointers, only: pointers_dt
+        use FDM, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
         use TLAB_VARS, only: buoyancy, imode_eqns, scal_on
         use TLAB_VARS, only: froude

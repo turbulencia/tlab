@@ -21,199 +21,178 @@ module Filters_Tophat
 contains
 !########################################################################
 !########################################################################
-    subroutine FLT_T1_COEFFS(scalex, x, f, wrk1d)
-        use TLab_Types, only: filter_dt
-        real(wp), intent(IN) :: scalex
-        real(wp), dimension(*), intent(IN) :: x
-        type(filter_dt), intent(INOUT) :: f
-        real(wp), dimension(f%size, 3), intent(INOUT) :: wrk1d
+    subroutine FLT_T1_COEFFS(imax, bcsimin, bcsimax, nx, periodic, scalex, x, cxi, wrk1d)
+        integer(wi), intent(in)    :: imax, bcsimin, bcsimax
+        logical,     intent(in)    :: periodic
+        real(wp),    intent(IN)    :: scalex
+        real(wp),    intent(IN)    :: x(imax)
+        real(wp),    intent(out)   :: cxi(imax, 1)
+        integer(wi), intent(in)    :: nx               ! filter size, delta
+        real(wp),    intent(inout) :: wrk1d(imax,3)
 
 ! -----------------------------------------------------------------------
         real(wp) dum
-        integer(wi) i, ii, im, ic, ip, nx
+        integer(wi) i, ii, im, ic, ip
 
 ! #######################################################################
         wrk1d = 0.0_wp
-        nx = int(f%parameters(1)) ! delta
+        ! nx = int(f%parameters(1)) ! delta
 
-! #######################################################################
-        if (f%uniform) then ! Only valid for free bcs
-            if (.not. f%periodic) then ! I only need info for the two nodes next to the boundary
-                do i = 1, nx/2
-                    im = nx/2 - i + 1
-                    dum = 0.0_wp
-                    do ii = 1, im
-                        dum = dum + real(ii, wp)
-                    end do
-                    ip = (i - 1)*2 + 1
-                    f%coeffs(ip, 1) = dum + 0.5_wp*real(im + 1, wp)
-                    if (nx == 2) then
-                        f%coeffs(ip + 1, 1) = 0.5_wp - dum + 0.5_wp*real(im, wp)
-                    else
-                        f%coeffs(ip + 1, 1) = 1.0_wp - dum + 0.5_wp*real(im, wp)
-                    end if
-                end do
-            end if
-
-! #######################################################################
+        ! calculate delta(i)
+        do i = 1, imax - 1
+            wrk1d(i, 1) = x(i + 1) - x(i)
+        end do
+        if (periodic) then
+            wrk1d(imax, 1) = scalex - (x(imax) - x(1))
         else
-            ! calculate delta(i)
-            do i = 1, f%size - 1
-                wrk1d(i, 1) = x(i + 1) - x(i)
+            wrk1d(imax, 1) = wrk1d(imax - 1, 1)
+        end if
+        ! calculate deltasum(i) = delta(i-1)+delta(i)
+        do i = 2, imax
+            wrk1d(i, 2) = wrk1d(i - 1, 1) + wrk1d(i, 1)
+        end do
+        if (periodic) then
+            wrk1d(1, 2) = wrk1d(imax, 1) + wrk1d(1, 1)
+        else
+            wrk1d(1, 2) = wrk1d(1, 1)*2.0_wp
+        end if
+        ! calculate deltaf(i) = delta(i-nx/2) + delta(i-nx/2+1) + ... + delta(i+nx/2-1)
+        if (periodic) then
+            do i = 1, imax
+                wrk1d(i, 3) = 0.0_wp
+                do ii = i - nx/2, i + nx/2 - 1
+                    im = ii + imax - 1
+                    im = mod(im, imax) + 1
+                    wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(im, 1)
+                end do
             end do
-            if (f%periodic) then
-                wrk1d(f%size, 1) = scalex - (x(f%size) - x(1))
-            else
-                wrk1d(f%size, 1) = wrk1d(f%size - 1, 1)
-            end if
-            ! calculate deltasum(i) = delta(i-1)+delta(i)
-            do i = 2, f%size
-                wrk1d(i, 2) = wrk1d(i - 1, 1) + wrk1d(i, 1)
+        else
+            do i = 1, nx/2
+                wrk1d(i, 3) = wrk1d(1, 1)*real(nx/2 - i + 1, wp)
+                do ii = 1, i + nx/2 - 1
+                    wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(ii, 1)
+                end do
             end do
-            if (f%periodic) then
-                wrk1d(1, 2) = wrk1d(f%size, 1) + wrk1d(1, 1)
-            else
-                wrk1d(1, 2) = wrk1d(1, 1)*2.0_wp
-            end if
-            ! calculate deltaf(i) = delta(i-nx/2) + delta(i-nx/2+1) + ... + delta(i+nx/2-1)
-            if (f%periodic) then
-                do i = 1, f%size
-                    wrk1d(i, 3) = 0.0_wp
-                    do ii = i - nx/2, i + nx/2 - 1
-                        im = ii + f%size - 1
-                        im = mod(im, f%size) + 1
-                        wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(im, 1)
-                    end do
+            do i = 1 + nx/2, imax - nx/2
+                do ii = i - nx/2, i + nx/2 - 1
+                    wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(ii, 1)
                 end do
-            else
-                do i = 1, nx/2
-                    wrk1d(i, 3) = wrk1d(1, 1)*real(nx/2 - i + 1, wp)
-                    do ii = 1, i + nx/2 - 1
-                        wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(ii, 1)
-                    end do
+            end do
+            do i = imax - nx/2 + 1, imax
+                wrk1d(i, 3) = wrk1d(imax, 1)*real(nx/2 - (imax - i), wp)
+                do ii = i - nx/2, imax - 1
+                    wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(ii, 1)
                 end do
-                do i = 1 + nx/2, f%size - nx/2
-                    do ii = i - nx/2, i + nx/2 - 1
-                        wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(ii, 1)
-                    end do
-                end do
-                do i = f%size - nx/2 + 1, f%size
-                    wrk1d(i, 3) = wrk1d(f%size, 1)*real(nx/2 - (f%size - i), wp)
-                    do ii = i - nx/2, f%size - 1
-                        wrk1d(i, 3) = wrk1d(i, 3) + wrk1d(ii, 1)
-                    end do
-                end do
-            end if
+            end do
+        end if
 
 ! -----------------------------------------------------------------------
 !    construct the coefficients array as if periodic; corrections for nonperiodic below
-            do i = 1, f%size
-                ii = i - nx/2               ! I need to use delta(ii)
-                im = ii + f%size - 1          ! The index im deals with periodicity
-                im = mod(im, f%size) + 1
+        do i = 1, imax
+            ii = i - nx/2               ! I need to use delta(ii)
+            im = ii + imax - 1          ! The index im deals with periodicity
+            im = mod(im, imax) + 1
+            ic = ii - i + nx/2 + 1
+            ip = (i - 1)*(nx + 1) + ic
+            cxi(ip, 1) = 0.5_wp*wrk1d(im, 1)/wrk1d(i, 3)
+
+            do ii = i - nx/2 + 1, i + nx/2 - 1 ! I need to use deltasum(ii)
+                im = ii + imax - 1       ! The index im deals with periodicity
+                im = mod(im, imax) + 1
                 ic = ii - i + nx/2 + 1
                 ip = (i - 1)*(nx + 1) + ic
-                f%coeffs(ip, 1) = 0.5_wp*wrk1d(im, 1)/wrk1d(i, 3)
-
-                do ii = i - nx/2 + 1, i + nx/2 - 1 ! I need to use deltasum(ii)
-                    im = ii + f%size - 1       ! The index im deals with periodicity
-                    im = mod(im, f%size) + 1
-                    ic = ii - i + nx/2 + 1
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = 0.5_wp*wrk1d(im, 2)/wrk1d(i, 3)
-                end do
-
-                ii = i + nx/2               ! I need to use delta(ii-1)
-                im = (ii - 1) + f%size - 1      ! The index im deals with periodicity
-                im = mod(im, f%size) + 1
-                ic = ii - i + nx/2 + 1
-                ip = (i - 1)*(nx + 1) + ic
-                f%coeffs(ip, 1) = 0.5_wp*wrk1d(im, 1)/wrk1d(i, 3)
-
+                cxi(ip, 1) = 0.5_wp*wrk1d(im, 2)/wrk1d(i, 3)
             end do
+
+            ii = i + nx/2               ! I need to use delta(ii-1)
+            im = (ii - 1) + imax - 1      ! The index im deals with periodicity
+            im = mod(im, imax) + 1
+            ic = ii - i + nx/2 + 1
+            ip = (i - 1)*(nx + 1) + ic
+            cxi(ip, 1) = 0.5_wp*wrk1d(im, 1)/wrk1d(i, 3)
+
+        end do
 
 ! -----------------------------------------------------------------------
 ! boundary treatment
-            select case (f%BcsMin)
+        select case (bcsimin)
 
-            case (DNS_FILTER_BCS_FREE)
-                do i = 1, nx/2
-                    im = nx/2 - i + 1
-                    dum = 0.0_wp
-                    do ii = 1, im
-                        dum = dum + real(ii, wp)
-                    end do
-                    ic = nx/2 - i + 2
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = f%coeffs(ip, 1) + &
-                                      0.5_wp*(wrk1d(1, 2)*(dum - 1.0_wp) + wrk1d(1, 1)*real(im + 1, wp))/wrk1d(i, 3)
-                    ic = nx/2 - i + 3
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = f%coeffs(ip, 1) - &
-                                      0.5_wp*(wrk1d(1, 2)*(dum - real(im, wp)) + wrk1d(1, 1)*real(im, wp))/wrk1d(i, 3)
-! pad with ceros
-                    do ic = 1, nx/2 - i + 1
-                        ip = (i - 1)*(nx + 1) + ic
-                        f%coeffs(ip, 1) = 0.0_wp
-                    end do
+        case (DNS_FILTER_BCS_FREE)
+            do i = 1, nx/2
+                im = nx/2 - i + 1
+                dum = 0.0_wp
+                do ii = 1, im
+                    dum = dum + real(ii, wp)
                 end do
-
-            case (DNS_FILTER_BCS_SOLID)
-                do i = 1, nx/2
-                    im = nx/2 - i + 1
-                    ic = nx/2 - i + 2
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = 0.5_wp*real(2*im + 1, wp)*wrk1d(1, 1)/wrk1d(i, 3)
+                ic = nx/2 - i + 2
+                ip = (i - 1)*(nx + 1) + ic
+                cxi(ip, 1) = cxi(ip, 1) + &
+                             0.5_wp*(wrk1d(1, 2)*(dum - 1.0_wp) + wrk1d(1, 1)*real(im + 1, wp))/wrk1d(i, 3)
+                ic = nx/2 - i + 3
+                ip = (i - 1)*(nx + 1) + ic
+                cxi(ip, 1) = cxi(ip, 1) - &
+                             0.5_wp*(wrk1d(1, 2)*(dum - real(im, wp)) + wrk1d(1, 1)*real(im, wp))/wrk1d(i, 3)
 ! pad with ceros
-                    do ic = 1, nx/2 - i + 1
-                        ip = (i - 1)*(nx + 1) + ic
-                        f%coeffs(ip, 1) = 0.0_wp
-                    end do
+                do ic = 1, nx/2 - i + 1
+                    ip = (i - 1)*(nx + 1) + ic
+                    cxi(ip, 1) = 0.0_wp
                 end do
+            end do
 
-            end select
+        case (DNS_FILTER_BCS_SOLID)
+            do i = 1, nx/2
+                im = nx/2 - i + 1
+                ic = nx/2 - i + 2
+                ip = (i - 1)*(nx + 1) + ic
+                cxi(ip, 1) = 0.5_wp*real(2*im + 1, wp)*wrk1d(1, 1)/wrk1d(i, 3)
+! pad with ceros
+                do ic = 1, nx/2 - i + 1
+                    ip = (i - 1)*(nx + 1) + ic
+                    cxi(ip, 1) = 0.0_wp
+                end do
+            end do
+
+        end select
 
 ! -----------------------------------------------------------------------
-            select case (f%BcsMax)
+        select case (bcsimax)
 
-            case (DNS_FILTER_BCS_FREE)
-                do i = f%size - nx/2 + 1, f%size
-                    im = i - f%size + nx/2
-                    dum = 0.0_wp
-                    do ii = 1, im
-                        dum = dum + real(ii, wp)
-                    end do
-                    ic = nx + 1 - im - 1
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = f%coeffs(ip, 1) - &
-                                      0.5_wp*(wrk1d(f%size, 2)*(dum - real(im, wp)) + wrk1d(f%size, 1)*real(im, wp))/wrk1d(i, 3)
-                    ic = nx + 1 - im
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = f%coeffs(ip, 1) + &
-                                      0.5_wp*(wrk1d(f%size, 2)*(dum - 1.0_wp) + wrk1d(f%size, 1)*real(im + 1, wp))/wrk1d(i, 3)
-! pad with ceros
-                    do ic = nx + 1 - im + 1, nx + 1
-                        ip = (i - 1)*(nx + 1) + ic
-                        f%coeffs(ip, 1) = 0.0_wp
-                    end do
+        case (DNS_FILTER_BCS_FREE)
+            do i = imax - nx/2 + 1, imax
+                im = i - imax + nx/2
+                dum = 0.0_wp
+                do ii = 1, im
+                    dum = dum + real(ii, wp)
                 end do
-
-            case (DNS_FILTER_BCS_SOLID)
-                do i = f%size - nx/2 + 1, f%size
-                    im = i - f%size + nx/2
-                    ic = nx + 1 - im
-                    ip = (i - 1)*(nx + 1) + ic
-                    f%coeffs(ip, 1) = 0.5_wp*real(2*im + 1, wp)*wrk1d(f%size, 1)/wrk1d(i, 3)
+                ic = nx + 1 - im - 1
+                ip = (i - 1)*(nx + 1) + ic
+                cxi(ip, 1) = cxi(ip, 1) - &
+                             0.5_wp*(wrk1d(imax, 2)*(dum - real(im, wp)) + wrk1d(imax, 1)*real(im, wp))/wrk1d(i, 3)
+                ic = nx + 1 - im
+                ip = (i - 1)*(nx + 1) + ic
+                cxi(ip, 1) = cxi(ip, 1) + &
+                             0.5_wp*(wrk1d(imax, 2)*(dum - 1.0_wp) + wrk1d(imax, 1)*real(im + 1, wp))/wrk1d(i, 3)
 ! pad with ceros
-                    do ic = nx + 1 - im + 1, nx + 1
-                        ip = (i - 1)*(nx + 1) + ic
-                        f%coeffs(ip, 1) = 0.0_wp
-                    end do
+                do ic = nx + 1 - im + 1, nx + 1
+                    ip = (i - 1)*(nx + 1) + ic
+                    cxi(ip, 1) = 0.0_wp
                 end do
+            end do
 
-            end select
+        case (DNS_FILTER_BCS_SOLID)
+            do i = imax - nx/2 + 1, imax
+                im = i - imax + nx/2
+                ic = nx + 1 - im
+                ip = (i - 1)*(nx + 1) + ic
+                cxi(ip, 1) = 0.5_wp*real(2*im + 1, wp)*wrk1d(imax, 1)/wrk1d(i, 3)
+! pad with ceros
+                do ic = nx + 1 - im + 1, nx + 1
+                    ip = (i - 1)*(nx + 1) + ic
+                    cxi(ip, 1) = 0.0_wp
+                end do
+            end do
 
-        end if
+        end select
 
         return
     end subroutine FLT_T1_COEFFS

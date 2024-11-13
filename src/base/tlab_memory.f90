@@ -5,16 +5,15 @@ module TLab_Arrays
     implicit none
     save
 
-    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)     ! Grid and associated arrays
-    real(wp), allocatable :: q(:, :)                       ! Eulerian fields, flow vartiables
-    real(wp), allocatable :: s(:, :)                       ! Eulerian fields, scalar variables
-    real(wp), allocatable :: txc(:, :)                     ! Temporary space for Eulerian fields
-    real(wp), allocatable :: wrk1d(:, :)                   ! Work arrays (scratch space)
-    real(wp), allocatable :: wrk2d(:, :)                   ! Work arrays (scratch space)
-    real(wp), allocatable :: wrk3d(:)                      ! Work arrays (scratch space)
+    real(wp), allocatable :: x(:, :), y(:, :), z(:, :)      ! Grid and associated arrays
+    real(wp), allocatable :: q(:, :)                        ! Eulerian fields, flow vartiables
+    real(wp), allocatable :: s(:, :)                        ! Eulerian fields, scalar variables
+    real(wp), allocatable :: txc(:, :)                      ! Temporary space for Eulerian fields
+    real(wp), allocatable :: wrk1d(:, :)                    ! Work arrays (scratch space)
+    real(wp), allocatable :: wrk2d(:, :)                    ! Work arrays (scratch space)
+    real(wp), allocatable :: wrk3d(:)                       ! Work arrays (scratch space)
     real(wp), allocatable :: wrkdea(:, :)                   ! Work arrays for dealiasing (scratch space)
 
-    target x, y, z
     target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
 
 end module TLab_Arrays
@@ -24,6 +23,12 @@ end module TLab_Arrays
 module TLab_Pointers
     use TLab_Constants, only: wp
     implicit none
+
+    type :: pointers_dt
+        sequence
+        character(len=32) :: tag
+        real(wp), pointer :: field(:)
+    end type pointers_dt
 
     real(wp), pointer :: u(:) => null()
     real(wp), pointer :: v(:) => null()
@@ -51,6 +56,12 @@ end module TLab_Pointers
 module TLab_Pointers_3D
     use TLab_Constants, only: wp
     implicit none
+
+    type :: pointers3d_dt
+        sequence
+        character(len=32) :: tag
+        real(wp), pointer :: field(:, :, :)
+    end type pointers3d_dt
 
     real(wp), pointer :: u(:, :, :) => null()
     real(wp), pointer :: v(:, :, :) => null()
@@ -97,13 +108,12 @@ end module TLab_Pointers_C
 
 module TLab_Memory
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
-    use TLAB_VARS, only: g
+    use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, inb_flow_array, inb_scal_array
     use TLAB_VARS, only: isize_txc_field, inb_txc, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d
     use TLAB_VARS, only: Dealiasing
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
     save
@@ -153,10 +163,6 @@ contains
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-
-        call TLab_Allocate_Real(C_FILE_LOC, x, [g(1)%size, g(1)%inb_grid], g(1)%name)
-        call TLab_Allocate_Real(C_FILE_LOC, y, [g(2)%size, g(2)%inb_grid], g(2)%name)
-        call TLab_Allocate_Real(C_FILE_LOC, z, [g(3)%size, g(3)%inb_grid], g(3)%name)
 
         call TLab_Allocate_Real(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')
         call TLab_Allocate_Real(C_FILE_LOC, s, [isize_field, inb_scal_array], 'scal')

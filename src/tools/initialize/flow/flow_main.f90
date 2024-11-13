@@ -4,16 +4,18 @@
 #define C_FILE_LOC "INIFLOW"
 
 program INIFLOW
-    use TLab_Constants
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
     use TLAB_VARS
     use TLab_Arrays
     use TLab_Pointers, only: e, rho, p, T
-    use TLab_WorkFlow
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_THERMAL
     use THERMO_CALORIC
@@ -46,10 +48,10 @@ program INIFLOW
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call TLab_Initialize_Background()
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel

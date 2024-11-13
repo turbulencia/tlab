@@ -8,7 +8,7 @@ subroutine DNS_FILTER()
     use TLAB_VARS, only: imode_eqns, imode_sim
     use TLAB_VARS, only: itime, rtime
     use TLAB_VARS, only: FilterDomain
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLab_Arrays
     use OPR_FILTERS
     use DNS_LOCAL, only: DNS_BOUNDS_LIMIT

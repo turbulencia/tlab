@@ -23,10 +23,8 @@ SUBROUTINE TRIDINV(size,a,inv)
 
   IMPLICIT NONE
 
-#include "types.h"
-
   TINTEGER size
-  TREAL a(size), inv(size,size)
+  real(wp) a(size), inv(size,size)
 
 ! -----------------------------------------------------------------------
   TINTEGER icol, iraw
