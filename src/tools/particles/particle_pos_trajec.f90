@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -31,9 +30,9 @@
 !########################################################################
 program PARTICLE_POS_TRAJEC
 
-    use TLAB_CONSTANTS
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err
@@ -68,19 +67,19 @@ program PARTICLE_POS_TRAJEC
 
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-    call Particle_Initialize_Parameters('tlab.ini')
-
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call Particle_Initialize_Parameters(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
+    call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'Start', '0', nitera_first)
 
     call Particle_Initialize_Memory(C_FILE_LOC)
 
@@ -91,10 +90,10 @@ program PARTICLE_POS_TRAJEC
     allocate (l_traj(3, isize_traj))
     allocate (all_l_traj(3, isize_traj))
 
-    l_traj(:, :) = C_0_R
-    all_l_traj(:, :) = C_0_R
-    dummy_proc(:) = C_0_R
-    all_dummy_proc(:) = C_0_R
+    l_traj(:, :) = 0.0_wp
+    all_l_traj(:, :) = 0.0_wp
+    dummy_proc(:) = 0.0_wp
+    all_dummy_proc(:) = 0.0_wp
 
 !#######################################################################
 !READ THE (FIRST) FILE
@@ -172,5 +171,5 @@ program PARTICLE_POS_TRAJEC
 
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

@@ -6,8 +6,8 @@
 !# and terms in its evolution equation.
 !########################################################################
 module FI_VORTICITY_EQN
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: g
+    use TLab_Constants, only: wp, wi
+    use FDM, only: g
     use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL
     implicit none

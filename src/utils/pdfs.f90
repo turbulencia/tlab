@@ -1,5 +1,5 @@
 module PDFS
-    use TLAB_CONSTANTS, only: wp, wi, big_wp
+    use TLab_Constants, only: wp, wi, big_wp
 #ifdef USE_MPI
     use MPI
 #endif

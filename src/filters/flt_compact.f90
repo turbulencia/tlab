@@ -1,20 +1,20 @@
-#include "types.h"
 #include "dns_const.h"
 
 ! Compact filters following Lele, JCP, 1992
-module FLT_COMPACT
+module Filters_Compact
+    use TLab_Constants, only: wp, wi
     implicit none
     private
 
     ! constants for the cutoff filter
-    TREAL, parameter :: C4_ALPHA = 0.6522474d0
-    TREAL, parameter :: C4_BETA = 0.1702929d0
-    TREAL, parameter :: C4_A = 0.9891856d0
-    TREAL, parameter :: C4_BD2 = 0.66059d0    ! 1.321180 /2
-    TREAL, parameter :: C4_CD2 = 0.1666774d0  ! 0.3333548 /2
-    TREAL, parameter :: C4_DD2 = 0.679925d-3  ! 0.001359850 /2
+    real(wp), parameter :: C4_ALPHA = 0.6522474d0
+    real(wp), parameter :: C4_BETA = 0.1702929d0
+    real(wp), parameter :: C4_A = 0.9891856d0
+    real(wp), parameter :: C4_BD2 = 0.66059d0    ! 1.321180 /2
+    real(wp), parameter :: C4_CD2 = 0.1666774d0  ! 0.3333548 /2
+    real(wp), parameter :: C4_DD2 = 0.679925d-3  ! 0.001359850 /2
 
-    TINTEGER i
+    integer(wi) i
 
     public :: FLT_C4_LHS, FLT_C4_RHS_COEFFS, FLT_C4_RHS
     public :: FLT_C4_CUTOFF_LHS, FLT_C4_CUTOFF_RHS, FLT_C4P_CUTOFF_LHS, FLT_C4P_CUTOFF_RHS
@@ -28,109 +28,109 @@ contains
 !#
 !########################################################################
     subroutine FLT_C4_LHS(imax, bcsimin, bcsimax, alpha, a, b, c)
-        TINTEGER, intent(in) :: imax, bcsimin, bcsimax
-        TREAL, intent(in) :: alpha
-        TREAL, intent(out) :: a(imax), b(imax), c(imax)
+        integer(wi), intent(in) :: imax, bcsimin, bcsimax
+        real(wp), intent(in) :: alpha
+        real(wp), intent(out) :: a(imax), b(imax), c(imax)
 
         a(:) = alpha
-        b(:) = C_1_R
+        b(:) = 1.0_wp
         c(:) = alpha
 
         if (bcsimin == DNS_FILTER_BCS_ZERO) then
-            c(1) = C_0_R
+            c(1) = 0.0_wp
         end if
 
         if (bcsimax == DNS_FILTER_BCS_ZERO) then
-            a(imax) = C_0_R
+            a(imax) = 0.0_wp
         end if
 
         return
     end subroutine FLT_C4_LHS
 
     subroutine FLT_C4_RHS_COEFFS(imax, alpha, periodic, dx, cxi)
-        TINTEGER, intent(in) :: imax
-        TREAL, intent(in) :: alpha
+        integer(wi), intent(in) :: imax
+        real(wp), intent(in) :: alpha
         logical, intent(in) :: periodic
-        TREAL, dimension(imax), intent(IN) :: dx
-        TREAL, dimension(imax, 5), intent(out) :: cxi
+        real(wp), dimension(imax), intent(IN) :: dx
+        real(wp), dimension(imax, 5), intent(out) :: cxi
 
         ! -----------------------------------------------------------------------
-        TREAL ac_loc
+        real(wp) ac_loc
 
         ! #######################################################################
         ! Calculate constants for RHS, interior point
         ! #######################################################################
-        ac_loc = (C_5_R + C_6_R*alpha)/C_8_R
+        ac_loc = (5.0_wp + 6.0_wp*alpha)/8.0_wp
 
         i = 1
-        cxi(i, 1) = (ac_loc - C_1_R)*dx(i)*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
+        cxi(i, 1) = (ac_loc - 1.0_wp)*dx(i)*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
                     (dx(i)*(dx(i) + dx(i) + dx(i + 1))* &
                      (dx(i) + dx(i) + dx(i + 1) + dx(i + 2)))
         cxi(i, 2) = alpha &
-                    + (C_1_R - ac_loc)*(dx(i) + dx(1))**2*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
+                    + (1.0_wp - ac_loc)*(dx(i) + dx(1))**2*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
                     (dx(i)*dx(i)*(dx(i) + dx(i + 1))*(dx(i) + dx(i) + dx(i + 1) + dx(i + 2))) &
-                    + (ac_loc - C_1_R)*(dx(i) + dx(i))*dx(i + 1)*(dx(i + 1) + dx(i + 2))**2/ &
+                    + (ac_loc - 1.0_wp)*(dx(i) + dx(i))*dx(i + 1)*(dx(i + 1) + dx(i + 2))**2/ &
                     (dx(i)*(dx(i) + dx(i + 1))*(dx(i) + dx(i + 1) + dx(i + 2))* &
                      (dx(i) + dx(i) + dx(i + 1) + dx(i + 2)))
         cxi(i, 3) = ac_loc
-        cxi(i, 4) = alpha + (C_1_R - ac_loc)*dx(i) &
+        cxi(i, 4) = alpha + (1.0_wp - ac_loc)*dx(i) &
                     *(dx(i) + dx(1))*(dx(i + 1) + dx(i + 2))/ &
                     (dx(i + 2)*(dx(i) + dx(i + 1))*(dx(i) + dx(1) + dx(i + 1)))
-        cxi(i, 5) = (ac_loc - C_1_R)*dx(i)*(dx(i) + dx(i))*dx(i + 1)/ &
+        cxi(i, 5) = (ac_loc - 1.0_wp)*dx(i)*(dx(i) + dx(i))*dx(i + 1)/ &
                     (dx(i + 2)*(dx(i) + dx(i + 1) + dx(i + 2))*(dx(i) + dx(i) + &
                                                                 dx(i + 1) + dx(i + 2)))
 
         do i = 2, imax - 2
-            cxi(i, 1) = (ac_loc - C_1_R)*dx(i)*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
+            cxi(i, 1) = (ac_loc - 1.0_wp)*dx(i)*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
                         (dx(i - 1)*(dx(i) + dx(i - 1) + dx(i + 1))* &
                          (dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 2)))
-            cxi(i, 2) = alpha + (C_1_R - ac_loc) &
+            cxi(i, 2) = alpha + (1.0_wp - ac_loc) &
                         *(dx(i) + dx(i - 1))**2*dx(i + 1)*(dx(i + 1) + dx(i + 2))/ &
                         (dx(i)*dx(i - 1)*(dx(i) + dx(i + 1))*(dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 2))) &
-                        + (ac_loc - C_1_R)*(dx(i) + dx(i - 1))*dx(i + 1)*(dx(i + 1) + dx(i + 2))**2/ &
+                        + (ac_loc - 1.0_wp)*(dx(i) + dx(i - 1))*dx(i + 1)*(dx(i + 1) + dx(i + 2))**2/ &
                         (dx(i)*(dx(i) + dx(i + 1))*(dx(i) + dx(i + 1) + dx(i + 2))* &
                          (dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 2)))
             cxi(i, 3) = ac_loc
-            cxi(i, 4) = alpha + (C_1_R - ac_loc) &
+            cxi(i, 4) = alpha + (1.0_wp - ac_loc) &
                         *dx(i)*(dx(i) + dx(i - 1))*(dx(i + 1) + dx(i + 2))/ &
                         (dx(i + 2)*(dx(i) + dx(i + 1))*(dx(i) + dx(i - 1) + dx(i + 1)))
-            cxi(i, 5) = (ac_loc - C_1_R)*dx(i)*(dx(i) + dx(i - 1))*dx(i + 1)/ &
+            cxi(i, 5) = (ac_loc - 1.0_wp)*dx(i)*(dx(i) + dx(i - 1))*dx(i + 1)/ &
                         (dx(i + 2)*(dx(i) + dx(i + 1) + dx(i + 2))* &
                          (dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 2)))
         end do
 
         i = imax - 1
-        cxi(i, 1) = (ac_loc - C_1_R)*dx(i)*dx(i + 1)*(dx(i + 1) + dx(i + 1))/ &
+        cxi(i, 1) = (ac_loc - 1.0_wp)*dx(i)*dx(i + 1)*(dx(i + 1) + dx(i + 1))/ &
                     (dx(i - 1)*(dx(i) + dx(i - 1) + dx(i + 1))* &
                      (dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 1)))
         cxi(i, 2) = alpha &
-                    + (C_1_R - ac_loc)*(dx(i) + dx(i - 1))**2*dx(i + 1)*(dx(i + 1) + dx(i + 1))/ &
+                    + (1.0_wp - ac_loc)*(dx(i) + dx(i - 1))**2*dx(i + 1)*(dx(i + 1) + dx(i + 1))/ &
                     (dx(i)*dx(i - 1)*(dx(i) + dx(i + 1))*(dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 1))) &
-                    + (ac_loc - C_1_R)*(dx(i) + dx(i - 1))*dx(i + 1)*(dx(i + 1) + dx(i + 1))**2/ &
+                    + (ac_loc - 1.0_wp)*(dx(i) + dx(i - 1))*dx(i + 1)*(dx(i + 1) + dx(i + 1))**2/ &
                     (dx(i)*(dx(i) + dx(i + 1))*(dx(i) + dx(i + 1) + dx(i + 1))* &
                      (dx(i) + dx(i - 1) + dx(i + 1) + dx(i + 1)))
         cxi(i, 3) = ac_loc
-        cxi(i, 4) = alpha + (C_1_R - ac_loc) &
+        cxi(i, 4) = alpha + (1.0_wp - ac_loc) &
                     *dx(i)*(dx(i) + dx(i - 1))*(dx(i + 1) + dx(i + 1))/ &
                     (dx(i + 1)*(dx(i) + dx(i + 1))*(dx(i) + dx(i - 1) + dx(i + 1)))
-        cxi(i, 5) = (ac_loc - C_1_R)*dx(i)*(dx(i) + dx(i - 1))*dx(i + 1)/ &
+        cxi(i, 5) = (ac_loc - 1.0_wp)*dx(i)*(dx(i) + dx(i - 1))*dx(i + 1)/ &
                     (dx(i + 1)*(dx(i) + dx(i + 1) + dx(i + 1))*(dx(i) + dx(i - 1) + &
                                                                 dx(i + 1) + dx(i + 1)))
 
         i = imax
-        cxi(i, 1) = (ac_loc - C_1_R)*dx(i)*dx(i)*(dx(i) + dx(i))/ &
+        cxi(i, 1) = (ac_loc - 1.0_wp)*dx(i)*dx(i)*(dx(i) + dx(i))/ &
                     (dx(i - 1)*(dx(i) + dx(i - 1) + dx(i))* &
                      (dx(i) + dx(i - 1) + dx(i) + dx(i)))
         cxi(i, 2) = alpha &
-                    + (C_1_R - ac_loc)*(dx(i) + dx(i - 1))**2*dx(i)*(dx(i) + dx(i))/ &
+                    + (1.0_wp - ac_loc)*(dx(i) + dx(i - 1))**2*dx(i)*(dx(i) + dx(i))/ &
                     (dx(i)*dx(i - 1)*(dx(i) + dx(i))*(dx(i) + dx(i - 1) + dx(i) + dx(i))) &
-                    + (ac_loc - C_1_R)*(dx(i) + dx(i - 1))*dx(i)*(dx(i) + dx(i))**2/ &
+                    + (ac_loc - 1.0_wp)*(dx(i) + dx(i - 1))*dx(i)*(dx(i) + dx(i))**2/ &
                     (dx(i)*(dx(i) + dx(i))*(dx(i) + dx(i) + dx(i))* &
                      (dx(i) + dx(i - 1) + dx(i) + dx(i)))
         cxi(i, 3) = ac_loc
-        cxi(i, 4) = alpha + (C_1_R - ac_loc)*dx(i)*(dx(i) + dx(i - 1))*(dx(i) + dx(i))/ &
+        cxi(i, 4) = alpha + (1.0_wp - ac_loc)*dx(i)*(dx(i) + dx(i - 1))*(dx(i) + dx(i))/ &
                     (dx(i)*(dx(i) + dx(i))*(dx(i) + dx(i - 1) + dx(i)))
-        cxi(i, 5) = (ac_loc - C_1_R)*dx(i)*(dx(i) + dx(i - 1))*dx(i)/ &
+        cxi(i, 5) = (ac_loc - 1.0_wp)*dx(i)*(dx(i) + dx(i - 1))*dx(i)/ &
                     (dx(i)*(dx(i) + dx(i) + dx(i))*(dx(i) + dx(i - 1) + &
                                                     dx(i) + dx(i)))
 
@@ -141,28 +141,28 @@ contains
 
             ! -----------------------------------------------------------------------
             i = 1
-            ac_loc = (C_15_R + alpha)/C_16_R
+            ac_loc = (15.0_wp + alpha)/16.0_wp
 
             cxi(i, 1) = ac_loc
-            cxi(i, 2) = alpha + (C_1_R - ac_loc) &
+            cxi(i, 2) = alpha + (1.0_wp - ac_loc) &
                         *(dx(2) + dx(3))*(dx(2) + dx(3) + dx(4))* &
                         (dx(2) + dx(3) + dx(4) + dx(5))/(dx(3)*(dx(3) + dx(4))*(dx(3) + dx(4) + dx(5)))
-            cxi(i, 3) = (ac_loc - C_1_R) &
+            cxi(i, 3) = (ac_loc - 1.0_wp) &
                         *dx(2)*(dx(2) + dx(3) + dx(4))*(dx(2) + dx(3) + dx(4) + dx(5))/ &
                         (dx(3)*dx(4)*(dx(4) + dx(5)))
-            cxi(i, 4) = (C_1_R - ac_loc)*dx(2)*(dx(2) + dx(3))*(dx(2) + dx(3) + dx(4) + dx(5))/ &
+            cxi(i, 4) = (1.0_wp - ac_loc)*dx(2)*(dx(2) + dx(3))*(dx(2) + dx(3) + dx(4) + dx(5))/ &
                         (dx(4)*dx(5)*(dx(3) + dx(4)))
-            cxi(i, 5) = (ac_loc - C_1_R)*dx(2)*(dx(2) + dx(3))*(dx(2) + dx(3) + dx(4))/ &
+            cxi(i, 5) = (ac_loc - 1.0_wp)*dx(2)*(dx(2) + dx(3))*(dx(2) + dx(3) + dx(4))/ &
                         (dx(5)*(dx(4) + dx(5))*(dx(3) + dx(4) + dx(5)))
 
             ! -----------------------------------------------------------------------
             i = 2
-            ac_loc = (C_3_R + C_2_R*alpha)/C_4_R
+            ac_loc = (3.0_wp + 2.0_wp*alpha)/4.0_wp
 
-            cxi(i, 1) = alpha + (C_1_R &
+            cxi(i, 1) = alpha + (1.0_wp &
                                  - ac_loc)*dx(3)*(dx(3) + dx(4))*(dx(3) + dx(4) + dx(5))/ &
                         ((dx(2) + dx(3))*(dx(2) + dx(3) + dx(4))*dx(5)) &
-                        + (-C_1_R + ac_loc) &
+                        + (-1.0_wp + ac_loc) &
                         *dx(3)*(dx(3) + dx(4))*(dx(3) + dx(4) + dx(5))/ &
                         ((dx(2) + dx(3))*dx(5)*(dx(2) + dx(3) + dx(4) + dx(5)))
             cxi(i, 2) = ac_loc
@@ -170,49 +170,49 @@ contains
                         ((dx(2) + dx(3))*dx(4)*(dx(4) + dx(5))) &
                         - ac_loc*dx(2)*(dx(3) + dx(4))*(dx(3) + dx(4) + dx(5))/ &
                         ((dx(2) + dx(3))*dx(4)*(dx(4) + dx(5)))
-            cxi(i, 4) = (-C_1_R + ac_loc)*dx(2)*dx(3)*(dx(3) + dx(4) + dx(5))/ &
+            cxi(i, 4) = (-1.0_wp + ac_loc)*dx(2)*dx(3)*(dx(3) + dx(4) + dx(5))/ &
                         (dx(4)*(dx(2) + dx(3) + dx(4))*dx(5))
-            cxi(i, 5) = (C_1_R - ac_loc)*dx(2)*dx(3)*(dx(3) + dx(4))/ &
+            cxi(i, 5) = (1.0_wp - ac_loc)*dx(2)*dx(3)*(dx(3) + dx(4))/ &
                         (dx(5)*(dx(4) + dx(5))*(dx(2) + dx(3) + dx(4) + dx(5)))
 
             ! -----------------------------------------------------------------------
             i = imax - 1
-            ac_loc = (C_3_R + C_2_R*alpha)/C_4_R
+            ac_loc = (3.0_wp + 2.0_wp*alpha)/4.0_wp
 
-            cxi(i, 5) = alpha + (C_1_R - ac_loc)* &
+            cxi(i, 5) = alpha + (1.0_wp - ac_loc)* &
                         dx(i)*(dx(i) + dx(i - 1))*(dx(i) + dx(i - 1) + dx(i - 2))/ &
                         ((dx(i) + dx(i + 1))*(dx(i) + dx(i - 1) + dx(i + 1))* &
                          (dx(i) + dx(i - 1) + dx(i - 2) + dx(i + 1)))
             cxi(i, 4) = ac_loc
-            cxi(i, 3) = alpha + (C_1_R - ac_loc)* &
+            cxi(i, 3) = alpha + (1.0_wp - ac_loc)* &
                         (dx(i) + dx(i - 1))*(dx(i) + dx(i - 1) + dx(i - 2))*dx(i + 1)/ &
                         (dx(i - 1)*dx(i - 2)*(dx(i) + dx(i + 1))) &
-                        + (-C_1_R + ac_loc)*(dx(i) + dx(i - 1))* &
+                        + (-1.0_wp + ac_loc)*(dx(i) + dx(i - 1))* &
                         (dx(i) + dx(i - 1) + dx(i - 2))*dx(i + 1)/ &
                         (dx(i - 2)*(dx(i - 1) + dx(i - 2))*(dx(i) + dx(i + 1)))
-            cxi(i, 2) = (-C_1_R + ac_loc) &
+            cxi(i, 2) = (-1.0_wp + ac_loc) &
                         *dx(i)*(dx(i) + dx(i - 1) + dx(i - 2))*dx(i + 1)/ &
                         (dx(i - 1)*dx(i - 2)*(dx(i) + dx(i - 1) + dx(i + 1)))
-            cxi(i, 1) = (C_1_R - ac_loc)*dx(i)*(dx(i) + dx(i - 1))*dx(i + 1)/ &
+            cxi(i, 1) = (1.0_wp - ac_loc)*dx(i)*(dx(i) + dx(i - 1))*dx(i + 1)/ &
                         (dx(i - 2)*(dx(i - 1) + dx(i - 2))*(dx(i) + dx(i - 1) + dx(i - 2) + &
                                                             dx(i + 1)))
 
             ! -----------------------------------------------------------------------
             i = imax
-            ac_loc = (C_15_R + alpha)/C_16_R
+            ac_loc = (15.0_wp + alpha)/16.0_wp
 
             cxi(i, 5) = ac_loc
-            cxi(i, 4) = alpha + (C_1_R - ac_loc) &
+            cxi(i, 4) = alpha + (1.0_wp - ac_loc) &
                         *(dx(i) + dx(i - 1))*(dx(i) + dx(i - 1) + dx(i - 2))* &
                         (dx(i) + dx(i - 1) + dx(i - 2) + dx(i - 3))/ &
                         (dx(i - 1)*(dx(i - 1) + dx(i - 2))*(dx(i - 1) + dx(i - 2) + dx(i - 3)))
-            cxi(i, 3) = (ac_loc - C_1_R)*dx(i)*(dx(i) + dx(i - 1) + dx(i - 2))* &
+            cxi(i, 3) = (ac_loc - 1.0_wp)*dx(i)*(dx(i) + dx(i - 1) + dx(i - 2))* &
                         (dx(i) + dx(i - 1) + dx(i - 2) + dx(i - 3))/ &
                         (dx(i - 1)*dx(i - 2)*(dx(i - 2) + dx(i - 3)))
-            cxi(i, 2) = (C_1_R - ac_loc)*dx(i) &
+            cxi(i, 2) = (1.0_wp - ac_loc)*dx(i) &
                         *(dx(i) + dx(i - 1))*(dx(i) + dx(i - 1) + dx(i - 2) + dx(i - 3))/ &
                         (dx(i - 2)*dx(i - 3)*(dx(i - 1) + dx(i - 2)))
-            cxi(i, 1) = (ac_loc - C_1_R)*dx(i) &
+            cxi(i, 1) = (ac_loc - 1.0_wp)*dx(i) &
                         *(dx(i) + dx(i - 1))*(dx(i) + dx(i - 1) + dx(i - 2))/ &
                         (dx(i - 3)*(dx(i - 2) + dx(i - 3))*(dx(i - 1) + dx(i - 2) + dx(i - 3)))
 
@@ -223,10 +223,10 @@ contains
 
     subroutine FLT_C4_RHS(imax, jkmax, periodic, bcsimin, bcsimax, cxi, u, rhs)
         logical, intent(in) :: periodic
-        TINTEGER, intent(IN) :: imax, jkmax, bcsimin, bcsimax
-        TREAL, dimension(jkmax, imax), intent(IN) :: u
-        TREAL, dimension(jkmax, imax), intent(OUT) :: rhs
-        TREAL, dimension(imax, 5), intent(IN) :: cxi
+        integer(wi), intent(IN) :: imax, jkmax, bcsimin, bcsimax
+        real(wp), dimension(jkmax, imax), intent(IN) :: u
+        real(wp), dimension(jkmax, imax), intent(OUT) :: rhs
+        real(wp), dimension(imax, 5), intent(IN) :: cxi
 
 ! -----------------------------------------------------------------------
 
@@ -295,12 +295,12 @@ contains
 !########################################################################
 
     subroutine FLT_C4P_CUTOFF_LHS(imax, a, b, c, d, e)
-        TINTEGER, intent(in) :: imax
-        TREAL, intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)
+        integer(wi), intent(in) :: imax
+        real(wp), intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)
 
         a(:) = C4_BETA
         b(:) = C4_ALPHA
-        c(:) = C_1_R
+        c(:) = 1.0_wp
         d(:) = C4_ALPHA
         e(:) = C4_BETA
 
@@ -308,25 +308,25 @@ contains
     end subroutine FLT_C4P_CUTOFF_LHS
 
     subroutine FLT_C4_CUTOFF_LHS(imax, a, b, c, d, e)
-        TINTEGER, intent(in) :: imax
-        TREAL, intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)
+        integer(wi), intent(in) :: imax
+        real(wp), intent(out) :: a(imax), b(imax), c(imax), d(imax), e(imax)
 
         a(:) = C4_BETA
         b(:) = C4_ALPHA
-        c(:) = C_1_R
+        c(:) = 1.0_wp
         d(:) = C4_ALPHA
         e(:) = C4_BETA
 
-        a(1:3) = C_0_R; b(1:3) = C_0_R; d(1:3) = C_0_R; e(1:3) = C_0_R
-        a(imax - 2:imax) = C_0_R; b(imax - 2:imax) = C_0_R; d(imax - 2:imax) = C_0_R; e(imax - 2:imax) = C_0_R
+        a(1:3) = 0.0_wp; b(1:3) = 0.0_wp; d(1:3) = 0.0_wp; e(1:3) = 0.0_wp
+        a(imax - 2:imax) = 0.0_wp; b(imax - 2:imax) = 0.0_wp; d(imax - 2:imax) = 0.0_wp; e(imax - 2:imax) = 0.0_wp
 
         return
     end subroutine FLT_C4_CUTOFF_LHS
 
     subroutine FLT_C4P_CUTOFF_RHS(imax, jkmax, u, rhs)
-        TINTEGER, intent(in) :: imax, jkmax
-        TREAL, intent(in) :: u(jkmax, imax)
-        TREAL, intent(out) :: rhs(jkmax, imax)
+        integer(wi), intent(in) :: imax, jkmax
+        real(wp), intent(in) :: u(jkmax, imax)
+        real(wp), intent(out) :: rhs(jkmax, imax)
 
         integer i
         integer im3, im2, im1, ip1, ip2, ip3
@@ -348,20 +348,20 @@ contains
     end subroutine FLT_C4P_CUTOFF_RHS
 
     subroutine FLT_C4_CUTOFF_RHS(imax, jkmax, u, rhs)
-        TINTEGER, intent(in) :: imax, jkmax
-        TREAL, intent(in) :: u(jkmax, imax)
-        TREAL, intent(out) :: rhs(jkmax, imax)
+        integer(wi), intent(in) :: imax, jkmax
+        real(wp), intent(in) :: u(jkmax, imax)
+        real(wp), intent(out) :: rhs(jkmax, imax)
 
         ! rhs(:, 1:3) = u(:, 1:3)
         ! rhs(:, imax - 2:imax) = u(:, imax - 2:imax)
 
-        rhs(:, 1) = (C_15_R*u(:, 1) + C_4_R*u(:, 2) - C_6_R*u(:, 3) + C_4_R*u(:, 4) - u(:, 5))/C_16_R
-        rhs(:, 2) = (C_12_R*u(:, 2) + u(:, 1) + C_6_R*u(:, 3) - C_4_R*u(:, 4) + u(:, 5))/C_16_R
-        rhs(:, 3) = (C_10_R*u(:, 3) - u(:, 1) + C_4_R*u(:, 2) + C_4_R*u(:, 4) - u(:, 5))/C_16_R
+        rhs(:, 1) = (15.0_wp*u(:, 1) + 4.0_wp*u(:, 2) - 6.0_wp*u(:, 3) + 4.0_wp*u(:, 4) - u(:, 5))/16.0_wp
+        rhs(:, 2) = (12.0_wp*u(:, 2) + u(:, 1) + 6.0_wp*u(:, 3) - 4.0_wp*u(:, 4) + u(:, 5))/16.0_wp
+        rhs(:, 3) = (10.0_wp*u(:, 3) - u(:, 1) + 4.0_wp*u(:, 2) + 4.0_wp*u(:, 4) - u(:, 5))/16.0_wp
 
-       rhs(:, imax - 2) = (C_10_R*u(:, imax - 2) - u(:, imax) + C_4_R*u(:, imax - 1) + C_4_R*u(:, imax - 3) - u(:, imax - 4))/C_16_R
-       rhs(:, imax - 1) = (C_12_R*u(:, imax - 1) + u(:, imax) + C_6_R*u(:, imax - 2) - C_4_R*u(:, imax - 3) + u(:, imax - 4))/C_16_R
-     rhs(:, imax) = (C_15_R*u(:, imax) + C_4_R*u(:, imax - 1) - C_6_R*u(:, imax - 2) + C_4_R*u(:, imax - 3) - u(:, imax - 4))/C_16_R
+       rhs(:, imax - 2) = (10.0_wp*u(:, imax - 2) - u(:, imax) + 4.0_wp*u(:, imax - 1) + 4.0_wp*u(:, imax - 3) - u(:, imax - 4))/16.0_wp
+       rhs(:, imax - 1) = (12.0_wp*u(:, imax - 1) + u(:, imax) + 6.0_wp*u(:, imax - 2) - 4.0_wp*u(:, imax - 3) + u(:, imax - 4))/16.0_wp
+     rhs(:, imax) = (15.0_wp*u(:, imax) + 4.0_wp*u(:, imax - 1) - 6.0_wp*u(:, imax - 2) + 4.0_wp*u(:, imax - 3) - u(:, imax - 4))/16.0_wp
 
         do i = 4, imax - 3
             rhs(:, i) = C4_BD2*(u(:, i + 1) + u(:, i - 1)) + &
@@ -373,4 +373,4 @@ contains
         return
     end subroutine FLT_C4_CUTOFF_RHS
 
-end module FLT_COMPACT
+end module Filters_Compact

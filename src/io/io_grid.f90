@@ -2,9 +2,9 @@
 
 !########################################################################
 !########################################################################
-subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z, area)
-    use TLAB_CONSTANTS, only: efile, wp, wi
-    use TLAB_PROCS
+subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
+    use TLab_Constants, only: efile, wp, wi
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 
@@ -12,7 +12,6 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     integer(wi), intent(in) :: imax, jmax, kmax
     real(wp) scalex, scaley, scalez
     real(wp) x(imax), y(jmax), z(kmax)
-    real(wp), optional :: area
 
     ! -----------------------------------------------------------------------
     integer(wi) imax_loc, jmax_loc, kmax_loc
@@ -34,8 +33,8 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     if (imax_loc /= imax .or. jmax_loc /= jmax .or. kmax_loc /= kmax) then
         close (50)
         write (line, 100) imax_loc, jmax_loc, kmax_loc
-        call TLAB_WRITE_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
-        call TLAB_STOP(DNS_ERROR_DIMGRID)
+        call TLab_Write_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
+        call TLab_Stop(DNS_ERROR_DIMGRID)
     end if
 
     ! -----------------------------------------------------------------------
@@ -43,11 +42,6 @@ subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z,
     read (50) y
     read (50) z
     close (50)
-
-    if (present(area)) then
-        area = scalex
-        if (kmax > 1) area = area*scalez ! 3D case
-    end if
 
     return
 
@@ -58,7 +52,7 @@ end subroutine IO_READ_GRID
 !########################################################################
 !########################################################################
 subroutine IO_WRITE_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
 
     character*(*) name

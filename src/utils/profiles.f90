@@ -2,9 +2,9 @@
 
 ! Definining functions f=f(x) to be used in bcs, ics, and reference background profiles
 module Profiles
-    use TLAB_TYPES,     only: profiles_dt
-    use TLAB_CONSTANTS, only: wp, pi_wp, efile, wfile
-    use TLAB_PROCS,     only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_Types,     only: profiles_dt
+    use TLab_Constants, only: wp, pi_wp, efile, wfile
+    use TLab_WorkFlow,     only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
@@ -47,21 +47,21 @@ contains
         real(wp) derivative
 
         ! -------------------------------------------------------------------
-        call TLAB_WRITE_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
-        call TLAB_WRITE_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#YMean'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#YMeanRelative'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Diam'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Thick'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Delta'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#LowerSlope'//trim(adjustl(tag))//'=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#UpperSlope'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Profile'//trim(adjustl(tag))//'=<None/Tanh/Erf/Ekman/Parabolic/...>')
+        call TLab_Write_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#YMean'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#YMeanRelative'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Diam'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Thick'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#Delta'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#LowerSlope'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#UpperSlope'//trim(adjustl(tag))//'=<value>')
 
         ! -------------------------------------------------------------------
         if (present(default)) then
             sRes = trim(adjustl(default))
         else
-            call SCANINICHAR(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Profile'//trim(adjustl(tag)), 'none', sRes)
         end if
         if (trim(adjustl(sRes)) == 'none') then;                       var%type = PROFILE_NONE
         else if (trim(adjustl(sRes)) == 'tanh') then;                  var%type = PROFILE_TANH
@@ -84,63 +84,63 @@ contains
         else if (trim(adjustl(sRes)) == 'mixedlayer') then;            var%type = PROFILE_MIXEDLAYER
         else if (trim(adjustl(sRes)) == 'gaussiantanhsymmetric') then; var%type = PROFILE_GAUSSIAN_TANH_SYM
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//' profile.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') then ! Backwards compatibility
-            call SCANINIREAL(bakfile, inifile, block, trim(adjustl(tag)), '0.0', var%mean)
+            call ScanFile_Real(bakfile, inifile, block, trim(adjustl(tag)), '0.0', var%mean)
         else
-            call SCANINIREAL(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), '0.0', var%mean)
+            call ScanFile_Real(bakfile, inifile, block, 'Mean'//trim(adjustl(tag)), '0.0', var%mean)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') then
             var%relative = .true.
-            call SCANINIREAL(bakfile, inifile, block, 'YMeanRelative'//trim(adjustl(tag)), '0.5', var%ymean_rel)    ! Position in relative coordinates
+            call ScanFile_Real(bakfile, inifile, block, 'YMeanRelative'//trim(adjustl(tag)), '0.5', var%ymean_rel)    ! Position in relative coordinates
             ! Backwards compatibility
-            call SCANINICHAR(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
-                call SCANINIREAL(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), '0.5', var%ymean_rel)
-                call TLAB_WRITE_ASCII(wfile, 'Update tag YCoor to YMeanRelative.')
+                call ScanFile_Real(bakfile, inifile, block, 'YCoor'//trim(adjustl(tag)), '0.5', var%ymean_rel)
+                call TLab_Write_ASCII(wfile, 'Update tag YCoor to YMeanRelative.')
             end if
         else
             var%relative = .false.
-            call SCANINIREAL(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), '0.0', var%ymean)         ! Position in absolute coordinates
+            call ScanFile_Real(bakfile, inifile, block, 'YMean'//trim(adjustl(tag)), '0.0', var%ymean)         ! Position in absolute coordinates
         end if
 
-        call SCANINIREAL(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), '0.0', var%thick)
-        call SCANINIREAL(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), '0.0', var%delta)
+        call ScanFile_Real(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), '0.0', var%thick)
+        call ScanFile_Real(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), '0.0', var%delta)
         ! alternative to provide the variable thick in terms of the maximum derivative
-        call SCANINICHAR(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call SCANINIREAL(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), '0.0', derivative)
-            call SCANINICHAR(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Real(bakfile, inifile, block, 'Derivative'//trim(adjustl(tag)), '0.0', derivative)
+            call ScanFile_Char(bakfile, inifile, block, 'Thick'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToThick(derivative, var)
             end if
-            call SCANINICHAR(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'Delta'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToDelta(derivative, var)
             end if
         end if
 
-        call SCANINIREAL(bakfile, inifile, block, 'LowerSlope'//trim(adjustl(tag)), '0.0', var%lslope)
-        call SCANINIREAL(bakfile, inifile, block, 'UpperSlope'//trim(adjustl(tag)), '0.0', var%uslope)
-        call SCANINIREAL(bakfile, inifile, block, 'Diam'//trim(adjustl(tag)), '0.0', var%diam)
+        call ScanFile_Real(bakfile, inifile, block, 'LowerSlope'//trim(adjustl(tag)), '0.0', var%lslope)
+        call ScanFile_Real(bakfile, inifile, block, 'UpperSlope'//trim(adjustl(tag)), '0.0', var%uslope)
+        call ScanFile_Real(bakfile, inifile, block, 'Diam'//trim(adjustl(tag)), '0.0', var%diam)
 
-        call SCANINIREAL(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), '1.0', var%parameters(3))
-        call SCANINIREAL(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), '0.0', var%parameters(4))
+        call ScanFile_Real(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), '1.0', var%parameters(3))
+        call ScanFile_Real(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), '0.0', var%parameters(4))
         ! alternative to provide the variable thick in terms of the maximum derivative
-        call SCANINICHAR(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
-            call SCANINIREAL(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), '0.0', derivative)
-            call SCANINICHAR(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Real(bakfile, inifile, block, 'SurfaceDerivative'//trim(adjustl(tag)), '0.0', derivative)
+            call ScanFile_Char(bakfile, inifile, block, 'SurfaceThick'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToThick(derivative, var)
             end if
-            call SCANINICHAR(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, block, 'SurfaceDelta'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 call Profiles_DerToDelta(derivative, var)
             end if
@@ -287,8 +287,8 @@ contains
             var%parameters(3) = -var%parameters(4)/derivative/thick_ratio
 
         case default
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         end select
 
@@ -318,8 +318,8 @@ contains
             var%parameters(4) = -var%parameters(3)*derivative*thick_ratio
 
         case default
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Undevelop derivative input for this case.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         end select
 

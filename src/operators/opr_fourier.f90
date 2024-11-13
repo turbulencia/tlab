@@ -4,13 +4,13 @@
 #endif
 
 module OPR_FOURIER
-    use TLAB_CONSTANTS, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, efile
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
     use TLAB_VARS, only: imax, jmax
-    use TLAB_VARS, only: g
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
-    use TLAB_POINTERS_C, only: c_wrk3d
-    use TLAB_PROCS
+    use FDM, only: g
+    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
+    use TLab_Pointers_C, only: c_wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
@@ -46,7 +46,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine OPR_FOURIER_INITIALIZE()
-        use TLAB_ARRAYS, only: txc
+        use TLab_Arrays, only: txc
 #ifdef USE_FFTW
 #include "fftw3.f"
 #endif
@@ -62,8 +62,8 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (ims_size_i(TLabMPI_I_POISSON1) /= ims_size_i(TLabMPI_I_POISSON2)) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
         end if
 #endif
@@ -176,8 +176,8 @@ contains
         end if
 
 #else
-        call TLAB_WRITE_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
 #endif
 

@@ -5,12 +5,12 @@
 !# It assumes constant visocsity
 !########################################################################
 subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: g
-    use TLAB_VARS, only: area, visc
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk3d
-    use AVGS, only: AVG_IK_V
+    use TLab_Constants, only: wp, wi
+    use FDM, only: g
+    use TLAB_VARS, only: visc
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk3d
+    use Averages, only: AVG_IK_V
     use OPR_PARTIAL
     implicit none
 
@@ -37,7 +37,7 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 ! 11
     p_wrk3d = 2.0_wp*tmp1 - tmp4 ! )*vis
     if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
         end do
@@ -47,8 +47,8 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 ! 22
     p_wrk3d = 2.0_wp*tmp2 - tmp4 ! )*vis
     if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
-        call AVG_IK_V(nx, ny, nz, ny, v, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, ny, v, wrk1d(1, 3), wrk1d(1, 2))
         call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
@@ -60,7 +60,7 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 ! 33
     p_wrk3d = 2.0_wp*tmp3 - tmp4 ! )*vis
     if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
         end do
@@ -74,8 +74,8 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
-        call AVG_IK_V(nx, ny, nz, ny, u, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, ny, u, wrk1d(1, 3), wrk1d(1, 2))
         call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
@@ -90,7 +90,7 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
         end do
@@ -103,8 +103,8 @@ subroutine FI_DISSIPATION(flag, nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, g(1)%jac, g(3)%jac, wrk1d(1, 1), wrk1d(1, 2), area)
-        call AVG_IK_V(nx, ny, nz, ny, w, g(1)%jac, g(3)%jac, wrk1d(1, 3), wrk1d(1, 2), area)
+        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, ny, w, wrk1d(1, 3), wrk1d(1, 2))
         call OPR_PARTIAL_Y(OPR_P1, i1, ny, i1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
@@ -129,12 +129,11 @@ end subroutine FI_DISSIPATION
 #define aux(j)    wrk1d(j,5)
 
 subroutine FI_RTKE(nx, ny, nz, q, ke)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imode_eqns, inb_flow
-    use TLAB_VARS, only: g, area
-    use TLAB_ARRAYS, only: wrk1d
+    use TLab_Arrays, only: wrk1d
     use THERMO_ANELASTIC, only : rbackground
-    use AVGS, only: AVG_IK_V
+    use Averages, only: AVG_IK_V
 
     implicit none
 
@@ -148,25 +147,25 @@ subroutine FI_RTKE(nx, ny, nz, q, ke)
     ! #######################################################################
     select case (imode_eqns)
     case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 5), g(1)%jac, g(3)%jac, rR(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 5), rR(1), aux(1))
 
         ke = q(:, :, :, 5)*q(:, :, :, 1)
-        call AVG_IK_V(nx, ny, nz, ny, ke, g(1)%jac, g(3)%jac, fU(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, ke, fU(1), aux(1))
         fU(:) = fU(:)/rR(:)
 
         ke = q(:, :, :, 5)*q(:, :, :, 2)
-        call AVG_IK_V(nx, ny, nz, ny, ke, g(1)%jac, g(3)%jac, fV(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, ke, fV(1), aux(1))
         fV(:) = fV(:)/rR(:)
 
         ke = q(:, :, :, 5)*q(:, :, :, 3)
-        call AVG_IK_V(nx, ny, nz, ny, ke, g(1)%jac, g(3)%jac, fW(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, ke, fW(1), aux(1))
         fW(:) = fW(:)/rR(:)
 
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         rR(:) = rbackground(:)
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 1), g(1)%jac, g(3)%jac, fU(1), aux(1), area)
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 2), g(1)%jac, g(3)%jac, fV(1), aux(1), area)
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 3), g(1)%jac, g(3)%jac, fW(1), aux(1), area)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 1), fU(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 2), fV(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 3), fW(1), aux(1))
 
     end select
 
@@ -181,9 +180,8 @@ end subroutine FI_RTKE
 ! Reynolds fluctuations of array a
 !########################################################################
 subroutine FI_FLUCTUATION_INPLACE(nx, ny, nz, a)
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_VARS, only: g, area
-    use AVGS, only: AVG_IK
+    use TLab_Constants, only: wp, wi
+    use Averages, only: AVG_IK
 
     implicit none
 
@@ -196,7 +194,7 @@ subroutine FI_FLUCTUATION_INPLACE(nx, ny, nz, a)
 
     ! ###################################################################
     do j = 1, ny
-        dummy = AVG_IK(nx, ny, nz, j, a, g(1)%jac, g(3)%jac, area)
+        dummy = AVG_IK(nx, ny, nz, j, a)
         a(:, j, :) = a(:, j, :) - dummy
     end do
 

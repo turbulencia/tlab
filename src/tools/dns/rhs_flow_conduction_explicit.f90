@@ -9,16 +9,16 @@
 !# Mass diffusion contribbution in RHS_SCAL_DIFFSUION_EXPLICIT.
 !########################################################################
 subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII
+    use TLab_Constants, only: tfile
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: idiffusion, visc, prandtl
-    use TLAB_POINTERS
-    use TLAB_ARRAYS, only: s
+    use TLab_Pointers
+    use TLab_Arrays, only: s
     use THERMO_CALORIC
     use DNS_ARRAYS, only: hq
     use BOUNDARY_BCS
@@ -30,7 +30,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
 
 ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_EXPLICIT')
+    call TLab_Write_ASCII(tfile, 'ENTERING RHS_FLOW_CONDUCTION_EXPLICIT')
 #endif
 
 ! ###################################################################
@@ -50,7 +50,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     hq(:,4) = hq(:,4) + cond*vis*(tmp1 + tmp2 + tmp3)
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_EXPLICIT')
+    call TLab_Write_ASCII(tfile, 'LEAVING RHS_FLOW_CONDUCTION_EXPLICIT')
 #endif
 
     return

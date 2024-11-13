@@ -25,15 +25,15 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_CONSTANTS
-    use TLAB_VARS, only: g
+    use TLab_Constants, only: wp, wi, BCS_NN, efile
+    use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
-    use TLAB_ARRAYS
-    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
+    use TLab_WorkFlow, only: TLab_Write_ASCII
+    use TLab_Arrays
+    use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7
     use DNS_ARRAYS
     use TIME, only: dte
     use BOUNDARY_BUFFER
@@ -62,7 +62,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
             BcsScalJmax%SfcType(is) == DNS_SFC_STATIC) then
             continue
         else
-            call TLAB_WRITE_ASCII(efile, 'Only static surface implemented in implicit mode')
+            call TLab_Write_ASCII(efile, 'Only static surface implemented in implicit mode')
         end if
     end do
 

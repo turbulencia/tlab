@@ -3,14 +3,17 @@
 #define C_FILE_LOC "INIPART"
 
 program INIPART
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: profiles_dt
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use TLab_Types, only: profiles_dt
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use Thermodynamics
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
@@ -27,14 +30,16 @@ program INIPART
     character*32 bakfile
 
     !########################################################################
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
-    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
+
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
     if (part%type /= PART_TYPE_NONE) then
 
@@ -44,7 +49,7 @@ program INIPART
         bakfile = trim(adjustl(ifile))//'.bak'
 
         call Profiles_ReadBlock(bakfile, ifile, 'Particles', 'IniP', IniP, 'gaussian') ! using gaussian as dummy to read rest of profile information
-        call SCANINICHAR(bakfile, ifile, 'Particles', 'ProfileIniP', 'None', sRes)
+        call ScanFile_Char(bakfile, ifile, 'Particles', 'ProfileIniP', 'None', sRes)
         if (trim(adjustl(sRes)) == 'scalar') IniP%type = PART_INITYPE_SCALAR
         if (trim(adjustl(sRes)) == 'hardcoded') IniP%type = PART_INITYPE_HARDCODED
 
@@ -62,14 +67,14 @@ program INIPART
         ! -------------------------------------------------------------------
         ! Read the grid
         ! -------------------------------------------------------------------
-        call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
-        call FDM_INITIALIZE(x, g(1), wrk1d)
-        call FDM_INITIALIZE(y, g(2), wrk1d)
-        call FDM_INITIALIZE(z, g(3), wrk1d)
+        call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+        call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+        call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+        call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
         ! problem if I enter with inb_scal_array = 0
         inb_scal_array = inb_scal
-        call FI_BACKGROUND_INITIALIZE()
+        call TLab_Initialize_Background()
         if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
 
         call Particle_Initialize_Fields()
@@ -83,15 +88,18 @@ program INIPART
 
     end if
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 
 contains
 
     ! ###################################################################
     subroutine Particle_Initialize_Variables(l_g, l_q, l_txc, txc)
-        use TLAB_CONSTANTS, only: wp, wi
-        use TLAB_TYPES, only: pointers_dt, pointers3d_dt, wp, wi, longi
-        use TLAB_VARS, only: g, imax, jmax, kmax, inb_scal, sbg
+        use TLab_Constants, only: wp, wi, longi
+        use TLab_Pointers, only: pointers_dt
+        use TLab_Pointers_3D, only: pointers3d_dt
+        use TLAB_VARS, only: imax, jmax, kmax, inb_scal
+        use TLAB_VARS, only: sbg
+        use FDM, only: g
         use PARTICLE_TYPES, only: particle_dt
         use PARTICLE_VARS
         use PARTICLE_INTERPOLATE

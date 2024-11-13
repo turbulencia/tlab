@@ -6,8 +6,8 @@
 !########################################################################
 
 module FDM_Integrate
-    use TLAB_CONSTANTS
-    use TLAB_PROCS, only: TLAB_WRITE_ASCII, TLAB_STOP
+    use TLab_Constants, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_PROCS
     implicit none
     private
@@ -59,20 +59,20 @@ contains
 ! ###################################################################
         ! check sizes
         if (abs(idl - idr) > 1) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. lhs and rhs cannot differ by more than 2 diagonals.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. lhs and rhs cannot differ by more than 2 diagonals.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (size(lhs_int, 2) < ndr) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array lhs_int size.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong array lhs_int size.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (size(rhs_int, 2) < ndl) then
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong array rhs_int size.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong array rhs_int size.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! -------------------------------------------------------------------
-        ! new rhs diagonals (array A), independent of lambda; this could be moved to fdm_initialize
+        ! new rhs diagonals (array A), independent of lambda; this could be moved to FDM_Initialize
         rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
 
         call FDM_Bcs_Reduce(ibc, rhs_int(:, 1:ndl), rhs(:, 1:ndr), rhsr_b, rhsr_t)

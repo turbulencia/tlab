@@ -5,13 +5,15 @@
 #endif
 
 module OPR_FILTERS
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_TYPES, only: grid_dt, filter_dt
-    use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, g
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
-    use TLAB_PROCS
-    use FLT_COMPACT
-    use FLT_EXPLICIT
+    use TLab_Constants, only: wp, wi, MAX_PARS
+    use FDM, only: grid_dt
+    use TLab_Types, only: filter_dt
+    use TLAB_VARS, only: isize_txc_field, isize_txc_dimz
+    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use Filters_Compact
+    use Filters_Explicit
+    use Filters_Tophat
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
@@ -22,12 +24,160 @@ module OPR_FILTERS
     implicit none
     private
 
-    public :: OPR_FILTER_INITIALIZE
+    public :: FILTER_READBLOCK, OPR_FILTER_INITIALIZE
     public :: OPR_FILTER
     public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
 
 contains
+    !###################################################################
+    !###################################################################
+    subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)
+        use TLab_Constants, only: efile
+        use FDM, only: g
+        character(len=*) bakfile, inifile, tag
+        type(filter_dt) variable(3)
+
+! -------------------------------------------------------------------
+        character(len=512) sRes
+        character(len=10) default
+        integer idummy, ig
+
+!########################################################################
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(tag))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<none/compact/helmholtz/SpectralBand/SpectralErf/tophat>')
+        call TLab_Write_ASCII(bakfile, '#Parameters=<values>')
+        call TLab_Write_ASCII(bakfile, '#ActiveX=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ActiveY=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ActiveZ=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#BcsJmin=<free,solid,zero>')
+        call TLab_Write_ASCII(bakfile, '#BcsJmax=<free,solid,zero>')
+
+        variable(:)%size = g(:)%size
+        variable(:)%periodic = g(:)%periodic
+        variable(:)%uniform = g(:)%uniform
+        variable(:)%inb_filter = 0          ! default array size
+        default = 'biased'                  ! default boundary condition
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'Type', 'none', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; variable(:)%type = DNS_FILTER_NONE
+        else if (trim(adjustl(sRes)) == 'compact') then; variable(:)%type = DNS_FILTER_COMPACT
+            variable(:)%parameters(1) = 0.49 ! default alpha value
+            variable(:)%inb_filter = 10
+        else if (trim(adjustl(sRes)) == 'explicit6') then; variable(:)%type = DNS_FILTER_6E
+        else if (trim(adjustl(sRes)) == 'explicit4') then; variable(:)%type = DNS_FILTER_4E
+            variable(:)%inb_filter = 5
+            ! else if (trim(adjustl(sRes)) == 'adm') then; variable(:)%type = DNS_FILTER_ADM
+            !     variable(:)%inb_filter = 5
+        else if (trim(adjustl(sRes)) == 'tophat') then; variable(:)%type = DNS_FILTER_TOPHAT
+            variable(:)%parameters(1) = 2    ! default filter size (in grid-step units)
+            default = 'free'
+        else if (trim(adjustl(sRes)) == 'compactcutoff') then; variable(:)%type = DNS_FILTER_COMPACT_CUTOFF
+            variable(:)%inb_filter = 7
+            variable(2)%type = DNS_FILTER_COMPACT ! nonuniform version not yet implemented; fall back to compact
+            variable(2)%parameters(1) = 0.49
+            variable(2)%inb_filter = 10
+        else if (trim(adjustl(sRes)) == 'spectralcutoff') then; variable(:)%type = DNS_FILTER_BAND
+            ! The frequency interval is (Parameter1, Parameter2)
+        else if (trim(adjustl(sRes)) == 'spectralerf') then; variable(:)%type = DNS_FILTER_ERF
+            ! Parameter1 is the transition wavenumber in physical units:
+            ! >0: high-pass filter
+            ! <0; low-pass filter
+            ! Parameter2 is the characteristic width--in log units (relative to domain size)'
+            variable(:)%parameters(3) = 1.0_wp    ! used to normalise wavenumbers in z-direction
+        else if (trim(adjustl(sRes)) == 'helmholtz') then; variable(:)%type = DNS_FILTER_HELMHOLTZ
+            variable(:)%parameters(1) = 1.0_wp    ! default filter size
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong '//trim(adjustl(tag))//'Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        ! Boundary conditions correction
+        do ig = 1, 3
+            if (variable(ig)%periodic) then
+                variable(ig)%BcsMin = DNS_FILTER_BCS_PERIODIC
+                variable(ig)%BcsMax = DNS_FILTER_BCS_PERIODIC
+            end if
+        end do
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'BcsJmin', trim(adjustl(default)), sRes)
+        if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMin = DNS_FILTER_BCS_PERIODIC
+        else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMin = DNS_FILTER_BCS_BIASED
+        else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMin = DNS_FILTER_BCS_FREE
+        else if (trim(adjustl(sRes)) == 'solid') then; variable(2)%BcsMin = DNS_FILTER_BCS_SOLID
+        else if (trim(adjustl(sRes)) == 'dirichlet') then; variable(2)%BcsMin = DNS_FILTER_BCS_DIRICHLET
+        else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMin = DNS_FILTER_BCS_NEUMANN
+        else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMin = DNS_FILTER_BCS_ZERO
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmin.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'BcsJmax', trim(adjustl(default)), sRes)
+        if (trim(adjustl(sRes)) == 'periodic') then; variable(2)%BcsMax = DNS_FILTER_BCS_PERIODIC
+        else if (trim(adjustl(sRes)) == 'biased') then; variable(2)%BcsMax = DNS_FILTER_BCS_BIASED
+        else if (trim(adjustl(sRes)) == 'free') then; variable(2)%BcsMax = DNS_FILTER_BCS_FREE
+        else if (trim(adjustl(sRes)) == 'solid') then; variable(2)%BcsMax = DNS_FILTER_BCS_SOLID
+        else if (trim(adjustl(sRes)) == 'dirichlet') then; variable(2)%BcsMax = DNS_FILTER_BCS_DIRICHLET
+        else if (trim(adjustl(sRes)) == 'neumann') then; variable(2)%BcsMax = DNS_FILTER_BCS_NEUMANN
+        else if (trim(adjustl(sRes)) == 'zero') then; variable(2)%BcsMax = DNS_FILTER_BCS_ZERO
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Filter.BcsJmax.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'Parameters', 'void', sRes)
+        if (trim(adjustl(sRes)) /= 'void') then
+            idummy = MAX_PARS
+            call LIST_REAL(sRes, idummy, variable(1)%parameters(:))
+            if (idummy < 3) & ! Fill 3 directions; if global, filled information is unused
+                variable(1)%parameters(idummy + 1:3) = variable(1)%parameters(idummy)
+            do ig = 2, 3
+                variable(ig)%parameters(1) = variable(1)%parameters(ig)
+            end do
+        end if
+
+        call ScanFile_Int(bakfile, inifile, trim(adjustl(tag)), 'Repeat', '1', idummy)
+        if (idummy > 0) then
+            variable(:)%repeat = idummy
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Entry Filter.Repeat must be positive.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveX', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') variable(1)%type = DNS_FILTER_NONE
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveY', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') variable(2)%type = DNS_FILTER_NONE
+        call ScanFile_Char(bakfile, inifile, trim(adjustl(tag)), 'ActiveZ', 'yes', sRes)
+        if (trim(adjustl(sRes)) == 'no') variable(3)%type = DNS_FILTER_NONE
+
+        ! Further control
+        do ig = 1, 3
+            if (variable(ig)%size == 1) variable(ig)%type = DNS_FILTER_NONE
+
+            if (variable(ig)%type == DNS_FILTER_TOPHAT .and. &
+                variable(ig)%parameters(1) == 0) variable(ig)%type = DNS_FILTER_NONE
+
+            if (variable(ig)%type == DNS_FILTER_TOPHAT) then
+                if (mod(int(variable(ig)%parameters(1)), 2) /= 0) then
+                    call TLab_Write_ASCII(efile, __FILE__//'. Tophat filter size must be even.')
+                    call TLab_Stop(DNS_ERROR_PARAMETER)
+                end if
+                variable(ig)%inb_filter = int(variable(ig)%parameters(1)) + 1
+            end if
+
+        end do
+
+#ifdef USE_MPI
+        variable(1)%mpitype = TLabMPI_I_PARTIAL
+        variable(3)%mpitype = TLabMPI_K_PARTIAL
+#endif
+
+        return
+    end subroutine FILTER_READBLOCK
+
     !###################################################################
     !###################################################################
     subroutine OPR_FILTER_INITIALIZE(g, f)
@@ -43,7 +193,7 @@ contains
             call FLT_E4_COEFFS(f%size, f%periodic, g%scale, g%nodes, f%coeffs)
 
         case (DNS_FILTER_TOPHAT)
-            call FLT_T1_INI(g%scale, g%nodes, f, wrk1d)
+            call FLT_T1_COEFFS(f%size, f%bcsmin, f%bcsmax, int(f%parameters(1)), f%periodic, g%scale, g%nodes, f%coeffs, wrk1d)
 
         case (DNS_FILTER_COMPACT)
             call FLT_C4_LHS(f%size, f%bcsmin, f%bcsmax, f%parameters(1), f%coeffs(1, 6), f%coeffs(1, 7), f%coeffs(1, 8))
@@ -77,6 +227,7 @@ contains
     ! Filter of u (I-nplace operation)
     !###################################################################
     subroutine OPR_FILTER(nx, ny, nz, f, u, txc)
+        use FDM, only: g
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
         integer(wi), intent(in) :: nx, ny, nz
@@ -292,7 +443,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, f%size, f%size, nyz, p_b, nyz)
 #else
-        call DNS_TRANSPOSE(p_a, f%size, nyz, f%size, p_b, nyz)
+        call TLab_Transpose(p_a, f%size, nyz, f%size, p_b, nyz)
 #endif
 
         !###################################################################
@@ -305,7 +456,7 @@ contains
 #ifdef USE_ESSL
         call DGETMO(p_a, nyz, nyz, f%size, p_b, f%size)
 #else
-        call DNS_TRANSPOSE(p_a, nyz, f%size, nyz, p_b, f%size)
+        call TLab_Transpose(p_a, nyz, f%size, nyz, p_b, f%size)
 #endif
 
         !-------------------------------------------------------------------
@@ -352,7 +503,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(u, nxy, nxy, nz, wrk3d, nz)
 #else
-            call DNS_TRANSPOSE(u, nxy, nz, nxy, wrk3d, nz)
+            call TLab_Transpose(u, nxy, nz, nxy, wrk3d, nz)
 #endif
             p_org => wrk3d
             p_dst => u
@@ -368,7 +519,7 @@ contains
 #ifdef USE_ESSL
             call DGETMO(p_dst, nz, nz, nxy, p_org, nxy)
 #else
-            call DNS_TRANSPOSE(p_dst, nz, nxy, nz, p_org, nxy)
+            call TLab_Transpose(p_dst, nz, nxy, nz, p_org, nxy)
 #endif
         end if
 
@@ -443,6 +594,7 @@ contains
     !Spectral band filter
     !########################################################################
     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
+        use FDM, only: g
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
@@ -500,6 +652,7 @@ contains
     !#
     !########################################################################
     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
+        use FDM, only: g
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: spc_param(*)
         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)

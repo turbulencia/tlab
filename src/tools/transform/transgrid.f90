@@ -1,6 +1,6 @@
 program TRANSGRID
-    use TLAB_CONSTANTS, only: wp, wi
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants, only: wp, wi
+    use FDM, only: grid_dt
     implicit none
 
     type(grid_dt), dimension(3) :: g, g_ref

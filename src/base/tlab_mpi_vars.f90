@@ -1,5 +1,5 @@
 module TLabMPI_VARS
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     implicit none
     save
 

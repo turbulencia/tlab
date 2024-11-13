@@ -7,7 +7,7 @@
 ! we use explicit-shape arrays in arguments for the routines to be callable with different array ranks
 
 module THERMO_THERMAL
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use Thermodynamics, only: imixture, THERMO_R, RRATIO_INV, RRATIO, NSP
     use Thermodynamics, only: Rd, Rdv, Rv
     implicit none

@@ -8,15 +8,15 @@
 !#
 !########################################################################
 subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: idiffusion, visc, schmidt
-    use TLAB_ARRAYS, only: s
-    use TLAB_POINTERS, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
+    use TLab_Arrays, only: s
+    use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs
     use OPR_PARTIAL
     use BOUNDARY_BCS

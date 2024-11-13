@@ -1,15 +1,8 @@
 module TLAB_VARS
-    use TLAB_TYPES, only: grid_dt, filter_dt, term_dt, profiles_dt, phaseavg_dt
-    use TLAB_CONSTANTS, only: MAX_VARS, wp, wi, sp
-    use TLAB_CONSTANTS, only: MAX_STATS_SPATIAL
+    use TLab_Types, only: filter_dt, term_dt, profiles_dt, phaseavg_dt
+    use TLab_Constants, only: MAX_VARS, wp, wi, sp
     implicit none
     save
-
-! ###################################################################
-! OpenMP
-! ###################################################################
-    integer :: dns_omp_numThreads
-    integer :: dns_omp_error
 
 ! ###################################################################
 ! General options
@@ -18,13 +11,14 @@ module TLAB_VARS
     integer :: imode_files              ! files format
     integer :: imode_precision_files    ! whether restart files in single or double precision
     integer :: imode_verbosity = 1      ! level of verbosity used in log files
-    integer :: imode_eqns               ! set of equations to be solved
-    integer :: iadvection, iviscous, idiffusion, itransport ! formulation
 
     logical :: flow_on = .true.         ! calculate flow parts of the code
     logical :: scal_on = .true.         ! calculate scal parts of the code
     logical :: fourier_on = .false.     ! using FFT libraries
     logical :: stagger_on = .false.     ! horizontal staggering of pressure
+
+    integer :: imode_eqns                       ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
+    integer :: iadvection, iviscous, idiffusion ! formulation of the Burgers operator
 
 ! ###################################################################
 ! Iteration
@@ -51,10 +45,6 @@ module TLAB_VARS
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
 
 ! ###################################################################
-    type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
-    real(wp) :: area                                ! Horizontal area and volume
-
-! ###################################################################
 ! information to set up bcs, ics, and reference background profiles
 ! ###################################################################
     type(profiles_dt) :: qbg(3)                     ! Velocity
@@ -73,7 +63,6 @@ module TLAB_VARS
 ! ###################################################################
     real(wp) :: visc, prandtl, schmidt(MAX_VARS)    ! molecular transport
     real(wp) :: mach                                ! compressibility
-    real(wp) :: gama0                               ! Specific heat ratio, Cp0/Cv0 = Cp0/(Cp0-R0)
     real(wp) :: damkohler(MAX_VARS)                 ! reaction
     real(wp) :: froude                              ! gravity force
     real(wp) :: rossby                              ! Coriolis force
@@ -91,16 +80,25 @@ module TLAB_VARS
     type(filter_dt) :: PressureFilter(3)
 
 ! ###################################################################
-! Jet Statistic
-! ###################################################################
-    integer :: nstatavg, statavg(MAX_STATS_SPATIAL) ! Ox planes at which to accumulate statistics
-    integer :: nstatavg_points                      ! number of accumulated points
-    integer :: istattimeorg                         ! time at which accumulation of statistics started
-    real(wp) :: rstattimeorg
-
-! ###################################################################
 ! Phase Average
 ! ###################################################################
     type(phaseavg_dt) :: phAvg
 
 end module TLAB_VARS
+
+! ###################################################################
+! Jet Statistic
+! ###################################################################
+module TLab_Spatial
+    use TLab_Types, only: wp
+    implicit none
+    save
+
+    integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
+
+    integer :: nstatavg, statavg(MAX_STATS_SPATIAL) ! Ox planes at which to accumulate statistics
+    integer :: nstatavg_points                      ! number of accumulated points
+    integer :: istattimeorg                         ! time at which accumulation of statistics started
+    real(wp) :: rstattimeorg
+
+end module TLAB_Spatial

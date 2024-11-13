@@ -1,35 +1,30 @@
 program VEFILTER2
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
     use OPR_FILTERS
 
     implicit none
 
-#include "types.h"
-
-    TREAL, dimension(:, :), allocatable :: x, y, z
-    TREAL, dimension(:), allocatable :: a, cx, cy, cz
-    TREAL, dimension(:, :), allocatable :: wrk3d
-    TINTEGER :: i
+    real(wp), dimension(:, :), allocatable :: x, y, z
+    real(wp), dimension(:), allocatable :: a, cx, cy, cz
+    real(wp), dimension(:, :), allocatable :: wrk3d
+    integer(wi) :: i
 
 ! ###################################################################
     call DNS_START
 
-    call IO_READ_GLOBAL('tlab.ini')
+    call TLab_Initialize_Parameters('tlab.ini')
+    call NavierStokes_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (wrk3d(imax*jmax*kmax, 2), a(imax*jmax*kmax))
     allocate (cx(imax*5), cy(jmax*5), cz(kmax_total*5))
 
 ! ###################################################################
-    call IO_READ_GRID(gfile, imax, jmax, kmax_total, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call IO_READ_GRID(gfile, imax, jmax, kmax_total, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
 
     ! CALL FLT4E_INI(g(1)%scale, x, cx)
     ! CALL FLT4E_INI(g(2)%scale, y, cy)

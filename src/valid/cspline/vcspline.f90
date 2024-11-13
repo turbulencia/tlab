@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 
 !########################################################################
@@ -21,34 +20,32 @@
 !########################################################################
 
 program CSPLINE
-
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants, only: wp, wi
+    use FDM, only: grid_dt
 
     implicit none
 
     ! define spline parameters here
     type(grid_dt) :: g, g_int                            ! original and refined grid
-    TINTEGER, parameter :: inb_grid = 57
-    TINTEGER, parameter :: imax = 11                       ! number of data points
-    TINTEGER, parameter :: mesh = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
-    TINTEGER, parameter :: imax_int = (imax + (mesh - 1)*(imax - 1)) ! number of spline data points
-    TINTEGER :: i
-    TREAL :: xb, xe, lambda, r
-    TREAL :: res_2, res_inf
+    integer(wi), parameter :: imax = 11                       ! number of data points
+    integer(wi), parameter :: mesh = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
+    integer(wi), parameter :: imax_int = (imax + (mesh - 1)*(imax - 1)) ! number of spline data points
+    integer(wi) :: i
+    real(wp) :: xb, xe, lambda, r
+    real(wp) :: res_2, res_inf
     logical :: periodic, random, uniform
     ! data arrays
-    TREAL, dimension(imax, inb_grid) :: x
-    TREAL, dimension(imax_int, inb_grid) :: x_int
-    TREAL, dimension(imax) :: y
-    TREAL, dimension(imax_int) :: y_sp, y_int, delta
-    TREAL, dimension(imax_int) :: dydx, ddydx
+    real(wp) :: x(:,:), x_int(:,:)
+    real(wp), dimension(imax) :: y
+    real(wp), dimension(imax_int) :: y_sp, y_int, delta
+    real(wp), dimension(imax_int) :: dydx, ddydx
     ! boundary conditions
-    TINTEGER, dimension(2) :: bc    ! boundary condition for both endpoints
-    TREAL, dimension(2) :: bcval ! boundary values of 1st or 2nd deriv. at endpoints
+    integer(wi), dimension(2) :: bc    ! boundary condition for both endpoints
+    real(wp), dimension(2) :: bcval ! boundary values of 1st or 2nd deriv. at endpoints
     ! working arrays
-    TREAL, dimension(11*imax) :: wrk
-    TREAL, dimension(imax, 5) :: wrk1d
-    TREAL, dimension(imax_int, 5) :: wrk1d_int
+    real(wp), dimension(11*imax) :: wrk
+    real(wp), dimension(imax, 18) :: wrk1d
+    real(wp), dimension(imax_int, 18) :: wrk1d_int
 
     integer, parameter :: i0 = 0, i1 = 1
 
@@ -59,11 +56,11 @@ program CSPLINE
 
 ! choose boundary type and boundary values (frist/second derivative)
 ! for cubic splines here
-    ! bc(1) = CS_BCS_CLAMPED;  bcval(:) = C_0_R  ! 1st derv. is zero
+    ! bc(1) = CS_BCS_CLAMPED;  bcval(:) = 0.0_wp  ! 1st derv. is zero
     ! bc(1) = CS_BCS_FIXED_1;  bcval(:) = C_3_R  ! fixed 1st deriv.
-    ! bc(1) = CS_BCS_NATURAL;  bcval(:) = C_0_R  ! 2nd deriv. is zero
+    ! bc(1) = CS_BCS_NATURAL;  bcval(:) = 0.0_wp  ! 2nd deriv. is zero
     ! bc(1) = CS_BCS_FIXED_2;  bcval(:) = C_3_R  ! fixed 2nd deriv.
-    bc(1) = CS_BCS_PERIODIC; bcval(:) = C_0_R    ! periodic BCs (for start and end of curve!)
+    bc(1) = CS_BCS_PERIODIC; bcval(:) = 0.0_wp    ! periodic BCs (for start and end of curve!)
     bc(2) = bc(1)                                ! also mixed BCs possible (not for periodic BC!)
 
 ! ###################################################################
@@ -75,22 +72,24 @@ program CSPLINE
 
     g%periodic = periodic; g%uniform = uniform
     g%size = imax
-    g%scale = C_1_R
-    lambda = C_1_R
+    g%scale = 1.0_wp
+    lambda = 1.0_wp
     g%mode_fdm1 = FDM_COM6_JACOBIAN
 
     if (random) then
         do i = 1, imax
             call random_number(r)
-            x(i, 1) = i - C_1_R + r
+            ! x(i, 1) = i - 1.0_wp + r
+            wrk1d(i, 1) = i - 1.0_wp + r
             call random_number(r)
             y(i) = r
         end do
-        x(1, 1) = C_0_R
+        x(1, 1) = 0.0_wp
     else
         do i = 1, imax
-            x(i, 1) = M_REAL(i - 1)/M_REAL(imax - 1)*g%scale
-            y(i) = sin(C_2_R*C_PI_R/g%scale*lambda*x(i, 1))
+            ! x(i, 1) = M_REAL(i - 1)/M_REAL(imax - 1)*g%scale
+            wrk1d(i, 1) = M_REAL(i - 1)/M_REAL(imax - 1)*g%scale
+            y(i) = sin(2.0_wp*pi_wp/g%scale*lambda*x(i, 1))
         end do
     end if
     if (periodic) y(imax) = y(1)
@@ -102,21 +101,22 @@ program CSPLINE
     g_int%periodic = g%periodic; g_int%size = imax_int; g_int%scale = g%scale
     g_int%uniform = g%uniform; g_int%mode_fdm1 = g%mode_fdm1
     do i = 1, imax_int
-        x_int(i, 1) = xb + (xe - xb)*(i - C_1_R)/(imax_int - C_1_R)
+!        x_int(i, 1) = xb + (xe - xb)*(i - 1.0_wp)/(imax_int - 1.0_wp)
+        wrk1d_int(i, 1) = xb + (xe - xb)*(i - 1.0_wp)/(imax_int - 1.0_wp)
     end do
     if (random) then
         do i = 1, imax_int
-            y_int(i) = C_0_R ! exact function exists only for non-random data
+            y_int(i) = 0.0_wp ! exact function exists only for non-random data
         end do
     else
         do i = 1, imax_int
-            y_int(i) = sin(C_2_R*C_PI_R/g_int%scale*lambda*x_int(i, 1))
+            y_int(i) = sin(2.0_wp*pi_wp/g_int%scale*lambda*x_int(i, 1))
         end do
     end if
 
 ! initialize grids for fdm calls
-    call FDM_INITIALIZE(x, g, wrk1d)
-    call FDM_INITIALIZE(x_int, g_int, wrk1d_int)
+    call FDM_Initialize(x, g, wrk1d(:,1), wrk1(:,4))
+    call FDM_Initialize(x_int, g_int, wrk1d_int, wrk1(:,4))
 
 ! cubic spline function
     call CUBIC_SPLINE(bc, bcval, imax, imax_int, g%nodes, y, g_int%nodes, y_sp, wrk)

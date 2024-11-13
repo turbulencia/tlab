@@ -3,10 +3,11 @@
 #include "dns_const_mpi.h"
 
 module BOUNDARY_BCS
-    use TLAB_CONSTANTS
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk3d
-    use FDM_PROCS
+    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH, MAX_VARS
+    use TLab_Constants, only: efile
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Arrays, only: wrk3d
+    use FDM_MatMul
     use FDM_Com1_Jacobian
     implicit none
     save
@@ -59,26 +60,26 @@ contains
         do is = 1, inb_scal
             write (lstr, *) is; lstr = 'Scalar'//trim(adjustl(lstr))
 
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'none') then; var%type(is) = DNS_BCS_NONE
             else if (trim(adjustl(sRes)) == 'dirichlet') then; var%type(is) = DNS_BCS_DIRICHLET
             else if (trim(adjustl(sRes)) == 'neumann') then; var%type(is) = DNS_BCS_NEUMANN
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. BoundaryConditions.'//trim(adjustl(lstr)))
-                call TLAB_STOP(DNS_ERROR_JBC)
+                call TLab_Write_ASCII(efile, __FILE__//'. BoundaryConditions.'//trim(adjustl(lstr)))
+                call TLab_Stop(DNS_ERROR_JBC)
             end if
 
-            call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)), 'static', sRes)
             if (sRes == 'static') then
                 var%SfcType(is) = DNS_SFC_STATIC
             elseif (sRes == 'linear') then
                 var%SfcType(is) = DNS_SFC_LINEAR
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. BoundaryConditions.'//trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)))
-                call TLAB_STOP(DNS_ERROR_JBC)
+                call TLab_Write_ASCII(efile, __FILE__//'. BoundaryConditions.'//trim(adjustl(lstr))//'SfcType'//trim(adjustl(tag)))
+                call TLab_Stop(DNS_ERROR_JBC)
             end if
 
-            call SCANINIREAL(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
+            call ScanFile_Real(bakfile, inifile, 'BoundaryConditions', trim(adjustl(lstr))//'Coupling'//trim(adjustl(tag)), '0.0', var%cpl(is))
 
         end do
 
@@ -106,14 +107,14 @@ contains
             itangential = [1, 2]
         end select
 
-        call SCANINICHAR(bakfile, inifile, 'BoundaryConditions', 'Velocity'//trim(adjustl(tag)), 'freeslip', sRes)
+        call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'Velocity'//trim(adjustl(tag)), 'freeslip', sRes)
         if (trim(adjustl(sRes)) == 'none') then; var%type(1:3) = DNS_BCS_NONE
         else if (trim(adjustl(sRes)) == 'noslip') then; var%type(1:3) = DNS_BCS_DIRICHLET
         else if (trim(adjustl(sRes)) == 'freeslip') then; var%type(inormal) = DNS_BCS_DIRICHLET
             var%type(itangential) = DNS_BCS_NEUMANN
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. BoundaryConditions.Velocity'//trim(adjustl(tag)))
-            call TLAB_STOP(DNS_ERROR_IBC)
+            call TLab_Write_ASCII(efile, __FILE__//'. BoundaryConditions.Velocity'//trim(adjustl(tag)))
+            call TLab_Stop(DNS_ERROR_IBC)
         end if
 
     end subroutine BOUNDARY_BCS_FLOW_READBLOCK
@@ -121,14 +122,14 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine BOUNDARY_BCS_INITIALIZE()
-        use TLAB_TYPES, only: profiles_dt
-        use TLAB_CONSTANTS, only: tag_flow, tag_scal, lfile, efile
+        use TLab_Types, only: profiles_dt
+        use TLab_Constants, only: tag_flow, tag_scal, lfile, efile
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
+        use TLab_Constants, only: tfile
 #endif
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
-        use TLAB_VARS, only: g
+        use FDM, only: g
         use TLAB_VARS, only: pbg, qbg
         use Thermodynamics, only: CRATIO_INV
         use THERMO_THERMAL
@@ -158,7 +159,7 @@ contains
 
 ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_BCS_INITIALLIZE')
 #endif
 
 ! ###################################################################
@@ -221,7 +222,7 @@ contains
                 end do
                 write (str, *) ims_bcs_imax
                 str = 'Initialize MPI types for Ox BCs transverse terms. '//trim(adjustl(str))//' planes.'
-                call TLAB_WRITE_ASCII(lfile, str)
+                call TLab_Write_ASCII(lfile, str)
                 isize_loc = ims_bcs_imax*jmax
                 call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
@@ -236,7 +237,7 @@ contains
                 end do
                 write (str, *) ims_bcs_jmax
                 str = 'Initialize MPI types for Oy BCs transverse terms. '//trim(adjustl(str))//' planes.'
-                call TLAB_WRITE_ASCII(lfile, str)
+                call TLab_Write_ASCII(lfile, str)
                 isize_loc = imax*ims_bcs_jmax
                 call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
@@ -380,7 +381,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_BCS_INITIALLIZE')
 #endif
 
         return
@@ -392,7 +393,7 @@ contains
 !# Routine format extracted from OPR_PARTIAL_Y
 !########################################################################
     subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, tmp1)
-        use TLAB_TYPES, only: grid_dt
+        use FDM, only: grid_dt
 
         integer(wi), intent(in) :: ibc     ! BCs at jmin/jmax: 1, for Neumann/-
         !                                                   2, for -      /Neumann
@@ -427,7 +428,7 @@ contains
 #ifdef USE_ESSL
                 call DGETMO(u, nxy, nxy, nz, tmp1, nz)
 #else
-                call DNS_TRANSPOSE(u, nxy, nz, nxy, tmp1, nz)
+                call TLab_Transpose(u, nxy, nz, nxy, tmp1, nz)
 #endif
                 p_org => tmp1
                 p_dst(1:nx*nz, 1:ny) => wrk3d(1:nx*ny*nz)
@@ -491,8 +492,8 @@ contains
                 if (any([BCS_ND, BCS_NN] == ibc)) call DGETMO(p_bcs_hb, nz, nz, nx, bcs_hb, nx)
                 if (any([BCS_DN, BCS_NN] == ibc)) call DGETMO(p_bcs_ht, nz, nz, nx, bcs_ht, nx)
 #else
-                if (any([BCS_ND, BCS_NN] == ibc)) call DNS_TRANSPOSE(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
-                if (any([BCS_DN, BCS_NN] == ibc)) call DNS_TRANSPOSE(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
+                if (any([BCS_ND, BCS_NN] == ibc)) call TLab_Transpose(p_bcs_hb, nz, nx, nz, bcs_hb, nx)
+                if (any([BCS_DN, BCS_NN] == ibc)) call TLab_Transpose(p_bcs_ht, nz, nx, nz, bcs_ht, nx)
 #endif
             end if
 
@@ -506,14 +507,15 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     subroutine BOUNDARY_BCS_SURFACE_Y(is, bcs, s, hs, tmp1, aux)
 #ifdef TRACE_ON
-        use TLAB_CONSTANTS, only: tfile
-        use TLAB_PROCS, only: TLAB_WRITE_ASCII
+        use TLab_Constants, only: tfile
+        use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-        use TLAB_CONSTANTS, only: lfile
-        use TLAB_VARS, only: imax, jmax, kmax, g
+        use TLab_Constants, only: lfile
+        use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: isize_field
         use TLAB_VARS, only: visc, schmidt
-        use AVGS, only: AVG1V2D
+        use FDM, only: g
+        use Averages, only: AVG1V2D
         use OPR_PARTIAL
 
         integer(wi) is
@@ -527,7 +529,7 @@ contains
         real(wp) :: diff, hfx_avg
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING SUBROUTINE BOUNDARY_BCS_SURFACE_Y')
+        call TLab_Write_ASCII(tfile, 'ENTERING SUBROUTINE BOUNDARY_BCS_SURFACE_Y')
 #endif
         diff = visc/schmidt(is)
         nxy = imax*jmax
@@ -566,7 +568,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(TFILE, 'LEAVING SUBROUTINE BOUNDAR_SURFACE_J')
+        call TLab_Write_ASCII(TFILE, 'LEAVING SUBROUTINE BOUNDAR_SURFACE_J')
 #endif
 
         return

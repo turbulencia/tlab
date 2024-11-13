@@ -1,4 +1,4 @@
-module TLAB_CONSTANTS
+module TLab_Constants
     implicit none
     save
 
@@ -11,7 +11,6 @@ module TLAB_CONSTANTS
     integer, parameter :: MAX_PROF = 10
     integer, parameter :: MAX_JETS = 5
     integer, parameter :: MAX_AVG_TEMPORAL = 235
-    integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
     integer, parameter :: MAX_PATH_LENGTH = 128
 
     character(len=*), parameter :: gfile = 'grid'
@@ -19,7 +18,7 @@ module TLAB_CONSTANTS
     character(len=*), parameter :: lfile = 'tlab.log'
     character(len=*), parameter :: efile = 'tlab.err'
     character(len=*), parameter :: wfile = 'tlab.war'
-    character(len=*), parameter :: tfile = 'dns.trc'
+    character(len=*), parameter :: tfile = 'tlab.trc'
 
     character(len=*), parameter :: tag_flow = 'flow.'
     character(len=*), parameter :: tag_scal = 'scal.'
@@ -71,4 +70,4 @@ module TLAB_CONSTANTS
     integer, parameter :: BCS_MAX = 2    ! Special treatment at the upper interval limit
     integer, parameter :: BCS_BOTH = 3
 
-end module TLAB_CONSTANTS
+end module TLab_Constants

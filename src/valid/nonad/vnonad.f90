@@ -1,16 +1,14 @@
 program VNONAD
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-#include "types.h"
+    integer(wi), parameter :: nmax = 32, len = 5
+    real(wp), dimension(nmax, 5) :: A, B
+    real(wp), dimension(nmax, 9) :: C
+    real(wp), dimension(len, nmax) :: x, frc9, frc5
 
-    TINTEGER, parameter :: nmax = 32, len = 5
-    TREAL, dimension(nmax, 5) :: A, B
-    TREAL, dimension(nmax, 9) :: C
-    TREAL, dimension(len, nmax) :: x, frc9, frc5
-
-    TINTEGER n, ij, seed, nmax_loc
-    TREAL RAN0, error, sol, diff
+    integer(wi) n, ij, seed, nmax_loc
+    real(wp) RAN0, error, sol, diff
 
 ! ###################################################################
 #define A_a(n) A(n,1)

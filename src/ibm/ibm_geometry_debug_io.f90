@@ -31,8 +31,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
   
   use IBM_VARS
   use IO_FIELDS
-  use TLAB_VARS,      only : g, imax, jmax, kmax, isize_field
-  use TLAB_CONSTANTS, only : wi, wp
+  use FDM,      only : g
+  use TLAB_VARS,      only : imax, jmax, kmax, isize_field
+  use TLab_Constants, only : wi, wp
 #ifdef USE_MPI
   use MPI
   use TLabMPI_PROCS
@@ -100,7 +101,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     ip = ip + nyz
   end do
 
-  call DNS_TRANSPOSE(tmp1, nyz, g(1)%size, nyz,        tmp2, g(1)%size)
+  call TLab_Transpose(tmp1, nyz, g(1)%size, nyz,        tmp2, g(1)%size)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
     call TLabMPI_TRPB_I(tmp2, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
@@ -126,7 +127,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     ip = ip + nxz
   end do
 
-  call DNS_TRANSPOSE(tmp1, kmax, imax * jmax, kmax, tmp2, imax * jmax)
+  call TLab_Transpose(tmp1, kmax, imax * jmax, kmax, tmp2, imax * jmax)
   call IO_WRITE_FIELDS('nobj3d',  IO_FLOW, imax,jmax,kmax, 1, tmp2)
   tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp
 
@@ -189,7 +190,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     ip = ip + nyz
   end do
 
-  call DNS_TRANSPOSE(tmp1, nyz, g(1)%size, nyz,        tmp3, g(1)%size)
+  call TLab_Transpose(tmp1, nyz, g(1)%size, nyz,        tmp3, g(1)%size)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
     call TLabMPI_TRPB_I(tmp3, tmp1, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
@@ -199,7 +200,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
   call IO_WRITE_FIELDS('nobi3d_b',  IO_FLOW, imax,jmax,kmax, 1, tmp3)
 #endif
 
-  call DNS_TRANSPOSE(tmp2, nyz, g(1)%size, nyz,        tmp3, g(1)%size)
+  call TLab_Transpose(tmp2, nyz, g(1)%size, nyz,        tmp3, g(1)%size)
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
     call TLabMPI_TRPB_I(tmp3, tmp2, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
@@ -243,9 +244,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     ip = ip + nxz
   end do
 
-  call DNS_TRANSPOSE(tmp1, kmax, imax * jmax, kmax, tmp3, imax * jmax)
+  call TLab_Transpose(tmp1, kmax, imax * jmax, kmax, tmp3, imax * jmax)
   call IO_WRITE_FIELDS('nobj3d_b',  IO_FLOW, imax,jmax,kmax, 1, tmp3)
-  call DNS_TRANSPOSE(tmp2, kmax, imax * jmax, kmax, tmp3, imax * jmax)
+  call TLab_Transpose(tmp2, kmax, imax * jmax, kmax, tmp3, imax * jmax)
   call IO_WRITE_FIELDS('nobj3d_e',  IO_FLOW, imax,jmax,kmax, 1, tmp3)
   if (ims_pro == 0) write(*,*) 'done writing files: nobj3d_b, nobj3d_e'
   tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp; tmp3(:) = 0.0_wp

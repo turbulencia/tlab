@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -6,10 +5,10 @@
 #endif
 
 program VFFT
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_txc_dimz
-    use TLAB_PROCS
+    use TLab_WorkFlow, only: TLab_Write_ASCII
     use OPR_FOURIER
 #ifdef USE_MPI
     use MPI
@@ -18,22 +17,23 @@ program VFFT
 
     implicit none
 
-    TREAL, dimension(:), allocatable :: trans, trans2, trans_ref
-    TREAL, dimension(:), allocatable :: tmp1, tmp2, tmp3, tmp4, wrk2d, wrk3d
+    real(wp), dimension(:), allocatable :: trans, trans2, trans_ref
+    real(wp), dimension(:), allocatable :: tmp1, tmp2, tmp3, tmp4, wrk2d, wrk3d
 
-    TINTEGER :: i, j, k, ip, ip_ref, bad_count, good_count, check_mode, bad
-    TINTEGER :: isize_fft3d, isize_trn3d
-    TINTEGER :: err_count, case_count
-    TREAL :: norm
+    integer(wi) :: i, j, k, ip, ip_ref, bad_count, good_count, check_mode, bad
+    integer(wi) :: isize_fft3d, isize_trn3d
+    integer(wi) :: err_count, case_count
+    real(wp) :: norm
 
     err_count = i0
     case_count = i0
 
-    call TLAB_START()
-    call IO_READ_GLOBAL('tlab.ini')
+    call TLab_Start()
+    call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
 
     isize_fft3d = isize_txc_dimz*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)
@@ -90,5 +90,5 @@ program VFFT
     end if
 #endif
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program VFFT

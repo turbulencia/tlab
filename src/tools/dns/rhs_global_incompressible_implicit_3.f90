@@ -25,17 +25,17 @@
 subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
                                                 q, hq, u, v, w, h1, h2, h3, s, hs, &
                                                 tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8)
-    use TLAB_CONSTANTS
+    use TLab_Constants, only: wp, wi, BCS_NN
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby
     use TLAB_VARS, only: buoyancy, coriolis
-    use TLAB_ARRAYS, only: wrk2d, wrk3d
+    use TLab_Arrays, only: wrk2d, wrk3d
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
     use BOUNDARY_BUFFER

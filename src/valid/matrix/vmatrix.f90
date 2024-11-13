@@ -2,15 +2,13 @@ program VMATRIX
 
     implicit none
 
-#include "types.h"
-
     TINTEGER, parameter :: nmax = 5, len = 1
-    TREAL, dimension(nmax, 5) :: a
-    TREAL, dimension(nmax, nmax) :: c, d, wrk2d
-!  TREAL, dimension(len,nmax)        :: x, f3, f5
+    real(wp), dimension(nmax, 5) :: a
+    real(wp), dimension(nmax, nmax) :: c, d, wrk2d
+!  real(wp), dimension(len,nmax)        :: x, f3, f5
 
     TINTEGER n, ij, seed
-    TREAL RAN0 !, error, sol
+    real(wp) RAN0 !, error, sol
 
 ! ###################################################################
 #define a_a(n) a(n,1)
@@ -56,7 +54,7 @@ program VMATRIX
 
     print *, 'Inverse of U'
     call TRIDINV(nmax, a_d(1), wrk2d)
-    call DNS_TRANSPOSE(wrk2d, nmax, nmax, nmax, d, nmax)
+    call TLab_Transpose(wrk2d, nmax, nmax, nmax, d, nmax)
     do n = 1, nmax
         write (*, '(6F10.5)') (d(n, ij), ij=1, nmax)
     end do

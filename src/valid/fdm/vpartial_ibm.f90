@@ -1,14 +1,16 @@
 #include "dns_const.h"
 
 program VPARTIAL
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only:  grid_dt
-    use TLAB_VARS, only: g, imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
+    use TLab_Constants, only: wp, wi
+    use FDM, only:  grid_dt
+    use FDM, only: g
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt, area
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, txc, x, y, z, wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII
+    use TLab_Memory, only: TLab_Initialize_Memory
+    use TLab_Arrays, only: wrk1d, wrk2d, txc, x, y, z, wrk3d
     use FDM_ComX_Direct
-    use FDM_PROCS
+    use FDM_MatMul
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use OPR_PARTIAL
@@ -34,20 +36,20 @@ program VPARTIAL
     integer, parameter :: i1 = 1, cases(4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
 
 ! ###################################################################
-    call TLAB_START()
-    call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
+    call TLab_Start()
+    call TLab_Initialize_Parameters(ifile)
     ! call Particle_Initialize_Parameters(ifile)
     ! call DNS_READ_LOCAL(ifile)
     call IBM_READ_INI(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 ! Initialize
     
     len = jmax*kmax
 
-    visc = 1.0_wp   ! Needed in FDM_INITIALIZE
+    visc = 1.0_wp   ! Needed in FDM_Initialize
     schmidt = 1.0_wp
 
-    ! g%inb_grid = 16
     ! g%size = imax
     ! g%scale = 1.0_wp
     ! g%uniform = .false.
@@ -77,10 +79,10 @@ program VPARTIAL
     ! Valid settings
     test_type = 1
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA

@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -20,7 +19,7 @@
 !########################################################################
 subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size, &
                                threshold, ibuffer_npy, u, v, w, p, z1, a, sl, profiles, txc, mean, wrk1d, wrk2d, wrk3d)
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
@@ -35,20 +34,20 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
 #define L_NFIELDS_MAX 13
 
-    TINTEGER isl, ith, nmax, istep, kstep, nfield, itxc_size, iavg, ibuffer_npy
-    TREAL threshold
-    TREAL u(*), v(*), w(*), p(*), z1(*), a(*), sl(imax, kmax)
-    TREAL profiles(L_NFIELDS_MAX, nmax, imax/istep, kmax/kstep)
-    TREAL mean(L_NFIELDS_MAX, nmax, 2)
-    TREAL txc(imax*jmax*kmax, 7)
-    TREAL wrk1d(*), wrk2d(3, imax, kmax), wrk3d(*)
+    integer(wi) isl, ith, nmax, istep, kstep, nfield, itxc_size, iavg, ibuffer_npy
+    real(wp) threshold
+    real(wp) u(*), v(*), w(*), p(*), z1(*), a(*), sl(imax, kmax)
+    real(wp) profiles(L_NFIELDS_MAX, nmax, imax/istep, kmax/kstep)
+    real(wp) mean(L_NFIELDS_MAX, nmax, 2)
+    real(wp) txc(imax*jmax*kmax, 7)
+    real(wp) wrk1d(*), wrk2d(3, imax, kmax), wrk3d(*)
 
 ! -------------------------------------------------------------------
-    TREAL vmin, vmax, vmean, AVG_IK, diff, normal_factor, dn_u, norm
-    TINTEGER ij, i, k, n, ifield, nfield_loc, ipfield, jmin_loc, jmax_loc
+    real(wp) vmin, vmax, vmean, AVG_IK, diff, normal_factor, dn_u, norm
+    integer(wi) ij, i, k, n, ifield, nfield_loc, ipfield, jmin_loc, jmax_loc
     character*32 fname
 #ifdef USE_MPI
-    TINTEGER ioffset, ip
+    integer(wi) ioffset, ip
     integer mpio_ip, mpio_locsize
     integer status(MPI_STATUS_SIZE)
 #endif
@@ -57,14 +56,14 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     jmax_loc = min(jmax, jmax - 2*ibuffer_npy + 1)
 
     if (nfield < L_NFIELDS_MAX) then
-        call TLAB_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Profiles array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_NORMAL_VORTICITY. Profiles array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     else
         nfield = L_NFIELDS_MAX
     end if
     if (itxc_size < imax*jmax*kmax*7) then
-        call TLAB_WRITE_ASCII(efile, 'SL_NORMAL_VORTICITY. Txc array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_NORMAL_VORTICITY. Txc array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! Calculate vorticiy field w_iw_i
@@ -80,7 +79,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
     else if (ith == 2) then
         ij = jmax/2
-        vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz, area)
+        vmean = AVG_IK(imax, jmax, kmax, ij, a, dx, dz)
         vmin = threshold*threshold*vmean
     end if
 ! upper or lower depending on flag isl

@@ -8,15 +8,18 @@
 
 program TRANSFIELDS
 
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: filter_dt, grid_dt
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use FDM, only: grid_dt
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
     use Thermodynamics
     use THERMO_ANELASTIC
@@ -66,14 +69,15 @@ program TRANSFIELDS
     ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START
+    call TLab_Start
 
-    call IO_READ_GLOBAL(ifile)
-    call Thermodynamics_Initialize_Parameters(ifile)
-
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 
     ! -------------------------------------------------------------------
     ! File names
@@ -86,7 +90,7 @@ program TRANSFIELDS
     opt_main = -1 ! default values
     opt_function = 0
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamTransform', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -110,7 +114,7 @@ program TRANSFIELDS
         opt_main = int(opt_vec(1))
     end if
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Subdomain', '-1', sRes)
 
     if (sRes == '-1') then
 #ifdef USE_MPI
@@ -131,18 +135,18 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     select case (opt_main)
     case (:0)
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Missing input [ParamTransform] in tlab.ini.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Missing input [ParamTransform] in tlab.ini.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
 
     case (1)
         if (subdomain(1) /= 1 .or. subdomain(2) /= g(1)%size .or. &
             subdomain(5) /= 1 .or. subdomain(6) /= g(3)%size) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Cropping only in Oy.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Cropping only in Oy.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (subdomain(3) < 1 .or. subdomain(4) > g(2)%size) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Cropping out of bounds in Oy.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Cropping out of bounds in Oy.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
     case (4)
@@ -158,23 +162,23 @@ program TRANSFIELDS
             iopt_size = iopt_size - 1
         end if
         if (iopt_size == 0) then
-            call TLAB_WRITE_ASCII(lfile, C_FILE_LOC//'. Performing arithmetic mean of fields.')
+            call TLab_Write_ASCII(lfile, C_FILE_LOC//'. Performing arithmetic mean of fields.')
             iopt_size = itime_size
             opt_vec(2:) = 1.0_wp/real(itime_size, wp)
         end if
         if (iopt_size /= itime_size) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Number of coefficient incorrect.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Number of coefficient incorrect.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (iopt_size > iopt_size_max) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Array opt_vec too small.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Array opt_vec too small.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
     case (5)
         if (FilterDomain(1)%type == DNS_FILTER_NONE) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Filter information needs to be provided in block [Filter].')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Filter information needs to be provided in block [Filter].')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
     case (6)
@@ -214,8 +218,8 @@ program TRANSFIELDS
             iopt_size = iopt_size - 1
         end if
         if (iopt_size /= 2) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Number of blend coefficient incorrect.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Number of blend coefficient incorrect.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
     end select
@@ -273,16 +277,16 @@ program TRANSFIELDS
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
 
     ! Further allocation
-    if (flow_on) call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
-    if (scal_on) call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
+    if (flow_on) call TLab_Allocate_Real(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
+    if (scal_on) call TLab_Allocate_Real(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
 
     if (opt_main == 3) then
         allocate (x_dst(g_dst(1)%size))
@@ -316,21 +320,21 @@ program TRANSFIELDS
     ! -------------------------------------------------------------------
     if (opt_main == 3) then
         call IO_READ_GRID('grid.trn', g_dst(1)%size, g_dst(2)%size, g_dst(3)%size, &
-                          g_dst(1)%scale, g_dst(2)%scale, g_dst(3)%scale, x_dst, y_dst, z_dst, dummy)
+                          g_dst(1)%scale, g_dst(2)%scale, g_dst(3)%scale, x_dst, y_dst, z_dst)
 
         tolerance = 0.001_wp    ! percentage of grid spacing
 
         ! Check grids; Ox and Oz directions are assumed to be periodic
         dummy = (g_dst(1)%scale - g(1)%scale)/(x(g(1)%size, 1) - x(g(1)%size - 1, 1))
         if (abs(dummy) > tolerance) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
-            call TLAB_STOP(DNS_ERROR_GRID_SCALE)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
+            call TLab_Stop(DNS_ERROR_GRID_SCALE)
         end if
 
         dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size, 1) - z(g(3)%size - 1, 1))
         if (abs(dummy) > tolerance) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
-            call TLAB_STOP(DNS_ERROR_GRID_SCALE)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
+            call TLab_Stop(DNS_ERROR_GRID_SCALE)
         end if
 
         ! In the Oy direction, we allow to have a different box
@@ -366,8 +370,8 @@ program TRANSFIELDS
         end if
 
         if (flag_extend .and. flag_crop) then
-            call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. Simultaneous extend and crop is undeveloped.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Simultaneous extend and crop is undeveloped.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! Reallocating memory space because jmax_aux can be larger than jmax, jmax_dst
@@ -384,12 +388,12 @@ program TRANSFIELDS
         idummy = idummy*max(imax, imax_dst)
         isize_txc_field = max(isize_txc_field, idummy)
 #endif
-        isize_wrk3d = max(isize_wrk3d,isize_txc_field)
+        isize_wrk3d = max(isize_wrk3d, isize_txc_field)
 
         deallocate (txc, wrk1d, wrk3d)
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
+        call TLab_Allocate_Real(C_FILE_LOC, txc, [isize_txc_field, inb_txc], 'txc')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
+        call TLab_Allocate_Real(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
         txc_aux(1:imax, 1:jmax_aux, 1:kmax) => txc(1:imax*jmax_aux*kmax, 1)
 
         allocate (x_aux(g(1)%size + 1))         ! need extra space in cubic splines
@@ -402,9 +406,9 @@ program TRANSFIELDS
         ! Creating grid
         if (flag_crop) then
             write (str, '(I3)') subdomain(4)
-            call TLAB_WRITE_ASCII(lfile, 'Croping above '//trim(adjustl(str))//' for remeshing...')
+            call TLab_Write_ASCII(lfile, 'Croping above '//trim(adjustl(str))//' for remeshing...')
             write (str, '(I3)') subdomain(3)
-            call TLAB_WRITE_ASCII(lfile, 'Croping below '//trim(adjustl(str))//' for remeshing...')
+            call TLab_Write_ASCII(lfile, 'Croping below '//trim(adjustl(str))//' for remeshing...')
             call TRANS_CROP(1, jmax, 1, subdomain, g(2)%nodes, y_aux)
 
             y_aux(1) = y_dst(1)                 ! Using min and max of new grid
@@ -415,7 +419,7 @@ program TRANSFIELDS
 
             if (subdomain(4) > 0) then
                 write (str, '(I3)') subdomain(4)
-                call TLAB_WRITE_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the top for remeshing...')
+                call TLab_Write_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the top for remeshing...')
                 dummy = (y_dst(g_dst(2)%size) - y(g(2)%size, 1))/real(subdomain(4)) ! distributing the points uniformly
                 do ip = g(2)%size + subdomain(3) + 1, g(2)%size + subdomain(3) + subdomain(4)
                     y_aux(ip) = y_aux(ip - 1) + dummy
@@ -424,7 +428,7 @@ program TRANSFIELDS
 
             if (subdomain(3) > 0) then
                 write (str, '(I3)') subdomain(3)
-                call TLAB_WRITE_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the bottom for remeshing...')
+                call TLab_Write_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the bottom for remeshing...')
                 dummy = (y_dst(1) - y(1, 1))/real(subdomain(3))
                 do ip = subdomain(3), 1, -1
                     y_aux(ip) = y_aux(ip + 1) + dummy ! dummy is negative
@@ -445,7 +449,7 @@ program TRANSFIELDS
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
@@ -464,14 +468,14 @@ program TRANSFIELDS
         case (1)
             if (flow_on) then
                 do iq = 1, inb_flow
-                    call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
+                    call TLab_Write_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_CROP(imax, jmax, kmax, subdomain, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
+                    call TLab_Write_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_CROP(imax, jmax, kmax, subdomain, s(1, is), s_dst(1, is))
                 end do
             end if
@@ -482,14 +486,14 @@ program TRANSFIELDS
         case (2)
             if (flow_on) then
                 do iq = 1, inb_flow
-                    call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
+                    call TLab_Write_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
+                    call TLab_Write_ASCII(lfile, 'Transfering data to new array...')
                     call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(1, is), s_dst(1, is))
                 end do
             end if
@@ -501,14 +505,14 @@ program TRANSFIELDS
 
             if (flow_on) then
                 do iq = 1, inb_flow
-                    call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
+                    call TLab_Write_ASCII(lfile, 'Transfering data to new array...')
                     if (flag_crop) then
                         call TRANS_CROP(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
                                  + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-                                 + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
+    + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
@@ -521,14 +525,14 @@ program TRANSFIELDS
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TLAB_WRITE_ASCII(lfile, 'Transfering data to new array...')
+                    call TLab_Write_ASCII(lfile, 'Transfering data to new array...')
                     if (flag_crop) then
                         call TRANS_CROP(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
                                  + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-                                 + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
+    + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
@@ -557,7 +561,7 @@ program TRANSFIELDS
         case (5)
             if (flow_on) then
                 do iq = 1, inb_flow
-                    call TLAB_WRITE_ASCII(lfile, 'Filtering...')
+                    call TLab_Write_ASCII(lfile, 'Filtering...')
                     q_dst(:, iq) = q(:, iq) ! in-place operation
                     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ) &  ! Bcs depending on field
                         FilterDomain(2)%BcsMin = FilterDomainBcsFlow(iq)
@@ -567,7 +571,7 @@ program TRANSFIELDS
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TLAB_WRITE_ASCII(lfile, 'Filtering...')
+                    call TLab_Write_ASCII(lfile, 'Filtering...')
                     s_dst(:, is) = s(:, is) ! in-place operation
                     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ) & ! Bcs depending on field
                         FilterDomain(2)%BcsMin = FilterDomainBcsScal(is)
@@ -596,7 +600,7 @@ program TRANSFIELDS
         case (7)
             if (it == 1) opt_vec(2) = y(1, 1) + opt_vec(2)*g(2)%scale
             write (sRes, *) opt_vec(2), opt_vec(3); sRes = 'Blending with '//trim(adjustl(sRes))
-            call TLAB_WRITE_ASCII(lfile, sRes)
+            call TLab_Write_ASCII(lfile, sRes)
 
             if (scal_on) then
                 do is = 1, inb_scal
@@ -618,14 +622,14 @@ program TRANSFIELDS
         case (8)
             if (flow_on) then
                 do iq = 1, inb_flow
-                    call TLAB_WRITE_ASCII(lfile, 'Adding mean flow profiles...')
+                    call TLab_Write_ASCII(lfile, 'Adding mean flow profiles...')
                     call TRANS_ADD_MEAN(0, iq, imax, jmax, kmax, y, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TLAB_WRITE_ASCII(lfile, 'Adding mean scal profiles...')
+                    call TLab_Write_ASCII(lfile, 'Adding mean scal profiles...')
                     call TRANS_ADD_MEAN(1, is, imax, jmax, kmax, y, s(1, is), s_dst(1, is))
                 end do
             end if
@@ -636,14 +640,14 @@ program TRANSFIELDS
         case (9)
             if (flow_on) then
                 do iq = 1, inb_flow
-                    call TLAB_WRITE_ASCII(lfile, 'Extruding along Oz...')
+                    call TLab_Write_ASCII(lfile, 'Extruding along Oz...')
                     call TRANS_EXTRUDE(imax, jmax, kmax, subdomain, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TLAB_WRITE_ASCII(lfile, 'Extruding along Oz...')
+                    call TLab_Write_ASCII(lfile, 'Extruding along Oz...')
                     call TRANS_EXTRUDE(imax, jmax, kmax, subdomain, s(1, is), s_dst(1, is))
                 end do
             end if
@@ -694,7 +698,7 @@ program TRANSFIELDS
         end if
     end if
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 
 contains
     !########################################################################
@@ -777,7 +781,7 @@ contains
     !########################################################################
     subroutine TRANS_ADD_MEAN(flag_mode, is, nx, ny, nz, y, a, b)
 
-        use TLAB_CONSTANTS, only: efile
+        use TLab_Constants, only: efile
         use TLAB_VARS, only: sbg, qbg
         use Profiles
         implicit none

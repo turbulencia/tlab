@@ -16,21 +16,21 @@
 !########################################################################
 module BOUNDARY_BUFFER
 
-    use TLAB_TYPES, only: filter_dt
+    ! use TLab_Types, only: filter_dt
 
-    use TLAB_CONSTANTS, only: tag_flow, tag_scal, wfile, efile, lfile, MAX_VARS, wp, wi
+    use TLab_Constants, only: tag_flow, tag_scal, wfile, efile, lfile, MAX_VARS, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imode_eqns, imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: itime
-    use TLAB_PROCS
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: CRATIO_INV
     use IO_FIELDS
     use OPR_FILTERS
-    use AVGS, only: COV2V1D, COV2V2D
+    use Averages, only: COV2V1D, COV2V2D
 
 #ifdef USE_MPI
     use MPI
@@ -70,7 +70,7 @@ module BOUNDARY_BUFFER
     type(buffer_dt), public :: BuffFlowImin, BuffFlowImax, BuffFlowJmin, BuffFlowJmax
     type(buffer_dt), public :: BuffScalImin, BuffScalImax, BuffScalJmin, BuffScalJmax
     !  TYPE(filter_dt), DIMENSION(3) :: FilterBuffer
-    ! BufferFilter should then be a block in tlab.ini as [Filter], which is read in io_read_global.
+    ! BufferFilter should then be a block in tlab.ini as [Filter], which is read in TLab_Initialize_Parameters.
 
     public :: BOUNDARY_BUFFER_READBLOCK
     public :: BOUNDARY_BUFFER_INITIALIZE
@@ -98,10 +98,10 @@ contains
         ! ###################################################################
         variable%active(:) = .false.; variable%hard = .false.
         if (variable%size > 0) then
-            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BufferZone', 'Parameters'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) == 'void') then
                 str = trim(adjustl(tag))
-                call SCANINICHAR(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
+                call ScanFile_Char(bakfile, inifile, 'BufferZone', 'Parameters'//str(1:1), '1.0,2.0', sRes)
             end if
             is = nfields + 1; call LIST_REAL(sRes, is, dummies)
             if (is == 1) then
@@ -114,21 +114,21 @@ contains
                 variable%strength(1:nfields) = dummies(1:nfields)
                 variable%sigma(:) = dummies(nfields + 1)
             else
-                call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.ParametersUImin.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
             do is = 1, nfields
                 if (variable%strength(is) /= 0.0_wp) variable%active(is) = .true.
             end do
 
-            call SCANINICHAR(bakfile, inifile, 'BufferZone', 'HardValues'//trim(adjustl(tag)), 'void', sRes)
+            call ScanFile_Char(bakfile, inifile, 'BufferZone', 'HardValues'//trim(adjustl(tag)), 'void', sRes)
             if (trim(adjustl(sRes)) /= 'void') then
                 is = nfields; call LIST_REAL(sRes, is, variable%hardvalues)
                 if (is == nfields) then
                     variable%hard = .true.
                 else
-                    call TLAB_WRITE_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//trim(adjustl(tag))//'.')
-                    call TLAB_STOP(DNS_ERROR_OPTION)
+                    call TLab_Write_ASCII(wfile, 'DNS_READ_LOCAL. Wrong number of values in BufferZone.HardValues.'//trim(adjustl(tag))//'.')
+                    call TLab_Stop(DNS_ERROR_OPTION)
                 end if
             end if
 
@@ -221,7 +221,7 @@ contains
         ! Reference fields
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING INI_BLOCK (boundary_buffer.f90)')
+        call TLab_Write_ASCII(tfile, 'ENTERING INI_BLOCK (boundary_buffer.f90)')
 #endif
 
         if (item%size > 0) then
@@ -349,7 +349,7 @@ contains
 
             line = trim(adjustl(str))//' and '//trim(adjustl(line))
             line = 'Checking bounds of field '//trim(adjustl(tag))//'.'//trim(adjustl(varname(iq)))//': '//trim(adjustl(line))
-            call TLAB_WRITE_ASCII(lfile, line)
+            call TLab_Write_ASCII(lfile, line)
         end do
 
         ! -----------------------------------------------------------------------
@@ -374,14 +374,14 @@ contains
         if (item%type == DNS_BUFFER_FILTER) then
             select case (idir)
             case (1)
-                call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for Ox BCs explicit filter.')
+                call TLab_Write_ASCII(lfile, 'Initialize MPI types for Ox BCs explicit filter.')
                 id = TLabMPI_K_OUTBCS
                 idummy = item%size*jmax
                 call TLabMPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
 
             case (2)
-                call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
+                call TLab_Write_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
                 id = TLabMPI_K_TOPBCS
                 idummy = imax*item%size
                 call TLabMPI_TYPE_K(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
@@ -392,7 +392,7 @@ contains
 #endif
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING INI_BLOCK (boundary_buffer.f90)')
+        call TLab_Write_ASCII(tfile, 'LEAVING INI_BLOCK (boundary_buffer.f90)')
 #endif
         return
 10      format(G_FORMAT_R)
@@ -401,7 +401,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine BOUNDARY_BUFFER_RELAX_SCAL()
-        use TLAB_ARRAYS, only: q, s
+        use TLab_Arrays, only: q, s
         use DNS_ARRAYS, only: hs
 
         ! ###################################################################
@@ -442,7 +442,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine BOUNDARY_BUFFER_RELAX_FLOW()
-        use TLAB_ARRAYS, only: q
+        use TLab_Arrays, only: q
         use DNS_ARRAYS, only: hq
 
         ! ###################################################################
@@ -640,8 +640,8 @@ contains
 
         ! ###################################################################
 !!! Routines OPR_FILTER have been changed. This routine needs to be updates !!!
-        call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         ! BCs for the filters (see routine FILTER)
         ! ibc_x(1) = 1; ibc_x(2) = i1bc; ibc_x(3) = 1; ibc_x(4) = 1
@@ -652,16 +652,16 @@ contains
         ! Bottom boundary
         ! ###################################################################
         if (BuffFlowJmin%size > 1) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! ###################################################################
         ! Top boundary
         ! ###################################################################
         if (BuffFlowJmax%size > 1) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Filter not yet implemented.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         ! ###################################################################

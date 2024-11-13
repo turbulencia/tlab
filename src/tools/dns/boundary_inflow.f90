@@ -8,19 +8,21 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-    use TLAB_TYPES, only: filter_dt, grid_dt, discrete_dt
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi
+    use TLab_Types, only: filter_dt
+    use TLab_Types, only: discrete_dt
+    use FDM, only: grid_dt
+    use TLab_Constants, only: efile, lfile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
-    use TLAB_VARS, only: imode_eqns, itransport
-    use TLAB_VARS, only: g, qbg
+    use TLAB_VARS, only: imode_eqns
+    use FDM, only: g, FDM_Initialize
     use TLAB_VARS, only: rtime, itime
-    use TLAB_VARS, only: visc, damkohler
-    use TLAB_ARRAYS, only: wrk1d, wrk2d, wrk3d
-    use TLAB_PROCS
-    use Thermodynamics, only: imixture
+    use TLAB_VARS, only: visc, damkohler, qbg
+    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use Thermodynamics, only: imixture, itransport
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER
@@ -79,50 +81,52 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_INIT')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_INIT')
 #endif
 
 #ifdef USE_MPI
         ! I/O routines not yet developed for this particular case
         if (ims_npro_i > 1) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INIT. I/O routines undeveloped.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_INIT. I/O routines undeveloped.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 #endif
 
-        if (.not. allocated(x_inf)) allocate (x_inf(g_inf(1)%size, g_inf(1)%inb_grid))
-        if (.not. allocated(y_inf)) allocate (y_inf(g_inf(2)%size, g_inf(2)%inb_grid))
-        if (.not. allocated(z_inf)) allocate (z_inf(g_inf(3)%size, g_inf(3)%inb_grid))
+        g_inf(:)%periodic = g(:)%periodic
+        g_inf(:)%uniform = g(:)%uniform
+        if (inflow_mode == 2) then
+            g_inf(1)%periodic = .true.
+            g_inf(1)%uniform = .true.
+        end if
+        if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
+            call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
+                              g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+            call FDM_Initialize(x_inf, g_inf(1), wrk1d(:, 1), wrk1d(:, 4))
+            call FDM_Initialize(y_inf, g_inf(2), wrk1d(:, 2), wrk1d(:, 4))
+            call FDM_Initialize(z_inf, g_inf(3), wrk1d(:, 3), wrk1d(:, 4))
+        end if
+
         if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))
         if (.not. allocated(s_inf)) allocate (s_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_scal_array))
-
-        if (g_inf(1)%size > 1) then ! Inflow fields for spatial simulations
-            if (.not. associated(g_inf(1)%nodes)) &
-                call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
-                                  g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, x_inf, y_inf, z_inf)
-            call FDM_INITIALIZE(x_inf, g_inf(1), wrk1d)
-            if (.not. associated(g_inf(2)%nodes)) g_inf(2)%nodes => y_inf(:, 1)
-            if (.not. associated(g_inf(3)%nodes)) g_inf(3)%nodes => z_inf(:, 1)
-        end if
 
         ! #######################################################################
         ! Definining types for parallel mode
         ! #######################################################################
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
-            call TLAB_WRITE_ASCII(lfile, 'Initialize MPI types for inflow filter.')
+            call TLab_Write_ASCII(lfile, 'Initialize MPI types for inflow filter.')
             id = TLabMPI_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
             call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
-                                 ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                                ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             FilterInflow(3)%mpitype = id
         end if
 #endif
 
         iwrk_size = g_inf(1)%size*g_inf(2)%size*kmax
         if (imax*jmax*kmax < iwrk_size) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INFLOW_INIT. Not enough space in array txc.')
-            call TLAB_STOP(DNS_ERROR_WRKSIZE)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_INFLOW_INIT. Not enough space in array txc.')
+            call TLab_Stop(DNS_ERROR_WRKSIZE)
         end if
 
         ! ###################################################################
@@ -135,8 +139,8 @@ contains
                 jglobal = joffset + j
                 dy = abs(g(2)%nodes(jglobal) - g_inf(2)%nodes(j))
                 if (dy > tolerance) then
-                    call TLAB_WRITE_ASCII(efile, 'BOUNDARY_INFLOW. Inflow domain does not match.')
-                    call TLAB_STOP(DNS_ERROR_INFLOWDOMAIN)
+                    call TLab_Write_ASCII(efile, 'BOUNDARY_INFLOW. Inflow domain does not match.')
+                    call TLab_Stop(DNS_ERROR_INFLOWDOMAIN)
                 end if
             end do
 
@@ -149,7 +153,7 @@ contains
                 fname = trim(adjustl(fname))//trim(adjustl(str))
                 sname = trim(adjustl(sname))//trim(adjustl(str))
                 line = 'Reading InflowFile '//trim(adjustl(str))
-                call TLAB_WRITE_ASCII(lfile, line)
+                call TLab_Write_ASCII(lfile, line)
             end if
 
             rtimetmp = rtime
@@ -190,7 +194,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_INIT')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_INIT')
 #endif
 
         return
@@ -210,7 +214,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_BROADBAND')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_BROADBAND')
 #endif
 
         ! Transient factor
@@ -263,13 +267,13 @@ contains
                 do j = 1, g_inf(2)%size
                     jglobal = joffset + j
                     do is = 1, inb_scal
-                inf_rhs(jglobal, k, is) = inf_rhs(jglobal, k, is) + vmult*BSPLINES3P(q_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
+                        inf_rhs(jglobal, k, is) = inf_rhs(jglobal, k, is) + vmult*BSPLINES3P(q_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
                     end do
 
                     if (scal_on) then
                         do is = 1, inb_scal
                             ip = inb_flow + is
-                inf_rhs(jglobal, k, ip) = inf_rhs(jglobal, k, ip) + vmult*BSPLINES3P(s_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
+                            inf_rhs(jglobal, k, ip) = inf_rhs(jglobal, k, ip) + vmult*BSPLINES3P(s_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
                         end do
                     end if
 
@@ -284,13 +288,13 @@ contains
                 do j = 1, g_inf(2)%size
                     jglobal = joffset + j
                     do is = 1, inb_flow
-                 inf_rhs(jglobal, k, is) = inf_rhs(jglobal, k, is) + vmult*BSPLINES3(q_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
+                        inf_rhs(jglobal, k, is) = inf_rhs(jglobal, k, is) + vmult*BSPLINES3(q_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
                     end do
 
                     if (scal_on) then
                         do is = 1, inb_scal
                             ip = inb_flow + is
-                 inf_rhs(jglobal, k, ip) = inf_rhs(jglobal, k, ip) + vmult*BSPLINES3(s_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
+                            inf_rhs(jglobal, k, ip) = inf_rhs(jglobal, k, ip) + vmult*BSPLINES3(s_inf(1, j, k, is), g_inf(1)%size, ileft, xaux)
                         end do
                     end if
 
@@ -310,7 +314,7 @@ contains
         end do
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_BROADBAND')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_BROADBAND')
 #endif
         return
     end subroutine BOUNDARY_INFLOW_BROADBAND
@@ -318,8 +322,8 @@ contains
     !########################################################################
     !########################################################################
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
-        use TLAB_TYPES, only: profiles_dt
-        use TLAB_CONSTANTS, only: pi_wp
+        use TLab_Types, only: profiles_dt
+        use TLab_Constants, only: pi_wp
         use Profiles
 
         real(wp) etime
@@ -336,7 +340,7 @@ contains
 
         ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_DISCRETE')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_DISCRETE')
 #endif
 
         ! Define pointers
@@ -407,8 +411,8 @@ contains
 
             do k = 1, kmax
                 wrk2d(k, 2) = wrk2d(k, 2) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))
-               wrk2d(k, 1) = wrk2d(k, 1) + fp%amplitude(im)*sin(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))*factorx
-               wrk2d(k, 3) = wrk2d(k, 3) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*sin(wz*z(kdsp + k) + fp%phasez(im))*factorz
+                wrk2d(k, 1) = wrk2d(k, 1) + fp%amplitude(im)*sin(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))*factorx
+                wrk2d(k, 3) = wrk2d(k, 3) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*sin(wz*z(kdsp + k) + fp%phasez(im))*factorz
             end do
 
         end do
@@ -432,7 +436,7 @@ contains
         end do
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_DISCRETE')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_INFLOW_DISCRETE')
 #endif
 
         return
@@ -442,7 +446,7 @@ contains
     !########################################################################
     ! Filter
     ! This should be integrated into the inflow buffer, as the filter contribution
-    ! BufferFilter should then be a block in tlab.ini as [Filter], which is read in io_read_global.
+    ! BufferFilter should then be a block in tlab.ini as [Filter], which is read in TLab_Initialize_Parameters.
 
     subroutine BOUNDARY_INFLOW_FILTER(bcs_vi, bcs_vi_scal, q, s, txc)
         real(wp), dimension(imax, jmax, kmax, *), intent(INOUT) :: q, s
@@ -460,9 +464,9 @@ contains
 
         ! ###################################################################
         ! #######################################################################
-        call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
+        call TLab_Write_ASCII(efile, 'BOUNDARY_BUFFER_FILTER. Needs to be updated to new filter routines.')
         ! FilterInflow needs to be initiliazed
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         ! Define pointers
         if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
@@ -586,7 +590,7 @@ contains
                 call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, s, rho, T, p)
             end if
 
-     if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax*jmax*kmax, T, vis)
+            if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax*jmax*kmax, T, vis)
 
         end if
 

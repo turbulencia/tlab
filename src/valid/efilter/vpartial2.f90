@@ -1,17 +1,16 @@
-#include "types.h"
 
 program VPARTIAL2
-
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants, only: wp, wi
+    use FDM, only: grid_dt
     use OPR_PARTIAL
     implicit none
 
     type(grid_dt) :: g
-    TINTEGER imax, jmax, kmax, i, wk, idummy
+    integer(wi) imax, jmax, kmax, i, wk, idummy
     parameter(imax=128)
-    TREAL x(imax, 3 + 4*3 + 4*3), u(imax), du1(imax), du2(imax), due(imax)
-    TREAL wrk1d(imax, 5), wrk2d(imax), wrk3d(imax), bcs(2, 2)
-    TREAL tmp(imax)
+    real(wp) x(imax, 3 + 4*3 + 4*3), u(imax), du1(imax), du2(imax), due(imax)
+    real(wp) wrk1d(imax, 5), wrk2d(imax), wrk3d(imax), bcs(2, 2)
+    real(wp) tmp(imax)
 
 ! ###################################################################
     g%size = imax
@@ -41,7 +40,7 @@ program VPARTIAL2
         g%scale = g%nodes(imax) - g%nodes(1)
     end if
 
-    call FDM_INITIALIZE(x, g, wrk1d)
+    call FDM_Initialize(g, wrk1d)
 
 ! ###################################################################
 ! Define the function

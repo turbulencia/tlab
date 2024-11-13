@@ -6,9 +6,10 @@
 
 !  Nonperiodic characteristic BCs at xmin and xmax
 module BOUNDARY_BCS_COMPRESSIBLE
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use FDM, only: g
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture, CRATIO_INV, THERMO_AI
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
@@ -17,7 +18,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLabMPI_VARS
 #endif
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
 
     implicit none
@@ -47,7 +48,7 @@ contains
 
 ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_X')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_BCS_X')
 #endif
 
 #define hr_loc(j,k)  aux2d(j,k,1)
@@ -79,8 +80,8 @@ contains
         nt = jmax*kmax
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
-            call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
-            call TLAB_STOP(DNS_ERROR_IBC)
+            call TLab_Write_ASCII(efile, 'BOUNDARY_BCS_X. Not enough space in txc.')
+            call TLab_Stop(DNS_ERROR_IBC)
         end if
 
 ! Define pointers
@@ -411,7 +412,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_X')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_BCS_X')
 #endif
 
 #undef hr_loc
@@ -468,7 +469,7 @@ contains
 
 ! ###################################################################
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'ENTERING BOUNDARY_BCS_Y')
+        call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_BCS_Y')
 #endif
 
 #define hr_loc(i,k)  aux2d(i,k,1)
@@ -500,8 +501,8 @@ contains
         nt = imax*kmax
 
         if (iaux < nt*(19 + 5*(inb_flow + inb_scal_array))) then
-            call TLAB_WRITE_ASCII(efile, 'RHS_BCS_Y. Not enough space.')
-            call TLAB_STOP(DNS_ERROR_JBC)
+            call TLab_Write_ASCII(efile, 'RHS_BCS_Y. Not enough space.')
+            call TLab_Stop(DNS_ERROR_JBC)
         end if
 
 ! Define pointers
@@ -774,7 +775,7 @@ contains
         end if
 
 #ifdef TRACE_ON
-        call TLAB_WRITE_ASCII(tfile, 'LEAVING BOUNDARY_BCS_Y')
+        call TLab_Write_ASCII(tfile, 'LEAVING BOUNDARY_BCS_Y')
 #endif
 
 #undef hr_loc
@@ -2059,8 +2060,8 @@ contains
 #ifdef USE_MPI
         call OPR_PARTIAL_Y(OPR_P1, ims_bcs_imax, jmax, kmax, bcs, g(2), tmp1, ddy)
 ! Needs to be checked
-        call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (TLabMPI_K_NRBCX-1)*100
         call OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax, jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
@@ -2211,8 +2212,8 @@ contains
 #ifdef USE_MPI
         call OPR_PARTIAL_X(OPR_P1, imax, ims_bcs_jmax, kmax, bcs, g(1), tmp1, ddx)
 ! Needs to be checked
-        call TLAB_WRITE_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_Y. To be checked')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_Y. To be checked')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (TLabMPI_K_NRBCY-1)*100
         call OPR_PARTIAL_Z(OPR_P1_BCS, imax, ims_bcs_jmax, kmax, bcs, g(3), tmp1, ddz)
 #else

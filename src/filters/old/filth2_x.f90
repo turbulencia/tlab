@@ -22,11 +22,11 @@ SUBROUTINE FILTH2_X(iunifx, i1bc, imax, jmax, kmax, nx0, nx1, cf2x, z1, zf1, wrk
   njk = jmax*kmax
 
   IF ( MOD(nx0,i2) .NE. 0 .AND. MOD(nx1,i2) .NE. 0 ) THEN
-     CALL TLAB_WRITE_ASCII(efile, 'FILTH2_X. NX2 is not even')
+     CALL TLab_Write_ASCII(efile, 'FILTH2_X. NX2 is not even')
      CALL DNS_STOP(DNS_ERROR_LESEVEN)
   ENDIF
 
-  CALL DNS_TRANSPOSE(z1, imax, njk, imax, zf1, njk)
+  CALL TLab_Transpose(z1, imax, njk, imax, zf1, njk)
 
   IF ( iunifx .EQ. 0 ) THEN
      IF ( i1bc .EQ. 0 ) THEN
@@ -48,7 +48,7 @@ SUBROUTINE FILTH2_X(iunifx, i1bc, imax, jmax, kmax, nx0, nx1, cf2x, z1, zf1, wrk
      ENDIF
   ENDIF
 
-  CALL DNS_TRANSPOSE(wrk, njk, imax, njk, zf1, imax)
+  CALL TLab_Transpose(wrk, njk, imax, njk, zf1, imax)
 
   RETURN
 END SUBROUTINE FILTH2_X

@@ -1,17 +1,15 @@
 program VPENTADP
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-#include "types.h"
+    integer(wi), parameter :: nmax = 32, len = 5
+    real(wp), dimension(nmax, 5) :: a
+    real(wp), dimension(len, nmax) :: x, f
+    real(wp), dimension(nmax) :: g, h
 
-    TINTEGER, parameter :: nmax = 32, len = 5
-    TREAL, dimension(nmax, 5) :: a
-    TREAL, dimension(len, nmax) :: x, f
-    TREAL, dimension(nmax) :: g, h
-
-    TINTEGER :: n, ij, seed
-    TREAL :: RAN0, error, sol, alpha, beta
-    TINTEGER :: im2, im1, ip1, ip2, imm1
+    integer(wi) :: n, ij, seed
+    real(wp) :: RAN0, error, sol, alpha, beta
+    integer(wi) :: im2, im1, ip1, ip2, imm1
 
 ! ###################################################################
 #define a_a(n) a(n,1)

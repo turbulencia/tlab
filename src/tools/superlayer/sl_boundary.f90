@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_const.h"
 #include "dns_error.h"
 
@@ -13,6 +12,7 @@
 !#
 !########################################################################
 program SL_BOUNDARY
+    use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
 #ifdef USE_MPI
@@ -26,69 +26,66 @@ program SL_BOUNDARY
 
 ! -------------------------------------------------------------------
 ! Grid and associated arrays
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
 
 ! Flow variables
-    TREAL, dimension(:, :), allocatable, target :: q
-    TREAL, dimension(:), allocatable :: s, field
+    real(wp), dimension(:, :), allocatable, target :: q
+    real(wp), dimension(:), allocatable :: s, field
 
 ! Work arrays
-    TREAL, dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
 ! Surface arrays
-    TREAL, dimension(:, :), allocatable :: sl, samples
+    real(wp), dimension(:, :), allocatable :: sl, samples
 
-    TREAL txc(:)
+    real(wp) txc(:)
     allocatable txc
 
-    TREAL pdf(:)
+    real(wp) pdf(:)
     allocatable pdf
 
 ! Pointers to existing allocated space
-    TREAL, dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: u, v, w
 
-    TINTEGER iopt, iint, isl, ith, itxc_size, nfield, np
-    TINTEGER jmin_loc, jmax_loc, idummy
+    integer(wi) iopt, iint, isl, ith, itxc_size, nfield, np
+    integer(wi) jmin_loc, jmax_loc, idummy
     logical iread_flow, iread_scal
-    TREAL threshold, vmin, vmax
-    TINTEGER buff_nps_u_jmin, buff_nps_u_jmax
+    real(wp) threshold, vmin, vmax
+    integer(wi) buff_nps_u_jmin, buff_nps_u_jmax
     character*64 str
     character*32 fname, bakfile
 
-    TINTEGER itime_size_max, itime_size, i
+    integer(wi) itime_size_max, itime_size, i
     parameter(itime_size_max=128)
-    TINTEGER itime_vec(itime_size_max)
-    TINTEGER iopt_size_max, iopt_size
+    integer(wi) itime_vec(itime_size_max)
+    integer(wi) iopt_size_max, iopt_size
     parameter(iopt_size_max=10)
-    TREAL opt_vec(iopt_size_max)
+    real(wp) opt_vec(iopt_size_max)
     character*512 sRes
 #ifdef USE_MPI
     integer icount
 #endif
 
-    TREAL, dimension(:, :), pointer :: dx, dy, dz
+    real(wp), dimension(:, :), pointer :: dx, dy, dz
 
 ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
     call DNS_START
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
-    call SCANINIINT(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
+    call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (sl(imax*kmax, 6))
     allocate (wrk1d(isize_wrk1d*5))
     allocate (wrk2d(isize_wrk2d*10))
@@ -100,7 +97,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'Files', '-1', sRes)
         if (sRes == '-1') then
             write (*, *) 'Integral Iterations ?'
             read (*, '(A512)') sRes
@@ -120,7 +117,7 @@ program SL_BOUNDARY
 #ifdef USE_MPI
     if (ims_pro == 0) then
 #endif
-        call SCANINICHAR(lfile, 'tlab.ini', 'PostProcessing', 'ParamSuperlayer', '-1', sRes)
+        call ScanFile_Char(lfile, 'tlab.ini', 'PostProcessing', 'ParamSuperlayer', '-1', sRes)
         iopt_size = iopt_size_max
         call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -193,10 +190,10 @@ program SL_BOUNDARY
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
 ! ###################################################################
 ! Define pointers
@@ -246,7 +243,7 @@ program SL_BOUNDARY
 
 ! Based on vorticity
             else if (iint == 2) then
-                call TLAB_WRITE_ASCII(lfile, 'Calculating vorticity...')
+                call TLab_Write_ASCII(lfile, 'Calculating vorticity...')
                 call FI_VORTICITY(imax, jmax, kmax, u, v, w, field, txc(1), txc(1 + isize_field))
                 if (ith == 1) then ! relative to max
                     call MINMAX(imax, jmax, kmax, field, vmin, vmax)
@@ -260,11 +257,11 @@ program SL_BOUNDARY
 
 ! Based on scalar gradient
             else if (iint == 3) then
-                call TLAB_WRITE_ASCII(lfile, 'Calculating scalar gradient...')
+                call TLab_Write_ASCII(lfile, 'Calculating scalar gradient...')
                 call FI_GRADIENT(imax, jmax, kmax, s, field, txc)
                 call MINMAX(imax, jmax, kmax, field, vmin, vmax)
                 write (str, '(E22.15E3,E22.15E3)') vmin, vmax; str = 'Bounds '//trim(adjustl(str))
-                call TLAB_WRITE_ASCII(lfile, str)
+                call TLab_Write_ASCII(lfile, str)
                 if (ith == 1) then ! relative to max
                     call MINMAX(imax, jmax, kmax, field, vmin, vmax)
                     vmin = threshold*threshold*vmax
@@ -279,15 +276,15 @@ program SL_BOUNDARY
 
 ! write threshold
             write (str, '(E22.15E3)') vmin; str = 'Threshold '//trim(adjustl(str))
-            call TLAB_WRITE_ASCII(lfile, str)
+            call TLab_Write_ASCII(lfile, str)
 
 ! save surfaces w/o header
             write (fname, *) itime; fname = 'sl'//trim(adjustl(fname))
             ! idummy = g(2)%size; g(2)%size = 1
             ! CALL DNS_WRITE_FIELDS(fname, i0, imax,i1,kmax, i2, isize_field, sl, wrk3d)
             ! g(2)%size = idummy
-            call TLAB_WRITE_ASCII(efile, 'SL_BOUNDARY. To be written in terms of IO_SUBARRAY as in averages.x')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'SL_BOUNDARY. To be written in terms of IO_SUBARRAY as in averages.x')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
 ! save scalar dissipation as scalar field
             ! WRITE(fname,*) itime; fname = 'chi'//TRIM(ADJUSTL(fname))
@@ -311,5 +308,5 @@ program SL_BOUNDARY
 
     end do
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SL_BOUNDARY

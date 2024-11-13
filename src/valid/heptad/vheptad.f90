@@ -1,16 +1,14 @@
 program VHEPTAD
-
+    use TLab_Constants, only: wp, wi
     implicit none
 
-#include "types.h"
+    integer(wi), parameter :: nmax = 32, len = 5
+    real(wp), dimension(nmax) :: a, b, c, d, e, f, g, h, i
+    real(wp), dimension(nmax) :: a5, b5, c5, d5, e5
+    real(wp), dimension(len, nmax) :: x, frc9, frc7, frc5
 
-    TINTEGER, parameter :: nmax = 32, len = 5
-    TREAL, dimension(nmax) :: a, b, c, d, e, f, g, h, i
-    TREAL, dimension(nmax) :: a5, b5, c5, d5, e5
-    TREAL, dimension(len, nmax) :: x, frc9, frc7, frc5
-
-    TINTEGER n, ij, seed
-    TREAL RAN0, error, sol, diff
+    integer(wi) n, ij, seed
+    real(wp) RAN0, error, sol, diff
 
 ! ###################################################################
     seed = 256

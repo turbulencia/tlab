@@ -55,20 +55,17 @@ See directory [`examples`](./examples/README.md).
 
 * [`config`](./config): configuration files for different architectures and compilers
 * [`doc`](./doc): documentation files
-* [`examples`](./examples): sample cases for reference and for debugging
+* [`examples`](./examples): sample cases for reference and debugging
 * [`scripts`](./scripts): shell and python scripts for job management and postprocessing
 * [`src`](./src): source files  
   * [`src/tools`](./src/tools): executables
-  * [`src/mappings`](./src/mappings): modules with mappings from 3D fields to 3D, 2D and 1D data
-  * [`src/operators`](./src/operators): modules with operators that depend only on fdm routines
+  * [`src/physics`](./src/physics): phenomena considered in the evolution equations.
+  * [`src/mappings`](./src/mappings): mappings from 3D fields to 3D, 2D and 1D data
+  * [`src/operators`](./src/operators): operators that depend only on fdm routines
   * [`src/fdm`](./src/fdm): modules with finite difference schemes
   * [`src/utils`](./src/utils): modules with basic generic operators
-  * [`src/modules`](./src/modules): constants, variables, arrays and basic procedures
+  * [`src/basic`](./src/basic): constants, variables, arrays and basic procedures
   * ...
-
-## Library dependencies
-
-tools → mappings → operators → {fdm,filter,io,thermo,utils} → tlab
 
 ## Data structure
 

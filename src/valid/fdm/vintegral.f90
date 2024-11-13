@@ -1,15 +1,17 @@
 #include "dns_const.h"
 
 program VINTEGRAL
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: grid_dt
+    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
+    use TLab_Constants, only: efile
+    use FDM, only: grid_dt, FDM_Initialize
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLAB_VARS, only: visc, schmidt
-    use TLAB_PROCS
-    use TLAB_ARRAYS, only: wrk1d, txc, x!, wrk2d!, wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII
+    use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
+    use TLab_Arrays, only: wrk1d, txc, x
     use FDM_ComX_Direct
     use FDM_Integrate
-    use FDM_PROCS
+    use FDM_MatMul
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use OPR_PARTIAL
@@ -38,10 +40,9 @@ program VINTEGRAL
     kmax = 1
     len = jmax*kmax
 
-    visc = 1.0_wp   ! Needed in FDM_INITIALIZE
+    visc = 1.0_wp   ! Needed in FDM_Initialize
     schmidt = 1.0_wp
 
-    g%inb_grid = 99
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
@@ -65,8 +66,6 @@ program VINTEGRAL
     dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
     du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
 
-    call TLAB_ALLOCATE_ARRAY_DOUBLE(__FILE__, x, [g%size, g%inb_grid], g%name)
-
     g%periodic = .false.
 
     wk = 1.0_wp ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
@@ -76,10 +75,10 @@ program VINTEGRAL
     test_type = 1
 
     ! ###################################################################
-
     if (g%periodic) then
         do i = 1, imax
-            x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            ! x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            wrk1d(i,1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
         ! do i = 1, imax
@@ -87,16 +86,16 @@ program VINTEGRAL
         ! end do
         open (21, file='y.dat')
         do i = 1, imax
-            read (21, *) x(i, 1)
+            read (21, *) wrk1d(i,1) !x(i, 1)
         end do
         close (21)
-        g%scale = x(imax, 1) - x(1, 1)
+        ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_INITIALIZE(x, g, wrk1d)
+    call FDM_Initialize(x, g, wrk1d, wrk1d(:,4))
 
     bcs_aux = 0
 

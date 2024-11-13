@@ -9,7 +9,7 @@
 !#
 !########################################################################
 module FDM_ComX_Direct
-    use TLAB_CONSTANTS
+    use TLab_Constants, only: wp, wi
     use FDM_PROCS
     implicit none
     private

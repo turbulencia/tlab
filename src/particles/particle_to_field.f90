@@ -10,7 +10,7 @@
 !#
 !########################################################################
 subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk3d)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use PARTICLE_VARS, only: isize_part
 #ifdef USE_MPI
@@ -58,9 +58,9 @@ end subroutine PARTICLE_TO_FIELD
 !########################################################################
 !########################################################################
 subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use PARTICLE_VARS, only: isize_part
     use PARTICLE_ARRAYS, only: l_g
 #ifdef USE_MPI
@@ -164,7 +164,7 @@ end subroutine PARTICLE_TO_FIELD_INTERPOLATE
 !#
 !########################################################################
 subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1, f_buffer_2, field)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use MPI
     use TLabMPI_VARS
@@ -223,7 +223,7 @@ end subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST
 !########################################################################
 !########################################################################
 subroutine PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1, f_buffer_2, field)
-    use TLAB_CONSTANTS, only: wp, wi
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
     use MPI
     use TLabMPI_VARS

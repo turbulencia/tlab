@@ -2,8 +2,8 @@
 
 subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
                    nx, ny, nz, igate_size, gate_threshold, q, s, txc, gate)
-    use TLAB_CONSTANTS, only: wp, wi, small_wp
-    use TLAB_VARS, only: g
+    use TLab_Constants, only: wp, wi, small_wp
+    use FDM, only: g
     use FI_VECTORCALCULUS, only: FI_CURL
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN

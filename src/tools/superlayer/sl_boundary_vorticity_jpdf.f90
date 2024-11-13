@@ -1,9 +1,8 @@
-#include "types.h"
 #include "dns_error.h"
 
 subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
                                       threshold, ibuffer_npy, u, v, w, sl, samples, txc, wrk1d, wrk2d, wrk3d)
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -13,16 +12,16 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 
 #define L_NFIELDS_MAX 4
 
-    TREAL threshold
-    TINTEGER iopt, isl, ith, nfield, itxc_size, np, ibuffer_npy
-    TREAL u(*), v(*), w(*), sl(imax*kmax, *)
-    TREAL samples(L_NFIELDS_MAX*imax*kmax)
-    TREAL txc(imax*jmax*kmax, 6)
-    TREAL wrk1d(*), wrk2d(imax*kmax, *), wrk3d(*)
+    real(wp) threshold
+    integer(wi) iopt, isl, ith, nfield, itxc_size, np, ibuffer_npy
+    real(wp) u(*), v(*), w(*), sl(imax*kmax, *)
+    real(wp) samples(L_NFIELDS_MAX*imax*kmax)
+    real(wp) txc(imax*jmax*kmax, 6)
+    real(wp) wrk1d(*), wrk2d(imax*kmax, *), wrk3d(*)
 
 ! -------------------------------------------------------------------
-    TREAL vmin, vmax, vmean, AVG_IK
-    TINTEGER ij, ikmax, nfield_loc, isize, jmin_loc, jmax_loc
+    real(wp) vmin, vmax, vmean, AVG_IK
+    integer(wi) ij, ikmax, nfield_loc, isize, jmin_loc, jmax_loc
     integer(1) igate
     character*32 fname
     character*16 suffix
@@ -32,14 +31,14 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
     jmax_loc = min(jmax, jmax - 2*ibuffer_npy + 1)
 
     if (nfield < L_NFIELDS_MAX) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Samples array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_JPDF. Samples array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     else
         nfield = L_NFIELDS_MAX
     end if
     if (itxc_size < imax*jmax*kmax*6) then
-        call TLAB_WRITE_ASCII(efile, 'SL_VORTICITY_JPDF. Txc array size.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SL_VORTICITY_JPDF. Txc array size.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! ###################################################################
@@ -51,9 +50,9 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! txc2 ....: second invariant Q
 ! -------------------------------------------------------------------
     if (iopt == 3) then
-        call TLAB_WRITE_ASCII(lfile, 'Computing invariant R...')
+        call TLab_Write_ASCII(lfile, 'Computing invariant R...')
         call FI_INVARIANT_R(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-        call TLAB_WRITE_ASCII(lfile, 'Computing invariant Q...')
+        call TLab_Write_ASCII(lfile, 'Computing invariant Q...')
         call FI_INVARIANT_Q(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         suffix = 'RQ '
 
@@ -63,9 +62,9 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! txc2 ....: strain 2 s_ij s_ij
 ! -------------------------------------------------------------------
     else if (iopt == 4) then
-        call TLAB_WRITE_ASCII(lfile, 'Computing vorticity...')
+        call TLab_Write_ASCII(lfile, 'Computing vorticity...')
         call FI_VORTICITY(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3))
-        call TLAB_WRITE_ASCII(lfile, 'Computing strain...')
+        call TLab_Write_ASCII(lfile, 'Computing strain...')
         call FI_STRAIN(imax, jmax, kmax, u, v, w, txc(1, 2), txc(1, 3), txc(1, 4))
         do ij = 1, imax*jmax*kmax
             txc(ij, 2) = C_2_R*txc(ij, 2)
@@ -90,7 +89,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! threshold w.r.t w_mean, therefore threshold^2 w.r.t. w^2_mean
     else if (ith == 2) then
         ij = jmax/2
-        vmean = AVG_IK(imax, jmax, kmax, ij, txc(1, 3), g(1)%jac, g(3)%jac, area)
+        vmean = AVG_IK(imax, jmax, kmax, ij, txc(1, 3))
         vmin = threshold*threshold*vmean
     end if
 ! upper/lower/both depending on flag isl
@@ -126,7 +125,7 @@ subroutine SL_BOUNDARY_VORTICITY_JPDF(iopt, isl, ith, np, nfield, itxc_size, &
 ! ###################################################################
 ! make ifields the last variable, putting first the imax*kmax
     ikmax = imax*kmax
-    call DNS_TRANSPOSE(samples, nfield_loc, ikmax, nfield_loc, wrk2d, ikmax)
+    call TLab_Transpose(samples, nfield_loc, ikmax, nfield_loc, wrk2d, ikmax)
 
     isize = nfield_loc/2
     write (fname, *) itime; fname = 'jpdf'//trim(adjustl(suffix))//trim(adjustl(fname))

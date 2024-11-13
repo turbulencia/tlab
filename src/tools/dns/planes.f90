@@ -2,13 +2,14 @@
 #include "dns_error.h"
 
 module PLANES
-    use TLAB_CONSTANTS, only: efile, lfile, wp, wi, fmt_r, small_wp
+    use TLab_Constants, only: efile, lfile, wp, wi, fmt_r, small_wp
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array, inb_flow_array, inb_txc
-    use TLAB_VARS, only: g, scal_on
+    use TLAB_VARS, only: scal_on
+    use FDM, only: g
     use TLAB_VARS, only: itime, rtime
-    use TLAB_ARRAYS, only: q, s, wrk1d, wrk2d, wrk3d, txc
+    use TLab_Arrays, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use IBM_VARS, only: imode_ibm, ibm_partial
-    use TLAB_PROCS
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
     use THERMO_ANELASTIC
     use IO_FIELDS
@@ -57,26 +58,26 @@ contains
         character(len=512) sRes
 
         ! -------------------------------------------------------------------
-        call TLAB_WRITE_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
+        call TLab_Write_ASCII(bakfile, '#'//trim(adjustl(tag))//'=<value>')
 
         var%n = 0
 
-        call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
+        call ScanFile_Char(bakfile, inifile, block, trim(adjustl(tag))//'Type', 'fix', sRes)
         if (trim(adjustl(sRes)) == 'none') then; var%type = PLANES_NONE
         elseif (trim(adjustl(sRes)) == 'fix') then; var%type = PLANES_FIX
         elseif (trim(adjustl(sRes)) == 'cbl') then; var%type = PLANES_CBL
         elseif (trim(adjustl(sRes)) == 'log') then; var%type = PLANES_LOG
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Planes.Type.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Planes.Type.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, tag, 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, tag, 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             var%n = MAX_SAVEPLANES; call LIST_INTEGER(sRes, var%n, var%nodes)
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, trim(adjustl(tag))//'Values', 'void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, trim(adjustl(tag))//'Values', 'void', sRes)
         if (trim(adjustl(sRes)) /= 'void') then
             var%n = MAX_SAVEPLANES; call LIST_REAL(sRes, var%n, var%values)
         end if
@@ -118,22 +119,22 @@ contains
         end if
 
         if (iplanes%size > imax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is insufficient.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Array size imax is insufficient.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (jplanes%size > jmax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is insufficient.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Array size jmax is insufficient.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (kplanes%size > kmax) then
-            call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is insufficient.')
-            call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+            call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Array size kmax is insufficient.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
         if (iplanes%type == PLANES_LOG .or. jplanes%type == PLANES_LOG .or. kplanes%type == PLANES_LOG) then
             if (scal_on) then
                 if ((inb_scal_array + 4) > inb_txc) then
-                    call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Not enough memory for log(grad(scal)) [inb_txc too small].')
-                    call TLAB_STOP(DNS_ERROR_ALLOC)
+                    call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Not enough memory for log(grad(scal)) [inb_txc too small].')
+                    call TLab_Stop(DNS_ERROR_ALLOC)
                 end if
             end if
         end if
@@ -141,20 +142,20 @@ contains
         ! Check [ijk]planes%nodes
         if (iplanes%type /= PLANES_NONE) then
             if (any(iplanes%nodes(:iplanes%n) < 1) .or. any(iplanes%nodes(:iplanes%n) > g(1)%size)) then
-                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Iplane nodes deceed/exeed grid in x-direction.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Iplane nodes deceed/exeed grid in x-direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
         if (jplanes%type /= PLANES_NONE) then
             if (any(jplanes%nodes(:jplanes%n) < 1) .or. any(jplanes%nodes(:jplanes%n) > g(2)%size)) then
-                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Jplane nodes deceed/exeed grid in y-direction.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Jplane nodes deceed/exeed grid in y-direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
         if (kplanes%type /= PLANES_NONE) then
             if (any(kplanes%nodes(:kplanes%n) < 1) .or. any(kplanes%nodes(:kplanes%n) > g(3)%size)) then
-                call TLAB_WRITE_ASCII(efile, 'PLANES_INITIALIZE. Kplane nodes deceed/exeed grid in z-direction.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, 'PLANES_INITIALIZE. Kplane nodes deceed/exeed grid in z-direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
 
@@ -211,10 +212,10 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine PLANES_SAVE()
-        use TLAB_TYPES
-        use TLAB_POINTERS_3D, only: p_wrk2d
+        use TLab_Pointers_3D, only: p_wrk2d
+        use TLab_Pointers_3D, only: pointers3d_dt
         use TLAB_VARS, only: sbg
-        use AVGS
+        use Averages
         use Integration, only: Int_Simpson
 
         ! -------------------------------------------------------------------
@@ -281,7 +282,7 @@ contains
             do iv = 1, kplanes%n
                 write (fname, *) kplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
             end do
-            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+            call TLab_Write_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
 
             offset = 0
             do iv = 1, nvars
@@ -299,7 +300,7 @@ contains
             do iv = 1, jplanes%n
                 write (fname, *) jplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
             end do
-            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+            call TLab_Write_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
 
             offset = 0
             do iv = 1, nvars
@@ -325,7 +326,7 @@ contains
             do iv = 1, iplanes%n
                 write (fname, *) iplanes%nodes(iv); line1 = trim(adjustl(line1))//' '//trim(adjustl(fname))//','
             end do
-            call TLAB_WRITE_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
+            call TLab_Write_ASCII(lfile, trim(adjustl(line1))//' '//trim(adjustl(str)))
 
             offset = 0
             do iv = 1, nvars

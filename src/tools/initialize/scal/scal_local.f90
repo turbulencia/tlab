@@ -2,16 +2,17 @@
 #include "dns_error.h"
 
 module SCAL_LOCAL
-    use TLAB_CONSTANTS, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp
-    use TLAB_TYPES, only: profiles_dt, discrete_dt
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, MAX_VARS
-    use TLAB_VARS, only: g, sbg
+    use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
+    use TLab_Types, only: profiles_dt, discrete_dt
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal
+    use TLAB_VARS, only: sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
-    use TLAB_ARRAYS, only: wrk1d
-    use TLAB_POINTERS_3D, only: p_wrk2d, p_wrk3d
-    use TLAB_PROCS
+    use TLab_Arrays, only: wrk1d
+    use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use FDM, only: g
     use IO_FIELDS
-    use AVGS, only: AVG1V2D
+    use Averages, only: AVG1V2D
     use Profiles
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
@@ -66,16 +67,16 @@ contains
         ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call TLAB_WRITE_ASCII(lfile, 'Reading local input data')
+        call TLab_Write_ASCII(lfile, 'Reading local input data')
 
         ! ###################################################################
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#[IniFields]')
-        call TLAB_WRITE_ASCII(bakfile, '#Scalar=<option>')
-        call TLAB_WRITE_ASCII(bakfile, '#NormalizeS=<values>')
-        call TLAB_WRITE_ASCII(bakfile, '#Mixture=<string>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[IniFields]')
+        call TLab_Write_ASCII(bakfile, '#Scalar=<option>')
+        call TLab_Write_ASCII(bakfile, '#NormalizeS=<values>')
+        call TLab_Write_ASCII(bakfile, '#Mixture=<string>')
 
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_s = 0
         else if (trim(adjustl(sRes)) == 'layerbroadband') then; flag_s = PERT_LAYER_BROADBAND
         else if (trim(adjustl(sRes)) == 'layerdiscrete')  then; flag_s = PERT_LAYER_DISCRETE
@@ -86,8 +87,8 @@ contains
         else if (trim(adjustl(sRes)) == 'fluxbroadband')  then; flag_s = PERT_FLUX_BROADBAND
         else if (trim(adjustl(sRes)) == 'fluxdiscrete')   then; flag_s = PERT_FLUX_DISCRETE
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Scalar forcing type unknown')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Scalar forcing type unknown')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call Profiles_ReadBlock(bakfile, inifile, 'IniFields', 'IniS', IniS(1), 'gaussiansurface')      ! if IniS, valid for all
@@ -101,30 +102,30 @@ contains
         end if
         do is = 1, inb_scal
             if (.not. any(IniSvalid == IniS(is)%type)) then
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. Undeveloped IniS type.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped IniS type.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end do
         IniS(:)%delta = 1.0_wp
         IniS(:)%mean = 0.0_wp
 
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'NormalizeS', '-1.0', sRes)
         norm_ini_s(:) = 0.0_wp; idummy = inb_scal
         call LIST_REAL(sRes, idummy, norm_ini_s)
         if (idummy /= inb_scal) then            ! Consistency check
             if (idummy == 1) then
                 norm_ini_s(2:) = norm_ini_s(1)
-                call TLAB_WRITE_ASCII(wfile, __FILE__//'. Using NormalizeS(1) for all scalars.')
+                call TLab_Write_ASCII(wfile, __FILE__//'. Using NormalizeS(1) for all scalars.')
             else
-                call TLAB_WRITE_ASCII(efile, __FILE__//'. NormalizeS size does not match number of scalars.')
-                call TLAB_STOP(DNS_ERROR_OPTION)
+                call TLab_Write_ASCII(efile, __FILE__//'. NormalizeS size does not match number of scalars.')
+                call TLab_Stop(DNS_ERROR_OPTION)
             end if
         end if
 
-        call SCANINIREAL(bakfile, inifile, 'IniFields', 'NormalizeR', '0.0', norm_ini_radiation) ! Radiation field
+        call ScanFile_Real(bakfile, inifile, 'IniFields', 'NormalizeR', '0.0', norm_ini_radiation) ! Radiation field
 
         ! Additional parameters
-        call SCANINICHAR(bakfile, inifile, 'IniFields', 'Mixture', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, 'IniFields', 'Mixture', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_mixture = 0
         else if (trim(adjustl(sRes)) == 'equilibrium') then; flag_mixture = 1
         else if (trim(adjustl(sRes)) == 'loadfields') then; flag_mixture = 2
@@ -133,8 +134,8 @@ contains
 ! Discrete Forcing
         call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
 !   specific for this tool
-        call SCANINIREAL(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
-        call SCANINIREAL(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
+        call ScanFile_Real(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
+        call ScanFile_Real(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
 
         return
     end subroutine SCAL_READ_LOCAL

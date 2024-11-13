@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -33,11 +32,13 @@
 !########################################################################
 program SPECTRA
 
-    use TLAB_CONSTANTS
-    use TLAB_TYPES, only: pointers_dt
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
+    use TLab_Pointers, only: pointers_dt
     use TLAB_VARS
-    use TLAB_ARRAYS
-    use TLAB_PROCS
+    use TLab_Arrays
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err
@@ -45,6 +46,7 @@ program SPECTRA
     use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_PROCS
 #endif
+    use FDM, only: g,  FDM_Initialize
     use FI_SOURCES, only: FI_BUOYANCY
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
@@ -54,7 +56,7 @@ program SPECTRA
     use IBM_VARS
     use IO_FIELDS
     use OPR_FILTERS
-    use AVGS, only: AVG1V2D, COV2V2D
+    use Averages, only: AVG1V2D, COV2V2D
     use OPR_FOURIER
     use OPR_ELLIPTIC
 #ifdef USE_OPENMP
@@ -118,25 +120,26 @@ program SPECTRA
 !########################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
+
+    call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
-    
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+    call ScanFile_Char(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
-        call TLAB_STOP(DNS_ERROR_OPTION)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Wrong IBM Status option.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
 ! -------------------------------------------------------------------
@@ -157,7 +160,7 @@ program SPECTRA
     opt_ffmt = 0
     opt_time = 0
 
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'ParamSpectra', '-1', sRes)
     iopt_size = iopt_size_max
     call LIST_REAL(sRes, iopt_size, opt_vec)
 
@@ -189,18 +192,18 @@ program SPECTRA
     end if
 
     if (opt_main < 0) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in tlab.ini.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Missing input [ParamSpectra] in tlab.ini.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     if (opt_block < 1) then
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Invalid value of opt_block.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     if (opt_time /= SPEC_SINGLE .and. opt_time /= SPEC_AVERAGE) then
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
-        call TLAB_STOP(DNS_ERROR_INVALOPT)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Invalid value of opt_time.')
+        call TLab_Stop(DNS_ERROR_INVALOPT)
     end if
 
     ! -------------------------------------------------------------------
@@ -251,10 +254,10 @@ program SPECTRA
     end if
 
     if (opt_main >= 5) then ! 3D spectrum
-!     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
+!     kr_total =  INT(SQRT(real( (kx_total-1)**2 + (kz_total-1)**2 + (ky_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
         kr_total = min(kx_total, min(ky_total, kz_total))
     else
-!     kr_total =  INT(SQRT(M_REAL( (kx_total-1)**2 + (kz_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
+!     kr_total =  INT(SQRT(real( (kx_total-1)**2 + (kz_total-1)**2))) + 1 ! Use if need to check Parseval's in output data
         kr_total = min(kx_total, kz_total)
     end if
 
@@ -313,7 +316,7 @@ program SPECTRA
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        call TLAB_WRITE_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
+        call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
         id = TLabMPI_K_AUX2
         call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
                             ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
@@ -328,11 +331,11 @@ program SPECTRA
 
     write (str, *) nfield; line = 'Allocating array outr  of size '//trim(adjustl(str))//'x'
     write (str, *) isize_spec2dr; line = trim(adjustl(line))//trim(adjustl(str))
-    call TLAB_WRITE_ASCII(lfile, line)
+    call TLab_Write_ASCII(lfile, line)
     allocate (outr(isize_spec2dr, nfield), stat=ierr)
     if (ierr /= 0) then
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
-        call TLAB_STOP(DNS_ERROR_ALLOC)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
+        call TLab_Stop(DNS_ERROR_ALLOC)
     end if
 
     if (flag_mode == 2) then
@@ -342,21 +345,21 @@ program SPECTRA
     if (opt_ffmt == 1) then ! need additional space for 2d spectra
         write (str, *) nfield; line = 'Allocating array out2d of size '//trim(adjustl(str))//'x'
         write (str, *) isize_out2d; line = trim(adjustl(line))//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
         allocate (out2d(isize_out2d, nfield), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
+            call TLab_Write_ASCII(efile, 'SPECTRA. Not enough memory for spectral data.')
+            call TLab_Stop(DNS_ERROR_ALLOC)
         end if
     end if
 
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
         write (str, *) isize_txc_field; line = 'Allocating array p_aux of size '//trim(adjustl(str))
-        call TLAB_WRITE_ASCII(lfile, line)
+        call TLab_Write_ASCII(lfile, line)
         allocate (p_aux(isize_txc_field), stat=ierr)
         if (ierr /= 0) then
-            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Not enough memory for p_aux.')
-            call TLAB_STOP(DNS_ERROR_ALLOC)
+            call TLab_Write_ASCII(efile, 'SPECTRA. Not enough memory for p_aux.')
+            call TLab_Stop(DNS_ERROR_ALLOC)
         end if
     end if
 
@@ -374,14 +377,14 @@ program SPECTRA
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
     call OPR_Elliptic_Initialize(ifile)
 
-    call FI_BACKGROUND_INITIALIZE()
+    call TLab_Initialize_Background()
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
@@ -398,7 +401,7 @@ program SPECTRA
     y_aux(:) = 0
     do j = 1, jmax
         is = (j - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) + y(j, 1)/M_REAL(opt_block)
+        y_aux(is) = y_aux(is) + y(j, 1)/real(opt_block, wp)
     end do
 
 ! -------------------------------------------------------------------
@@ -420,14 +423,14 @@ program SPECTRA
 ! -------------------------------------------------------------------
 ! Initialize
 ! -------------------------------------------------------------------
-    outx = C_0_R; outz = C_0_R; outr = C_0_R
-    if (opt_ffmt == 1) out2d = C_0_R
+    outx = 0.0_wp; outz = 0.0_wp; outr = 0.0_wp
+    if (opt_ffmt == 1) out2d = 0.0_wp
 
 ! Normalization
     if (opt_main >= 5) then ! 3D spectra
-        norm = C_1_R/M_REAL(g(1)%size*g(3)%size*g(2)%size)
+        norm = 1.0_wp/real(g(1)%size*g(3)%size*g(2)%size, wp)
     else
-        norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
+        norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
     end if
 
 ! Define tags
@@ -459,8 +462,8 @@ program SPECTRA
     end if
 
     if (nfield_ref /= iv) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Array space nfield_ref incorrect.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
 ! Define pairs
@@ -494,21 +497,21 @@ program SPECTRA
             ! iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 4
             ! iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 4
             ! IF ( scal_on ) THEN ! aux array for u_iu_i/2
-            !    s(:,1) = C_05_R*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
+            !    s(:,1) = 0.5_wp*( q(:,1)*q(:,1) + q(:,2)*q(:,2) + q(:,3)*q(:,3) ); tag_var(5) = 'q'
             !    iv = iv+1; p_pairs(iv,1) = 1; p_pairs(iv,2) = 5
             !    iv = iv+1; p_pairs(iv,1) = 2; p_pairs(iv,2) = 5
             !    iv = iv+1; p_pairs(iv,1) = 3; p_pairs(iv,2) = 5
             ! ENDIF
         else
-            call TLAB_WRITE_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
-            call TLAB_STOP(DNS_ERROR_INVALOPT)
+            call TLab_Write_ASCII(efile, 'SPECTRA. Cross-spectra needs flow fields.')
+            call TLab_Stop(DNS_ERROR_INVALOPT)
         end if
 
     end if
 
     if (nfield /= iv) then ! Check
-        call TLAB_WRITE_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
-        call TLAB_STOP(DNS_ERROR_WRKSIZE)
+        call TLab_Write_ASCII(efile, 'SPECTRA. Array space nfield incorrect.')
+        call TLab_Stop(DNS_ERROR_WRKSIZE)
     end if
 
     do iv = 1, nfield ! define variable names
@@ -522,7 +525,7 @@ program SPECTRA
         itime = itime_vec(it)
 
         write (sRes, *) itime; sRes = 'Processing iteration It'//trim(adjustl(sRes))
-        call TLAB_WRITE_ASCII(lfile, sRes)
+        call TLab_Write_ASCII(lfile, sRes)
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
@@ -548,10 +551,10 @@ program SPECTRA
                 if (buoyancy%type == EQNS_EXPLICIT) then
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
                 else
-                    wrk1d(1:jmax, 1) = C_0_R
+                    wrk1d(1:jmax, 1) = 0.0_wp
                     call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
                 end if
-                dummy = C_1_R/froude
+                dummy = 1.0_wp/froude
                 s(:, inb_scal_array) = s(:, inb_scal_array)*dummy
             end if
         end if
@@ -588,8 +591,8 @@ program SPECTRA
 
 ! reset if needed
         if (opt_time == SPEC_SINGLE) then
-            outx = C_0_R; outz = C_0_R; outr = C_0_R
-            if (opt_ffmt == 1) out2d = C_0_R
+            outx = 0.0_wp; outz = 0.0_wp; outr = 0.0_wp
+            if (opt_ffmt == 1) out2d = 0.0_wp
         end if
 
 ! ###################################################################
@@ -603,7 +606,7 @@ program SPECTRA
             do iv = 1, nfield
                 iv1 = p_pairs(iv, 1); iv2 = p_pairs(iv, 2)
 
-                wrk1d(:, 1:3) = C_0_R ! variance to normalize and check Parseval's relation
+                wrk1d(:, 1:3) = 0.0_wp ! variance to normalize and check Parseval's relation
                 do j = 1, jmax
                     wrk1d(j, 1) = COV2V2D(imax, jmax, kmax, j, vars(iv1)%field, vars(iv2)%field)
                     wrk1d(j, 2) = COV2V2D(imax, jmax, kmax, j, vars(iv1)%field, vars(iv1)%field)
@@ -624,7 +627,7 @@ program SPECTRA
                     txc(:, 1) = txc(:, 1)*norm*norm
 
 ! Reduce 2D spectra into array wrk3d
-                    wrk3d = C_0_R
+                    wrk3d = 0.0_wp
                     call REDUCE_SPECTRUM(imax, jmax, kmax, opt_block, &
                                          txc(1, 1), wrk3d, txc(1, 3), wrk1d(1, 4))
 
@@ -636,7 +639,7 @@ program SPECTRA
                     txc(:, 2) = txc(:, 2)*norm*norm
 
 ! Reduce 2D correlation into array wrk3d and accumulate 1D correlation
-                    wrk3d = C_0_R
+                    wrk3d = 0.0_wp
                     call REDUCE_CORRELATION(imax, jmax, kmax, opt_block, kr_total, &
                                             txc(1, 2), wrk3d, outx(1, iv), outz(1, iv), outr(1, iv), wrk1d(1, 2), wrk1d(1, 4), icalc_radial)
                 end if
@@ -646,7 +649,7 @@ program SPECTRA
                 write (line, 100) maxval(abs(wrk1d(1:ip, 4) - wrk1d(1:ip, 1)))
                 write (str, *) maxloc(abs(wrk1d(1:ip, 4) - wrk1d(1:ip, 1)))
                 line = 'Checking Parseval: Maximum residual '//trim(adjustl(line))//' at level '//trim(adjustl(str))//'.'
-                call TLAB_WRITE_ASCII(lfile, line)
+                call TLab_Write_ASCII(lfile, line)
 
 ! Accumulate 2D information, if needed
                 if (opt_ffmt == 1) out2d(1:isize_out2d, iv) = out2d(1:isize_out2d, iv) + wrk3d(1:isize_out2d)
@@ -654,7 +657,7 @@ program SPECTRA
             end do
 
             if (flag_mode == 2 .and. icalc_radial == 1) then  ! Calculate sampling size for radial correlation
-                samplesize = C_0_R
+                samplesize = 0.0_wp
                 call RADIAL_SAMPLESIZE(imax, kmax, kr_total, samplesize)
             end if
 
@@ -666,7 +669,7 @@ program SPECTRA
 ! Normalizing accumulated spectra
                 ip = opt_block
                 if (opt_time == SPEC_AVERAGE) ip = ip*itime_size
-                dummy = C_1_R/M_REAL(ip)
+                dummy = 1.0_wp/real(ip, wp)
                 if (ip > 1) then
                     outx = outx*dummy; outz = outz*dummy; outr = outr*dummy
                     if (opt_ffmt == 1) out2d = out2d*dummy
@@ -691,7 +694,7 @@ program SPECTRA
 #endif
                     if (flag_mode == 2 .and. icalc_radial == 1) then
                         do iv1 = 1, kr_total
-                            if (samplesize(iv1) > C_0_R) samplesize(iv1) = C_1_R/samplesize(iv1)
+                            if (samplesize(iv1) > 0.0_wp) samplesize(iv1) = 1.0_wp/samplesize(iv1)
                         end do
 
                         do iv = 1, nfield
@@ -773,5 +776,5 @@ program SPECTRA
     end do ! Loop in itime
 
 100 format(G_FORMAT_R)
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program SPECTRA

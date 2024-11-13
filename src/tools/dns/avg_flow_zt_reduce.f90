@@ -24,17 +24,18 @@
 ! #####################################################
 subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 
-    use TLAB_CONSTANTS, only: efile, wp, wi
+    use TLab_Constants, only: efile, wp, wi
 #ifdef TRACE_ON
-    use TLAB_CONSTANTS, only: tfile
+    use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
-    use TLAB_VARS, only: g
-    use TLAB_VARS, only: itransport, visc
-    use TLAB_VARS, only: nstatavg, statavg, nstatavg_points
-    use TLAB_ARRAYS, only: wrk2d
-    use TLAB_PROCS
-    use AVGS, only: SUM1V1D_V
+    use FDM, only: g
+    use TLAB_VARS, only: visc
+    use Thermodynamics, only: itransport
+    use TLab_Spatial
+    use TLab_Arrays, only: wrk2d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use Averages, only: SUM1V1D_V
     use OPR_PARTIAL
     implicit none
 
@@ -52,12 +53,12 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 
     ! ###################################################################
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'ENTERING AVG_FLOW_ZT_REDUCE')
+    call TLab_Write_ASCII(tfile, 'ENTERING AVG_FLOW_ZT_REDUCE')
 #endif
 
     if (imax < nstatavg) then
-        call TLAB_WRITE_ASCII(efile, 'AVG_FLOW_ZT_REDUCE. Not enough space in available arrays.')
-        call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+        call TLab_Write_ASCII(efile, 'AVG_FLOW_ZT_REDUCE. Not enough space in available arrays.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end if
 
     nstatavg_points = nstatavg_points + g(3)%size
@@ -3246,7 +3247,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     end do
 
 #ifdef TRACE_ON
-    call TLAB_WRITE_ASCII(tfile, 'LEAVING DNS_SAVE_AVGIJ')
+    call TLab_Write_ASCII(tfile, 'LEAVING DNS_SAVE_AVGIJ')
 #endif
 
     ! ############
@@ -3363,7 +3364,8 @@ subroutine AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
     ! ##############################################
 
     use TLAB_VARS
-    use AVGS, only: SUM1V1D_V
+    use TLab_Spatial
+    use Averages, only: SUM1V1D_V
 
     implicit none
 

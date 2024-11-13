@@ -8,10 +8,9 @@
 ! we use explicit-shape arrays in argements for the routines to be calleable with different array ranks
 
 module THERMO_CALORIC
-    use TLAB_CONSTANTS, only: wp, wi, efile
-    use TLAB_PROCS
-    use TLAB_VARS, only: gama0
-    use Thermodynamics, only: imixture, CRATIO_INV, THERMO_R, MAX_NSP, NSP
+    use TLab_Constants, only: wp, wi, efile
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use Thermodynamics, only: imixture, gama0, CRATIO_INV, THERMO_R, MAX_NSP, NSP
     use Thermodynamics, only: NCP, THERMO_AI, THERMO_TLIM
     use Thermodynamics, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
     use THERMO_AIRWATER
@@ -186,8 +185,8 @@ contains
                 end do
 
             else
-                call TLAB_WRITE_ASCII(efile, 'THERMO_CALORIC_TEMPERATURE. General case undeveloped.')
-                call TLAB_STOP(DNS_ERROR_UNDEVELOP)
+                call TLab_Write_ASCII(efile, 'THERMO_CALORIC_TEMPERATURE. General case undeveloped.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
             end if
 
@@ -275,7 +274,7 @@ contains
 !     DO ij = 1,ijmax
 !#define MACRO_ZINPUT s(ij,inb_scal)
 !#include "dns_chem_mass.h"
-!        cp(ij) = gama(ij)*GRATIO/((gama(ij)-1.0_wp)*WMEAN)
+!        cp(ij) = gama(ij)*CRATIO_INV*RMEAN/(gama(ij) - 1.0_wp)
 !     ENDDO
 
         case (MIXT_TYPE_AIRWATER)   ! s(1,2) contains liquid mass fraction

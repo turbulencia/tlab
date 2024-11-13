@@ -2,11 +2,11 @@
 #include "dns_error.h"
 
 module PARTICLE_PROCS
-    use TLAB_CONSTANTS, only: wp, wi, longi, efile, lfile, MAX_PARS
+    use TLab_Constants, only: wp, wi, longi, efile, lfile, MAX_PARS
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
-    use TLAB_VARS, only: g, imax, jmax, kmax, isize_wrk3d
-    use TLAB_PROCS
+    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro
 #endif
@@ -37,15 +37,15 @@ contains
 ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Particles'
-        call TLAB_WRITE_ASCII(lfile, 'Reading '//trim(adjustl(block))//' input data.')
+        call TLab_Write_ASCII(lfile, 'Reading '//trim(adjustl(block))//' input data.')
 
-        call TLAB_WRITE_ASCII(bakfile, '#')
-        call TLAB_WRITE_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLAB_WRITE_ASCII(bakfile, '#Type=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#Number=<value>')
-        call TLAB_WRITE_ASCII(bakfile, '#MemoryFactor=<value>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#Type=<value>')
+        call TLab_Write_ASCII(bakfile, '#Number=<value>')
+        call TLab_Write_ASCII(bakfile, '#MemoryFactor=<value>')
 
-        call SCANINICHAR(bakfile, inifile, block, 'Type', 'None', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; part%type = PART_TYPE_NONE
         else if (trim(adjustl(sRes)) == 'tracer') then; part%type = PART_TYPE_TRACER
         else if (trim(adjustl(sRes)) == 'inertia') then; part%type = PART_TYPE_INERTIA
@@ -53,8 +53,8 @@ contains
         else if (trim(adjustl(sRes)) == 'bilinearcloudfour') then; part%type = PART_TYPE_BIL_CLOUD_4
         else if (trim(adjustl(sRes)) == 'tiniaone') then; part%type = PART_TYPE_TINIA_1
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
-            call TLAB_STOP(DNS_ERROR_OPTION)
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Particles.Type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         isize_part = 0
@@ -64,35 +64,35 @@ contains
         part_bcs = PART_BCS_NONE
         if (part%type == PART_TYPE_INERTIA) part_bcs = PART_BCS_SPECULAR
         if (part%type == PART_TYPE_TINIA_1) part_bcs = PART_BCS_STICK
-        call SCANINICHAR(bakfile, inifile, block, 'BoundaryCondition', 'Void', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'BoundaryCondition', 'Void', sRes)
         if (trim(adjustl(sRes)) == 'none') then; part_bcs = PART_BCS_NONE
         else if (trim(adjustl(sRes)) == 'specular') then; part_bcs = PART_BCS_SPECULAR
         else if (trim(adjustl(sRes)) == 'stick') then; part_bcs = PART_BCS_STICK
         end if
 
-        call SCANINICHAR(bakfile, inifile, block, 'Parameters', '0.0', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'Parameters', '0.0', sRes)
         idummy = MAX_PARS
         call LIST_REAL(sRes, idummy, part%parameters)
 
-        call SCANINILONGINT(bakfile, inifile, block, 'Number', '0', isize_part_total)
+        call ScanFile_LongInt(bakfile, inifile, block, 'Number', '0', isize_part_total)
 
 ! -------------------------------------------------------------------
         particle_pdf_calc = .false.
-        call SCANINICHAR(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'CalculatePdf', 'no', sRes)
         if (trim(adjustl(sRes)) == 'yes') particle_pdf_calc = .true.
 
-        call SCANINICHAR(bakfile, inifile, block, 'PdfSubdomain', '-1', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'PdfSubdomain', '-1', sRes)
         particle_pdf_subdomain = 0.0_wp; idummy = 6
         call LIST_REAL(sRes, idummy, particle_pdf_subdomain)
-        call SCANINIREAL(bakfile, inifile, block, 'PdfMax', '10', particle_pdf_max)
-        call SCANINIREAL(bakfile, inifile, block, 'PdfInterval', '0.5', particle_pdf_interval)
+        call ScanFile_Real(bakfile, inifile, block, 'PdfMax', '10', particle_pdf_max)
+        call ScanFile_Real(bakfile, inifile, block, 'PdfInterval', '0.5', particle_pdf_interval)
 
-        call SCANINICHAR(bakfile, inifile, block, 'ResidenceReset', 'yes', sRes)
+        call ScanFile_Char(bakfile, inifile, block, 'ResidenceReset', 'yes', sRes)
         if (trim(adjustl(sRes)) == 'yes') then; residence_reset = 1
         elseif (trim(adjustl(sRes)) == 'no') then; residence_reset = 0
         else
-            call TLAB_WRITE_ASCII(efile, __FILE__//'. ResidenceReset must be yes or no')
-            call TLAB_STOP(DNS_ERROR_RESIDENCERESET)
+            call TLab_Write_ASCII(efile, __FILE__//'. ResidenceReset must be yes or no')
+            call TLab_Stop(DNS_ERROR_RESIDENCERESET)
         end if
 
 ! ###################################################################
@@ -134,7 +134,7 @@ contains
         end select
 
 #ifdef USE_MPI
-        call SCANINIREAL(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
+        call ScanFile_Real(bakfile, inifile, block, 'MemoryFactor', '2.0', memory_factor)
         isize_part = int(isize_part_total/int(ims_npro, longi))
         if (mod(isize_part_total, int(ims_npro, longi)) /= 0) then ! All PEs with equal memory
             isize_part = isize_part + 1
@@ -154,6 +154,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine Particle_Initialize_Memory(C_FILE_LOC)
+        use TLab_Memory
 
         character(len=*) C_FILE_LOC
 
@@ -162,14 +163,14 @@ contains
         integer iv
 
         ! ###################################################################
-        call TLAB_ALLOCATE_ARRAY_LONG_INT(C_FILE_LOC, l_g%tags, [isize_part], 'l_tags')
-        call TLAB_ALLOCATE_ARRAY_INT(C_FILE_LOC, l_g%nodes, [isize_part], 'l_g')
+        call TLab_Allocate_LONG_INT(C_FILE_LOC, l_g%tags, [isize_part], 'l_tags')
+        call TLab_Allocate_INT(C_FILE_LOC, l_g%nodes, [isize_part], 'l_g')
 #ifdef USE_MPI
         allocate (ims_np_all(ims_npro))
 #endif
 
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_q, [isize_part, inb_part_array], 'l_q')
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
+        call TLab_Allocate_Real(C_FILE_LOC, l_q, [isize_part, inb_part_array], 'l_q')
+        call TLab_Allocate_Real(C_FILE_LOC, l_txc, [isize_part, inb_part_txc], 'l_txc')
 
         ! Work array
         isize_l_work = (2*jmax*(kmax + 1) + (imax + 1)*jmax*2)*inb_part_interp  ! halos for particle_interpolate
@@ -179,7 +180,7 @@ contains
         idummy = int(isize_part/4*(inb_part_array*2 + 1))                       ! transfer particles between MPI tasks
         isize_l_work = max(isize_l_work, 2*idummy)
 #endif
-        call TLAB_ALLOCATE_ARRAY_DOUBLE(C_FILE_LOC, l_work, [isize_l_work], 'l_work')
+        call TLab_Allocate_Real(C_FILE_LOC, l_work, [isize_l_work], 'l_work')
 
 #ifdef USE_MPI
         p_buffer_1 => l_work(1:idummy)

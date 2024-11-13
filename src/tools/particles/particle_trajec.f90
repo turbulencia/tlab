@@ -1,4 +1,3 @@
-#include "types.h"
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
@@ -27,9 +26,9 @@
 !########################################################################
 program PARTICLE_TRAJEC
 
-    use TLAB_CONSTANTS
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
-    use TLAB_PROCS
+    use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_err
@@ -70,18 +69,19 @@ program PARTICLE_TRAJEC
 !  INTEGER(8) test4(50)
     bakfile = trim(adjustl(ifile))//'.bak'
 
-    call TLAB_START()
+    call TLab_Start()
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize()
 #endif
-    call Thermodynamics_Initialize_Parameters(ifile)
     call Particle_Initialize_Parameters(ifile)
 
+    call NavierStokes_Initialize_Parameters(ifile)
+    call Thermodynamics_Initialize_Parameters(ifile)
 ! Get the local information from the tlab.ini
-    call SCANINIINT(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
-    call SCANINIINT(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
+    call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
+    call ScanFile_Int(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)
 
     call Particle_Initialize_Memory(C_FILE_LOC)
 
@@ -263,5 +263,5 @@ program PARTICLE_TRAJEC
 !CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
 !print*, 'here2', ims_pro
 
-    call TLAB_STOP(0)
+    call TLab_Stop(0)
 end program

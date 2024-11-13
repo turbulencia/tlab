@@ -1,10 +1,9 @@
-#include "types.h"
-
-module FLT_EXPLICIT
+module Filters_Explicit
+    use TLab_Constants, only: wp, wi
     implicit none
     private
 
-    TINTEGER i
+    integer(wi) i
 
     public :: FLT_E4, FLT_E4_COEFFS
     public :: FLT_E6
@@ -13,12 +12,12 @@ module FLT_EXPLICIT
 contains
 ! Explicit 4th order, nonuniform case.
 ! Coincides with filter as described in Stolz's thesis, imported from  Holger Foysi.
-! Coefficient lpha_{-2} determined by setting minimum imaginary part, which implies alpha_m2 = alpha_p2
+! Coefficient alpha_{-2} determined by setting minimum imaginary part, which implies alpha_m2 = alpha_p2
     subroutine FLT_E4(imax, jkmax, periodic, a, u, uf)
-        TINTEGER, intent(in) :: imax, jkmax
+        integer(wi), intent(in) :: imax, jkmax
         logical, intent(in) :: periodic
-        TREAL, dimension(jkmax, imax) :: u, uf
-        TREAL, dimension(imax, 5) :: a
+        real(wp), dimension(jkmax, imax) :: u, uf
+        real(wp), dimension(imax, 5) :: a
 
 ! boundary points
         if (periodic) then
@@ -62,15 +61,15 @@ contains
 
 !########################################################################
     subroutine FLT_E4_COEFFS(kmax, periodic, scalez, z, cxi)
-        TINTEGER, intent(in) :: kmax
+        integer(wi), intent(in) :: kmax
         logical, intent(in) :: periodic
-        TREAL, intent(IN) :: scalez
-        TREAL, dimension(*), intent(IN) :: z
-        TREAL, dimension(kmax, 5), intent(out) :: cxi
+        real(wp), intent(IN) :: scalez
+        real(wp), dimension(*), intent(IN) :: z
+        real(wp), dimension(kmax, 5), intent(out) :: cxi
 
         ! -----------------------------------------------------------------------
-        TINTEGER k, km2, km1, kp1, kp2, kmin_loc, kmax_loc
-        TREAL D0, D1, D2, Dm1, zm2, zm1, zp1, zp2, zp3
+        integer(wi) k, km2, km1, kp1, kp2, kmin_loc, kmax_loc
+        real(wp) D0, D1, D2, Dm1, zm2, zm1, zp1, zp2, zp3
 
 #define alpha_m2(k)  cxi(k,1)
 #define alpha_m1(k)  cxi(k,2)
@@ -101,16 +100,16 @@ contains
             D0 = D2
             Dm1 = D1
 
-            alpha_m2(k) = (zp2**3*zp1*zm1/(C_2_R*D2) - zp1**3*(zm1**2 + zp2*zm1)/(C_2_R*D1) + &
-                           zm1**3*(zp1**2 - zp2*zp1)/(C_2_R*Dm1))/ &
+            alpha_m2(k) = (zp2**3*zp1*zm1/(2.0_wp*D2) - zp1**3*(zm1**2 + zp2*zm1)/(2.0_wp*D1) + &
+                           zm1**3*(zp1**2 - zp2*zp1)/(2.0_wp*Dm1))/ &
                           (zp3**3 - zp2**3*(-zp1*zp3 - zp1*zm1 + zp3**2 + zm1*zp3)/D2 + &
-                           zp1**3*(-zm1**2 - zp2*zp3 - zp2*zm1 + C_2_R*zp3**2)/D1 - &
+                           zp1**3*(-zm1**2 - zp2*zp3 - zp2*zm1 + 2.0_wp*zp3**2)/D1 - &
                            zm1**3*(-zp2*zp3 - zp1**2 + zp3**2 + zp2*zp1)/Dm1)
 
-            alpha_m1(k) = -C_05_R*(zp1**2 - zp2*zp1 + C_2_R*alpha_m2(k)*(-zp2*zp3 + zp3**2 - zp1**2 + zp2*zp1))/Dm1
-            alpha(k) = C_05_R*(-zp2*zp1 + zp2**2 + zp2*zm1 + zp1*zm1 - C_2_R*alpha_m2(k)*(zp1*zp3 + zp1*zm1 - zp3**2 - zm1*zp3))/D0
-            alpha_p1(k) = C_05_R*(zm1**2 + zp2*zm1 + C_2_R*alpha_m2(k)*(-zm1**2 - zp2*zp3 - zp2*zm1 + zp3**2))/D1
-            alpha_p2(k) = -C_05_R*(C_2_R*alpha_m2(k)*(-zp1*zp3 - zp1*zm1 + zp3**2 + zm1*zp3) + zp1*zm1)/D2
+            alpha_m1(k) = -0.5_wp*(zp1**2 - zp2*zp1 + 2.0_wp*alpha_m2(k)*(-zp2*zp3 + zp3**2 - zp1**2 + zp2*zp1))/Dm1
+            alpha(k) = 0.5_wp*(-zp2*zp1 + zp2**2 + zp2*zm1 + zp1*zm1 - 2.0_wp*alpha_m2(k)*(zp1*zp3 + zp1*zm1 - zp3**2 - zm1*zp3))/D0
+            alpha_p1(k) = 0.5_wp*(zm1**2 + zp2*zm1 + 2.0_wp*alpha_m2(k)*(-zm1**2 - zp2*zp3 - zp2*zm1 + zp3**2))/D1
+            alpha_p2(k) = -0.5_wp*(2.0_wp*alpha_m2(k)*(-zp1*zp3 - zp1*zm1 + zp3**2 + zm1*zp3) + zp1*zm1)/D2
 
             ! -----------------------------------------------------------------------
             ! Point N-1
@@ -127,16 +126,16 @@ contains
             D0 = D2
             Dm1 = D1
 
-            alpha_p2(k) = (zp2**3*zp1*zm1/(C_2_R*D2) - zp1**3*(zm1**2 + zp2*zm1)/(C_2_R*D1) + &
-                           zm1**3*(zp1**2 - zp2*zp1)/(C_2_R*Dm1))/ &
+            alpha_p2(k) = (zp2**3*zp1*zm1/(2.0_wp*D2) - zp1**3*(zm1**2 + zp2*zm1)/(2.0_wp*D1) + &
+                           zm1**3*(zp1**2 - zp2*zp1)/(2.0_wp*Dm1))/ &
                           (zp3**3 - zp2**3*(-zp1*zp3 - zp1*zm1 + zp3**2 + zm1*zp3)/D2 + &
-                           zp1**3*(-zm1**2 - zp2*zp3 - zp2*zm1 + C_2_R*zp3**2)/D1 - &
+                           zp1**3*(-zm1**2 - zp2*zp3 - zp2*zm1 + 2.0_wp*zp3**2)/D1 - &
                            zm1**3*(-zp2*zp3 - zp1**2 + zp3**2 + zp2*zp1)/Dm1)
 
-            alpha_p1(k) = -C_05_R*(zp1**2 - zp2*zp1 + C_2_R*alpha_p2(k)*(-zp2*zp3 + zp3**2 - zp1**2 + zp2*zp1))/Dm1
-            alpha(k) = C_05_R*(-zp2*zp1 + zp2**2 + zp2*zm1 + zp1*zm1 - C_2_R*alpha_p2(k)*(zp1*zp3 + zp1*zm1 - zp3**2 - zm1*zp3))/D0
-            alpha_m1(k) = C_05_R*(zm1**2 + zp2*zm1 + C_2_R*alpha_p2(k)*(-zm1**2 - zp2*zp3 - zp2*zm1 + zp3**2))/D1
-            alpha_m2(k) = -C_05_R*(C_2_R*alpha_p2(k)*(-zp1*zp3 - zp1*zm1 + zp3**2 + zm1*zp3) + zp1*zm1)/D2
+            alpha_p1(k) = -0.5_wp*(zp1**2 - zp2*zp1 + 2.0_wp*alpha_p2(k)*(-zp2*zp3 + zp3**2 - zp1**2 + zp2*zp1))/Dm1
+            alpha(k) = 0.5_wp*(-zp2*zp1 + zp2**2 + zp2*zm1 + zp1*zm1 - 2.0_wp*alpha_p2(k)*(zp1*zp3 + zp1*zm1 - zp3**2 - zm1*zp3))/D0
+            alpha_m1(k) = 0.5_wp*(zm1**2 + zp2*zm1 + 2.0_wp*alpha_p2(k)*(-zm1**2 - zp2*zp3 - zp2*zm1 + zp3**2))/D1
+            alpha_m2(k) = -0.5_wp*(2.0_wp*alpha_p2(k)*(-zp1*zp3 - zp1*zm1 + zp3**2 + zm1*zp3) + zp1*zm1)/D2
 
             kmin_loc = 3
             kmax_loc = kmax - 2
@@ -156,20 +155,20 @@ contains
             kp1 = k + 1; kp1 = mod(kp1 + kmax - 1, kmax) + 1
             kp2 = k + 2; kp2 = mod(kp2 + kmax - 1, kmax) + 1
 
-            zm2 = z(k) - z(km2); if (zm2 < C_0_R) zm2 = zm2 + scalez
-            zm1 = z(k) - z(km1); if (zm1 < C_0_R) zm1 = zm1 + scalez
-            zp1 = z(kp1) - z(k); if (zp1 < C_0_R) zp1 = zp1 + scalez
-            zp2 = z(kp2) - z(k); if (zp2 < C_0_R) zp2 = zp2 + scalez
+            zm2 = z(k) - z(km2); if (zm2 < 0.0_wp) zm2 = zm2 + scalez
+            zm1 = z(k) - z(km1); if (zm1 < 0.0_wp) zm1 = zm1 + scalez
+            zp1 = z(kp1) - z(k); if (zp1 < 0.0_wp) zp1 = zp1 + scalez
+            zp2 = z(kp2) - z(k); if (zp2 < 0.0_wp) zp2 = zp2 + scalez
 
             D2 = zp2*(zp1 - zp2 - zm1) - (zp1*zm2 + zm2**2 - zm2*zm1)
             D1 = (zp1 - zp2 - zm1)*(zp1 + zm1)
             D0 = zp2*(zp1 - zp2 - zm1)
 
-            alpha_p2(k) = C_05_R*(zp1*zm1)/D2
+            alpha_p2(k) = 0.5_wp*(zp1*zm1)/D2
             alpha_m2(k) = alpha_p2(k)
-            alpha_p1(k) = -C_05_R*(C_2_R*alpha_m2(k)*zm2*(zm2 + zp2) + zm1*(zp2 + zm1))/D1
-            alpha_m1(k) = C_05_R*(zp1**2 - zp2*zp1 + C_2_R*alpha_m2(k)*(zm2**2 + zm2*zp2))/D1
-            alpha(k) = C_05_R*(C_1_R - (zp1*zm1 + C_2_R*alpha_m2(k)*(zp1*zm2 + zm2**2 - zm1*zm2))/D0) - alpha_m2(k)
+            alpha_p1(k) = -0.5_wp*(2.0_wp*alpha_m2(k)*zm2*(zm2 + zp2) + zm1*(zp2 + zm1))/D1
+            alpha_m1(k) = 0.5_wp*(zp1**2 - zp2*zp1 + 2.0_wp*alpha_m2(k)*(zm2**2 + zm2*zp2))/D1
+            alpha(k) = 0.5_wp*(1.0_wp - (zp1*zm1 + 2.0_wp*alpha_m2(k)*(zp1*zm2 + zm2**2 - zm1*zm2))/D0) - alpha_m2(k)
         end do
 
         return
@@ -177,18 +176,18 @@ contains
 
     !########################################################################
     subroutine FLT_E6(kmax, ijmax, periodic, kflt1bc, kfltmxbc, u, uf)
-        TINTEGER kflt1bc, kfltmxbc
+        integer(wi) kflt1bc, kfltmxbc
         logical periodic
-        TINTEGER ijmax, kmax
-        TREAL, dimension(ijmax, kmax) :: u, uf
+        integer(wi) ijmax, kmax
+        real(wp), dimension(ijmax, kmax) :: u, uf
 
         ! -------------------------------------------------------------------
-        TINTEGER k
-        TINTEGER kstart, kstop
-        TREAL b0, b1, b2, b3
-        TREAL b_a(7), b_b(7), b_c(7)
+        integer(wi) k
+        integer(wi) kstart, kstop
+        real(wp) b0, b1, b2, b3
+        real(wp) b_a(7), b_b(7), b_c(7)
 
-        TINTEGER i1, i2, i3, i4, im3, ip3, im2, ip2, im1, ip1
+        integer(wi) i1, i2, i3, i4, im3, ip3, im2, ip2, im1, ip1
 
         ! #######################################################################
 #ifdef SINGLE_PREC
@@ -362,17 +361,17 @@ contains
 !#    = G*( 3u - 3G*u + G*G*u )
 !#
     subroutine FLT_ADM(imax, jkmax, periodic, a, u, uf, tmp)
-        TINTEGER imax, jkmax
+        integer(wi) imax, jkmax
         logical periodic
-        TREAL, dimension(jkmax, imax) :: u, uf, tmp
-        TREAL, dimension(imax, 5) :: a
+        real(wp), dimension(jkmax, imax) :: u, uf, tmp
+        real(wp), dimension(imax, 5) :: a
 
         ! #######################################################################
         call FLT_E4(imax, jkmax, periodic, u, uf, a)
         call FLT_E4(imax, jkmax, periodic, uf, tmp, a)
 
         do i = 1, imax
-            tmp(:, i) = tmp(:, i) + C_3_R*(u(:, i) - uf(:, i))
+            tmp(:, i) = tmp(:, i) + 3.0_wp*(u(:, i) - uf(:, i))
         end do
 
         call FLT_E4(imax, jkmax, periodic, tmp, uf, a)
@@ -380,4 +379,4 @@ contains
         return
     end subroutine FLT_ADM
 
-end module FLT_EXPLICIT
+end module Filters_Explicit

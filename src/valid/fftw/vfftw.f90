@@ -1,7 +1,6 @@
-#include "types.h"
 
 program VFFTW
-
+    use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_FIELDS
     use OPR_PARTIAL
@@ -12,10 +11,10 @@ program VFFTW
 #include "fftw3.f"
 #endif
 
-    TREAL, dimension(:, :), allocatable, save, target :: x, y, z
-    TREAL, dimension(:, :, :), pointer :: a, b, c
+    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), dimension(:, :, :), pointer :: a, b, c
     TCOMPLEX, dimension(:, :, :), pointer :: a1, a2, a3
-    TREAL, dimension(:), pointer :: wrk1d, wrk2d, wrk3d
+    real(wp), dimension(:), pointer :: wrk1d, wrk2d, wrk3d
 
     TCOMPLEX :: Img
 
@@ -23,21 +22,18 @@ program VFFTW
     integer(8) fft_plan_fx, fft_plan_fz
     integer(8) fft_plan_bx, fft_plan_bz
 
-!  TREAL fft_data_x, fft_data_z
-    TREAL dummy, error
+!  real(wp) fft_data_x, fft_data_z
+    real(wp) dummy, error
 
 ! ###################################################################
     call DNS_START
 
-    call IO_READ_GLOBAL(ifile)
+    call TLab_Initialize_Parameters(ifile)
+    call NavierStokes_Initialize_Parameters(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space
 ! -------------------------------------------------------------------
-    allocate (x(g(1)%size, g(1)%inb_grid))
-    allocate (y(g(2)%size, g(2)%inb_grid))
-    allocate (z(g(3)%size, g(3)%inb_grid))
-
     allocate (wrk1d(isize_wrk1d*10))
     allocate (wrk2d(isize_wrk2d*5))
     allocate (wrk3d(imax*jmax*kmax), a(imax, jmax, kmax), b(imax, jmax, kmax), c(imax, jmax, kmax))
@@ -46,10 +42,10 @@ program VFFTW
     Img = (-1.0, 0.0)
     Img = sqrt(Img)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z, area)
-    call FDM_INITIALIZE(x, g(1), wrk1d)
-    call FDM_INITIALIZE(y, g(2), wrk1d)
-    call FDM_INITIALIZE(z, g(3), wrk1d)
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
 ! ###################################################################
 !  Define forcing term
