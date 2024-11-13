@@ -5,12 +5,14 @@
 
 module PHASEAVG
   
-  USE TLAB_PROCS
+  USE TLAB_WORKFLOW
   USE TLAB_TYPES
+  use FDM, only : g
   use TLAB_CONSTANTS, only : wp, wi
-  use TLAB_VARS,      only : imax, jmax, kmax, g
+  use TLAB_VARS,      only : imax, jmax, kmax
   use TLAB_VARS,      only : rtime
-  use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach, gama0
+  use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach
+  USE THERMODYNAMICS, only : gama0
   use TLAB_VARS,      only : imode_eqns
   use TLAB_VARS,      only : inb_flow, inb_scal
   use TLAB_VARS,      only : phAvg
@@ -31,13 +33,14 @@ module PHASEAVG
   character(len=32), parameter                          :: avgp_name       = 'avg_p'
   character(len=32), parameter                          :: avgs_name       = 'avg_scal'
 
-  public :: PhaseAvg_Space
+  public :: PhaseAvg_Space, PhaseAvg_Allocate, PhaseAvg_Initialize
+  
 CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine PhaseAvg_Allocate(C_FILE_LOC, restart)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    use TLAB_VARS,      only : g
+    use TLAB_CONSTANTS, only : efile 
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS,  only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
@@ -91,7 +94,8 @@ CONTAINS
     use TLabMPI_VARS, only : ims_comm_x, ims_pro_k, ims_pro
 #endif
     use TLAB_VARS, only : rtime
-    use TLAB_VARS, only : visc, froude, rossby, prandtl, mach, gama0
+    use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
+    use THERMODYNAMICS, only : gama0
     use TLAB_VARS, only : imode_eqns
 
     implicit none
@@ -161,6 +165,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine PhaseAvg_Space_Exec(localsum, nfield, itime, it_first, it_save, index, field)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    use TLAB_CONSTANTS, only : efile
     use TLAB_VARS, only : imax, jmax, kmax, isize_field
 #ifdef USE_MPI 
     use MPI
@@ -246,11 +251,12 @@ CONTAINS
   subroutine PhaseAvg_Write(nfield, iheader, it_save, basename, index, avg_start)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use IO_FIELDS
-    use TLAB_VARS, only : imax, jmax
+    use TLAB_VARS, only : jmax
     use TLAB_VARS, only : rtime, itime
-    use TLAB_VARS, only : visc, froude, rossby, prandtl, mach, gama0
+    use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
     use TLAB_VARS, only : imode_eqns
-    use TLAB_CONSTANTS, only : sizeofint, sizeofreal
+    use THERMODYNAMICS, only : gama0
+    use TLAB_CONSTANTS, only : sizeofint, sizeofreal, efile
 #ifdef USE_MPI 
     use MPI
     use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
@@ -270,7 +276,6 @@ CONTAINS
     integer(wi)                                     :: isize, iheader, ifld, ifld_srt, ifld_end
     character(len=10)                               :: start, end, fld_id
     integer(wi)                                     :: arr_planes, header_offset, ioffset_local
-    character(len=100)                              :: filename
 
 #ifdef USE_MPI
     integer(kind=MPI_OFFSET_KIND)                   :: f_offset

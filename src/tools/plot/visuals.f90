@@ -111,7 +111,7 @@ program VISUALS
     ! -------------------------------------------------------------------
     ! Read pressure decomposition
     ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
+    call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
     if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomp = DCMP_TOTAL
     else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomp = DCMP_TOTAL 
     else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomp = DCMP_RESOLVED

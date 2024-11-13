@@ -95,9 +95,6 @@ program DNS
     call DNS_STATISTICS_INITIALIZE()
 
     call PLANES_INITIALIZE()
-    if (phAvg%active) then
-        call PhaseAvg_Allocate(__FILE__, nitera_save)
-    end if
 
     if (phAvg%active) then
         call AvgPhaseInitializeMemory(__FILE__, nitera_save)
@@ -218,9 +215,6 @@ program DNS
     if (dns_obs_log /= OBS_TYPE_NONE) then
         call DNS_OBS_INITIALIZE()
         call DNS_OBS()
-    end if
-    if (phAvg%active) then
-        call PhaseAvg_Initialize()
     end if
 
     ! ###################################################################

@@ -585,6 +585,7 @@ contains
     subroutine TLAB_ALLOCATE_LOG_SHORT(log_file, dims, s)
         integer(wi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
+        integer(longi) :: dims_long(size(dims) )
         integer id
         !#####################################################################
 
