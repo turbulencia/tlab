@@ -18,8 +18,8 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: g
     use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter, phAvg
-    use FDM, only: g
     use TLab_Spatial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
