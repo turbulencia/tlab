@@ -7,17 +7,21 @@ module AVG_PHASE
   
   USE TLab_WorkFlow
   USE TLAB_TYPES
-  use TLAB_CONSTANTS, only : wp, wi
-  use TLAB_VARS,      only : imax, jmax, kmax, g
-  use TLAB_VARS,      only : rtime
-  use TLAB_VARS,      only : visc, froude, rossby, prandtl, mach
-  use Thermodynamics, only: gama0
-  use TLAB_VARS,      only : imode_eqns
-  use TLAB_VARS,      only : inb_flow, inb_scal
-  use TLAB_VARS,      only : PhAvg
+  use TLab_Constants, only : wp, wi, efile
   use TLAB_CONSTANTS, only : sizeofint, sizeofreal
+  use FDM, only : g
+  use TLAB_VARS, only : imax, jmax, kmax, isize_field
+  use TLAB_VARS, only : rtime
+  use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
+  use TLAB_VARS, only : imode_eqns
+  use TLAB_VARS, only : inb_flow, inb_scal
+  use TLAB_VARS, only : PhAvg
+  use TLAB_ARRAYS, only: q, s
+  use TLab_Arrays, only: wrk2d, wrk3d
+  use Thermodynamics, only: gama0
   use IO_FIELDS
   use TLab_Memory, only: Tlab_Allocate_Real_LONG
+  use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
 
   implicit none
 
@@ -41,10 +45,9 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine AvgPhaseInitializeMemory(C_FILE_LOC, restart)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    use TLAB_VARS,      only : g
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS,  only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
+    use TLabMPI_VARS, only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
 #endif
 
     implicit none
@@ -63,7 +66,7 @@ CONTAINS
       avg_planes = restart/PhAvg%stride
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of average planes not an integer. Change stride.')
-      call TLAB_STOP(DNS_ERROR_PHASEAVG)
+      call TLAB_STOP(DNS_ERROR_AVG_PHASE)
     end if
     
 #ifdef USE_MPI
@@ -112,13 +115,10 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine AvgPhaseSpaceExec(localsum, nfield, itr, it_first, it_save, index, field)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    use TLAB_VARS, only : imax, jmax, kmax, isize_field
 #ifdef USE_MPI 
     use MPI
     use TLabMPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
 #endif
-    use TLAB_ARRAYS, only: q, s
-    use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
 
     implicit none
     real(wp), dimension(imax*jmax), intent(inout) :: localsum
@@ -151,7 +151,7 @@ CONTAINS
       ! Not yet coded
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in AvgPhaseSpaceExec')
-      call TLAB_STOP(DNS_ERROR_PHASEAVG)
+      call TLAB_STOP(DNS_ERROR_AVG_PHASE)
     end if
 
     if ((index == 1) .or. (index == 2) .or. (index == 4)) then
@@ -229,11 +229,12 @@ CONTAINS
   end subroutine AvgPhaseStress
 
   subroutine AvgPhaseCalcStress(field1, field2, stress_id, plane_id)
-    use TLab_Arrays, only: wrk2d, wrk3d
-
+#ifdef USE_MPI 
+    use MPI
+    use TLabMPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
+#endif
     real(wp), pointer, intent(in) :: field1(:)
     real(wp), pointer, intent(in) :: field2(:)
-    ! real(wp), intent(inout) :: avg_stress(:)
     integer(wi), intent(in) :: stress_id
     integer(wi), intent(in) :: plane_id
 
@@ -276,10 +277,10 @@ CONTAINS
 #endif 
     
   end subroutine AvgPhaseCalcStress
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine AvgPhaseCalcStress()
+  subroutine AvgPhaseResetVariable()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    use TLAB_CONSTANTS, only : wp
 #ifdef USE_MPI 
     use MPI
     use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_pro, ims_pro_k
@@ -295,5 +296,5 @@ CONTAINS
 #ifdef USE_MPI
     end if
 #endif
-  end subroutine AvgPhaseCalcStress
+  end subroutine AvgPhaseResetVariable
 end module

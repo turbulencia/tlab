@@ -32,7 +32,7 @@ module IO_FIELDS
     implicit none
     private
 
-    public :: IO_READ_FIELDS, IO_WRITE_FIELDS, IO_Write_PhaseAvg
+    public :: IO_READ_FIELDS, IO_WRITE_FIELDS, IO_Write_AvgPhase
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
     integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
     integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
@@ -592,16 +592,16 @@ contains
 #undef LOC_STATUS
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    subroutine IO_Write_PhaseAvg(avg_planes, nfield, iheader, it_save, basename, index, avg_type, avg_start)
+    subroutine IO_Write_AvgPhase(avg_planes, nfield, iheader, it_save, basename, index, avg_type, avg_start)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         use TLAB_VARS, only : imax, jmax
         use FDM, only : g
         use TLAB_VARS, only : rtime, itime
         use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
-        use Thermodynamics, only: gama0
         use TLAB_VARS, only : imode_eqns
         use TLAB_VARS, only : PhAvg
         use TLAB_CONSTANTS, only : sizeofint, sizeofreal
+        use Thermodynamics, only: gama0
 #ifdef USE_MPI 
         use MPI
         use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
@@ -633,7 +633,7 @@ contains
 
         if (index > 8 .or. index == 3 .or. index == 5 .or. index == 6 .or. index == 7) then
             call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in PhaseAvg_Write')
-            call TLAB_STOP(DNS_ERROR_PHASEAVG)
+            call TLAB_STOP(DNS_ERROR_AVG_PHASE)
         end if
 
         nz_total = it_save + 1
@@ -727,7 +727,7 @@ contains
 #endif
         end do
         return
-    end subroutine IO_Write_PhaseAvg
+    end subroutine IO_Write_AvgPhase
     
     !########################################################################
     !########################################################################

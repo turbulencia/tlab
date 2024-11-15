@@ -6,8 +6,10 @@
 
 program AVERAGES
 
-    use TLAB_TYPES, only: pointers_dt, phaseavg_dt
-    use TLAB_CONSTANTS
+    use TLAB_TYPES, only: phaseavg_dt
+    use TLab_Pointers, only: pointers_dt
+    use TLab_Constants, only: wp, wi, small_wp, MAX_AVG_TEMPORAL
+    use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
@@ -962,16 +964,18 @@ program AVERAGES
 
         case (18)
             call AvgPhaseSpace(wrk2d, inb_flow, it, 0, 0, 1)
-            call IO_Write_PhaseAvg(1, inb_flow, IO_FLOW, 0, avgu_name, 1, avg_flow, itime_vec(it))
+            call IO_Write_AvgPhase(1, inb_flow, IO_FLOW, 0, avgu_name, 1, avg_flow, itime_vec(it))
             
             call AvgPhaseSpace(wrk2d, inb_scal, it, 0, 0, 2)
-            call IO_Write_PhaseAvg(1, inb_scal, IO_SCAL, 0, avgp_name, 2,  avg_scal, itime_vec(it))
+            call IO_Write_AvgPhase(1, inb_scal, IO_SCAL, 0, avgp_name, 2,  avg_scal, itime_vec(it))
             
             p => txc(:,9) !makes sure to only pass the address, not the entire array 
             call AvgPhaseSpace(wrk2d, 1, it, 0, 0 , p)
-            call IO_Write_PhaseAvg(1, 1       ,      IO_SCAL, 0, avgs_name, 4, avg_p, itime_vec(it))
+            call IO_Write_AvgPhase(1, 1       ,      IO_SCAL, 0, avgs_name, 4, avg_p, itime_vec(it))
             
-            call AvgPhaseCalcStress()
+            call AvgPhaseStress(q, it, 0, 0)
+
+            call AvgPhaseResetVariable()
 
         end select
 

@@ -329,8 +329,7 @@ contains
         character(LEN=128) :: vname_loc
 #endif
         integer(wi) :: include_global
-        integer(wi), pointer :: tip
-        
+        integer(wi), pointer :: tip        
         tip => tower_isize_plane
 
         if (tip < 1) then

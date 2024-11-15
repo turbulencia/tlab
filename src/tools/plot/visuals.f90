@@ -107,7 +107,7 @@ program VISUALS
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
-
+    call Particle_Initialize_Parameters(ifile)
     ! -------------------------------------------------------------------
     ! Read from tlab.ini
     ! -------------------------------------------------------------------
@@ -125,7 +125,7 @@ program VISUALS
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
     end if
 
-    call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
+    call ScanFile_Char(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1
     else

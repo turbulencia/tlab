@@ -125,6 +125,6 @@
 
 #define DNS_ERROR_PRESSURE_DECOMPOSITION    500
 
-#define DNS_ERROR_PHASEAVG          600
+#define DNS_ERROR_AVG_PHASE         600
 
 #endif
