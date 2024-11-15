@@ -106,10 +106,10 @@ program VISUALS
     call Thermodynamics_Initialize_Parameters(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call Chemistry_Initialize(ifile)
 
-    call Particle_Initialize_Parameters(ifile)
     ! -------------------------------------------------------------------
-    ! Read pressure decomposition
+    ! Read from tlab.ini
     ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
     if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomp = DCMP_TOTAL
@@ -121,29 +121,10 @@ program VISUALS
     else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomp = DCMP_CORIOLIS
     else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomp = DCMP_BUOYANCY
     else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
+        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. VISUALS. Wrong Pressure decomposition option.')
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
     end if
 
-    call Chemistry_Initialize(ifile)
-
-    ! -------------------------------------------------------------------
-    ! Read pressure decomposition
-    ! -------------------------------------------------------------------
-    call SCANINICHAR(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
-    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomp = DCMP_TOTAL
-    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomp = DCMP_TOTAL 
-    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomp = DCMP_RESOLVED
-    else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomp = DCMP_ADVECTION
-    else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomp = DCMP_ADVDIFF 
-    else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomp = DCMP_DIFFUSION
-    else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomp = DCMP_CORIOLIS
-    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomp = DCMP_BUOYANCY
-    else
-        call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. IO_READ_GLOBAL. Wrong Pressure decomposition option.')
-        call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
-    end if
-    ! -------------------------------------------------------------------
     call SCANINICHAR(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0
     else if (trim(adjustl(sRes)) == 'on') then; imode_ibm = 1

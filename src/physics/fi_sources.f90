@@ -281,7 +281,7 @@ contains
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx, ny, nz, inb_scal_array)
         real(wp), intent(out) :: b(nx, ny, nz)
-        real(wp), intent(inout) :: ref(ny)         ! reference profile
+        real(wp), intent(in) :: ref(ny)         ! reference profile
 
         ! -----------------------------------------------------------------------
         integer(wi) j, k

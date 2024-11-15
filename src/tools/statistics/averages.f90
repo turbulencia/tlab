@@ -248,8 +248,8 @@ program AVERAGES
         nfield = 2
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     case (18) ! Phase average
-        phAvg%active = .true. 
-        phAvg%stride = 1
+        PhAvg%active = .true. 
+        PhAvg%stride = 1
         nfield = 3
         inb_txc = max(inb_txc, 9)
         iread_flow = flow_on; iread_scal = scal_on 
@@ -327,7 +327,7 @@ program AVERAGES
     end if
 
     if (opt_main == 18) then
-        call PhaseAvg_Initialize_Memory(__FILE__, -1)
+        call AvgPhaseInitializeMemory(__FILE__, -1)
     end if
     ! -------------------------------------------------------------------
     ! Initialize
@@ -961,17 +961,17 @@ program AVERAGES
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Cos'
 
         case (18)
-            call PhaseAvg_Space(wrk2d, inb_flow, it, 0, 0, 1)
+            call AvgPhaseSpace(wrk2d, inb_flow, it, 0, 0, 1)
             call IO_Write_PhaseAvg(1, inb_flow, IO_FLOW, 0, avgu_name, 1, avg_flow, itime_vec(it))
             
-            call PhaseAvg_Space(wrk2d, inb_scal, it, 0, 0, 2)
+            call AvgPhaseSpace(wrk2d, inb_scal, it, 0, 0, 2)
             call IO_Write_PhaseAvg(1, inb_scal, IO_SCAL, 0, avgp_name, 2,  avg_scal, itime_vec(it))
             
             p => txc(:,9) !makes sure to only pass the address, not the entire array 
-            call PhaseAvg_Space(wrk2d, 1, it, 0, 0 , p)
+            call AvgPhaseSpace(wrk2d, 1, it, 0, 0 , p)
             call IO_Write_PhaseAvg(1, 1       ,      IO_SCAL, 0, avgs_name, 4, avg_p, itime_vec(it))
             
-            call PhaseAvg_ResetVariable()
+            call AvgPhaseCalcStress()
 
         end select
 

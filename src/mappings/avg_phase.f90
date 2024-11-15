@@ -14,16 +14,16 @@ module AVG_PHASE
   use Thermodynamics, only: gama0
   use TLAB_VARS,      only : imode_eqns
   use TLAB_VARS,      only : inb_flow, inb_scal
-  use TLAB_VARS,      only : phAvg
+  use TLAB_VARS,      only : PhAvg
   use TLAB_CONSTANTS, only : sizeofint, sizeofreal
   use IO_FIELDS
-  use TLab_Memory, only: Tlab_Allocate_Real_Long
+  use TLab_Memory, only: Tlab_Allocate_Real_LONG
 
   implicit none
 
-  interface PhaseAvg_Space 
-    module procedure PhaseAvg_Space_FieldPtr, PhaseAvg_Space_index
-  end interface PhaseAvg_Space
+  interface AvgPhaseSpace 
+    module procedure AvgPhaseSpaceFieldPtr, AvgPhaseSpaceIndex
+  end interface AvgPhaseSpace
 
 
   real(wp), dimension(:), allocatable, target :: avg_flow, avg_stress, avg_p, avg_scal
@@ -34,12 +34,12 @@ module AVG_PHASE
   character(len=32), parameter :: avgp_name = 'avg_p'
   character(len=32), parameter :: avgs_name = 'avg_scal'
 
-  public :: PhaseAvg_Space
+  public :: AvgPhaseSpace
   public :: avg_flow, avg_p, avg_scal, avg_stress, avg_planes
 CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_Initialize_Memory(C_FILE_LOC, restart)
+  subroutine AvgPhaseInitializeMemory(C_FILE_LOC, restart)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_VARS,      only : g
 #ifdef USE_MPI
@@ -59,8 +59,8 @@ CONTAINS
 
     if ( restart == -1 ) then ! used for calls from outside dns_main / dns.x 
       avg_planes = 0 
-    elseif (mod(restart,phAvg%stride) == 0) then
-      avg_planes = restart/phAvg%stride
+    elseif (mod(restart,PhAvg%stride) == 0) then
+      avg_planes = restart/PhAvg%stride
     else
       call TLAB_WRITE_ASCII(efile, __FILE__//'. Number of average planes not an integer. Change stride.')
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
@@ -70,10 +70,10 @@ CONTAINS
     if (ims_pro_k == 0) then
 #endif
       alloc_size = imax*jmax*(avg_planes+1)
-      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_flow,      [alloc_size*inb_flow], 'avgflow.')
-      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_stress,    [alloc_size*       6], 'avgstr.' ) ! allocated not yet coded
-      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_p,         [alloc_size*       1], 'avgp.'   )
-      call Tlab_Allocate_Real_Long(C_FILE_LOC,   avg_scal,      [alloc_size*inb_scal], 'avgscal.')
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_flow,      [alloc_size*inb_flow], 'avgflow.')
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_stress,    [alloc_size*       6], 'avgstr.' ) ! allocated not yet coded
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_p,         [alloc_size*       1], 'avgp.'   )
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_scal,      [alloc_size*inb_scal], 'avgscal.')
       
       avg_flow(:)   = 0.0_wp
       avg_stress(:) = 0.0_wp
@@ -84,9 +84,9 @@ CONTAINS
     end if
 #endif
     return
-  end subroutine PhaseAvg_Initialize_Memory
+  end subroutine AvgPhaseInitializeMemory
 
-  subroutine PhaseAvg_Space_FieldPtr(localsum, nfield, itr, it_first, it_save, field)
+  subroutine AvgPhaseSpaceFieldPtr(localsum, nfield, itr, it_first, it_save, field)
     implicit none
     real(wp), dimension(imax, jmax), intent(inout) :: localsum
     integer(wi), intent(in) :: nfield
@@ -95,22 +95,22 @@ CONTAINS
   
     integer :: index_loc = 4 ! Index needs to be set to appropriate value for pressure. Needed later for if statement
 
-    call PhaseAvg_Space_Exec(localsum, nfield, itr, it_first, it_save, index_loc, field)
-  end subroutine PhaseAvg_Space_FieldPtr
+    call AvgPhaseSpaceExec(localsum, nfield, itr, it_first, it_save, index_loc, field)
+  end subroutine AvgPhaseSpaceFieldPtr
 
 
-  subroutine PhaseAvg_Space_index(localsum, nfield, itr, it_first, it_save, index)
+  subroutine AvgPhaseSpaceIndex(localsum, nfield, itr, it_first, it_save, index)
     implicit none
     real(wp), dimension(imax,jmax), intent(inout) :: localsum
     integer(wi), intent(in) :: nfield
     integer(wi), intent(in) :: itr, it_first, it_save, index
     real(wp), pointer :: field_loc(:) => null()
 
-    call PhaseAvg_Space_Exec(localsum, nfield, itr, it_first, it_save, index, field_loc)    
-  end subroutine PhaseAvg_Space_index
+    call AvgPhaseSpaceExec(localsum, nfield, itr, it_first, it_save, index, field_loc)    
+  end subroutine AvgPhaseSpaceIndex
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_Space_Exec(localsum, nfield, itr, it_first, it_save, index, field)
+  subroutine AvgPhaseSpaceExec(localsum, nfield, itr, it_first, it_save, index, field)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_VARS, only : imax, jmax, kmax, isize_field
 #ifdef USE_MPI 
@@ -150,7 +150,7 @@ CONTAINS
       call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*nfield])
       ! Not yet coded
     else
-      call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in PhaseAvg_Space_Exec')
+      call TLAB_WRITE_ASCII(efile, __FILE__//'. Unassigned case type check the index of the field in AvgPhaseSpaceExec')
       call TLAB_STOP(DNS_ERROR_PHASEAVG)
     end if
 
@@ -192,9 +192,9 @@ CONTAINS
       end do
     end if
   return
-  end subroutine PhaseAvg_Space_Exec
+  end subroutine AvgPhaseSpaceExec
 
-  subroutine PhaseAvg_Stress(q, itr, it_first, it_save)
+  subroutine AvgPhaseStress(q, itr, it_first, it_save)
     real(wp), dimension(:,:), intent(in) :: q
     integer(wi), intent(in) :: itr
     integer(wi) , intent(in) :: it_first
@@ -219,16 +219,16 @@ CONTAINS
     plane_id = 1
     if (it_save /= 0) plane_id = mod((itr-1) - (it_first), it_save) + 1
 
-    call PhaseAvg_Calc_Stress(u, u, 1, plane_id)
-    call PhaseAvg_Calc_Stress(u, v, 2, plane_id)
-    call PhaseAvg_Calc_Stress(v, v, 4, plane_id)
-    call PhaseAvg_Calc_Stress(v, w, 5, plane_id)
-    call PhaseAvg_Calc_Stress(u, w, 3, plane_id)
-    call PhaseAvg_Calc_Stress(w, w, 6, plane_id)
+    call AvgPhaseCalcStress(u, u, 1, plane_id)
+    call AvgPhaseCalcStress(u, v, 2, plane_id)
+    call AvgPhaseCalcStress(v, v, 4, plane_id)
+    call AvgPhaseCalcStress(v, w, 5, plane_id)
+    call AvgPhaseCalcStress(u, w, 3, plane_id)
+    call AvgPhaseCalcStress(w, w, 6, plane_id)
 
-  end subroutine PhaseAvg_Stress
+  end subroutine AvgPhaseStress
 
-  subroutine PhaseAvg_Calc_Stress(field1, field2, stress_id, plane_id)
+  subroutine AvgPhaseCalcStress(field1, field2, stress_id, plane_id)
     use TLab_Arrays, only: wrk2d, wrk3d
 
     real(wp), pointer, intent(in) :: field1(:)
@@ -275,9 +275,9 @@ CONTAINS
         endif 
 #endif 
     
-  end subroutine PhaseAvg_Calc_Stress
+  end subroutine AvgPhaseCalcStress
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine PhaseAvg_ResetVariable()
+  subroutine AvgPhaseCalcStress()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     use TLAB_CONSTANTS, only : wp
 #ifdef USE_MPI 
@@ -295,5 +295,5 @@ CONTAINS
 #ifdef USE_MPI
     end if
 #endif
-  end subroutine PhaseAvg_ResetVariable
+  end subroutine AvgPhaseCalcStress
 end module

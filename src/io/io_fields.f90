@@ -34,7 +34,6 @@ module IO_FIELDS
 
     public :: IO_READ_FIELDS, IO_WRITE_FIELDS, IO_Write_PhaseAvg
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
-    public :: IO_WRITE_HEADER
     integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
     integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
 
@@ -72,8 +71,7 @@ module IO_FIELDS
     integer, parameter, public :: IO_SUBARRAY_ENVELOPES   = 12
     integer, parameter, public :: IO_SUBARRAY_AUX         = 13
     integer, parameter, public :: IO_SUBARRAY_SIZE        = 13
-    integer, parameter, public :: IO_AVERAGE_PLANE        = 14
-    type(subarray_dt), public :: io_aux(IO_AVERAGE_PLANE)
+    type(subarray_dt), public :: io_aux(IO_SUBARRAY_SIZE)
 
     integer(wi) nx_total, ny_total, nz_total
     character(len=64) str, name
@@ -602,7 +600,7 @@ contains
         use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
         use Thermodynamics, only: gama0
         use TLAB_VARS, only : imode_eqns
-        use TLAB_VARS, only : phAvg
+        use TLAB_VARS, only : PhAvg
         use TLAB_CONSTANTS, only : sizeofint, sizeofreal
 #ifdef USE_MPI 
         use MPI
@@ -662,7 +660,7 @@ contains
             write(start, '(I10)') (avg_start)
             write(end,   '(I10)') avg_start
         else
-            write(start, '(I10)') (itime - it_save*phAvg%stride + 1)
+            write(start, '(I10)') (itime - it_save*PhAvg%stride + 1)
             write(end,   '(I10)') itime
         end if
 

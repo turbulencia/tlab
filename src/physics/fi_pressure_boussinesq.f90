@@ -7,7 +7,7 @@
 !########################################################################
 subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLab_Constants, only: wp, wi, BCS_NN
-    use TLAB_VARS, only: g
+    use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_txc
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: PressureFilter, stagger_on
@@ -34,9 +34,9 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
     target q, tmp, s
 ! -----------------------------------------------------------------------
-    integer(wi) bcs(2, 2)
-    integer(wi) iq
-    integer(wi) siz, srt, end
+    integer(wi) :: bcs(2, 2)
+    integer(wi) :: iq
+    integer(wi) :: srt
     integer(wi) :: i
 
 ! -----------------------------------------------------------------------
@@ -177,7 +177,6 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
                         call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
                     end if
 
-                    ! call DNS_OMP_PARTITION(isize_field, srt, end, siz)
                     dummy = buoyancy%vector(iq)
 #ifdef USE_BLAS
                     ILEN = isize_field

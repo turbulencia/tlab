@@ -82,7 +82,7 @@ module TLAB_VARS
 ! ###################################################################
 ! Phase Average
 ! ###################################################################
-    type(phaseavg_dt) :: phAvg
+    type(phaseavg_dt) :: PhAvg
 
 end module TLAB_VARS
 
@@ -100,10 +100,5 @@ module TLab_Spatial
     integer :: nstatavg_points                      ! number of accumulated points
     integer :: istattimeorg                         ! time at which accumulation of statistics started
     real(wp) :: rstattimeorg
-
-! ###################################################################
-! Phase Average
-! ###################################################################
-    type(phaseavg_dt) :: phAvg
 
 end module TLAB_VARS

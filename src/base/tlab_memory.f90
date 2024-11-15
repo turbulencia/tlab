@@ -122,7 +122,7 @@ module TLab_Memory
     integer :: ierr
 
     interface TLAB_ALLOCATE_LOG
-        module procedure TLAB_ALLOCATE_LOG_SHORT, TLAB_ALLOCATE_LOG_LONG
+        module procedure Tlab_Allocate_Log_SHORT, Tlab_Allocate_Log_LONG
     end interface TLAB_ALLOCATE_LOG
 
 #ifdef NO_ASSUMED_RANKS
@@ -148,7 +148,7 @@ module TLab_Memory
     public :: TLab_Allocate_Real
     public :: TLab_Allocate_INT
     public :: TLab_Allocate_LONG_INT
-    public :: Tlab_Allocate_Real_Long
+    public :: Tlab_Allocate_Real_LONG
 contains
 
     ! ###################################################################
@@ -301,16 +301,16 @@ contains
     end subroutine TLab_Allocate_Real
 
 ! ### DOUBLE ALLOCATION ROUTINES FOR LARGE 1D ARRAYS
-    subroutine Tlab_Allocate_Real_Long(C_FILE_LOC, a, dims, s)
+    subroutine Tlab_Allocate_Real_LONG(C_FILE_LOC, a, dims, s)
       character(len=*), intent(in) :: C_FILE_LOC,s
       real(8), allocatable, intent(inout) :: a(:)
       integer(8), intent(in) :: dims(1)
       integer id
       !#####################################################################
-      call TLAB_ALLOCATE_LOG_LONG(lfile,dims,s)
+      call Tlab_Allocate_Log_LONG(lfile,dims,s)
       allocate (a(dims(1)), stat=ierr)
       call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-    end subroutine Tlab_Allocate_Real_Long
+    end subroutine Tlab_Allocate_Real_LONG
 
     ! ######################################################################
     ! ######################################################################
@@ -569,7 +569,7 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine TLAB_ALLOCATE_LOG_SHORT(log_file, dims, s)
+    subroutine Tlab_Allocate_Log_SHORT(log_file, dims, s)
         integer(wi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
         integer(longi) :: dims_long(size(dims) )
@@ -584,7 +584,7 @@ contains
         DO id=1,size(dims) 
             dims_long(id) = dims(id)
         ENDDO
-        CALL TLAB_ALLOCATE_LOG_LONG(log_file,dims_long,s)
+        CALL Tlab_Allocate_Log_LONG(log_file,dims_long,s)
       
         if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
 
@@ -593,9 +593,9 @@ contains
             write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
         end do
         call TLab_Write_ASCII(log_file, line)
-    end subroutine TLAB_ALLOCATE_LOG_SHORT
+    end subroutine Tlab_Allocate_Log_SHORT
 
-    subroutine TLAB_ALLOCATE_LOG_LONG(log_file, dims, s)
+    subroutine Tlab_Allocate_Log_LONG(log_file, dims, s)
         integer(longi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
         integer id
@@ -613,47 +613,7 @@ contains
             write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
         end do
         call TLab_Write_ASCII(log_file, line)
-    end subroutine TLAB_ALLOCATE_LOG_SHORT
-
-    subroutine TLAB_ALLOCATE_LOG_LONG(log_file, dims, s)
-        integer(longi), intent(IN) :: dims(:)
-        character(len=*), intent(IN) :: log_file, s
-        integer id
-        !#####################################################################
-
-        if (any(dims < 0)) then
-            ierr = DNS_ERROR_ALLOC
-            call TLAB_ALLOCATE_ERR('TLAB_ALLOCATE_LOG', efile, s)
-        end if
-
-        if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
-
-        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-        do id = 2, size(dims)
-            write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
-        end do
-        call TLab_Write_ASCII(log_file, line)
-    end subroutine TLAB_ALLOCATE_LOG_SHORT
-
-    subroutine TLAB_ALLOCATE_LOG_LONG(log_file, dims, s)
-        integer(longi), intent(IN) :: dims(:)
-        character(len=*), intent(IN) :: log_file, s
-        integer id
-        !#####################################################################
-
-        if (any(dims < 0)) then
-            ierr = DNS_ERROR_ALLOC
-            call TLAB_ALLOCATE_ERR('TLAB_ALLOCATE_LOG', efile, s)
-        end if
-
-        if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
-
-        write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))
-        do id = 2, size(dims)
-            write (str, *) dims(id); line = trim(adjustl(line))//' x '//trim(adjustl(str))
-        end do
-        call TLab_Write_ASCII(log_file, line)
-    end subroutine TLAB_ALLOCATE_LOG_LONG
+    end subroutine Tlab_Allocate_Log_LONG
 
     ! ###################################################################
     ! ###################################################################
