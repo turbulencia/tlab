@@ -2,5 +2,5 @@ site=dkrz
 system=levante
 os=linux
 account=um1276
-queue=""
+queue=compute
 hpc=parallel

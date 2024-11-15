@@ -66,7 +66,8 @@ elif [ $system = "supermuc" ]; then
 	$exfile > $STDOUT 2> $STDERR
 
 elif [ $system = "levante" ]; then
-    srun --export=ALL -l --cpu_bind=verbose --hint=nomultithread --distribution=block:cyclic:block \
+#    srun --export=ALL -l --cpu_bind=verbose --hint=nomultithread --distribution=block:cyclic:block \
+    srun --export=ALL \
 	$exfile > $STDOUT 2> $STDERR
 
 elif [ $system = "juwels" ]; then

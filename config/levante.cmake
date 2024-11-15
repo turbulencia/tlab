@@ -41,6 +41,6 @@ set(LIBS ${FFTW_LIB})
 
 add_definitions(-DUSE_NETCDF)
 set(NC_INCLUDE_DIR     "/sw/spack-levante/netcdf-fortran-4.5.3-pvmcx6/include")
-set(NC_LIB             "-L/sw/spack-levante/netcdf-fortran-4.5.3-pvmcx6/lib -lnetcdff -Wl,-rpath,/sw/buster-x64/io/netcdf-c-4.7.4-fortran-4.5.2-cxx4-4.3.1-cxx-4.2-gccsys/lib")
+set(NC_LIB             "-L/sw/spack-levante/netcdf-fortran-4.5.3-pvmcx6/lib -lnetcdff -Wl,-rpath,/sw/spack-levante/netcdf-fortran-4.5.3-pvmcx6/lib")
 set(INCLUDE_DIRS ${INCLUDE_DIRS} ${NC_INCLUDE_DIR})
 set(LIBS ${LIBS} ${NC_LIB})
