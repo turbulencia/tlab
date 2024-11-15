@@ -131,7 +131,7 @@ end subroutine IO_WRITE_AVERAGES
 #ifdef USE_NETCDF
 subroutine NC_CHECK(status)
     use TLab_Constants, only: efile
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop 
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use NETCDF
 
     implicit none
