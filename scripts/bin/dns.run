@@ -65,6 +65,11 @@ elif [ $system = "supermuc" ]; then
     srun --export=ALL \
 	$exfile > $STDOUT 2> $STDERR
 
+elif [ $system = "levante" ]; then
+#    srun --export=ALL -l --cpu_bind=verbose --hint=nomultithread --distribution=block:cyclic:block \
+    srun --export=ALL \
+	$exfile > $STDOUT 2> $STDERR
+
 elif [ $system = "juwels" ]; then
     srun --export=ALL,ROMIO_HINTS=/p/home/jusers/ansorge1/juwels/romio_hints \
 	$exfile > $STDOUT 2> $STDERR
