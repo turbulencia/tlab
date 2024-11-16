@@ -16,8 +16,8 @@ export MPI_BIND=1
 ABORT="no"
 
 # Change this to reflect your directories
-LOCALDIR=$WORK/$JOBDIR
-TRASHDIR=$WORK/$JOBDIR-transfered
+LOCALDIR=$SCRATCH/$JOBDIR
+TRASHDIR=$SCRATCH/$JOBDIR-transfered
 
 # Create Working Directories
 mkdir -p $LOCALDIR

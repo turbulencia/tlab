@@ -31,11 +31,11 @@ MSFHOME=$HOME
 ABORT="no"
 
 MASSDIR=$MSFHOME/$JOBDIR
-LOCALDIR=$WORK/$JOBDIR
+LOCALDIR=$SCRATCH/$JOBDIR
    
 # Create Working Directories
-if [ ! -d $WORK ]; then
-   mkdir $WORK
+if [ ! -d $SCRATCH ]; then
+   mkdir $SCRATCH
 fi
 if [ ! -d $LOCALDIR ]; then
    mkdir  $LOCALDIR
