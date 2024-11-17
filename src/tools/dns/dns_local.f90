@@ -19,8 +19,9 @@ module DNS_LOCAL
     integer :: nitera_pln       ! Iteration step to save planes
     integer :: nitera_filter    ! Iteration step for domain filter, if any
 
-    real(wp) :: nruntime_sec     ! Maximum runtime of the simulation in seconds
-    real(wp) :: wall_time        ! Actual elapsed time during the simulation in seconds
+    real(wp):: nruntime_sec     ! Maximum runtime of the simulation in seconds
+    real(wp):: wall_time        ! Actual elapsed time during the simulation in seconds
+    integer :: start_clock      ! Starting time of the simulation on the system
 
     integer :: nitera_log           ! Iteration step for data logger with simulation information
     character(len=*), parameter :: ofile_base = 'dns.out'    ! data logger filename
@@ -110,7 +111,7 @@ contains
         real(wp) dummy
 #ifdef USE_MPI
 #else
-        real(sp) tdummy(2), wall_time_loc
+        integer wall_time_loc, int_dummy
 #endif
         character*128 line
         character*32 str
@@ -124,8 +125,9 @@ contains
         wall_time = MPI_WTIME() - ims_time_min
         call MPI_BCast(wall_time, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #else
-        call ETIME(tdummy, wall_time_loc)
-        wall_time = real(wall_time_loc, wp)
+        ! call ETIME(tdummy, wall_time_loc)
+        CALL SYSTEM_CLOCK(wall_time_loc,int_dummy)
+        wall_time = real(wall_time_loc - start_clock) / int_dummy
 #endif
         ! ###################################################################
         ! Compressible flow
