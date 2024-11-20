@@ -19,10 +19,11 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use FDM, only: g
-    use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter, PhAvg
+    use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
     use TLab_Spatial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
+
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
@@ -300,12 +301,6 @@ subroutine TLab_Initialize_Parameters(inifile)
     call ScanFile_Char(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
     nstatavg = MAX_STATS_SPATIAL
     call LIST_INTEGER(sRes, nstatavg, statavg)
-
-! ###################################################################
-! Phase Averaging
-! ###################################################################
-    call ScanFile_Int(bakfile, inifile, 'Iteration', 'PhaseAvg', '0' , PhAvg%stride)
-    if ( PhAvg%stride .GT. 0 ) PhAvg%active = .true.
 
 ! ###################################################################
 ! Initialization of array sizes

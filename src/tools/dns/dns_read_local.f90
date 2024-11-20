@@ -19,6 +19,7 @@ subroutine DNS_READ_LOCAL(inifile)
     use DNS_STATISTICS, only: stats_averages, stats_pdfs, stats_intermittency
     use PLANES
     use IBM_VARS, only: imode_ibm, ibm_geo
+    use AVG_PHASE
 
     implicit none
 
@@ -448,6 +449,12 @@ subroutine DNS_READ_LOCAL(inifile)
     call ScanFile_Char(bakfile, inifile, 'Statistics', 'Intermittency', 'yes', sRes)
     if (trim(adjustl(sRes)) == 'yes') then; stats_intermittency = .true.
     else; stats_intermittency = .false.; end if
+
+! ###################################################################
+! Phase Averaging
+! ###################################################################
+    call ScanFile_Int(bakfile, inifile, 'Iteration', 'PhaseAvg', '0' , PhAvg%stride)
+    if ( PhAvg%stride .GT. 0 ) PhAvg%active = .true.
 
 ! ###################################################################
 ! Inflow forcing conditions

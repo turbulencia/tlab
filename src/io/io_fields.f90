@@ -592,16 +592,16 @@ contains
 #undef LOC_STATUS
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    subroutine IO_Write_AvgPhase(avg_planes, nfield, iheader, it_save, basename, index, avg_type, avg_start)
+    subroutine IO_Write_AvgPhase(avg_planes, nfield, iheader, it_save, stride, basename, index, avg_ptr, avg_start)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         use TLAB_VARS, only : imax, jmax
         use FDM, only : g
         use TLAB_VARS, only : rtime, itime
         use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
         use TLAB_VARS, only : imode_eqns
-        use TLAB_VARS, only : PhAvg
         use TLAB_CONSTANTS, only : sizeofint, sizeofreal
         use Thermodynamics, only: gama0
+        
 #ifdef USE_MPI 
         use MPI
         use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
@@ -610,9 +610,10 @@ contains
         integer(wi),                                          intent(in)          :: avg_planes
         integer(wi),                                          intent(in)          :: nfield
         integer(wi),                                          intent(in)          :: it_save
+        integer(wi),                                          intent(in)          :: stride
         character(len=*),                                     intent(in)          :: basename
         integer(wi),                                          intent(in)          :: index
-        real(wp),  dimension(:),                               intent(in)          :: avg_type
+        real(wp),  dimension(:),                              intent(in)          :: avg_ptr
         integer(wi),                                          intent(in),optional :: avg_start
 
         character(len=128)                              :: name
@@ -636,7 +637,7 @@ contains
             call TLAB_STOP(DNS_ERROR_AVG_PHASE)
         end if
 
-        nz_total = it_save + 1
+        nz_total = it_save/stride + 1
 
         isize = 0
         isize = isize + 1; params(isize) = rtime
@@ -660,7 +661,7 @@ contains
             write(start, '(I10)') (avg_start)
             write(end,   '(I10)') avg_start
         else
-            write(start, '(I10)') (itime - it_save*PhAvg%stride + 1)
+            write(start, '(I10)') (itime - it_save + 1)
             write(end,   '(I10)') itime
         end if
 
@@ -710,7 +711,7 @@ contains
                 call MPI_File_set_view(f_handle, f_offset, MPI_REAL8, ftype, 'native', MPI_INFO_NULL, ims_err)
 
                 ! Write the data to the file
-                call MPI_FILE_WRITE_ALL(f_handle, avg_type(ifld_srt), arr_planes, mtype, status, ims_err)
+                call MPI_FILE_WRITE_ALL(f_handle, avg_ptr(ifld_srt), arr_planes, mtype, status, ims_err)
 
                 ! Close the file
                 call MPI_FILE_CLOSE(f_handle, ims_err)
@@ -722,7 +723,7 @@ contains
 #else
 #include "dns_open_file.h"
                 ioffset_local = header_offset + 1
-                write (LOC_UNIT_ID, POS=ioffset_local) avg_type(ifld_srt:ifld_end)
+                write (LOC_UNIT_ID, POS=ioffset_local) avg_ptr(ifld_srt:ifld_end)
                 close (LOC_UNIT_ID)
 #endif
         end do

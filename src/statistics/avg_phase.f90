@@ -5,9 +5,8 @@
 
 module AVG_PHASE
   
-  USE TLab_WorkFlow
-  USE TLAB_TYPES
-  use TLab_Constants, only : wp, wi, efile
+  use TLab_WorkFlow
+  use TLab_Constants, only : wp, wi, longi, efile
   use TLAB_CONSTANTS, only : sizeofint, sizeofreal
   use FDM, only : g
   use TLAB_VARS, only : imax, jmax, kmax, isize_field
@@ -15,12 +14,12 @@ module AVG_PHASE
   use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
   use TLAB_VARS, only : imode_eqns
   use TLAB_VARS, only : inb_flow, inb_scal
-  use TLAB_VARS, only : PhAvg
   use TLAB_ARRAYS, only: q, s
   use TLab_Arrays, only: wrk2d, wrk3d
   use Thermodynamics, only: gama0
   use IO_FIELDS
   use TLab_Memory, only: Tlab_Allocate_Real_LONG
+  use Avg_Vars
   use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
 
   implicit none
@@ -29,17 +28,18 @@ module AVG_PHASE
     module procedure AvgPhaseSpaceFieldPtr, AvgPhaseSpaceIndex
   end interface AvgPhaseSpace
 
+  ! type(phaseavg_dt) :: PhAvg
+  ! real(wp), dimension(:), allocatable, target :: avg_flow, avg_stress, avg_p, avg_scal
+  ! integer(wi) :: nxy, nxz, nyz, nz_total
+  ! integer(wi) :: avg_planes
+  ! character(len=32), parameter :: avgu_name = 'avg_flow'
+  ! character(len=32), parameter :: avgstr_name = 'avg_stress'
+  ! character(len=32), parameter :: avgp_name = 'avg_p'
+  ! character(len=32), parameter :: avgs_name = 'avg_scal'
 
-  real(wp), dimension(:), allocatable, target :: avg_flow, avg_stress, avg_p, avg_scal
-  integer(wi) :: nxy, nxz, nyz, nz_total
-  integer(wi) :: avg_planes
-  character(len=32), parameter :: avgu_name = 'avg_flow'
-  character(len=32), parameter :: avgstr_name = 'avg_stress'
-  character(len=32), parameter :: avgp_name = 'avg_p'
-  character(len=32), parameter :: avgs_name = 'avg_scal'
-
-  public :: AvgPhaseSpace
-  public :: avg_flow, avg_p, avg_scal, avg_stress, avg_planes
+  ! public :: AvgPhaseSpace
+  ! public :: avg_flow, avg_p, avg_scal, avg_stress, avg_planes
+  ! public :: PhAvg
 CONTAINS
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -127,7 +127,7 @@ CONTAINS
     real(wp), dimension(imax, jmax, kmax, 1), target, intent(in) :: field
 
     integer(wi) :: k, ifld, plane_id
-    real(wp), dimension(:), pointer :: avg_type
+    real(wp), dimension(:), pointer :: avg_ptr
     real(wp), dimension(:), pointer :: loc_field
     integer(wi) :: ipl_srt, ipl_end, iavg_srt, iavg_end, lpl_srt, lpl_end
       ! ================================================================== !
@@ -137,16 +137,16 @@ CONTAINS
 
       ! Determing the tendency to be written
     if (index == 1) then
-      avg_type => avg_flow
+      avg_ptr => avg_flow
       call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*nfield])
     elseif (index == 2) then
-      avg_type => avg_scal
+      avg_ptr => avg_scal
       call c_f_pointer(c_loc(s), loc_field, shape=[imax*jmax*kmax*nfield])
     elseif (index == 4) then
-      avg_type => avg_p
+      avg_ptr => avg_p
       call c_f_pointer(c_loc(field), loc_field, shape=[imax*jmax*kmax*nfield])
     elseif (index == 5) then
-      avg_type => avg_stress
+      avg_ptr => avg_stress
       call c_f_pointer(c_loc(q), loc_field, shape=[imax*jmax*kmax*nfield])
       ! Not yet coded
     else
@@ -171,12 +171,12 @@ CONTAINS
         iavg_end = (ifld - 1)*nxy*(avg_planes+1) + nxy*plane_id  
 #ifdef USE_MPI
         if (ims_pro_k == 0) then
-          call MPI_Reduce(localsum, avg_type(iavg_srt:iavg_end), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err) ! avg_type(imax*jmax*restarts*fld)
+          call MPI_Reduce(localsum, avg_ptr(iavg_srt:iavg_end), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err) ! avg_ptr(imax*jmax*restarts*fld)
         else
           call MPI_Reduce(localsum, MPI_IN_PLACE,                nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
         end if
 #else
-        avg_type(iavg_srt:iavg_end) = localsum
+        avg_ptr(iavg_srt:iavg_end) = localsum
 #endif
       
         lpl_srt = (ifld - 1)*nxy*(avg_planes+1) + nxy*avg_planes + 1
@@ -185,7 +185,7 @@ CONTAINS
 #ifdef USE_MPI
         if (ims_pro_k == 0) then
 #endif
-          avg_type(lpl_srt:lpl_end) = avg_type(lpl_srt:lpl_end) + avg_type(iavg_srt:iavg_end)/avg_planes
+          avg_ptr(lpl_srt:lpl_end) = avg_ptr(lpl_srt:lpl_end) + avg_ptr(iavg_srt:iavg_end)/avg_planes
 #ifdef USE_MPI 
         endif 
 #endif 
@@ -257,7 +257,7 @@ CONTAINS
 
 #ifdef USE_MPI
         if (ims_pro_k == 0) then
-          call MPI_Reduce(wrk2d, avg_stress(iavg_srt:iavg_end), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err) ! avg_type(imax*jmax*restarts*fld)
+          call MPI_Reduce(wrk2d, avg_stress(iavg_srt:iavg_end), nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err) ! avg_ptr(imax*jmax*restarts*fld)
         else
           call MPI_Reduce(wrk2d, MPI_IN_PLACE,                nxy, MPI_REAL8, MPI_SUM, 0, ims_comm_z, ims_err)
         end if
