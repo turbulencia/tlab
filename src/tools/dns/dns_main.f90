@@ -46,6 +46,7 @@ program DNS
     integer, parameter :: i0 = 0, i1 = 1
 
     ! ###################################################################
+    call SYSTEM_CLOCK(start_clock)
     call TLab_Start()
 
     call TLab_Initialize_Parameters(ifile)

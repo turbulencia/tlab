@@ -4,17 +4,18 @@ if ( NOT BUILD_TYPE )
 endif()
 
 if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
-  set(ENV{FC} mpif90)
-  set(CMAKE_Fortran_COMPILER mpif90)
+  set(ENV{FC} mpifort)
+  set(CMAKE_Fortran_COMPILER mpifort)
   set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -heap-arrays -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " )
-  set(USER_Fortran_FLAGS_RELEASE  " -march=skylake-avx512 -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" )
+  set(USER_Fortran_FLAGS_RELEASE  " -march=core-avx2 -mtune=core-avx2 -qopt-prefetch -O3 -ipo" )
+  #set(USER_Fortran_FLAGS_RELEASE  " -march=skylake-avx512 -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" )
   #set(USER_Fortran_FLAGS_RELEASE  " -axCORE-AVX2 -qopt-prefetch -O3 -ipo" )
 
   add_definitions(-DUSE_MPI -DUSE_MPI_IO -DUSE_ALLTOALL)
   set(CMAKE_BUILD_TYPE RELEASE)
 
 else() # compiler for serial build
-  set(ENV{FC} gfortran)
+  set(ENV{FC} ifort)
   set(CMAKE_Fortran_COMPILER gfortran)
   set(USER_Fortran_FLAGS          " -fpp ${USER_profile_FLAGS} -nbs -save-temps -heap-arrays -simd -vec-threshold50 -unroll-aggressive ${USER_omp_FLAGS} " )
 

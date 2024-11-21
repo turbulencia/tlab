@@ -23,9 +23,9 @@ module OPR_ELLIPTIC
     implicit none
     private
 
-    pointer :: OPR_Poisson_dt
-    interface
-        subroutine OPR_Poisson_dt(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    procedure (OPR_Poisson_interface) :: OPR_Poisson_dt ! Implicit pointer (Procedure type)
+    abstract interface
+        subroutine OPR_Poisson_interface(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
             use TLab_Constants, only: wi, wp
             use FDM, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz
@@ -40,9 +40,9 @@ module OPR_ELLIPTIC
         end subroutine
     end interface
 
-    pointer :: OPR_Helmholtz_dt
-    interface
-        subroutine OPR_Helmholtz_dt(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
+    procedure (OPR_Helmholtz_interface) :: OPR_Helmholtz_dt ! Implicit pointer (Procedure type)
+    abstract interface
+        subroutine OPR_Helmholtz_interface(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
             use TLab_Constants, only: wi, wp
             use FDM, only: grid_dt
             use TLAB_VARS, only: isize_txc_dimz

@@ -31,7 +31,7 @@ QSEND_TMP_SCRIPT="dns.nqs.sh-$TIMESTAMP"
 # Default values
 QSEND_NAME="dns-run"
 QSEND_JOBDIR=$(pwd)
-QSEND_JOBDIR=${QSEND_JOBDIR#"$WORK"/}
+QSEND_JOBDIR=${QSEND_JOBDIR#"$SCRATCH"/}
 if [ $hpc = "parallel" ]; then
     QSEND_NP=32
 else

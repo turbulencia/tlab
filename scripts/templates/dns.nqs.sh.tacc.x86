@@ -19,8 +19,8 @@ ABORT="no"
 
 # Change this to reflect your directories
 MASSDIR=$ARCHIVE/$JOBDIR
-LOCALDIR=$WORK/$JOBDIR
-TRASHDIR=$WORK/$JOBDIR-transfered
+LOCALDIR=$SCRATCH/$JOBDIR
+TRASHDIR=$SCRATCH/$JOBDIR-transfered
    
 # Create Working Directories
 if [ ! -d /tmp/$LOGNAME ]; then

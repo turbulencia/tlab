@@ -19,8 +19,8 @@ export CONFIG_FILE=$TOOLS_HOME/CONFIG.default
 ABORT="no"
 
 # Change this to reflect your directories
-LOCALDIR=$WORK/$JOBDIR
-TRASHDIR=$WORK/$JOBDIR-transfered
+LOCALDIR=$SCRATCH/$JOBDIR
+TRASHDIR=$SCRATCH/$JOBDIR-transfered
 
 # Create Working Directories
 mkdir -p $LOCALDIR
