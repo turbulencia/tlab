@@ -54,7 +54,7 @@ module IO_FIELDS
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
 #endif
-    public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY, IO_WRITE_HEADER
+    public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
 
     ! Global IO subarrays; to be transformed into local variables in corrresponding apps
     integer, parameter, public :: IO_SUBARRAY_VISUALS_XOY = 1

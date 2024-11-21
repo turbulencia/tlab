@@ -6,20 +6,20 @@
 module AVG_PHASE
   
   use TLab_WorkFlow
-  use TLab_Constants, only : wp, wi, longi, efile
-  use TLAB_CONSTANTS, only : sizeofint, sizeofreal
-  use FDM, only : g
-  use TLAB_VARS, only : imax, jmax, kmax, isize_field
-  use TLAB_VARS, only : rtime
-  use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
-  use TLAB_VARS, only : imode_eqns
-  use TLAB_VARS, only : inb_flow, inb_scal
+  use TLab_Constants, only: wp, wi, longi, efile
+  use TLAB_CONSTANTS, only: sizeofint, sizeofreal
+  use FDM, only: g
+  use TLAB_VARS, only: imax, jmax, kmax, isize_field
+  use TLAB_VARS, only: rtime
+  use TLAB_VARS, only: visc, froude, rossby, prandtl, mach
+  use TLAB_VARS, only: imode_eqns
+  use TLAB_VARS, only: inb_flow, inb_scal
   use TLAB_ARRAYS, only: q, s
   use TLab_Arrays, only: wrk2d, wrk3d
   use Thermodynamics, only: gama0
   use IO_FIELDS
   use TLab_Memory, only: Tlab_Allocate_Real_LONG
-  use, intrinsic :: ISO_C_binding, only : c_f_pointer, c_loc
+  use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
   implicit none
   type phaseavg_dt
@@ -52,7 +52,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only : ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
+    use TLabMPI_VARS, only: ims_size_i, ims_size_k, ims_pro, ims_npro_i, ims_pro_k
 #endif
 
     implicit none
@@ -78,15 +78,15 @@ CONTAINS
     if (ims_pro_k == 0) then
 #endif
       alloc_size = imax*jmax*(avg_planes+1)
-      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_flow,      [alloc_size*inb_flow], 'avgflow.')
-      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_stress,    [alloc_size*       6], 'avgstr.' ) ! allocated not yet coded
-      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_p,         [alloc_size*       1], 'avgp.'   )
-      call Tlab_Allocate_Real_LONG(C_FILE_LOC,   avg_scal,      [alloc_size*inb_scal], 'avgscal.')
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC, avg_flow, [alloc_size*inb_flow], 'avgflow.')
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC, avg_stress, [alloc_size*6], 'avgstr.') ! allocated not yet coded
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC, avg_p, [alloc_size*1], 'avgp.')
+      call Tlab_Allocate_Real_LONG(C_FILE_LOC, avg_scal, [alloc_size*inb_scal], 'avgscal.')
       
-      avg_flow(:)   = 0.0_wp
+      avg_flow(:) = 0.0_wp
       avg_stress(:) = 0.0_wp
-      avg_p(:)      = 0.0_wp
-      avg_scal(:)   = 0.0_wp
+      avg_p(:) = 0.0_wp
+      avg_scal(:) = 0.0_wp
 
 #ifdef USE_MPI
     end if
@@ -122,7 +122,7 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI 
     use MPI
-    use TLabMPI_VARS,  only : ims_comm_z, ims_err, ims_pro, ims_pro_k
+    use TLabMPI_VARS, only : ims_comm_z, ims_err, ims_pro, ims_pro_k
 #endif
 
     implicit none
@@ -214,6 +214,7 @@ CONTAINS
     v => q(:, 2)
     w => q(:, 3)
 
+    ! Order of computation to reuse cache
     ! uu 1
     ! uv 2
     ! uw 5
@@ -284,39 +285,61 @@ CONTAINS
   end subroutine AvgPhaseCalcStress
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  subroutine IO_WRITE_HEADER(unit, isize, nx, ny, nz, nt, params)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      integer, intent(in) :: unit, isize
+      integer(wi), intent(in) :: nx, ny, nz, nt
+      real(wp), intent(in) :: params(isize)
+
+      ! -------------------------------------------------------------------
+      integer(wi) offset
+
+      !########################################################################
+      offset = 5*SIZEOFINT + isize*SIZEOFREAL
+
+      write (unit) offset, nx, ny, nz, nt
+
+      if (isize > 0) then   ! do not write params to file if there are none
+          write (unit) params(1:isize)
+      end if
+
+      return
+  end subroutine IO_WRITE_HEADER
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine IO_Write_AvgPhase(avg_planes, nfield, iheader, it_save, stride, basename, index, avg_ptr, avg_start)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      use TLAB_VARS, only : imax, jmax
-      use FDM, only : g
-      use TLAB_VARS, only : rtime, itime
-      use TLAB_VARS, only : visc, froude, rossby, prandtl, mach
-      use TLAB_VARS, only : imode_eqns
-      use TLAB_CONSTANTS, only : sizeofint, sizeofreal
+      use TLAB_VARS, only: imax, jmax
+      use FDM, only: g
+      use TLAB_VARS, only: rtime, itime
+      use TLAB_VARS, only: visc, froude, rossby, prandtl, mach
+      use TLAB_VARS, only: imode_eqns
+      use TLAB_CONSTANTS, only: sizeofint, sizeofreal
       use Thermodynamics, only: gama0
       
 #ifdef USE_MPI 
       use MPI
-      use TLabMPI_VARS,  only : ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
+      use TLabMPI_VARS, only: ims_comm_x, ims_err, ims_npro_i, ims_pro_i, ims_pro, ims_comm_z, ims_pro_k
 #endif
       implicit none
-      integer(wi),                                          intent(in)          :: avg_planes
-      integer(wi),                                          intent(in)          :: nfield
-      integer(wi),                                          intent(in)          :: it_save
-      integer(wi),                                          intent(in)          :: stride
-      character(len=*),                                     intent(in)          :: basename
-      integer(wi),                                          intent(in)          :: index
-      real(wp),  dimension(:),                              intent(in)          :: avg_ptr
-      integer(wi),                                          intent(in),optional :: avg_start
+      integer(wi), intent(in) :: avg_planes
+      integer(wi), intent(in) :: nfield
+      integer(wi), intent(in) :: it_save
+      integer(wi), intent(in) :: stride
+      character(len=*), intent(in) :: basename
+      integer(wi), intent(in) :: index
+      real(wp),  dimension(:), intent(in) :: avg_ptr
+      integer(wi), intent(in),optional :: avg_start
 
-      character(len=128)                              :: name
-      character(len=32)                               :: varname(1)
-      integer(wi),       parameter                    :: isize_max = 20
-      real(wp)                                        :: params(isize_max)
-      integer(wi)                                     :: isize, iheader, ifld, ifld_srt, ifld_end
-      character(len=10)                               :: start, end, fld_id
-      integer(wi)                                     :: arr_planes, header_offset, ioffset_local
-      character(len=100)                              :: filename
-      integer(wi)                                  :: nxy
+      character(len=128) :: name
+      character(len=32) :: varname(1)
+      integer(wi), parameter :: isize_max = 20
+      real(wp) :: params(isize_max)
+      integer(wi) :: isize, iheader, ifld, ifld_srt, ifld_end
+      character(len=10) :: start, end, fld_id
+      integer(wi) :: arr_planes, header_offset, ioffset_local
+      character(len=100) :: filename
+      integer(wi) :: nxy
 
 #ifdef USE_MPI
       integer(kind=MPI_OFFSET_KIND)                   :: f_offset
