@@ -317,7 +317,6 @@ contains
         integer(wi) :: it, ivar
         character(LEN=64) :: cdummy
 
-        integer(wi), pointer :: tip
         integer(wi) :: itower, ktower, ip_skp, ip_srt, ip_end, tower_count, op_srt, op_end
 #ifdef USE_H5
         integer :: h5_err
@@ -330,7 +329,7 @@ contains
         character(LEN=128) :: vname_loc
 #endif
         integer(wi) :: include_global
-
+        integer(wi), pointer :: tip        
         tip => tower_isize_plane
 
         if (tip < 1) then

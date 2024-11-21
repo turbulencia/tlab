@@ -338,7 +338,7 @@ program PDFS
             ifield = ifield + 1; vars(ifield)%field => q(:, 2); vars(ifield)%tag = 'v'
             ifield = ifield + 1; vars(ifield)%field => q(:, 3); vars(ifield)%tag = 'w'
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'p'
             else
                 ifield = ifield + 1; vars(ifield)%field => q(:, 6); vars(ifield)%tag = 'p'
@@ -438,7 +438,7 @@ program PDFS
             call TLab_Write_ASCII(lfile, 'Computing strain equation...')
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             else
@@ -762,7 +762,7 @@ program PDFS
 
             ! -------------------------------------------------------------------
             bbackground = 0.0_wp
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), DCMP_TOTAL)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4))
             if (jmax_aux*opt_block /= g(2)%size) then
                 call REDUCE_BLOCK_INPLACE(imax, jmax, kmax, i1, i1, i1, imax, jmax_aux*opt_block, kmax, txc(1, 3), wrk1d)

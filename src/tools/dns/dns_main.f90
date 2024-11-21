@@ -36,6 +36,7 @@ program DNS
     use OPR_ELLIPTIC
     use OPR_FILTERS
     use OPR_FOURIER
+    use AVG_PHASE
     implicit none
     save
 
@@ -95,6 +96,10 @@ program DNS
     call DNS_STATISTICS_INITIALIZE()
 
     call PLANES_INITIALIZE()
+
+    if (PhAvg%active) then
+        call AvgPhaseInitializeMemory(__FILE__, nitera_save)
+    end if
 
     if (use_tower) then
         call DNS_TOWER_INITIALIZE(tower_stride)
@@ -224,12 +229,9 @@ program DNS
     do
         if (itime >= nitera_last) exit
         if (int(logs_data(1)) /= 0) exit
-
         call TIME_RUNGEKUTTA()
-
         itime = itime + 1
         rtime = rtime + dtime
-
         if (mod(itime - nitera_first, nitera_filter) == 0) then
             call DNS_FILTER()
             if (imode_ibm == 1) then
@@ -259,26 +261,40 @@ program DNS
                 call DNS_OBS()
             end if
         end if
+        
+        if (PhAvg%active) then
+            if (mod(itime, PhAvg%stride) == 0) then
+                call AvgPhaseSpace(wrk2d, inb_flow, itime/PhAvg%stride, nitera_first, nitera_save/PhAvg%stride, 1)
+                call AvgPhaseSpace(wrk2d, inb_scal, itime/PhAvg%stride, nitera_first, nitera_save/PhAvg%stride, 2)
+                ! Pressure is taken from the RHS subroutine
+                ! call AvgPhaseSpace(wrk2d, 6       , itime/PhAvg%stride, nitera_first, nitera_save/PhAvg%stride, 8)
+                call AvgPhaseStress(q, itime/PhAvg%stride, nitera_first, nitera_save/PhAvg%stride)
+                if (mod(itime - nitera_first, nitera_save) == 0) then
+                    call IO_Write_AvgPhase(avg_planes, inb_flow, IO_FLOW, nitera_save, PhAvg%stride, avgu_name  , 1, avg_flow)
+                    call IO_Write_AvgPhase(avg_planes, inb_scal, IO_SCAL, nitera_save, PhAvg%stride, avgs_name  , 2, avg_scal)
+                    call IO_Write_AvgPhase(avg_planes, 1       , IO_SCAL, nitera_save, PhAvg%stride, avgp_name  , 4, avg_p)
+                    call IO_Write_AvgPhase(avg_planes, 6       , IO_FLOW, nitera_save, PhAvg%stride, avgstr_name, 8, avg_stress)
+
+                    call AvgPhaseResetVariable()
+                end if
+            end if
+        end if
 
         if (use_tower) then
             call DNS_TOWER_ACCUMULATE(q, 1, wrk1d)
             call DNS_TOWER_ACCUMULATE(s, 2, wrk1d)
         end if
-
         if (imode_traj /= TRAJ_TYPE_NONE) then
             call ParticleTrajectories_Accumulate()
         end if
-
         if (mod(itime - nitera_first, nitera_stats_spa) == 0) then  ! Accumulate statistics in spatially evolving cases
             if (flow_on) call AVG_FLOW_ZT_REDUCE(q, hq, txc, mean_flow)
             if (scal_on) call AVG_SCAL_ZT_REDUCE(q, s, hq, txc, mean_scal)
         end if
-
         if (mod(itime - nitera_first, nitera_stats) == 0) then      ! Calculate statistics
             if (imode_sim == DNS_MODE_TEMPORAL) call DNS_STATISTICS_TEMPORAL()
             if (imode_sim == DNS_MODE_SPATIAL) call DNS_STATISTICS_SPATIAL()
         end if
-
         if (mod(itime - nitera_first, nitera_save) == 0 .or. &      ! Check-pointing: Save restart files
             itime == nitera_last .or. int(logs_data(1)) /= 0 .or. & ! Secure that one restart file is saved
             wall_time > nruntime_sec) then                          ! If max runtime of the code is reached
@@ -317,13 +333,12 @@ program DNS
             call PLANES_SAVE()
         end if
 
-        if (wall_time > nruntime_sec) then
+        if (wall_time > nruntime_sec) then 
             write (str, *) wall_time
             ! write to efile so that job is not resubmitted
             call TLab_Write_ASCII(efile, 'Maximum walltime of '//trim(adjustl(str))//' seconds is reached.')
             exit
         end if
-
     end do
 
     ! ###################################################################

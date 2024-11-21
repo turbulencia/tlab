@@ -152,4 +152,13 @@
 #define OBS_TYPE_NONE  0
 #define OBS_TYPE_EKMAN 1
 
+! Pressure Decomposition
+#define DCMP_TOTAL      0
+#define DCMP_RESOLVED   1
+#define DCMP_ADVECTION  2
+#define DCMP_ADVDIFF    3
+#define DCMP_DIFFUSION  4
+#define DCMP_CORIOLIS   5
+#define DCMP_BUOYANCY   6
+
 #endif

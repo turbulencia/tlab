@@ -37,6 +37,7 @@ program AVERAGES
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use AVG_PHASE
 
     implicit none
 
@@ -88,7 +89,7 @@ program AVERAGES
     integer(wi) io_sizes(5), id
 
     ! Pointers to existing allocated space
-    real(wp), dimension(:), pointer :: u, v, w
+    real(wp), dimension(:), pointer :: u, v, w, p
 
     !########################################################################
     !########################################################################
@@ -157,6 +158,7 @@ program AVERAGES
         write (*, *) '15. Dissipation'
         write (*, *) '16. Third-order scalar covariances'
         write (*, *) '17. Potential vorticity'
+        write (*, *) '18. Phase Average'
         read (*, *) opt_main
 
         write (*, *) 'Planes block size ?'
@@ -246,6 +248,12 @@ program AVERAGES
     case (17) ! potential vorticity
         nfield = 2
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
+    case (18) ! Phase average
+        PhAvg%active = .true. 
+        PhAvg%stride = 1
+        nfield = 3
+        inb_txc = max(inb_txc, 9)
+        iread_flow = flow_on; iread_scal = scal_on 
     end select
 
     if (imode_ibm == 1) then ! check if enough memory is provided for the IBM
@@ -319,6 +327,9 @@ program AVERAGES
         call IBM_ALLOCATE(C_FILE_LOC)
     end if
 
+    if (opt_main == 18) then
+        call AvgPhaseInitializeMemory(__FILE__, -1)
+    end if
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
@@ -422,7 +433,7 @@ program AVERAGES
             ! ###################################################################
         case (1)
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4))
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 9), txc(1, 1), txc(1, 2), txc(1, 4), DCMP_TOTAL)
             end if
 
             if (scal_on) then
@@ -581,7 +592,7 @@ program AVERAGES
             ifield = ifield + 1; vars(ifield)%field => w(:); vars(ifield)%tag = 'W'
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
             else
                 ifield = ifield + 1; vars(ifield)%field => q(:, 5); vars(ifield)%tag = 'R'
@@ -663,7 +674,7 @@ program AVERAGES
             ifield = 0
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+                call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, u, v, w, txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
             else
@@ -879,11 +890,11 @@ program AVERAGES
             call TLab_Write_ASCII(lfile, 'Computing '//trim(adjustl(fname))//'...')
             ifield = 0
 
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'P'
 
             q = 0.0_wp
-            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+            call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), DCMP_TOTAL)
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Psta'
 
             txc(:, 3) = txc(:, 1) - txc(:, 2)
@@ -949,6 +960,21 @@ program AVERAGES
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'PV'
             ifield = ifield + 1; vars(ifield)%field => txc(:, 2); vars(ifield)%tag = 'Cos'
+
+        case (18)
+            call AvgPhaseSpace(wrk2d, inb_flow, it, 0, 0, 1)
+            call IO_Write_AvgPhase(1, inb_flow, IO_FLOW, 0, PhAvg%stride, avgu_name, 1, avg_flow, itime_vec(it))
+            
+            call AvgPhaseSpace(wrk2d, inb_scal, it, 0, 0, 2)
+            call IO_Write_AvgPhase(1, inb_scal, IO_SCAL, 0, PhAvg%stride, avgp_name, 2,  avg_scal, itime_vec(it))
+            
+            p => txc(:,9) !makes sure to only pass the address, not the entire array 
+            call AvgPhaseSpace(wrk2d, 1, it, 0, 0 , p)
+            call IO_Write_AvgPhase(1, 1       ,      IO_SCAL, 0, PhAvg%stride, avgs_name, 4, avg_p, itime_vec(it))
+            
+            call AvgPhaseStress(q, it, 0, 0)
+
+            call AvgPhaseResetVariable()
 
         end select
 

@@ -96,4 +96,4 @@ module TLab_Spatial
     integer :: istattimeorg                         ! time at which accumulation of statistics started
     real(wp) :: rstattimeorg
 
-end module TLAB_Spatial
+end module TLab_Spatial

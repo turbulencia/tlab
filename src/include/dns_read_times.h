@@ -1,7 +1,7 @@
   CALL ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Files', '-1', sRes)
 
   IF ( sRes .EQ. '-1' ) THEN
-#ifdef PARALLEL
+#if defined PARALLEL || defined USE_MPI
 #else
      WRITE(*,*) 'Iteration numbers ?'
      READ(*,'(A512)') sRes

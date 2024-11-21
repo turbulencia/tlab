@@ -14,6 +14,8 @@ subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, group
 #endif
 #ifdef USE_NETCDF
     use NETCDF
+#else
+    use TLab_WorkFlow, only : TLab_Stop
 #endif
     implicit none
 
