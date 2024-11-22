@@ -302,14 +302,15 @@ contains
 
 ! ### DOUBLE ALLOCATION ROUTINES FOR LARGE 1D ARRAYS
     subroutine Tlab_Allocate_Real_LONG(C_FILE_LOC, a, dims, s)
-      character(len=*), intent(in) :: C_FILE_LOC,s
-      real(8), allocatable, intent(inout) :: a(:)
-      integer(8), intent(in) :: dims(1)
-      integer id
-      !#####################################################################
-      call Tlab_Allocate_Log_LONG(lfile,dims,s)
-      allocate (a(dims(1)), stat=ierr)
-      call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
+        character(len=*), intent(in) :: C_FILE_LOC, s
+        real(8), allocatable, intent(inout) :: a(:)
+        integer(8), intent(in) :: dims(1)
+
+        !#####################################################################
+        call Tlab_Allocate_Log_LONG(lfile, dims, s)
+        allocate (a(dims(1)), stat=ierr)
+        call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
+        
     end subroutine Tlab_Allocate_Real_LONG
 
     ! ######################################################################
@@ -572,7 +573,7 @@ contains
     subroutine Tlab_Allocate_Log_SHORT(log_file, dims, s)
         integer(wi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
-        integer(longi) :: dims_long(size(dims) )
+        integer(longi) :: dims_long(size(dims))
         integer id
         !#####################################################################
 
@@ -581,11 +582,11 @@ contains
             call TLAB_ALLOCATE_ERR('TLAB_ALLOCATE_LOG', efile, s)
         end if
 
-        DO id=1,size(dims) 
+        do id = 1, size(dims)
             dims_long(id) = dims(id)
-        ENDDO
-        CALL Tlab_Allocate_Log_LONG(log_file,dims_long,s)
-      
+        end do
+        call Tlab_Allocate_Log_LONG(log_file, dims_long, s)
+
         if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
 
         write (str, *) dims(1); line = 'Allocating array '//trim(adjustl(s))//' of size '//trim(adjustl(str))

@@ -7,19 +7,13 @@
 !# - Incompressible and anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
 !#
 !# Mixture:
-!# inb_scal          # of scalars transported during the simulation and saved
-!# inb_scal_array    # of scalars in array s (normally = inb_scal)
+!# inb_scal          # of prognostic scalars (transported during the simulation and saved)
+!# inb_scal_array    # of scalars in array s (prognositc+diagnostic, normally = inb_scal)
 !# NSP               # of species in the mixture (NSP>=inb_scal)
 !#
-!# The code handles reactive/non-reactive, multiple/single species:
-!# 1. Non-reactive + general multispecies retains NSP-1 species, in scalar
-!#    array s (the last one is obtained by sum Y_i=1), i.e., Y_i=s_i, w/o additional conserved scalar.
-!# 2. Reactive => Multispecies.
-!# 3. Reactive + general multispecies retains NSP-1 species in scalar
-!#    array s (the last one is obtained by sum Y_i=1), i.e., Y_i=s_i, and an additional conserved scalar, i.e. inb_scal=NSP.
-!# 4. Multispecies admits the case Y_i=f_i(s_j), s_j could be conserved scalar, e.g. using total water or mixture fraction
-!#
-!# Multispecies implies that reference T_0 in non-dimensionalization is 298 K.
+!# General multispecies formulation retains NSP-1 species in scalar array s, Y_i=s_i, the last one is obtained by sum Y_i=1
+!# There might be additional scalars at the end of array s, e.g., conserved scalars or diagnostic variables
+!# Multispecies admits the case Y_i=f_i(s_j), s_j could be conserved scalar, e.g. using total water or mixture fraction
 !#
 !# Saturation pressure implies that reference R_0 in non-dimensionalization is such that reference pressure is 1 bar.
 !#
@@ -97,7 +91,7 @@ contains
 
         real(wp) WGHT(MAX_NSP)                              ! Molar masses
         real(wp) TREF_LOC, HREF_LOC(MAX_NSP), SREF_LOC(MAX_NSP)
-        integer(wi) icp, is, im, inb_scal_loc
+        integer(wi) icp, is, im
         real(wp) WRK1D_LOC(MAX_NPSAT)
         integer(wi) ipsat, i, j
         real(wp) tmp1, tmp2
@@ -174,134 +168,92 @@ contains
         ! Species tags
         ! Thermal equation, molar masses in kg/kmol
         ! ###################################################################
-        inb_scal_loc = inb_scal     ! Control that inb_scal read in tlab.ini is correct
         WGHT(:) = 1.0_wp            ! We devide by WGTH below even when mxiture is none
 
         select case (imixture)
             ! -------------------------------------------------------------------
-            ! Burke-Schuman case
-            ! Transport just mixture fraction, and then equilibrium
+            ! Burke-Schuman case: transport just mixture fraction, and then equilibrium
             ! 4 species + Nitrogen + Conserved Scalar
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_BS, MIXT_TYPE_QUASIBS)
-            NSP = 5
-            inb_scal = 1
-            inb_scal_array = inb_scal
-
-            THERMO_SPNAME(1) = 'CH4'; WGHT(1) = 16.0_wp
-            THERMO_SPNAME(2) = 'O2 '; WGHT(2) = 32.0_wp
-            THERMO_SPNAME(3) = 'H2O'; WGHT(3) = 18.0_wp
-            THERMO_SPNAME(4) = 'CO2'; WGHT(4) = 44.0_wp
-            THERMO_SPNAME(5) = 'N2 '; WGHT(5) = 28.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'CH4'; WGHT(NSP) = 16.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'O2 '; WGHT(NSP) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2O'; WGHT(NSP) = 18.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'CO2'; WGHT(NSP) = 44.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'N2 '; WGHT(NSP) = 28.0_wp
 
             ! -------------------------------------------------------------------
             ! Peters Mechanism for Methane
             ! 7 species + Nitrogen + Conserved Scalar
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_PETERS1991, MIXT_TYPE_PETERS1988)
-            NSP = 8
-            inb_scal = NSP
-            inb_scal_array = inb_scal
-
-            THERMO_SPNAME(1) = 'CH4'; WGHT(1) = 16.0_wp
-            THERMO_SPNAME(2) = 'O2 '; WGHT(2) = 32.0_wp
-            THERMO_SPNAME(3) = 'H2O'; WGHT(3) = 18.0_wp
-            THERMO_SPNAME(4) = 'CO2'; WGHT(4) = 44.0_wp
-            THERMO_SPNAME(5) = 'CO '; WGHT(5) = 28.0_wp
-            THERMO_SPNAME(6) = 'H2 '; WGHT(6) = 2.0_wp
-            THERMO_SPNAME(7) = 'H  '; WGHT(7) = 1.0_wp
-            THERMO_SPNAME(8) = 'N2 '; WGHT(8) = 28.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'CH4'; WGHT(NSP) = 16.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'O2 '; WGHT(NSP) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2O'; WGHT(NSP) = 18.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'CO2'; WGHT(NSP) = 44.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'CO '; WGHT(NSP) = 28.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2 '; WGHT(NSP) = 2.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H  '; WGHT(NSP) = 1.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'N2 '; WGHT(NSP) = 28.0_wp
 
             ! -------------------------------------------------------------------
             ! Unimolecular decomposition flame
             ! 1 reactant + 1 product + Conserved Scalar
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_UNIDECOMP)
-            NSP = 2
-            inb_scal = NSP
-            inb_scal_array = inb_scal
-
-            THERMO_SPNAME(1) = 'R'; WGHT(1) = 32.0_wp
-            THERMO_SPNAME(2) = 'P'; WGHT(2) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Reactant'; WGHT(NSP) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Product'; WGHT(NSP) = 32.0_wp
 
             ! -------------------------------------------------------------------
             ! Unimolecular decomposition flame
             ! 2 reactant + 1 product + Conserved Scalar
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_ONESTEP)
-            NSP = 4
-            inb_scal = NSP
-            inb_scal_array = inb_scal
-
-            THERMO_SPNAME(1) = 'R'; WGHT(1) = 32.0_wp      ! Reactant
-            THERMO_SPNAME(2) = 'O'; WGHT(2) = 32.0_wp      ! Oxidizer
-            THERMO_SPNAME(3) = 'P'; WGHT(3) = 32.0_wp      ! Product
-            THERMO_SPNAME(4) = 'I'; WGHT(4) = 32.0_wp      ! Inert
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Reactant'; WGHT(NSP) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Oxidizer'; WGHT(NSP) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Product'; WGHT(NSP) = 32.0_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Inert'; WGHT(NSP) = 32.0_wp
 
             ! -------------------------------------------------------------------
-            ! Water vapor and air
+            ! Air; data from Iribarne and Godson, 1981
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIR)
-            NSP = 2
-            inb_scal = max(inb_scal, 1) ! at least one scalar
-            inb_scal_array = inb_scal
-
-            THERMO_SPNAME(1) = 'H2O'; WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
-            THERMO_SPNAME(2) = 'AIR'; WGHT(2) = 28.9644_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Air'; WGHT(NSP) = 28.9644_wp 
+            WGHT(2) = 28.9644_wp  ! needed for the nondimensionalization, based on species 2; to be fixed
 
             ! -------------------------------------------------------------------
-            ! Water vapor and air
+            ! Water vapor and air; data from Iribarne and Godson, 1981
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIRVAPOR)
-            NSP = 2
-            inb_scal = max(inb_scal, NSP)
-            inb_scal_array = inb_scal
-
-            THERMO_SPNAME(1) = 'H2O'; WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
-            THERMO_SPNAME(2) = 'AIR'; WGHT(2) = 28.9644_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2Ov'; WGHT(NSP) = 18.015_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Air'; WGHT(NSP) = 28.9644_wp
 
             ! -------------------------------------------------------------------
-            ! Water vapor, air and liquid water
+            ! Water vapor, air and liquid water; data from Iribarne and Godson, 1981
             ! Compressible:   Transport    q_t, and q_l from equilibrium; add space for q_l
             ! Incompressible: Transport h, q_t, and q_l from equilibrium; add space for q_l
-            ! If non-equilibrium calculation, then inb_scal includes q_l and inb_scal_array = inb_scal (default)
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIRWATER)
-            NSP = 3
-            inb_scal_array = min(NSP, inb_scal + 1)
-            inb_scal_array = max(inb_scal, inb_scal_array)
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2Ov'; WGHT(NSP) = 18.015_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Air'; WGHT(NSP) = 28.9644_wp
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2Ol'; WGHT(NSP) = 18.015_wp
 
-            THERMO_SPNAME(1) = 'H2Ov'; WGHT(1) = 18.015_wp    ! from Iribarne and Godson, 1981
-            THERMO_SPNAME(2) = 'AIR '; WGHT(2) = 28.9644_wp
-            THERMO_SPNAME(3) = 'H2Ol'; WGHT(1) = 18.015_wp
+            inb_scal_array = inb_scal + 1   ! assumes phase equilibrium so that q_l is not prognostic
 
             ! -------------------------------------------------------------------
-            ! Linearized thermodynamics for stratocumulus case
-            ! The 1. scalar is the scaled total water (mixing fraction)
-            ! The 2. scalar is the enthalpy deviations from the pure mixing case (described by mixing fraction only)
-            ! The 3. scalar is the normalized concentration of liquid.
+            ! Linearized thermodynamics for stratocumulus case; mainly for the tags
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIRWATER_LINEAR)
-            inb_scal_array = inb_scal + 1 ! using inb_scal read in the inifile
-            NSP = inb_scal_array
-
-            THERMO_SPNAME(1) = 'Chi'      ! Mixture fraction
-            THERMO_SPNAME(2) = 'Psi'      ! Deviation in the enthalpy from the mixture fraction
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Chi'   ! scaled total water (mixing fraction)
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Psi'   ! enthalpy deviations from the pure mixing case (described by mixing fraction only)
             do is = 3, inb_scal
-                write (THERMO_SPNAME(is), *) is; THERMO_SPNAME(is) = 'Scalar'//trim(adjustl(THERMO_SPNAME(is)))
+                NSP = NSP + 1; write (THERMO_SPNAME(NSP), *) is; THERMO_SPNAME(NSP) = 'Scalar'//trim(adjustl(THERMO_SPNAME(NSP)))
             end do
-            THERMO_SPNAME(NSP) = 'Liquid' ! Normalized Liquid
 
-            WGHT(1) = 18.015_wp           ! unused, but defined for re-normalization below
-            WGHT(2) = 28.9644_wp
-            WGHT(3) = 18.015_wp
+            inb_scal_array = inb_scal + 1
+            NSP = inb_scal_array; THERMO_SPNAME(NSP) = 'Liquid' ! normalized concentration of liquid.
 
         end select
-
-        if (inb_scal_loc /= inb_scal) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Incorrect number of Schmidt numbers.')
-            call TLab_Stop(DNS_ERROR_OPTION)
-        end if
 
         ! ###################################################################
         ! Caloric equations
