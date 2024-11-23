@@ -6,7 +6,11 @@
 program INIFLOW
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
-    use TLAB_VARS
+    use TLAB_VARS, only: stagger_on, fourier_on
+    use TLAB_VARS, only: imode_eqns, PressureFilter
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLAB_VARS, only: itime, rtime
     use TLab_Arrays
     use TLab_Pointers, only: e, rho, p, T
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
@@ -15,7 +19,7 @@ program INIFLOW
     use MPI
     use TLabMPI_PROCS
 #endif
-    use FDM, only: g,  FDM_Initialize
+    use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_THERMAL
     use THERMO_CALORIC
@@ -36,22 +40,15 @@ program INIFLOW
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
-    call FLOW_READ_LOCAL(ifile)
 
-    inb_wrk2d = max(inb_wrk2d, 3)
-
-    if (flag_u == 0) then
-        inb_txc = 2
-    else
-        inb_txc = 8
-    end if
+    call Iniflow_Initialize_Parameters(ifile)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
+    call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
+    call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
     call TLab_Initialize_Background()
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
@@ -79,8 +76,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    itime = 0; rtime = 0.0_wp
-    q = 0.0_wp
+    itime = 0; rtime = 0.0_wp; q = 0.0_wp
 
     ! ###################################################################
     call TLab_Write_ASCII(lfile, 'Initializing velocity.')
@@ -100,24 +96,15 @@ program INIFLOW
 
     ! ###################################################################
     ! Compressible formulation
-    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         call TLab_Write_ASCII(lfile, 'Initializing pressure and density.')
 
         call PRESSURE_MEAN(p, T, s)
         call DENSITY_MEAN(rho, p, T, s, txc)
 
-        if (flag_u /= 0) then
-            call PRESSURE_FLUCTUATION(q(1, 1), q(1, 2), q(1, 3), rho, p, txc(1, 1), &
-                                      txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
-        end if
-
-        if (imixture > 0) then
-            call IO_READ_FIELDS(trim(adjustl(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
-        end if
-
-        if (flag_t /= 0) then
-            call DENSITY_FLUCTUATION(s, p, rho, txc(1, 1), txc(1, 2))
-        end if
+        if (flag_u /= 0) call PRESSURE_FLUCTUATION(q(1, 1), q(1, 2), q(1, 3), rho, p, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+        if (imixture /= 0) call IO_READ_FIELDS(trim(adjustl(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+        if (flag_t /= 0) call DENSITY_FLUCTUATION(s, p, rho, txc(1, 1), txc(1, 2))
 
         ! Calculate specfic energy. Array s should contain the species fields at this point.
         call THERMO_THERMAL_TEMPERATURE(imax*jmax*kmax, s, p, rho, txc(:, 1))
