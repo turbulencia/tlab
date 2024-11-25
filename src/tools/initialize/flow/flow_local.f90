@@ -2,12 +2,14 @@
 #include "dns_error.h"
 
 module FLOW_LOCAL
-    use TLab_Constants, only: efile, lfile, wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN
+    use TLab_Constants, only: efile, lfile, wfile
+    use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN
     use TLab_Types, only: profiles_dt, discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: inb_wrk2d, inb_txc
+    use TLAB_VARS, only: stagger_on
     use FDM, only: g
-    use TLAB_VARS, only: qbg, tbg, hbg
+    use TLAB_VARS, only: qbg, tbg, hbg, PressureFilter
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use THERMO_THERMAL
@@ -143,6 +145,18 @@ contains
         ! specific for this tool
         call ScanFile_Real(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
         call ScanFile_Real(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))
+
+        ! ###################################################################
+        ! Consistency check
+        ! ###################################################################
+        ! Staggering of the pressure grid not implemented here
+        if (stagger_on) then
+            call TLab_Write_ASCII(wfile, __FILE__//'. Staggering of the pressure grid not yet implemented.')
+            stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
+        end if
+        if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
+            call TLab_Write_ASCII(wfile, __FILE__//'. Pressure and dpdy Filter not implemented here.')
+        end if
 
         ! ###################################################################
         ! Initialization of array sizes

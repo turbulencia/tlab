@@ -6,8 +6,8 @@
 program INIFLOW
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
-    use TLAB_VARS, only: stagger_on, fourier_on
-    use TLAB_VARS, only: imode_eqns, PressureFilter
+    use TLAB_VARS, only: fourier_on
+    use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: itime, rtime
@@ -52,15 +52,6 @@ program INIFLOW
 
     call TLab_Initialize_Background()
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
-
-    ! Staggering of the pressure grid not implemented here
-    if (stagger_on) then
-        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Staggering of the pressure grid not yet implemented.')
-        stagger_on = .false. ! turn staggering off for OPR_Poisson_FourierXZ_Factorize(...)
-    end if
-    if (any(PressureFilter%type /= DNS_FILTER_NONE)) then
-        call TLab_Write_ASCII(wfile, C_FILE_LOC//'. Pressure and dpdy Filter not implemented here.')
-    end if
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
         call OPR_Elliptic_Initialize(ifile)
