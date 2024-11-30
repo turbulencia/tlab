@@ -489,7 +489,7 @@ contains
         ifltmx = imx - 1 + 1
         jfltmx = jmx - j1 + 1
 
-        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+        if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
             iq_loc = (/5, 1, 2, 3, 6/) ! Filtered variables: rho, u,v,w, p
         else
             iq_loc = (/1, 2, 3/)

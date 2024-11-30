@@ -443,7 +443,7 @@ contains
             else if (iheader == IO_FLOW) then
                 isize = isize + 1; params(isize) = froude
                 isize = isize + 1; params(isize) = rossby
-                if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+                if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
                     isize = isize + 1; params(isize) = gama0
                     isize = isize + 1; params(isize) = prandtl
                     isize = isize + 1; params(isize) = mach

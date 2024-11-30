@@ -67,7 +67,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     u => q(:, :, :, 1)
     v => q(:, :, :, 2)
     w => q(:, :, :, 3)
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         rho => q(:, :, :, 5)
         p => q(:, :, :, 6)
         if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) vis => q(:, :, :, 8)
@@ -343,11 +343,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
 
     dsdx = v*u
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) dsdx = dsdx*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) dsdx = dsdx*rho
     dsdy = v*v
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) dsdy = dsdy*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) dsdy = dsdy*rho
     dsdz = v*w
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) dsdz = dsdz*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) dsdz = dsdz*rho
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, Rvu(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Rvv(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, Rvw(1), wrk1d)
@@ -411,7 +411,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     do j = 1, jmax
         p_wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
     end do
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) p_wrk3d = p_wrk3d*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) p_wrk3d = p_wrk3d*rho
 
     do j = 1, jmax
         dsdx(:, j, :) = p_wrk3d(:, j, :)*(u(:, j, :) - fU(j))
@@ -580,7 +580,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         p_wrk3d = p_wrk3d + tmp3
     end if
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, rQ(1), wrk1d)
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) p_wrk3d = p_wrk3d*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) p_wrk3d = p_wrk3d*rho
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, fQ(1), wrk1d)
     fQ(:) = fQ(:)/rR(:)
 

@@ -33,7 +33,7 @@ subroutine TLab_Initialize_Background()
 ! Note that rho1 and rho2 are the values defined by equation of state,
 ! being then mean_rho=(rho1+rho2)/2
 ! should we not use the thermal equation of state in thermo routines?
-    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
             rbg = tbg
             dummy = tbg%delta/tbg%mean

@@ -133,7 +133,7 @@ contains
             else if (trim(adjustl(sRes)) == 'airwater') then; imixture = MIXT_TYPE_AIRWATER
             else if (trim(adjustl(sRes)) == 'airwaterlinear') then; imixture = MIXT_TYPE_AIRWATER_LINEAR
             else
-                call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Type.')
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Mixture.')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
@@ -218,7 +218,7 @@ contains
             ! Air; data from Iribarne and Godson, 1981
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIR)
-            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Air'; WGHT(NSP) = 28.9644_wp 
+            NSP = NSP + 1; THERMO_SPNAME(NSP) = 'Air'; WGHT(NSP) = 28.9644_wp
             WGHT(2) = 28.9644_wp  ! needed for the nondimensionalization, based on species 2; to be fixed
 
             ! -------------------------------------------------------------------

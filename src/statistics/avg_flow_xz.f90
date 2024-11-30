@@ -69,7 +69,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     u => q(:, :, :, 1)
     v => q(:, :, :, 2)
     w => q(:, :, :, 3)
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         e => q(:, :, :, 4)
         rho => q(:, :, :, 5)
         p => q(:, :, :, 6)
