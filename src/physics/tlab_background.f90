@@ -5,7 +5,7 @@
 !# Initialize data of reference thermodynamic profiles
 !########################################################################
 subroutine TLab_Initialize_Background()
-    use TLab_Constants, only: lfile, wp, wi
+    use TLab_Constants, only: lfile, wp, wi, MAX_VARS
     use TLAB_VARS, only: inb_scal, inb_scal_array, imax, jmax, kmax, imode_eqns
     use FDM, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
@@ -13,7 +13,8 @@ subroutine TLab_Initialize_Background()
     use TLAB_VARS, only: buoyancy
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_WorkFlow, only: TLab_Write_ASCII
-    use Thermodynamics, only: imixture, RRATIO, GRATIO, scaleheight
+    use Thermodynamics, only: imixture, GRATIO, scaleheight
+    use THERMO_THERMAL
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use Profiles, only: PROFILE_NONE, Profiles_Calculate
@@ -25,29 +26,39 @@ subroutine TLab_Initialize_Background()
     implicit none
 
 ! -----------------------------------------------------------------------
-    real(wp) dummy
+    real(wp) ploc(2), rloc(2), Tloc(2), sloc(2, 1:MAX_VARS)
+
     integer(wi) is, j, ip, nlines, offset
 
 ! #######################################################################
 ! mean_rho and delta_rho need to be defined, because of old version.
-! Note that rho1 and rho2 are the values defined by equation of state,
-! being then mean_rho=(rho1+rho2)/2
-! should we not use the thermal equation of state in thermo routines?
     if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
         if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
             rbg = tbg
-            dummy = tbg%delta/tbg%mean
-            rbg%mean = pbg%mean/tbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)/RRATIO
-            rbg%delta = -rbg%mean*dummy
+
+            Tloc(1) = tbg%mean + 0.5_wp*tbg%delta
+            Tloc(2) = tbg%mean - 0.5_wp*tbg%delta
+            ploc(1:2) = pbg%mean
+            sloc(1, :) = sbg(:)%mean + 0.5_wp*sbg(:)%delta
+            sloc(2, :) = sbg(:)%mean - 0.5_wp*sbg(:)%delta
+            call THERMO_THERMAL_DENSITY(2, sloc, ploc, Tloc, rloc)
+            rbg%mean = 0.5_wp*(rloc(1) + rloc(2))
+            rbg%delta = rloc(1) - rloc(2)
 
         else if (rbg%type == PROFILE_NONE .and. hbg%type /= PROFILE_NONE) then
             rbg%mean = 1.0_wp ! to be done; I need a nonzero value for dns_control.
 
         else
             tbg = rbg
-            dummy = rbg%delta/rbg%mean
-            tbg%mean = pbg%mean/rbg%mean/(1.0_wp - 0.25_wp*dummy*dummy)/RRATIO
-            tbg%delta = -tbg%mean*dummy
+
+            rloc(1) = rbg%mean + 0.5_wp*rbg%delta
+            rloc(2) = rbg%mean - 0.5_wp*rbg%delta
+            ploc(1:2) = pbg%mean
+            sloc(1, :) = sbg(:)%mean + 0.5_wp*sbg(:)%delta
+            sloc(2, :) = sbg(:)%mean - 0.5_wp*sbg(:)%delta
+            call THERMO_THERMAL_TEMPERATURE(2, sloc, ploc, rloc, Tloc)
+            tbg%mean = 0.5_wp*(Tloc(1) + Tloc(2))
+            tbg%delta = Tloc(1) - Tloc(2)
 
         end if
     end if
@@ -73,7 +84,7 @@ subroutine TLab_Initialize_Background()
         allocate (tbackground(g(2)%size))
         allocate (epbackground(g(2)%size))
         allocate (sbackground(g(2)%size, inb_scal_array))
-    
+
         rbackground = 1.0_wp ! defaults
         ribackground = 1.0_wp
         pbackground = 1.0_wp
