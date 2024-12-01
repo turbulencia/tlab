@@ -748,7 +748,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         if (imixture == MIXT_TYPE_AIRWATER) &
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 3), dudy)
 
- call THERMO_ANELASTIC_LAPSE_EQU(imax, jmax, kmax, s, dudz, dudy, GAMMA_LOC(1, 1, 1), p_wrk3d)
+        call THERMO_ANELASTIC_LAPSE_EQU(imax, jmax, kmax, s, dudz, dudy, GAMMA_LOC(1, 1, 1), p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), lapse_eq(1), wrk1d)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, bfreq_eq(1), wrk1d)
         bfreq_eq(:) = bfreq_eq(:)*buoyancy%vector(2)
@@ -756,8 +756,6 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call THERMO_ANELASTIC_LAPSE_FR(imax, jmax, kmax, s, dudz, GAMMA_LOC(1, 1, 1), p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, GAMMA_LOC(1, 1, 1), lapse_fr(1), wrk1d)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, bfreq_fr(1), wrk1d)
-        ! dummy = 1.0_wp /( scaleheight *gama0 )
-        ! bfreq_fr(:) = -rR_y(:) /rbackground(:) -dummy *rR(:) /pbackground(:)
         bfreq_fr(:) = bfreq_fr(:)*buoyancy%vector(2)
 
         ! GAMMA_LOC(1,1,1) should contains lapse_fr, since lapse_dew = lapse_fr when saturated

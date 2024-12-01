@@ -24,7 +24,7 @@ program STATE
     call Thermodynamics_Initialize_Parameters()
     ep = 0.0_wp
     dsmooth = 1.0_wp
-    scaleheight = 1.0_wp
+    scaleheightinv = 1.0_wp
 
     write (*, *) 'Case p-t (1) or d-e (2) or p-h (3)?'
     read (*, *) iopt

@@ -13,7 +13,7 @@ subroutine TLab_Initialize_Background()
     use TLAB_VARS, only: buoyancy
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_WorkFlow, only: TLab_Write_ASCII
-    use Thermodynamics, only: imixture, GRATIO, scaleheight
+    use Thermodynamics, only: imixture, GRATIO, scaleheightinv
     use THERMO_THERMAL
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
@@ -96,8 +96,8 @@ subroutine TLab_Initialize_Background()
             end do
         end do
 
-        if (scaleheight > 0.0_wp) then
-            epbackground = (g(2)%nodes - pbg%ymean)*GRATIO/scaleheight
+        if (scaleheightinv > 0.0_wp) then
+            epbackground = (g(2)%nodes - pbg%ymean)*GRATIO*scaleheightinv
 
             if (buoyancy%active(2)) then
                 call FI_HYDROSTATIC_H(g(2), sbackground, epbackground, tbackground, pbackground, p_wrk1d(:, 1))
@@ -111,7 +111,7 @@ subroutine TLab_Initialize_Background()
             call THERMO_AIRWATER_LINEAR(g(2)%size, sbackground, sbackground(:, inb_scal_array))
         end if
 
-        if (scaleheight > 0.0_wp) then
+        if (scaleheightinv > 0.0_wp) then
             call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, rbackground)
             ribackground = 1.0_wp/rbackground
         end if

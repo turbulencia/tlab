@@ -14,7 +14,7 @@
 module THERMO_ANELASTIC
     use TLab_Constants, only: wp, wi
     use Thermodynamics, only: imixture
-    use Thermodynamics, only: GRATIO, scaleheight   ! anelastic parameters
+    use Thermodynamics, only: GRATIO, scaleheightinv   ! anelastic parameters
     use Thermodynamics, only: THERMO_PSAT, NPSAT
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
     implicit none
@@ -619,7 +619,7 @@ contains
 
 ! ###################################################################
         if (imixture == MIXT_TYPE_AIR) then
-            lapse(:) = GRATIO/scaleheight
+            lapse(:) = GRATIO*scaleheightinv
 
             ij = 0
             do jk = 0, ny*nz - 1
@@ -635,7 +635,7 @@ contains
             end do
 
         else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            lapse(:) = GRATIO/scaleheight/(Cd + s(:, 2)*Cdv)
+            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv)
 
             ij = 0
             do jk = 0, ny*nz - 1
@@ -651,7 +651,7 @@ contains
             end do
 
         else if (imixture == MIXT_TYPE_AIRWATER) then
-            lapse(:) = GRATIO/scaleheight/(Cd + s(:, 2)*Cdv + s(:, 3)*Cvl)
+            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv + s(:, 3)*Cvl)
 
             ij = 0
             do jk = 0, ny*nz - 1
@@ -681,13 +681,12 @@ contains
 ! -------------------------------------------------------------------
         real(wp) RT_INV, dpsat
 
-        real(wp) Cp_loc, Lv, scaleheightinv, one_p_eps, qvequ, qsat, dummy
+        real(wp) Cp_loc, Lv, one_p_eps, qvequ, qsat, dummy
 
 ! ###################################################################
-        scaleheightinv = GRATIO/scaleheight
 
         if (imixture == MIXT_TYPE_AIR) then
-            lapse(:) = scaleheightinv
+            lapse(:) = GRATIO*scaleheightinv
 
             ij = 0
             do jk = 0, ny*nz - 1
@@ -703,7 +702,7 @@ contains
             end do
 
         else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            lapse(:) = scaleheightinv/(Cd + s(:, 2)*Cdv)
+            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv)
 
             ij = 0
             do jk = 0, ny*nz - 1
@@ -726,7 +725,7 @@ contains
                 E_LOC = epbackground(is)
                 R_LOC = rbackground(is)
 
-                RT_INV = R_LOC/(P_LOC)/scaleheight
+                RT_INV = R_LOC/P_LOC*scaleheightinv
 
                 do i = 1, nx
                     ij = ij + 1
@@ -745,7 +744,7 @@ contains
 ! We cannot use ql directly (s(:,3)) because the smoothing function imposes
 ! an exponentially small value, but nonzero
                     if (qsat >= s(ij, 2)) then
-                        lapse(ij) = scaleheightinv/(Cd + s(ij, 2)*Cdv)
+                        lapse(ij) = GRATIO*scaleheightinv/(Cd + s(ij, 2)*Cdv)
                         frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
 
                     else
@@ -754,7 +753,7 @@ contains
                         one_p_eps = 1.0_wp/(1.0_wp - psat/P_LOC)
                         Lv = Lv0 - T_LOC*Cvl
 
-                        lapse(ij) = scaleheightinv + qvequ*one_p_eps*Lv*RT_INV
+                        lapse(ij) = GRATIO*scaleheightinv + qvequ*one_p_eps*Lv*RT_INV
                         lapse(ij) = lapse(ij)/(Cp_loc + qvequ*one_p_eps*Lv*dpsat/psat)
 
                         frequency(ij) = qvequ*(lapse(ij)*dpsat/psat - RT_INV)*one_p_eps - dqldy(ij)
@@ -781,15 +780,13 @@ contains
 
         ! -------------------------------------------------------------------
         integer(wi) inr, nrmax
-        real(wp) dpsat, dummy, qsat, scaleheightinv
+        real(wp) dpsat, dummy, qsat
 
 !  real(wp) NEWTONRAPHSON_ERROR
 
 ! ###################################################################
 ! maximum number of iterations in Newton-Raphson
         nrmax = 5
-
-        scaleheightinv = 1.0_wp/scaleheight
 
         if (imixture == MIXT_TYPE_AIR) then
 
@@ -819,7 +816,7 @@ contains
                     end do
 !           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                     Td(ij) = T_LOC
-                    Lapse(ij) = scaleheightinv*R_LOC/(P_LOC)*psat/dpsat
+                    Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat
 
                 end do
             end do
@@ -865,7 +862,7 @@ contains
                         ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                         ! print*,NEWTONRAPHSON_ERROR
                         Td(ij) = T_LOC
-                        Lapse(ij) = scaleheightinv*R_LOC/(P_LOC)*psat/dpsat
+                        Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat
 
                     end if
 

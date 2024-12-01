@@ -200,7 +200,7 @@ The remaining scalars are the composition (e.g., total water specific humidity a
 
 The thermodynamic variables are nondimensionalized by $\rho_0$, $T_0$ and $R_0$, such that $p_0=\rho_0R_0T_0$. (Note the difference with the compressible formulation, where the pressure was nondimensionalized with $\rho_0U_0^2$.) The equations depend on the nondimensional parameter
 \begin{equation}
-    (\gamma_0-1)/\gamma_0 \;,
+    (\gamma_0-1)/\gamma_0 = R_0/C_{p0} \;,
 \end{equation}
 a conversion factor between gas constants and heat capacities (thermal equation of state and caloric equation of state). We refer to it in the code as \texttt{GRATIO}. The default reference values are $p_0=10^5$~Pa and $T_0=298$~K, and are set in \texttt{Thermodynamics\_Initilize}. 
 

@@ -10,7 +10,7 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     use FDM, only: grid_dt
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
-    use Thermodynamics, only: imixture, scaleheight
+    use Thermodynamics, only: imixture, scaleheightinv
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL
@@ -54,8 +54,8 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
             epbackground(:) = e(:)
             pbackground(:) = p_aux(:)
-            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:))   ! Get r_aus=1/RT
-            dummy = -1.0_wp/sign(scaleheight, buoyancy%vector(2))
+            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:))   ! Get r_aux=1/RT
+            dummy = sign(scaleheightinv, -buoyancy%vector(2))
         else
             call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
             call THERMO_THERMAL_DENSITY(g%size, s(:, 2), p_aux(:), T, r_aux(:)) ! Get r_aux=1/RT
