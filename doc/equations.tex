@@ -164,9 +164,9 @@ Dynamics and thermodynamics are still coupled by the background density and the 
 \begin{subequations}
     \begin{align}
         0                 =& -\partial_k(\rho_\mathrm{bg}u_k)   & \\
-        \partial_t  u_i   =& -\partial_k ( u_i u_k )-\rho_\mathrm{bg}^{-1}\partial_i p' &
+        \partial_t  u_i   =& - u_k\partial_k u_i -\rho_\mathrm{bg}^{-1}\partial_i p' &
         +\Re^{-1}\qquad\;\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) & +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-        \partial_t\zeta_i =& -\partial_k (\zeta_i u_k) &
+        \partial_t\zeta_i =& -u_k \partial_k \zeta_i &
         + \Re^{-1}\Sc_i^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \Da_i\,\rho_\mathrm{bg}^{-1}w_i
     \end{align}
 \end{subequations}
@@ -177,7 +177,7 @@ where the buoyancy is
 The dynamic pressure $p'$ satisfies the following Poisson equation:
 \begin{equation}
     \partial_i\partial_ip'=\partial_i\left[\rho_\mathrm{bg}\left(
-    -\partial_k ( u_i u_k )+\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
+    -u_k \partial_k u_i  +\Re^{-1}\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j
     \right)\right]\;.
 \end{equation}
 So far, only the case $\mu^*=1$ in the equations above has been implemented. The dynamic variables in these equations are  nondimensionalized by $\rho_0$, $U_0$ and $L_0$.
@@ -218,10 +218,10 @@ Dynamics and thermodynamics are at most coupled by the buoyancy field, and therm
 \begin{subequations}
     \begin{align}
         0                   =& -\partial_k u_k                                          \\
-        \partial_t  u_i     =& -\partial_k ( u_i u_k )  
+        \partial_t  u_i     =& -u_k \partial_k u_i   
         +\Re^{-1}\qquad\;\partial_k \left( \mu^{*} \partial_k u_i\right)  -\partial_i p&&
         +\Fr^{-1}\, g_i\,b +\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-        \partial_t \zeta_i  =& -\partial_k (\zeta_i u_k)                    
+        \partial_t \zeta_i  =& -u_k\partial_k \zeta_i              
         +\Re^{-1}\Sc_i^{-1}\, \partial_k \left( \mu^{*}\partial_k\zeta_i\right) &&+ \Da_i\,w_i
     \end{align}
 \end{subequations}
