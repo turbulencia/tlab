@@ -123,7 +123,7 @@ contains
 
             call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)      ! needed in compressible formulation
             call ScanFile_Real(bakfile, inifile, block, 'ScaleHeight', '0.0', scaleheightinv)   ! needed in anelastic formulation
-            scaleheightinv = 1.0_wp/scaleheightinv
+            if (scaleheightinv > 0.0_wp) scaleheightinv = 1.0_wp/scaleheightinv
 
             call ScanFile_Char(bakfile, inifile, block, 'Mixture', 'None', sRes)
             if (trim(adjustl(sRes)) == 'none') &

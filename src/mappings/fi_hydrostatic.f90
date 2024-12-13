@@ -5,12 +5,13 @@
 ! Compute hydrostatic equilibrium from profiles s=(h,q_t).
 ! Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale height in the system
 !########################################################################
-subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
+subroutine FI_HYDROSTATIC_H(g, s, ep, T, p, wrk1d)
     use TLab_Constants, only: wp, wi, BCS_MIN, BCS_BOTH
     use FDM, only: grid_dt
+    use TLAB_VARS, only: inb_scal_array
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: pbg, damkohler, buoyancy
-    use Thermodynamics, only: imixture, scaleheightinv
+    use Thermodynamics, only: imixture, GRATIO, scaleheightinv
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use THERMO_THERMAL
@@ -18,11 +19,10 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
     implicit none
 
-    type(grid_dt), intent(IN) :: g
-    real(wp), dimension(g%size), intent(IN) :: e
-    real(wp), dimension(g%size), intent(OUT) :: T, p
-    real(wp), dimension(g%size, *), intent(INOUT) :: s      ! We calculate equilibrium composition
-    real(wp), dimension(g%size, *), intent(INOUT) :: wrk1d
+    type(grid_dt), intent(in) :: g
+    real(wp), dimension(g%size, inb_scal_array), intent(inout) :: s      ! We calculate equilibrium composition
+    real(wp), dimension(g%size), intent(out) :: ep, T, p
+    real(wp), dimension(g%size, 2), intent(inout) :: wrk1d
 
     ! -------------------------------------------------------------------
     integer(wi) iter, niter, j, jcenter
@@ -41,7 +41,12 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 #define p_aux(i)        wrk1d(i,1)
 #define r_aux(i)        wrk1d(i,2)
 
-    ! Setting the pressure entry to 1 to get 1/RT
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+        ep(:) = (g%nodes - pbg%ymean)*GRATIO*scaleheightinv
+        epbackground(:) = ep(:)
+    end if
+
+! Setting the pressure entry to 1 to get 1/RT
     p_aux(:) = 1.0_wp
 
     niter = 10
@@ -52,21 +57,19 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
     end if
     do iter = 1, niter           ! iterate
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-            epbackground(:) = e(:)
             pbackground(:) = p_aux(:)
-            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:))   ! Get r_aux=1/RT
-            dummy = sign(scaleheightinv, -buoyancy%vector(2))
+            call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:))            ! Get r_aux=1/RT
+            r_aux(:) = -scaleheightinv*r_aux(:)
         else
             call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
             call THERMO_THERMAL_DENSITY(g%size, s(:, 2), p_aux(:), T, r_aux(:)) ! Get r_aux=1/RT
-            dummy = buoyancy%vector(2)
+            r_aux(:) = buoyancy%vector(2)*r_aux(:)
         end if
-        r_aux(:) = dummy*r_aux(:)
 
         p(1) = 0.0_wp
         call OPR_Integral1(1, g, r_aux(:), p, BCS_MIN)
 
-        ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean_rel
+        ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean
         p(:) = exp(p(:))
         if (abs(pbg%ymean - g%nodes(jcenter)) == 0.0_wp) then
             dummy = p(jcenter)
@@ -77,12 +80,16 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
         dummy = pbg%mean/dummy
         p(:) = dummy*p(:)
 
-        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then ! Get ql, if necessary
-            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-                epbackground(:) = e(:)
-                pbackground(:) = p(:)
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+            pbackground(:) = p(:)
+            if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
                 call THERMO_ANELASTIC_PH(1, g%size, 1, s(1, 2), s(1, 1))
-            else
+            else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+                call THERMO_AIRWATER_LINEAR(g%size, s, s(:, inb_scal_array))
+            end if
+            call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, T)
+        else
+            if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
                 call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
             end if
         end if
@@ -91,12 +98,6 @@ subroutine FI_HYDROSTATIC_H(g, s, e, T, p, wrk1d)
 
 #undef p_aux
 #undef r_aux
-
-    ! compute equilibrium values of T
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-        epbackground(:) = e(:)
-        call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, T)
-    end if
 
     return
 end subroutine FI_HYDROSTATIC_H

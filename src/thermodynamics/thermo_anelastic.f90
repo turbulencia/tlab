@@ -48,11 +48,11 @@ module THERMO_ANELASTIC
     ! public :: THERMO_ANELASTIC_PH_RE
 
     ! background, reference profiles
+    real(wp), allocatable, public :: sbackground(:, :)                  ! Scalars
+    real(wp), allocatable, public :: epbackground(:)                    ! Potential energy
     real(wp), allocatable, public :: pbackground(:)                     ! Pressure background profile
     real(wp), allocatable, public :: tbackground(:)                     ! Temperature
     real(wp), allocatable, public :: rbackground(:), ribackground(:)    ! Density and its inverse
-    real(wp), allocatable, public :: epbackground(:)                    ! Potential energy
-    real(wp), allocatable, public :: sbackground(:, :)                  ! Scalars
 
 contains
 
