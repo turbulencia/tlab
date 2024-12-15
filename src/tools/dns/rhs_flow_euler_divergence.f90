@@ -6,11 +6,12 @@
 subroutine RHS_FLOW_EULER_DIVERGENCE()
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: imode_eqns, buoyancy
+    use TLAB_VARS, only: imode_eqns
     use FDM, only: g
     use TLab_Pointers
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV
+    use Gravity, only: buoyancy
     use OPR_PARTIAL
     implicit none
 

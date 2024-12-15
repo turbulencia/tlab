@@ -11,7 +11,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_txc
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: PressureFilter, stagger_on
-    use TLAB_VARS, only: buoyancy, coriolis, subsidence
+    use TLAB_VARS, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d
     use THERMO_ANELASTIC
@@ -20,6 +20,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use OPR_BURGERS
     use OPR_ELLIPTIC
     use FI_SOURCES
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
     use OPR_FILTERS
 
     implicit none
@@ -171,10 +172,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
             else
                 if (buoyancy%active(iq)) then
                     if (iq == 2) then
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
+                        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
                     else
                         wrk1d(:, 1) = 0.0_wp
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
+                        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, tmp1, wrk1d)
                     end if
 
                     dummy = buoyancy%vector(iq)

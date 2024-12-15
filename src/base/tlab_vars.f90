@@ -54,7 +54,6 @@ module TLAB_VARS
 ! ###################################################################
 ! phenomena in addition to the navier-stokes equations
 ! ###################################################################
-    type(term_dt) :: buoyancy                       ! Buoyancy parameters
     type(term_dt) :: coriolis                       ! Coriolis parameters
     type(term_dt) :: subsidence                     ! Large-scale parameters
 

@@ -47,7 +47,7 @@ program SPECTRA
     use TLabMPI_PROCS
 #endif
     use FDM, only: g,  FDM_Initialize
-    use FI_SOURCES, only: FI_BUOYANCY
+    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
@@ -129,6 +129,7 @@ program SPECTRA
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -552,7 +553,7 @@ program SPECTRA
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
-                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
+                    call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, s(1, inb_scal_array), wrk1d)
                 end if
                 dummy = 1.0_wp/froude
                 s(:, inb_scal_array) = s(:, inb_scal_array)*dummy

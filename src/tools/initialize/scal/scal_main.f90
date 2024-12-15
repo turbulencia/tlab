@@ -17,6 +17,7 @@ program INISCAL
 #endif
     use FDM, only: g,  FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use Gravity, only: Gravity_Initialize
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
     use Radiation
@@ -37,6 +38,7 @@ program INISCAL
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 
     call SCAL_READ_LOCAL(ifile)
 

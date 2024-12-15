@@ -44,7 +44,7 @@ program PARTICLE_BUILD_PDF
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
-    call Particle_Initialize_Parameters('tlab.ini')
+    call Particle_Initialize_Parameters(ifile)
 
 !  CALL DNS_READ_LOCAL(ifile) !for nitera stuff
 

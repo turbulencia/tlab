@@ -8,7 +8,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
     use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
-    use TLAB_VARS, only: buoyancy, coriolis, subsidence
+    use TLAB_VARS, only: coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     use TLab_Spatial
@@ -38,7 +38,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
     call TLab_Write_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
     !
-    call TLab_Write_ASCII(bakfile, '#TermBodyForce=<none/Explicit/Homogeneous/Linear/Bilinear/Quadratic>')
     call TLab_Write_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
     call TLab_Write_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
 
@@ -197,59 +196,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
         prandtl = schmidt(1)
 
     end select
-
-! ###################################################################
-! Buoyancy
-! ###################################################################
-    ! I wonder if this should be part of [BodyForce] instead of [Main]
-    call ScanFile_Char(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
-    else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
-    else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
-    else if (trim(adjustl(sRes)) == 'bilinear') then; buoyancy%type = EQNS_BOD_BILINEAR
-    else if (trim(adjustl(sRes)) == 'quadratic') then; buoyancy%type = EQNS_BOD_QUADRATIC
-    else if (trim(adjustl(sRes)) == 'normalizedmean') then; buoyancy%type = EQNS_BOD_NORMALIZEDMEAN
-    else if (trim(adjustl(sRes)) == 'subtractmean') then; buoyancy%type = EQNS_BOD_SUBTRACTMEAN
-    else
-        call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermBodyForce option.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-
-    if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
-        call TLab_Write_ASCII(wfile, __FILE__//'. Zero scalars; setting TermBodyForce equal to none.')
-        buoyancy%type = EQNS_NONE
-    end if
-
-    call TLab_Write_ASCII(bakfile, '#')
-    call TLab_Write_ASCII(bakfile, '#[BodyForce]')
-    call TLab_Write_ASCII(bakfile, '#Vector=<Gx,Gy,Gz>')
-    call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
-
-    buoyancy%vector = 0.0_wp; buoyancy%active = .false.
-    if (buoyancy%type /= EQNS_NONE) then
-        call ScanFile_Char(bakfile, inifile, 'BodyForce', 'Vector', '0.0,-1.0,0.0', sRes)
-        idummy = 3
-        call LIST_REAL(sRes, idummy, buoyancy%vector)
-
-        if (abs(buoyancy%vector(1)) > 0.0_wp) then; buoyancy%active(1) = .true.; call TLab_Write_ASCII(lfile, 'Body force along Ox.'); end if
-        if (abs(buoyancy%vector(2)) > 0.0_wp) then; buoyancy%active(2) = .true.; call TLab_Write_ASCII(lfile, 'Body force along Oy.'); end if
-        if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLab_Write_ASCII(lfile, 'Body force along Oz.'); end if
-
-        if (froude > 0.0_wp) then
-            buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into the vector g
-        else
-            call TLab_Write_ASCII(efile, __FILE__//'. Froude number must be nonzero if buoyancy is retained.')
-            call TLab_Stop(DNS_ERROR_OPTION)
-        end if
-
-        buoyancy%parameters(:) = 0.0_wp
-        call ScanFile_Char(bakfile, inifile, 'BodyForce', 'Parameters', '0.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, buoyancy%parameters)
-        buoyancy%scalar(1) = idummy
-
-    end if
 
 ! ###################################################################
     block = 'Rotation'

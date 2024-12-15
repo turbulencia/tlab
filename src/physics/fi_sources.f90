@@ -9,9 +9,10 @@ module FI_SOURCES
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use TLAB_VARS, only: imode_eqns
     use FDM, only: g
-    use TLAB_VARS, only: buoyancy, coriolis, subsidence
+    use TLAB_VARS, only: coriolis, subsidence
     use TLab_OpenMP
     use THERMO_ANELASTIC
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
     use Radiation
     use Microphysics
     use Chemistry
@@ -27,10 +28,7 @@ module FI_SOURCES
 
     public :: FI_SOURCES_FLOW
     public :: FI_SOURCES_SCAL
-    public :: FI_BUOYANCY, FI_BUOYANCY_SOURCE
     public :: FI_CORIOLIS
-
-    real(wp), allocatable, public :: bbackground(:)     ! Buoyancy
 
 contains
 ! #######################################################################
@@ -67,7 +65,7 @@ contains
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
 
                 else
-                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
+                    call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
 
                 end if
 
@@ -271,156 +269,6 @@ contains
         end select
 
     end subroutine FI_CORIOLIS
-
-!########################################################################
-!# Determine the buoyancy term (density difference rho -rho_0
-!# when it is a function of a scalar
-!########################################################################
-    subroutine FI_BUOYANCY(buoyancy, nx, ny, nz, s, b, ref)
-        type(term_dt), intent(in) :: buoyancy
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx, ny, nz, inb_scal_array)
-        real(wp), intent(out) :: b(nx, ny, nz)
-        real(wp), intent(in) :: ref(ny)         ! reference profile
-
-        ! -----------------------------------------------------------------------
-        integer(wi) j, k
-        real(wp) c0_loc, c1_loc, c2_loc, c3_loc, dummy
-
-        ! #######################################################################
-        select case (buoyancy%type)
-
-        case (EQNS_BOD_HOMOGENEOUS)
-            b = buoyancy%parameters(1)
-
-        case (EQNS_BOD_LINEAR)
-            c1_loc = buoyancy%parameters(1); 
-            c2_loc = buoyancy%parameters(2); 
-            c3_loc = buoyancy%parameters(3)                     ! proportionality factors
-            c0_loc = buoyancy%parameters(inb_scal_array + 1)    ! independent term
-
-            if (buoyancy%scalar(1) == 1) then
-                do k = 1, nz
-                    do j = 1, ny
-                        dummy = ref(j) - c0_loc
-                        b(1:nx, j, k) = c1_loc*s(1:nx, j, k, 1) - dummy
-                    end do
-                end do
-
-            else if (buoyancy%scalar(1) == 2) then
-                do k = 1, nz
-                    do j = 1, ny
-                        dummy = ref(j) - c0_loc
-                        b(1:nx, j, k) = c1_loc*s(1:nx, j, k, 1) + c2_loc*s(1:nx, j, k, 2) - dummy
-                    end do
-                end do
-
-            else if (buoyancy%scalar(1) == 3) then
-                do k = 1, nz
-                    do j = 1, ny
-                        dummy = ref(j) - c0_loc
-                        b(1:nx, j, k) = c1_loc*s(1:nx, j, k, 1) + c2_loc*s(1:nx, j, k, 2) + c3_loc*s(1:nx, j, k, 3) - dummy
-                    end do
-                end do
-
-            else ! general
-                do k = 1, nz
-                    do j = 1, ny
-                        dummy = ref(j)
-                        b(1:nx, j, k) = c0_loc - dummy
-                    end do
-                end do
-
-                do is = 1, buoyancy%scalar(1)
-                    if (abs(buoyancy%parameters(is)) > small_wp) b(:, :, :) = b(:, :, :) + buoyancy%parameters(is)*s(:, :, :, is)
-                end do
-
-            end if
-
-        case (EQNS_BOD_BILINEAR)
-            c0_loc = buoyancy%parameters(1); 
-            c1_loc = buoyancy%parameters(2); 
-            c2_loc = buoyancy%parameters(3)
-
-            do k = 1, nz
-                do j = 1, ny
-                    dummy = ref(j)
-                    b(1:nx, j, k) = c0_loc*s(1:nx, j, k, 1) + c1_loc*s(1:nx, j, k, 2) + c2_loc*s(1:nx, j, k, 1)*s(1:nx, j, k, 2) - dummy
-                end do
-            end do
-
-        case (EQNS_BOD_QUADRATIC)
-            c0_loc = -buoyancy%parameters(1)/(buoyancy%parameters(2)/2.0_wp)**2
-            c1_loc = buoyancy%parameters(2)
-
-            do k = 1, nz
-                do j = 1, ny
-                    dummy = ref(j)
-                    b(1:nx, j, k) = c0_loc*s(1:nx, j, k, 1)*(s(1:nx, j, k, 1) - c1_loc) - dummy
-                end do
-            end do
-
-        case (EQNS_BOD_NORMALIZEDMEAN)
-            c1_loc = buoyancy%parameters(1)
-
-            do k = 1, nz
-                do j = 1, ny
-                    dummy = 1.0_wp/bbackground(j)
-                    b(1:nx, j, k) = c1_loc*(dummy*s(1:nx, j, k, 1) - 1.0_wp)
-                end do
-            end do
-
-        case (EQNS_BOD_SUBTRACTMEAN)
-            c1_loc = buoyancy%parameters(1)
-
-            do k = 1, nz
-                do j = 1, ny
-                    dummy = bbackground(j)
-                    b(1:nx, j, k) = c1_loc*(s(1:nx, j, k, 1) - dummy)
-                end do
-            end do
-
-        case default
-            b = 0.0_wp
-
-        end select
-
-        return
-    end subroutine FI_BUOYANCY
-
-    !########################################################################
-    !########################################################################
-    subroutine FI_BUOYANCY_SOURCE(buoyancy, nx, ny, nz, s, gradient, source)
-        type(term_dt), intent(in) :: buoyancy
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx, ny, nz, inb_scal_array)
-        real(wp), intent(inout) :: gradient(nx, ny, nz)         ! gradient magnitude
-        real(wp), intent(out) :: source(nx, ny, nz)
-
-        ! -----------------------------------------------------------------------
-        real(wp) c0_loc
-
-        ! #######################################################################
-        select case (buoyancy%type)
-
-        case (EQNS_BOD_HOMOGENEOUS)
-            source = 0.0_wp
-
-        case (EQNS_BOD_LINEAR)
-            source = 0.0_wp
-
-        case (EQNS_BOD_BILINEAR)
-            source = 0.0_wp
-
-        case (EQNS_BOD_QUADRATIC)
-            c0_loc = -buoyancy%parameters(1)/(buoyancy%parameters(2)/2.0_wp)**2; c0_loc = c0_loc*2.0_wp
-
-            source = c0_loc*gradient
-
-        end select
-
-        return
-    end subroutine FI_BUOYANCY_SOURCE
 
 ! #######################################################################
 ! #######################################################################

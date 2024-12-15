@@ -48,7 +48,7 @@ contains
         use TLab_Pointers, only: pointers_dt
         use FDM, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
-        use TLAB_VARS, only: buoyancy, imode_eqns, scal_on
+        use TLAB_VARS, only: imode_eqns, scal_on
         use TLAB_VARS, only: froude
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: schmidt
@@ -58,7 +58,7 @@ contains
         use Thermodynamics, only: imixture
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
-        use FI_SOURCES, only: FI_BUOYANCY
+        use Gravity, only: buoyancy, Gravity_Buoyancy
         use FI_VORTICITY_EQN
 
         ! -------------------------------------------------------------------
@@ -163,7 +163,7 @@ contains
                             call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, hq(1, 1))
                         else
                             wrk1d(1:jmax, 1) = 0.0_wp
-                            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d)
+                            call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d)
                         end if
                         dummy = 1.0_wp/froude
                         hq(1:isize_field, 1) = hq(1:isize_field, 1)*dummy

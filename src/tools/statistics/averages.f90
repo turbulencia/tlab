@@ -18,7 +18,7 @@ program AVERAGES
     use TLabMPI_PROCS
 #endif
     use FDM, only: g,  FDM_Initialize
-    use FI_SOURCES, only: FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
@@ -107,6 +107,7 @@ program AVERAGES
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -450,7 +451,7 @@ program AVERAGES
                         call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 7))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 7), wrk1d)
+                        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 7), wrk1d)
                     end if
                     dummy = 1.0_wp/froude
                     txc(1:isize_field, 7) = txc(1:isize_field, 7)*dummy
@@ -623,7 +624,7 @@ program AVERAGES
                         call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
+                        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
                     end if
                     do ij = 1, isize_field
                         s(ij, 1) = wrk3d(ij)*buoyancy%vector(2)

@@ -11,6 +11,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture, CRATIO_INV, THERMO_AI
+    use Gravity, only: buoyancy
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
     use OPR_PARTIAL

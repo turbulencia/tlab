@@ -20,6 +20,7 @@ program APRIORI
 #endif
     use FDM, only: g,  FDM_Initialize
     use Thermodynamics
+    use Gravity, only: Gravity_Initialize
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
@@ -73,6 +74,7 @@ program APRIORI
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

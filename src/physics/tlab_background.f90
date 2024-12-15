@@ -10,7 +10,6 @@ subroutine TLab_Initialize_Background()
     use FDM, only: g
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: froude, schmidt
-    use TLAB_VARS, only: buoyancy
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use Thermodynamics, only: imixture
@@ -18,7 +17,7 @@ subroutine TLab_Initialize_Background()
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
     use Profiles, only: PROFILE_NONE, Profiles_Calculate
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
@@ -91,7 +90,7 @@ subroutine TLab_Initialize_Background()
             end do
         end do
 
-        call FI_HYDROSTATIC_H(g(2), sbackground, epbackground, tbackground, pbackground, p_wrk1d(:, 1))
+        call Gravity_Hydrostatic_Enthalpy(g(2), sbackground, epbackground, tbackground, pbackground, p_wrk1d(:, 1))
 
         call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, rbackground)
         ribackground = 1.0_wp/rbackground
@@ -104,7 +103,7 @@ subroutine TLab_Initialize_Background()
         else
             bbackground(:) = 0.0_wp
             if (buoyancy%active(2)) then
-                call FI_BUOYANCY(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
+                call Gravity_Buoyancy(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
                 bbackground(:) = p_wrk1d(:, 1)
             end if
             buoyancy%scalar(1) = min(inb_scal_array, buoyancy%scalar(1))

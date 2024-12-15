@@ -83,6 +83,7 @@ program PARTICLE_INI_TRAJEC
     call TLab_Initialize_Parameters(ifile)
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+call Gravity_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI

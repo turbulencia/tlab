@@ -13,6 +13,7 @@ program DNS
     use TLabMPI_PROCS
 #endif
     use Thermodynamics
+    use Gravity, only: Gravity_Initialize
     use Radiation
     use Microphysics
     use Chemistry
@@ -61,6 +62,7 @@ program DNS
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)

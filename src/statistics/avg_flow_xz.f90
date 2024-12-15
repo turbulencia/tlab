@@ -35,7 +35,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use OPR_PARTIAL
 
     implicit none
@@ -939,7 +939,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
             if (buoyancy%type == EQNS_EXPLICIT) then
                 call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, dudx)
             else
-                call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, dudx, bbackground)
+                call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, dudx, bbackground)
             end if
 
             call AVG_IK_V(imax, jmax, kmax, jmax, dudx, rB(1), wrk1d)

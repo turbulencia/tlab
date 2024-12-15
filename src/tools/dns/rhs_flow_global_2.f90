@@ -18,7 +18,8 @@ subroutine RHS_FLOW_GLOBAL_2()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use FDM, only: g
-    use TLAB_VARS, only: idiffusion, visc, prandtl, buoyancy
+    use TLAB_VARS, only: idiffusion, visc, prandtl
+    use Gravity, only: buoyancy
     use TLab_Arrays, only: s
     use TLab_Pointers
     use Thermodynamics, only: CRATIO_INV

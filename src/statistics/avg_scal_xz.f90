@@ -30,7 +30,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLabMPI_VARS
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Radiation
     use Microphysics
     use FI_GRADIENT_EQN
@@ -544,7 +544,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         else
             if (buoyancy%type /= EQNS_EXPLICIT) then
                 call FI_GRADIENT(imax, jmax, kmax, s, dsdx, dsdy)
-                call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, dsdx, tmp1) ! dsdx contains gradient
+                call Gravity_Buoyancy_Source(buoyancy, imax, jmax, kmax, s, dsdx, tmp1) ! dsdx contains gradient
                 tmp1 = tmp1*diff/froude
             end if
 
@@ -772,7 +772,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         if (buoyancy%type == EQNS_EXPLICIT) then
             call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, p_wrk3d)
         else
-            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, p_wrk3d, bbackground)
+            call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, p_wrk3d, bbackground)
         end if
         dummy = 1.0_wp/froude
         p_wrk3d = p_wrk3d*dummy

@@ -15,6 +15,7 @@ program INIPART
 #endif
     use FDM, only: g,  FDM_Initialize
     use Thermodynamics
+    use Gravity, only: Gravity_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -40,6 +41,7 @@ program INIPART
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 
     if (part%type /= PART_TYPE_NONE) then
 

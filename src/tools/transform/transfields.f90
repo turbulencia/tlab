@@ -22,6 +22,7 @@ program TRANSFIELDS
     use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
     use Thermodynamics
+    use Gravity, only: Gravity_Initialize
     use THERMO_ANELASTIC
     use OPR_FILTERS
     use OPR_INTERPOLATORS
@@ -78,6 +79,7 @@ program TRANSFIELDS
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 
     ! -------------------------------------------------------------------
     ! File names
@@ -838,6 +840,7 @@ contains
         ! #######################################################################
         imixture = MIXT_TYPE_AIRWATER
         call Thermodynamics_Initialize_Parameters(ifile)
+        call Gravity_Initialize(ifile)
         inb_scal = 1
 
         qt_0 = 9.0d-3; qt_1 = 1.5d-3

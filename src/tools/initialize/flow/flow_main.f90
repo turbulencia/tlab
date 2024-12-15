@@ -23,6 +23,7 @@ program INIFLOW
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_THERMAL
     use THERMO_CALORIC
+    use Gravity, only: Gravity_Initialize
     use IO_FIELDS
     use OPR_Elliptic
     use OPR_FOURIER
@@ -40,6 +41,7 @@ program INIFLOW
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 
     call Iniflow_Initialize_Parameters(ifile)
 

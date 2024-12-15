@@ -43,6 +43,7 @@ program VPARTIAL
     call IBM_READ_INI(ifile)
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 ! Initialize
     
     len = jmax*kmax

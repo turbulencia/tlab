@@ -15,7 +15,7 @@ program PDFS
     use TLabMPI_PROCS
 #endif
     use FDM, only: g,  FDM_Initialize
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY
+    use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
@@ -92,6 +92,7 @@ program PDFS
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -390,7 +391,7 @@ program PDFS
                         call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
+                        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
                     end if
                     s(1:isize_field, 1) = wrk3d(1:isize_field)*buoyancy%vector(2)
 
@@ -687,7 +688,7 @@ program PDFS
                 call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
             else
                 wrk1d(1:jmax, 1) = 0.0_wp
-                call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
+                call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
             end if
             dummy = 1.0_wp/froude
             txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy

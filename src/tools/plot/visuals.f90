@@ -23,7 +23,7 @@ program VISUALS
     use TLabMPI_PROCS
 #endif
     use FDM, only: g,  FDM_Initialize
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY, FI_BUOYANCY_SOURCE
+    use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use THERMO_AIRWATER
@@ -104,6 +104,7 @@ program VISUALS
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call Chemistry_Initialize(ifile)
@@ -493,7 +494,7 @@ program VISUALS
                         call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, txc(1, 1))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
-                        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
+                        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
                         dummy = 1.0_wp/froude
                         txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy + 1.0_wp
                     end if
@@ -721,7 +722,7 @@ program VISUALS
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 4))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
-                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 4), wrk1d)
+                    call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 4), wrk1d)
                 end if
                 dummy = 1.0_wp/froude
                 txc(1:isize_field, 4) = txc(1:isize_field, 4)*dummy
@@ -834,7 +835,7 @@ program VISUALS
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
-                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
+                    call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
                 end if
                 dummy = 1.0_wp/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy
@@ -861,7 +862,7 @@ program VISUALS
                     txc(1:isize_field, 2) = txc(1:isize_field, 2)*txc(1:isize_field, 3)*dummy
                 else
                     call FI_GRADIENT(imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
-                    call FI_BUOYANCY_SOURCE(buoyancy, imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
+                    call Gravity_Buoyancy_Source(buoyancy, imax, jmax, kmax, s, txc(1, 1), txc(1, 2))
                 end if
                 dummy = visc/schmidt(1)/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 2)*dummy
@@ -966,7 +967,7 @@ program VISUALS
                     call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
-                    call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
+                    call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
                 end if
                 dummy = 1.0_wp/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy

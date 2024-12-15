@@ -64,6 +64,7 @@ program SL_CORRELATION
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
+    call Gravity_Initialize(ifile)
 
 ! -------------------------------------------------------------------
 ! allocation of memory space

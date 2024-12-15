@@ -34,7 +34,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
     use TLAB_VARS, only: visc, schmidt, rossby
-    use TLAB_VARS, only: buoyancy, coriolis
+    use TLAB_VARS, only: coriolis
+    use Gravity, only: buoyancy
     use TLab_Arrays, only: wrk2d, wrk3d
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
@@ -42,7 +43,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use BOUNDARY_BCS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use FI_SOURCES, only: bbackground, FI_BUOYANCY
+    use Gravity, only: bbackground, Gravity_Buoyancy
 
     implicit none
 
@@ -131,7 +132,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
         if (buoyancy%active(3)) then
-            call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
+            call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
             dummy = buoyancy%vector(3)
             do ij = 1, isize_field
                 h3(ij) = h3(ij) + dummy*wrk3d(ij)
@@ -174,7 +175,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
     if (buoyancy%active(1)) then
-        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
+        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
         dummy = buoyancy%vector(1)
         do ij = 1, isize_field
             h1(ij) = h1(ij) + dummy*wrk3d(ij)
@@ -214,7 +215,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Buoyancy. Remember that buoyancy%vector contains the Froude # already.
 ! -----------------------------------------------------------------------
     if (buoyancy%active(2)) then
-        call FI_BUOYANCY(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
+        call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, bbackground)
         dummy = buoyancy%vector(2)
         do ij = 1, isize_field
             h2(ij) = h2(ij) - w(ij)*tmp3(ij) + dummy*wrk3d(ij)

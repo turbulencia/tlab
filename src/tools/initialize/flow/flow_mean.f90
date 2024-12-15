@@ -6,11 +6,12 @@ module FLOW_MEAN
     use FDM, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
     use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
-    use TLAB_VARS, only: coriolis, buoyancy
+    use TLAB_VARS, only: coriolis
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
+    use Gravity, only: buoyancy, Gravity_Hydrostatic_Enthalpy
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use Profiles
@@ -127,8 +128,7 @@ contains
                         z1_loc(j) = Profiles_Calculate(hbg, g(2)%nodes(j))
                         z2_loc(j) = Profiles_Calculate(sbg(1), g(2)%nodes(j))
                     end do
-                    ! ep contains the potential energy but it is not used in the compressible formulation
-                    call FI_HYDROSTATIC_H(g(2), z1_loc(1), ep_loc(1), t_loc(1), p_loc(1), wrk1d_loc(1))
+                    call Gravity_Hydrostatic_Enthalpy(g(2), z1_loc(:), ep_loc(:), t_loc(:), p_loc(:), wrk1d_loc(:))
                     do j = 1, jmax
                         s(:, j, :, 1) = z2_loc(j)
                         s(:, j, :, 2) = z3_loc(j)
