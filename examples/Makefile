@@ -45,9 +45,8 @@ PRJS=\
      Case62 \
      Case63
 
-     # Case12 \
-     # Case33 \
-     # Case34 \
+    #  Case12 
+    #  Case34 
 
 FILES=avg* grid* flow* scal* dns.out tlab.log dns.obs tlab.err tlab.war tlab.ini.bak tower* part* traj* residence* eps*
 

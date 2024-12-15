@@ -52,7 +52,7 @@ contains
 
         call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
-            call ScanFile_Char(bakfile, inifile, 'Main', 'TermBodyForce', 'void', sRes)               ! backwards compatibility, to be removed
+            call ScanFile_Char(bakfile, inifile, 'Main', 'TermBodyForce', 'none', sRes)               ! backwards compatibility, to be removed
         if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
         else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_EXPLICIT
         else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
