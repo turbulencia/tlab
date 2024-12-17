@@ -1,4 +1,5 @@
 ! debug code for levante where we are experiencing some problems possibly due to stripping of disks.
+! mpifort -nbs -save-temps -heap-arrays -simd -vec-threshold50 -unroll-aggressive -march=core-avx2 -mtune=core-avx2 -qopt-prefetch -O3 -ipo vmpi_io.f90
 program vmpi_io_levante
     use MPI
     implicit none
@@ -12,12 +13,15 @@ program vmpi_io_levante
     integer, parameter :: wp = dp               ! working precision
     integer, parameter :: wi = selected_int_kind(9)
 
+    integer, parameter :: sizeofreal = sizeof(1.0_wp)
+    integer, parameter :: sizeofint = sizeof(1_wi)
+
     ! using 1536 cores, 12 nodes. Decomposition along X and Z in 48x32 pencils
     integer ims_npro                            ! number of tasks
-    ! integer, parameter :: ims_npro_i = 48       ! number of tasks in X
-    ! integer, parameter :: ims_npro_k = 32       ! number of tasks in Z
-    integer, parameter :: ims_npro_i = 2       ! number of tasks in X
-    integer, parameter :: ims_npro_k = 2       ! number of tasks in Z
+    integer, parameter :: ims_npro_i = 48       ! number of tasks in X
+    integer, parameter :: ims_npro_k = 32       ! number of tasks in Z
+    !integer, parameter :: ims_npro_i = 2       ! number of tasks in X
+    !integer, parameter :: ims_npro_k = 2       ! number of tasks in Z
     integer ims_pro                             ! local task in global communicator
     integer ims_pro_i, ims_pro_k                ! local task in each directional communicator; here used only as offsets
 
@@ -43,10 +47,10 @@ program vmpi_io_levante
 
     ! initialize grid
     ny = 384
-    ! nx = 1536
-    ! nz = 1536
-    nx = 16
-    nz = 24
+    nx = 1536
+    nz = 1536
+    !nx = 16
+    !nz = 24
     nx = nx/ims_npro_i                      ! task-local number of grid points along X
     nz = nz/ims_npro_k                      ! task-local number of grid points along Z
     
@@ -61,13 +65,24 @@ program vmpi_io_levante
     ! double precission
     ! subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL8)
 
-    mpio_disp = 0
+    !mpio_disp = 0
+    mpio_disp = 1*sizeofint
     mpio_locsize = nx*ny*nz
     do iv = 1, nv
-        call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
         write (str, *) iv; str = trim(adjustl(name))//trim(adjustl(str))
-        call MPI_FILE_OPEN(MPI_COMM_WORLD, str, MPI_MODE_WRONLY+MPI_MODE_CREATE, MPI_INFO_NULL, mpio_fh, ims_err)
+
+        ! if PE 0 does this and not the others, then it hangs...
+        if ( ims_pro == 0 ) then
+           open(55,file=str,status='unknown',form='unformatted',access='stream')
+           write(55) nx*ny*nz
+           close(55)
+        end if
+
+        call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+
+        !call MPI_FILE_OPEN(MPI_COMM_WORLD, str, MPI_MODE_WRONLY+MPI_MODE_CREATE, MPI_INFO_NULL, mpio_fh, ims_err)
+        call MPI_FILE_OPEN(MPI_COMM_WORLD, str, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
 
         ! single precission
         call MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)

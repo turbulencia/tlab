@@ -11,7 +11,7 @@ if ( ${BUILD_TYPE} STREQUAL "PARALLEL" ) # compiler for parallel build
   #set(USER_Fortran_FLAGS_RELEASE  " -march=skylake-avx512 -axcommon-avx512,SSE4.2 -qopt-prefetch -O3 -ipo" )
   #set(USER_Fortran_FLAGS_RELEASE  " -axCORE-AVX2 -qopt-prefetch -O3 -ipo" )
 
-  add_definitions(-DUSE_MPI -DUSE_MPI_IO -DUSE_ALLTOALL)
+  add_definitions(-DUSE_MPI)
   set(CMAKE_BUILD_TYPE RELEASE)
 
 else() # compiler for serial build
