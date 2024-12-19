@@ -1,9 +1,9 @@
 '''
-Interpolate and concatenate up to five netCDF4 files with different vertical grids. A cubic spline interpolation is performed. All netCDF4 files need to be located in the same 
-directory and should follow the naming convention (i.e. first set: avg2000-4000.nc, avg1s2000-4000.nc,... and second set: avg4000-6000.nc, avg1s4000-6000.nc,...).
-(Note: To perform a visual inspection of the results uncomment line 70-83 and adapt it to your needs.)
+Interpolate and concatenate up to five netCDF4 files with different vertical grids. A cubic spline interpolation is performed. 
 
 Bernhard Schulz, May 2019
+Raphael Pistor, 2023
+JP Mellado, 2024, simplifying to just do it for one file. 
 '''
 
 import warnings
@@ -11,46 +11,20 @@ import netCDF4 as nc
 import numpy   as np
 import matplotlib.pyplot as plt
 import scipy.interpolate as interp
+import sys
 
-''' define iterations to be merged '''
-it_1 = '0'	    							# first index 
-it_2 = '34000'								# second index
-it_3 = '159000'								# third index
-number_scalars = 5							# maximum 5
+if ( len(sys.argv) == 1 ):
+    print("Usage: python $0 nc-file-1 nc-file-2 nc-file-out.")
+    quit()
 
-'''-----------------------------------------------------------------------------------------------------------------------'''
-'''-----------------------------------------------------------------------------------------------------------------------'''
-'''-----------------------------------------------------------------------------------------------------------------------'''
-''' load data; _1 for SMALL GRID; _2 for LARGE GRID; _12 CONCATENATED FILES '''
+file1 = sys.argv[1]
+file2 = sys.argv[2]
+fileOut = sys.argv[3]
 
-path_avg_1 = './avg' +  it_1 + '-' + it_2 + '.nc';	avg_1 = nc.Dataset(path_avg_1, 'r')
-path_avg_2 = './avg' +  it_2 + '-' + it_3 + '.nc';	avg_2 = nc.Dataset(path_avg_2, 'r')
-print( 'merge ', path_avg_1, 'with', path_avg_2 )
+print( 'Interpolate and concatenate '+file1+' with '+file2+'...' )
 
-''' create and read scalars '''
-list_scalars = ['avg1s', 'avg2s', 'avg3s', 'avg4s', 'avg5s']
-avg1s_1 = 'nan'; avg2s_1 = 'nan'; avg3s_1 = 'nan'; avg4s_1 = 'nan'; avg5s_1 = 'nan'	# create dummy varibles 
-avg1s_2 = 'nan'; avg2s_2 = 'nan'; avg3s_2 = 'nan'; avg4s_2 = 'nan'; avg5s_2 = 'nan'
-list_1 = [avg1s_1, avg2s_1, avg3s_1, avg4s_1, avg5s_1]
-list_2 = [avg1s_2, avg2s_2, avg3s_2, avg4s_2, avg5s_2]
-for idx in range(number_scalars):
-	path_1 = './' + list_scalars[idx] +  it_1 + '-' + it_2 + '.nc'
-	list_1[idx] = nc.Dataset(path_1, 'r')
-
-	path_2 = './' + list_scalars[idx] +  it_2 + '-' + it_3 + '.nc'
-	list_2[idx] = nc.Dataset(path_2, 'r')
-	print( 'interpolate and concatenate ', path_1, 'with ', path_2 )
-
-
-''' names for concatenated files '''
-avg_12 = 'avg' +  it_1 + '-' + it_3 + '.nc' 
-
-avg1s_12 = 'nan'; avg2s_12 = 'nan'; avg3s_12 = 'nan'; avg4s_12 = 'nan'; avg5s_12 ='nan'
-list_12 = [avg1s_12, avg2s_12, avg3s_12, avg4s_12, avg5s_12]
-for idx in range(number_scalars):
-	list_12[idx] = list_scalars[idx] +  it_1 + '-' + it_3 + '.nc' 
-
-print('list of variables', avg_1.variables.keys())
+avg_1 = nc.Dataset(file1, 'r')
+avg_2 = nc.Dataset(file2, 'r')
 
 '''-----------------------------------------------------------------------------------------------------------------------'''
 '''-----------------------------------------------------------------------------------------------------------------------'''
@@ -165,10 +139,6 @@ def writeNC(dictonary,name_12):
 '''-----------------------------------------------------------------------------------------------------------------------'''
 ''' run code '''
 
-''' interpolate and concatenate data '''
-dict_avg = interpolate(avg_1,avg_2,'avg')
-writeNC(dict_avg,avg_12)
+dict_avg = interpolate(avg_1,avg_2)
+writeNC(dict_avg,fileOut)
 
-for idx in range(number_scalars):
-	dictonary = interpolate(list_1[idx], list_2[idx], list_scalars[idx] )
-	writeNC(dictonary, list_12[idx])
