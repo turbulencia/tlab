@@ -10,7 +10,7 @@ program TRANSGRID
     logical flag_exit
 
     real(wp), dimension(:, :), allocatable :: wrk1d
-    real(wp) offset, factor1, factor2, dummy
+    real(wp) offset, factor1, factor2
 
     ! ###################################################################
     ! Initialize and read reference data
@@ -34,7 +34,7 @@ program TRANSGRID
     allocate (g(3)%nodes(2*g(3)%size))
     allocate (wrk1d(isize_wrk1d, 3))
 
-  CALL IO_READ_GRID(ifile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, g(1)%nodes,g(2)%nodes,g(3)%nodes, dummy)
+    CALL IO_READ_GRID(ifile, g(1)%size,g(2)%size,g(3)%size, g(1)%scale,g(2)%scale,g(3)%scale, g(1)%nodes,g(2)%nodes,g(3)%nodes)
 
     ! #######################################################################
     ! Main loop
@@ -99,7 +99,7 @@ program TRANSGRID
                     allocate (g_ref(n)%nodes(g_ref(n)%size))
                 end if
             end do
-        CALL IO_READ_GRID(ifile, g_ref(1)%size,g_ref(2)%size,g_ref(3)%size, g_ref(1)%scale,g_ref(2)%scale,g_ref(3)%scale, g_ref(1)%nodes,g_ref(2)%nodes,g_ref(3)%nodes, dummy)
+        CALL IO_READ_GRID(ifile, g_ref(1)%size,g_ref(2)%size,g_ref(3)%size, g_ref(1)%scale,g_ref(2)%scale,g_ref(3)%scale, g_ref(1)%nodes,g_ref(2)%nodes,g_ref(3)%nodes)
 
             g(direction)%size = g_ref(direction)%size
             g(direction)%scale = g_ref(direction)%scale
