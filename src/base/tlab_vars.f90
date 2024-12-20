@@ -8,9 +8,6 @@ module TLAB_VARS
 ! General options
 ! ###################################################################
     integer :: imode_sim                ! type of simulation (spatial, temporal)
-    integer :: imode_files              ! files format
-    integer :: imode_precision_files    ! whether restart files in single or double precision
-    integer :: imode_verbosity = 1      ! level of verbosity used in log files
 
     logical :: flow_on = .true.         ! calculate flow parts of the code
     logical :: scal_on = .true.         ! calculate scal parts of the code

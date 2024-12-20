@@ -32,10 +32,14 @@ module IO_FIELDS
     implicit none
     private
 
-    public :: IO_READ_FIELDS, IO_WRITE_FIELDS
-    public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
+    integer, public :: imode_files              ! files format
+    integer, public :: imode_precision_files    ! single or double precision
+
     integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
     integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
+
+    public :: IO_READ_FIELDS, IO_WRITE_FIELDS
+    public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
 
     type subarray_dt
         sequence
@@ -151,7 +155,6 @@ contains
 #define LOC_STATUS 'old'
 
     subroutine IO_READ_FIELDS(fname, iheader, nx, ny, nz, nfield, iread, a)
-        use TLAB_VARS, only: imode_files, imode_precision_files
         use TLAB_VARS, only: itime, rtime, visc
 
         character(LEN=*) fname
@@ -373,7 +376,7 @@ contains
 #define LOC_STATUS 'unknown'
 
     subroutine IO_WRITE_FIELDS(fname, iheader, nx, ny, nz, nfield, a)
-        use TLAB_VARS, only: imode_files, imode_precision_files, imode_eqns
+        use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: itime, rtime
         use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach
         use TLAB_VARS, only: schmidt

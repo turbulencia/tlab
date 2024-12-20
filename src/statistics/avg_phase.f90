@@ -338,7 +338,6 @@ CONTAINS
       integer(wi) :: isize, iheader, ifld, ifld_srt, ifld_end
       character(len=10) :: start, end, fld_id
       integer(wi) :: arr_planes, header_offset, ioffset_local
-      character(len=100) :: filename
       integer(wi) :: nxy
 
 #ifdef USE_MPI

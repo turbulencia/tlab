@@ -3,7 +3,6 @@
 
 module TLab_WorkFlow
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
-    use TLAB_VARS, only: imode_verbosity
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
@@ -17,6 +16,7 @@ module TLab_WorkFlow
 
     character*128 :: line
 
+    integer, public :: imode_verbosity = 1      ! level of verbosity used in log files
     public :: TLab_Start
     public :: TLab_Stop
     public :: TLab_Write_ASCII

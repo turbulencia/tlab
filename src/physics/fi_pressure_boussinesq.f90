@@ -25,19 +25,17 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
     implicit none
 
-
     real(wp), intent(in) :: q(isize_field, 3)
     real(wp), intent(in) :: s(isize_field, *)
     real(wp), intent(out) :: p(isize_field)
     real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field)
     real(wp), intent(inout) :: tmp(isize_field, inb_txc - 3)
-    integer(wi),  intent(in) :: decomposition
+    integer(wi), intent(in) :: decomposition
 
     target q, tmp, s
 ! -----------------------------------------------------------------------
     integer(wi) :: bcs(2, 2)
     integer(wi) :: iq
-    integer(wi) :: srt
     integer(wi) :: i
 
 ! -----------------------------------------------------------------------
@@ -45,6 +43,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
 ! -----------------------------------------------------------------------
 #ifdef USE_BLAS
+    integer(wi) :: srt
     integer ILEN
 #endif
 ! -----------------------------------------------------------------------
@@ -90,7 +89,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 ! If IBM, then use modified fields for derivatives
     if (imode_ibm == 1) ibm_burgers = .true.
 
-    if (decomposition == DCMP_ADVDIFF .OR. decomposition == DCMP_TOTAL .OR. decomposition == DCMP_ADVECTION) then
+    if (decomposition == DCMP_ADVDIFF .or. decomposition == DCMP_TOTAL .or. decomposition == DCMP_ADVECTION) then
         !  Advection and diffusion terms
         call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
         tmp3 = tmp3 + p
@@ -115,7 +114,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
     end if
 
-    if (decomposition == DCMP_ADVECTION .OR. decomposition == DCMP_DIFFUSION) then
+    if (decomposition == DCMP_ADVECTION .or. decomposition == DCMP_DIFFUSION) then
         tmp9 = 0.0_wp
         ! Sepereating Diffusion
         ! NSE X-Comp
@@ -128,7 +127,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
         ! NSE Y-Comp
         call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, tmp9, p, tmp1)
-        tmp7 = tmp7 + p ! Diffusion d2v/dx2 + d2v/dy2 
+        tmp7 = tmp7 + p ! Diffusion d2v/dx2 + d2v/dy2
         call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, tmp9, p, tmp2, tmp1)
         tmp6 = tmp6 + p
         call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, tmp9, p, tmp2, tmp1)
@@ -158,10 +157,10 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
     ! Coriolis Forcing term
     if (decomposition == DCMP_CORIOLIS) then
-        call FI_CORIOLIS(coriolis,imax, jmax, kmax, q, tmp)
-        tmp3        => tmp(:, 1)
-        tmp4        => tmp(:, 2)
-        tmp5        => tmp(:, 3)
+        call FI_CORIOLIS(coriolis, imax, jmax, kmax, q, tmp)
+        tmp3 => tmp(:, 1)
+        tmp4 => tmp(:, 2)
+        tmp5 => tmp(:, 3)
     end if
 
     ! Buoyancy Forcing term
@@ -184,16 +183,16 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
                     call DAXPY(ILEN, dummy, tmp1(srt), 1, tmp(srt, iq), 1)
 #else
                     do i = 1, isize_field
-                            tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
+                        tmp(i, iq) = tmp(i, iq) + dummy*tmp1(i)
                     end do
 #endif
                 end if
             end if
         end do
 
-        tmp3        => tmp(:, 1)
-        tmp4        => tmp(:, 2)
-        tmp5        => tmp(:, 3)
+        tmp3 => tmp(:, 1)
+        tmp4 => tmp(:, 2)
+        tmp5 => tmp(:, 3)
 
     end if
 
@@ -269,7 +268,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     !     call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
     ! end select
     call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-    
+
     ! filter pressure p
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
         call OPR_FILTER(imax, jmax, kmax, PressureFilter, p, tmp)
