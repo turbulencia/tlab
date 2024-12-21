@@ -23,6 +23,7 @@ program VISUALS
     use TLabMPI_PROCS
 #endif
     use FDM, only: g,  FDM_Initialize
+    use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
@@ -346,7 +347,7 @@ program VISUALS
 
     call OPR_Elliptic_Initialize(ifile)
 
-    call TLab_Initialize_Background() ! Initialize thermodynamic quantities
+    call TLab_Initialize_Background(ifile) ! Initialize thermodynamic quantities
 
     if (fourier_on .and. inb_txc >= 1) then ! For Poisson solver
         call OPR_FOURIER_INITIALIZE()

@@ -3,9 +3,9 @@
 
 module SCAL_LOCAL
     use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
-    use TLab_Types, only: profiles_dt, discrete_dt
+    use TLab_Types, only: discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal
-    use TLAB_VARS, only: sbg
+    use Tlab_Background, only: sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d
@@ -13,7 +13,8 @@ module SCAL_LOCAL
     use FDM, only: g
     use IO_FIELDS
     use Averages, only: AVG1V2D
-    use Profiles
+    use Profiles, only: profiles_dt, Profiles_ReadBlock, Profiles_Calculate
+    use Profiles, only: PROFILE_NONE, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_ANTISYM, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_SURFACE, PROFILE_TANH_COS
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif

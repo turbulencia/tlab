@@ -17,6 +17,7 @@ program INISCAL
 #endif
     use FDM, only: g,  FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
@@ -59,7 +60,7 @@ program INISCAL
 
     call Radiation_Initialize(ifile)
 
-    call TLab_Initialize_Background()
+    call TLab_Initialize_Background(ifile)
     do is = 1, size(IniS)
         if (IniS(is)%relative) IniS(is)%ymean = g(2)%nodes(1) + g(2)%scale*IniS(is)%ymean_rel
     end do

@@ -5,7 +5,7 @@ module FLOW_MEAN
     use TLab_Constants, only: wp, wi, efile
     use FDM, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
-    use TLAB_VARS, only: qbg, pbg, rbg, tbg, hbg, sbg
+    use Tlab_Background, only: qbg, pbg, rbg, tbg, hbg, sbg
     use TLAB_VARS, only: coriolis
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk3d
@@ -128,7 +128,7 @@ contains
                         z1_loc(j) = Profiles_Calculate(hbg, g(2)%nodes(j))
                         z2_loc(j) = Profiles_Calculate(sbg(1), g(2)%nodes(j))
                     end do
-                    call Gravity_Hydrostatic_Enthalpy(g(2), z1_loc(:), ep_loc(:), t_loc(:), p_loc(:), wrk1d_loc(:))
+                    call Gravity_Hydrostatic_Enthalpy(g(2), z1_loc(:), ep_loc(:), t_loc(:), p_loc(:), pbg%ymean, pbg%mean, wrk1d_loc(:))
                     do j = 1, jmax
                         s(:, j, :, 1) = z2_loc(j)
                         s(:, j, :, 2) = z3_loc(j)
@@ -277,8 +277,9 @@ contains
                 end do
 
                 ! 2D distribution of density
-                call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
-                                          g(1)%nodes, g(2)%nodes, s, p, rho_vi(1), u_vi(1), aux1(1), rho, aux2(1), aux3(1), aux4(1))
+                ! TO BE CHECKED
+                ! call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
+                !                           g(1)%nodes, g(2)%nodes, s, p, rho_vi(1), u_vi(1), aux1(1), rho, aux2(1), aux3(1), aux4(1))
 
                 do k = 2, kmax
                     rho(:, :, k) = rho(:, :, 1)

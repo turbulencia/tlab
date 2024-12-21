@@ -122,7 +122,6 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine BOUNDARY_BCS_INITIALIZE()
-        use TLab_Types, only: profiles_dt
         use TLab_Constants, only: tag_flow, tag_scal, lfile, efile
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -130,12 +129,12 @@ contains
         use TLAB_VARS, only: imode_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use FDM, only: g
-        use TLAB_VARS, only: pbg, qbg
+        use Tlab_Background, only: pbg, qbg
         use Thermodynamics, only: CRATIO_INV
         use THERMO_THERMAL
         use THERMO_CALORIC
         use BOUNDARY_BUFFER
-        use Profiles
+        use Profiles, only: profiles_dt, Profiles_Calculate, PROFILE_TANH
 #ifdef USE_MPI
         use MPI
         use TLAB_VARS, only: inb_scal_array

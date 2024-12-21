@@ -7,7 +7,10 @@
 !  Nonperiodic characteristic BCs at xmin and xmax
 module BOUNDARY_BCS_COMPRESSIBLE
     use TLab_Constants, only: efile, wp, wi
-    use TLAB_VARS
+    use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array
+    use TLAB_VARS, only: inb_flow, inb_scal, imode_eqns
+    use TLAB_VARS, only: imode_sim, scal_on, flow_on
+    use Tlab_Background, only: qbg
     use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture, CRATIO_INV, THERMO_AI

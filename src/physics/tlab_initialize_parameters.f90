@@ -8,23 +8,19 @@
 
 !########################################################################
 !# Reading general data from file tlab.ini, setting up general parameters
-!# and doing cross-check of these general data.
 !########################################################################
 subroutine TLab_Initialize_Parameters(inifile)
-
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MajorVersion, MinorVersion
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, imode_verbosity
     use TLAB_VARS, only: imode_sim
-    use IO_FIELDS, only: imode_files, imode_precision_files
     use TLAB_VARS, only: flow_on, scal_on, fourier_on, stagger_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use FDM, only: g
+    use IO_FIELDS, only: imode_files, imode_precision_files
     use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
     use TLab_Spatial
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, imode_verbosity
-    use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
-
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif

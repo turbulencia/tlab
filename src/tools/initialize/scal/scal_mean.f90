@@ -6,11 +6,11 @@ subroutine SCAL_MEAN(is, s)
     use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax, inb_wrk2d
     use TLAB_VARS, only: imode_sim
-    use TLAB_VARS, only: pbg, rbg, tbg, sbg, qbg
+    use Tlab_Background, only: sbg, pbg, tbg, rbg, qbg
     use TLab_Arrays, only: wrk2d
     use TLab_Pointers_3D, only: p_wrk1d
     use THERMO_THERMAL
-    use Profiles
+    use Profiles, only: Profiles_Calculate, PROFILE_NONE
     implicit none
 
     integer(wi) is
@@ -70,18 +70,19 @@ subroutine SCAL_MEAN(is, s)
         end do
 
         ! 2D distributions of density and velocity
-        if (rbg%delta /= 0.0_wp) then
-            call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
-                                      g(1)%nodes, g(2)%nodes, s, p_loc(1, 1), rho_vi(1), u_vi(1), aux1(1), rho_loc(1, 1), &
-                                      aux2(1), aux3(1), aux4(1))
-        end if
-        call FLOW_SPATIAL_VELOCITY(imax, jmax, qbg(1), qbg(1)%diam, &
-                                   qbg(1)%parameters(2), qbg(1)%parameters(3), qbg(1)%parameters(4), &
-                     g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), rho_loc(1, 1), u_loc(1, 1), v_loc(1, 1), aux1(1), p_wrk2d(1, 1, 6))
-        ! 2D distribution of scalar
-        call FLOW_SPATIAL_SCALAR(imax, jmax, sbg(is), sbg(is)%diam, sbg(is)%diam, &
-                                 sbg(is)%parameters(2), sbg(is)%parameters(3), sbg(is)%parameters(4), &
-                                 g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), z_vi(1), rho_loc(1, 1), u_loc(1, 1), s, p_wrk2d(1, 1, 6))
+        ! TO BE CHECKED
+        ! if (rbg%delta /= 0.0_wp) then
+        !     call FLOW_SPATIAL_DENSITY(imax, jmax, tbg, qbg(1), &
+        !                               g(1)%nodes, g(2)%nodes, s, p_loc(:, 1), rho_vi(1), u_vi(1), aux1(1), rho_loc(1, 1), &
+        !                               aux2(1), aux3(1), aux4(1))
+        ! end if
+        ! call FLOW_SPATIAL_VELOCITY(imax, jmax, qbg(1), qbg(1)%diam, &
+        !                            qbg(1)%parameters(2), qbg(1)%parameters(3), qbg(1)%parameters(4), &
+        !              g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), rho_loc(1, 1), u_loc(1, 1), v_loc(1, 1), aux1(1), p_wrk2d(1, 1, 6))
+        ! ! 2D distribution of scalar
+        ! call FLOW_SPATIAL_SCALAR(imax, jmax, sbg(is), sbg(is)%diam, sbg(is)%diam, &
+        !                          sbg(is)%parameters(2), sbg(is)%parameters(3), sbg(is)%parameters(4), &
+        !                          g(1)%nodes, g(2)%nodes, rho_vi(1), u_vi(1), z_vi(1), rho_loc(1, 1), u_loc(1, 1), s, p_wrk2d(1, 1, 6))
         if (g(3)%size > 1) then
             do k = 2, kmax
                 s(:, :, k) = s(:, :, 1)

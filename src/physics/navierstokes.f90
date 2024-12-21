@@ -3,17 +3,15 @@
 
 subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_PROF, MAX_VARS
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
     use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
-    use TLAB_VARS, only: qbg, sbg, pbg, rbg, tbg, hbg
     use TLAB_VARS, only: coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
     use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     use TLab_Spatial
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use Profiles, only: Profiles_ReadBlock, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
     implicit none
 
     character(len=*), intent(in) :: inifile
@@ -263,96 +261,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
 ! This subsidence type is implemented in opr_burgers_y only
 ! to speed up calculation
     if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
-
-! ###################################################################
-    block = 'Scalar'
-
-    call TLab_Write_ASCII(bakfile, '#')
-    call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-    do is = 1, MAX_VARS
-        write (lstr, *) is
-        call Profiles_ReadBlock(bakfile, inifile, block, 'Scalar'//trim(adjustl(lstr)), sbg(is))
-    end do
-
-    if (imode_sim == DNS_MODE_SPATIAL) then
-        call TLab_Write_ASCII(bakfile, '#ThickA=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickB=<value>')
-        call TLab_Write_ASCII(bakfile, '#Flux=<value>')
-
-        do is = 1, MAX_VARS
-            write (lstr, *) is
-            call ScanFile_Real(bakfile, inifile, block, 'ThickA'//trim(adjustl(lstr)), '0.14', sbg(is)%parameters(2))
-            call ScanFile_Real(bakfile, inifile, block, 'ThickB'//trim(adjustl(lstr)), '2.0', sbg(is)%parameters(3))
-            call ScanFile_Real(bakfile, inifile, block, 'Flux'//trim(adjustl(lstr)), '0.94', sbg(is)%parameters(4))
-        end do
-    end if
-
-! ###################################################################
-    block = 'Flow'
-
-    call TLab_Write_ASCII(bakfile, '#')
-    call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityX', qbg(1))
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityY', qbg(2))
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'VelocityZ', qbg(3))
-
-    ! backwards compatilibity; originally, all velocity data was contained in block 'Velocity' except for the mean value
-    call ScanFile_Char(bakfile, inifile, 'Flow', 'ProfileVelocity', 'void', sRes)
-    if (trim(adjustl(sRes)) /= 'void') then
-        call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Velocity', qbg(1))
-        call TLab_Write_ASCII(wfile, 'Update tag Flow.Velocity to Flow.VelocityX.')
-    end if
-
-    ! Consistency check
-    if (any([PROFILE_EKMAN_U, PROFILE_EKMAN_U_P] == qbg(1)%type)) then
-        qbg(3) = qbg(1)
-        qbg(3)%type = PROFILE_EKMAN_V
-    end if
-
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Pressure', pbg)
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Density', rbg)
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Temperature', tbg)
-    call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
-
-! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
-    ! if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-    !     idummy=0
-    !     if (pbg%type == PROFILE_NONE) idummy=idummy+1
-    !     if (rbg%type == PROFILE_NONE) idummy=idummy+1
-    !     if (tbg%type == PROFILE_NONE) idummy=idummy+1
-    !     if (hbg%type == PROFILE_NONE) idummy=idummy+1
-    !     if (idummy /= 2) then
-    !         call TLab_Write_ASCII(efile, __FILE__//'. Specify only 2 thermodynamic profiles.')
-    !         call TLab_Stop(DNS_ERROR_OPTION)
-    !     end if
-    ! end if
-
-    if (imode_sim == DNS_MODE_SPATIAL) then     ! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
-        call TLab_Write_ASCII(bakfile, '#ThickAVelocity=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickBVelocity=<value>')
-        call TLab_Write_ASCII(bakfile, '#FluxVelocity=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickADensity=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickBDensity=<value>')
-        call TLab_Write_ASCII(bakfile, '#FluxDensity=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickATemperature=<value>')
-        call TLab_Write_ASCII(bakfile, '#ThickBTemperature=<value>')
-        call TLab_Write_ASCII(bakfile, '#FluxTemperature=<value>')
-
-! Bradbury profile is the default (x0=a*b)
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickAVelocity', '0.1235', qbg(1)%parameters(2))
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBVelocity', '-0.873', qbg(1)%parameters(3))
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxVelocity', '0.96', qbg(1)%parameters(4))
-
-! Ramaprian is the default (x0=a*b)
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickADensity', '0.14', rbg%parameters(2))
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBDensity', '2.0', rbg%parameters(3))
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxDensity', '0.94', rbg%parameters(4))
-
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickATemperature', '0.14', tbg%parameters(2))
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBTemperature', '2.0', tbg%parameters(3))
-        call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxTemperature', '0.94', tbg%parameters(4))
-
-    end if
 
 ! ###################################################################
     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &

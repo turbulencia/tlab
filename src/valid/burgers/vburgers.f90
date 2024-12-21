@@ -18,6 +18,7 @@ program VBURGERS
     use OPR_PARTIAL
     use OPR_BURGERS
     use OPR_FILTERS
+    use TLab_Background, only: TLab_Initialize_Background
     implicit none
 
 #ifdef USE_MPI
@@ -55,7 +56,7 @@ program VBURGERS
     call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
     call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
 
-    call TLab_Initialize_Background()
+    call TLab_Initialize_Background(ifile)
 
     bcs = 0
 

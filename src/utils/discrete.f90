@@ -5,7 +5,7 @@ subroutine DISCRETE_READBLOCK(bakfile, inifile, block, var)
     use TLab_Types, only: discrete_dt
     use TLab_Constants, only: wp, wi, efile, MAX_PARS, MAX_MODES
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use Profiles
+    use Profiles, only: PROFILE_NONE, PROFILE_TANH_COS, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM
     implicit none
 
     character(LEN=*), intent(in) :: bakfile, inifile, block

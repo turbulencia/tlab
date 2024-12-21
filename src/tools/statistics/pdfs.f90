@@ -15,6 +15,7 @@ program PDFS
     use TLabMPI_PROCS
 #endif
     use FDM, only: g,  FDM_Initialize
+    use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
@@ -257,7 +258,7 @@ program PDFS
 
     call OPR_Elliptic_Initialize(ifile)
 
-    call TLab_Initialize_Background()  ! Initialize thermodynamic quantities
+    call TLab_Initialize_Background(ifile)  ! Initialize thermodynamic quantities
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))

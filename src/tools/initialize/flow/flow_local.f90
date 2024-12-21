@@ -4,12 +4,13 @@
 module FLOW_LOCAL
     use TLab_Constants, only: efile, lfile, wfile
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN
-    use TLab_Types, only: profiles_dt, discrete_dt
+    use TLab_Types, only: discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: inb_wrk2d, inb_txc
     use TLAB_VARS, only: stagger_on
     use FDM, only: g
-    use TLAB_VARS, only: qbg, tbg, hbg, PressureFilter
+    use Tlab_Background, only: tbg, hbg
+    use TLAB_VARS, only: PressureFilter
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use THERMO_THERMAL
@@ -17,7 +18,8 @@ module FLOW_LOCAL
     use THERMO_ANELASTIC
     use IO_FIELDS
     use Averages, only: AVG1V2D
-    use Profiles
+    use Profiles, only: profiles_dt, Profiles_ReadBlock, Profiles_Calculate
+    use Profiles, only: PROFILE_NONE, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_ANTISYM, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_SURFACE, PROFILE_PARABOLIC_SURFACE
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif

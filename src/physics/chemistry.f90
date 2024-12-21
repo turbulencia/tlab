@@ -27,17 +27,17 @@ contains
     !########################################################################
     !########################################################################
     subroutine Chemistry_Initialize(inifile)
-        use TLab_Types, only: profiles_dt
-        use TLAB_VARS, only: damkohler, sbg
-        use FDM, only: g
+        use Profiles, only: profiles_dt
+        use TLAB_VARS, only: damkohler
+        ! use FDM, only: g
         use Profiles
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
-        integer(wi) idummy, is, j
-        type(profiles_dt) prof_loc
+        integer(wi) idummy, is !, j
+        ! type(profiles_dt) prof_loc
 
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
@@ -74,15 +74,17 @@ contains
 
         select case (chemistryProps%type)
         case (TYPE_LAYEREDRELAXATION)
-            prof_loc = profiles_dt(type=PROFILE_TANH)
-            prof_loc%ymean = sbg(is)%ymean
-            prof_loc%thick = -chemistryProps%parameters(3)*0.5_wp
-            prof_loc%mean = 0.5_wp
+            ! to be written in terms of local data in this block
+            
+            ! prof_loc = profiles_dt(type=PROFILE_TANH)
+            ! prof_loc%ymean = sbg(is)%ymean
+            ! prof_loc%thick = -chemistryProps%parameters(3)*0.5_wp
+            ! prof_loc%mean = 0.5_wp
 
-            allocate (relaxation_strength(g(2)%size))
-            do j = 1, g(2)%size
-                relaxation_strength(j) = Profiles_Calculate(prof_loc, g(2)%nodes(j) - chemistryProps%parameters(2))
-            end do
+            ! allocate (relaxation_strength(g(2)%size))
+            ! do j = 1, g(2)%size
+            !     relaxation_strength(j) = Profiles_Calculate(prof_loc, g(2)%nodes(j) - chemistryProps%parameters(2))
+            ! end do
 
         end select
 

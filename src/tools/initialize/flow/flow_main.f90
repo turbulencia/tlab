@@ -21,6 +21,7 @@ program INIFLOW
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use TLab_Background, only: TLab_Initialize_Background
     use THERMO_THERMAL
     use THERMO_CALORIC
     use Gravity, only: Gravity_Initialize
@@ -52,7 +53,7 @@ program INIFLOW
     call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
     call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
-    call TLab_Initialize_Background()
+    call TLab_Initialize_Background(ifile)
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
 
     if (flag_u /= 0) then ! Initialize Poisson Solver

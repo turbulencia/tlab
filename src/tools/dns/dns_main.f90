@@ -4,20 +4,25 @@
 program DNS
 
     use TLab_Constants, only: ifile, efile, wfile, lfile, gfile, tag_flow, tag_scal, tag_part, tag_traj
-    use TLAB_VARS
-    use FDM, only: g,  FDM_Initialize
-    use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
+    use TLAB_VARS, only: imode_sim, fourier_on, scal_on, flow_on
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: itime
+    use TLAB_VARS, only: damkohler
+    use TLAB_VARS, only: FilterDomain, Dealiasing, PressureFilter
+    use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
+    use FDM, only: g,  FDM_Initialize
+    use TLab_Arrays
 #ifdef USE_MPI
     use TLabMPI_PROCS
 #endif
-    use Thermodynamics
+    use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
-    use Radiation
-    use Microphysics
-    use Chemistry
-    use SpecialForcing
+    use Radiation, only: Radiation_Initialize
+    use Microphysics, only: Microphysics_Initialize
+    use Chemistry, only: Chemistry_Initialize
+    use SpecialForcing, only: SpecialForcing_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -86,7 +91,7 @@ program DNS
 
     call SpecialForcing_Initialize(ifile)
 
-    call TLab_Initialize_Background()
+    call TLab_Initialize_Background(ifile)
 
     call TLab_Allocate_Real(__FILE__, hq, [isize_field, inb_flow], 'flow-rhs')
     call TLab_Allocate_Real(__FILE__, hs, [isize_field, inb_scal], 'scal-rhs')

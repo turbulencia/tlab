@@ -5,7 +5,6 @@
 program INIPART
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
-    use TLab_Types, only: profiles_dt
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
@@ -15,11 +14,12 @@ program INIPART
 #endif
     use FDM, only: g,  FDM_Initialize
     use Thermodynamics
+    use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
-    use Profiles
+    use Profiles, only: profiles_dt, Profiles_ReadBlock
 
     implicit none
 
@@ -76,7 +76,7 @@ program INIPART
 
         ! problem if I enter with inb_scal_array = 0
         inb_scal_array = inb_scal
-        call TLab_Initialize_Background()
+        call TLab_Initialize_Background(ifile)
         if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
 
         call Particle_Initialize_Fields()
@@ -100,7 +100,7 @@ contains
         use TLab_Pointers, only: pointers_dt
         use TLab_Pointers_3D, only: pointers3d_dt
         use TLAB_VARS, only: imax, jmax, kmax, inb_scal
-        use TLAB_VARS, only: sbg
+        use Tlab_Background, only: sbg
         use FDM, only: g
         use PARTICLE_TYPES, only: particle_dt
         use PARTICLE_VARS

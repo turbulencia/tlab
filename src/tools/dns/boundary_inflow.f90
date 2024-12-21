@@ -19,7 +19,8 @@ module BOUNDARY_INFLOW
     use TLAB_VARS, only: imode_eqns
     use FDM, only: g, FDM_Initialize
     use TLAB_VARS, only: rtime, itime
-    use TLAB_VARS, only: visc, damkohler, qbg
+    use TLAB_VARS, only: visc, damkohler
+    use TLab_Background, only: qbg
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture, itransport
@@ -322,9 +323,8 @@ contains
     !########################################################################
     !########################################################################
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
-        use TLab_Types, only: profiles_dt
+        use Profiles, only: profiles_dt, Profiles_Calculate, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM
         use TLab_Constants, only: pi_wp
-        use Profiles
 
         real(wp) etime
         real(wp), intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)

@@ -2,13 +2,28 @@
 
 ! Definining functions f=f(x) to be used in bcs, ics, and reference background profiles
 module Profiles
-    use TLab_Types,     only: profiles_dt
-    use TLab_Constants, only: wp, pi_wp, efile, wfile
+    use TLab_Constants, only: wp, i4_, pi_wp, efile, wfile, MAX_PARS
     use TLab_WorkFlow,     only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
     public :: Profiles_ReadBlock, Profiles_Calculate
+
+    type, public :: profiles_dt                             ! I wonder if this should be in module profiles, which needs to change dependecies...
+        sequence
+        integer type
+        integer :: padding = 0_i4_
+        logical :: relative = .true.                ! use reference spatial position relative to the extent of the domain
+        real(wp) :: mean = 0.0_wp                   ! mean value of f
+        real(wp) :: delta = 1.0_wp                  ! increment of f
+        real(wp) :: ymean = 0.0_wp                  ! reference spatial position at which f changes      
+        real(wp) :: ymean_rel = 0.5_wp              ! same but relative to the extent of the domain
+        real(wp) :: thick = 1.0_wp                  ! spatial interval over which f changes
+        real(wp) :: lslope = 0.0_wp                 ! slope of f below the ymean
+        real(wp) :: uslope = 0.0_wp                 ! slope of f above ymean
+        real(wp) :: diam = 0.0_wp                   ! diameter
+        real(wp) :: parameters(MAX_PARS) = 0.0_wp   ! additional parameters
+    end type profiles_dt
 
     integer, parameter, public :: PROFILE_NONE               = 0
     integer, parameter, public :: PROFILE_LINEAR             = 1

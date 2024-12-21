@@ -303,8 +303,6 @@ contains
     !# pbg%mean. Nondimensional with C_{p,0}.
     !########################################################################
     subroutine THERMO_ENTROPY(ijmax, z1, T, p, result)
-        use TLAB_VARS, only: pbg
-
         integer(wi), intent(in) :: ijmax
         real(wp), intent(in) :: z1(ijmax, *), T(ijmax), p(ijmax)
         real(wp), intent(out) :: result(ijmax)
@@ -313,7 +311,8 @@ contains
         select case (imixture)
         case (MIXT_TYPE_NONE)
             dummy = (gama0 - 1.0_wp)/gama0
-            result(:) = log(T(:)/(p(:)/pbg%mean)**dummy)
+            ! result(:) = log(T(:)/(p(:)/pbg%mean)**dummy)
+            result(:) = log(T(:)/p(:)**dummy)
 
         case (MIXT_TYPE_AIRWATER)       ! to be reformulated in terms of Cd, Rd, ...
             do ij = 1, ijmax
@@ -341,7 +340,8 @@ contains
                         result(ij) = result(ij) - CRATIO_INV*YMASS(is)*THERMO_R(is)*log(XMOL_I)
                     end if
                 end do
-                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
+                ! result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
+                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij))
 
                 result(ij) = result(ij) + z1(ij, 2)*(THERMO_AI(7, im, 3) + THERMO_AI(1, 1, 3)*log(T(ij)))
 
@@ -376,7 +376,8 @@ contains
                         result(ij) = result(ij) - CRATIO_INV*YMASS(is)*THERMO_R(is)*log(XMOL_I)
                     end if
                 end do
-                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
+                ! result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij)/pbg%mean)
+                result(ij) = result(ij) - CRATIO_INV*RMEAN*log(p(ij))
             end do
 
         end select

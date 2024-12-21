@@ -101,14 +101,13 @@ contains
 
     !########################################################################
     ! Compute hydrostatic equilibrium from profiles s=(h,q_t) where h is the enthalpy
-    ! Evaluate the integral \int_pbg%ymean^y dx/H(x), where H(x) is the scale height in the system
+    ! Evaluate the integral \int_yref^y dx/H(x), where H(x) is the scale height in the system
     !########################################################################
-    subroutine Gravity_Hydrostatic_Enthalpy(g, s, ep, T, p, wrk1d)
+    subroutine Gravity_Hydrostatic_Enthalpy(g, s, ep, T, p, yref, pref, wrk1d)
         use TLab_Constants, only: BCS_MIN
         use FDM, only: grid_dt
-        use TLAB_VARS, only: inb_scal_array
         use TLAB_VARS, only: imode_eqns
-        use TLAB_VARS, only: pbg, damkohler
+        use TLAB_VARS, only: damkohler
         use Thermodynamics, only: imixture, GRATIO, scaleheightinv
         use THERMO_ANELASTIC
         use THERMO_AIRWATER
@@ -118,6 +117,7 @@ contains
         type(grid_dt), intent(in) :: g
         real(wp), dimension(g%size, inb_scal_array), intent(inout) :: s      ! We calculate equilibrium composition
         real(wp), dimension(g%size), intent(out) :: ep, T, p
+        real(wp), intent(in) :: yref, pref
         real(wp), dimension(g%size, 2), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
@@ -127,8 +127,8 @@ contains
         ! ###################################################################
         ! Get the center
         do j = 1, g%size
-            if (g%nodes(j) <= pbg%ymean .and. &
-                g%nodes(j + 1) > pbg%ymean) then
+            if (g%nodes(j) <= yref .and. &
+                g%nodes(j + 1) > yref) then
                 jcenter = j
                 exit
             end if
@@ -136,10 +136,10 @@ contains
 
         ! specific potential energy
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-            ep(:) = (g%nodes - pbg%ymean)*GRATIO*scaleheightinv
+            ep(:) = (g%nodes - yref)*GRATIO*scaleheightinv
             epbackground(:) = ep(:)
         else
-            ep(:) = -(g%nodes - pbg%ymean)*buoyancy%vector(2)
+            ep(:) = -(g%nodes - yref)*buoyancy%vector(2)
         end if
 
         ! hydrstatic pressure
@@ -151,7 +151,7 @@ contains
 
         niter = 10
 
-        p(:) = pbg%mean             ! initialize iteration
+        p(:) = pref             ! initialize iteration
         if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then       ! Get ql, if necessary
             s(:, 3) = 0.0_wp
         end if
@@ -169,15 +169,15 @@ contains
             p(1) = 0.0_wp
             call OPR_Integral1(1, g, r_aux(:), p, BCS_MIN)
 
-            ! Calculate pressure and normalize s.t. p=pbg%mean at y=pbg%ymean
+            ! Calculate pressure and normalize s.t. p=pref at y=yref
             p(:) = exp(p(:))
-            if (abs(pbg%ymean - g%nodes(jcenter)) == 0.0_wp) then
+            if (abs(yref - g%nodes(jcenter)) == 0.0_wp) then
                 dummy = p(jcenter)
             else
                 dummy = p(jcenter) + (p(jcenter + 1) - p(jcenter)) &
-                        /(g%nodes(jcenter + 1) - g%nodes(jcenter))*(pbg%ymean - g%nodes(jcenter))
+                        /(g%nodes(jcenter + 1) - g%nodes(jcenter))*(yref - g%nodes(jcenter))
             end if
-            dummy = pbg%mean/dummy
+            dummy = pref/dummy
             p(:) = dummy*p(:)
 
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
