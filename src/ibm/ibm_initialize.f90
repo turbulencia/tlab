@@ -189,9 +189,8 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
     use IBM_VARS
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use IO_FIELDS, only: imode_files
+    use IO_FIELDS, only: imode_files, IO_FLOW, IO_WRITE_FIELDS
     use TLab_Constants, only: wp, wi
-    use IO_FIELDS
 
     implicit none
 
