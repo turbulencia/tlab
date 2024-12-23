@@ -13,13 +13,6 @@ module TLabMPI_PROCS
     implicit none
     private
 
-    ! type, public :: mpi_transpose_dt
-    !     sequence
-    !     integer :: type_s, type_r                           ! send/recv types
-    !     integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
-    !     integer(wi) :: size
-    ! end type mpi_transpose_dt
-
     ! Global variables and procedures
     public :: TLabMPI_Initialize
     public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
@@ -31,7 +24,15 @@ module TLabMPI_PROCS
     public :: TLabMPI_PANIC
     public :: TLabMPI_WRITE_PE0_SINGLE
 
-    ! Local variables and procedures
+    ! Local variables and procedures; mainly for the transposition
+
+    ! type, public :: mpi_transpose_dt
+    !     sequence
+    !     integer :: type_s, type_r                           ! send/recv types
+    !     integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
+    !     integer(wi) :: size
+    ! end type mpi_transpose_dt
+
     integer(wi) :: ims_sizBlock_i, ims_sizBlock_k
 
     integer :: ims_trp_type_i, ims_trp_type_k
