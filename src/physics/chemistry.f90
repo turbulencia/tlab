@@ -30,7 +30,6 @@ contains
         use Profiles, only: profiles_dt
         use TLAB_VARS, only: damkohler
         ! use FDM, only: g
-        use Profiles
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
