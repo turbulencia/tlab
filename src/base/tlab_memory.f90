@@ -573,7 +573,7 @@ contains
     subroutine Tlab_Allocate_Log_SHORT(log_file, dims, s)
         integer(wi), intent(IN) :: dims(:)
         character(len=*), intent(IN) :: log_file, s
-        integer(longi) :: dims_long(size(dims))
+        ! integer(longi) :: dims_long(size(dims))
         integer id
         !#####################################################################
 
@@ -582,10 +582,10 @@ contains
             call TLAB_ALLOCATE_ERR('TLAB_ALLOCATE_LOG', efile, s)
         end if
 
-        do id = 1, size(dims)
-            dims_long(id) = dims(id)
-        end do
-        call Tlab_Allocate_Log_LONG(log_file, dims_long, s)
+        ! do id = 1, size(dims)
+        !     dims_long(id) = dims(id)
+        ! end do
+        ! call Tlab_Allocate_Log_LONG(log_file, dims_long, s)
 
         if (any(dims == 0)) return      ! do not print out lines when allocation a zero-space array
 

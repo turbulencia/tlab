@@ -171,7 +171,7 @@ contains
         allocate (ims_status(MPI_STATUS_SIZE, 2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
         allocate (ims_request(2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
 
-        call TLab_Allocate_Real(__FILE__, wrk_mpi, [isize_wrk3d], 'tmp-mpi')
+        call TLab_Allocate_Real(__FILE__, wrk_mpi, [isize_wrk3d], 'wrk-mpi')
 
         ! #######################################################################
         call TLab_Write_ASCII(lfile, 'Creating MPI communicators.')
