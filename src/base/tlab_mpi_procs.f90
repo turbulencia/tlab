@@ -43,9 +43,26 @@ module TLabMPI_PROCS
     integer, parameter :: TLabMPI_TRP_ASYNCHRONOUS = 1
     integer, parameter :: TLabMPI_TRP_SENDRECV = 2
 
+    integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
+    integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
+    integer(wi), allocatable :: ims_plan_trps_i(:), ims_plan_trpr_i(:)
+
+    integer, dimension(:), allocatable :: ims_ts_k, ims_tr_k
+    integer(wi), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
+    integer(wi), allocatable :: ims_plan_trps_k(:), ims_plan_trpr_k(:)
+
     integer :: ims_tag
 
     real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI
+
+#ifdef USE_PSFFT
+    integer :: ims_nb_thrsupp_provided
+    integer, dimension(2) :: ims_nb_proc_grid
+    integer, dimension(3) :: ims_nb_msize
+    integer, dimension(3) :: ims_nb_xsrt, ims_nb_xend, ims_nb_xsiz
+    integer, dimension(3) :: ims_nb_ysrt, ims_nb_yend, ims_nb_ysiz
+    integer, dimension(3) :: ims_nb_zsrt, ims_nb_zend, ims_nb_zsiz
+#endif
 
 contains
 
@@ -197,16 +214,14 @@ contains
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLabMPI_I_PARTIAL
             npage = kmax*jmax
-            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
         end if
 
         if (ims_npro_k > 1) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
             id = TLabMPI_K_PARTIAL
             npage = imax*jmax
-            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
-                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
         end if
 
         ! -----------------------------------------------------------------------
@@ -214,14 +229,12 @@ contains
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
-            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
 
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON2 ! isize_txc_field/(imax+2)
             npage = isize_txc_dimx
-            call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
 
         end if
 
@@ -229,8 +242,7 @@ contains
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
             id = TLabMPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax
-            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
-                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
         end if
 
         ! -----------------------------------------------------------------------
@@ -256,16 +268,6 @@ contains
         !     end if
         !     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
         ! end do
-
-        ! #######################################################################
-        ! Auxiliar depending on simmode
-        ! #######################################################################
-        ! IF ( imode_sim == DNS_MODE_TEMPORAL ) THEN
-        ! CALL TLab_Write_ASCII(lfile,'Initializing MPI types for spectra/correlations.')
-        ! id = TLabMPI_K_SHEAR
-        ! CALL TLabMPI_TypeK_Create(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
-        !      ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
-        ! END IF
 
         call TLabMPI_TAGRESET
 
@@ -296,20 +298,23 @@ contains
     ! ######################################################################
     ! Pointers and types for transposition across ims_npro processors
     ! ######################################################################
-    subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, &
-                                    nsize, sdisp, rdisp, stype, rtype)
+    subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, id)
         integer, intent(in) :: npro_i
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in) :: nd, md, n1, n2
-        integer(wi), intent(out) :: nsize
-        integer(wi), intent(out) :: sdisp(:), rdisp(:)
-        integer, intent(out) :: stype, rtype
+        integer, intent(in) :: id
 
         ! -----------------------------------------------------------------------
         integer(wi) i
         integer ims_ss, ims_rs
         integer ims_tmp1, ims_tmp2, ims_tmp3
         character*64 str, line
+
+#define nsize       ims_size_i(id)
+#define sdisp(j)    ims_ds_i(j, id)
+#define rdisp(j)    ims_dr_i(j, id)
+#define stype       ims_ts_i(id)
+#define rtype       ims_tr_i(id)
 
         ! #######################################################################
         if (mod(npage, npro_i) == 0) then
@@ -319,7 +324,7 @@ contains
             call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
-        ! Calculate Displacements in Forward Send/Receive
+        ! Calculate array displacements in Forward Send/Receive
         sdisp(1) = 0
         rdisp(1) = 0
         do i = 2, npro_i
@@ -362,26 +367,35 @@ contains
             call TLab_Stop(DNS_ERROR_MPITYPECHECK)
         end if
 
+#undef nsize
+#undef sdisp
+#undef rdisp
+#undef stype
+#undef rtype
+
         return
     end subroutine TLabMPI_TypeI_Create
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TypeK_Create(npro_k, nmax, npage, nd, md, n1, n2, &
-                                    nsize, sdisp, rdisp, stype, rtype)
+    subroutine TLabMPI_TypeK_Create(npro_k, nmax, npage, nd, md, n1, n2, id)
         integer, intent(in) :: npro_k
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in) :: nd, md, n1, n2
-        integer(wi), intent(out) :: nsize
-        integer(wi), intent(out) :: sdisp(:), rdisp(:)
-        integer, intent(out) :: stype, rtype
+        integer, intent(in) :: id
 
         ! -----------------------------------------------------------------------
         integer(wi) i
         integer ims_ss, ims_rs
         integer ims_tmp1, ims_tmp2, ims_tmp3
 
-        ! #######################################################################
+#define nsize       ims_size_k(id)
+#define sdisp(j)    ims_ds_k(j, id)
+#define rdisp(j)    ims_dr_k(j, id)
+#define stype       ims_ts_k(id)
+#define rtype       ims_tr_k(id)
+
+! #######################################################################
         if (mod(npage, npro_k) == 0) then
             nsize = npage/npro_k
         else
@@ -389,7 +403,7 @@ contains
             call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
-        ! Calculate Displacements in Forward Send/Receive
+        ! Calculate array displacements in Forward Send/Receive
         sdisp(1) = 0
         rdisp(1) = 0
         do i = 2, npro_k
@@ -430,21 +444,27 @@ contains
             call TLab_Stop(DNS_ERROR_MPITYPECHECK)
         end if
 
+#undef nsize
+#undef sdisp
+#undef rdisp
+#undef stype
+#undef rtype
+
         return
     end subroutine TLabMPI_TypeK_Create
 
     !########################################################################
     !########################################################################
     subroutine TLabMPI_TRPF_K(a, b, id)
-        use, intrinsic :: iso_c_binding, only: c_int
+        ! use, intrinsic :: iso_c_binding, only: c_int
 
-        interface
-            function DNS_USLEEP(useconds) bind(C, name="usleep")
-                import
-                integer(c_int) :: nb3dfft_nbc_usleep
-                integer(c_int), intent(in), value :: useconds
-            end function DNS_USLEEP
-        end interface
+        ! interface
+        !     function DNS_USLEEP(useconds) bind(C, name="usleep")
+        !         import
+        !         integer(c_int) :: nb3dfft_nbc_usleep
+        !         integer(c_int), intent(in), value :: useconds
+        !     end function DNS_USLEEP
+        ! end interface
 
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
@@ -452,16 +472,15 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer(wi), dimension(ims_npro_k) :: dsend, drecv ! displacements
-        integer tsend, trecv
 
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
 #endif
-        dsend(1:ims_npro_k) = ims_ds_k(1:ims_npro_k, id)
-        drecv(1:ims_npro_k) = ims_dr_k(1:ims_npro_k, id)
-        tsend = ims_ts_k(id)
-        trecv = ims_tr_k(id)
+
+#define dsend(j)    ims_ds_k(j, id)
+#define drecv(j)    ims_dr_k(j, id)
+#define tsend       ims_ts_k(id)
+#define trecv       ims_tr_k(id)
 
         ! #######################################################################
 #ifdef PROFILE_ON
@@ -489,6 +508,12 @@ contains
 
             call TLabMPI_TAGUPDT
         end do
+
+#undef dsend
+#undef drecv
+#undef tsend
+#undef trecv
+
 #ifdef PROFILE_ON
         time_loc_2 = MPI_WTIME()
         ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
@@ -507,13 +532,12 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer(wi), dimension(ims_npro_i) :: dsend, drecv ! displacements
-        integer tsend, trecv
 
-        dsend(1:ims_npro_i) = ims_ds_i(1:ims_npro_i, id)
-        drecv(1:ims_npro_i) = ims_dr_i(1:ims_npro_i, id)
-        tsend = ims_ts_i(id)
-        trecv = ims_tr_i(id)
+        ! #######################################################################
+#define dsend(j)    ims_ds_i(j, id)
+#define drecv(j)    ims_dr_i(j, id)
+#define tsend       ims_ts_i(id)
+#define trecv       ims_tr_i(id)
 
         do j = 1, ims_npro_i, ims_sizBlock_i
             l = 0
@@ -538,6 +562,11 @@ contains
             call TLabMPI_TAGUPDT
         end do
 
+#undef dsend
+#undef drecv
+#undef tsend
+#undef trecv
+
         return
     end subroutine TLabMPI_TRPF_I
 
@@ -550,8 +579,6 @@ contains
         integer, intent(in) :: id
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer(wi), dimension(ims_npro_k) :: dsend, drecv ! displacements
-        integer tsend, trecv
 
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
@@ -561,10 +588,11 @@ contains
 #ifdef PROFILE_ON
         time_loc_1 = MPI_WTIME()
 #endif
-        dsend(1:ims_npro_k) = ims_ds_k(1:ims_npro_k, id)
-        drecv(1:ims_npro_k) = ims_dr_k(1:ims_npro_k, id)
-        tsend = ims_ts_k(id)
-        trecv = ims_tr_k(id)
+
+#define dsend(j)    ims_ds_k(j, id)
+#define drecv(j)    ims_dr_k(j, id)
+#define tsend       ims_ts_k(id)
+#define trecv       ims_tr_k(id)
 
         do j = 1, ims_npro_k, ims_sizBlock_k
             l = 0
@@ -589,6 +617,11 @@ contains
             call TLabMPI_TAGUPDT
         end do
 
+#undef dsend
+#undef drecv
+#undef tsend
+#undef trecv
+
 #ifdef PROFILE_ON
         time_loc_2 = MPI_WTIME()
         ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
@@ -607,13 +640,12 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
-        integer(wi), dimension(ims_npro_i) :: dsend, drecv ! displacements
-        integer tsend, trecv
 
-        dsend(1:ims_npro_i) = ims_ds_i(1:ims_npro_i, id)
-        drecv(1:ims_npro_i) = ims_dr_i(1:ims_npro_i, id)
-        tsend = ims_ts_i(id)
-        trecv = ims_tr_i(id)
+        ! #######################################################################
+#define dsend(j)    ims_ds_i(j, id)
+#define drecv(j)    ims_dr_i(j, id)
+#define tsend       ims_ts_i(id)
+#define trecv       ims_tr_i(id)
 
         do j = 1, ims_npro_i, ims_sizBlock_i
             l = 0
@@ -637,6 +669,11 @@ contains
 
             call TLabMPI_TAGUPDT
         end do
+
+#undef dsend
+#undef drecv
+#undef tsend
+#undef trecv
 
         return
     end subroutine TLabMPI_TRPB_I

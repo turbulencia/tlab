@@ -36,8 +36,7 @@ module BOUNDARY_BUFFER
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_npro
-    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_VARS, only: ims_comm_z
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i, ims_pro_k
     use TLabMPI_PROCS
@@ -378,14 +377,14 @@ contains
                 id = TLabMPI_K_OUTBCS
                 idummy = item%size*jmax
                 call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
-                                     ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
+                                     id)
 
             case (2)
                 call TLab_Write_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
                 id = TLabMPI_K_TOPBCS
                 idummy = imax*item%size
                 call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
-                                     ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
+                                     id)
 
             end select
         end if

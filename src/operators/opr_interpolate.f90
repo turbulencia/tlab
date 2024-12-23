@@ -17,8 +17,7 @@ module OPR_INTERPOLATORS
 #ifdef USE_MPI
     use TLab_Constants, only: lfile
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_PROCS
 #endif
     implicit none
@@ -64,7 +63,7 @@ contains
                 npage = (npage + 1)*ims_npro_i
             end if
             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
+                                      id)
 
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
             id = TLabMPI_I_AUX2
@@ -74,7 +73,7 @@ contains
                 npage = (npage + 1)*ims_npro_i
             end if
             call TLabMPI_TypeI_Create(ims_npro_i, nx_dst, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
+                                      id)
         end if
 
         if (ims_npro_k > 1) then
@@ -82,13 +81,13 @@ contains
             id = TLabMPI_K_AUX1
             npage = nx_dst*ny_dst
             call TLabMPI_TypeK_Create(ims_npro_k, nz, npage, 1, 1, 1, 1, &
-                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
+                                      id)
 
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
             id = TLabMPI_K_AUX2
             npage = nx_dst*ny_dst
             call TLabMPI_TypeK_Create(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, &
-                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
+                                      id)
 
         end if
 #endif

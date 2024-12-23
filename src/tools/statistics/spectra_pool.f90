@@ -14,7 +14,6 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_npro_k
-    use TLabMPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
     use TLabMPI_VARS, only: ims_comm_x, ims_comm_z
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
     use TLabMPI_PROCS
