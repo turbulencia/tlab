@@ -852,7 +852,7 @@ contains
 !             call TLab_Write_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
 !             id = TLabMPI_I_AUX1
 !             npage = nz*ny
-!             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+!             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
 !             p_read => wrk
@@ -925,7 +925,7 @@ contains
 !             call TLab_Write_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
 !             id = TLabMPI_I_AUX1
 !             npage = nz*ny
-!             call TLabMPI_TYPE_I(ims_npro_i, nx, npage, i1, i1, i1, i1, &
+!             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
 !             call TLabMPI_TRPF_I(a, wrk, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))

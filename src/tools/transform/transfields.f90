@@ -75,7 +75,7 @@ program TRANSFIELDS
 
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLabMPI_Initialize()
+    call TLabMPI_Initialize(ifile)
 #endif
 
     call NavierStokes_Initialize_Parameters(ifile)

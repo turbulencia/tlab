@@ -138,26 +138,6 @@ subroutine TLab_Initialize_Parameters(inifile)
     end if
     g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
 
-#ifdef USE_MPI
-    call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLabMPI_TRP_NONE
-    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLabMPI_TRP_ASYNCHRONOUS
-    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLabMPI_TRP_SENDRECV
-    else
-        call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeITranspose option.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-
-    call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLabMPI_TRP_NONE
-    elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLabMPI_TRP_ASYNCHRONOUS
-    elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLabMPI_TRP_SENDRECV
-    else
-        call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Wrong ComModeKTranspose option.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-#endif
-
 ! ###################################################################
 ! Pressure staggering
 ! ###################################################################

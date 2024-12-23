@@ -118,7 +118,7 @@ contains
             call TLab_Write_ASCII(lfile, 'Initialize MPI types for inflow filter.')
             id = TLabMPI_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
-            call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
+            call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                 ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             FilterInflow(3)%mpitype = id
         end if

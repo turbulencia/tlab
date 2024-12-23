@@ -35,7 +35,7 @@ program INIPART
 
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLabMPI_Initialize()
+    call TLabMPI_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
 

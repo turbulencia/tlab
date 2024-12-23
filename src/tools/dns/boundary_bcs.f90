@@ -223,7 +223,7 @@ contains
                 str = 'Initialize MPI types for Ox BCs transverse terms. '//trim(adjustl(str))//' planes.'
                 call TLab_Write_ASCII(lfile, str)
                 isize_loc = ims_bcs_imax*jmax
-                call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
+                call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             end if
 
@@ -238,7 +238,7 @@ contains
                 str = 'Initialize MPI types for Oy BCs transverse terms. '//trim(adjustl(str))//' planes.'
                 call TLab_Write_ASCII(lfile, str)
                 isize_loc = imax*ims_bcs_jmax
-                call TLabMPI_TYPE_K(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
+                call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
             end if
 #endif

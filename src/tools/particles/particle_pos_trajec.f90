@@ -71,7 +71,7 @@ program PARTICLE_POS_TRAJEC
 
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
-    call TLabMPI_Initialize()
+    call TLabMPI_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
     call NavierStokes_Initialize_Parameters(ifile)

@@ -25,9 +25,4 @@
 
 #define TLabMPI_I_MAXTYPES  6
 
-! Control of MPI Transpositions
-#define TLabMPI_TRP_NONE         0
-#define TLabMPI_TRP_ASYNCHRONOUS 1
-#define TLabMPI_TRP_SENDRECV     2
-
 #endif

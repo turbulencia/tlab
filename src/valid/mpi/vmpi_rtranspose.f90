@@ -115,7 +115,7 @@ program VMPI_RTRANSPOSE
         stop
     end if
 
-    call TLabMPI_Initialize()
+    call TLabMPI_Initialize(ifile)
 
     allocate (a(imax*jmax*kmax, 18)) ! Number of 3d arrays commonly used in the code
     allocate (wrk3d(imax*jmax*kmax))
@@ -312,7 +312,7 @@ subroutine TLabMPI_Initialize()
 !  CALL TLab_Write_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
         id = TLabMPI_I_PARTIAL
         npage = kmax*jmax
-        call TLabMPI_TYPE_I(ims_npro_i, imax, npage, i1, i1, i1, i1, &
+        call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, i1, i1, i1, i1, &
                              ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
     end if
 
@@ -320,7 +320,7 @@ subroutine TLabMPI_Initialize()
 !  CALL TLab_Write_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
         id = TLabMPI_K_PARTIAL
         npage = imax*jmax
-        call TLabMPI_TYPE_K(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
+        call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
                              ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
     end if
 
@@ -358,7 +358,7 @@ end subroutine TLabMPI_Initialize
 
 ! ###################################################################
 ! ###################################################################
-subroutine TLabMPI_TYPE_I(ims_npro, imax, npage, nd, md, n1, n2, &
+subroutine TLabMPI_TypeI_Create(ims_npro, imax, npage, nd, md, n1, n2, &
                            nsize, sdisp, rdisp, stype, rtype)
 
     use TLabMPI_VARS, only: ims_pro
@@ -419,11 +419,11 @@ subroutine TLabMPI_TYPE_I(ims_npro, imax, npage, nd, md, n1, n2, &
     end do
 
     return
-end subroutine TLabMPI_TYPE_I
+end subroutine TLabMPI_TypeI_Create
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TYPE_K(ims_npro, nmax, npage, nd, md, n1, n2, &
+subroutine TLabMPI_TypeK_Create(ims_npro, nmax, npage, nd, md, n1, n2, &
                            nsize, sdisp, rdisp, stype, rtype)
 
     use TLabMPI_VARS, only: ims_pro
@@ -483,7 +483,7 @@ subroutine TLabMPI_TYPE_K(ims_npro, nmax, npage, nd, md, n1, n2, &
     end do
 
     return
-end subroutine TLabMPI_TYPE_K
+end subroutine TLabMPI_TypeK_Create
 
 ! ###################################################################
 ! ###################################################################

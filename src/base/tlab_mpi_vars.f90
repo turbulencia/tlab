@@ -14,12 +14,10 @@ module TLabMPI_VARS
     integer(wi) :: ims_bcs_imax, ims_bcs_jmax
 
     integer, dimension(:), allocatable :: ims_map_i
-    integer(wi) :: ims_sizBlock_i
     integer(wi), dimension(:), allocatable :: ims_size_i
     integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
     integer, dimension(:, :), allocatable :: ims_ts_i, ims_tr_i
     integer(wi), dimension(:), allocatable :: ims_plan_trps_i, ims_plan_trpr_i
-    integer :: ims_trp_mode_i
 
 !  integer,  DIMENSION(:  ), ALLOCATABLE :: ims_map_j
 !  integer(wi), DIMENSION(  :), ALLOCATABLE :: ims_size_j
@@ -27,12 +25,10 @@ module TLabMPI_VARS
 !  integer,  DIMENSION(:,:), ALLOCATABLE :: ims_ts_j, ims_tr_j
 
     integer, dimension(:), allocatable :: ims_map_k
-    integer(wi) :: ims_sizBlock_k
     integer(wi), dimension(:), allocatable :: ims_size_k
     integer(wi), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
     integer, dimension(:, :), allocatable :: ims_ts_k, ims_tr_k
     integer(wi), dimension(:), allocatable :: ims_plan_trps_k, ims_plan_trpr_k
-    integer :: ims_trp_mode_k
 
     integer, dimension(:, :), allocatable :: ims_status
     integer, dimension(:), allocatable :: ims_request

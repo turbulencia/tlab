@@ -83,7 +83,7 @@ program VMPI
         stop
     end if
 
-    call TLabMPI_Initialize()
+    call TLabMPI_Initialize(ifile)
 
     allocate (a(imax*jmax*kmax, 18)) ! Number of 3d arrays commonly used in the code
     allocate (wrk3d(imax*jmax*kmax))

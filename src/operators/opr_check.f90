@@ -18,7 +18,6 @@ subroutine OPR_CHECK()
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
     use TLabMPI_VARS, only: ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
-    use TLabMPI_VARS, only: ims_sizBlock_i, ims_sizBlock_k
     use TLabMPI_PROCS
 #endif
 
@@ -66,12 +65,6 @@ subroutine OPR_CHECK()
                //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
         call TLab_Write_ASCII(lfile, line)
 
-        if (ims_npro_i > ims_sizBlock_i) then
-            line = ''
-            write (line, *) ims_sizBlock_i
-            line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLabMPI_TRP<F,B>_I'
-            call TLab_Write_ASCII(lfile, line)
-        end if
     end if
 #endif
 
@@ -101,12 +94,6 @@ subroutine OPR_CHECK()
                //TRIM(ADJUSTL(line))//'. Max. elapsed time '//TRIM(ADJUSTL(str))//' sec.'
         call TLab_Write_ASCII(lfile, line)
 
-        if (ims_npro_k > ims_sizBlock_k) then
-            line = ''
-            write (line, *) ims_sizBlock_k
-            line = '   using blocking of '//TRIM(ADJUSTL(line))//' in  TLabMPI_TRP<F,B>_K'
-            call TLab_Write_ASCII(lfile, line)
-        end if
     end if
 #endif
 

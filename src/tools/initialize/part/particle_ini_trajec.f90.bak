@@ -87,7 +87,7 @@ call Gravity_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI
-    call TLabMPI_Initialize()
+    call TLabMPI_Initialize(ifile)
 #endif
 
     bakfile = trim(adjustl(ifile))//'.bak'

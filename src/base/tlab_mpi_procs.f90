@@ -5,38 +5,103 @@
 module TLabMPI_PROCS
     use MPI
     use TLab_Constants, only: lfile, efile, wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax, isize_txc_dimx, isize_txc_dimz
+    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: fourier_on
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Memory, only: TLab_Allocate_Real
     use TLabMPI_VARS
     implicit none
-    save
     private
+
+    ! Global variables and procedures
+    public :: TLabMPI_Initialize
+    public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
+    public :: TLabMPI_TRPF_K
+    public :: TLabMPI_TRPB_K    ! I wonder whether I need 2 routines forward/backward instead of simply 1...
+    public :: TLabMPI_TRPF_I
+    public :: TLabMPI_TRPB_I
+    ! public :: TLabMPI_TransposeK, TLabMPI_TransposeI
+    public :: TLabMPI_PANIC
+    public :: TLabMPI_WRITE_PE0_SINGLE
+
+    ! Local variables and procedures
+    integer(wi) :: ims_sizBlock_i, ims_sizBlock_k
+
+    integer :: ims_trp_type_i, ims_trp_type_k
+    integer, parameter :: TLabMPI_TRP_SINGLE = 1
+    integer, parameter :: TLabMPI_TRP_DOUBLE = 2
+
+    integer :: ims_trp_mode_i, ims_trp_mode_k
+    integer, parameter :: TLabMPI_TRP_NONE = 0
+    integer, parameter :: TLabMPI_TRP_ASYNCHRONOUS = 1
+    integer, parameter :: TLabMPI_TRP_SENDRECV = 2
 
     integer :: ims_tag
 
-    public :: TLabMPI_Initialize
-    public :: TLabMPI_TRPF_K
-    public :: TLabMPI_TRPF_I
-    public :: TLabMPI_TRPB_K
-    public :: TLabMPI_TRPB_I
-    public :: TLabMPI_TYPE_K
-    public :: TLabMPI_TYPE_I
-    public :: TLabMPI_PANIC
-    public :: TLabMPI_WRITE_PE0_SINGLE
+    real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI
 
 contains
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLabMPI_Initialize()
+    subroutine TLabMPI_Initialize(inifile)
+        character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
         integer(wi) id, ip, npage
         integer(wi) dims(2)
         logical period(2), remain_dims(2), reorder
 
+        character(len=32) bakfile, block
+        character(len=512) sRes, line
+        character*64 lstr
+
         ! #######################################################################
+        ! Read data
+        bakfile = trim(adjustl(inifile))//'.bak'
+
+        block = 'Parallel'
+
+        call ScanFile_Char(bakfile, inifile, block, 'TransposeModeI', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') &
+            call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLabMPI_TRP_NONE
+        elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLabMPI_TRP_ASYNCHRONOUS
+        elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLabMPI_TRP_SENDRECV
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeModeI option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, block, 'TransposeModeK', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') &
+            call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
+        if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLabMPI_TRP_NONE
+        elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLabMPI_TRP_ASYNCHRONOUS
+        elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLabMPI_TRP_SENDRECV
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeModeK option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, block, 'TransposeTypeK', 'Double', sRes)
+        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_k = TLabMPI_TRP_DOUBLE
+        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_k = TLabMPI_TRP_SINGLE
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeTypeK.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, block, 'TransposeTypeI', 'Double', sRes)
+        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_i = TLabMPI_TRP_DOUBLE
+        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_i = TLabMPI_TRP_SINGLE
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeTypeI.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
+        end if
+
+        ! #######################################################################
+        ! Allocation
         allocate (ims_map_i(ims_npro_i))
         allocate (ims_size_i(TLabMPI_I_MAXTYPES))
         allocate (ims_ds_i(ims_npro_i, TLabMPI_I_MAXTYPES))
@@ -68,10 +133,25 @@ contains
         ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking
 #endif
 
+        if (ims_npro_i > ims_sizBlock_i) then
+            write (line, *) ims_sizBlock_i
+            line = 'Using blocking of '//TRIM(ADJUSTL(line))//' in TLabMPI_TRP<F,B>_I'
+            call TLab_Write_ASCII(lfile, line)
+        end if
+
+        if (ims_npro_k > ims_sizBlock_k) then
+            write (line, *) ims_sizBlock_k
+            line = 'Using blocking of '//TRIM(ADJUSTL(line))//' in TLabMPI_TRP<F,B>_K'
+            call TLab_Write_ASCII(lfile, line)
+        end if
+
         allocate (ims_status(MPI_STATUS_SIZE, 2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
         allocate (ims_request(2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
 
+        call TLab_Allocate_Real(__FILE__, wrk_mpi, [isize_wrk3d], 'tmp-mpi')
+
         ! #######################################################################
+        ! Initialize parameters
         ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
         ! ims_pro_i = ims_pro / ims_npro_k
         ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
@@ -92,7 +172,7 @@ contains
         end do
 
         ! #######################################################################
-        call TLab_Write_ASCII(lfile, 'Initializing MPI communicators.')
+        call TLab_Write_ASCII(lfile, 'Creating MPI communicators.')
 
         ! the first index in the grid corresponds to k, the second to i
         dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
@@ -117,46 +197,46 @@ contains
         ! print*, 'P:', ims_pro, 'Sum along Z', id
 
         ! #######################################################################
-        ! Main
+        ! Create MPI types for transpositions
         ! #######################################################################
         if (ims_npro_i > 1) then
-            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Ox derivatives.')
+            call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLabMPI_I_PARTIAL
             npage = kmax*jmax
-            call TLabMPI_TYPE_I(ims_npro_i, imax, npage, 1, 1, 1, 1, &
-                                 ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, &
+                                      ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
         end if
 
         if (ims_npro_k > 1) then
-            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Oz derivatives.')
+            call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
             id = TLabMPI_K_PARTIAL
             npage = imax*jmax
-            call TLabMPI_TYPE_K(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
-                                 ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
+                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 
         ! -----------------------------------------------------------------------
         if (ims_npro_i > 1 .and. fourier_on) then
-            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
+            call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
-            call TLabMPI_TYPE_I(ims_npro_i, imax, npage, 1, 1, 1, 1, &
-                                 ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, &
+                                      ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
-            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Ox FFTW in Poisson solver.')
+            call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON2 ! isize_txc_field/(imax+2)
             npage = isize_txc_dimx
-            call TLabMPI_TYPE_I(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, &
-                                 ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, &
+                                      ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
 
         end if
 
         if (ims_npro_k > 1 .and. fourier_on) then
-            call TLab_Write_ASCII(lfile, 'Initializing MPI types for Oz FFTW in Poisson solver.')
+            call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
             id = TLabMPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax
-            call TLabMPI_TYPE_K(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
-                                 ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
+                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
         end if
 
         ! ######################################################################
@@ -190,7 +270,7 @@ contains
         ! IF ( imode_sim == DNS_MODE_TEMPORAL ) THEN
         ! CALL TLab_Write_ASCII(lfile,'Initializing MPI types for spectra/correlations.')
         ! id = TLabMPI_K_SHEAR
-        ! CALL TLabMPI_TYPE_K(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
+        ! CALL TLabMPI_TypeK_Create(ims_npro_k, kmax, imax, i1, jmax, jmax, i1, &
         !      ims_size_k(id), ims_ds_k(1,id), ims_dr_k(1,id), ims_ts_k(1,id), ims_tr_k(1,id))
         ! END IF
 
@@ -223,8 +303,8 @@ contains
     ! ######################################################################
     ! Pointers and types for transposition across ims_npro processors
     ! ######################################################################
-    subroutine TLabMPI_TYPE_I(npro_i, nmax, npage, nd, md, n1, n2, &
-                               nsize, sdisp, rdisp, stype, rtype)
+    subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, &
+                                    nsize, sdisp, rdisp, stype, rtype)
 
         integer npro_i
         integer(wi) npage, nmax, nsize
@@ -242,7 +322,7 @@ contains
         if (mod(npage, npro_i) == 0) then
             nsize = npage/npro_i
         else
-            call TLab_Write_ASCII(efile, 'TLabMPI_TYPE_I. Ratio npage/npro_i not an integer.')
+            call TLab_Write_ASCII(efile, 'TLabMPI_TypeI_Create. Ratio npage/npro_i not an integer.')
             call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
@@ -258,13 +338,23 @@ contains
         ims_tmp1 = nsize*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = ims_tmp2  ! stride = block because things are together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, stype, ims_err)
+        select case (ims_trp_type_i)
+        case (TLabMPI_TRP_DOUBLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, stype, ims_err)
+        case (TLabMPI_TRP_SINGLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, stype, ims_err)
+        end select
         call MPI_TYPE_COMMIT(stype, ims_err)
 
         ims_tmp1 = nsize*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = nmax*npro_i*n2 ! stride is a multiple of nmax_total=nmax*npro_i
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, rtype, ims_err)
+        select case (ims_trp_type_i)
+        case (TLabMPI_TRP_DOUBLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, rtype, ims_err)
+        case (TLabMPI_TRP_SINGLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, rtype, ims_err)
+        end select
         call MPI_TYPE_COMMIT(rtype, ims_err)
 
         call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
@@ -280,12 +370,12 @@ contains
         end if
 
         return
-    end subroutine TLabMPI_TYPE_I
+    end subroutine TLabMPI_TypeI_Create
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TYPE_K(npro_k, nmax, npage, nd, md, n1, n2, &
-                               nsize, sdisp, rdisp, stype, rtype)
+    subroutine TLabMPI_TypeK_Create(npro_k, nmax, npage, nd, md, n1, n2, &
+                                    nsize, sdisp, rdisp, stype, rtype)
 
         integer npro_k
         integer(wi) npage, nmax, nsize
@@ -302,7 +392,7 @@ contains
         if (mod(npage, npro_k) == 0) then
             nsize = npage/npro_k
         else
-            call TLab_Write_ASCII(efile, 'TLabMPI_TYPE_K. Ratio npage/npro_k not an integer.')
+            call TLab_Write_ASCII(efile, 'TLabMPI_TypeK_Create. Ratio npage/npro_k not an integer.')
             call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
@@ -318,13 +408,23 @@ contains
         ims_tmp1 = nmax*n1 ! count
         ims_tmp2 = nsize*n2 ! block
         ims_tmp3 = npage*n2 ! stride
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, stype, ims_err)
+        select case (ims_trp_type_k)
+        case (TLabMPI_TRP_DOUBLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, stype, ims_err)
+        case (TLabMPI_TRP_SINGLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, stype, ims_err)
+        end select
         call MPI_TYPE_COMMIT(stype, ims_err)
 
         ims_tmp1 = nmax*n1 ! count
         ims_tmp2 = nsize*n2 ! block
         ims_tmp3 = ims_tmp2  ! stride = block to put things together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, rtype, ims_err)
+        select case (ims_trp_type_k)
+        case (TLabMPI_TRP_DOUBLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, rtype, ims_err)
+        case (TLabMPI_TRP_SINGLE)
+            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, rtype, ims_err)
+        end select
         call MPI_TYPE_COMMIT(rtype, ims_err)
 
         call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
@@ -338,7 +438,7 @@ contains
         end if
 
         return
-    end subroutine TLabMPI_TYPE_K
+    end subroutine TLabMPI_TypeK_Create
 
     !########################################################################
     !########################################################################
