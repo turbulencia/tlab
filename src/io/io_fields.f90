@@ -853,7 +853,7 @@ contains
 !             id = TLabMPI_I_AUX1
 !             npage = nz*ny
 !             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
-!                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+!                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
 
 !             p_read => wrk
 
@@ -871,7 +871,7 @@ contains
 !         call MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !         if (ims_npro_i > 1) then
-!             call TLabMPI_TRPB_I(p_read, a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+!             call TLabMPI_TRPB_I(p_read, a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
 !         end if
 
 !         nullify (p_read)
@@ -926,9 +926,9 @@ contains
 !             id = TLabMPI_I_AUX1
 !             npage = nz*ny
 !             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
-!                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+!                                  ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
 
-!             call TLabMPI_TRPF_I(a, wrk, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+!             call TLabMPI_TRPF_I(a, wrk, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
 !             p_write => wrk
 
 !         else

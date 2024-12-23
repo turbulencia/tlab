@@ -13,6 +13,13 @@ module TLabMPI_PROCS
     implicit none
     private
 
+    ! type, public :: mpi_transpose_dt
+    !     sequence
+    !     integer :: type_s, type_r                           ! send/recv types
+    !     integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
+    !     integer(wi) :: size
+    ! end type mpi_transpose_dt
+
     ! Global variables and procedures
     public :: TLabMPI_Initialize
     public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
@@ -49,7 +56,7 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) id, ip, npage
-        integer(wi) dims(2)
+        integer(wi) dims(2), coord(2)
         logical period(2), remain_dims(2), reorder
 
         character(len=32) bakfile, block
@@ -102,22 +109,20 @@ contains
 
         ! #######################################################################
         ! Allocation
-        allocate (ims_map_i(ims_npro_i))
-        allocate (ims_size_i(TLabMPI_I_MAXTYPES))
+        allocate (ims_ts_i(TLabMPI_I_MAXTYPES))         ! derived MPI types for send/recv
+        allocate (ims_tr_i(TLabMPI_I_MAXTYPES))
+        allocate (ims_size_i(TLabMPI_I_MAXTYPES))       ! metadata inside/to-calculate MPI types
         allocate (ims_ds_i(ims_npro_i, TLabMPI_I_MAXTYPES))
         allocate (ims_dr_i(ims_npro_i, TLabMPI_I_MAXTYPES))
-        allocate (ims_ts_i(1, TLabMPI_I_MAXTYPES))     ! ims_npro_i, TLabMPI_I_MAXTYPES
-        allocate (ims_tr_i(1, TLabMPI_I_MAXTYPES))     ! ims_npro_i, TLabMPI_I_MAXTYPES
-        allocate (ims_plan_trps_i(ims_npro_i))
+        allocate (ims_plan_trps_i(ims_npro_i))          ! mappings for explicit send/recv
         allocate (ims_plan_trpr_i(ims_npro_i))
 
-        allocate (ims_map_k(ims_npro_k))
-        allocate (ims_size_k(TLabMPI_K_MAXTYPES))
+        allocate (ims_ts_k(TLabMPI_K_MAXTYPES))         ! derived MPI types for send/recv
+        allocate (ims_tr_k(TLabMPI_K_MAXTYPES))
+        allocate (ims_size_k(TLabMPI_K_MAXTYPES))       ! metadata inside/to-calculate MPI types
         allocate (ims_ds_k(ims_npro_k, TLabMPI_K_MAXTYPES))
         allocate (ims_dr_k(ims_npro_k, TLabMPI_K_MAXTYPES))
-        allocate (ims_ts_k(1, TLabMPI_K_MAXTYPES))     ! ims_npro_k,TLabMPI_K_MAXTYPES
-        allocate (ims_tr_k(1, TLabMPI_K_MAXTYPES))     ! ims_npro_k,TLabMPI_K_MAXTYPES
-        allocate (ims_plan_trps_k(ims_npro_k))
+        allocate (ims_plan_trps_k(ims_npro_k))          ! mappings for explicit send/recv
         allocate (ims_plan_trpr_k(ims_npro_k))
 
 #ifdef HLRS_HAWK
@@ -151,27 +156,6 @@ contains
         call TLab_Allocate_Real(__FILE__, wrk_mpi, [isize_wrk3d], 'tmp-mpi')
 
         ! #######################################################################
-        ! Initialize parameters
-        ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
-        ! ims_pro_i = ims_pro / ims_npro_k
-        ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
-        ! ims_pro_k = mod(ims_pro,ims_npro_k)
-
-        ims_offset_i = ims_pro_i*imax
-        ims_offset_j = 0
-        ims_offset_k = ims_pro_k*kmax
-
-        ims_map_i(1) = ims_pro_k*ims_npro_i
-        do ip = 2, ims_npro_i
-            ims_map_i(ip) = ims_map_i(ip - 1) + 1
-        end do
-
-        ims_map_k(1) = ims_pro_i
-        do ip = 2, ims_npro_k
-            ims_map_k(ip) = ims_map_k(ip - 1) + ims_npro_i
-        end do
-
-        ! #######################################################################
         call TLab_Write_ASCII(lfile, 'Creating MPI communicators.')
 
         ! the first index in the grid corresponds to k, the second to i
@@ -179,16 +163,22 @@ contains
         ! dims(1) = ims_npro_i; dims(2) = ims_npro_k; period = .true.; reorder = .false.
         call MPI_CART_CREATE(MPI_COMM_WORLD, 2, dims, period, reorder, ims_comm_xz, ims_err)
 
-        !  CALL MPI_CART_COORDS(ims_comm_xz, ims_pro, 2, coord, ims_err)
-        !  coord(1) is ims_pro_k, and coord(2) is ims_pro_i
+        call MPI_CART_COORDS(ims_comm_xz, ims_pro, 2, coord, ims_err)
+        ims_pro_k = coord(1); ims_pro_i = coord(2)      ! starting at 0
+        ! ims_pro_k = coord(2); ims_pro_i = coord(1)
+        ! 
+        ! equivalent to:
+        ! ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
+        ! ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
+        ! to revert them:
 
         remain_dims(1) = .false.; remain_dims(2) = .true.
         call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
-        !call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
+        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
 
         remain_dims(1) = .true.; remain_dims(2) = .false.
         call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
-        !call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
+        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
 
         ! ip = ims_pro
         ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_x, ims_err)
@@ -196,15 +186,19 @@ contains
         ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_z, ims_err)
         ! print*, 'P:', ims_pro, 'Sum along Z', id
 
+        ims_offset_i = ims_pro_i*imax       ! local offset in grid points
+        ims_offset_j = 0
+        ims_offset_k = ims_pro_k*kmax
+
         ! #######################################################################
-        ! Create MPI types for transpositions
+        ! Initialize information for circular transposition
         ! #######################################################################
         if (ims_npro_i > 1) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLabMPI_I_PARTIAL
             npage = kmax*jmax
             call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
         end if
 
         if (ims_npro_k > 1) then
@@ -212,7 +206,7 @@ contains
             id = TLabMPI_K_PARTIAL
             npage = imax*jmax
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
-                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
         end if
 
         ! -----------------------------------------------------------------------
@@ -221,13 +215,13 @@ contains
             id = TLabMPI_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
             call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
 
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
             id = TLabMPI_I_POISSON2 ! isize_txc_field/(imax+2)
             npage = isize_txc_dimx
             call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, &
-                                      ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
 
         end if
 
@@ -236,33 +230,32 @@ contains
             id = TLabMPI_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, &
-                                      ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
         end if
 
-        ! ######################################################################
-        ! Work plans for circular transposes
-        ! ######################################################################
+        ! -----------------------------------------------------------------------
+        ! local PE mappings for explicit send/recv
         do ip = 0, ims_npro_i - 1
             ims_plan_trps_i(ip + 1) = ip
             ims_plan_trpr_i(ip + 1) = mod(ims_npro_i - ip, ims_npro_i)
         end do
         ims_plan_trps_i = cshift(ims_plan_trps_i, ims_pro_i)
-        ims_plan_trpr_i = cshift(ims_plan_trpr_i, -(ims_pro_i))
+        ims_plan_trpr_i = cshift(ims_plan_trpr_i, -ims_pro_i)
 
         do ip = 0, ims_npro_k - 1
             ims_plan_trps_k(ip + 1) = ip
             ims_plan_trpr_k(ip + 1) = mod(ims_npro_k - ip, ims_npro_k)
         end do
         ims_plan_trps_k = cshift(ims_plan_trps_k, ims_pro_k)
-        ims_plan_trpr_k = cshift(ims_plan_trpr_k, -(ims_pro_k))
+        ims_plan_trpr_k = cshift(ims_plan_trpr_k, -ims_pro_k)
 
-        ! DO ip=0,ims_npro_i-1
-        !    IF ( ims_pro == ip ) THEN
-        !       WRITE(*,*) ims_pro, ims_pro_i, 'SEND:', ims_plan_trps_i
-        !       WRITE(*,*) ims_pro, ims_pro_i, 'RECV:', ims_plan_trpr_i
-        !    END IF
-        !    CALL MPI_BARRIER(MPI_COMM_WORLD,ims_err)
-        ! END DO
+        ! do ip = 0, ims_npro_i - 1
+        !     if (ims_pro == ip) then
+        !         write (*, *) ims_pro, ims_pro_i, 'SEND:', ims_plan_trps_i
+        !         write (*, *) ims_pro, ims_pro_i, 'RECV:', ims_plan_trpr_i
+        !     end if
+        !     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+        ! end do
 
         ! #######################################################################
         ! Auxiliar depending on simmode
@@ -305,11 +298,11 @@ contains
     ! ######################################################################
     subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, &
                                     nsize, sdisp, rdisp, stype, rtype)
-
-        integer npro_i
-        integer(wi) npage, nmax, nsize
-        integer(wi) nd, md, n1, n2
-        integer(wi) sdisp(*), rdisp(*)
+        integer, intent(in) :: npro_i
+        integer(wi), intent(in) :: npage, nmax
+        integer(wi), intent(in) :: nd, md, n1, n2
+        integer(wi), intent(out) :: nsize
+        integer(wi), intent(out) :: sdisp(:), rdisp(:)
         integer, intent(out) :: stype, rtype
 
         ! -----------------------------------------------------------------------
@@ -376,11 +369,11 @@ contains
     !########################################################################
     subroutine TLabMPI_TypeK_Create(npro_k, nmax, npage, nd, md, n1, n2, &
                                     nsize, sdisp, rdisp, stype, rtype)
-
-        integer npro_k
-        integer(wi) npage, nmax, nsize
-        integer(wi) nd, md, n1, n2
-        integer(wi) sdisp(*), rdisp(*)
+        integer, intent(in) :: npro_k
+        integer(wi), intent(in) :: npage, nmax
+        integer(wi), intent(in) :: nd, md, n1, n2
+        integer(wi), intent(out) :: nsize
+        integer(wi), intent(out) :: sdisp(:), rdisp(:)
         integer, intent(out) :: stype, rtype
 
         ! -----------------------------------------------------------------------
@@ -683,7 +676,7 @@ contains
         ! Transposing along Ox
         ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPF_I(u, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
             p_org => tmp1
             nyz = ims_size_i(id)
         else

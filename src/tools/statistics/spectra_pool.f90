@@ -109,7 +109,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
 
     if (ims_npro_k > 1) then
         id = TLabMPI_K_AUX2
-        call TLabMPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        call TLabMPI_TRPF_K(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
 
     else
         wrk2d(1:ny*nz, 1, 1) = tmp_z(1:ny*nz, 1, 2)
@@ -144,7 +144,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
             wrk2d(1:ny_local*count, (k - 1)*2 + 1, 1) = wrk2d(1:ny_local*count, k, 2)
         end do
 
-        call TLabMPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+        call TLabMPI_TRPB_K(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
 
     else
 #endif

@@ -53,7 +53,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   ! MPI  and local transposition in x
 #ifdef USE_MPI
   if ( ims_npro_i > 1 ) then
-    call TLabMPI_TRPF_I(eps, tmp, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(1,idi), ims_tr_i(1,idi))
+    call TLabMPI_TRPF_I(eps, tmp, ims_ds_i(1,idi), ims_dr_i(1,idi), ims_ts_i(idi), ims_tr_i(idi))
     nyz = ims_size_i(idi)
   else
 #endif
@@ -80,7 +80,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
   ! MPI transposition in z
 #ifdef USE_MPI
   if ( ims_npro_k > 1 ) then
-    call TLabMPI_TRPF_K(eps, epsk, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(1,idk), ims_tr_k(1,idk))
+    call TLabMPI_TRPF_K(eps, epsk, ims_ds_k(1,idk), ims_dr_k(1,idk), ims_ts_k(idk), ims_tr_k(idk))
   else
 #endif
   epsk = eps

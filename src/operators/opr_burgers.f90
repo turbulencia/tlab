@@ -63,7 +63,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPF_I(s, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(s, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
             p_a => result
             p_b => tmp1
             p_c => wrk3d
@@ -109,7 +109,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPB_I(p_c, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(p_c, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
         end if
 #endif
 
@@ -235,7 +235,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TRPF_K(s, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                call TLabMPI_TRPF_K(s, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
                 p_a => tmp1
                 p_b => result
                 p_c => wrk3d
@@ -272,7 +272,7 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TRPB_K(p_c, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                call TLabMPI_TRPB_K(p_c, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
             end if
 #endif
 

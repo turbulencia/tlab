@@ -64,7 +64,7 @@ contains
                 npage = (npage + 1)*ims_npro_i
             end if
             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, 1, 1, 1, 1, &
-                                 ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
 
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
             id = TLabMPI_I_AUX2
@@ -74,7 +74,7 @@ contains
                 npage = (npage + 1)*ims_npro_i
             end if
             call TLabMPI_TypeI_Create(ims_npro_i, nx_dst, npage, 1, 1, 1, 1, &
-                                 ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                                      ims_size_i(id), ims_ds_i(:, id), ims_dr_i(:, id), ims_ts_i(id), ims_tr_i(id))
         end if
 
         if (ims_npro_k > 1) then
@@ -82,13 +82,13 @@ contains
             id = TLabMPI_K_AUX1
             npage = nx_dst*ny_dst
             call TLabMPI_TypeK_Create(ims_npro_k, nz, npage, 1, 1, 1, 1, &
-                                 ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
 
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
             id = TLabMPI_K_AUX2
             npage = nx_dst*ny_dst
             call TLabMPI_TypeK_Create(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, &
-                                 ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                                      ims_size_k(id), ims_ds_k(:, id), ims_dr_k(:, id), ims_ts_k(id), ims_tr_k(id))
 
         end if
 #endif
@@ -146,7 +146,7 @@ contains
         if (ims_npro_i > 1) then
             id = TLabMPI_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLabMPI_TRPF_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
 
             p_a => u_tmp1
             p_b => u_tmp2
@@ -177,7 +177,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             id = TLabMPI_I_AUX2
-            call TLabMPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -212,7 +212,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             id = TLabMPI_K_AUX1
-            call TLabMPI_TRPF_K(u_org, u_tmp2, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPF_K(u_org, u_tmp2, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
 
             p_a => u_tmp2
             p_b => u_tmp1
@@ -260,7 +260,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             id = TLabMPI_K_AUX2
-            call TLabMPI_TRPB_K(u_tmp1, u_dst, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+            call TLabMPI_TRPB_K(u_tmp1, u_dst, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
         end if
 #endif
         nullify (p_a, p_b)
@@ -351,14 +351,14 @@ contains
                 u_org(imax + 1, k) = u_org(1, k)      ! avoid the copy of the whole line
                 call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
                                   imax + 1, imax_dst, x_org, u_org(1, k), x_dst, u_dst(1, k), &
-                                  wrk1d(imax + 2,1))                 !
+                                  wrk1d(imax + 2, 1))                 !
                 u_org(imax + 1, k) = rdum            ! set u_org back to stored value rdum
             end do                                !
-            wrk1d(1:imax,1) = u_org(1:imax, kmax)     ! cannot avoid the copy for the last line
-            wrk1d(imax + 1,1) = u_org(1, kmax)          ! as u_org(imax+1,kmax) is out of bounds
+            wrk1d(1:imax, 1) = u_org(1:imax, kmax)     ! cannot avoid the copy for the last line
+            wrk1d(imax + 1, 1) = u_org(1, kmax)          ! as u_org(imax+1,kmax) is out of bounds
             call CUBIC_SPLINE(CSpline_BCType, CSpline_BCVal, &
                               imax + 1, imax_dst, x_org, wrk1d, x_dst, u_dst(1, kmax), &
-                              wrk1d(imax + 2,1))
+                              wrk1d(imax + 2, 1))
             !---------------------------------------! the aperiodic case
         else
             CSpline_BCType(1) = CS_BCS_NATURAL; CSpline_BCVal(1) = 0.0_wp

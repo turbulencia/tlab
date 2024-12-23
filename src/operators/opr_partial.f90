@@ -420,7 +420,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPF_I(u, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPF_I(u, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
             p_a => result
             p_b => wrk3d
             p_c => result
@@ -508,9 +508,9 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (type == OPR_P2_P1) then ! only if you really want first derivative back
-                call TLabMPI_TRPB_I(p_c, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+                call TLabMPI_TRPB_I(p_c, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
             end if
-            call TLabMPI_TRPB_I(p_b, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(1, id), ims_tr_i(1, id))
+            call TLabMPI_TRPB_I(p_b, result, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
         end if
 #endif
 
@@ -562,7 +562,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TRPF_K(u, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                call TLabMPI_TRPF_K(u, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
@@ -624,9 +624,9 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TRPB_K(p_b, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                call TLabMPI_TRPB_K(p_b, result, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
                 if (type == OPR_P2_P1) then
-                    call TLabMPI_TRPB_K(p_c, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(1, id), ims_tr_k(1, id))
+                    call TLabMPI_TRPB_K(p_c, tmp1, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
                 end if
             end if
 #endif
