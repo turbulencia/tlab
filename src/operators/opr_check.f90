@@ -49,8 +49,8 @@ subroutine OPR_CHECK()
         id = TLabMPI_I_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call TLabMPI_TRPF_I(q(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
-        call TLabMPI_TRPB_I(wrk3d, q(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+        call TLabMPI_TRPF_I(q(1, 1), wrk3d, id)
+        call TLabMPI_TRPB_I(wrk3d, q(1, 2), id)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
@@ -77,9 +77,9 @@ subroutine OPR_CHECK()
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
-        call TLabMPI_TRPF_K(q(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+        call TLabMPI_TRPF_K(q(1, 1), wrk3d, id)
         itime = idummy
-        call TLabMPI_TRPB_K(wrk3d, q(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+        call TLabMPI_TRPB_K(wrk3d, q(1, 2), id)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt

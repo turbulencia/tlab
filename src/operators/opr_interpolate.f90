@@ -146,7 +146,7 @@ contains
         if (ims_npro_i > 1) then
             id = TLabMPI_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLabMPI_TRPF_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPF_I(u_tmp2, u_tmp1, id)
 
             p_a => u_tmp1
             p_b => u_tmp2
@@ -177,7 +177,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             id = TLabMPI_I_AUX2
-            call TLabMPI_TRPB_I(u_tmp2, u_tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPB_I(u_tmp2, u_tmp1, id)
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -212,7 +212,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             id = TLabMPI_K_AUX1
-            call TLabMPI_TRPF_K(u_org, u_tmp2, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPF_K(u_org, u_tmp2, id)
 
             p_a => u_tmp2
             p_b => u_tmp1
@@ -260,7 +260,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             id = TLabMPI_K_AUX2
-            call TLabMPI_TRPB_K(u_tmp1, u_dst, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPB_K(u_tmp1, u_dst, id)
         end if
 #endif
         nullify (p_a, p_b)

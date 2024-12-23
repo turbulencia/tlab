@@ -123,13 +123,13 @@ program VMPI
 
     if (ims_npro_k > 1) then
         id = TLabMPI_K_PARTIAL
-        call TLabMPI_TRPF_K(a(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
-        call TLabMPI_TRPB_K(wrk3d, a(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+        call TLabMPI_TRPF_K(a(1, 1), wrk3d, id)
+        call TLabMPI_TRPB_K(wrk3d, a(1, 2), id)
     end if
     if (ims_npro_i > 1) then
         id = TLabMPI_I_PARTIAL
-        call TLabMPI_TRPF_I(a(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
-        call TLabMPI_TRPB_I(wrk3d, a(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+        call TLabMPI_TRPF_I(a(1, 1), wrk3d, id)
+        call TLabMPI_TRPB_I(wrk3d, a(1, 2), id)
     end if
 
     if (IMS_PRO == 0) then
@@ -148,8 +148,8 @@ program VMPI
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
-            call TLabMPI_TRPF_I(a(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
-            call TLabMPI_TRPB_I(wrk3d, a(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPF_I(a(1, 1), wrk3d, id)
+            call TLabMPI_TRPB_I(wrk3d, a(1, 2), id)
 
             call system_clock(t_end, PROC_CYCLES, MAX_CYCLES)
 
@@ -178,8 +178,8 @@ program VMPI
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
-            call TLabMPI_TRPF_K(a(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
-            call TLabMPI_TRPB_K(wrk3d, a(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPF_K(a(1, 1), wrk3d, id)
+            call TLabMPI_TRPB_K(wrk3d, a(1, 2), id)
 
             call system_clock(t_end, PROC_CYCLES, MAX_CYCLES)
 
@@ -283,7 +283,7 @@ subroutine TLabMPI_Initialize()
         id = TLabMPI_I_PARTIAL
         npage = kmax*jmax
         call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, i1, i1, i1, i1, &
-                             ims_size_i(id), ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+                             ims_size_i(id), id)
     end if
 
     if (ims_npro_k > 1) then
@@ -291,7 +291,7 @@ subroutine TLabMPI_Initialize()
         id = TLabMPI_K_PARTIAL
         npage = imax*jmax
         call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
-                             ims_size_k(id), ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+                             ims_size_k(id), id)
     end if
 
     call TLabMPI_TAGRESET

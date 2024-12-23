@@ -15,8 +15,7 @@ module OPR_FOURIER
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro, ims_err
-    use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-    use TLabMPI_VARS, only: ims_size_k, ims_ds_k, ims_dr_k, ims_ts_k, ims_tr_k
+    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_PROCS
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
@@ -379,7 +378,7 @@ contains
 
             ! Transpose array a into b
             id = TLabMPI_I_POISSON1
-            call TLabMPI_TRPF_I(in, r_out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPF_I(in, r_out, id)
 
             ! ims_size_i(id) FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
@@ -401,7 +400,7 @@ contains
 
             ! Transpose array back
             id = TLabMPI_I_POISSON2
-            call TLabMPI_TRPB_I(wrk3d, r_out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPB_I(wrk3d, r_out, id)
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
             wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
@@ -487,7 +486,7 @@ contains
 
             ! Transpose array
             id = TLabMPI_I_POISSON2
-            call TLabMPI_TRPF_I(r_in, out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPF_I(r_in, out, id)
 
             ! reorganize a (FFTW make a stride in a already before)
             id = TLabMPI_I_POISSON1
@@ -509,7 +508,7 @@ contains
 
             ! Transpose array wrk into out
             id = TLabMPI_I_POISSON1
-            call TLabMPI_TRPB_I(r_in, out, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPB_I(r_in, out, id)
 
             nullify (in_aux, r_in, c_out)
 
@@ -559,7 +558,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TRPF_K(r_in, r_out, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPF_K(r_in, r_out, id)
             p_org => out
             p_dst => in
         else
@@ -589,7 +588,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TRPB_K(r_in, r_out, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPB_K(r_in, r_out, id)
             nullify (r_in, r_out)
         end if
 #endif
@@ -629,7 +628,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TRPF_K(r_in, r_out, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPF_K(r_in, r_out, id)
             p_org => out
             p_dst => in
         else
@@ -659,7 +658,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TRPB_K(r_in, r_out, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPB_K(r_in, r_out, id)
             nullify (r_in, r_out)
         end if
 #endif

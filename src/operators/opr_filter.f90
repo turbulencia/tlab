@@ -424,7 +424,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPF_I(u, wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPF_I(u, wrk3d, id)
             p_a => wrk3d
             p_b => u
             nyz = ims_size_i(id)
@@ -464,7 +464,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPB_I(p_b, p_a, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPB_I(p_b, p_a, id)
         end if
 #endif
 
@@ -557,7 +557,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TRPF_K(u, wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPF_K(u, wrk3d, id)
             p_a => wrk3d
             p_b => u
             nxy = ims_size_k(id)
@@ -579,7 +579,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TRPB_K(p_b, p_a, ims_ds_k(1, id), ims_dr_k(1, id), ims_ts_k(id), ims_tr_k(id))
+            call TLabMPI_TRPB_K(p_b, p_a, id)
         end if
 #endif
 

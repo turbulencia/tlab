@@ -166,7 +166,7 @@ contains
         call MPI_CART_COORDS(ims_comm_xz, ims_pro, 2, coord, ims_err)
         ims_pro_k = coord(1); ims_pro_i = coord(2)      ! starting at 0
         ! ims_pro_k = coord(2); ims_pro_i = coord(1)
-        ! 
+        !
         ! equivalent to:
         ! ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
         ! ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
@@ -435,7 +435,7 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPF_K(a, b, dsend, drecv, tsend, trecv)
+    subroutine TLabMPI_TRPF_K(a, b, id)
         use, intrinsic :: iso_c_binding, only: c_int
 
         interface
@@ -448,15 +448,20 @@ contains
 
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
-        integer(wi), dimension(ims_npro_k), intent(in) :: dsend, drecv ! displacements
-        integer, intent(in) :: tsend, trecv
+        integer, intent(in) :: id
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
+        integer(wi), dimension(ims_npro_k) :: dsend, drecv ! displacements
+        integer tsend, trecv
 
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
 #endif
+        dsend(1:ims_npro_k) = ims_ds_k(1:ims_npro_k, id)
+        drecv(1:ims_npro_k) = ims_dr_k(1:ims_npro_k, id)
+        tsend = ims_ts_k(id)
+        trecv = ims_tr_k(id)
 
         ! #######################################################################
 #ifdef PROFILE_ON
@@ -494,15 +499,21 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPF_I(a, b, dsend, drecv, tsend, trecv)
+    subroutine TLabMPI_TRPF_I(a, b, id)
 
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
-        integer(wi), dimension(ims_npro_i), intent(in) :: dsend, drecv ! displacements
-        integer, intent(in) :: tsend, trecv
+        integer, intent(in) :: id
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
+        integer(wi), dimension(ims_npro_i) :: dsend, drecv ! displacements
+        integer tsend, trecv
+
+        dsend(1:ims_npro_i) = ims_ds_i(1:ims_npro_i, id)
+        drecv(1:ims_npro_i) = ims_dr_i(1:ims_npro_i, id)
+        tsend = ims_ts_i(id)
+        trecv = ims_tr_i(id)
 
         do j = 1, ims_npro_i, ims_sizBlock_i
             l = 0
@@ -532,15 +543,15 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPB_K(b, a, dsend, drecv, tsend, trecv)
+    subroutine TLabMPI_TRPB_K(b, a, id)
 
         real(wp), dimension(*), intent(in) :: b
         real(wp), dimension(*), intent(out) :: a
-        integer(wi), dimension(ims_npro_k), intent(in) :: dsend, drecv
-        integer, dimension(ims_npro_k), intent(in) :: tsend, trecv
-
+        integer, intent(in) :: id
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
+        integer(wi), dimension(ims_npro_k) :: dsend, drecv ! displacements
+        integer tsend, trecv
 
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
@@ -550,6 +561,11 @@ contains
 #ifdef PROFILE_ON
         time_loc_1 = MPI_WTIME()
 #endif
+        dsend(1:ims_npro_k) = ims_ds_k(1:ims_npro_k, id)
+        drecv(1:ims_npro_k) = ims_dr_k(1:ims_npro_k, id)
+        tsend = ims_ts_k(id)
+        trecv = ims_tr_k(id)
+
         do j = 1, ims_npro_k, ims_sizBlock_k
             l = 0
             do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
@@ -557,12 +573,12 @@ contains
                 nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
                 if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) then
                     l = l + 1
-                    call MPI_ISEND(b(drecv(nr) + 1), 1, trecv(1), ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
+                    call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
                     l = l + 1
-                    call MPI_IRECV(a(dsend(ns) + 1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
+                    call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
                 elseif (ims_trp_mode_k == TLabMPI_TRP_SENDRECV) then
-                    call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv(1), ipr, ims_tag, &
-                                      a(dsend(ns) + 1), 1, tsend(1), ips, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
+                    call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
+                                      a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
                 else; continue   ! No transpose
                 end if
             end do
@@ -583,15 +599,21 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPB_I(b, a, dsend, drecv, tsend, trecv)
+    subroutine TLabMPI_TRPB_I(b, a, id)
 
         real(wp), dimension(*), intent(in) :: b
         real(wp), dimension(*), intent(out) :: a
-        integer(wi), dimension(ims_npro_i), intent(in) :: dsend, drecv ! displacements
-        integer, dimension(ims_npro_i), intent(in) :: tsend, trecv ! types
+        integer, intent(in) :: id
 
         ! -----------------------------------------------------------------------
         integer(wi) j, l, m, ns, nr, ips, ipr
+        integer(wi), dimension(ims_npro_i) :: dsend, drecv ! displacements
+        integer tsend, trecv
+
+        dsend(1:ims_npro_i) = ims_ds_i(1:ims_npro_i, id)
+        drecv(1:ims_npro_i) = ims_dr_i(1:ims_npro_i, id)
+        tsend = ims_ts_i(id)
+        trecv = ims_tr_i(id)
 
         do j = 1, ims_npro_i, ims_sizBlock_i
             l = 0
@@ -600,12 +622,12 @@ contains
                 nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
                 if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) then
                     l = l + 1
-                    call MPI_ISEND(b(drecv(nr) + 1), 1, trecv(1), ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
+                    call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
                     l = l + 1
-                    call MPI_IRECV(a(dsend(ns) + 1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
+                    call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
                 elseif (ims_trp_mode_i == TLabMPI_TRP_SENDRECV) then
-                    call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv(1), ipr, ims_tag, &
-                                      a(dsend(ns) + 1), 1, tsend(1), ips, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
+                    call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
+                                      a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
                 else; continue    ! No transpose
                 end if
             end do
@@ -676,7 +698,7 @@ contains
         ! Transposing along Ox
         ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPF_I(u, tmp1, ims_ds_i(1, id), ims_dr_i(1, id), ims_ts_i(id), ims_tr_i(id))
+            call TLabMPI_TRPF_I(u, tmp1, id)
             p_org => tmp1
             nyz = ims_size_i(id)
         else
