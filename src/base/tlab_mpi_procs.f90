@@ -485,8 +485,6 @@ contains
         integer, intent(in) :: id
 
         ! -----------------------------------------------------------------------
-        ! integer(wi) j, l, m, ns, nr, ips, ipr
-
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
 #endif
@@ -499,39 +497,6 @@ contains
                               b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
                               ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
 
-! #define dsend(j)    ims_ds_k(j, id)
-! #define drecv(j)    ims_dr_k(j, id)
-! #define tsend       ims_ts_k(id)
-! #define trecv       ims_tr_k(id)
-
-        ! do j = 1, ims_npro_k, ims_sizBlock_k
-        !     l = 0
-        !     do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
-        !         ns = ims_plan_trps_k(m) + 1; ips = ns - 1
-        !         nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
-        !         if (ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) then
-        !             l = l + 1
-        !             call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
-        !             l = l + 1
-        !             call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
-        !         elseif (ims_trp_mode_k == TLAB_MPI_TRP_SENDRECV) then
-        !             call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-        !                               b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
-        !         else; continue     ! No transpose
-        !         end if
-        !     end do
-
-        !     if (ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) &
-        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
-
-        !     call TLabMPI_TAGUPDT
-        ! end do
-
-! #undef dsend
-! #undef drecv
-! #undef tsend
-! #undef trecv
-
 #ifdef PROFILE_ON
         time_loc_2 = MPI_WTIME()
         ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
@@ -539,6 +504,69 @@ contains
 
         return
     end subroutine TLabMPI_TRPF_K
+
+    !########################################################################
+    !########################################################################
+    subroutine TLabMPI_TRPB_K(b, a, id)
+        real(wp), dimension(*), intent(in) :: b
+        real(wp), dimension(*), intent(out) :: a
+        integer, intent(in) :: id
+
+        ! -----------------------------------------------------------------------
+#ifdef PROFILE_ON
+        real(wp) time_loc_1, time_loc_2
+#endif
+
+        ! #######################################################################
+#ifdef PROFILE_ON
+        time_loc_1 = MPI_WTIME()
+#endif
+
+        call Transpose_Kernel(b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                              a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+
+#ifdef PROFILE_ON
+        time_loc_2 = MPI_WTIME()
+        ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
+#endif
+
+        return
+    end subroutine TLabMPI_TRPB_K
+
+    !########################################################################
+    !########################################################################
+    subroutine TLabMPI_TRPF_I(a, b, id)
+        real(wp), dimension(*), intent(in) :: a
+        real(wp), dimension(*), intent(out) :: b
+        integer, intent(in) :: id
+
+        ! -----------------------------------------------------------------------
+
+        ! #######################################################################
+        call Transpose_Kernel(a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                              b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+
+        return
+    end subroutine TLabMPI_TRPF_I
+
+    !########################################################################
+    !########################################################################
+    subroutine TLabMPI_TRPB_I(b, a, id)
+        real(wp), dimension(*), intent(in) :: b
+        real(wp), dimension(*), intent(out) :: a
+        integer, intent(in) :: id
+
+        ! -----------------------------------------------------------------------
+
+        ! #######################################################################
+        call Transpose_Kernel(b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                              a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+
+        return
+    end subroutine TLabMPI_TRPB_I
 
     !########################################################################
     !########################################################################
@@ -598,171 +626,6 @@ contains
 
         return
     end subroutine Transpose_Kernel
-
-    !########################################################################
-    !########################################################################
-    subroutine TLabMPI_TRPF_I(a, b, id)
-        real(wp), dimension(*), intent(in) :: a
-        real(wp), dimension(*), intent(out) :: b
-        integer, intent(in) :: id
-
-        ! -----------------------------------------------------------------------
-        ! integer(wi) j, l, m, ns, nr, ips, ipr
-
-        ! #######################################################################
-        call Transpose_Kernel(a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                              b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
-
-! #define dsend(j)    ims_ds_i(j, id)
-! #define drecv(j)    ims_dr_i(j, id)
-! #define tsend       ims_ts_i(id)
-! #define trecv       ims_tr_i(id)
-
-        ! do j = 1, ims_npro_i, ims_sizBlock_i
-        !     l = 0
-        !     do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
-        !         ns = ims_plan_trps_i(m) + 1; ips = ns - 1
-        !         nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
-        !         if (ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS) then
-        !             l = l + 1
-        !             call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
-        !             l = l + 1
-        !             call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
-        !         elseif (ims_trp_mode_i == TLAB_MPI_TRP_SENDRECV) then
-        !             call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-        !                               b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
-        !         else; continue ! No transpose
-        !         end if
-        !     end do
-
-        !     if (ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS) &
-        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
-
-        !     call TLabMPI_TAGUPDT
-        ! end do
-
-! #undef dsend
-! #undef drecv
-! #undef tsend
-! #undef trecv
-
-        return
-    end subroutine TLabMPI_TRPF_I
-
-    !########################################################################
-    !########################################################################
-    subroutine TLabMPI_TRPB_K(b, a, id)
-        real(wp), dimension(*), intent(in) :: b
-        real(wp), dimension(*), intent(out) :: a
-        integer, intent(in) :: id
-        ! -----------------------------------------------------------------------
-        ! integer(wi) j, l, m, ns, nr, ips, ipr
-
-#ifdef PROFILE_ON
-        real(wp) time_loc_1, time_loc_2
-#endif
-
-        ! #######################################################################
-#ifdef PROFILE_ON
-        time_loc_1 = MPI_WTIME()
-#endif
-
-        call Transpose_Kernel(b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                              a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
-
-! #define dsend(j)    ims_ds_k(j, id)
-! #define drecv(j)    ims_dr_k(j, id)
-! #define tsend       ims_ts_k(id)
-! #define trecv       ims_tr_k(id)
-
-        ! do j = 1, ims_npro_k, ims_sizBlock_k
-        !     l = 0
-        !     do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
-        !         ns = ims_plan_trps_k(m) + 1; ips = ns - 1
-        !         nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
-        !         if (ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) then
-        !             l = l + 1
-        !             call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
-        !             l = l + 1
-        !             call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
-        !         elseif (ims_trp_mode_k == TLAB_MPI_TRP_SENDRECV) then
-        !             call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
-        !                               a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
-        !         else; continue   ! No transpose
-        !         end if
-        !     end do
-
-        !     if (ims_trp_mode_k == TLAB_MPI_TRP_ASYNCHRONOUS) &
-        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
-
-        !     call TLabMPI_TAGUPDT
-        ! end do
-
-! #undef dsend
-! #undef drecv
-! #undef tsend
-! #undef trecv
-
-#ifdef PROFILE_ON
-        time_loc_2 = MPI_WTIME()
-        ims_time_trans = ims_time_trans + (time_loc_2 - time_loc_1)
-#endif
-
-        return
-    end subroutine TLabMPI_TRPB_K
-
-    !########################################################################
-    !########################################################################
-    subroutine TLabMPI_TRPB_I(b, a, id)
-        real(wp), dimension(*), intent(in) :: b
-        real(wp), dimension(*), intent(out) :: a
-        integer, intent(in) :: id
-
-        ! -----------------------------------------------------------------------
-        ! integer(wi) j, l, m, ns, nr, ips, ipr
-
-        ! #######################################################################
-        call Transpose_Kernel(b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                              a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
-
-! #define dsend(j)    ims_ds_i(j, id)
-! #define drecv(j)    ims_dr_i(j, id)
-! #define tsend       ims_ts_i(id)
-! #define trecv       ims_tr_i(id)
-
-        ! do j = 1, ims_npro_i, ims_sizBlock_i
-        !     l = 0
-        !     do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
-        !         ns = ims_plan_trps_i(m) + 1; ips = ns - 1
-        !         nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
-        !         if (ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS) then
-        !             l = l + 1
-        !             call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
-        !             l = l + 1
-        !             call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
-        !         elseif (ims_trp_mode_i == TLAB_MPI_TRP_SENDRECV) then
-        !             call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
-        !                               a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
-        !         else; continue    ! No transpose
-        !         end if
-        !     end do
-
-        !     if (ims_trp_mode_i == TLAB_MPI_TRP_ASYNCHRONOUS) &
-        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
-
-        !     call TLabMPI_TAGUPDT
-        ! end do
-
-! #undef dsend
-! #undef drecv
-! #undef tsend
-! #undef trecv
-
-        return
-    end subroutine TLabMPI_TRPB_I
 
     ! ###################################################################
     ! ###################################################################
