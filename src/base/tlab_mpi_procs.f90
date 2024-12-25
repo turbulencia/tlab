@@ -45,6 +45,7 @@ module TLabMPI_PROCS
     integer, parameter :: TLabMPI_TRP_NONE = 0
     integer, parameter :: TLabMPI_TRP_ASYNCHRONOUS = 1
     integer, parameter :: TLabMPI_TRP_SENDRECV = 2
+    integer, parameter :: TLabMPI_TRP_ALLTOALL = 3
 
     integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
     integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
@@ -129,12 +130,12 @@ contains
 
         ! #######################################################################
         select case (wp)
-        case(dp)
+        case (dp)
             TLAB_MPI_REAL_TYPE = MPI_REAL8
-        case(sp)
-            TLAB_MPI_REAL_TYPE = MPI_REAL4           
+        case (sp)
+            TLAB_MPI_REAL_TYPE = MPI_REAL4
         end select
-        
+
         ! #######################################################################
         ! Allocation
         allocate (ims_ts_i(TLabMPI_I_MAXTYPES))         ! derived MPI types for send/recv
@@ -497,28 +498,32 @@ contains
 #ifdef PROFILE_ON
         time_loc_1 = MPI_WTIME()
 #endif
-        do j = 1, ims_npro_k, ims_sizBlock_k
-            l = 0
-            do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
-                ns = ims_plan_trps_k(m) + 1; ips = ns - 1
-                nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
-                if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) then
-                    l = l + 1
-                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
-                    l = l + 1
-                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
-                elseif (ims_trp_mode_k == TLabMPI_TRP_SENDRECV) then
-                    call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
-                else; continue     ! No transpose
-                end if
-            end do
+        call Transpose_Kernel(a, ims_plan_trps_k(:), dsend(:), tsend, &
+                              b, ims_plan_trpr_k(:), drecv(:), trecv, &
+                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
 
-            if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) &
-                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+        ! do j = 1, ims_npro_k, ims_sizBlock_k
+        !     l = 0
+        !     do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
+        !         ns = ims_plan_trps_k(m) + 1; ips = ns - 1
+        !         nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
+        !         if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) then
+        !             l = l + 1
+        !             call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
+        !             l = l + 1
+        !             call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
+        !         elseif (ims_trp_mode_k == TLabMPI_TRP_SENDRECV) then
+        !             call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
+        !                               b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
+        !         else; continue     ! No transpose
+        !         end if
+        !     end do
 
-            call TLabMPI_TAGUPDT
-        end do
+        !     if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) &
+        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+
+        !     call TLabMPI_TAGUPDT
+        ! end do
 
 #undef dsend
 #undef drecv
@@ -532,6 +537,63 @@ contains
 
         return
     end subroutine TLabMPI_TRPF_K
+
+    !########################################################################
+    !########################################################################
+    subroutine Transpose_Kernel(a, msend, dsend, tsend, b, mrecv, drecv, trecv, comm, step, mode)
+        real(wp), intent(in) :: a(*)
+        real(wp), intent(out) :: b(*)
+
+        integer, intent(in) :: comm                         ! communicator
+        integer, intent(in) :: tsend, trecv                 ! types send/receive
+        integer(wi), intent(in) :: dsend(:), drecv(:)       ! displacements send/receive
+        integer(wi), intent(in) :: msend(:), mrecv(:)       ! maps send/receive
+        integer(wi), intent(in) :: step
+        integer, intent(in) :: mode
+
+        ! -----------------------------------------------------------------------
+        integer(wi) npro
+        integer(wi) j, l, m, ns, nr, ips, ipr
+
+        ! #######################################################################
+        npro = size(dsend(:))
+
+        select case (mode)
+        case (TLabMPI_TRP_ASYNCHRONOUS)
+            do j = 1, npro, step
+                l = 0
+                do m = j, min(j + step - 1, npro)
+                    ns = msend(m) + 1; ips = ns - 1
+                    nr = mrecv(m) + 1; ipr = nr - 1
+                    l = l + 1
+                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, ims_request(l), ims_err)
+                    l = l + 1
+                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_request(l), ims_err)
+                end do
+
+                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+
+                call TLabMPI_TAGUPDT
+
+            end do
+
+        case (TLabMPI_TRP_SENDRECV)
+            do j = 1, npro, step
+                do m = j, min(j + step - 1, npro)
+                    ns = msend(m) + 1; ips = ns - 1
+                    nr = mrecv(m) + 1; ipr = nr - 1
+                    call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
+                end do
+
+                call TLabMPI_TAGUPDT
+
+            end do
+
+        end select
+
+        return
+    end subroutine Transpose_Kernel
 
     !########################################################################
     !########################################################################
@@ -550,28 +612,32 @@ contains
 #define tsend       ims_ts_i(id)
 #define trecv       ims_tr_i(id)
 
-        do j = 1, ims_npro_i, ims_sizBlock_i
-            l = 0
-            do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
-                ns = ims_plan_trps_i(m) + 1; ips = ns - 1
-                nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
-                if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) then
-                    l = l + 1
-                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
-                    l = l + 1
-                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
-                elseif (ims_trp_mode_i == TLabMPI_TRP_SENDRECV) then
-                    call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
-                else; continue ! No transpose
-                end if
-            end do
+        call Transpose_Kernel(a, ims_plan_trps_i(:), dsend(:), tsend, &
+                              b, ims_plan_trpr_i(:), drecv(:), trecv, &
+                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
 
-            if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) &
-                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+        ! do j = 1, ims_npro_i, ims_sizBlock_i
+        !     l = 0
+        !     do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
+        !         ns = ims_plan_trps_i(m) + 1; ips = ns - 1
+        !         nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
+        !         if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) then
+        !             l = l + 1
+        !             call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
+        !             l = l + 1
+        !             call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
+        !         elseif (ims_trp_mode_i == TLabMPI_TRP_SENDRECV) then
+        !             call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
+        !                               b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
+        !         else; continue ! No transpose
+        !         end if
+        !     end do
 
-            call TLabMPI_TAGUPDT
-        end do
+        !     if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) &
+        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+
+        !     call TLabMPI_TAGUPDT
+        ! end do
 
 #undef dsend
 #undef drecv
@@ -605,28 +671,32 @@ contains
 #define tsend       ims_ts_k(id)
 #define trecv       ims_tr_k(id)
 
-        do j = 1, ims_npro_k, ims_sizBlock_k
-            l = 0
-            do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
-                ns = ims_plan_trps_k(m) + 1; ips = ns - 1
-                nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
-                if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) then
-                    l = l + 1
-                    call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
-                    l = l + 1
-                    call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
-                elseif (ims_trp_mode_k == TLabMPI_TRP_SENDRECV) then
-                    call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
-                                      a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
-                else; continue   ! No transpose
-                end if
-            end do
+        call Transpose_Kernel(b, ims_plan_trpr_k(:), drecv(:), trecv, &
+                              a, ims_plan_trps_k(:), dsend(:), tsend, &
+                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
 
-            if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) &
-                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+        ! do j = 1, ims_npro_k, ims_sizBlock_k
+        !     l = 0
+        !     do m = j, min(j + ims_sizBlock_k - 1, ims_npro_k)
+        !         ns = ims_plan_trps_k(m) + 1; ips = ns - 1
+        !         nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
+        !         if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) then
+        !             l = l + 1
+        !             call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_z, ims_request(l), ims_err)
+        !             l = l + 1
+        !             call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_request(l), ims_err)
+        !         elseif (ims_trp_mode_k == TLabMPI_TRP_SENDRECV) then
+        !             call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
+        !                               a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_z, ims_status(:, 1), ims_err)
+        !         else; continue   ! No transpose
+        !         end if
+        !     end do
 
-            call TLabMPI_TAGUPDT
-        end do
+        !     if (ims_trp_mode_k == TLabMPI_TRP_ASYNCHRONOUS) &
+        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+
+        !     call TLabMPI_TAGUPDT
+        ! end do
 
 #undef dsend
 #undef drecv
@@ -658,28 +728,32 @@ contains
 #define tsend       ims_ts_i(id)
 #define trecv       ims_tr_i(id)
 
-        do j = 1, ims_npro_i, ims_sizBlock_i
-            l = 0
-            do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
-                ns = ims_plan_trps_i(m) + 1; ips = ns - 1
-                nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
-                if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) then
-                    l = l + 1
-                    call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
-                    l = l + 1
-                    call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
-                elseif (ims_trp_mode_i == TLabMPI_TRP_SENDRECV) then
-                    call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
-                                      a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
-                else; continue    ! No transpose
-                end if
-            end do
+        call Transpose_Kernel(b, ims_plan_trpr_i(:), drecv(:), trecv, &
+                              a, ims_plan_trps_i(:), dsend(:), tsend, &
+                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
 
-            if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) &
-                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+        ! do j = 1, ims_npro_i, ims_sizBlock_i
+        !     l = 0
+        !     do m = j, min(j + ims_sizBlock_i - 1, ims_npro_i)
+        !         ns = ims_plan_trps_i(m) + 1; ips = ns - 1
+        !         nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
+        !         if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) then
+        !             l = l + 1
+        !             call MPI_ISEND(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, ims_comm_x, ims_request(l), ims_err)
+        !             l = l + 1
+        !             call MPI_IRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_request(l), ims_err)
+        !         elseif (ims_trp_mode_i == TLabMPI_TRP_SENDRECV) then
+        !             call MPI_SENDRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, &
+        !                               a(dsend(ns) + 1), 1, tsend, ips, ims_tag, ims_comm_x, ims_status(:, 1), ims_err)
+        !         else; continue    ! No transpose
+        !         end if
+        !     end do
 
-            call TLabMPI_TAGUPDT
-        end do
+        !     if (ims_trp_mode_i == TLabMPI_TRP_ASYNCHRONOUS) &
+        !         call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+
+        !     call TLabMPI_TAGUPDT
+        ! end do
 
 #undef dsend
 #undef drecv
