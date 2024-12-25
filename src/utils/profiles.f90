@@ -9,7 +9,7 @@ module Profiles
 
     public :: Profiles_ReadBlock, Profiles_Calculate
 
-    type, public :: profiles_dt                             ! I wonder if this should be in module profiles, which needs to change dependecies...
+    type, public :: profiles_dt
         sequence
         integer type
         integer :: padding = 0_i4_
