@@ -4,7 +4,7 @@
 
 module TLabMPI_PROCS
     use MPI
-    use TLab_Constants, only: lfile, efile, wp, wi
+    use TLab_Constants, only: lfile, efile, wp, dp, sp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: fourier_on
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -23,6 +23,8 @@ module TLabMPI_PROCS
     ! public :: TLabMPI_TransposeK, TLabMPI_TransposeI
     public :: TLabMPI_PANIC
     public :: TLabMPI_WRITE_PE0_SINGLE
+
+    integer, public :: TLAB_MPI_REAL_TYPE
 
     ! Local variables and procedures; mainly for the transposition
 
@@ -125,6 +127,14 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
+        ! #######################################################################
+        select case (wp)
+        case(dp)
+            TLAB_MPI_REAL_TYPE = MPI_REAL8
+        case(sp)
+            TLAB_MPI_REAL_TYPE = MPI_REAL4           
+        end select
+        
         ! #######################################################################
         ! Allocation
         allocate (ims_ts_i(TLabMPI_I_MAXTYPES))         ! derived MPI types for send/recv
