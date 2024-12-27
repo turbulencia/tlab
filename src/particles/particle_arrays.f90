@@ -8,6 +8,8 @@ module PARTICLE_ARRAYS
     type(particle_dt) :: l_g                    ! particle tags and Oy-node information in local processor, changes in time
 #ifdef USE_MPI
     integer(wi), allocatable :: ims_np_all(:)   ! vector with all # of particles per processor
+    integer, allocatable :: ims_status(:, :)
+    integer, allocatable :: ims_request(:)
 #endif
 
     real(wp), allocatable :: l_q(:, :)          ! Lagrangian fields, flow vartiables

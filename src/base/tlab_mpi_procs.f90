@@ -2,6 +2,8 @@
 #include "dns_const_mpi.h"
 #include "dns_error.h"
 
+! To be changed into TLabMPI (includes TLabMPI_VARS) and TLabMPI_Transpose
+
 module TLabMPI_PROCS
     use MPI
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi
@@ -17,17 +19,14 @@ module TLabMPI_PROCS
     ! Global variables and procedures
     public :: TLabMPI_Initialize
     public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
-    public :: TLabMPI_TRPF_K
-    public :: TLabMPI_TRPB_K    ! I wonder whether I need 2 routines forward/backward instead of simply 1...
-    public :: TLabMPI_TRPF_I
-    public :: TLabMPI_TRPB_I
-    ! public :: TLabMPI_TransposeK, TLabMPI_TransposeI
+    public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
+    public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
     public :: TLabMPI_PANIC
     public :: TLabMPI_WRITE_PE0_SINGLE
 
     integer, public :: TLAB_MPI_REAL_TYPE
 
-    ! Local variables and procedures; mainly for the transposition
+    ! Local variables and procedures; mainly for the transposition--should be a separate module TlabMPI_Transpose
 
     ! type, public :: mpi_transpose_dt
     !     sequence
@@ -57,6 +56,8 @@ module TLabMPI_PROCS
     integer(wi), allocatable :: ims_plan_trps_k(:), ims_plan_trpr_k(:)
 
     integer :: ims_tag
+    integer, allocatable :: ims_status(:, :)
+    integer, allocatable :: ims_request(:)
 
     real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
@@ -87,6 +88,54 @@ contains
         character*64 lstr
 
         ! #######################################################################
+        call TLab_Write_ASCII(lfile, 'Creating MPI communicators.')
+
+        ! the first index in the grid corresponds to k, the second to i
+        dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
+        ! dims(1) = ims_npro_i; dims(2) = ims_npro_k; period = .true.; reorder = .false.
+        call MPI_CART_CREATE(MPI_COMM_WORLD, 2, dims, period, reorder, ims_comm_xz, ims_err)
+
+        call MPI_CART_COORDS(ims_comm_xz, ims_pro, 2, coord, ims_err)
+        ims_pro_k = coord(1); ims_pro_i = coord(2)      ! starting at 0
+        ! ims_pro_k = coord(2); ims_pro_i = coord(1)
+        !
+        ! equivalent to:
+        ! ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
+        ! ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
+        ! to revert them:
+
+        remain_dims(1) = .false.; remain_dims(2) = .true.
+        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
+        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
+
+        remain_dims(1) = .true.; remain_dims(2) = .false.
+        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
+        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
+
+        ! ip = ims_pro
+        ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_x, ims_err)
+        ! print*, 'P:', ims_pro, 'Sum along X', id
+        ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_z, ims_err)
+        ! print*, 'P:', ims_pro, 'Sum along Z', id
+
+        ims_offset_i = ims_pro_i*imax       ! local offset in grid points
+        ims_offset_j = 0
+        ims_offset_k = ims_pro_k*kmax
+
+        ! -----------------------------------------------------------------------
+        ! Control of MPI type
+        select case (wp)
+        case (dp)
+            TLAB_MPI_REAL_TYPE = MPI_REAL8
+        case (sp)
+            TLAB_MPI_REAL_TYPE = MPI_REAL4
+        end select
+
+        ! #######################################################################
+        ! Circular transposition
+        ! Maybe this should be a separate module
+        ! #######################################################################
+        ! -----------------------------------------------------------------------
         ! Read data
         bakfile = trim(adjustl(inifile))//'.bak'
 
@@ -132,15 +181,7 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
-        ! #######################################################################
-        select case (wp)
-        case (dp)
-            TLAB_MPI_REAL_TYPE = MPI_REAL8
-        case (sp)
-            TLAB_MPI_REAL_TYPE = MPI_REAL4
-        end select
-
-        ! #######################################################################
+        ! -----------------------------------------------------------------------
         ! Allocation
         allocate (ims_ts_i(TLabMPI_I_MAXTYPES))         ! derived MPI types for send/recv
         allocate (ims_tr_i(TLabMPI_I_MAXTYPES))
@@ -188,44 +229,8 @@ contains
 
         call TLab_Allocate_Real(__FILE__, wrk_mpi, [isize_wrk3d], 'wrk-mpi')
 
-        ! #######################################################################
-        call TLab_Write_ASCII(lfile, 'Creating MPI communicators.')
-
-        ! the first index in the grid corresponds to k, the second to i
-        dims(1) = ims_npro_k; dims(2) = ims_npro_i; period = .true.; reorder = .false.
-        ! dims(1) = ims_npro_i; dims(2) = ims_npro_k; period = .true.; reorder = .false.
-        call MPI_CART_CREATE(MPI_COMM_WORLD, 2, dims, period, reorder, ims_comm_xz, ims_err)
-
-        call MPI_CART_COORDS(ims_comm_xz, ims_pro, 2, coord, ims_err)
-        ims_pro_k = coord(1); ims_pro_i = coord(2)      ! starting at 0
-        ! ims_pro_k = coord(2); ims_pro_i = coord(1)
-        !
-        ! equivalent to:
-        ! ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
-        ! ims_pro_k = ims_pro/ims_npro_i  ! Starting at 0
-        ! to revert them:
-
-        remain_dims(1) = .false.; remain_dims(2) = .true.
-        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
-        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
-
-        remain_dims(1) = .true.; remain_dims(2) = .false.
-        call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_z, ims_err)
-        ! call MPI_CART_SUB(ims_comm_xz, remain_dims, ims_comm_x, ims_err)
-
-        ! ip = ims_pro
-        ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_x, ims_err)
-        ! print*, 'P:', ims_pro, 'Sum along X', id
-        ! CALL MPI_ALLREDUCE(ip, id, 1, MPI_INTEGER4, MPI_SUM, ims_comm_z, ims_err)
-        ! print*, 'P:', ims_pro, 'Sum along Z', id
-
-        ims_offset_i = ims_pro_i*imax       ! local offset in grid points
-        ims_offset_j = 0
-        ims_offset_k = ims_pro_k*kmax
-
-        ! #######################################################################
-        ! Initialize information for circular transposition
-        ! #######################################################################
+        ! -----------------------------------------------------------------------
+        ! Initialize
         if (ims_npro_i > 1) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLabMPI_I_PARTIAL
@@ -471,7 +476,7 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPF_K(a, b, id)
+    subroutine TLabMPI_TransposeK_Forward(a, b, id)
         ! use, intrinsic :: iso_c_binding, only: c_int
 
         ! interface
@@ -524,11 +529,11 @@ contains
 #endif
 
         return
-    end subroutine TLabMPI_TRPF_K
+    end subroutine TLabMPI_TransposeK_Forward
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPB_K(b, a, id)
+    subroutine TLabMPI_TransposeK_Backward(b, a, id)
         real(wp), dimension(*), intent(in) :: b
         real(wp), dimension(*), intent(out) :: a
         integer, intent(in) :: id
@@ -570,11 +575,11 @@ contains
 #endif
 
         return
-    end subroutine TLabMPI_TRPB_K
+    end subroutine TLabMPI_TransposeK_Backward
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPF_I(a, b, id)
+    subroutine TLabMPI_TransposeI_Forward(a, b, id)
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
         integer, intent(in) :: id
@@ -604,11 +609,11 @@ contains
         end if
 
         return
-    end subroutine TLabMPI_TRPF_I
+    end subroutine TLabMPI_TransposeI_Forward
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TRPB_I(b, a, id)
+    subroutine TLabMPI_TransposeI_Backward(b, a, id)
         real(wp), dimension(*), intent(in) :: b
         real(wp), dimension(*), intent(out) :: a
         integer, intent(in) :: id
@@ -638,7 +643,7 @@ contains
         end if
 
         return
-    end subroutine TLabMPI_TRPB_I
+    end subroutine TLabMPI_TransposeI_Backward
 
     !########################################################################
     !########################################################################
@@ -819,7 +824,7 @@ contains
         ! Transposing along Ox
         ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            call TLabMPI_TRPF_I(u, tmp1, id)
+            call TLabMPI_TransposeI_Forward(u, tmp1, id)
             p_org => tmp1
             nyz = ims_size_i(id)
         else

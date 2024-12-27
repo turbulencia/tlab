@@ -144,28 +144,28 @@ PROGRAM VMPI
      ENDIF
 
      DO is = 1,is_max
-        CALL TLabMPI_TRPF_K(u, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, u, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPF_K(u, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, u, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(u, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, u, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(u, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, u, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
 
-        CALL TLabMPI_TRPF_K(v, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, v, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPF_K(v, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, v, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(v, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, v, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(v, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, v, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
 
-        CALL TLabMPI_TRPF_K(w, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, w, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPF_K(w, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, w, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(w, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, w, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(w, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, w, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
 
-        CALL TLabMPI_TRPF_K(txc, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, txc, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(txc, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, txc, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
 
-        CALL TLabMPI_TRPF_K(z1, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, z1, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPF_K(z1, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
-        CALL TLabMPI_TRPB_K(wrk3d, z1, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(z1, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, z1, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Forward(z1, wrk3d, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
+        CALL TLabMPI_TransposeK_Backward(wrk3d, z1, ndisp(1,1), mdisp(1,1), tfsend(1,1), tfrecv(1,1))
 
      ENDDO
 
@@ -271,7 +271,7 @@ END SUBROUTINE TLabMPI_TYPE
 !# ARGUMENTS
 !#
 !########################################################################
-SUBROUTINE TLabMPI_TRPF_K(a, b, ndsp, mdsp, tsend, trecv)
+SUBROUTINE TLabMPI_TransposeK_Forward(a, b, ndsp, mdsp, tsend, trecv)
 
   USE TLabMPI_VARS
 
@@ -340,7 +340,7 @@ SUBROUTINE TLabMPI_TRPF_K(a, b, ndsp, mdsp, tsend, trecv)
 #endif
 
   RETURN
-END SUBROUTINE TLabMPI_TRPF_K
+END SUBROUTINE TLabMPI_TransposeK_Forward
 
 !########################################################################
 !# Tool/Library
@@ -355,7 +355,7 @@ END SUBROUTINE TLabMPI_TRPF_K
 !# ARGUMENTS
 !#
 !########################################################################
-SUBROUTINE TLabMPI_TRPB_K(b, a, ndsp, mdsp, tsend, trecv)
+SUBROUTINE TLabMPI_TransposeK_Backward(b, a, ndsp, mdsp, tsend, trecv)
 
   USE TLabMPI_VARS
 
@@ -418,7 +418,7 @@ SUBROUTINE TLabMPI_TRPB_K(b, a, ndsp, mdsp, tsend, trecv)
 #endif
 
   RETURN
-END SUBROUTINE TLabMPI_TRPB_K
+END SUBROUTINE TLabMPI_TransposeK_Backward
 
 !########################################################################
 !# Tool/Library

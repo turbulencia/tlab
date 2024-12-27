@@ -13,6 +13,7 @@ module PARTICLE_INTERPOLATE
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS
+    use PARTICLE_ARRAYS, only: ims_request, ims_status
     use PARTICLE_ARRAYS, only: halo_mpi_recv_i, halo_mpi_recv_k, halo_mpi_send_i, halo_mpi_send_k
 #endif
     implicit none

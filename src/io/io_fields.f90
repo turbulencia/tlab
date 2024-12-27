@@ -871,7 +871,7 @@ contains
 !         call MPI_FILE_CLOSE(mpio_fh, ims_err)
 
 !         if (ims_npro_i > 1) then
-!             call TLabMPI_TRPB_I(p_read, a, id)
+!             call TLabMPI_TransposeI_Backward(p_read, a, id)
 !         end if
 
 !         nullify (p_read)
@@ -928,7 +928,7 @@ contains
 !             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), id)
 
-!             call TLabMPI_TRPF_I(a, wrk, id)
+!             call TLabMPI_TransposeI_Forward(a, wrk, id)
 !             p_write => wrk
 
 !         else

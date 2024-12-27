@@ -378,7 +378,7 @@ contains
 
             ! Transpose array a into b
             id = TLabMPI_I_POISSON1
-            call TLabMPI_TRPF_I(in, r_out, id)
+            call TLabMPI_TransposeI_Forward(in, r_out, id)
 
             ! ims_size_i(id) FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
@@ -400,7 +400,7 @@ contains
 
             ! Transpose array back
             id = TLabMPI_I_POISSON2
-            call TLabMPI_TRPB_I(wrk3d, r_out, id)
+            call TLabMPI_TransposeI_Backward(wrk3d, r_out, id)
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
             wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
@@ -486,7 +486,7 @@ contains
 
             ! Transpose array
             id = TLabMPI_I_POISSON2
-            call TLabMPI_TRPF_I(r_in, out, id)
+            call TLabMPI_TransposeI_Forward(r_in, out, id)
 
             ! reorganize a (FFTW make a stride in a already before)
             id = TLabMPI_I_POISSON1
@@ -508,7 +508,7 @@ contains
 
             ! Transpose array wrk into out
             id = TLabMPI_I_POISSON1
-            call TLabMPI_TRPB_I(r_in, out, id)
+            call TLabMPI_TransposeI_Backward(r_in, out, id)
 
             nullify (in_aux, r_in, c_out)
 
@@ -558,7 +558,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TRPF_K(r_in, r_out, id)
+            call TLabMPI_TransposeK_Forward(r_in, r_out, id)
             p_org => out
             p_dst => in
         else
@@ -588,7 +588,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TRPB_K(r_in, r_out, id)
+            call TLabMPI_TransposeK_Backward(r_in, r_out, id)
             nullify (r_in, r_out)
         end if
 #endif
@@ -628,7 +628,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TRPF_K(r_in, r_out, id)
+            call TLabMPI_TransposeK_Forward(r_in, r_out, id)
             p_org => out
             p_dst => in
         else
@@ -658,7 +658,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TRPB_K(r_in, r_out, id)
+            call TLabMPI_TransposeK_Backward(r_in, r_out, id)
             nullify (r_in, r_out)
         end if
 #endif

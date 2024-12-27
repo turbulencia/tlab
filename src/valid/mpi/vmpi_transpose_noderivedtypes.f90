@@ -103,8 +103,8 @@ program VMPI
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
-            call TLabMPI_TRPF_I(a(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_size_i(id))
-            call TLabMPI_TRPB_I(wrk3d, a(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_size_i(id))
+            call TLabMPI_TransposeI_Forward(a(1, 1), wrk3d, ims_ds_i(1, id), ims_dr_i(1, id), ims_size_i(id))
+            call TLabMPI_TransposeI_Backward(wrk3d, a(1, 2), ims_ds_i(1, id), ims_dr_i(1, id), ims_size_i(id))
 
             call system_clock(t_end, PROC_CYCLES, MAX_CYCLES)
 
@@ -135,8 +135,8 @@ program VMPI
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
-            call TLabMPI_TRPF_K(a(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_size_k(id))
-            call TLabMPI_TRPB_K(wrk3d, a(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_size_k(id))
+            call TLabMPI_TransposeK_Forward(a(1, 1), wrk3d, ims_ds_k(1, id), ims_dr_k(1, id), ims_size_k(id))
+            call TLabMPI_TransposeK_Backward(wrk3d, a(1, 2), ims_ds_k(1, id), ims_dr_k(1, id), ims_size_k(id))
 
             call system_clock(t_end, PROC_CYCLES, MAX_CYCLES)
 
@@ -261,7 +261,7 @@ end subroutine TLabMPI_Initialize
 
 ! ###################################################################
 ! ###################################################################
-subroutine TLabMPI_TRPF_K(a, b, dsend, drecv, size)
+subroutine TLabMPI_TransposeK_Forward(a, b, dsend, drecv, size)
 
     use TLabMPI_VARS, only: ims_npro_k, ims_pro_k
     use TLabMPI_VARS, only: ims_comm_z
@@ -309,11 +309,11 @@ subroutine TLabMPI_TRPF_K(a, b, dsend, drecv, size)
     call TLabMPI_TAGUPDT
 
     return
-end subroutine TLabMPI_TRPF_K
+end subroutine TLabMPI_TransposeK_Forward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TRPF_I(a, b, dsend, drecv, size)
+subroutine TLabMPI_TransposeI_Forward(a, b, dsend, drecv, size)
 
     use TLabMPI_VARS, only: ims_npro_i, ims_pro_i
     use TLabMPI_VARS, only: ims_comm_x
@@ -361,11 +361,11 @@ subroutine TLabMPI_TRPF_I(a, b, dsend, drecv, size)
     call TLabMPI_TAGUPDT
 
     return
-end subroutine TLabMPI_TRPF_I
+end subroutine TLabMPI_TransposeI_Forward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TRPB_K(b, a, dsend, drecv, size)
+subroutine TLabMPI_TransposeK_Backward(b, a, dsend, drecv, size)
 
     use TLabMPI_VARS, only: ims_npro_k, ims_pro_k
     use TLabMPI_VARS, only: ims_comm_z
@@ -413,11 +413,11 @@ subroutine TLabMPI_TRPB_K(b, a, dsend, drecv, size)
     call TLabMPI_TAGUPDT
 
     return
-end subroutine TLabMPI_TRPB_K
+end subroutine TLabMPI_TransposeK_Backward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TRPB_I(b, a, dsend, drecv, size)
+subroutine TLabMPI_TransposeI_Backward(b, a, dsend, drecv, size)
 
     use TLabMPI_VARS, only: ims_npro_i, ims_pro_i
     use TLabMPI_VARS, only: ims_comm_x
@@ -465,7 +465,7 @@ subroutine TLabMPI_TRPB_I(b, a, dsend, drecv, size)
     call TLabMPI_TAGUPDT
 
     return
-end subroutine TLabMPI_TRPB_I
+end subroutine TLabMPI_TransposeI_Backward
 
 !########################################################################
 !########################################################################
