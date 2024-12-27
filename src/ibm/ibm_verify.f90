@@ -45,8 +45,8 @@ subroutine IBM_VERIFY_GEOMETRY()
     implicit none
 
 #ifdef USE_MPI
-    integer(wi), parameter :: idi = TLabMPI_I_PARTIAL
-    integer(wi), parameter :: idk = TLabMPI_K_PARTIAL
+    integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
+    integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
     real(wp) :: dummy
 #else
 #ifdef IBM_DEBUG

@@ -5,11 +5,11 @@
 #define TINTEGER   INTEGER(4)
 
 ! from dns_const_mpi.h
-#define TLabMPI_K_PARTIAL   1 ! tags and sizes for MPI data
-#define TLabMPI_I_PARTIAL   1
+#define TLAB_MPI_TRP_K_PARTIAL   1 ! tags and sizes for MPI data
+#define TLAB_MPI_TRP_I_PARTIAL   1
 
-#define TLabMPI_K_MAXTYPES  1
-#define TLabMPI_I_MAXTYPES  1
+#define TLAB_MPI_TRP_K_MAXTYPES  1
+#define TLAB_MPI_TRP_I_MAXTYPES  1
 
 module DNS_MPI
     implicit none
@@ -99,7 +99,7 @@ program VMPI
 ! Transposition along OX
 ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            id = TLabMPI_I_PARTIAL
+            id = TLAB_MPI_TRP_I_PARTIAL
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
@@ -131,7 +131,7 @@ program VMPI
 ! Transposition along OZ
 ! -------------------------------------------------------------------
         if (ims_npro_k > 1) then
-            id = TLabMPI_K_PARTIAL
+            id = TLAB_MPI_TRP_K_PARTIAL
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
@@ -183,14 +183,14 @@ subroutine TLabMPI_Initialize()
 
 ! #######################################################################
     allocate (ims_map_i(ims_npro_i))
-    allocate (ims_size_i(TLabMPI_I_MAXTYPES))
-    allocate (ims_ds_i(ims_npro_i, TLabMPI_I_MAXTYPES))
-    allocate (ims_dr_i(ims_npro_i, TLabMPI_I_MAXTYPES))
+    allocate (ims_size_i(TLAB_MPI_TRP_I_MAXTYPES))
+    allocate (ims_ds_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+    allocate (ims_dr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
 
     allocate (ims_map_k(ims_npro_k))
-    allocate (ims_size_k(TLabMPI_K_MAXTYPES))
-    allocate (ims_ds_k(ims_npro_k, TLabMPI_K_MAXTYPES))
-    allocate (ims_dr_k(ims_npro_k, TLabMPI_K_MAXTYPES))
+    allocate (ims_size_k(TLAB_MPI_TRP_K_MAXTYPES))
+    allocate (ims_ds_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+    allocate (ims_dr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
 
     allocate (status(MPI_STATUS_SIZE, 2*max(ims_npro_k, ims_npro_i)))
     allocate (mpireq(2*max(ims_npro_k, ims_npro_i)))
@@ -229,7 +229,7 @@ subroutine TLabMPI_Initialize()
 ! Derived MPI types to deal with the strides when tranposing data
 ! #######################################################################
     if (ims_npro_i > 1) then
-        id = TLabMPI_I_PARTIAL
+        id = TLAB_MPI_TRP_I_PARTIAL
         ! Calculate size
         ims_size_i(id) = imax*jmax*kmax/ims_npro_i
         ! Calculate Displacements in Forward Send/Receive
@@ -242,7 +242,7 @@ subroutine TLabMPI_Initialize()
     end if
 
     if (ims_npro_k > 1) then
-        id = TLabMPI_K_PARTIAL
+        id = TLAB_MPI_TRP_K_PARTIAL
         ! Calculate size
         ims_size_k(id) = imax*jmax*kmax/ims_npro_k
         ! Calculate Displacements in Forward Send/Receive

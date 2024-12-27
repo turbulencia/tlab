@@ -213,7 +213,7 @@ contains
 ! Characteristic BCs
 ! -------------------------------------------------------------------
             if (.not. g(1)%periodic) then ! Required for NRBCs in Ox
-                id = TLabMPI_K_NRBCX
+                id = TLAB_MPI_TRP_K_NRBCX
                 isize_loc = mod(jmax, ims_npro_k)
                 ims_bcs_imax = 2*(inb_flow + inb_scal_array)
                 do while (mod(isize_loc*ims_bcs_imax, ims_npro_k) > 0)
@@ -228,7 +228,7 @@ contains
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
-                id = TLabMPI_K_NRBCY
+                id = TLAB_MPI_TRP_K_NRBCY
                 isize_loc = mod(imax, ims_npro_k)
                 ims_bcs_jmax = 2*(inb_flow + inb_scal_array)
                 do while (mod(isize_loc*ims_bcs_jmax, ims_npro_k) > 0)

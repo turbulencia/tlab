@@ -44,7 +44,7 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        id = TLabMPI_I_PARTIAL
+        id = TLAB_MPI_TRP_I_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         call TLabMPI_TransposeI_Forward(q(1, 1), wrk3d, id)
@@ -71,7 +71,7 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        id = TLabMPI_K_PARTIAL
+        id = TLAB_MPI_TRP_K_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption

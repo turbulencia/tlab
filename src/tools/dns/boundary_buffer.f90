@@ -374,14 +374,14 @@ contains
             select case (idir)
             case (1)
                 call TLab_Write_ASCII(lfile, 'Initialize MPI types for Ox BCs explicit filter.')
-                id = TLabMPI_K_OUTBCS
+                id = TLAB_MPI_TRP_K_OUTBCS
                 idummy = item%size*jmax
                 call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
                                      id)
 
             case (2)
                 call TLab_Write_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
-                id = TLabMPI_K_TOPBCS
+                id = TLAB_MPI_TRP_K_TOPBCS
                 idummy = imax*item%size
                 call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, &
                                      id)
@@ -667,7 +667,7 @@ contains
         ! Outflow boundary
         ! ###################################################################
         if (BuffFlowImax%size > 1) then
-            id = TLabMPI_K_OUTBCS
+            id = TLAB_MPI_TRP_K_OUTBCS
             buff_imax = imax - BuffFlowImax%size + iloc
             ! -------------------------------------------------------------------
             ! Flow

@@ -848,9 +848,9 @@ contains
 
 !         if (ims_npro_i > 1) then
 !             ! We always initialize types here. For the general field files, we could
-!             ! use TLabMPI_I_PARTIAL, but we use this routine for other files.
+!             ! use TLAB_MPI_TRP_I_PARTIAL, but we use this routine for other files.
 !             call TLab_Write_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
-!             id = TLabMPI_I_AUX1
+!             id = TLAB_MPI_TRP_I_AUX1
 !             npage = nz*ny
 !             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), id)
@@ -921,9 +921,9 @@ contains
 
 !         if (ims_npro_i > 1) then
 !             ! We always initialize types here. For the general field files, we could
-!             ! use TLabMPI_I_PARTIAL, but we use this routine for other files.
+!             ! use TLAB_MPI_TRP_I_PARTIAL, but we use this routine for other files.
 !             call TLab_Write_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
-!             id = TLabMPI_I_AUX1
+!             id = TLAB_MPI_TRP_I_AUX1
 !             npage = nz*ny
 !             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
 !                                  ims_size_i(id), id)

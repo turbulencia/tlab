@@ -48,8 +48,8 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
   real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
   
 #ifdef USE_MPI 
-  integer(wi), parameter                       :: idi = TLabMPI_I_PARTIAL 
-  integer(wi), parameter                       :: idk = TLabMPI_K_PARTIAL 
+  integer(wi), parameter                       :: idi = TLAB_MPI_TRP_I_PARTIAL 
+  integer(wi), parameter                       :: idk = TLAB_MPI_TRP_K_PARTIAL 
 #endif
   integer(wi)                                  :: i, j, k, ij, ik, jk, ip, inum, rse
   integer(wi)                                  :: nyz, nxz, nxy

@@ -257,7 +257,7 @@ contains
             g(1)%anelastic = .true.
 #ifdef USE_MPI
             if (ims_npro_i > 1) then
-                nlines = ims_size_i(TLabMPI_I_PARTIAL)
+                nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
                 offset = nlines*ims_pro_i
             else
 #endif
@@ -285,7 +285,7 @@ contains
             g(3)%anelastic = .true.
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                nlines = ims_size_k(TLabMPI_K_PARTIAL)
+                nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
                 offset = nlines*ims_pro_k
             else
 #endif

@@ -107,7 +107,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
     call MPI_ALLREDUCE(tmp_z(:, :, 1), tmp_z(:, :, 2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
     if (ims_npro_k > 1) then
-        id = TLabMPI_K_AUX2
+        id = TLAB_MPI_TRP_K_AUX2
         call TLabMPI_TransposeK_Forward(tmp_z(:, :, 2), wrk2d(:, :, 1), id)
 
     else

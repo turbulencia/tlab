@@ -183,19 +183,19 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Allocation
-        allocate (ims_ts_i(TLabMPI_I_MAXTYPES))         ! derived MPI types for send/recv
-        allocate (ims_tr_i(TLabMPI_I_MAXTYPES))
-        allocate (ims_size_i(TLabMPI_I_MAXTYPES))       ! metadata inside/to-calculate MPI types
-        allocate (ims_ds_i(ims_npro_i, TLabMPI_I_MAXTYPES))
-        allocate (ims_dr_i(ims_npro_i, TLabMPI_I_MAXTYPES))
+        allocate (ims_ts_i(TLAB_MPI_TRP_I_MAXTYPES))         ! derived MPI types for send/recv
+        allocate (ims_tr_i(TLAB_MPI_TRP_I_MAXTYPES))
+        allocate (ims_size_i(TLAB_MPI_TRP_I_MAXTYPES))       ! metadata inside/to-calculate MPI types
+        allocate (ims_ds_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+        allocate (ims_dr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
         allocate (ims_plan_trps_i(ims_npro_i))          ! mappings for explicit send/recv
         allocate (ims_plan_trpr_i(ims_npro_i))
 
-        allocate (ims_ts_k(TLabMPI_K_MAXTYPES))         ! derived MPI types for send/recv
-        allocate (ims_tr_k(TLabMPI_K_MAXTYPES))
-        allocate (ims_size_k(TLabMPI_K_MAXTYPES))       ! metadata inside/to-calculate MPI types
-        allocate (ims_ds_k(ims_npro_k, TLabMPI_K_MAXTYPES))
-        allocate (ims_dr_k(ims_npro_k, TLabMPI_K_MAXTYPES))
+        allocate (ims_ts_k(TLAB_MPI_TRP_K_MAXTYPES))         ! derived MPI types for send/recv
+        allocate (ims_tr_k(TLAB_MPI_TRP_K_MAXTYPES))
+        allocate (ims_size_k(TLAB_MPI_TRP_K_MAXTYPES))       ! metadata inside/to-calculate MPI types
+        allocate (ims_ds_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+        allocate (ims_dr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
         allocate (ims_plan_trps_k(ims_npro_k))          ! mappings for explicit send/recv
         allocate (ims_plan_trpr_k(ims_npro_k))
 
@@ -233,14 +233,14 @@ contains
         ! Initialize
         if (ims_npro_i > 1) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
-            id = TLabMPI_I_PARTIAL
+            id = TLAB_MPI_TRP_I_PARTIAL
             npage = kmax*jmax
             call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
         end if
 
         if (ims_npro_k > 1) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
-            id = TLabMPI_K_PARTIAL
+            id = TLAB_MPI_TRP_K_PARTIAL
             npage = imax*jmax
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
         end if
@@ -248,12 +248,12 @@ contains
         ! -----------------------------------------------------------------------
         if (ims_npro_i > 1 .and. fourier_on) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
-            id = TLabMPI_I_POISSON1
+            id = TLAB_MPI_TRP_I_POISSON1
             npage = isize_txc_dimx ! isize_txc_field/imax
             call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
 
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
-            id = TLabMPI_I_POISSON2 ! isize_txc_field/(imax+2)
+            id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
             npage = isize_txc_dimx
             call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
 
@@ -261,7 +261,7 @@ contains
 
         if (ims_npro_k > 1 .and. fourier_on) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
-            id = TLabMPI_K_POISSON
+            id = TLAB_MPI_TRP_K_POISSON
             npage = isize_txc_dimz ! isize_txc_field/kmax
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
         end if
@@ -818,7 +818,7 @@ contains
         koffset_loc = 0
         joffset_loc = 0
 
-        id = TLabMPI_I_PARTIAL
+        id = TLAB_MPI_TRP_I_PARTIAL
 
         ! -------------------------------------------------------------------
         ! Transposing along Ox
@@ -1031,7 +1031,7 @@ contains
         call GET_DIMS(ims_nb_zsrt, ims_nb_zend, ims_nb_zsiz, 1, 3)
 
         if (ims_nb_xsrt(1) == 1 .and. ims_nb_xend(1) == g(1)%size &
-            .and. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(TLabMPI_I_PARTIAL)) then
+            .and. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(TLAB_MPI_TRP_I_PARTIAL)) then
             ! Decomp standing in X okay
         else
             call TLab_Write_ASCII(efile, 'Decomp standing in X-BAD')
@@ -1050,7 +1050,7 @@ contains
         end if
 
         if (ims_nb_zsrt(3) == 1 .and. ims_nb_zend(3) == g(3)%size &
-            .and. ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(TLabMPI_K_PARTIAL)) then
+            .and. ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(TLAB_MPI_TRP_K_PARTIAL)) then
             ! Decomp standing in Z okay
         else
             call TLab_Write_ASCII(efile, 'Decomp standing in Z--BAD')

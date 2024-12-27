@@ -42,8 +42,8 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
     character(len=128), intent(in) :: C_FILE_LOC
 
 #ifdef USE_MPI
-    integer(wi), parameter :: idi = TLabMPI_I_PARTIAL
-    integer(wi), parameter :: idk = TLabMPI_K_PARTIAL
+    integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
+    integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
 #endif
     integer(wi) :: nyz, nxz, nxy
 

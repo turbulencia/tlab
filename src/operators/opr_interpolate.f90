@@ -56,7 +56,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
-            id = TLabMPI_I_AUX1
+            id = TLAB_MPI_TRP_I_AUX1
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
@@ -66,7 +66,7 @@ contains
                                       id)
 
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
-            id = TLabMPI_I_AUX2
+            id = TLAB_MPI_TRP_I_AUX2
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
@@ -78,13 +78,13 @@ contains
 
         if (ims_npro_k > 1) then
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
-            id = TLabMPI_K_AUX1
+            id = TLAB_MPI_TRP_K_AUX1
             npage = nx_dst*ny_dst
             call TLabMPI_TypeK_Create(ims_npro_k, nz, npage, 1, 1, 1, 1, &
                                       id)
 
             call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
-            id = TLabMPI_K_AUX2
+            id = TLAB_MPI_TRP_K_AUX2
             npage = nx_dst*ny_dst
             call TLabMPI_TypeK_Create(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, &
                                       id)
@@ -143,7 +143,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            id = TLabMPI_I_AUX1
+            id = TLAB_MPI_TRP_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
             call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, id)
 
@@ -175,7 +175,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            id = TLabMPI_I_AUX2
+            id = TLAB_MPI_TRP_I_AUX2
             call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, id)
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
@@ -210,7 +210,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            id = TLabMPI_K_AUX1
+            id = TLAB_MPI_TRP_K_AUX1
             call TLabMPI_TransposeK_Forward(u_org, u_tmp2, id)
 
             p_a => u_tmp2
@@ -258,7 +258,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            id = TLabMPI_K_AUX2
+            id = TLAB_MPI_TRP_K_AUX2
             call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, id)
         end if
 #endif

@@ -3,11 +3,11 @@
 ! from dns_const.h
 
 ! from dns_const_mpi.h
-#define TLabMPI_K_PARTIAL   1 ! tags and sizes for MPI data
-#define TLabMPI_I_PARTIAL   1
+#define TLAB_MPI_TRP_K_PARTIAL   1 ! tags and sizes for MPI data
+#define TLAB_MPI_TRP_I_PARTIAL   1
 
-#define TLabMPI_K_MAXTYPES 10
-#define TLabMPI_I_MAXTYPES  6
+#define TLAB_MPI_TRP_K_MAXTYPES 10
+#define TLAB_MPI_TRP_I_MAXTYPES  6
 
 module DNS_MPI
     implicit none
@@ -129,12 +129,12 @@ program VMPI_RTRANSPOSE
         write (*, *) 'Executing everything once to get caches / stack / network in production state'
 
     if (ims_npro_k > 1) then
-        id = TLabMPI_K_PARTIAL
+        id = TLAB_MPI_TRP_K_PARTIAL
         call TLabMPI_TransposeK_Forward(a(1, 1), wrk3d, id)
         call TLabMPI_TransposeK_Backward(wrk3d, a(1, 2), id)
     end if
     if (ims_npro_i > 1) then
-        id = TLabMPI_I_PARTIAL
+        id = TLAB_MPI_TRP_I_PARTIAL
         call TLabMPI_TransposeI_Forward(a(1, 1), wrk3d, id)
         call TLabMPI_TransposeI_Backward(wrk3d, a(1, 2), id)
     end if
@@ -159,7 +159,7 @@ program VMPI_RTRANSPOSE
 ! Transposition along OX
 ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            id = TLabMPI_I_PARTIAL
+            id = TLAB_MPI_TRP_I_PARTIAL
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
@@ -196,7 +196,7 @@ program VMPI_RTRANSPOSE
 ! Transposition along OZ
 ! -------------------------------------------------------------------
         if (ims_npro_k > 1) then
-            id = TLabMPI_K_PARTIAL
+            id = TLAB_MPI_TRP_K_PARTIAL
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
@@ -255,18 +255,18 @@ subroutine TLabMPI_Initialize()
 
 ! #######################################################################
     allocate (ims_map_i(ims_npro_i))
-    allocate (ims_size_i(TLabMPI_I_MAXTYPES))
-    allocate (ims_ds_i(ims_npro_i, TLabMPI_I_MAXTYPES))
-    allocate (ims_dr_i(ims_npro_i, TLabMPI_I_MAXTYPES))
-    allocate (ims_ts_i(ims_npro_i, TLabMPI_I_MAXTYPES))
-    allocate (ims_tr_i(ims_npro_i, TLabMPI_I_MAXTYPES))
+    allocate (ims_size_i(TLAB_MPI_TRP_I_MAXTYPES))
+    allocate (ims_ds_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+    allocate (ims_dr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+    allocate (ims_ts_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+    allocate (ims_tr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
 
     allocate (ims_map_k(ims_npro_k))
-    allocate (ims_size_k(TLabMPI_K_MAXTYPES))
-    allocate (ims_ds_k(ims_npro_k, TLabMPI_K_MAXTYPES))
-    allocate (ims_dr_k(ims_npro_k, TLabMPI_K_MAXTYPES))
-    allocate (ims_ts_k(ims_npro_k, TLabMPI_K_MAXTYPES))
-    allocate (ims_tr_k(ims_npro_k, TLabMPI_K_MAXTYPES))
+    allocate (ims_size_k(TLAB_MPI_TRP_K_MAXTYPES))
+    allocate (ims_ds_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+    allocate (ims_dr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+    allocate (ims_ts_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+    allocate (ims_tr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
 
     allocate (ims_plan_trps_i(ims_npro_i))
     allocate (ims_plan_trpr_i(ims_npro_i))
@@ -310,7 +310,7 @@ subroutine TLabMPI_Initialize()
 
     if (ims_npro_i > 1) then
 !  CALL TLab_Write_ASCII(lfile,'Initializing MPI types for Ox derivatives.')
-        id = TLabMPI_I_PARTIAL
+        id = TLAB_MPI_TRP_I_PARTIAL
         npage = kmax*jmax
         call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, i1, i1, i1, i1, &
                              ims_size_i(id), id)
@@ -318,7 +318,7 @@ subroutine TLabMPI_Initialize()
 
     if (ims_npro_k > 1) then
 !  CALL TLab_Write_ASCII(lfile,'Initializing MPI types for Oz derivatives.')
-        id = TLabMPI_K_PARTIAL
+        id = TLAB_MPI_TRP_K_PARTIAL
         npage = imax*jmax
         call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, i1, i1, i1, i1, &
                              ims_size_k(id), id)

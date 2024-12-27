@@ -171,8 +171,8 @@ contains
         end do
 
 #ifdef USE_MPI
-        variable(1)%mpitype = TLabMPI_I_PARTIAL
-        variable(3)%mpitype = TLabMPI_K_PARTIAL
+        variable(1)%mpitype = TLAB_MPI_TRP_I_PARTIAL
+        variable(3)%mpitype = TLAB_MPI_TRP_K_PARTIAL
 #endif
 
         return
@@ -416,7 +416,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLabMPI_I_PARTIAL
+        id = f%mpitype  !TLAB_MPI_TRP_I_PARTIAL
 #endif
 
         !-------------------------------------------------------------------
@@ -549,7 +549,7 @@ contains
 
         !###################################################################
 #ifdef USE_MPI
-        id = f%mpitype  !TLabMPI_K_PARTIAL
+        id = f%mpitype  !TLAB_MPI_TRP_K_PARTIAL
 #endif
 
         !-------------------------------------------------------------------

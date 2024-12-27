@@ -52,7 +52,7 @@ contains
         integer(wi) nyz
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d, p_vel
 #ifdef USE_MPI
-        integer(wi), parameter :: id = TLabMPI_I_PARTIAL
+        integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
 #endif
 
 ! ###################################################################
@@ -219,7 +219,7 @@ contains
         integer(wi) nxy
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_vel
 #ifdef USE_MPI
-        integer(wi), parameter :: id = TLabMPI_K_PARTIAL
+        integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
 #endif
 
 ! ###################################################################

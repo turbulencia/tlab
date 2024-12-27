@@ -115,7 +115,7 @@ contains
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
             call TLab_Write_ASCII(lfile, 'Initialize MPI types for inflow filter.')
-            id = TLabMPI_K_INFLOW
+            id = TLAB_MPI_TRP_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
                                 id)

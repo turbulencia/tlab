@@ -60,7 +60,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            if (ims_size_i(TLabMPI_I_POISSON1) /= ims_size_i(TLabMPI_I_POISSON2)) then
+            if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
                 call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
@@ -72,7 +72,7 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            isize_fft_z = ims_size_k(TLabMPI_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
+            isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
         else
 #endif
             isize_fft_z = (imax/2 + 1)*(jmax + 2)
@@ -107,7 +107,7 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            isize_fft_x = ims_size_i(TLabMPI_I_POISSON1)
+            isize_fft_x = ims_size_i(TLAB_MPI_TRP_I_POISSON1)
         else
 #endif
             isize_fft_x = jmax
@@ -366,7 +366,7 @@ contains
         if (ims_npro_i > 1) then
 
             ! Pass memory address from complex array to real array
-            id = TLabMPI_I_POISSON1
+            id = TLAB_MPI_TRP_I_POISSON1
             call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
             call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
@@ -377,14 +377,14 @@ contains
             in(:, (ny + 1)*nz + 1:(ny + 2)*nz) = in_bcs_ht(:, 1:nz)
 
             ! Transpose array a into b
-            id = TLabMPI_I_POISSON1
+            id = TLAB_MPI_TRP_I_POISSON1
             call TLabMPI_TransposeI_Forward(in, r_out, id)
 
             ! ims_size_i(id) FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
-            id = TLabMPI_I_POISSON1
+            id = TLAB_MPI_TRP_I_POISSON1
             do k = 1, ims_size_i(id)
                 inew = (nx/2 + 1)*ims_npro_i
                 iold = g(1)%size/2 + 1
@@ -399,7 +399,7 @@ contains
             end do
 
             ! Transpose array back
-            id = TLabMPI_I_POISSON2
+            id = TLAB_MPI_TRP_I_POISSON2
             call TLabMPI_TransposeI_Backward(wrk3d, r_out, id)
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
@@ -485,11 +485,11 @@ contains
             end do
 
             ! Transpose array
-            id = TLabMPI_I_POISSON2
+            id = TLAB_MPI_TRP_I_POISSON2
             call TLabMPI_TransposeI_Forward(r_in, out, id)
 
             ! reorganize a (FFTW make a stride in a already before)
-            id = TLabMPI_I_POISSON1
+            id = TLAB_MPI_TRP_I_POISSON1
             do k = 1, ims_size_i(id)
                 do ip = 2, ims_npro_i
                     do i = 1, nx/2
@@ -507,7 +507,7 @@ contains
             call dfftw_execute_dft_c2r(fft_plan_bx, c_out, r_in)
 
             ! Transpose array wrk into out
-            id = TLabMPI_I_POISSON1
+            id = TLAB_MPI_TRP_I_POISSON1
             call TLabMPI_TransposeI_Backward(r_in, out, id)
 
             nullify (in_aux, r_in, c_out)
@@ -534,7 +534,7 @@ contains
     subroutine OPR_FOURIER_F_Z_EXEC(in, out)
 
 #ifdef USE_MPI
-        complex(wp), dimension(ims_size_k(TLabMPI_K_POISSON)/2, g(3)%size), target :: in, out
+        complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
 #else
         complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
 #endif
@@ -551,7 +551,7 @@ contains
         ! #######################################################################
         ! Forward complex FFT in z
 #ifdef USE_MPI
-        id = TLabMPI_K_POISSON
+        id = TLAB_MPI_TRP_K_POISSON
 
         if (ims_npro_k > 1) then
             ! Pass memory address from complex array to real array
@@ -604,7 +604,7 @@ contains
     subroutine OPR_FOURIER_B_Z_EXEC(in, out)
 
 #ifdef USE_MPI
-        complex(wp), dimension(ims_size_k(TLabMPI_K_POISSON)/2, g(3)%size), target :: in, out
+        complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
 #else
         complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
 #endif
@@ -621,7 +621,7 @@ contains
         ! #######################################################################
         ! Forward complex FFT in z
 #ifdef USE_MPI
-        id = TLabMPI_K_POISSON
+        id = TLAB_MPI_TRP_K_POISSON
 
         if (ims_npro_k > 1) then
             ! Pass memory address from complex array to real array

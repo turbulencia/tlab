@@ -177,8 +177,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
         t_init = t_init + MPI_WTime()
 
-        id = TLabMPI_I_PARTIAL; nyz_trans = ims_size_i(id)
-        id = TLabMPI_K_PARTIAL; nxy_trans = ims_size_k(id)
+        id = TLAB_MPI_TRP_I_PARTIAL; nyz_trans = ims_size_i(id)
+        id = TLAB_MPI_TRP_K_PARTIAL; nxy_trans = ims_size_k(id)
         !
         ! kick off transpose U y->x and W y->z
         call NB3DFFT_R2R_YXCOMM(u, bt1, bt1, tmp11, info(FUYX), t_tmp); t_comp = t_comp + t_tmp
