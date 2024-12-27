@@ -75,9 +75,9 @@ subroutine OPR_CHECK()
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
-        call TLabMPI_TRPF_K(q(1, 1), wrk3d, id)
+        call TLabMPI_TRPF_K(q(:, 1), wrk3d, id)
         itime = idummy
-        call TLabMPI_TRPB_K(wrk3d, q(1, 2), id)
+        call TLabMPI_TRPB_K(wrk3d, q(:, 2), id)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt

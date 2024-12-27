@@ -10,6 +10,7 @@ module TLabMPI_PROCS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use TLabMPI_VARS
+    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
 
@@ -58,6 +59,7 @@ module TLabMPI_PROCS
     integer :: ims_tag
 
     real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI
+    real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
 
 #ifdef USE_PSFFT
     integer :: ims_nb_thrsupp_provided
@@ -484,7 +486,11 @@ contains
         real(wp), dimension(*), intent(out) :: b
         integer, intent(in) :: id
 
+        target b
+
         ! -----------------------------------------------------------------------
+        integer(wi) size
+
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
 #endif
@@ -493,9 +499,24 @@ contains
 #ifdef PROFILE_ON
         time_loc_1 = MPI_WTIME()
 #endif
-        call Transpose_Kernel(a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                              b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+
+        if (ims_trp_type_k == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
+            call MPI_TYPE_SIZE(ims_ts_k(id), size, ims_err)
+            size = size/sizeof(1.0_sp)
+            size = size*ims_npro_k
+            call c_f_pointer(c_loc(b), a_wrk, shape=[size])
+            call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
+            a_wrk(1:size) = real(a(1:size), sp)
+            call Transpose_Kernel_Single(a_wrk, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                                         b_wrk, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                                         ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+            b(1:size) = real(b_wrk(1:size), dp)
+            nullify (a_wrk, b_wrk)
+        else
+            call Transpose_Kernel(a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                                  b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                                  ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+        end if
 
 #ifdef PROFILE_ON
         time_loc_2 = MPI_WTIME()
@@ -512,7 +533,10 @@ contains
         real(wp), dimension(*), intent(out) :: a
         integer, intent(in) :: id
 
+        target a
+
         ! -----------------------------------------------------------------------
+        integer(wi) size
 #ifdef PROFILE_ON
         real(wp) time_loc_1, time_loc_2
 #endif
@@ -522,9 +546,23 @@ contains
         time_loc_1 = MPI_WTIME()
 #endif
 
-        call Transpose_Kernel(b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                              a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+        if (ims_trp_type_k == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
+            call MPI_TYPE_SIZE(ims_ts_k(id), size, ims_err)
+            size = size/sizeof(1.0_sp)
+            size = size*ims_npro_k
+            call c_f_pointer(c_loc(a), b_wrk, shape=[size])
+            call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
+            b_wrk(1:size) = real(b(1:size), sp)
+            call Transpose_Kernel_Single(b_wrk, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                                         a_wrk, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                                         ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+            a(1:size) = real(a_wrk(1:size), dp)
+            nullify (a_wrk, b_wrk)
+        else
+            call Transpose_Kernel(b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                                  a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                                  ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+        end if
 
 #ifdef PROFILE_ON
         time_loc_2 = MPI_WTIME()
@@ -541,12 +579,29 @@ contains
         real(wp), dimension(*), intent(out) :: b
         integer, intent(in) :: id
 
+        target b
+
         ! -----------------------------------------------------------------------
+        integer(wi) size
 
         ! #######################################################################
-        call Transpose_Kernel(a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                              b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+        if (ims_trp_type_i == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
+            call MPI_TYPE_SIZE(ims_ts_i(id), size, ims_err)
+            size = size/sizeof(1.0_sp)
+            size = size*ims_npro_i
+            call c_f_pointer(c_loc(b), a_wrk, shape=[size])
+            call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
+            a_wrk(1:size) = real(a(1:size), sp)
+            call Transpose_Kernel_Single(a_wrk, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                                         b_wrk, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                                         ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+            b(1:size) = real(b_wrk(1:size), dp)
+            nullify (a_wrk, b_wrk)
+        else
+            call Transpose_Kernel(a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                                  b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                                  ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+        end if
 
         return
     end subroutine TLabMPI_TRPF_I
@@ -558,12 +613,29 @@ contains
         real(wp), dimension(*), intent(out) :: a
         integer, intent(in) :: id
 
+        target a
+
         ! -----------------------------------------------------------------------
+        integer(wi) size
 
         ! #######################################################################
-        call Transpose_Kernel(b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                              a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+        if (ims_trp_type_i == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
+            call MPI_TYPE_SIZE(ims_ts_i(id), size, ims_err)
+            size = size/sizeof(1.0_sp)
+            size = size*ims_npro_i
+            call c_f_pointer(c_loc(a), b_wrk, shape=[size])
+            call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
+            b_wrk(1:size) = real(b(1:size), sp)
+            call Transpose_Kernel_Single(b_wrk, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                                         a_wrk, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                                         ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+            a(1:size) = real(a_wrk(1:size), dp)
+            nullify (a_wrk, b_wrk)
+        else
+            call Transpose_Kernel(b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                                  a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                                  ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+        end if
 
         return
     end subroutine TLabMPI_TRPB_I
@@ -621,11 +693,74 @@ contains
             end do
 
         case (TLAB_MPI_TRP_ALLTOALL)
+            ! call MPI_ALLTOALL(a, 1, tsend, &
+            !                   b, 1, trecv, comm, ims_err)
 
         end select
 
         return
     end subroutine Transpose_Kernel
+
+    !########################################################################
+    !########################################################################
+    subroutine Transpose_Kernel_Single(a, msend, dsend, tsend, b, mrecv, drecv, trecv, comm, step, mode)
+        real(sp), intent(in) :: a(*)
+        real(sp), intent(out) :: b(*)
+
+        integer, intent(in) :: comm                         ! communicator
+        integer, intent(in) :: tsend, trecv                 ! types send/receive
+        integer(wi), intent(in) :: dsend(:), drecv(:)       ! displacements send/receive
+        integer(wi), intent(in) :: msend(:), mrecv(:)       ! maps send/receive
+        integer(wi), intent(in) :: step
+        integer, intent(in) :: mode
+
+        ! -----------------------------------------------------------------------
+        integer(wi) npro
+        integer(wi) j, l, m, ns, nr, ips, ipr
+
+        ! #######################################################################
+        npro = size(dsend(:))
+
+        select case (mode)
+        case (TLAB_MPI_TRP_ASYNCHRONOUS)
+            do j = 1, npro, step
+                l = 0
+                do m = j, min(j + step - 1, npro)
+                    ns = msend(m) + 1; ips = ns - 1
+                    nr = mrecv(m) + 1; ipr = nr - 1
+                    l = l + 1
+                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, ims_request(l), ims_err)
+                    l = l + 1
+                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_request(l), ims_err)
+                end do
+
+                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+
+                call TLabMPI_TAGUPDT
+
+            end do
+
+        case (TLAB_MPI_TRP_SENDRECV)
+            do j = 1, npro, step
+                do m = j, min(j + step - 1, npro)
+                    ns = msend(m) + 1; ips = ns - 1
+                    nr = mrecv(m) + 1; ipr = nr - 1
+                    call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
+                end do
+
+                call TLabMPI_TAGUPDT
+
+            end do
+
+        case (TLAB_MPI_TRP_ALLTOALL)
+            ! call MPI_ALLTOALL(a, 1, tsend, &
+            !                   b, 1, trecv, comm, ims_err)
+
+        end select
+
+        return
+    end subroutine Transpose_Kernel_Single
 
     ! ###################################################################
     ! ###################################################################
