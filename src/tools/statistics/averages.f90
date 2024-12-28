@@ -15,9 +15,10 @@ program AVERAGES
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g,  FDM_Initialize
+    use FDM, only: g, FDM_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
@@ -103,6 +104,7 @@ program AVERAGES
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
 
@@ -251,11 +253,11 @@ program AVERAGES
         nfield = 2
         iread_flow = .true.; iread_scal = .true.; inb_txc = max(inb_txc, 6)
     case (18) ! Phase average
-        PhAvg%active = .true. 
+        PhAvg%active = .true.
         PhAvg%stride = 1
         nfield = 3
         inb_txc = max(inb_txc, 9)
-        iread_flow = flow_on; iread_scal = scal_on 
+        iread_flow = flow_on; iread_scal = scal_on
     end select
 
     if (imode_ibm == 1) then ! check if enough memory is provided for the IBM
@@ -335,10 +337,10 @@ program AVERAGES
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
+    call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
+    call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
     call OPR_Elliptic_Initialize(ifile)
 
@@ -966,14 +968,14 @@ program AVERAGES
         case (18)
             call AvgPhaseSpace(wrk2d, inb_flow, it, 0, 0, 1)
             call IO_Write_AvgPhase(1, inb_flow, IO_FLOW, 0, PhAvg%stride, avgu_name, 1, avg_flow, itime_vec(it))
-            
+
             call AvgPhaseSpace(wrk2d, inb_scal, it, 0, 0, 2)
-            call IO_Write_AvgPhase(1, inb_scal, IO_SCAL, 0, PhAvg%stride, avgp_name, 2,  avg_scal, itime_vec(it))
-            
-            p => txc(:,9) !makes sure to only pass the address, not the entire array 
-            call AvgPhaseSpace(wrk2d, 1, it, 0, 0 , p)
-            call IO_Write_AvgPhase(1, 1       ,      IO_SCAL, 0, PhAvg%stride, avgs_name, 4, avg_p, itime_vec(it))
-            
+            call IO_Write_AvgPhase(1, inb_scal, IO_SCAL, 0, PhAvg%stride, avgp_name, 2, avg_scal, itime_vec(it))
+
+            p => txc(:, 9) !makes sure to only pass the address, not the entire array
+            call AvgPhaseSpace(wrk2d, 1, it, 0, 0, p)
+            call IO_Write_AvgPhase(1, 1, IO_SCAL, 0, PhAvg%stride, avgs_name, 4, avg_p, itime_vec(it))
+
             call AvgPhaseStress(q, it, 0, 0)
 
             call AvgPhaseResetVariable()

@@ -23,10 +23,7 @@ module IO_FIELDS
     use TLab_Arrays, only: wrk3d
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only: ims_err
-    use TLabMPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_pro_i, ims_pro_k
-    use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k
-    use TLabMPI_PROCS, only: TLabMPI_PANIC
+    use TLabMPI_VARS
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
@@ -57,6 +54,7 @@ module IO_FIELDS
     public :: subarray_dt
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
+    public :: TLabMPI_WRITE_PE0_SINGLE
 #endif
     public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
 
@@ -826,7 +824,8 @@ contains
 !     subroutine IO_READ_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
 ! #ifdef USE_MPI
 !         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLabMPI_PROCS
+!         use TLabMPI_VARS, only: TLabMPI_Initialize
+! use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 ! #endif
 
 !         character(LEN=*) name
@@ -897,7 +896,8 @@ contains
 !     subroutine IO_WRITE_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
 ! #ifdef USE_MPI
 !         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLabMPI_PROCS
+!         use TLabMPI_VARS, only: TLabMPI_Initialize
+! use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 ! #endif
 
 !         character(LEN=*) name
@@ -957,4 +957,96 @@ contains
 ! #undef LOC_UNIT_ID
 ! #undef LOC_STATUS
 
+        !########################################################################
+    !########################################################################
+#ifdef USE_MPI
+    subroutine TLabMPI_WRITE_PE0_SINGLE(iunit, nx, ny, nz, subdomain, u, tmp1, tmp2)
+        use TLabMPI_PROCS
+
+        integer ims_tag
+        integer(wi) iunit, nx, ny, nz, subdomain(6)
+        real(wp), dimension(nx*ny*nz), target :: u, tmp1
+        real(wp), dimension(nx*ims_npro_i, *), target :: tmp2
+
+        ! -------------------------------------------------------------------
+        integer(wi) nx_total, ny_total, nz_total
+        integer(wi) nx_min, nx_max, ny_min, ny_max, nz_min, nz_max
+        integer(wi) nyz
+
+        integer(wi) ip_i, ip_k, joffset_loc, koffset_loc, id
+        integer(wi) i, jk, j_loc, k_loc
+        integer mpio_size, mpio_ip
+        integer status(MPI_STATUS_SIZE)
+
+        real(wp), dimension(:), pointer :: p_org
+
+        ! ###################################################################
+        nx_total = nx*ims_npro_i
+        ny_total = ny
+        nz_total = nz*ims_npro_k
+
+        nx_min = subdomain(1); nx_max = subdomain(2)
+        ny_min = subdomain(3); ny_max = subdomain(4)
+        nz_min = subdomain(5); nz_max = subdomain(6)
+
+        koffset_loc = 0
+        joffset_loc = 0
+
+        id = TLAB_MPI_TRP_I_PARTIAL
+
+        ! -------------------------------------------------------------------
+        ! Transposing along Ox
+        ! -------------------------------------------------------------------
+        if (ims_npro_i > 1) then
+            call TLabMPI_TransposeI_Forward(u, tmp1, id)
+            p_org => tmp1
+            nyz = ims_size_i(id)
+        else
+            p_org => u
+            nyz = ny*nz
+        end if
+        mpio_size = nyz*nx_total
+
+        call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
+
+        ! -------------------------------------------------------------------
+        ! Passing all data through PE#0
+        ! -------------------------------------------------------------------
+        if (ims_pro == 0) then
+
+            do ip_k = 1, ims_npro_k
+                koffset_loc = nz*(ip_k - 1)
+
+                do ip_i = 1, ims_npro_i
+                    joffset_loc = nyz*(ip_i - 1) ! Remember that data is Ox-transposed
+
+                    mpio_ip = ims_npro_i*(ip_k - 1) + ip_i - 1
+                    if (mpio_ip == 0) then
+                        tmp2(1:mpio_size, 1) = p_org(1:mpio_size)
+                    else
+                        call MPI_RECV(tmp2, mpio_size, MPI_REAL8, mpio_ip, ims_tag, MPI_COMM_WORLD, status, ims_err)
+                    end if
+
+                    do jk = 1, nyz
+                        j_loc = mod((jk - 1 + joffset_loc), ny_total) + 1
+                        k_loc = ((jk - 1 + joffset_loc)/ny_total) + 1 + koffset_loc
+
+                        if ((j_loc >= ny_min) .and. (j_loc <= ny_max) .and. &
+                            (k_loc >= nz_min) .and. (k_loc <= nz_max)) then
+                            write (iunit) (SNGL(tmp2(i, jk)), i=nx_min, nx_max)
+                        end if
+
+                    end do
+
+                end do
+            end do
+
+        else
+            call MPI_SEND(p_org, mpio_size, MPI_REAL8, 0, ims_tag, MPI_COMM_WORLD, ims_err)
+        end if
+
+        return
+    end subroutine TLabMPI_WRITE_PE0_SINGLE
+
+#endif
 end module IO_FIELDS

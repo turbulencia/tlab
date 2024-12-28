@@ -33,7 +33,8 @@ program PARTICLE_TRAJEC
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 #endif
     use Thermodynamics
     use Gravity, only: Gravity_Initialize
@@ -75,6 +76,7 @@ program PARTICLE_TRAJEC
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
 

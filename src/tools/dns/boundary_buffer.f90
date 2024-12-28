@@ -34,11 +34,7 @@ module BOUNDARY_BUFFER
 
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only: ims_err
-    use TLabMPI_VARS, only: ims_pro, ims_npro_i, ims_npro_k, ims_npro
-    use TLabMPI_VARS, only: ims_size_i, ims_size_k
-    use TLabMPI_VARS, only: ims_comm_z
-    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i, ims_pro_k
+    use TLabMPI_VARS
     use TLabMPI_PROCS
 #endif
 

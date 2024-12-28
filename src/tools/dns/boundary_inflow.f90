@@ -32,7 +32,6 @@ module BOUNDARY_INFLOW
     use OPR_FILTERS
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_VARS, only: ims_offset_k
     use TLabMPI_PROCS
 #endif
@@ -118,7 +117,7 @@ contains
             id = TLAB_MPI_TRP_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
-                                id)
+                                      id)
             FilterInflow(3)%mpitype = id
         end if
 #endif

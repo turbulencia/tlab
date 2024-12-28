@@ -12,7 +12,6 @@ module OPR_BURGERS
     use TLAB_VARS, only: Dealiasing, subsidence
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_PROCS
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

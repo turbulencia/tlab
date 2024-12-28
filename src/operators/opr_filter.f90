@@ -18,7 +18,7 @@ module OPR_FILTERS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
 #ifdef USE_MPI
-    use TLabMPI_VARS
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_offset_i, ims_offset_k
     use TLabMPI_PROCS
 #endif
     implicit none

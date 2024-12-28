@@ -17,7 +17,8 @@ program INIFLOW
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
@@ -39,6 +40,7 @@ program INIFLOW
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)

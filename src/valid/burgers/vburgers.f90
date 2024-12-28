@@ -10,7 +10,8 @@ program VBURGERS
     use TLab_Pointers_3D, only: tmp1
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
     use TLabMPI_VARS
 #endif
     use FDM, only: g,  FDM_Initialize
@@ -38,6 +39,7 @@ program VBURGERS
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
 

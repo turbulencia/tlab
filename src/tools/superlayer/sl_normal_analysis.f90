@@ -7,7 +7,8 @@ program SL_NORMAL_ANALYSIS
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 #endif
     use IO_FIELDS
 
@@ -69,6 +70,7 @@ program SL_NORMAL_ANALYSIS
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)

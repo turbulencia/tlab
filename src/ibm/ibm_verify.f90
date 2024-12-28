@@ -35,8 +35,8 @@ subroutine IBM_VERIFY_GEOMETRY()
     use TLab_Constants, only: efile, wp, wi
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only: ims_size_i, ims_size_k, ims_err
-    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
+    use TLabMPI_PROCS, only: ims_size_i, ims_size_k
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err
 #ifdef IBM_DEBUG
     use TLabMPI_VARS, only: ims_pro
 #endif

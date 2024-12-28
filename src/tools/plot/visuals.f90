@@ -20,9 +20,10 @@ program VISUALS
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g,  FDM_Initialize
+    use FDM, only: g, FDM_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
@@ -100,6 +101,7 @@ program VISUALS
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
 
@@ -114,14 +116,14 @@ program VISUALS
     ! Read from tlab.ini
     ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
-    if ( TRIM(ADJUSTL(sRes)) == '' )  then; pdecomp = DCMP_TOTAL
-    else if ( TRIM(ADJUSTL(sRes)) == 'total'    ) then; pdecomp = DCMP_TOTAL 
-    else if ( TRIM(ADJUSTL(sRes)) == 'resolved' ) then; pdecomp = DCMP_RESOLVED
-    else if ( TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomp = DCMP_ADVECTION
-    else if ( TRIM(ADJUSTL(sRes)) == 'advdiff'  ) then; pdecomp = DCMP_ADVDIFF 
-    else if ( TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomp = DCMP_DIFFUSION
-    else if ( TRIM(ADJUSTL(sRes)) == 'coriolis' ) then; pdecomp = DCMP_CORIOLIS
-    else if ( TRIM(ADJUSTL(sRes)) == 'buoyancy' ) then; pdecomp = DCMP_BUOYANCY
+    if (TRIM(ADJUSTL(sRes)) == '') then; pdecomp = DCMP_TOTAL
+    else if (TRIM(ADJUSTL(sRes)) == 'total') then; pdecomp = DCMP_TOTAL
+    else if (TRIM(ADJUSTL(sRes)) == 'resolved') then; pdecomp = DCMP_RESOLVED
+    else if (TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomp = DCMP_ADVECTION
+    else if (TRIM(ADJUSTL(sRes)) == 'advdiff') then; pdecomp = DCMP_ADVDIFF
+    else if (TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomp = DCMP_DIFFUSION
+    else if (TRIM(ADJUSTL(sRes)) == 'coriolis') then; pdecomp = DCMP_CORIOLIS
+    else if (TRIM(ADJUSTL(sRes)) == 'buoyancy') then; pdecomp = DCMP_BUOYANCY
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. VISUALS. Wrong Pressure decomposition option.')
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
@@ -340,10 +342,10 @@ program VISUALS
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
+    call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
+    call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
     call OPR_Elliptic_Initialize(ifile)
 
@@ -526,7 +528,7 @@ program VISUALS
                         pdecomp = DCMP_BUOYANCY
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
-                        
+
                         plot_file = 'PressureDiffusion'//time_str(1:MaskSize)
                         pdecomp = DCMP_DIFFUSION
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
@@ -548,7 +550,7 @@ program VISUALS
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
                     end if
-                    
+
                     plot_file = 'Pressure'//time_str(1:MaskSize)
                     call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
@@ -1217,11 +1219,8 @@ contains
     subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
         use TLab_Constants, only: wp, wi
 #ifdef USE_MPI
-        use TLabMPI_VARS, only: ims_pro
-        use TLabMPI_PROCS
+        use IO_FIELDS, only: TLabMPI_WRITE_PE0_SINGLE
 #endif
-
-        implicit none
 
         character*(*) name
         integer(wi), intent(IN) :: iheader ! 0 no header; 1 header

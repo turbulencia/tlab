@@ -43,7 +43,7 @@ program SPECTRA
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro_k
-    use TLabMPI_VARS, only: ims_size_k
+    use TLabMPI_VARS, only: TLabMPI_Initialize
     use TLabMPI_PROCS
 #endif
     use TLab_Background, only: TLab_Initialize_Background
@@ -126,6 +126,7 @@ program SPECTRA
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
 
     call NavierStokes_Initialize_Parameters(ifile)
@@ -321,7 +322,7 @@ program SPECTRA
         call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
         id = TLAB_MPI_TRP_K_AUX2
         call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
-                            id)
+                                  id)
 
     end if
 #endif

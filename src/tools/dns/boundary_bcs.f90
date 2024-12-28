@@ -139,7 +139,6 @@ contains
         use MPI
         use TLAB_VARS, only: inb_scal_array
         use TLabMPI_VARS, only: ims_npro_k
-        use TLabMPI_VARS, only: ims_size_k
         use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
         use TLabMPI_PROCS
 #endif
@@ -224,7 +223,7 @@ contains
                 call TLab_Write_ASCII(lfile, str)
                 isize_loc = ims_bcs_imax*jmax
                 call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
-                                     id)
+                                          id)
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
@@ -239,7 +238,7 @@ contains
                 call TLab_Write_ASCII(lfile, str)
                 isize_loc = imax*ims_bcs_jmax
                 call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
-                                     id)
+                                          id)
             end if
 #endif
 
@@ -456,7 +455,7 @@ contains
 
             select case (g%nb_diag_1(2))
             case (3)
-                call MatMul_3d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t, p_bcs_hb, p_bcs_ht)
+  call MatMul_3d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t, p_bcs_hb, p_bcs_ht)
             case (5)
                 call MatMul_5d_antisym(g%size,  nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
             case (7)

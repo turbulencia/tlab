@@ -16,7 +16,9 @@ program VPOISSON
     use TLab_Arrays
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_PROCS
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+    use TLabMPI_VARS, only: TLabMPI_Initialize
+use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g,  FDM_Initialize
     use IO_FIELDS
@@ -43,6 +45,7 @@ program VPOISSON
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
+call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
 

@@ -17,7 +17,6 @@ module OPR_INTERPOLATORS
 #ifdef USE_MPI
     use TLab_Constants, only: lfile
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_PROCS
 #endif
     implicit none

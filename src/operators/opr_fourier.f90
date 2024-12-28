@@ -15,7 +15,6 @@ module OPR_FOURIER
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro, ims_err
-    use TLabMPI_VARS, only: ims_size_i, ims_size_k
     use TLabMPI_PROCS
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
@@ -30,7 +29,7 @@ module OPR_FOURIER
     logical :: fft_reordering
 
     integer(wi) k
-    complex(wp), pointer :: c_in(:,:) => null(), c_out(:,:) => null(), c_tmp1(:,:) => null(), c_tmp2(:,:) => null(), c_in1(:,:) => null()
+    complex(wp), pointer :: c_in(:, :) => null(), c_out(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:, :) => null(), c_in1(:, :) => null()
 
     ! public :: fft_plan_fy1d, fft_plan_by1d ! vertical spectral pressure filter
     public :: OPR_FOURIER_INITIALIZE
@@ -479,7 +478,7 @@ contains
             do k = 2, nz
                 ip = 1
                 do j = 1, ny
-                    in_aux(:, j + ny*(k - 1)) = in(ip:ip + isize_line - 1, k) 
+                    in_aux(:, j + ny*(k - 1)) = in(ip:ip + isize_line - 1, k)
                     ip = ip + isize_line
                 end do
             end do
