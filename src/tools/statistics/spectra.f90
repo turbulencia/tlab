@@ -43,8 +43,8 @@ program SPECTRA
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro_k
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-    use TLabMPI_PROCS
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+    use TLabMPI_Transpose
 #endif
     use TLab_Background, only: TLab_Initialize_Background
     use FDM, only: g, FDM_Initialize

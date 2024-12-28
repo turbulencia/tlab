@@ -14,8 +14,8 @@ program SL_CORRELATION
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use IO_FIELDS
 

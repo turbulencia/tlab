@@ -38,7 +38,7 @@ contains
         use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
-        use TLabMPI_PROCS, only: ims_size_i, ims_size_k
+        use TLabMPI_Transpose, only: ims_size_i, ims_size_k
 #endif
 
         character(len=*), intent(in) :: inifile

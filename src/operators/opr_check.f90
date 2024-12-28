@@ -16,7 +16,7 @@ subroutine OPR_CHECK()
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_PROCS
+    use TLabMPI_Transpose
 #endif
 
     implicit none

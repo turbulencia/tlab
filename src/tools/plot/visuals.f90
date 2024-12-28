@@ -20,8 +20,8 @@ program VISUALS
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
     use TLab_Background, only: TLab_Initialize_Background

@@ -24,6 +24,7 @@ module IO_FIELDS
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS
+    use TLabMPI_PROCS, only: TLabMPI_Panic
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
@@ -698,22 +699,22 @@ contains
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
                                    ior(MPI_MODE_WRONLY, MPI_MODE_CREATE), MPI_INFO_NULL, mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 if (aux%precision == IO_TYPE_SINGLE) then
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     s_wrk(1:isize) = real(data(sizes(2):sizes(3):sizes(4), iv), sp)
                     call MPI_File_write_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 else
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     wrk3d(1:isize) = data(sizes(2):sizes(3):sizes(4), iv)
                     call MPI_File_write_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 end if
                 call MPI_File_close(mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 
 #else
 #include "dns_open_file.h"
@@ -777,20 +778,20 @@ contains
 #ifdef USE_MPI
                 call MPI_File_open(aux%communicator, trim(adjustl(name)), &
                                    MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 if (aux%precision == IO_TYPE_SINGLE) then
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     call MPI_File_read_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 else
                     call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     call MPI_File_read_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 end if
                 call MPI_File_close(mpio_fh, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 #else
 #include "dns_open_file.h"
                 ioffset_local = aux%offset + 1
@@ -824,8 +825,8 @@ contains
 !     subroutine IO_READ_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
 ! #ifdef USE_MPI
 !         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLabMPI_VARS, only: TLabMPI_Initialize
-! use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+!         use TLabMPI_PROCS, only: TLabMPI_Initialize
+! use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 ! #endif
 
 !         character(LEN=*) name
@@ -896,8 +897,8 @@ contains
 !     subroutine IO_WRITE_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
 ! #ifdef USE_MPI
 !         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLabMPI_VARS, only: TLabMPI_Initialize
-! use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+!         use TLabMPI_PROCS, only: TLabMPI_Initialize
+! use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 ! #endif
 
 !         character(LEN=*) name
@@ -961,7 +962,7 @@ contains
     !########################################################################
 #ifdef USE_MPI
     subroutine TLabMPI_WRITE_PE0_SINGLE(iunit, nx, ny, nz, subdomain, u, tmp1, tmp2)
-        use TLabMPI_PROCS
+        use TLabMPI_Transpose
 
         integer ims_tag
         integer(wi) iunit, nx, ny, nz, subdomain(6)

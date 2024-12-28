@@ -17,8 +17,8 @@ program SL_BOUNDARY
     use TLAB_VARS
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN

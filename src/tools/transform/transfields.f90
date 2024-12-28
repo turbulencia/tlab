@@ -17,8 +17,8 @@ program TRANSFIELDS
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
     use FDM, only: g,  FDM_Initialize

@@ -16,8 +16,8 @@ program PARTICLE_BUILD_PDF
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use IO_FIELDS
 #ifdef USE_MPI
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-    use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use Thermodynamics
     use THERMO_AIRWATER

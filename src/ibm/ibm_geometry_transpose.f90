@@ -32,7 +32,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_PROCS
+    use TLabMPI_Transpose
 #endif
 
     implicit none

@@ -255,7 +255,7 @@ subroutine TLabMPI_Initialize()
         end do
     end if
 
-    call TLabMPI_TAGRESET
+    call TLabMPI_TagReset
 
     return
 end subroutine TLabMPI_Initialize
@@ -307,7 +307,7 @@ subroutine TLabMPI_TransposeK_Forward(a, b, dsend, drecv, size)
 
     call MPI_WAITALL(ims_npro_k*2 - 2, mpireq(3:), status(1, 3), ims_err)
 
-    call TLabMPI_TAGUPDT
+    call TLabMPI_TagUpdate
 
     return
 end subroutine TLabMPI_TransposeK_Forward
@@ -359,7 +359,7 @@ subroutine TLabMPI_TransposeI_Forward(a, b, dsend, drecv, size)
 
     call MPI_WAITALL(ims_npro_i*2 - 2, mpireq(3:), status(1, 3), ims_err)
 
-    call TLabMPI_TAGUPDT
+    call TLabMPI_TagUpdate
 
     return
 end subroutine TLabMPI_TransposeI_Forward
@@ -411,7 +411,7 @@ subroutine TLabMPI_TransposeK_Backward(b, a, dsend, drecv, size)
 
     call MPI_WAITALL(ims_npro_k*2 - 2, mpireq(3:), status(1, 3), ims_err)
 
-    call TLabMPI_TAGUPDT
+    call TLabMPI_TagUpdate
 
     return
 end subroutine TLabMPI_TransposeK_Backward
@@ -463,14 +463,14 @@ subroutine TLabMPI_TransposeI_Backward(b, a, dsend, drecv, size)
 
     call MPI_WAITALL(ims_npro_i*2 - 2, mpireq(3:), status(1, 3), ims_err)
 
-    call TLabMPI_TAGUPDT
+    call TLabMPI_TagUpdate
 
     return
 end subroutine TLabMPI_TransposeI_Backward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TAGUPDT
+subroutine TLabMPI_TagUpdate
 
     use TLabMPI_VARS, only: ims_tag
 
@@ -479,15 +479,15 @@ subroutine TLabMPI_TAGUPDT
     ims_tag = ims_tag + 1
 
     if (ims_tag > 32000) then
-        call TLabMPI_TAGRESET
+        call TLabMPI_TagReset
     end if
 
     return
-end subroutine TLabMPI_TAGUPDT
+end subroutine TLabMPI_TagUpdate
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TAGRESET
+subroutine TLabMPI_TagReset
 
     use TLabMPI_VARS, only: ims_tag
 
@@ -496,4 +496,4 @@ subroutine TLabMPI_TAGRESET
     ims_tag = 0
 
     return
-end subroutine TLabMPI_TAGRESET
+end subroutine TLabMPI_TagReset

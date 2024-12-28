@@ -33,7 +33,8 @@ module BOUNDARY_INFLOW
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_k
-    use TLabMPI_PROCS
+    use TLabMPI_PROCS, only: TLabMPI_Panic
+    use TLabMPI_Transpose
 #endif
     use OPR_PARTIAL
 

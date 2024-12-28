@@ -19,7 +19,7 @@ module OPR_PARTIAL
     use IBM_VARS, only: ibm_case_x, ibm_case_y, ibm_case_z
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_PROCS
+    use TLabMPI_Transpose
 #endif
     use FDM_MatMul
     implicit none

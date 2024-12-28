@@ -15,7 +15,7 @@ module OPR_FOURIER
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro, ims_err
-    use TLabMPI_PROCS
+    use TLabMPI_Transpose
 #endif
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 

@@ -33,7 +33,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
     use TLab_Memory
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_PROCS, only: ims_size_i, ims_size_k
+    use TLabMPI_Transpose, only: ims_size_i, ims_size_k
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
 

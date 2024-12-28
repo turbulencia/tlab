@@ -35,7 +35,8 @@ module BOUNDARY_BUFFER
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS
-    use TLabMPI_PROCS
+    use TLabMPI_PROCS, only: TLabMPI_Panic
+    use TLabMPI_Transpose
 #endif
 
     implicit none
@@ -253,9 +254,9 @@ contains
                     end if
 
                     call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     call MPI_TYPE_COMMIT(io_aux(id)%subarray, ims_err)
-                    if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                    if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 
                     sa_comm_color = 1
                 else
@@ -263,7 +264,7 @@ contains
                 end if
                 io_aux(id)%communicator = MPI_UNDEFINED
                 call MPI_Comm_Split(MPI_COMM_WORLD, sa_comm_color, ims_pro, io_aux(id)%communicator, ims_err)
-                if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+                if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 
             end if
 #endif
@@ -334,7 +335,7 @@ contains
             end if
 
             call MPI_ALLREDUCE(var_minmax, dummy2, 2, MPI_REAL8, MPI_MIN, MPI_COMM_WORLD, ims_err)
-            if (ims_err /= MPI_SUCCESS) call TLabMPI_PANIC(__FILE__, ims_err)
+            if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
             var_minmax = dummy2; var_minmax(2) = -var_minmax(2)
 #else
             var_minmax = [minval(item%ref(:, :, :, iq)), maxval(item%ref(:, :, :, iq))]

@@ -16,9 +16,9 @@ program VPOISSON
     use TLab_Arrays
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-    use TLabMPI_VARS, only: TLabMPI_Initialize
-use TLabMPI_PROCS, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g,  FDM_Initialize
     use IO_FIELDS

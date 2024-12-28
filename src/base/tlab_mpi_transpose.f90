@@ -2,7 +2,7 @@
 #include "dns_const_mpi.h"
 #include "dns_error.h"
 
-module TLabMPI_PROCS
+module TLabMPI_Transpose
     use MPI
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
@@ -10,6 +10,7 @@ module TLabMPI_PROCS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use TLabMPI_VARS
+    use TLabMPI_PROCS, only: TLabMPI_TagUpdate
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
@@ -226,8 +227,6 @@ contains
         !     end if
         !     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
         ! end do
-
-        call TLabMPI_TAGRESET
 
         return
     end subroutine TLabMPI_Transpose_Initialize
@@ -596,7 +595,7 @@ contains
 
                 call MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
-                call TLabMPI_TAGUPDT
+                call TLabMPI_TagUpdate
 
             end do
 
@@ -609,7 +608,7 @@ contains
                                       b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
                 end do
 
-                call TLabMPI_TAGUPDT
+                call TLabMPI_TagUpdate
 
             end do
 
@@ -657,7 +656,7 @@ contains
 
                 call MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
-                call TLabMPI_TAGUPDT
+                call TLabMPI_TagUpdate
 
             end do
 
@@ -670,7 +669,7 @@ contains
                                       b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
                 end do
 
-                call TLabMPI_TAGUPDT
+                call TLabMPI_TagUpdate
 
             end do
 
@@ -683,4 +682,4 @@ contains
         return
     end subroutine Transpose_Kernel_Single
 
-end module TLabMPI_PROCS
+end module TLabMPI_Transpose
