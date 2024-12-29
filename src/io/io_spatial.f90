@@ -129,7 +129,6 @@ subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
     use TLab_WorkFlow, only: TLab_Write_ASCII
 
 #ifdef USE_MPI
-    use MPI
     use TLabMPI_VARS
 #endif
 

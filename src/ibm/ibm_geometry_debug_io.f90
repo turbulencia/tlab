@@ -35,7 +35,6 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLab_Constants, only: wi, wp
 #ifdef USE_MPI
-    use MPI
     use TLabMPI_Transpose
     use TLabMPI_VARS, only: ims_pro
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err

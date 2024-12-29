@@ -20,39 +20,41 @@ module TLabMPI_Transpose
     public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
 
-    integer(wi), allocatable, public :: ims_size_i(:), ims_size_k(:)    ! Maybe public in module for TLabMPI_Transpose
-
+    integer(wi), allocatable, public :: ims_size_i(:), ims_size_k(:)
+    
     ! type, public :: mpi_transpose_dt
     !     sequence
     !     integer :: type_s, type_r                           ! send/recv types
     !     integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
-    !     integer(wi) :: size
     ! end type mpi_transpose_dt
+    ! type(mpi_transpose_dt) :: trp_plans_i(TLAB_MPI_TRP_I_MAXTYPES)
+    ! type(mpi_transpose_dt) :: trp_plans_k(TLAB_MPI_TRP_K_MAXTYPES)
 
-    integer(wi) :: ims_sizBlock_i, ims_sizBlock_k
+    integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
+    integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
 
-    integer :: ims_trp_type_i, ims_trp_type_k
+    integer, dimension(:), allocatable :: ims_ts_k, ims_tr_k
+    integer(wi), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
+
+    integer(wi), allocatable :: ims_trp_map_s_i(:), ims_trp_map_r_i(:)
+    integer(wi), allocatable :: ims_trp_map_s_k(:), ims_trp_map_r_k(:)
+
+    integer, allocatable :: ims_status(:, :)
+    integer, allocatable :: ims_request(:)
+
+    integer(wi) :: ims_sizBlock_i, ims_sizBlock_k       ! group sizes of rend/recv messages
+
+    integer :: ims_trp_type_i, ims_trp_type_k           ! Tranposition in double or single precission
     integer, parameter :: TLAB_MPI_TRP_SINGLE = 1
     integer, parameter :: TLAB_MPI_TRP_DOUBLE = 2
 
-    integer :: ims_trp_mode_i, ims_trp_mode_k
+    integer :: ims_trp_mode_i, ims_trp_mode_k           ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
     integer, parameter :: TLAB_MPI_TRP_ASYNCHRONOUS = 1
     integer, parameter :: TLAB_MPI_TRP_SENDRECV = 2
     integer, parameter :: TLAB_MPI_TRP_ALLTOALL = 3
 
-    integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
-    integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
-    integer(wi), allocatable :: ims_plan_trps_i(:), ims_plan_trpr_i(:)
-
-    integer, dimension(:), allocatable :: ims_ts_k, ims_tr_k
-    integer(wi), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
-    integer(wi), allocatable :: ims_plan_trps_k(:), ims_plan_trpr_k(:)
-
-    integer, allocatable :: ims_status(:, :)
-    integer, allocatable :: ims_request(:)
-
-    real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI
+    real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI; maybe in tlab_memory
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
 
 contains
@@ -126,16 +128,16 @@ contains
         allocate (ims_size_i(TLAB_MPI_TRP_I_MAXTYPES))       ! metadata inside/to-calculate MPI types
         allocate (ims_ds_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
         allocate (ims_dr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
-        allocate (ims_plan_trps_i(ims_npro_i))          ! mappings for explicit send/recv
-        allocate (ims_plan_trpr_i(ims_npro_i))
+        allocate (ims_trp_map_s_i(ims_npro_i))          ! mappings for explicit send/recv
+        allocate (ims_trp_map_r_i(ims_npro_i))
 
         allocate (ims_ts_k(TLAB_MPI_TRP_K_MAXTYPES))         ! derived MPI types for send/recv
         allocate (ims_tr_k(TLAB_MPI_TRP_K_MAXTYPES))
         allocate (ims_size_k(TLAB_MPI_TRP_K_MAXTYPES))       ! metadata inside/to-calculate MPI types
         allocate (ims_ds_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
         allocate (ims_dr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
-        allocate (ims_plan_trps_k(ims_npro_k))          ! mappings for explicit send/recv
-        allocate (ims_plan_trpr_k(ims_npro_k))
+        allocate (ims_trp_map_s_k(ims_npro_k))          ! mappings for explicit send/recv
+        allocate (ims_trp_map_r_k(ims_npro_k))
 
 #ifdef HLRS_HAWK
         ! On hawk, we tested that 192 yields optimum performace;
@@ -207,23 +209,23 @@ contains
         ! -----------------------------------------------------------------------
         ! local PE mappings for explicit send/recv
         do ip = 0, ims_npro_i - 1
-            ims_plan_trps_i(ip + 1) = ip
-            ims_plan_trpr_i(ip + 1) = mod(ims_npro_i - ip, ims_npro_i)
+            ims_trp_map_s_i(ip + 1) = ip
+            ims_trp_map_r_i(ip + 1) = mod(ims_npro_i - ip, ims_npro_i)
         end do
-        ims_plan_trps_i = cshift(ims_plan_trps_i, ims_pro_i)
-        ims_plan_trpr_i = cshift(ims_plan_trpr_i, -ims_pro_i)
+        ims_trp_map_s_i = cshift(ims_trp_map_s_i, ims_pro_i)
+        ims_trp_map_r_i = cshift(ims_trp_map_r_i, -ims_pro_i)
 
         do ip = 0, ims_npro_k - 1
-            ims_plan_trps_k(ip + 1) = ip
-            ims_plan_trpr_k(ip + 1) = mod(ims_npro_k - ip, ims_npro_k)
+            ims_trp_map_s_k(ip + 1) = ip
+            ims_trp_map_r_k(ip + 1) = mod(ims_npro_k - ip, ims_npro_k)
         end do
-        ims_plan_trps_k = cshift(ims_plan_trps_k, ims_pro_k)
-        ims_plan_trpr_k = cshift(ims_plan_trpr_k, -ims_pro_k)
+        ims_trp_map_s_k = cshift(ims_trp_map_s_k, ims_pro_k)
+        ims_trp_map_r_k = cshift(ims_trp_map_r_k, -ims_pro_k)
 
         ! do ip = 0, ims_npro_i - 1
         !     if (ims_pro == ip) then
-        !         write (*, *) ims_pro, ims_pro_i, 'SEND:', ims_plan_trps_i
-        !         write (*, *) ims_pro, ims_pro_i, 'RECV:', ims_plan_trpr_i
+        !         write (*, *) ims_pro, ims_pro_i, 'SEND:', ims_trp_map_s_i
+        !         write (*, *) ims_pro, ims_pro_i, 'RECV:', ims_trp_map_r_i
         !     end if
         !     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
         ! end do
@@ -427,14 +429,14 @@ contains
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
-            call Transpose_Kernel_Single(a_wrk, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                                         b_wrk, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                                         b_wrk, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
                                          ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                                  b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            call Transpose_Kernel(a, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+                                  b, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
                                   ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
         end if
 
@@ -473,14 +475,14 @@ contains
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
-            call Transpose_Kernel_Single(b_wrk, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                                         a_wrk, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                                         a_wrk, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
                                          ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, ims_plan_trpr_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                                  a, ims_plan_trps_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            call Transpose_Kernel(b, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+                                  a, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
                                   ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
         end if
 
@@ -512,14 +514,14 @@ contains
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
-            call Transpose_Kernel_Single(a_wrk, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                                         b_wrk, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                                         b_wrk, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
                                          ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                                  b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            call Transpose_Kernel(a, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+                                  b, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
                                   ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
         end if
 
@@ -546,14 +548,14 @@ contains
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
-            call Transpose_Kernel_Single(b_wrk, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                                         a_wrk, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                                         a_wrk, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
                                          ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, ims_plan_trpr_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                                  a, ims_plan_trps_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            call Transpose_Kernel(b, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+                                  a, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
                                   ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
         end if
 

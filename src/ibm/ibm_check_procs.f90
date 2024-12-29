@@ -27,7 +27,6 @@ subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
   use TLab_Constants, only : wi, wp
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 
-  use MPI
   use TLabMPI_VARS,  only : ims_pro
 #endif
 #endif

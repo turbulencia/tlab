@@ -37,7 +37,6 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   use TLab_Constants, only : wi, wp
   use TLAB_VARS,      only : stagger_on
 #ifdef USE_MPI 
-  use MPI
   use TLabMPI_VARS,  only : ims_offset_i, ims_offset_j, ims_offset_k
 #ifdef IBM_DEBUG
   use TLabMPI_VARS,  only : ims_pro, ims_npro, ims_npro_i, ims_npro_k 
