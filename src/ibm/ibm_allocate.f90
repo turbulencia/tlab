@@ -32,8 +32,8 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory
 #ifdef USE_MPI
-    use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-    use TLabMPI_Transpose, only: ims_trp_plan_i
+    ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
+    use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
 
@@ -64,7 +64,8 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
 
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        nxy = ims_size_k(idk)
+        ! nxy = ims_size_k(idk)
+        nxy = ims_trp_plan_k(idk)%nlines
     else
 #endif
         nxy = imax*jmax

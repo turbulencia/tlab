@@ -216,7 +216,8 @@ contains
             p_a => u_tmp2
             p_b => u_tmp1
 
-            nxy = ims_size_k(id)
+            ! nxy = ims_size_k(id)
+            nxy = ims_trp_plan_k(id)%nlines
             nz_total = nz*ims_npro_k
             nz_total_dst = nz_dst*ims_npro_k
 

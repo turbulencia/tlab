@@ -73,7 +73,8 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        nxy = ims_size_k(idk)
+        ! nxy = ims_size_k(idk)
+        nxy = ims_trp_plan_k(idk)%nlines
     else
 #endif
         nxy = imax*jmax

@@ -237,7 +237,8 @@ contains
                 p_a => tmp1
                 p_b => result
                 p_c => wrk3d
-                nxy = ims_size_k(id)
+                ! nxy = ims_size_k(id)
+                nxy = ims_trp_plan_k(id)%nlines
             else
 #endif
                 p_a => s

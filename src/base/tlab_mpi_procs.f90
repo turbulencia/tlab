@@ -291,7 +291,8 @@ contains
         end if
 
         if (ims_nb_zsrt(3) == 1 .and. ims_nb_zend(3) == g(3)%size &
-            .and. ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(TLAB_MPI_TRP_K_PARTIAL)) then
+            ! .and. ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_size_k(TLAB_MPI_TRP_K_PARTIAL)) then
+            .and. ims_nb_zsiz(1)*ims_nb_zsiz(2) == ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines) then
             ! Decomp standing in Z okay
         else
             call TLab_Write_ASCII(efile, 'Decomp standing in Z--BAD')

@@ -568,7 +568,8 @@ contains
                 else
                     p_b => wrk3d
                 end if
-                nxy = ims_size_k(id)
+                ! nxy = ims_size_k(id)
+                nxy = ims_trp_plan_k(id)%nlines
             else
 #endif
                 p_a => u

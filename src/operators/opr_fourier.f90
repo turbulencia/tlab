@@ -72,7 +72,8 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
+            ! isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
+            isize_fft_z = ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2 ! divide by 2 bcs. we work w complex #
         else
 #endif
             isize_fft_z = (imax/2 + 1)*(jmax + 2)
@@ -538,7 +539,8 @@ contains
     subroutine OPR_FOURIER_F_Z_EXEC(in, out)
 
 #ifdef USE_MPI
-        complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
+        ! complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
+        complex(wp), dimension(ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2, g(3)%size), target :: in, out
 #else
         complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
 #endif

@@ -36,8 +36,8 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err
-    use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-    use TLabMPI_Transpose, only: ims_trp_plan_i
+    ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
+    use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
 #ifdef IBM_DEBUG
     use TLabMPI_VARS, only: ims_pro
 #endif
@@ -79,7 +79,8 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        nxy = ims_size_k(idk)
+        ! nxy = ims_size_k(idk)
+        nxy = ims_trp_plan_k(idk)%nlines
     else
 #endif
         nxy = imax*jmax

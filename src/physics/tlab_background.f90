@@ -38,8 +38,8 @@ contains
         use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
-        use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-        use TLabMPI_Transpose, only: ims_trp_plan_i
+        ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
+        use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
 #endif
 
         character(len=*), intent(in) :: inifile
@@ -288,7 +288,8 @@ contains
             g(3)%anelastic = .true.
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
+                ! nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
+                nlines = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
                 offset = nlines*ims_pro_k
             else
 #endif

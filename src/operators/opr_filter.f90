@@ -561,7 +561,8 @@ contains
             call TLabMPI_TransposeK_Forward(u, wrk3d, id)
             p_a => wrk3d
             p_b => u
-            nxy = ims_size_k(id)
+            ! nxy = ims_size_k(id)
+            nxy = ims_trp_plan_k(id)%nlines
         else
 #endif
             p_a => u
