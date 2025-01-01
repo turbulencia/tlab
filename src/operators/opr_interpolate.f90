@@ -149,7 +149,8 @@ contains
             p_a => u_tmp1
             p_b => u_tmp2
 
-            nyz = ims_size_i(id)
+            ! nyz = ims_size_i(id)
+            nyz = ims_trp_plan_i(id)%nlines
             nx_total = nx*ims_npro_i
             nx_total_dst = nx_dst*ims_npro_i
 

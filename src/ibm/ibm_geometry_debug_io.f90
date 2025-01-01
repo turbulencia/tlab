@@ -60,7 +60,8 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     ! npages
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        nyz = ims_size_i(idi)
+        ! nyz = ims_size_i(idi)
+        nyz = ims_trp_plan_i(idi)%nlines
     else
 #endif
         nyz = jmax*kmax

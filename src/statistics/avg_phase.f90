@@ -53,7 +53,6 @@ CONTAINS
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_pro, ims_npro_i, ims_pro_k
-    use TLabMPI_Transpose, only: ims_size_i, ims_size_k
 #endif
 
     implicit none

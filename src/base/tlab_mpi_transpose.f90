@@ -27,7 +27,7 @@ module TLabMPI_Transpose
     type, public :: mpi_transpose_dt
         sequence
         integer :: type_s, type_r                           ! send/recv types
-        integer(wi) :: size2d                               !
+        integer(wi) :: nlines                               !
         integer(wi) :: size3d                               !
         integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
     end type mpi_transpose_dt
@@ -324,7 +324,7 @@ contains
 
         ! #######################################################################
         if (mod(npage, ims_npro_i) == 0) then
-            trp_plan%size2d = npage/ims_npro_i
+            trp_plan%nlines = npage/ims_npro_i
             allocate (trp_plan%disp_s(ims_npro_i), trp_plan%disp_r(ims_npro_i))
             trp_plan%size3d = npage*nmax
         else
@@ -336,18 +336,18 @@ contains
         trp_plan%disp_s(1) = 0
         trp_plan%disp_r(1) = 0
         do i = 2, ims_npro_i
-            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + nmax*nd*trp_plan%size2d
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + nmax*nd*trp_plan%nlines
             trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + nmax*md
         end do
 
         ! #######################################################################
-        ims_tmp1 = trp_plan%size2d*n1 ! count
+        ims_tmp1 = trp_plan%nlines*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = ims_tmp2  ! stride = block because things are together
         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, trp_plan%type_s, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
-        ims_tmp1 = trp_plan%size2d*n1 ! count
+        ims_tmp1 = trp_plan%nlines*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = nmax*ims_npro_i*n2 ! stride is a multiple of nmax_total=nmax*ims_npro_i
         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, trp_plan%type_r, ims_err)
@@ -446,7 +446,7 @@ contains
 
         ! #######################################################################
         if (mod(npage, ims_npro_k) == 0) then
-            trp_plan%size2d = npage/ims_npro_k
+            trp_plan%nlines = npage/ims_npro_k
             allocate (trp_plan%disp_s(ims_npro_k), trp_plan%disp_r(ims_npro_k))
             trp_plan%size3d = npage*nmax
         else
@@ -458,19 +458,19 @@ contains
         trp_plan%disp_s(1) = 0
         trp_plan%disp_r(1) = 0
         do i = 2, ims_npro_k
-            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + trp_plan%size2d*nd
-            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + trp_plan%size2d*md*nmax
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + trp_plan%nlines*nd
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + trp_plan%nlines*md*nmax
         end do
 
         ! #######################################################################
         ims_tmp1 = nmax*n1                  ! count
-        ims_tmp2 = trp_plan%size2d*n2       ! block
+        ims_tmp2 = trp_plan%nlines*n2       ! block
         ims_tmp3 = npage*n2                 ! stride
         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, trp_plan%type_s, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
         ims_tmp1 = nmax*n1                  ! count
-        ims_tmp2 = trp_plan%size2d*n2       ! block
+        ims_tmp2 = trp_plan%nlines*n2       ! block
         ims_tmp3 = ims_tmp2                 ! stride = block to put things together
         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, trp_plan%type_r, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)

@@ -33,6 +33,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
     use TLab_Memory
 #ifdef USE_MPI
     use TLabMPI_Transpose, only: ims_size_i, ims_size_k
+    use TLabMPI_Transpose, only: ims_trp_plan_i
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
 
@@ -50,7 +51,8 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
     ! npages
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        nyz = ims_size_i(idi)
+        ! nyz = ims_size_i(idi)
+        nyz = ims_trp_plan_i(idi)%nlines
     else
 #endif
         nyz = jmax*kmax

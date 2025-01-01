@@ -50,7 +50,8 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         call TLabMPI_TransposeI_Forward(eps, tmp, idi)
-        nyz = ims_size_i(idi)
+        ! nyz = ims_size_i(idi)
+        nyz = ims_trp_plan_i(idi)%nlines
     else
 #endif
         tmp = eps

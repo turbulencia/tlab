@@ -271,7 +271,8 @@ contains
         call GET_DIMS(ims_nb_zsrt, ims_nb_zend, ims_nb_zsiz, 1, 3)
 
         if (ims_nb_xsrt(1) == 1 .and. ims_nb_xend(1) == g(1)%size &
-            .and. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(TLAB_MPI_TRP_I_PARTIAL)) then
+            ! .and. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_size_i(TLAB_MPI_TRP_I_PARTIAL)) then
+            .and. ims_nb_xsiz(2)*ims_nb_xsiz(3) == ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines) then
             ! Decomp standing in X okay
         else
             call TLab_Write_ASCII(efile, 'Decomp standing in X-BAD')

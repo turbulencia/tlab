@@ -65,7 +65,8 @@ contains
             p_b => tmp1
             p_c => wrk3d
             p_d => result
-            nyz = ims_size_i(id)
+            ! nyz = ims_size_i(id)
+            nyz = ims_trp_plan_i(id)%nlines
         else
 #endif
             p_a => s

@@ -59,7 +59,8 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
+            ! if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
+            if (ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines /= ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2)%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
                 call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
@@ -106,7 +107,8 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            isize_fft_x = ims_size_i(TLAB_MPI_TRP_I_POISSON1)
+            ! isize_fft_x = ims_size_i(TLAB_MPI_TRP_I_POISSON1)
+            isize_fft_x = ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines
         else
 #endif
             isize_fft_x = jmax
@@ -366,7 +368,8 @@ contains
 
             ! Pass memory address from complex array to real array
             id = TLAB_MPI_TRP_I_POISSON1
-            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
+            ! call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
+            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_trp_plan_i(id)%nlines])
             call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
             out_aux(1:nx/2 + 1, 1:(ny + 2)*nz) => out(1:isize_txc_dimz/2*nz, 1)
@@ -379,12 +382,13 @@ contains
             id = TLAB_MPI_TRP_I_POISSON1
             call TLabMPI_TransposeI_Forward(in, r_out, id)
 
-            ! ims_size_i(id) FFTWs
+            ! ims_trp_plan_i(id)%nlines FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
             id = TLAB_MPI_TRP_I_POISSON1
-            do k = 1, ims_size_i(id)
+            ! do k = 1, ims_size_i(id)
+            do k = 1, ims_trp_plan_i(id)%nlines
                 inew = (nx/2 + 1)*ims_npro_i
                 iold = g(1)%size/2 + 1
                 wrk1(inew, k) = wrk1(iold, k)
@@ -489,7 +493,8 @@ contains
 
             ! reorganize a (FFTW make a stride in a already before)
             id = TLAB_MPI_TRP_I_POISSON1
-            do k = 1, ims_size_i(id)
+            ! do k = 1, ims_size_i(id)
+            do k = 1, ims_trp_plan_i(id)%nlines
                 do ip = 2, ims_npro_i
                     do i = 1, nx/2
                         iold = (ip - 1)*(nx/2 + 1) + i

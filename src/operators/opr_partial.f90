@@ -424,7 +424,8 @@ contains
             if (any([OPR_P2, OPR_P2_P1] == type)) then
                 p_d => tmp1
             end if
-            nyz = ims_size_i(id)
+            ! nyz = ims_size_i(id)
+            nyz = ims_trp_plan_i(id)%nlines
         else
 #endif
             p_a => u

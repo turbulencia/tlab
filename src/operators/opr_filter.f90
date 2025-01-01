@@ -427,7 +427,8 @@ contains
             call TLabMPI_TransposeI_Forward(u, wrk3d, id)
             p_a => wrk3d
             p_b => u
-            nyz = ims_size_i(id)
+            ! nyz = ims_size_i(id)
+            nyz = ims_trp_plan_i(id)%nlines
         else
 #endif
             p_a => u

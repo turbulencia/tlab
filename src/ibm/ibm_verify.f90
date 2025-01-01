@@ -36,6 +36,7 @@ subroutine IBM_VERIFY_GEOMETRY()
 #ifdef USE_MPI
     use MPI
     use TLabMPI_Transpose, only: ims_size_i, ims_size_k
+    use TLabMPI_Transpose, only: ims_trp_plan_i
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err
 #ifdef IBM_DEBUG
     use TLabMPI_VARS, only: ims_pro
@@ -64,7 +65,8 @@ subroutine IBM_VERIFY_GEOMETRY()
     ! npages
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        nyz = ims_size_i(idi)
+        ! nyz = ims_size_i(idi)
+        nyz = ims_trp_plan_i(idi)%nlines
     else
 #endif
         nyz = jmax*kmax

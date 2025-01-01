@@ -39,6 +39,7 @@ contains
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
         use TLabMPI_Transpose, only: ims_size_i, ims_size_k
+        use TLabMPI_Transpose, only: ims_trp_plan_i
 #endif
 
         character(len=*), intent(in) :: inifile
@@ -258,7 +259,8 @@ contains
             g(1)%anelastic = .true.
 #ifdef USE_MPI
             if (ims_npro_i > 1) then
-                nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
+                ! nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
+                nlines = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
                 offset = nlines*ims_pro_i
             else
 #endif
