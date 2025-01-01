@@ -4,7 +4,6 @@
 
 ! MPI structures id
 #define TLAB_MPI_TRP_K_PARTIAL   1
-#define TLAB_MPI_TRP_K_SHEAR     2
 #define TLAB_MPI_TRP_K_POISSON   3
 #define TLAB_MPI_TRP_K_INFLOW    4
 #define TLAB_MPI_TRP_K_OUTBCS    5
@@ -17,7 +16,6 @@
 #define TLAB_MPI_TRP_K_MAXTYPES 10
 
 #define TLAB_MPI_TRP_I_PARTIAL   1
-#define TLAB_MPI_TRP_I_SHEAR     2
 #define TLAB_MPI_TRP_I_POISSON1  3
 #define TLAB_MPI_TRP_I_POISSON2  4
 #define TLAB_MPI_TRP_I_AUX1      5

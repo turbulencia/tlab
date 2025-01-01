@@ -321,8 +321,8 @@ program SPECTRA
 
         call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
         id = TLAB_MPI_TRP_K_AUX2
-        call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, &
-                                  id)
+        call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, id)
+        ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_aux, 1, 1, 1, 1)
 
     end if
 #endif

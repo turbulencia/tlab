@@ -2,6 +2,7 @@
 #include "dns_const_mpi.h"
 #include "dns_error.h"
 
+! Circular transposition
 module TLabMPI_Transpose
     use MPI
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi
@@ -16,19 +17,22 @@ module TLabMPI_Transpose
     private
 
     public :: TLabMPI_Transpose_Initialize
+    public :: TLabMPI_Trp_TypeI_Create_Devel, TLabMPI_Trp_TypeK_Create_Devel
     public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
     public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
 
     integer(wi), allocatable, public :: ims_size_i(:), ims_size_k(:)
-    
-    ! type, public :: mpi_transpose_dt
-    !     sequence
-    !     integer :: type_s, type_r                           ! send/recv types
-    !     integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
-    ! end type mpi_transpose_dt
-    ! type(mpi_transpose_dt) :: trp_plans_i(TLAB_MPI_TRP_I_MAXTYPES)
-    ! type(mpi_transpose_dt) :: trp_plans_k(TLAB_MPI_TRP_K_MAXTYPES)
+
+    type, public :: mpi_transpose_dt
+        sequence
+        integer :: type_s, type_r                           ! send/recv types
+        integer(wi) :: size2d                               !
+        integer(wi) :: size3d                               !
+        integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
+    end type mpi_transpose_dt
+    type(mpi_transpose_dt), public :: ims_trp_plan_i(TLAB_MPI_TRP_I_MAXTYPES)
+    type(mpi_transpose_dt), public :: ims_trp_plan_k(TLAB_MPI_TRP_K_MAXTYPES)
 
     integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
     integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
@@ -45,8 +49,8 @@ module TLabMPI_Transpose
     integer(wi) :: ims_sizBlock_i, ims_sizBlock_k       ! group sizes of rend/recv messages
 
     integer :: ims_trp_type_i, ims_trp_type_k           ! Tranposition in double or single precission
-    integer, parameter :: TLAB_MPI_TRP_SINGLE = 1
-    integer, parameter :: TLAB_MPI_TRP_DOUBLE = 2
+    ! integer, parameter :: TLAB_MPI_TRP_SINGLE = 1
+    ! integer, parameter :: TLAB_MPI_TRP_DOUBLE = 2
 
     integer :: ims_trp_mode_i, ims_trp_mode_k           ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
@@ -72,10 +76,6 @@ contains
         character*64 lstr
 
         ! #######################################################################
-        ! Circular transposition
-        ! Maybe this should be a separate module
-        ! #######################################################################
-        ! -----------------------------------------------------------------------
         ! Read data
         bakfile = trim(adjustl(inifile))//'.bak'
 
@@ -106,16 +106,16 @@ contains
         end if
 
         call ScanFile_Char(bakfile, inifile, block, 'TransposeTypeK', 'Double', sRes)
-        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_k = TLAB_MPI_TRP_DOUBLE
-        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_k = TLAB_MPI_TRP_SINGLE
+        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_k = MPI_REAL8
+        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_k = MPI_REAL4
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeTypeK.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         call ScanFile_Char(bakfile, inifile, block, 'TransposeTypeI', 'Double', sRes)
-        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_i = TLAB_MPI_TRP_DOUBLE
-        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_i = TLAB_MPI_TRP_SINGLE
+        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_i = MPI_REAL8
+        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_i = MPI_REAL4
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeTypeI.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
@@ -154,13 +154,13 @@ contains
 
         if (ims_npro_i > ims_sizBlock_i) then
             write (line, *) ims_sizBlock_i
-            line = 'Using blocking of '//TRIM(ADJUSTL(line))//' in TLabMPI_TRP<F,B>_I'
+            line = 'Using blocking of '//trim(adjustl(line))//' in TLabMPI_TRP<F,B>_I'
             call TLab_Write_ASCII(lfile, line)
         end if
 
         if (ims_npro_k > ims_sizBlock_k) then
             write (line, *) ims_sizBlock_k
-            line = 'Using blocking of '//TRIM(ADJUSTL(line))//' in TLabMPI_TRP<F,B>_K'
+            line = 'Using blocking of '//trim(adjustl(line))//' in TLabMPI_TRP<F,B>_K'
             call TLab_Write_ASCII(lfile, line)
         end if
 
@@ -170,12 +170,29 @@ contains
         call TLab_Allocate_Real(__FILE__, wrk_mpi, [isize_wrk3d], 'wrk-mpi')
 
         ! -----------------------------------------------------------------------
-        ! Initialize
+        ! Create transposition plans
         if (ims_npro_i > 1) then
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLAB_MPI_TRP_I_PARTIAL
             npage = kmax*jmax
             call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
+            ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1)
+
+            if (fourier_on) then
+                call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
+                id = TLAB_MPI_TRP_I_POISSON1
+                npage = isize_txc_dimx ! isize_txc_field/imax
+                call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
+                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1)
+
+                call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
+                id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
+                npage = isize_txc_dimx
+                call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
+                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, npage, 1, 1, 1, 1)
+
+            end if
+
         end if
 
         if (ims_npro_k > 1) then
@@ -183,27 +200,17 @@ contains
             id = TLAB_MPI_TRP_K_PARTIAL
             npage = imax*jmax
             call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
-        end if
+            ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1)
 
-        ! -----------------------------------------------------------------------
-        if (ims_npro_i > 1 .and. fourier_on) then
-            call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
-            id = TLAB_MPI_TRP_I_POISSON1
-            npage = isize_txc_dimx ! isize_txc_field/imax
-            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
+            if (fourier_on) then
+                call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
+                id = TLAB_MPI_TRP_K_POISSON
+                npage = isize_txc_dimz ! isize_txc_field/kmax
+                call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
+                ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1)
 
-            call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
-            id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
-            npage = isize_txc_dimx
-            call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
+            end if
 
-        end if
-
-        if (ims_npro_k > 1 .and. fourier_on) then
-            call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
-            id = TLAB_MPI_TRP_K_POISSON
-            npage = isize_txc_dimz ! isize_txc_field/kmax
-            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
         end if
 
         ! -----------------------------------------------------------------------
@@ -234,8 +241,8 @@ contains
     end subroutine TLabMPI_Transpose_Initialize
 
     ! ######################################################################
-    ! Pointers and types for transposition across ims_npro processors
     ! ######################################################################
+    ! Pointers and types for transposition across processors
     subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, id)
         integer, intent(in) :: npro_i
         integer(wi), intent(in) :: npage, nmax
@@ -274,23 +281,13 @@ contains
         ims_tmp1 = nsize*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = ims_tmp2  ! stride = block because things are together
-        select case (ims_trp_type_i)
-        case (TLAB_MPI_TRP_DOUBLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, stype, ims_err)
-        case (TLAB_MPI_TRP_SINGLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, stype, ims_err)
-        end select
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, stype, ims_err)
         call MPI_TYPE_COMMIT(stype, ims_err)
 
         ims_tmp1 = nsize*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = nmax*npro_i*n2 ! stride is a multiple of nmax_total=nmax*npro_i
-        select case (ims_trp_type_i)
-        case (TLAB_MPI_TRP_DOUBLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, rtype, ims_err)
-        case (TLAB_MPI_TRP_SINGLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, rtype, ims_err)
-        end select
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, rtype, ims_err)
         call MPI_TYPE_COMMIT(rtype, ims_err)
 
         call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
@@ -313,6 +310,61 @@ contains
 
         return
     end subroutine TLabMPI_TypeI_Create
+
+    function TLabMPI_Trp_TypeI_Create_Devel(nmax, npage, nd, md, n1, n2) result(trp_plan)
+        integer(wi), intent(in) :: npage, nmax
+        integer(wi), intent(in) :: nd, md, n1, n2
+        type(mpi_transpose_dt) :: trp_plan
+
+        ! -----------------------------------------------------------------------
+        integer(wi) i
+        integer ims_tmp1, ims_tmp2, ims_tmp3
+        integer ims_ss, ims_rs
+        character*64 str, line
+
+        ! #######################################################################
+        if (mod(npage, ims_npro_i) == 0) then
+            trp_plan%size2d = npage/ims_npro_i
+            allocate (trp_plan%disp_s(ims_npro_i), trp_plan%disp_r(ims_npro_i))
+            trp_plan%size3d = npage*nmax
+        else
+            call TLab_Write_ASCII(efile, 'TLabMPI_TypeI_Create. Ratio npage/npro not an integer.')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
+        end if
+
+        ! Calculate array displacements in Forward Send/Receive
+        trp_plan%disp_s(1) = 0
+        trp_plan%disp_r(1) = 0
+        do i = 2, ims_npro_i
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + nmax*nd*trp_plan%size2d
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + nmax*md
+        end do
+
+        ! #######################################################################
+        ims_tmp1 = trp_plan%size2d*n1 ! count
+        ims_tmp2 = nmax*n2 ! block
+        ims_tmp3 = ims_tmp2  ! stride = block because things are together
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, trp_plan%type_s, ims_err)
+        call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
+
+        ims_tmp1 = trp_plan%size2d*n1 ! count
+        ims_tmp2 = nmax*n2 ! block
+        ims_tmp3 = nmax*ims_npro_i*n2 ! stride is a multiple of nmax_total=nmax*ims_npro_i
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, trp_plan%type_r, ims_err)
+        call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
+
+        call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
+        call MPI_TYPE_SIZE(trp_plan%type_r, ims_rs, ims_err)
+
+        if (ims_ss /= ims_rs) then
+            write (str, *) ims_ss; write (line, *) ims_rs
+            line = 'Send size '//trim(adjustl(str))//'differs from recv size '//trim(adjustl(line))
+            call TLab_Write_ASCII(efile, line)
+            call TLab_Stop(DNS_ERROR_MPITYPECHECK)
+        end if
+
+        return
+    end function TLabMPI_Trp_TypeI_Create_Devel
 
     !########################################################################
     !########################################################################
@@ -353,23 +405,13 @@ contains
         ims_tmp1 = nmax*n1 ! count
         ims_tmp2 = nsize*n2 ! block
         ims_tmp3 = npage*n2 ! stride
-        select case (ims_trp_type_k)
-        case (TLAB_MPI_TRP_DOUBLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, stype, ims_err)
-        case (TLAB_MPI_TRP_SINGLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, stype, ims_err)
-        end select
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, stype, ims_err)
         call MPI_TYPE_COMMIT(stype, ims_err)
 
         ims_tmp1 = nmax*n1 ! count
         ims_tmp2 = nsize*n2 ! block
         ims_tmp3 = ims_tmp2  ! stride = block to put things together
-        select case (ims_trp_type_k)
-        case (TLAB_MPI_TRP_DOUBLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL8, rtype, ims_err)
-        case (TLAB_MPI_TRP_SINGLE)
-            call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, MPI_REAL4, rtype, ims_err)
-        end select
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, rtype, ims_err)
         call MPI_TYPE_COMMIT(rtype, ims_err)
 
         call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
@@ -390,6 +432,61 @@ contains
 
         return
     end subroutine TLabMPI_TypeK_Create
+
+    function TLabMPI_Trp_TypeK_Create_Devel(nmax, npage, nd, md, n1, n2) result(trp_plan)
+        integer(wi), intent(in) :: npage, nmax
+        integer(wi), intent(in) :: nd, md, n1, n2
+        type(mpi_transpose_dt) :: trp_plan
+
+        ! -----------------------------------------------------------------------
+        integer(wi) i
+        integer ims_tmp1, ims_tmp2, ims_tmp3
+        integer ims_ss, ims_rs
+        character*64 str, line
+
+        ! #######################################################################
+        if (mod(npage, ims_npro_k) == 0) then
+            trp_plan%size2d = npage/ims_npro_k
+            allocate (trp_plan%disp_s(ims_npro_k), trp_plan%disp_r(ims_npro_k))
+            trp_plan%size3d = npage*nmax
+        else
+            call TLab_Write_ASCII(efile, 'TLabMPI_TypeI_Create. Ratio npage/npro not an integer.')
+            call TLab_Stop(DNS_ERROR_PARPARTITION)
+        end if
+
+        ! Calculate array displacements in Forward Send/Receive
+        trp_plan%disp_s(1) = 0
+        trp_plan%disp_r(1) = 0
+        do i = 2, ims_npro_k
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + trp_plan%size2d*nd
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + trp_plan%size2d*md*nmax
+        end do
+
+        ! #######################################################################
+        ims_tmp1 = nmax*n1                  ! count
+        ims_tmp2 = trp_plan%size2d*n2       ! block
+        ims_tmp3 = npage*n2                 ! stride
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, trp_plan%type_s, ims_err)
+        call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
+
+        ims_tmp1 = nmax*n1                  ! count
+        ims_tmp2 = trp_plan%size2d*n2       ! block
+        ims_tmp3 = ims_tmp2                 ! stride = block to put things together
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, trp_plan%type_r, ims_err)
+        call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
+
+        call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
+        call MPI_TYPE_SIZE(trp_plan%type_r, ims_rs, ims_err)
+
+        if (ims_ss /= ims_rs) then
+            write (str, *) ims_ss; write (line, *) ims_rs
+            line = 'Send size '//trim(adjustl(str))//'differs from recv size '//trim(adjustl(line))
+            call TLab_Write_ASCII(efile, line)
+            call TLab_Stop(DNS_ERROR_MPITYPECHECK)
+        end if
+
+        return
+    end function TLabMPI_Trp_TypeK_Create_Devel
 
     !########################################################################
     !########################################################################
@@ -422,21 +519,29 @@ contains
         time_loc_1 = MPI_WTIME()
 #endif
 
-        if (ims_trp_type_k == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
-            call MPI_TYPE_SIZE(ims_ts_k(id), size, ims_err)
-            size = size/sizeof(1.0_sp)
-            size = size*ims_npro_k
+        if (ims_trp_type_k == MPI_REAL4 .and. wp == dp) then
+            ! call MPI_TYPE_SIZE(ims_ts_k(id), size, ims_err)
+            ! size = size/sizeof(1.0_sp)
+            ! size = size*ims_npro_k
+            ! print *, size, ims_trp_plan_k(id)%size3d
+            size = ims_trp_plan_k(id)%size3d
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
-            call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                                         b_wrk, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            ! call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            !                              b_wrk, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            !                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+            call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
+                                         b_wrk, ims_trp_map_r_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
                                          ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
-                                  b, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            ! call Transpose_Kernel(a, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            !                       b, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            !                       ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+            call Transpose_Kernel(a, ims_trp_map_s_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
+                                  b, ims_trp_map_r_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
                                   ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
         end if
 
@@ -468,21 +573,29 @@ contains
         time_loc_1 = MPI_WTIME()
 #endif
 
-        if (ims_trp_type_k == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
-            call MPI_TYPE_SIZE(ims_ts_k(id), size, ims_err)
-            size = size/sizeof(1.0_sp)
-            size = size*ims_npro_k
+        if (ims_trp_type_k == MPI_REAL4 .and. wp == dp) then
+            ! call MPI_TYPE_SIZE(ims_ts_k(id), size, ims_err)
+            ! size = size/sizeof(1.0_sp)
+            ! size = size*ims_npro_k
+            ! print *, size, ims_trp_plan_k(id)%size3d
+            size = ims_trp_plan_k(id)%size3d
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
-            call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                                         a_wrk, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            ! call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            !                              a_wrk, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            !                              ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+            call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
+                                         a_wrk, ims_trp_map_s_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
                                          ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
-                                  a, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            ! call Transpose_Kernel(b, ims_trp_map_r_k(:), ims_dr_k(:, id), ims_tr_k(id), &
+            !                       a, ims_trp_map_s_k(:), ims_ds_k(:, id), ims_ts_k(id), &
+            !                       ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+            call Transpose_Kernel(b, ims_trp_map_r_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
+                                  a, ims_trp_map_s_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
                                   ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
         end if
 
@@ -507,21 +620,30 @@ contains
         integer(wi) size
 
         ! #######################################################################
-        if (ims_trp_type_i == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
-            call MPI_TYPE_SIZE(ims_ts_i(id), size, ims_err)
-            size = size/sizeof(1.0_sp)
-            size = size*ims_npro_i
+        if (ims_trp_type_i == MPI_REAL4 .and. wp == dp) then
+            ! call MPI_TYPE_SIZE(ims_ts_i(id), size, ims_err)
+            ! size = size/sizeof(1.0_sp)
+            ! size = size*ims_npro_i
+            ! print *, size, ims_trp_plan_i(id)%size3d
+            size = ims_trp_plan_i(id)%size3d
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
-            call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                                         b_wrk, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            ! call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            !                              b_wrk, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            !                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+            call Transpose_Kernel_Single(a_wrk, ims_trp_map_s_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
+                                         b_wrk, ims_trp_map_r_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
                                          ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
-                                  b, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            ! call Transpose_Kernel(a, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            !                       b, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            !                       ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+            ! print *, ims_pro, ims_ds_i(:, id), ims_trp_plan_i(id)%disp_s
+            call Transpose_Kernel(a, ims_trp_map_s_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
+                                  b, ims_trp_map_r_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
                                   ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
         end if
 
@@ -541,21 +663,29 @@ contains
         integer(wi) size
 
         ! #######################################################################
-        if (ims_trp_type_i == TLAB_MPI_TRP_SINGLE .and. wp == dp) then
-            call MPI_TYPE_SIZE(ims_ts_i(id), size, ims_err)
-            size = size/sizeof(1.0_sp)
-            size = size*ims_npro_i
+        if (ims_trp_type_i == MPI_REAL4 .and. wp == dp) then
+            ! call MPI_TYPE_SIZE(ims_ts_i(id), size, ims_err)
+            ! size = size/sizeof(1.0_sp)
+            ! size = size*ims_npro_i
+            ! print *, size, ims_trp_plan_i(id)%size3d
+            size = ims_trp_plan_i(id)%size3d
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
-            call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                                         a_wrk, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            ! call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            !                              a_wrk, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            !                              ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+            call Transpose_Kernel_Single(b_wrk, ims_trp_map_r_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
+                                         a_wrk, ims_trp_map_s_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
                                          ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
-                                  a, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            ! call Transpose_Kernel(b, ims_trp_map_r_i(:), ims_dr_i(:, id), ims_tr_i(id), &
+            !                       a, ims_trp_map_s_i(:), ims_ds_i(:, id), ims_ts_i(id), &
+            !                       ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+            call Transpose_Kernel(b, ims_trp_map_r_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
+                                  a, ims_trp_map_s_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
                                   ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
         end if
 

@@ -222,8 +222,8 @@ contains
                 str = 'Initialize MPI types for Ox BCs transverse terms. '//trim(adjustl(str))//' planes.'
                 call TLab_Write_ASCII(lfile, str)
                 isize_loc = ims_bcs_imax*jmax
-                call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
-                                          id)
+                call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, id)
+                ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_loc, 1, 1, 1, 1)
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
@@ -237,8 +237,8 @@ contains
                 str = 'Initialize MPI types for Oy BCs transverse terms. '//trim(adjustl(str))//' planes.'
                 call TLab_Write_ASCII(lfile, str)
                 isize_loc = imax*ims_bcs_jmax
-                call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, &
-                                          id)
+                call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, id)
+                ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_loc, 1, 1, 1, 1)
             end if
 #endif
 
