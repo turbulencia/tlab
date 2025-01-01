@@ -63,17 +63,17 @@ module IO_FIELDS
     integer, parameter, public :: IO_SUBARRAY_VISUALS_XOY = 1
     integer, parameter, public :: IO_SUBARRAY_VISUALS_ZOY = 2
     integer, parameter, public :: IO_SUBARRAY_VISUALS_XOZ = 3
-    integer, parameter, public :: IO_SUBARRAY_PLANES_XOY  = 4
-    integer, parameter, public :: IO_SUBARRAY_PLANES_ZOY  = 5
-    integer, parameter, public :: IO_SUBARRAY_PLANES_XOZ  = 6
-    integer, parameter, public :: IO_SUBARRAY_BUFFER_ZOY  = 7
-    integer, parameter, public :: IO_SUBARRAY_BUFFER_XOZ  = 8
-    integer, parameter, public :: IO_SUBARRAY_SPECTRA_X   = 9
-    integer, parameter, public :: IO_SUBARRAY_SPECTRA_Z   = 10
-    integer, parameter, public :: IO_SUBARRAY_SPECTRA_XZ  = 11
-    integer, parameter, public :: IO_SUBARRAY_ENVELOPES   = 12
-    integer, parameter, public :: IO_SUBARRAY_AUX         = 13
-    integer, parameter, public :: IO_SUBARRAY_SIZE        = 13
+    integer, parameter, public :: IO_SUBARRAY_PLANES_XOY = 4
+    integer, parameter, public :: IO_SUBARRAY_PLANES_ZOY = 5
+    integer, parameter, public :: IO_SUBARRAY_PLANES_XOZ = 6
+    integer, parameter, public :: IO_SUBARRAY_BUFFER_ZOY = 7
+    integer, parameter, public :: IO_SUBARRAY_BUFFER_XOZ = 8
+    integer, parameter, public :: IO_SUBARRAY_SPECTRA_X = 9
+    integer, parameter, public :: IO_SUBARRAY_SPECTRA_Z = 10
+    integer, parameter, public :: IO_SUBARRAY_SPECTRA_XZ = 11
+    integer, parameter, public :: IO_SUBARRAY_ENVELOPES = 12
+    integer, parameter, public :: IO_SUBARRAY_AUX = 13
+    integer, parameter, public :: IO_SUBARRAY_SIZE = 13
     type(subarray_dt), public :: io_aux(IO_SUBARRAY_SIZE)
 
     integer(wi) nx_total, ny_total, nz_total
@@ -593,7 +593,6 @@ contains
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
 
-    
     !########################################################################
     !########################################################################
     subroutine IO_READ_HEADER(unit, offset, nx, ny, nz, nt, params)
@@ -796,9 +795,9 @@ contains
 #include "dns_open_file.h"
                 ioffset_local = aux%offset + 1
                 if (aux%precision == IO_TYPE_SINGLE) then
-                    read(LOC_UNIT_ID, POS=ioffset_local) s_wrk(1:isize)
+                    read (LOC_UNIT_ID, POS=ioffset_local) s_wrk(1:isize)
                 else
-                    read(LOC_UNIT_ID, POS=ioffset_local) wrk3d(1:isize)
+                    read (LOC_UNIT_ID, POS=ioffset_local) wrk3d(1:isize)
                 end if
                 close (LOC_UNIT_ID)
 #endif
@@ -817,148 +816,7 @@ contains
         return
     end subroutine IO_READ_SUBARRAY
 
-!     !########################################################################
-!     !########################################################################
-! #define LOC_UNIT_ID 54
-! #define LOC_STATUS 'old'
-
-!     subroutine IO_READ_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
-! #ifdef USE_MPI
-!         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLabMPI_PROCS, only: TLabMPI_Initialize
-! use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
-! #endif
-
-!         character(LEN=*) name
-!         integer(wi), intent(in) :: header_offset, nx, ny, nz
-!         real(wp), intent(out) :: a(nx*ny*nz)
-!         real(wp), intent(inout) :: wrk(nx*ny*nz)
-
-!         target a, wrk
-
-! #ifdef USE_MPI
-!         integer(KIND=MPI_OFFSET_KIND) mpio_locoff
-!         real(wp), dimension(:), pointer :: p_read, p_write
-!         integer(wi) id, npage
-! #endif
-
-!         ! ###################################################################
-! #ifdef USE_MPI
-!         mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
-
-!         if (ims_npro_i > 1) then
-!             ! We always initialize types here. For the general field files, we could
-!             ! use TLAB_MPI_TRP_I_PARTIAL, but we use this routine for other files.
-!             call TLab_Write_ASCII(lfile, 'Initializing MPI types for reading in IO_READ_FIELDS_SPLIT.')
-!             id = TLAB_MPI_TRP_I_AUX1
-!             npage = nz*ny
-!             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
-!                                  ims_size_i(id), id)
-
-!             p_read => wrk
-
-!         else
-!             p_read => a
-
-!         end if
-
-!         mpio_locsize = nx*ny*nz
-!         mpio_locoff = mpio_locsize         ! mpio_locoff might be of type larger than INT4
-!         mpio_locoff = ims_pro*mpio_locoff  ! mpio_locoff might be of type larger than INT4
-!         call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-!         call MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-!         call MPI_FILE_READ_AT_ALL(mpio_fh, mpio_locoff, p_read, mpio_locsize, MPI_REAL8, status, ims_err)
-!         call MPI_FILE_CLOSE(mpio_fh, ims_err)
-
-!         if (ims_npro_i > 1) then
-!             call TLabMPI_TransposeI_Backward(p_read, a, id)
-!         end if
-
-!         nullify (p_read)
-
-! #else
-! #include "dns_open_file.h"
-!         read (LOC_UNIT_ID, POS=header_offset + 1) a
-!         close (LOC_UNIT_ID)
-
-! #endif
-
-!         return
-!     end subroutine IO_READ_FIELD_XPENCIL
-
-! #undef LOC_UNIT_ID
-! #undef LOC_STATUS
-
-!     !########################################################################
-!     !########################################################################
-! #define LOC_UNIT_ID 55
-! #define LOC_STATUS 'unknown'
-
-!     subroutine IO_WRITE_FIELD_XPENCIL(name, header_offset, nx, ny, nz, a, wrk)
-! #ifdef USE_MPI
-!         use TLabMPI_VARS, only: ims_size_i, ims_ds_i, ims_dr_i, ims_ts_i, ims_tr_i
-!         use TLabMPI_PROCS, only: TLabMPI_Initialize
-! use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
-! #endif
-
-!         character(LEN=*) name
-!         integer(wi), intent(in) :: header_offset, nx, ny, nz
-!         real(wp), intent(in) :: a(nx*ny*nz)
-!         real(wp), intent(inout) :: wrk(nx*ny*nz)
-
-!         target a, wrk
-
-! #ifdef USE_MPI
-!         integer(KIND=MPI_OFFSET_KIND) mpio_locoff
-!         real(wp), dimension(:), pointer :: p_read, p_write
-!         integer(wi) id, npage
-! #endif
-
-!         ! ###################################################################
-! #ifdef USE_MPI
-!         mpio_disp = header_offset*SIZEOFBYTE
-
-!         call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
-
-!         if (ims_npro_i > 1) then
-!             ! We always initialize types here. For the general field files, we could
-!             ! use TLAB_MPI_TRP_I_PARTIAL, but we use this routine for other files.
-!             call TLab_Write_ASCII(lfile, 'Initializing MPI types for writing in IO_WRITE_FIELDS_SPLIT.')
-!             id = TLAB_MPI_TRP_I_AUX1
-!             npage = nz*ny
-!             call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, i1, i1, i1, i1, &
-!                                  ims_size_i(id), id)
-
-!             call TLabMPI_TransposeI_Forward(a, wrk, id)
-!             p_write => wrk
-
-!         else
-!             p_write => a
-
-!         end if
-
-!         mpio_locsize = nx*ny*nz
-!         mpio_locoff = mpio_locsize         ! reclen might be of type larger than INT4
-!         mpio_locoff = ims_pro*mpio_locoff  ! reclen might be of type larger than INT4
-!         call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-!         call MPI_FILE_SET_VIEW(mpio_fh, mpio_disp, MPI_REAL8, MPI_REAL8, 'native', MPI_INFO_NULL, ims_err)
-!         call MPI_FILE_WRITE_AT_ALL(mpio_fh, mpio_locoff, p_write, mpio_locsize, MPI_REAL8, status, ims_err)
-!         call MPI_FILE_CLOSE(mpio_fh, ims_err)
-!         nullify (p_write)
-
-! #else
-! #include "dns_open_file.h"
-!         write (LOC_UNIT_ID, POS=header_offset + 1) a
-!         close (LOC_UNIT_ID)
-! #endif
-
-!         return
-!     end subroutine IO_WRITE_FIELD_XPENCIL
-
-! #undef LOC_UNIT_ID
-! #undef LOC_STATUS
-
-        !########################################################################
+    !########################################################################
     !########################################################################
 #ifdef USE_MPI
     subroutine TLabMPI_WRITE_PE0_SINGLE(iunit, nx, ny, nz, subdomain, u, tmp1, tmp2)
