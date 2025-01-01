@@ -18,11 +18,11 @@ module TLabMPI_Transpose
 
     public :: TLabMPI_Transpose_Initialize
     public :: TLabMPI_Trp_TypeI_Create_Devel, TLabMPI_Trp_TypeK_Create_Devel
-    public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
+    ! public :: TLabMPI_TypeK_Create, TLabMPI_TypeI_Create
     public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
 
-    integer(wi), allocatable, public :: ims_size_i(:), ims_size_k(:)
+    ! integer(wi), allocatable, public :: ims_size_i(:), ims_size_k(:)
 
     type, public :: mpi_transpose_dt
         sequence
@@ -34,11 +34,11 @@ module TLabMPI_Transpose
     type(mpi_transpose_dt), public :: ims_trp_plan_i(TLAB_MPI_TRP_I_MAXTYPES)
     type(mpi_transpose_dt), public :: ims_trp_plan_k(TLAB_MPI_TRP_K_MAXTYPES)
 
-    integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
-    integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
+    ! integer, dimension(:), allocatable :: ims_ts_i, ims_tr_i
+    ! integer(wi), dimension(:, :), allocatable :: ims_ds_i, ims_dr_i
 
-    integer, dimension(:), allocatable :: ims_ts_k, ims_tr_k
-    integer(wi), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
+    ! integer, dimension(:), allocatable :: ims_ts_k, ims_tr_k
+    ! integer(wi), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
 
     integer(wi), allocatable :: ims_trp_map_s_i(:), ims_trp_map_r_i(:)
     integer(wi), allocatable :: ims_trp_map_s_k(:), ims_trp_map_r_k(:)
@@ -123,19 +123,19 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Allocation
-        allocate (ims_ts_i(TLAB_MPI_TRP_I_MAXTYPES))         ! derived MPI types for send/recv
-        allocate (ims_tr_i(TLAB_MPI_TRP_I_MAXTYPES))
-        allocate (ims_size_i(TLAB_MPI_TRP_I_MAXTYPES))       ! metadata inside/to-calculate MPI types
-        allocate (ims_ds_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
-        allocate (ims_dr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+        ! allocate (ims_ts_i(TLAB_MPI_TRP_I_MAXTYPES))         ! derived MPI types for send/recv
+        ! allocate (ims_tr_i(TLAB_MPI_TRP_I_MAXTYPES))
+        ! allocate (ims_size_i(TLAB_MPI_TRP_I_MAXTYPES))       ! metadata inside/to-calculate MPI types
+        ! allocate (ims_ds_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
+        ! allocate (ims_dr_i(ims_npro_i, TLAB_MPI_TRP_I_MAXTYPES))
         allocate (ims_trp_map_s_i(ims_npro_i))          ! mappings for explicit send/recv
         allocate (ims_trp_map_r_i(ims_npro_i))
 
-        allocate (ims_ts_k(TLAB_MPI_TRP_K_MAXTYPES))         ! derived MPI types for send/recv
-        allocate (ims_tr_k(TLAB_MPI_TRP_K_MAXTYPES))
-        allocate (ims_size_k(TLAB_MPI_TRP_K_MAXTYPES))       ! metadata inside/to-calculate MPI types
-        allocate (ims_ds_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
-        allocate (ims_dr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+        ! allocate (ims_ts_k(TLAB_MPI_TRP_K_MAXTYPES))         ! derived MPI types for send/recv
+        ! allocate (ims_tr_k(TLAB_MPI_TRP_K_MAXTYPES))
+        ! allocate (ims_size_k(TLAB_MPI_TRP_K_MAXTYPES))       ! metadata inside/to-calculate MPI types
+        ! allocate (ims_ds_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
+        ! allocate (ims_dr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
         allocate (ims_trp_map_s_k(ims_npro_k))          ! mappings for explicit send/recv
         allocate (ims_trp_map_r_k(ims_npro_k))
 
@@ -175,20 +175,20 @@ contains
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLAB_MPI_TRP_I_PARTIAL
             npage = kmax*jmax
-            call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
+            ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
             ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1)
 
             if (fourier_on) then
                 call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
                 id = TLAB_MPI_TRP_I_POISSON1
                 npage = isize_txc_dimx ! isize_txc_field/imax
-                call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
+                ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
                 ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1)
 
                 call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
                 id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
                 npage = isize_txc_dimx
-                call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
+                ! call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
                 ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, npage, 1, 1, 1, 1)
 
             end if
@@ -199,14 +199,14 @@ contains
             call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
             id = TLAB_MPI_TRP_K_PARTIAL
             npage = imax*jmax
-            call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
+            ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
             ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1)
 
             if (fourier_on) then
                 call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
                 id = TLAB_MPI_TRP_K_POISSON
                 npage = isize_txc_dimz ! isize_txc_field/kmax
-                call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
+                ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
                 ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1)
 
             end if
@@ -243,73 +243,73 @@ contains
     ! ######################################################################
     ! ######################################################################
     ! Pointers and types for transposition across processors
-    subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, id)
-        integer, intent(in) :: npro_i
-        integer(wi), intent(in) :: npage, nmax
-        integer(wi), intent(in) :: nd, md, n1, n2
-        integer, intent(in) :: id
+!     subroutine TLabMPI_TypeI_Create(npro_i, nmax, npage, nd, md, n1, n2, id)
+!         integer, intent(in) :: npro_i
+!         integer(wi), intent(in) :: npage, nmax
+!         integer(wi), intent(in) :: nd, md, n1, n2
+!         integer, intent(in) :: id
 
-        ! -----------------------------------------------------------------------
-        integer(wi) i
-        integer ims_ss, ims_rs
-        integer ims_tmp1, ims_tmp2, ims_tmp3
-        character*64 str, line
+!         ! -----------------------------------------------------------------------
+!         integer(wi) i
+!         integer ims_ss, ims_rs
+!         integer ims_tmp1, ims_tmp2, ims_tmp3
+!         character*64 str, line
 
-#define nsize       ims_size_i(id)
-#define sdisp(j)    ims_ds_i(j, id)
-#define rdisp(j)    ims_dr_i(j, id)
-#define stype       ims_ts_i(id)
-#define rtype       ims_tr_i(id)
+! #define nsize       ims_size_i(id)
+! #define sdisp(j)    ims_ds_i(j, id)
+! #define rdisp(j)    ims_dr_i(j, id)
+! #define stype       ims_ts_i(id)
+! #define rtype       ims_tr_i(id)
 
-        ! #######################################################################
-        if (mod(npage, npro_i) == 0) then
-            nsize = npage/npro_i
-        else
-            call TLab_Write_ASCII(efile, 'TLabMPI_TypeI_Create. Ratio npage/npro_i not an integer.')
-            call TLab_Stop(DNS_ERROR_PARPARTITION)
-        end if
+!         ! #######################################################################
+!         if (mod(npage, npro_i) == 0) then
+!             nsize = npage/npro_i
+!         else
+!             call TLab_Write_ASCII(efile, 'TLabMPI_TypeI_Create. Ratio npage/npro_i not an integer.')
+!             call TLab_Stop(DNS_ERROR_PARPARTITION)
+!         end if
 
-        ! Calculate array displacements in Forward Send/Receive
-        sdisp(1) = 0
-        rdisp(1) = 0
-        do i = 2, npro_i
-            sdisp(i) = sdisp(i - 1) + nmax*nd*nsize
-            rdisp(i) = rdisp(i - 1) + nmax*md
-        end do
+!         ! Calculate array displacements in Forward Send/Receive
+!         sdisp(1) = 0
+!         rdisp(1) = 0
+!         do i = 2, npro_i
+!             sdisp(i) = sdisp(i - 1) + nmax*nd*nsize
+!             rdisp(i) = rdisp(i - 1) + nmax*md
+!         end do
 
-        ! #######################################################################
-        ims_tmp1 = nsize*n1 ! count
-        ims_tmp2 = nmax*n2 ! block
-        ims_tmp3 = ims_tmp2  ! stride = block because things are together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, stype, ims_err)
-        call MPI_TYPE_COMMIT(stype, ims_err)
+!         ! #######################################################################
+!         ims_tmp1 = nsize*n1 ! count
+!         ims_tmp2 = nmax*n2 ! block
+!         ims_tmp3 = ims_tmp2  ! stride = block because things are together
+!         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, stype, ims_err)
+!         call MPI_TYPE_COMMIT(stype, ims_err)
 
-        ims_tmp1 = nsize*n1 ! count
-        ims_tmp2 = nmax*n2 ! block
-        ims_tmp3 = nmax*npro_i*n2 ! stride is a multiple of nmax_total=nmax*npro_i
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, rtype, ims_err)
-        call MPI_TYPE_COMMIT(rtype, ims_err)
+!         ims_tmp1 = nsize*n1 ! count
+!         ims_tmp2 = nmax*n2 ! block
+!         ims_tmp3 = nmax*npro_i*n2 ! stride is a multiple of nmax_total=nmax*npro_i
+!         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, rtype, ims_err)
+!         call MPI_TYPE_COMMIT(rtype, ims_err)
 
-        call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
-        call MPI_TYPE_SIZE(rtype, ims_rs, ims_err)
+!         call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
+!         call MPI_TYPE_SIZE(rtype, ims_rs, ims_err)
 
-        if (ims_ss /= ims_rs) then
-            write (str, *) ims_ss; write (line, *) ims_rs
-            line = 'Send size '//trim(adjustl(str))//'differs from recv size '//trim(adjustl(line))
-            write (str, *) 1  ! i
-            line = trim(adjustl(line))//' in message '//trim(adjustl(str))
-            call TLab_Write_ASCII(efile, line)
-            call TLab_Stop(DNS_ERROR_MPITYPECHECK)
-        end if
+!         if (ims_ss /= ims_rs) then
+!             write (str, *) ims_ss; write (line, *) ims_rs
+!             line = 'Send size '//trim(adjustl(str))//'differs from recv size '//trim(adjustl(line))
+!             write (str, *) 1  ! i
+!             line = trim(adjustl(line))//' in message '//trim(adjustl(str))
+!             call TLab_Write_ASCII(efile, line)
+!             call TLab_Stop(DNS_ERROR_MPITYPECHECK)
+!         end if
 
-#undef nsize
-#undef sdisp
-#undef rdisp
-#undef stype
-#undef rtype
+! #undef nsize
+! #undef sdisp
+! #undef rdisp
+! #undef stype
+! #undef rtype
 
-        return
-    end subroutine TLabMPI_TypeI_Create
+!         return
+!     end subroutine TLabMPI_TypeI_Create
 
     function TLabMPI_Trp_TypeI_Create_Devel(nmax, npage, nd, md, n1, n2) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
@@ -368,70 +368,70 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TypeK_Create(npro_k, nmax, npage, nd, md, n1, n2, id)
-        integer, intent(in) :: npro_k
-        integer(wi), intent(in) :: npage, nmax
-        integer(wi), intent(in) :: nd, md, n1, n2
-        integer, intent(in) :: id
+!     subroutine TLabMPI_TypeK_Create(npro_k, nmax, npage, nd, md, n1, n2, id)
+!         integer, intent(in) :: npro_k
+!         integer(wi), intent(in) :: npage, nmax
+!         integer(wi), intent(in) :: nd, md, n1, n2
+!         integer, intent(in) :: id
 
-        ! -----------------------------------------------------------------------
-        integer(wi) i
-        integer ims_ss, ims_rs
-        integer ims_tmp1, ims_tmp2, ims_tmp3
+!         ! -----------------------------------------------------------------------
+!         integer(wi) i
+!         integer ims_ss, ims_rs
+!         integer ims_tmp1, ims_tmp2, ims_tmp3
 
-#define nsize       ims_size_k(id)
-#define sdisp(j)    ims_ds_k(j, id)
-#define rdisp(j)    ims_dr_k(j, id)
-#define stype       ims_ts_k(id)
-#define rtype       ims_tr_k(id)
+! #define nsize       ims_size_k(id)
+! #define sdisp(j)    ims_ds_k(j, id)
+! #define rdisp(j)    ims_dr_k(j, id)
+! #define stype       ims_ts_k(id)
+! #define rtype       ims_tr_k(id)
 
-! #######################################################################
-        if (mod(npage, npro_k) == 0) then
-            nsize = npage/npro_k
-        else
-            call TLab_Write_ASCII(efile, 'TLabMPI_TypeK_Create. Ratio npage/npro_k not an integer.')
-            call TLab_Stop(DNS_ERROR_PARPARTITION)
-        end if
+! ! #######################################################################
+!         if (mod(npage, npro_k) == 0) then
+!             nsize = npage/npro_k
+!         else
+!             call TLab_Write_ASCII(efile, 'TLabMPI_TypeK_Create. Ratio npage/npro_k not an integer.')
+!             call TLab_Stop(DNS_ERROR_PARPARTITION)
+!         end if
 
-        ! Calculate array displacements in Forward Send/Receive
-        sdisp(1) = 0
-        rdisp(1) = 0
-        do i = 2, npro_k
-            sdisp(i) = sdisp(i - 1) + nsize*nd
-            rdisp(i) = rdisp(i - 1) + nsize*md*nmax
-        end do
+!         ! Calculate array displacements in Forward Send/Receive
+!         sdisp(1) = 0
+!         rdisp(1) = 0
+!         do i = 2, npro_k
+!             sdisp(i) = sdisp(i - 1) + nsize*nd
+!             rdisp(i) = rdisp(i - 1) + nsize*md*nmax
+!         end do
 
-        ! #######################################################################
-        ims_tmp1 = nmax*n1 ! count
-        ims_tmp2 = nsize*n2 ! block
-        ims_tmp3 = npage*n2 ! stride
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, stype, ims_err)
-        call MPI_TYPE_COMMIT(stype, ims_err)
+!         ! #######################################################################
+!         ims_tmp1 = nmax*n1 ! count
+!         ims_tmp2 = nsize*n2 ! block
+!         ims_tmp3 = npage*n2 ! stride
+!         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, stype, ims_err)
+!         call MPI_TYPE_COMMIT(stype, ims_err)
 
-        ims_tmp1 = nmax*n1 ! count
-        ims_tmp2 = nsize*n2 ! block
-        ims_tmp3 = ims_tmp2  ! stride = block to put things together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, rtype, ims_err)
-        call MPI_TYPE_COMMIT(rtype, ims_err)
+!         ims_tmp1 = nmax*n1 ! count
+!         ims_tmp2 = nsize*n2 ! block
+!         ims_tmp3 = ims_tmp2  ! stride = block to put things together
+!         call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, rtype, ims_err)
+!         call MPI_TYPE_COMMIT(rtype, ims_err)
 
-        call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
-        call MPI_TYPE_SIZE(rtype, ims_rs, ims_err)
+!         call MPI_TYPE_SIZE(stype, ims_ss, ims_err)
+!         call MPI_TYPE_SIZE(rtype, ims_rs, ims_err)
 
-        if (ims_ss /= ims_rs) then
-            print *, 'Message   : ', 1, ' size is wrong' ! i
-            print *, 'Send size : ', ims_ss
-            print *, 'Recv size : ', ims_rs
-            call TLab_Stop(DNS_ERROR_MPITYPECHECK)
-        end if
+!         if (ims_ss /= ims_rs) then
+!             print *, 'Message   : ', 1, ' size is wrong' ! i
+!             print *, 'Send size : ', ims_ss
+!             print *, 'Recv size : ', ims_rs
+!             call TLab_Stop(DNS_ERROR_MPITYPECHECK)
+!         end if
 
-#undef nsize
-#undef sdisp
-#undef rdisp
-#undef stype
-#undef rtype
+! #undef nsize
+! #undef sdisp
+! #undef rdisp
+! #undef stype
+! #undef rtype
 
-        return
-    end subroutine TLabMPI_TypeK_Create
+!         return
+!     end subroutine TLabMPI_TypeK_Create
 
     function TLabMPI_Trp_TypeK_Create_Devel(nmax, npage, nd, md, n1, n2) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax

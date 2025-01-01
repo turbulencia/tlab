@@ -610,7 +610,8 @@ contains
     subroutine OPR_FOURIER_B_Z_EXEC(in, out)
 
 #ifdef USE_MPI
-        complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
+        ! complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
+        complex(wp), dimension(ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2, g(3)%size), target :: in, out
 #else
         complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
 #endif
