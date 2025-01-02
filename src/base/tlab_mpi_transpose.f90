@@ -172,42 +172,42 @@ contains
         ! -----------------------------------------------------------------------
         ! Create transposition plans
         if (ims_npro_i > 1) then
-            call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
+            ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
             id = TLAB_MPI_TRP_I_PARTIAL
             npage = kmax*jmax
             ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1)
+            ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
 
             if (fourier_on) then
-                call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
+                ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
                 id = TLAB_MPI_TRP_I_POISSON1
                 npage = isize_txc_dimx ! isize_txc_field/imax
                 ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
-                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1)
+                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
 
-                call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
+                ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
                 id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
                 npage = isize_txc_dimx
                 ! call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
-                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, npage, 1, 1, 1, 1)
+                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, npage, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
 
             end if
 
         end if
 
         if (ims_npro_k > 1) then
-            call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
+            ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
             id = TLAB_MPI_TRP_K_PARTIAL
             npage = imax*jmax
             ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1)
+            ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
 
             if (fourier_on) then
-                call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
+                ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
                 id = TLAB_MPI_TRP_K_POISSON
                 npage = isize_txc_dimz ! isize_txc_field/kmax
                 ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
-                ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1)
+                ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
 
             end if
 
@@ -311,9 +311,10 @@ contains
 !         return
 !     end subroutine TLabMPI_TypeI_Create
 
-    function TLabMPI_Trp_TypeI_Create_Devel(nmax, npage, nd, md, n1, n2) result(trp_plan)
+    function TLabMPI_Trp_TypeI_Create_Devel(nmax, npage, nd, md, n1, n2, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in) :: nd, md, n1, n2
+        character(len=*), intent(in), optional :: message
         type(mpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
@@ -323,6 +324,9 @@ contains
         character*64 str, line
 
         ! #######################################################################
+        if (present(message)) &
+            call TLab_Write_ASCII(lfile, 'Creating derived MPI types for '//trim(adjustl(message)))
+
         if (mod(npage, ims_npro_i) == 0) then
             trp_plan%nlines = npage/ims_npro_i
             allocate (trp_plan%disp_s(ims_npro_i), trp_plan%disp_r(ims_npro_i))
@@ -433,9 +437,10 @@ contains
 !         return
 !     end subroutine TLabMPI_TypeK_Create
 
-    function TLabMPI_Trp_TypeK_Create_Devel(nmax, npage, nd, md, n1, n2) result(trp_plan)
+    function TLabMPI_Trp_TypeK_Create_Devel(nmax, npage, nd, md, n1, n2, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in) :: nd, md, n1, n2
+        character(len=*), intent(in), optional :: message
         type(mpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
@@ -445,6 +450,9 @@ contains
         character*64 str, line
 
         ! #######################################################################
+        if (present(message)) &
+            call TLab_Write_ASCII(lfile, 'Creating derived MPI types for '//trim(adjustl(message)))
+
         if (mod(npage, ims_npro_k) == 0) then
             trp_plan%nlines = npage/ims_npro_k
             allocate (trp_plan%disp_s(ims_npro_k), trp_plan%disp_r(ims_npro_k))
