@@ -7,7 +7,7 @@ module TLabMPI_Transpose
     use MPI
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
-    use TLAB_VARS, only: fourier_on
+    ! use TLAB_VARS, only: fourier_on
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use TLabMPI_VARS
@@ -173,43 +173,43 @@ contains
         ! Create transposition plans
         if (ims_npro_i > 1) then
             ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox derivatives.')
-            id = TLAB_MPI_TRP_I_PARTIAL
+            ! id = TLAB_MPI_TRP_I_PARTIAL
             npage = kmax*jmax
             ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
+            ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
 
-            if (fourier_on) then
-                ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
-                id = TLAB_MPI_TRP_I_POISSON1
-                npage = isize_txc_dimx ! isize_txc_field/imax
-                ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
-                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
+            ! if (fourier_on) then
+            !     ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
+            !     id = TLAB_MPI_TRP_I_POISSON1
+            !     npage = isize_txc_dimx ! isize_txc_field/imax
+            !     ! call TLabMPI_TypeI_Create(ims_npro_i, imax, npage, 1, 1, 1, 1, id)
+            !     ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax, npage, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
 
-                ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
-                id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
-                npage = isize_txc_dimx
-                ! call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
-                ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, npage, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
+            !     ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Ox FFTW in Poisson solver.')
+            !     id = TLAB_MPI_TRP_I_POISSON2 ! isize_txc_field/(imax+2)
+            !     npage = isize_txc_dimx
+            !     ! call TLabMPI_TypeI_Create(ims_npro_i, imax + 2, npage, 1, 1, 1, 1, id)
+            !     ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, npage, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
 
-            end if
+            ! end if
 
         end if
 
         if (ims_npro_k > 1) then
             ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz derivatives.')
-            id = TLAB_MPI_TRP_K_PARTIAL
+            ! id = TLAB_MPI_TRP_K_PARTIAL
             npage = imax*jmax
             ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
+            ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
 
-            if (fourier_on) then
-                ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
-                id = TLAB_MPI_TRP_K_POISSON
-                npage = isize_txc_dimz ! isize_txc_field/kmax
-                ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
-                ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
+            ! if (fourier_on) then
+            !     ! call TLab_Write_ASCII(lfile, 'Creating MPI types for Oz FFTW in Poisson solver.')
+            !     id = TLAB_MPI_TRP_K_POISSON
+            !     npage = isize_txc_dimz ! isize_txc_field/kmax
+            !     ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, npage, 1, 1, 1, 1, id)
+            !     ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, npage, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
 
-            end if
+            ! end if
 
         end if
 

@@ -5,8 +5,8 @@
 
 module OPR_FOURIER
     use TLab_Constants, only: wp, wi, efile
-    use TLAB_VARS, only: isize_txc_field, isize_txc_dimz, isize_wrk2d
-    use TLAB_VARS, only: imax, jmax
+    use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz, isize_wrk2d
+    use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_C, only: c_wrk3d
@@ -59,6 +59,9 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
+            ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1) = TLabMPI_Trp_TypeI_Create_Devel(imax, isize_txc_dimx, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
+            ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2) = TLabMPI_Trp_TypeI_Create_Devel(imax + 2, isize_txc_dimx, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
+
             ! if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
             if (ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines /= ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2)%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
@@ -72,6 +75,8 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
+            ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_txc_dimz, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
+            
             ! isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
             isize_fft_z = ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2 ! divide by 2 bcs. we work w complex #
         else
