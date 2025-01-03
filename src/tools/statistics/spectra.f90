@@ -111,11 +111,11 @@ program SPECTRA
     integer(wi) iopt_size
     real(wp) opt_vec(iopt_size_max)
 
-    integer, parameter :: i0 = 0, i1 = 1, i2 = 2, i3 = 3
+    integer, parameter :: i0 = 0 !, i1 = 1, i2 = 2, i3 = 3
 
-#ifdef USE_MPI
-    integer(wi) id
-#endif
+! #ifdef USE_MPI
+!     integer(wi) id
+! #endif
 
 !########################################################################
 !########################################################################
@@ -319,10 +319,10 @@ program SPECTRA
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
-        id = TLAB_MPI_TRP_K_AUX2
+        ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
+        ! id = TLAB_MPI_TRP_K_AUX2
         ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, id)
-        ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_aux, 1, 1, 1, 1)
+        ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_aux, 1, 1, 1, 1, 'type-2 Oz spectra integration.')
 
     end if
 #endif
@@ -764,7 +764,7 @@ program SPECTRA
 
             do iv = 1, nfield
                 txc(1:isize_field, 1) = vars(iv)%field(1:isize_field)
-                call OPR_FOURIER_F(i3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
+                call OPR_FOURIER_F(3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
 
                 call OPR_FOURIER_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv))
             end do

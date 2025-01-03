@@ -69,7 +69,7 @@ contains
         character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
-        integer(wi) id, ip, npage
+        integer(wi) ip, npage!, id
 
         character(len=32) bakfile, block
         character(len=512) sRes, line

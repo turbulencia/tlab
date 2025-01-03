@@ -54,39 +54,39 @@ contains
 ! This should be OPR_INTERPOLATE_INITIALIZE
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
-            id = TLAB_MPI_TRP_I_AUX1
+            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
+            ! id = TLAB_MPI_TRP_I_AUX1
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
             ! call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(nx, npage, 1, 1, 1, 1)
+            ims_trp_plan_i(TLAB_MPI_TRP_I_AUX1) = TLabMPI_Trp_TypeI_Create_Devel(nx, npage, 1, 1, 1, 1, 'type-1 Ox interpolation')
 
-            call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
-            id = TLAB_MPI_TRP_I_AUX2
+            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
+            ! id = TLAB_MPI_TRP_I_AUX2
             npage = nz*ny
             if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
             ! call TLabMPI_TypeI_Create(ims_npro_i, nx_dst, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_i(id) = TLabMPI_Trp_TypeI_Create_Devel(nx_dst, npage, 1, 1, 1, 1)
+            ims_trp_plan_i(TLAB_MPI_TRP_I_AUX2) = TLabMPI_Trp_TypeI_Create_Devel(nx_dst, npage, 1, 1, 1, 1, 'type-2 Ox interpolation')
         end if
 
         if (ims_npro_k > 1) then
-            call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
-            id = TLAB_MPI_TRP_K_AUX1
+            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
+            ! id = TLAB_MPI_TRP_K_AUX1
             npage = nx_dst*ny_dst
             ! call TLabMPI_TypeK_Create(ims_npro_k, nz, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(nz, npage, 1, 1, 1, 1)
+            ims_trp_plan_k(TLAB_MPI_TRP_K_AUX1) = TLabMPI_Trp_TypeK_Create_Devel(nz, npage, 1, 1, 1, 1, 'type-1 Oz interpolation')
 
-            call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
-            id = TLAB_MPI_TRP_K_AUX2
+            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
+            ! id = TLAB_MPI_TRP_K_AUX2
             npage = nx_dst*ny_dst
             ! call TLabMPI_TypeK_Create(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_k(id) = TLabMPI_Trp_TypeK_Create_Devel(nz_dst, npage, 1, 1, 1, 1)
+            ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2) = TLabMPI_Trp_TypeK_Create_Devel(nz_dst, npage, 1, 1, 1, 1, 'type-2 Oz interpolation')
 
         end if
 #endif
