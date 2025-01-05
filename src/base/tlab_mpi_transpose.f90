@@ -5,7 +5,7 @@
 ! Circular transposition
 module TLabMPI_Transpose
     use MPI
-    use TLab_Constants, only: lfile, efile, wp, dp, sp, wi
+    use TLab_Constants, only: lfile, efile, wp, dp, sp, wi, sizeofreal
     use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
     ! use TLAB_VARS, only: fourier_on
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -60,6 +60,8 @@ module TLabMPI_Transpose
 
     real(wp), allocatable, target :: wrk_mpi(:)      ! 3D work array for MPI; maybe in tlab_memory
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
+
+    integer, allocatable :: counts(:), types_send(:), types_recv(:) ! for the use of alltoallw
 
 contains
 
@@ -236,6 +238,12 @@ contains
         !     end if
         !     call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
         ! end do
+
+        ! for use of alltoallw
+        allocate (counts(max(ims_npro_i, ims_npro_j, ims_npro_k)))
+        allocate (types_send(max(ims_npro_i, ims_npro_j, ims_npro_k)))
+        allocate (types_recv(max(ims_npro_i, ims_npro_j, ims_npro_k)))
+        counts(:) = 1
 
         return
     end subroutine TLabMPI_Transpose_Initialize
@@ -753,9 +761,12 @@ contains
             end do
 
         case (TLAB_MPI_TRP_ALLTOALL)
-            ! call MPI_ALLTOALL(a, 1, tsend, &
-            !                   b, 1, trecv, comm, ims_err)
-
+            types_send(1:npro) = tsend
+            types_recv(1:npro) = trecv
+            call MPI_ALLTOALLW(a, counts, dsend*int(sizeof(1.0_wp)), types_send, &
+                               b, counts, drecv*int(sizeof(1.0_wp)), types_recv, comm, ims_err)
+            ! call MPI_ALLTOALLW(a, spread(1, 1, npro), dsend*int(sizeof(1.0_wp)), spread(tsend, 1, npro), &
+            !                    b, spread(1, 1, npro), drecv*int(sizeof(1.0_wp)), spread(trecv, 1, npro), comm, ims_err)
         end select
 
         return
@@ -814,8 +825,12 @@ contains
             end do
 
         case (TLAB_MPI_TRP_ALLTOALL)
-            ! call MPI_ALLTOALL(a, 1, tsend, &
-            !                   b, 1, trecv, comm, ims_err)
+            types_send(1:npro) = tsend
+            types_recv(1:npro) = trecv
+            call MPI_ALLTOALLW(a, counts, dsend*int(sizeof(1.0_sp)), types_send, &
+                               b, counts, drecv*int(sizeof(1.0_sp)), types_recv, comm, ims_err)
+            ! call MPI_ALLTOALLW(a, spread(1, 1, npro), dsend*int(sizeof(1.0_wp)), spread(tsend, 1, npro), &
+            !                    b, spread(1, 1, npro), drecv*int(sizeof(1.0_wp)), spread(trecv, 1, npro), comm, ims_err)
 
         end select
 
