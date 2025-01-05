@@ -159,7 +159,7 @@ contains
 
             call MPI_WAITALL(4, mpireq, status, ims_err)
 
-            call TLabMPI_TagUpdate
+            ! call TLabMPI_TagUpdate
 
         end if
 
@@ -213,7 +213,7 @@ contains
 
             call MPI_WAITALL(4, mpireq, status, ims_err)
 
-            call TLabMPI_TagUpdate
+            ! call TLabMPI_TagUpdate
 
             ! -----------------------------------------------------------------------
             ! second-left and second-right PEs.
@@ -237,7 +237,7 @@ contains
 
             call MPI_WAITALL(4, mpireq(5:), status, ims_err)
 
-            call TLabMPI_TagUpdate
+            ! call TLabMPI_TagUpdate
 
         end if
 

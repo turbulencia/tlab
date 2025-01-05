@@ -743,7 +743,7 @@ contains
 
                 call MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
-                call TLabMPI_TagUpdate
+                ! call TLabMPI_TagUpdate
 
             end do
 
@@ -756,7 +756,7 @@ contains
                                       b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
                 end do
 
-                call TLabMPI_TagUpdate
+                ! call TLabMPI_TagUpdate
 
             end do
 
@@ -807,7 +807,7 @@ contains
 
                 call MPI_WAITALL(l, ims_request, ims_status, ims_err)
 
-                call TLabMPI_TagUpdate
+                ! call TLabMPI_TagUpdate
 
             end do
 
@@ -820,7 +820,7 @@ contains
                                       b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
                 end do
 
-                call TLabMPI_TagUpdate
+                ! call TLabMPI_TagUpdate
 
             end do
 

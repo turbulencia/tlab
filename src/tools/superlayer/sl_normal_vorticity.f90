@@ -306,8 +306,6 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 ! TkStat file
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-        call TLabMPI_TagUpdate
-
         if (ims_pro == 0) then
 #endif
 
