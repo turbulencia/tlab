@@ -44,6 +44,7 @@ program DNS
     use OPR_FILTERS
     use OPR_FOURIER
     use AVG_PHASE
+    use Avg_Spatial, only: IO_READ_AVG_SPATIAL, IO_WRITE_AVG_SPATIAL
     implicit none
     save
 

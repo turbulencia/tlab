@@ -32,7 +32,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use FDM, only: g
     use TLAB_VARS, only: visc
     use Thermodynamics, only: itransport
-    use TLab_Spatial
+    use Avg_Spatial
     use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Averages, only: SUM1V1D_V
@@ -3364,7 +3364,7 @@ subroutine AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
     ! ##############################################
 
     use TLAB_VARS
-    use TLab_Spatial
+    use Avg_Spatial
     use Averages, only: SUM1V1D_V
 
     implicit none

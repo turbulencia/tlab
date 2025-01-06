@@ -20,7 +20,7 @@ subroutine TLab_Initialize_Parameters(inifile)
     use FDM, only: g
     use IO_FIELDS, only: imode_files, imode_precision_files
     use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
-    use TLab_Spatial
+    ! use Avg_Spatial
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
@@ -275,9 +275,13 @@ subroutine TLab_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#[Statistics]')
     call TLab_Write_ASCII(bakfile, '#IAvera=<plane1,plane2,...>')
 
-    call ScanFile_Char(bakfile, inifile, 'Statistics', 'IAvera', '1', sRes)
-    nstatavg = MAX_STATS_SPATIAL
-    call LIST_INTEGER(sRes, nstatavg, statavg)
+    call ScanFile_Char(bakfile, inifile, 'Statistics', 'IAvera', 'void', sRes)
+    if (trim(adjustl(sRes)) /= 'void') then
+        ! nstatavg = MAX_STATS_SPATIAL
+        ! call LIST_INTEGER(sRes, nstatavg, statavg)
+        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Initialization of spatial statistics to be updated.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
+    end if
 
 ! ###################################################################
 ! Initialization of array sizes

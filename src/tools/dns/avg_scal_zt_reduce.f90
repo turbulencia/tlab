@@ -33,7 +33,7 @@ module AVG_SCAL_ZT
 #endif
     use TLAB_VARS, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d, imode_eqns
     use FDM, only: g
-    use TLab_Spatial
+    use Avg_Spatial
     use TLAB_VARS, only: visc
     use Thermodynamics, only: itransport
     use TLab_Arrays, only: wrk2d, wrk3d

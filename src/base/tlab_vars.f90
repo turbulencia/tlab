@@ -69,20 +69,3 @@ module TLAB_VARS
     type(filter_dt) :: PressureFilter(3)
 
 end module TLAB_VARS
-
-! ###################################################################
-! Jet Statistic
-! ###################################################################
-module TLab_Spatial
-    use TLab_Types, only: wp
-    implicit none
-    save
-
-    integer, parameter :: MAX_STATS_SPATIAL = 100 ! Running statistics
-
-    integer :: nstatavg, statavg(MAX_STATS_SPATIAL) ! Ox planes at which to accumulate statistics
-    integer :: nstatavg_points                      ! number of accumulated points
-    integer :: istattimeorg                         ! time at which accumulation of statistics started
-    real(wp) :: rstattimeorg
-
-end module TLab_Spatial
