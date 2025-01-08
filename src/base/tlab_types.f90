@@ -13,16 +13,4 @@ module TLab_Types
         real(wp) vector(3)
     end type term_dt
 
-    type filter_dt
-        sequence
-        integer type, ipadding
-        integer(wi) size, inb_filter
-        logical uniform, periodic, lpadding(2)
-        real(wp) parameters(MAX_PARS)
-        integer BcsMin, BcsMax                  ! boundary conditions
-        integer repeat
-        integer mpitype
-        real(wp), allocatable :: coeffs(:, :)    ! filted coefficients
-    end type filter_dt
-
 end module TLab_Types

@@ -10,7 +10,6 @@ module FLOW_LOCAL
     use TLAB_VARS, only: stagger_on
     use FDM, only: g
     use Tlab_Background, only: tbg, hbg
-    use TLAB_VARS, only: PressureFilter
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use THERMO_THERMAL
@@ -26,6 +25,7 @@ module FLOW_LOCAL
     use FI_VECTORCALCULUS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use OPR_Filters, only: PressureFilter
     use Discrete, only: Discrete_ReadBlock
     implicit none
     save

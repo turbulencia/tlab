@@ -5,9 +5,8 @@
 #endif
 
 module OPR_FILTERS
-    use TLab_Constants, only: wp, wi, MAX_PARS
+    use TLab_Constants, only: wp, wi, MAX_PARS, MAX_VARS
     use FDM, only: grid_dt
-    use TLab_Types, only: filter_dt
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimz
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -23,6 +22,25 @@ module OPR_FILTERS
 #endif
     implicit none
     private
+
+    type, public :: filter_dt
+        sequence
+        integer type, ipadding
+        integer(wi) size, inb_filter
+        logical uniform, periodic, lpadding(2)
+        real(wp) parameters(MAX_PARS)
+        integer BcsMin, BcsMax                  ! boundary conditions
+        integer repeat
+        integer mpitype
+        real(wp), allocatable :: coeffs(:, :)    ! filted coefficients
+    end type filter_dt
+
+    type(filter_dt), public :: FilterDomain(3)
+    logical, public :: FilterDomainActive(MAX_VARS)
+    integer, public :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
+
+    type(filter_dt), public :: Dealiasing(3)
+    type(filter_dt), public :: PressureFilter(3)
 
     public :: FILTER_READBLOCK, OPR_FILTER_INITIALIZE
     public :: OPR_FILTER

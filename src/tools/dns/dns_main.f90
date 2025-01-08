@@ -9,7 +9,6 @@ program DNS
     use TLAB_VARS, only: imode_sim, fourier_on, scal_on, flow_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: itime
-    use TLAB_VARS, only: FilterDomain, Dealiasing, PressureFilter
     use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
     use FDM, only: g, FDM_Initialize
     use TLab_Arrays

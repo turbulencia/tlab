@@ -10,7 +10,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
     use TLAB_VARS, only: coriolis, subsidence
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
-    use TLAB_VARS, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
+    use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     ! use Avg_Spatial
     implicit none
 

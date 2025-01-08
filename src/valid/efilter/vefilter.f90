@@ -2,7 +2,6 @@
 
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
-    use TLab_Types, only: filter_dt
     use FDM, only: grid_dt, FDM_Initialize
     use TLAB_VARS, only: visc, schmidt
     USE OPR_FILTERS

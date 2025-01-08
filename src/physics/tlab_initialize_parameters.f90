@@ -19,12 +19,12 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use FDM, only: g
     use IO_FIELDS, only: imode_files, imode_precision_files
-    use TLAB_VARS, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
     ! use Avg_Spatial
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
-    use OPR_FILTERS, only: FILTER_READBLOCK
+    use OPR_Filters, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
+    use OPR_Filters, only: FILTER_READBLOCK
 
     implicit none
 

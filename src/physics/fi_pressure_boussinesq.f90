@@ -10,7 +10,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_txc
     use TLAB_VARS, only: imode_eqns
-    use TLAB_VARS, only: PressureFilter, stagger_on
+    use TLAB_VARS, only: stagger_on
     use TLAB_VARS, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d

@@ -8,8 +8,6 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-    use TLab_Types, only: filter_dt
-    use Discrete, only: discrete_dt
     use FDM, only: grid_dt
     use TLab_Constants, only: efile, lfile, wp, wi
 #ifdef TRACE_ON
@@ -24,6 +22,7 @@ module BOUNDARY_INFLOW
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture, itransport
+    use Discrete, only: discrete_dt
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER

@@ -1,5 +1,5 @@
 module TLAB_VARS
-    use TLab_Types, only: filter_dt, term_dt
+    use TLab_Types, only: term_dt
     use TLab_Constants, only: MAX_VARS, wp, wi, sp
     implicit none
     save
@@ -57,15 +57,5 @@ module TLAB_VARS
     real(wp) :: rossby                              ! Coriolis force
     real(wp) :: stokes                              ! particle inertial effects
     real(wp) :: settling                            ! sedimentation effects
-
-! ###########################################################
-! Filters
-! ###########################################################
-    type(filter_dt) :: FilterDomain(3)
-    logical :: FilterDomainActive(MAX_VARS)
-    integer :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
-
-    type(filter_dt) :: Dealiasing(3)
-    type(filter_dt) :: PressureFilter(3)
 
 end module TLAB_VARS
