@@ -4,7 +4,7 @@
 module FLOW_LOCAL
     use TLab_Constants, only: efile, lfile, wfile
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN
-    use TLab_Types, only: discrete_dt
+    use Discrete, only: discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: inb_wrk2d, inb_txc
     use TLAB_VARS, only: stagger_on
@@ -26,6 +26,7 @@ module FLOW_LOCAL
     use FI_VECTORCALCULUS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
+    use Discrete, only: Discrete_ReadBlock
     implicit none
     save
     private
@@ -143,7 +144,7 @@ contains
         end if
 
         ! Discrete Forcing
-        call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
+        call Discrete_ReadBlock(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
         ! specific for this tool
         call ScanFile_Real(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
         call ScanFile_Real(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))

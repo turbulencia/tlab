@@ -3,7 +3,7 @@
 
 module SCAL_LOCAL
     use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
-    use TLab_Types, only: discrete_dt
+    use Discrete, only: discrete_dt, Discrete_ReadBlock
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal
     use Tlab_Background, only: sbg
     use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
@@ -133,7 +133,7 @@ contains
         end if
 
 ! Discrete Forcing
-        call DISCRETE_READBLOCK(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
+        call Discrete_ReadBlock(bakfile, inifile, 'Discrete', fp) ! Modulation type in fp%type
 !   specific for this tool
         call ScanFile_Real(bakfile, inifile, 'Discrete', 'Broadening', '-1.0', fp%parameters(1))
         call ScanFile_Real(bakfile, inifile, 'Discrete', 'ThickStep', '-1.0', fp%parameters(2))

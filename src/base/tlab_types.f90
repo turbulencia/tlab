@@ -1,5 +1,5 @@
 module TLab_Types
-    use TLab_Constants, only: wp, wi, i4_, longi, MAX_VARS, MAX_PARS, MAX_MODES
+    use TLab_Constants, only: wp, wi, MAX_VARS, MAX_PARS
     implicit none
     save
 
@@ -24,13 +24,5 @@ module TLab_Types
         integer mpitype
         real(wp), allocatable :: coeffs(:, :)    ! filted coefficients
     end type filter_dt
-
-    type discrete_dt
-        sequence
-        integer type, size
-        integer, dimension(MAX_MODES) :: modex, modez
-        real(wp), dimension(MAX_MODES) :: amplitude, phasex, phasez
-        real(wp), dimension(MAX_PARS) :: parameters
-    end type discrete_dt
 
 end module TLab_Types

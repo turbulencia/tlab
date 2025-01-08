@@ -9,7 +9,6 @@ program DNS
     use TLAB_VARS, only: imode_sim, fourier_on, scal_on, flow_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: itime
-    use TLAB_VARS, only: damkohler
     use TLAB_VARS, only: FilterDomain, Dealiasing, PressureFilter
     use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
     use FDM, only: g, FDM_Initialize
@@ -401,6 +400,7 @@ contains
 !########################################################################
     subroutine DNS_LOGS_INITIALIZE()
         use Thermodynamics, only: imixture
+        use TLAB_VARS, only: damkohler
 
         integer ip
         character(len=256) line1
@@ -444,6 +444,7 @@ contains
 
     subroutine DNS_LOGS()
         use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
+        use TLAB_VARS, only: damkohler
 #ifdef USE_MPI
         use MPI
         use TLabMPI_VARS, only: ims_err
