@@ -56,25 +56,28 @@ contains
 
         character*32 bakfile
 
-        ! ###################################################################   
+        ! ###################################################################
+        ! Read input data
         bakfile = trim(adjustl(inifile))//'.bak'
 
         call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
 
         ! ###################################################################
+        ! Initialize dealiasing
         do ig = 1, 3
-            call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
+            if (Dealiasing(ig)%type /= DNS_FILTER_NONE) call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
         end do
 
         if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then ! to be moved to OPR_Burgers_Initialize
             call TLab_Allocate_Real(__FILE__, wrkdea, [isize_field, 2], 'wrk-dealiasing')
         end if
 
-        ! -----------------------------------------------------------------------
-        ! Anelastic density correction term in burgers operator
+        ! ###################################################################
+        ! Initialize anelastic density correction
         if (imode_eqns == DNS_EQNS_ANELASTIC) then
             call TLab_Write_ASCII(lfile, 'Initialize anelastic density correction in burgers operator.')
 
+            ! -----------------------------------------------------------------------
             ! Density correction term in the burgers operator along X
             g(1)%anelastic = .true.
 #ifdef USE_MPI
@@ -95,8 +98,9 @@ contains
                 g(1)%rhoinv(j) = ribackground(ip)
             end do
 
+            ! -----------------------------------------------------------------------
             ! Density correction term in the burgers operator along Y; see FDM_Initialize
-            ! implemented directly in the tridiagonal system
+            ! we implement it directly in the tridiagonal system
             ip = 0
             do is = 0, inb_scal ! case 0 for the velocity
                 g(2)%lu2d(:, ip + 2) = g(2)%lu2d(:, ip + 2)*ribackground(:)  ! matrix U; 1/diagonal
@@ -104,6 +108,7 @@ contains
                 ip = ip + 3
             end do
 
+            ! -----------------------------------------------------------------------
             ! Density correction term in the burgers operator along Z
             g(3)%anelastic = .true.
 #ifdef USE_MPI
@@ -431,13 +436,13 @@ contains
                 end do
 
             else
-                !$omp parallel default( shared ) private( ij )
-                !$omp do
+!$omp parallel default( shared ) private( ij )
+!$omp do
                 do ij = 1, nlines*g%size
                     result(ij, 1) = result(ij, 1) - uf(ij, 1)*dsf(ij, 1)
                 end do
-                !$omp end do
-                !$omp end parallel
+!$omp end do
+!$omp end parallel
             end if
 
             nullify (uf, dsf)
@@ -449,13 +454,13 @@ contains
                 end do
 
             else
-                !$omp parallel default( shared ) private( ij )
-                !$omp do
+!$omp parallel default( shared ) private( ij )
+!$omp do
                 do ij = 1, nlines*g%size
                     result(ij, 1) = result(ij, 1) - u(ij, 1)*dsdx(ij, 1)
                 end do
-                !$omp end do
-                !$omp end parallel
+!$omp end do
+!$omp end parallel
             end if
         end if
 

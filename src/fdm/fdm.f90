@@ -12,7 +12,8 @@ module FDM
         integer(wi) size, inb_grid
         integer mode_fdm1                   ! finite-difference method for 1. order derivative
         integer mode_fdm2                   ! finite-difference method for 2. order derivative
-        logical uniform, periodic, anelastic
+        logical uniform, periodic
+        logical :: anelastic = .false.
         logical :: need_1der = .false.      ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
         integer nb_diag_1(2)                ! # of left and right diagonals 1. order derivative (max 5/7)
         integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative (max 5/7)
@@ -38,7 +39,7 @@ module FDM
         real(wp), pointer :: lu2d(:, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
         !
-        real(wp), pointer :: rhoinv(:)      ! pointer to density correction in anelastic
+        real(wp), allocatable :: rhoinv(:)  ! anelastic density correction
     end type grid_dt
 
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
@@ -136,8 +137,8 @@ contains
                          + 5 &                  ! LU decomposition 2. order, 1bcs
                          + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
         end if
-        g%inb_grid = g%inb_grid &
-                     + 1                        ! Density correction in anelastic mode
+        ! g%inb_grid = g%inb_grid &
+        !              + 1                        ! Density correction in anelastic mode
         if ((stagger_on) .and. g%periodic) then
             g%inb_grid = g%inb_grid &
                          + 5 &                  ! LU decomposition interpolation
@@ -512,14 +513,14 @@ contains
             ig = ig + 5
         end if
 
-! ###################################################################
-! Density correction in anelastic mode
-! ###################################################################
-        g%rhoinv => x(:, ig)
+! ! ###################################################################
+! ! Density correction in anelastic mode
+! ! ###################################################################
+!         g%rhoinv => x(:, ig)
 
-        g%anelastic = .false. ! Default; activated in TLab_Initialize_Background
+!         g%anelastic = .false. ! Default; activated in TLab_Initialize_Background
 
-        ig = ig + 1
+!         ig = ig + 1
 
 ! ###################################################################
 ! Check array sizes
