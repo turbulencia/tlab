@@ -1,10 +1,10 @@
 #include "dns_const.h"
-#include "dns_const_mpi.h"
 
 module Tlab_Background
     use TLab_Constants, only: wp, wi, lfile, wfile, MAX_VARS
     use TLab_WorkFlow, only: TLab_Write_ASCII
-    use Profiles, only: profiles_dt
+    use Profiles, only: profiles_dt, Profiles_Calculate
+    use THERMO_THERMAL
     implicit none
     private
 
@@ -20,43 +20,37 @@ module Tlab_Background
 
 contains
 !########################################################################
-!# Initialize data of reference thermodynamic profiles
+!# Initialize data of reference profiles
 !########################################################################
     subroutine TLab_Initialize_Background(inifile)
         use TLab_Pointers_3D, only: p_wrk1d
         use FDM, only: g
-        use TLAB_VARS, only: inb_scal_array, imax, jmax, kmax
+        use TLAB_VARS, only: inb_scal_array
         use TLAB_VARS, only: imode_eqns, inb_scal
         use TLAB_VARS, only: froude, schmidt
         use TLAB_VARS, only: imode_sim
         use Thermodynamics, only: imixture
-        use THERMO_THERMAL
         use THERMO_ANELASTIC
         use THERMO_AIRWATER
-        use Profiles, only: Profiles_ReadBlock, Profiles_Calculate
+        use Profiles, only: Profiles_ReadBlock
         use Profiles, only: PROFILE_NONE, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
         use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
-#ifdef USE_MPI
-        use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
-        ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-        use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
-#endif
 
         character(len=*), intent(in) :: inifile
 
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
         character*64 lstr
 
         real(wp) ploc(2), rloc(2), Tloc(2), sloc(2, 1:MAX_VARS)
 
-        integer(wi) is, j, ip, nlines, offset
+        integer(wi) is, j
 
-! ###################################################################
+        ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-! ###################################################################
+        ! -----------------------------------------------------------------------
         block = 'Scalar'
 
         call TLab_Write_ASCII(bakfile, '#')
@@ -79,7 +73,7 @@ contains
             end do
         end if
 
-! ###################################################################
+        ! -----------------------------------------------------------------------
         block = 'Flow'
 
         call TLab_Write_ASCII(bakfile, '#')
@@ -106,7 +100,7 @@ contains
         call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Temperature', tbg)
         call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
 
-! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
+        ! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
         ! if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
         !     idummy=0
         !     if (pbg%type == PROFILE_NONE) idummy=idummy+1
@@ -119,6 +113,7 @@ contains
         !     end if
         ! end if
 
+        ! -----------------------------------------------------------------------
         if (imode_sim == DNS_MODE_SPATIAL) then     ! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
             call TLab_Write_ASCII(bakfile, '#ThickAVelocity=<value>')
             call TLab_Write_ASCII(bakfile, '#ThickBVelocity=<value>')
@@ -130,12 +125,12 @@ contains
             call TLab_Write_ASCII(bakfile, '#ThickBTemperature=<value>')
             call TLab_Write_ASCII(bakfile, '#FluxTemperature=<value>')
 
-! Bradbury profile is the default (x0=a*b)
+            ! Bradbury profile is the default (x0=a*b)
             call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickAVelocity', '0.1235', qbg(1)%parameters(2))
             call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBVelocity', '-0.873', qbg(1)%parameters(3))
             call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxVelocity', '0.96', qbg(1)%parameters(4))
 
-! Ramaprian is the default (x0=a*b)
+            ! Ramaprian is the default (x0=a*b)
             call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickADensity', '0.14', rbg%parameters(2))
             call ScanFile_Real(bakfile, inifile, 'Flow', 'ThickBDensity', '2.0', rbg%parameters(3))
             call ScanFile_Real(bakfile, inifile, 'Flow', 'FluxDensity', '0.94', rbg%parameters(4))
@@ -146,8 +141,8 @@ contains
 
         end if
 
-! #######################################################################
-! mean_rho and delta_rho need to be defined, because of old version.
+        ! #######################################################################
+        ! mean_rho and delta_rho need to be defined, because of old version.
         if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
             if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
                 rbg = tbg
@@ -190,7 +185,8 @@ contains
             if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
         end do
 
-! #######################################################################
+        ! #######################################################################
+        ! Anelastic reference profiles
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
             ! -----------------------------------------------------------------------
             ! Construct reference thermodynamic profiles
@@ -250,62 +246,6 @@ contains
 
         end if
 
-! -----------------------------------------------------------------------
-! Anelastic density correction term in burgers operator
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
-            call TLab_Write_ASCII(lfile, 'Initialize anelastic density correction in burgers operator.')
-
-! Density correction term in the burgers operator along X
-            g(1)%anelastic = .true.
-#ifdef USE_MPI
-            if (ims_npro_i > 1) then
-                ! nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
-                nlines = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
-                offset = nlines*ims_pro_i
-            else
-#endif
-                nlines = jmax*kmax
-                offset = 0
-#ifdef USE_MPI
-            end if
-#endif
-            allocate (g(1)%rhoinv(nlines))
-            do j = 1, nlines
-                ip = mod(offset + j - 1, g(2)%size) + 1
-                g(1)%rhoinv(j) = ribackground(ip)
-            end do
-
-! Density correction term in the burgers operator along Y; see FDM_Initialize
-! implemented directly in the tridiagonal system
-            ip = 0
-            do is = 0, inb_scal ! case 0 for the velocity
-                g(2)%lu2d(:, ip + 2) = g(2)%lu2d(:, ip + 2)*ribackground(:)  ! matrix U; 1/diagonal
-                g(2)%lu2d(:g(2)%size - 1, ip + 3) = g(2)%lu2d(:, ip + 3)*rbackground(2:) ! matrix U; 1. superdiagonal
-                ip = ip + 3
-            end do
-
-! Density correction term in the burgers operator along Z
-            g(3)%anelastic = .true.
-#ifdef USE_MPI
-            if (ims_npro_k > 1) then
-                ! nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
-                nlines = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
-                offset = nlines*ims_pro_k
-            else
-#endif
-                nlines = imax*jmax
-                offset = 0
-#ifdef USE_MPI
-            end if
-#endif
-            allocate (g(3)%rhoinv(nlines))
-            do j = 1, nlines
-                ip = (offset + j - 1)/imax + 1
-                g(3)%rhoinv(j) = ribackground(ip)
-            end do
-
-        end if
-
         return
     end subroutine TLab_Initialize_Background
 
@@ -322,9 +262,6 @@ contains
 !########################################################################
     subroutine FLOW_SPATIAL_DENSITY(imax, jmax, tbg, ubg, &
                                     x, y, z1, p, rho_vi, u_vi, tem_vi, rho_vo, u_vo, tem_vo, wrk1d)
-        use THERMO_THERMAL
-        use Profiles, only: Profiles_Calculate
-
         integer(wi) imax, jmax
         type(profiles_dt) tbg, ubg
         real(wp) x(imax)
@@ -414,7 +351,6 @@ contains
 !########################################################################
     subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &
                                      jet_u_a, jet_u_b, jet_u_flux, x, y, rho_vi, u_vi, rho, u, v, wrk1d, wrk2d)
-        use Profiles, only: Profiles_Calculate
         use Integration, only: Int_Simpson
 
         integer(wi) imax, jmax
@@ -573,7 +509,6 @@ contains
     end subroutine FLOW_SPATIAL_VELOCITY
 
 !########################################################################
-!# DESCRIPTION
 !#
 !# Calculate the fields z1(x,y) s.t. the axial scalar flux
 !# is conserved.
@@ -585,8 +520,6 @@ contains
                                    diam_z, diam_u, jet_z_a, jet_z_b, jet_z_flux, &
                                    x, y, rho_vi, u_vi, z_vi, rho, u, z1, wrk1d)
         use Integration, only: Int_Simpson
-        use Profiles, only: Profiles_Calculate
-        implicit none
 
         integer(wi) imax, jmax
         real(wp) diam_u, diam_z
@@ -681,4 +614,5 @@ contains
 
         return
     end subroutine FLOW_SPATIAL_SCALAR
+    
 end module Tlab_Background

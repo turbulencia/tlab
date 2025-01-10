@@ -38,9 +38,10 @@ program DNS
     use ParticleTrajectories
     use AVG_SCAL_ZT
     use IO_FIELDS
-    use OPR_ELLIPTIC
-    use OPR_FILTERS
     use OPR_FOURIER
+    use OPR_FILTERS
+    use OPR_Burgers, only: OPR_Burgers_Initialize
+    use OPR_ELLIPTIC
     use AVG_PHASE
     use Avg_Spatial, only: IO_READ_AVG_SPATIAL, IO_WRITE_AVG_SPATIAL
     implicit none
@@ -118,13 +119,14 @@ program DNS
     end if
 
     ! ###################################################################
-    ! Initialize operators and reference data
+    ! Initialize operators
     ! ###################################################################
+    call OPR_Burgers_Initialize(ifile)
+
     call OPR_Elliptic_Initialize(ifile)
 
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 

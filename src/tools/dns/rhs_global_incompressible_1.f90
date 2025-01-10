@@ -39,7 +39,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use BOUNDARY_BCS
     use IBM_VARS, only: imode_ibm, imode_ibm_scal, ibm_burgers
     use OPR_PARTIAL
-    use OPR_BURGERS
+    use OPR_Burgers
     use OPR_ELLIPTIC
     use OPR_FILTERS
     use AVG_PHASE
@@ -91,17 +91,17 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     ! Diffusion and advection terms
     ! #######################################################################
     ! Preliminaries for IBM use
-    ! (OPR_BURGERS_X/Y/Z uses modified fields for derivatives)
+    ! (OPR_Burgers_X/Y/Z uses modified fields for derivatives)
     if (imode_ibm == 1) ibm_burgers = .true.
 
     ! Diagonal terms and transposed velocity arrays
-    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, tmp1, tmp4) ! store u transposed in tmp4
-    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, tmp2, tmp5) ! store v transposed in tmp5
-    call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, tmp3, tmp6) ! store w transposed in tmp6
+    call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, tmp1, tmp4) ! store u transposed in tmp4
+    call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, tmp2, tmp5) ! store v transposed in tmp5
+    call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, tmp3, tmp6) ! store w transposed in tmp6
 
     ! Ox momentum equation
-    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, tmp7, tmp9, tmp5) ! tmp5 contains v transposed
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, tmp8, tmp9, tmp6) ! tmp6 contains w transposed
+    call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, tmp7, tmp9, tmp5) ! tmp5 contains v transposed
+    call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, tmp8, tmp9, tmp6) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -112,8 +112,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp end parallel
 
     ! Oy momentum equation
-    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, tmp7, tmp9, tmp4) ! tmp4 contains u transposed
-    call OPR_BURGERS_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, tmp8, tmp9, tmp6) ! tmp6 contains w transposed
+    call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, tmp7, tmp9, tmp4) ! tmp4 contains u transposed
+    call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, tmp8, tmp9, tmp6) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -124,8 +124,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 !$omp end parallel
 
     ! Oz momentum equation
-    call OPR_BURGERS_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, tmp7, tmp9, tmp4) ! tmp4 contains u transposed
-    call OPR_BURGERS_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, tmp8, tmp9, tmp5) ! tmp5 contains v transposed
+    call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, tmp7, tmp9, tmp4) ! tmp4 contains u transposed
+    call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, tmp8, tmp9, tmp5) ! tmp5 contains v transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -147,9 +147,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 
     ! Scalar equations
     do is = 1, inb_scal
-        call OPR_BURGERS_X(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(1), s(1, is), u, tmp1, tmp9, tmp4) ! tmp4 contains u transposed
-        call OPR_BURGERS_Y(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(2), s(1, is), v, tmp2, tmp9, tmp5) ! tmp5 contains v transposed
-        call OPR_BURGERS_Z(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(3), s(1, is), w, tmp3, tmp9, tmp6) ! tmp6 contains w transposed
+        call OPR_Burgers_X(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(1), s(1, is), u, tmp1, tmp9, tmp4) ! tmp4 contains u transposed
+        call OPR_Burgers_Y(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(2), s(1, is), v, tmp2, tmp9, tmp5) ! tmp5 contains v transposed
+        call OPR_Burgers_Z(OPR_B_U_IN, is, imax, jmax, kmax, bcs, g(3), s(1, is), w, tmp3, tmp9, tmp6) ! tmp6 contains w transposed
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )

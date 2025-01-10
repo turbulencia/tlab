@@ -12,9 +12,8 @@ module TLab_Arrays
     real(wp), allocatable :: wrk1d(:, :)                    ! Work arrays (scratch space)
     real(wp), allocatable :: wrk2d(:, :)                    ! Work arrays (scratch space)
     real(wp), allocatable :: wrk3d(:)                       ! Work arrays (scratch space)
-    real(wp), allocatable :: wrkdea(:, :)                   ! Work arrays for dealiasing (scratch space)
 
-    target q, s, txc, wrk1d, wrk2d, wrk3d, wrkdea
+    target q, s, txc, wrk1d, wrk2d, wrk3d
 
 end module TLab_Arrays
 
@@ -112,7 +111,6 @@ module TLab_Memory
     use TLAB_VARS, only: isize_field, inb_flow_array, inb_scal_array
     use TLAB_VARS, only: isize_txc_field, inb_txc, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d
-    ! use TLAB_VARS, only: Dealiasing
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
@@ -171,10 +169,6 @@ contains
         call TLab_Allocate_Real(C_FILE_LOC, wrk1d, [isize_wrk1d, inb_wrk1d], 'wrk1d')
         call TLab_Allocate_Real(C_FILE_LOC, wrk2d, [isize_wrk2d, inb_wrk2d], 'wrk2d')
         call TLab_Allocate_Real(C_FILE_LOC, wrk3d, [isize_wrk3d], 'wrk3d')
-
-        ! if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then ! to be moved to OPR_Burgers_Initialize
-        !     call TLab_Allocate_Real(C_FILE_LOC, wrkdea, [isize_field, 2], 'wrk-dealiasing')
-        ! end if
 
         call TLab_Set_Pointers()
 

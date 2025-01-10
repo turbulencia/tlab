@@ -39,7 +39,6 @@ module OPR_FILTERS
     logical, public :: FilterDomainActive(MAX_VARS)
     integer, public :: FilterDomainBcsFlow(MAX_VARS), FilterDomainBcsScal(MAX_VARS)
 
-    type(filter_dt), public :: Dealiasing(3)
     type(filter_dt), public :: PressureFilter(3)
 
     public :: FILTER_READBLOCK, OPR_FILTER_INITIALIZE

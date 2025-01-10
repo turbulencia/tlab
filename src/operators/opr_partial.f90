@@ -192,7 +192,7 @@ contains
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
         ! ###################################################################
-        if (is >= 0 .or. g%need_1der) then   ! called from opr_burgers or need for 1. order derivative
+        if (is >= 0 .or. g%need_1der) then   ! called from OPR_Burgers or need for 1. order derivative
             call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
         end if
 

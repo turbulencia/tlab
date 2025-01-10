@@ -35,9 +35,10 @@ program AVERAGES
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
-    use OPR_FILTERS
-    use OPR_FOURIER
     use OPR_PARTIAL
+    use OPR_FOURIER
+    use OPR_FILTERS
+    use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
     use AVG_PHASE
 
@@ -342,12 +343,13 @@ program AVERAGES
     call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
     call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
-    call OPR_Elliptic_Initialize(ifile)
-
     call TLab_Initialize_Background(ifile)  ! Initialize thermodynamic quantities
 
+    call OPR_Burgers_Initialize(ifile)
+
+    call OPR_Elliptic_Initialize(ifile)
+
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 

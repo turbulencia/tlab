@@ -26,8 +26,9 @@ program INIFLOW
     use THERMO_CALORIC
     use Gravity, only: Gravity_Initialize
     use IO_FIELDS
-    use OPR_Elliptic
     use OPR_FOURIER
+    use OPR_Burgers, only: OPR_Burgers_Initialize
+    use OPR_Elliptic, only: OPR_Elliptic_Initialize
     use FLOW_LOCAL
     use FLOW_MEAN
 
@@ -56,6 +57,8 @@ program INIFLOW
 
     call TLab_Initialize_Background(ifile)
     if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
+
+    call OPR_Burgers_Initialize(ifile)
 
     if (flag_u /= 0) then ! Initialize Poisson Solver
         call OPR_Elliptic_Initialize(ifile)

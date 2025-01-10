@@ -11,13 +11,13 @@ program VBURGERS
 #ifdef USE_MPI
     use MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     use TLabMPI_VARS
 #endif
-    use FDM, only: g,  FDM_Initialize
+    use FDM, only: g, FDM_Initialize
     use IO_FIELDS
     use OPR_PARTIAL
-    use OPR_BURGERS
+    use OPR_Burgers
     use OPR_FILTERS
     use TLab_Background, only: TLab_Initialize_Background
     implicit none
@@ -30,7 +30,7 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 
     real(wp), dimension(:, :, :), pointer :: a, b, c
 
-    integer(wi) i, j, k, ig, bcs(2, 2)
+    integer(wi) i, j, k, bcs(2, 2)
     real(wp) dummy, error
 
 ! ###################################################################
@@ -39,7 +39,7 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
 
@@ -53,18 +53,16 @@ call TLabMPI_Transpose_Initialize(ifile)
 
     visc = 1.0_wp/big_wp    ! inviscid
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
+    call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
+    call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
     call TLab_Initialize_Background(ifile)
 
-    bcs = 0
+    call OPR_Burgers_Initialize(ifile)
 
-    do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
-    end do
+    bcs = 0
 
 ! ###################################################################
 ! Define forcing term
@@ -85,7 +83,7 @@ call TLabMPI_Transpose_Initialize(ifile)
     end do
     call IO_WRITE_FIELDS('fieldXdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), a, a, c, tmp1)
+    call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), a, a, c, tmp1)
     call IO_WRITE_FIELDS('fieldXburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
@@ -111,7 +109,7 @@ call TLabMPI_Transpose_Initialize(ifile)
     end do
     call IO_WRITE_FIELDS('fieldYdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), a, a, c, tmp1)
+    call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), a, a, c, tmp1)
     call IO_WRITE_FIELDS('fieldYburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
@@ -139,7 +137,7 @@ call TLabMPI_Transpose_Initialize(ifile)
         end do
         call IO_WRITE_FIELDS('fieldZdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), a, a, c, tmp1)
+        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), a, a, c, tmp1)
         call IO_WRITE_FIELDS('fieldZburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
         c = c - b; error = sum(c**2); dummy = sum(b**2)

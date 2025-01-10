@@ -5,6 +5,7 @@ program VTGVORTEX
     use TLAB_VARS
     use IO_FIELDS
     use OPR_FOURIER
+    use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
     use FI_SOURCES
 
@@ -37,6 +38,10 @@ program VTGVORTEX
     call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
     call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
     call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+
+    call TLab_Initialize_Background(ifile)
+
+    call OPR_Burgers_Initialize(ifile)
 
     call OPR_Elliptic_Initialize(ifile)
 

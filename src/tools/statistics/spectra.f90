@@ -56,10 +56,11 @@ program SPECTRA
     use Chemistry
     use IBM_VARS
     use IO_FIELDS
-    use OPR_FILTERS
-    use Averages, only: AVG1V2D, COV2V2D
     use OPR_FOURIER
+    use OPR_FILTERS
+    use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
+    use Averages, only: AVG1V2D, COV2V2D
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
@@ -385,14 +386,16 @@ program SPECTRA
     call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
     call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
-    call OPR_Elliptic_Initialize(ifile)
-
     call TLab_Initialize_Background(ifile)
 
     do ig = 1, 3
-        call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
+
+    call OPR_Burgers_Initialize(ifile)
+
+    call OPR_Elliptic_Initialize(ifile)
+
 
     icalc_radial = 0
     if (flag_mode == 1 .and. g(1)%size == g(3)%size) icalc_radial = 1 ! Calculate radial spectra

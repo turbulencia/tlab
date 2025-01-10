@@ -23,9 +23,8 @@ subroutine TLab_Initialize_Parameters(inifile)
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
-    use OPR_Filters, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, Dealiasing, PressureFilter
+    use OPR_Filters, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, PressureFilter
     use OPR_Filters, only: FILTER_READBLOCK
-
     implicit none
 
     character(len=*), intent(in) :: inifile
@@ -256,9 +255,6 @@ subroutine TLab_Initialize_Parameters(inifile)
 ! ###################################################################
 ! Filters
 ! ###################################################################
-! Dealiasing
-    call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
-
 ! Domain
     call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
     FilterDomainActive(:) = .true.                      ! Variable to eventually allow for control field by field

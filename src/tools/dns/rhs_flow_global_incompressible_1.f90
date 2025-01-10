@@ -26,7 +26,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use OPR_PARTIAL
-    use OPR_BURGERS
+    use OPR_Burgers
     use OPR_ELLIPTIC
 
     implicit none
@@ -58,7 +58,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 ! #######################################################################
     call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), u, tmp6, tmp3)
     call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp5, tmp2)
-    call OPR_BURGERS_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, tmp4, tmp1)
+    call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, tmp4, tmp1)
 
 !$omp parallel default( shared ) private( ij, srt,end,siz )
     call TLab_OMP_PARTITION(isize_field, srt, end, siz)
@@ -72,7 +72,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 ! Diffusion and convection terms in Oz momentum eqn
 ! #######################################################################
     if (g(3)%size > 1) then
-        call OPR_BURGERS_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, tmp6, tmp3)
+        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, tmp6, tmp3)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp5, tmp2)
         call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), w, tmp4, tmp1)
 
@@ -90,7 +90,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
     call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), v, tmp6, tmp3)
-    call OPR_BURGERS_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, tmp5, tmp2)
+    call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, tmp5, tmp2)
     call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), v, tmp4, tmp1)
 
 #ifdef USE_ESSL

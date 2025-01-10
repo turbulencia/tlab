@@ -258,7 +258,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
 
     end if
 
-! This subsidence type is implemented in opr_burgers_y only
+! This subsidence type is implemented in OPR_Burgers_y only
 ! to speed up calculation
     if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
 
