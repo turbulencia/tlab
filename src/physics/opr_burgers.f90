@@ -8,7 +8,6 @@ module OPR_Burgers
     use TLab_Constants, only: wp, wi, efile, lfile
     use FDM, only: grid_dt
     use IBM_VARS, only: ibm_burgers
-    use TLAB_VARS, only: subsidence
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_Transpose
@@ -17,6 +16,7 @@ module OPR_Burgers
     use TLab_Arrays, only: wrk2d, wrk3d
     use OPR_FILTERS
     use OPR_PARTIAL
+    use LargeScaleForcing, only: subsidenceProps, TYPE_SUB_CONSTANT_LOCAL
     implicit none
     private
 
@@ -279,9 +279,9 @@ contains
             ! ###################################################################
             call OPR_Burgers_1D(is, nxz, bcs, g, Dealiasing(2), p_org, p_vel, p_dst2, p_dst1)
 
-            if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) then
+            if (subsidenceProps%type == TYPE_SUB_CONSTANT_LOCAL) then
                 do j = 1, ny
-                    p_dst2(:, j) = p_dst2(:, j) + g%nodes(j)*subsidence%parameters(1)*p_dst1(:, j)
+                    p_dst2(:, j) = p_dst2(:, j) + g%nodes(j)*subsidenceProps%parameters(1)*p_dst1(:, j)
                 end do
             end if
 

@@ -14,6 +14,7 @@ module TLAB_VARS
     logical :: fourier_on = .false.     ! using FFT libraries
     logical :: stagger_on = .false.     ! horizontal staggering of pressure
 
+    ! info about Navier-Stokes
     integer :: imode_eqns                       ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
     integer :: iadvection, iviscous, idiffusion ! formulation of the Burgers operator
 
@@ -45,7 +46,6 @@ module TLAB_VARS
 ! phenomena in addition to the navier-stokes equations
 ! ###################################################################
     type(term_dt) :: coriolis                       ! Coriolis parameters
-    type(term_dt) :: subsidence                     ! Large-scale parameters
 
 ! ###################################################################
 ! Nondimensional numbers

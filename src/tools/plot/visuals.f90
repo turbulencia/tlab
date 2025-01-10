@@ -32,6 +32,7 @@ program VISUALS
     use Radiation
     use Microphysics
     use Chemistry
+    use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -111,6 +112,7 @@ program VISUALS
     call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
 

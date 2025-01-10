@@ -19,9 +19,10 @@ program INISCAL
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
+    use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y
+    use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
-    use Radiation
     use IO_FIELDS
     use SCAL_LOCAL
 
@@ -41,6 +42,8 @@ program INISCAL
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+    call Radiation_Initialize(ifile)
+    call LargeScaleForcing_Initialize(ifile)
 
     call SCAL_READ_LOCAL(ifile)
 
@@ -58,8 +61,6 @@ program INISCAL
     call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
     call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
     call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
-
-    call Radiation_Initialize(ifile)
 
     call TLab_Initialize_Background(ifile)
     do is = 1, size(IniS)

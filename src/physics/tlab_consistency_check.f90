@@ -5,7 +5,7 @@
 ! Check for cross dependencies and undeveloped options.
 subroutine TLab_Consistency_Check()
     use TLab_Constants, only: efile, lfile, MAX_VARS
-    use TLAB_VARS, only: imode_eqns, iadvection, subsidence
+    use TLAB_VARS, only: imode_eqns, iadvection
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on
     use OPR_Filters, only: PressureFilter
@@ -17,6 +17,7 @@ subroutine TLab_Consistency_Check()
     use Microphysics
     use Chemistry
     use SpecialForcing
+    use LargeScaleForcing, only: subsidenceProps
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
 
@@ -51,7 +52,7 @@ subroutine TLab_Consistency_Check()
             (sedimentationProps%type /= EQNS_NONE) .or. &
             (infraredProps%type /= EQNS_NONE) .or. &
             (chemistryProps%type /= EQNS_NONE) .or. &
-            (subsidence%type /= EQNS_NONE)) then
+            (subsidenceProps%type /= EQNS_NONE)) then
             call TLab_Write_ASCII(efile, __FILE__//'. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if

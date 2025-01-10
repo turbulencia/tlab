@@ -21,10 +21,11 @@ program INIFLOW
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use Gravity, only: Gravity_Initialize
+    use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use THERMO_THERMAL
     use THERMO_CALORIC
-    use Gravity, only: Gravity_Initialize
     use IO_FIELDS
     use OPR_FOURIER
     use OPR_Burgers, only: OPR_Burgers_Initialize
@@ -45,6 +46,7 @@ program INIFLOW
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+    call LargeScaleForcing_Initialize(ifile)
 
     call Iniflow_Initialize_Parameters(ifile)
 

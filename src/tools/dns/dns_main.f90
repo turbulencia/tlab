@@ -22,6 +22,7 @@ program DNS
     use Microphysics, only: Microphysics_Initialize
     use Chemistry, only: Chemistry_Initialize
     use SpecialForcing, only: SpecialForcing_Initialize
+    use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -41,7 +42,7 @@ program DNS
     use OPR_FOURIER
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize
-    use OPR_ELLIPTIC
+    use OPR_Elliptic, only: OPR_Elliptic_Initialize
     use AVG_PHASE
     use Avg_Spatial, only: IO_READ_AVG_SPATIAL, IO_WRITE_AVG_SPATIAL
     implicit none
@@ -72,6 +73,7 @@ program DNS
     call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
     call TLab_Consistency_Check()

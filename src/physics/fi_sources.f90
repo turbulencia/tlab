@@ -9,7 +9,7 @@ module FI_SOURCES
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use TLAB_VARS, only: imode_eqns
     use FDM, only: g
-    use TLAB_VARS, only: coriolis, subsidence
+    use TLAB_VARS, only: coriolis
     use TLab_OpenMP
     use THERMO_ANELASTIC
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
@@ -17,6 +17,7 @@ module FI_SOURCES
     use Microphysics
     use Chemistry
     use SpecialForcing
+    use LargeScaleForcing
     implicit none
     private
 
@@ -94,8 +95,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Subsidence
             ! -----------------------------------------------------------------------
-            if (subsidence%active(iq)) then
-                call FI_SUBSIDENCE(subsidence, imax, jmax, kmax, q(:, iq), tmp1)
+            if (subsidenceProps%active(iq)) then
+                call LargeScaleForcing_Subsidence(subsidenceProps, imax, jmax, kmax, q(:, iq), tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -208,8 +209,8 @@ contains
             ! -----------------------------------------------------------------------
             ! Subsidence
             ! -----------------------------------------------------------------------
-            if (subsidence%active(is)) then
-                call FI_SUBSIDENCE(subsidence, imax, jmax, kmax, s(:, is), tmp1)
+            if (subsidenceProps%active(is)) then
+                call LargeScaleForcing_Subsidence(subsidenceProps, imax, jmax, kmax, s(:, is), tmp1)
 
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -269,48 +270,5 @@ contains
         end select
 
     end subroutine FI_CORIOLIS
-
-! #######################################################################
-! #######################################################################
-    subroutine FI_SUBSIDENCE(subsidence, nx, ny, nz, a, source)
-        use TLab_Arrays, only: wrk1d
-        use OPR_PARTIAL, only: OPR_PARTIAL_Y
-        use Averages, only: AVG1V2D_V
-        type(term_dt), intent(in) :: subsidence
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: a(nx, ny, nz)
-        real(wp), intent(out) :: source(nx, ny, nz)
-
-        ! -----------------------------------------------------------------------
-        integer(wi) bcs(2, 2), j
-
-        !########################################################################
-        bcs = 0
-
-        select case (subsidence%type)
-
-        case (EQNS_SUB_CONSTANT_LOCAL)
-            wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! subsidence velocity
-
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), a, source)
-
-            do j = 1, ny
-                source(:, j, :) = source(:, j, :)*wrk1d(j, 1)
-            end do
-
-        case (EQNS_SUB_CONSTANT_GLOBAL)
-            wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*subsidence%parameters(1)      ! subsidence velocity
-
-            call AVG1V2D_V(nx, ny, nz, 1, a, wrk1d(:, 2), wrk1d(1, 3))     ! Calculate averaged scalar into wrk1d(:,2)
-            call OPR_PARTIAL_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 2), wrk1d(1, 3))
-
-            do j = 1, ny
-                source(:, j, :) = wrk1d(j, 3)*wrk1d(j, 1)
-            end do
-
-        end select
-
-        return
-    end subroutine FI_SUBSIDENCE
 
 end module FI_SOURCES

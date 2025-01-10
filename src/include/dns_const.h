@@ -53,9 +53,6 @@
 #define EQNS_TRANS_POWERLAW             21
 #define EQNS_TRANS_SUTHERLAND           22
 
-#define EQNS_SUB_CONSTANT_LOCAL         29
-#define EQNS_SUB_CONSTANT_GLOBAL        30
-
 #define EQNS_RAND_MULTIPLY              31 
 
 ! Finite-differences method

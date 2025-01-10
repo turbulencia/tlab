@@ -21,6 +21,7 @@ program PDFS
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use THERMO_ANELASTIC
     use Radiation
+    use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use Microphysics
     use Chemistry
     use IO_FIELDS
@@ -99,6 +100,7 @@ program PDFS
     call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------

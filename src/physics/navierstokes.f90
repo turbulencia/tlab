@@ -8,7 +8,7 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
     use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
     use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
-    use TLAB_VARS, only: coriolis, subsidence
+    use TLAB_VARS, only: coriolis
     use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
     use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
     ! use Avg_Spatial
@@ -37,7 +37,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
     !
     call TLab_Write_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
-    call TLab_Write_ASCII(bakfile, '#TermSubsidence=<none/ConstantDivergenceLocal/ConstantDivergenceGlobal>')
 
 ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
@@ -104,15 +103,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
     else if (trim(adjustl(sRes)) == 'normalized') then; coriolis%type = EQNS_COR_NORMALIZED
     else
         call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermCoriolis option.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-
-    call ScanFile_Char(bakfile, inifile, 'Main', 'TermSubsidence', 'None', sRes)
-    if (trim(adjustl(sRes)) == 'none') then; subsidence%type = EQNS_NONE
-    else if (trim(adjustl(sRes)) == 'constantdivergencelocal') then; subsidence%type = EQNS_SUB_CONSTANT_LOCAL
-    else if (trim(adjustl(sRes)) == 'constantdivergenceglobal') then; subsidence%type = EQNS_SUB_CONSTANT_GLOBAL
-    else
-        call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermSubsidence option.')
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
@@ -239,28 +229,6 @@ subroutine NavierStokes_Initialize_Parameters(inifile)
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
     end if
-
-! ###################################################################
-    block = 'Subsidence'
-
-    call TLab_Write_ASCII(bakfile, '#')
-    call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-    call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
-
-    subsidence%active = .false.
-    if (subsidence%type /= EQNS_NONE) then
-        subsidence%active = .true.
-
-        subsidence%parameters(:) = 0.0_wp
-        call ScanFile_Char(bakfile, inifile, 'Subsidence', 'Parameters', '0.0', sRes)
-        idummy = MAX_PROF
-        call LIST_REAL(sRes, idummy, subsidence%parameters)
-
-    end if
-
-! This subsidence type is implemented in OPR_Burgers_y only
-! to speed up calculation
-    if (subsidence%type == EQNS_SUB_CONSTANT_LOCAL) subsidence%active = .false.
 
 ! ###################################################################
     if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &

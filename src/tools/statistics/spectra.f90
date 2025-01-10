@@ -50,6 +50,7 @@ program SPECTRA
     use FDM, only: g, FDM_Initialize
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -135,6 +136,7 @@ program SPECTRA
     call Gravity_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
+    call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
     ! -------------------------------------------------------------------
