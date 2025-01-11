@@ -407,9 +407,9 @@ contains
 
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d
 
-#ifdef USE_MPI
-        integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
-#endif
+! #ifdef USE_MPI
+!         integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
+! #endif
 
 ! ###################################################################
 ! -------------------------------------------------------------------
@@ -417,7 +417,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, result, id)
+            call TLabMPI_TransposeI_Forward(u, result, TLAB_MPI_TRP_I_PARTIAL)
             p_a => result
             p_b => wrk3d
             p_c => result
@@ -425,7 +425,7 @@ contains
                 p_d => tmp1
             end if
             ! nyz = ims_size_i(id)
-            nyz = ims_trp_plan_i(id)%nlines
+            nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
         else
 #endif
             p_a => u
@@ -506,9 +506,9 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (type == OPR_P2_P1) then ! only if you really want first derivative back
-                call TLabMPI_TransposeI_Backward(p_c, tmp1, id)
+                call TLabMPI_TransposeI_Backward(p_c, tmp1, TLAB_MPI_TRP_I_PARTIAL)
             end if
-            call TLabMPI_TransposeI_Backward(p_b, result, id)
+            call TLabMPI_TransposeI_Backward(p_b, result, TLAB_MPI_TRP_I_PARTIAL)
         end if
 #endif
 
@@ -544,9 +544,9 @@ contains
 
         real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
-#ifdef USE_MPI
-        integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
-#endif
+! #ifdef USE_MPI
+!         integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
+! #endif
 
 ! ###################################################################
         if (g%size == 1) then ! Set to zero in 2D case
@@ -560,7 +560,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Forward(u, result, id)
+                call TLabMPI_TransposeK_Forward(u, result, TLAB_MPI_TRP_K_PARTIAL)
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
@@ -569,7 +569,7 @@ contains
                     p_b => wrk3d
                 end if
                 ! nxy = ims_size_k(id)
-                nxy = ims_trp_plan_k(id)%nlines
+                nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
             else
 #endif
                 p_a => u
@@ -623,9 +623,9 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Backward(p_b, result, id)
+                call TLabMPI_TransposeK_Backward(p_b, result, TLAB_MPI_TRP_K_PARTIAL)
                 if (type == OPR_P2_P1) then
-                    call TLabMPI_TransposeK_Backward(p_c, tmp1, id)
+                    call TLabMPI_TransposeK_Backward(p_c, tmp1, TLAB_MPI_TRP_K_PARTIAL)
                 end if
             end if
 #endif

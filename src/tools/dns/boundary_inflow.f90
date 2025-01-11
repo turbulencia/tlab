@@ -75,7 +75,7 @@ contains
         character*128 line
 
 #ifdef USE_MPI
-        integer(wi) isize_loc, id
+        integer(wi) isize_loc !, id
 #endif
 
         ! ###################################################################
@@ -118,7 +118,7 @@ contains
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
             ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1,  id)
             ims_trp_plan_k(TLAB_MPI_TRP_K_INFLOW) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'inflow filter.')
-            FilterInflow(3)%mpitype = id
+            FilterInflow(3)%mpitype = TLAB_MPI_TRP_K_INFLOW
         end if
 #endif
 

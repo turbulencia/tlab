@@ -24,9 +24,9 @@ module OPR_INTERPOLATORS
 
     public :: OPR_INTERPOLATE
 
-#ifdef USE_MPI
-    integer(wi) id
-#endif
+! #ifdef USE_MPI
+!     integer(wi) id
+! #endif
 
 contains
 !########################################################################
@@ -142,15 +142,15 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            id = TLAB_MPI_TRP_I_AUX1
+            ! id = TLAB_MPI_TRP_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, id)
+            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, TLAB_MPI_TRP_I_AUX1)
 
             p_a => u_tmp1
             p_b => u_tmp2
 
             ! nyz = ims_size_i(id)
-            nyz = ims_trp_plan_i(id)%nlines
+            nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_AUX1)%nlines
             nx_total = nx*ims_npro_i
             nx_total_dst = nx_dst*ims_npro_i
 
@@ -175,8 +175,8 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            id = TLAB_MPI_TRP_I_AUX2
-            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, id)
+            ! id = TLAB_MPI_TRP_I_AUX2
+            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, TLAB_MPI_TRP_I_AUX2)
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -210,14 +210,14 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            id = TLAB_MPI_TRP_K_AUX1
-            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, id)
+            ! id = TLAB_MPI_TRP_K_AUX1
+            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, TLAB_MPI_TRP_K_AUX1)
 
             p_a => u_tmp2
             p_b => u_tmp1
 
             ! nxy = ims_size_k(id)
-            nxy = ims_trp_plan_k(id)%nlines
+            nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_AUX1)%nlines
             nz_total = nz*ims_npro_k
             nz_total_dst = nz_dst*ims_npro_k
 
@@ -259,8 +259,8 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            id = TLAB_MPI_TRP_K_AUX2
-            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, id)
+            ! id = TLAB_MPI_TRP_K_AUX2
+            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, TLAB_MPI_TRP_K_AUX2)
         end if
 #endif
         nullify (p_a, p_b)

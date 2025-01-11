@@ -45,10 +45,10 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
     real(wp), dimension(isize_field), intent(inout) :: tmp1, tmp2, tmp3
 
-#ifdef USE_MPI
-    integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
-    integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
-#endif
+! #ifdef USE_MPI
+!     integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
+!     integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
+! #endif
     integer(wi) :: i, j, k, ij, ik, jk, ip, inum
     integer(wi) :: nyz, nxz, nxy
 #ifdef USE_MPI
@@ -61,7 +61,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         ! nyz = ims_size_i(idi)
-        nyz = ims_trp_plan_i(idi)%nlines
+        nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
     else
 #endif
         nyz = jmax*kmax
@@ -74,7 +74,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
         ! nxy = ims_size_k(idk)
-        nxy = ims_trp_plan_k(idk)%nlines
+        nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
     else
 #endif
         nxy = imax*jmax
