@@ -19,15 +19,15 @@ module TLabMPI_Transpose
     public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
 
-    type, public :: mpi_transpose_dt
+    type, public :: tmpi_transpose_dt
         sequence
         integer :: type_s, type_r                           ! send/recv types
         integer(wi) :: nlines                               !
         integer(wi) :: size3d                               !
         integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
-    end type mpi_transpose_dt
-    type(mpi_transpose_dt), public :: ims_trp_plan_i(TLAB_MPI_TRP_I_MAXTYPES)
-    type(mpi_transpose_dt), public :: ims_trp_plan_k(TLAB_MPI_TRP_K_MAXTYPES)
+    end type tmpi_transpose_dt
+    type(tmpi_transpose_dt), public :: ims_trp_plan_i(TLAB_MPI_TRP_I_MAXTYPES)
+    type(tmpi_transpose_dt), public :: ims_trp_plan_k(TLAB_MPI_TRP_K_MAXTYPES)
 
     integer :: ims_trp_mode_i, ims_trp_mode_k               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
@@ -194,7 +194,7 @@ contains
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in) :: nd, md, n1, n2
         character(len=*), intent(in), optional :: message
-        type(mpi_transpose_dt) :: trp_plan
+        type(tmpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
         integer(wi) i
@@ -255,7 +255,7 @@ contains
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in) :: nd, md, n1, n2
         character(len=*), intent(in), optional :: message
-        type(mpi_transpose_dt) :: trp_plan
+        type(tmpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
         integer(wi) i
@@ -312,7 +312,7 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Forward(a, b, id)
+    subroutine TLabMPI_TransposeK_Forward(a, b, trp_plan)
         ! use, intrinsic :: iso_c_binding, only: c_int
 
         ! interface
@@ -325,7 +325,7 @@ contains
 
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
-        integer, intent(in) :: id
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target b
 
@@ -342,18 +342,18 @@ contains
 #endif
 
         if (ims_trp_type_k == MPI_REAL4 .and. wp == dp) then
-            size = ims_trp_plan_k(id)%size3d
+            size = trp_plan%size3d
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
-            call Transpose_Kernel_Single(a_wrk, maps_send_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
-                                         b_wrk, maps_recv_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
+            call Transpose_Kernel_Single(a_wrk, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                         b_wrk, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                          ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, maps_send_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
-                                  b, maps_recv_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
+            call Transpose_Kernel(a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                  b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                   ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
         end if
 
@@ -367,10 +367,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Backward(b, a, id)
+    subroutine TLabMPI_TransposeK_Backward(b, a, trp_plan)
         real(wp), dimension(*), intent(in) :: b
         real(wp), dimension(*), intent(out) :: a
-        integer, intent(in) :: id
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target a
 
@@ -386,18 +386,18 @@ contains
 #endif
 
         if (ims_trp_type_k == MPI_REAL4 .and. wp == dp) then
-            size = ims_trp_plan_k(id)%size3d
+            size = trp_plan%size3d
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
-            call Transpose_Kernel_Single(b_wrk, maps_recv_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
-                                         a_wrk, maps_send_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
+            call Transpose_Kernel_Single(b_wrk, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                         a_wrk, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                          ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, maps_recv_k(:), ims_trp_plan_k(id)%disp_r(:), ims_trp_plan_k(id)%type_r, &
-                                  a, maps_send_k(:), ims_trp_plan_k(id)%disp_s(:), ims_trp_plan_k(id)%type_s, &
+            call Transpose_Kernel(b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                  a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                   ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
         end if
 
@@ -411,10 +411,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Forward(a, b, id)
+    subroutine TLabMPI_TransposeI_Forward(a, b, trp_plan)
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
-        integer, intent(in) :: id
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target b
 
@@ -423,18 +423,18 @@ contains
 
         ! #######################################################################
         if (ims_trp_type_i == MPI_REAL4 .and. wp == dp) then
-            size = ims_trp_plan_i(id)%size3d
+            size = trp_plan%size3d
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
-            call Transpose_Kernel_Single(a_wrk, maps_send_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
-                                         b_wrk, maps_recv_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
+            call Transpose_Kernel_Single(a_wrk, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                         b_wrk, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                          ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, maps_send_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
-                                  b, maps_recv_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
+            call Transpose_Kernel(a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                  b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                   ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
         end if
 
@@ -443,10 +443,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Backward(b, a, id)
+    subroutine TLabMPI_TransposeI_Backward(b, a, trp_plan)
         real(wp), dimension(*), intent(in) :: b
         real(wp), dimension(*), intent(out) :: a
-        integer, intent(in) :: id
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target a
 
@@ -455,18 +455,18 @@ contains
 
         ! #######################################################################
         if (ims_trp_type_i == MPI_REAL4 .and. wp == dp) then
-            size = ims_trp_plan_i(id)%size3d
+            size = trp_plan%size3d
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
-            call Transpose_Kernel_Single(b_wrk, maps_recv_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
-                                         a_wrk, maps_send_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
+            call Transpose_Kernel_Single(b_wrk, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                         a_wrk, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                          ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, maps_recv_i(:), ims_trp_plan_i(id)%disp_r(:), ims_trp_plan_i(id)%type_r, &
-                                  a, maps_send_i(:), ims_trp_plan_i(id)%disp_s(:), ims_trp_plan_i(id)%type_s, &
+            call Transpose_Kernel(b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                  a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                   ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
         end if
 

@@ -417,7 +417,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, result, TLAB_MPI_TRP_I_PARTIAL)
+            call TLabMPI_TransposeI_Forward(u, result, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
             p_a => result
             p_b => wrk3d
             p_c => result
@@ -506,9 +506,9 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (type == OPR_P2_P1) then ! only if you really want first derivative back
-                call TLabMPI_TransposeI_Backward(p_c, tmp1, TLAB_MPI_TRP_I_PARTIAL)
+                call TLabMPI_TransposeI_Backward(p_c, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
             end if
-            call TLabMPI_TransposeI_Backward(p_b, result, TLAB_MPI_TRP_I_PARTIAL)
+            call TLabMPI_TransposeI_Backward(p_b, result, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
         end if
 #endif
 
@@ -560,7 +560,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Forward(u, result, TLAB_MPI_TRP_K_PARTIAL)
+                call TLabMPI_TransposeK_Forward(u, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
@@ -623,9 +623,9 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Backward(p_b, result, TLAB_MPI_TRP_K_PARTIAL)
+                call TLabMPI_TransposeK_Backward(p_b, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
                 if (type == OPR_P2_P1) then
-                    call TLabMPI_TransposeK_Backward(p_c, tmp1, TLAB_MPI_TRP_K_PARTIAL)
+                    call TLabMPI_TransposeK_Backward(p_c, tmp1, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
                 end if
             end if
 #endif

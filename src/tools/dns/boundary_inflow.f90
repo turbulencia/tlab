@@ -33,7 +33,7 @@ module BOUNDARY_INFLOW
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_k
     use TLabMPI_PROCS, only: TLabMPI_Panic
-    use TLabMPI_Transpose
+    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
 #endif
     use OPR_PARTIAL
 

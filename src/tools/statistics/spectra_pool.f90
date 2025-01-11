@@ -40,7 +40,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
 ! -----------------------------------------------------------------------
     integer(wi) :: i, k, kx_global, kz_global, kr_global, flag, ny_local
 #ifdef USE_MPI
-    integer(wi) count, id
+    integer(wi) count !, id
 #endif
 
 ! #######################################################################
@@ -107,8 +107,8 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
     call MPI_ALLREDUCE(tmp_z(:, :, 1), tmp_z(:, :, 2), count, MPI_REAL8, MPI_SUM, ims_comm_x, ims_err)
 
     if (ims_npro_k > 1) then
-        id = TLAB_MPI_TRP_K_AUX2
-        call TLabMPI_TransposeK_Forward(tmp_z(:, :, 2), wrk2d(:, :, 1), id)
+        ! id = TLAB_MPI_TRP_K_AUX2
+        call TLabMPI_TransposeK_Forward(tmp_z(:, :, 2), wrk2d(:, :, 1), ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2))
 
     else
         wrk2d(1:ny*nz, 1, 1) = tmp_z(1:ny*nz, 1, 2)
@@ -143,7 +143,7 @@ subroutine INTEGRATE_SPECTRUM(nx, ny, nz, kr_total, isize_aux, &
             wrk2d(1:ny_local*count, (k - 1)*2 + 1, 1) = wrk2d(1:ny_local*count, k, 2)
         end do
 
-        call TLabMPI_TransposeK_Backward(wrk2d(:, :, 1), tmp_z(:, :, 1), id)
+        call TLabMPI_TransposeK_Backward(wrk2d(:, :, 1), tmp_z(:, :, 1), ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2))
 
     else
 #endif

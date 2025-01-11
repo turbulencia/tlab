@@ -36,7 +36,7 @@ module BOUNDARY_BUFFER
     use MPI
     use TLabMPI_VARS
     use TLabMPI_PROCS, only: TLabMPI_Panic
-    use TLabMPI_Transpose
+    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
 #endif
 
     implicit none

@@ -857,7 +857,7 @@ contains
         ! Transposing along Ox
         ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, tmp1, TLAB_MPI_TRP_I_PARTIAL)
+            call TLabMPI_TransposeI_Forward(u, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
             p_org => tmp1
             ! nyz = ims_size_i(id)
             nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines

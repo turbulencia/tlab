@@ -140,7 +140,7 @@ contains
         use TLAB_VARS, only: inb_scal_array
         use TLabMPI_VARS, only: ims_npro_k
         use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
-        use TLabMPI_Transpose
+        use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
 #endif
 
 ! -------------------------------------------------------------------

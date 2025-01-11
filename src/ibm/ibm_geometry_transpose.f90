@@ -39,17 +39,17 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
     real(wp), dimension(isize_field), intent(out) :: epsi, epsj, epsk
     real(wp), dimension(isize_field), intent(inout) :: tmp
 
-#ifdef USE_MPI
-    integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
-    integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
-#endif
+! #ifdef USE_MPI
+!     integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
+!     integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
+! #endif
     integer(wi) :: nyz, nxy
 
     ! ================================================================== !
     ! MPI  and local transposition in x
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        call TLabMPI_TransposeI_Forward(eps, tmp, TLAB_MPI_TRP_I_PARTIAL)
+        call TLabMPI_TransposeI_Forward(eps, tmp, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
         ! nyz = ims_size_i(idi)
         nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
     else
@@ -77,7 +77,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
     ! MPI transposition in z
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        call TLabMPI_TransposeK_Forward(eps, epsk, idk)
+        call TLabMPI_TransposeK_Forward(eps, epsk, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
     else
 #endif
         epsk = eps

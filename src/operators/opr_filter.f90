@@ -441,7 +441,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, wrk3d, f%mpitype)
+            call TLabMPI_TransposeI_Forward(u, wrk3d, ims_trp_plan_i(f%mpitype))
             p_a => wrk3d
             p_b => u
             ! nyz = ims_size_i(id)
@@ -482,7 +482,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Backward(p_b, p_a, f%mpitype)
+            call TLabMPI_TransposeI_Backward(p_b, p_a, ims_trp_plan_i(f%mpitype))
         end if
 #endif
 
@@ -575,7 +575,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(u, wrk3d, f%mpitype)
+            call TLabMPI_TransposeK_Forward(u, wrk3d, ims_trp_plan_k(f%mpitype))
             p_a => wrk3d
             p_b => u
             ! nxy = ims_size_k(id)
@@ -598,7 +598,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(p_b, p_a, f%mpitype)
+            call TLabMPI_TransposeK_Backward(p_b, p_a, ims_trp_plan_k(f%mpitype))
         end if
 #endif
 

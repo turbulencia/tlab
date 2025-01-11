@@ -57,7 +57,7 @@ contains
             ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
             ! id = TLAB_MPI_TRP_I_AUX1
             npage = nz*ny
-            if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
+            if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
@@ -67,7 +67,7 @@ contains
             ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
             ! id = TLAB_MPI_TRP_I_AUX2
             npage = nz*ny
-            if (MOD(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
+            if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
@@ -144,7 +144,7 @@ contains
         if (ims_npro_i > 1) then
             ! id = TLAB_MPI_TRP_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, TLAB_MPI_TRP_I_AUX1)
+            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_AUX1))
 
             p_a => u_tmp1
             p_b => u_tmp2
@@ -176,7 +176,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             ! id = TLAB_MPI_TRP_I_AUX2
-            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, TLAB_MPI_TRP_I_AUX2)
+            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_AUX2))
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -211,7 +211,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             ! id = TLAB_MPI_TRP_K_AUX1
-            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, TLAB_MPI_TRP_K_AUX1)
+            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, ims_trp_plan_k(TLAB_MPI_TRP_K_AUX1))
 
             p_a => u_tmp2
             p_b => u_tmp1
@@ -260,7 +260,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             ! id = TLAB_MPI_TRP_K_AUX2
-            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, TLAB_MPI_TRP_K_AUX2)
+            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2))
         end if
 #endif
         nullify (p_a, p_b)

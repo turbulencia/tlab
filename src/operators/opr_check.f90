@@ -30,7 +30,7 @@ subroutine OPR_CHECK()
 
 #ifdef USE_MPI
     real(wp) dummy
-    integer(wi) idummy, id
+    integer(wi) idummy !, id
 #endif
 
 ! ###################################################################
@@ -44,11 +44,11 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        id = TLAB_MPI_TRP_I_PARTIAL
+        ! id = TLAB_MPI_TRP_I_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call TLabMPI_TransposeI_Forward(q(1, 1), wrk3d, id)
-        call TLabMPI_TransposeI_Backward(wrk3d, q(1, 2), id)
+        call TLabMPI_TransposeI_Forward(q(1, 1), wrk3d, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+        call TLabMPI_TransposeI_Backward(wrk3d, q(1, 2), ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
@@ -71,13 +71,13 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        id = TLAB_MPI_TRP_K_PARTIAL
+        ! id = TLAB_MPI_TRP_K_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
-        call TLabMPI_TransposeK_Forward(q(:, 1), wrk3d, id)
+        call TLabMPI_TransposeK_Forward(q(:, 1), wrk3d, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
         itime = idummy
-        call TLabMPI_TransposeK_Backward(wrk3d, q(:, 2), id)
+        call TLabMPI_TransposeK_Backward(wrk3d, q(:, 2), ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt

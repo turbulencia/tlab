@@ -386,7 +386,7 @@ contains
 
             ! Transpose array a into b
             ! id = TLAB_MPI_TRP_I_POISSON1
-            call TLabMPI_TransposeI_Forward(in, r_out, TLAB_MPI_TRP_I_POISSON1)
+            call TLabMPI_TransposeI_Forward(in, r_out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1))
 
             ! ims_trp_plan_i(id)%nlines FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
@@ -409,7 +409,7 @@ contains
 
             ! Transpose array back
             ! id = TLAB_MPI_TRP_I_POISSON2
-            call TLabMPI_TransposeI_Backward(wrk3d, r_out, TLAB_MPI_TRP_I_POISSON2)
+            call TLabMPI_TransposeI_Backward(wrk3d, r_out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2))
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
             wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
@@ -495,7 +495,7 @@ contains
 
             ! Transpose array
             ! id = TLAB_MPI_TRP_I_POISSON2
-            call TLabMPI_TransposeI_Forward(r_in, out, TLAB_MPI_TRP_I_POISSON2)
+            call TLabMPI_TransposeI_Forward(r_in, out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2))
 
             ! reorganize a (FFTW make a stride in a already before)
             ! id = TLAB_MPI_TRP_I_POISSON1
@@ -518,7 +518,7 @@ contains
 
             ! Transpose array wrk into out
             ! id = TLAB_MPI_TRP_I_POISSON1
-            call TLabMPI_TransposeI_Backward(r_in, out,  TLAB_MPI_TRP_I_POISSON1)
+            call TLabMPI_TransposeI_Backward(r_in, out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1))
 
             nullify (in_aux, r_in, c_out)
 
@@ -555,21 +555,21 @@ contains
 
         integer(wi) k_old1, k_old2, k_new1, k_new2
 #ifdef USE_MPI
-        integer(wi) id
+        ! integer(wi) id
         real(wp), pointer :: r_in(:) => null(), r_out(:) => null()
 #endif
 
         ! #######################################################################
         ! Forward complex FFT in z
 #ifdef USE_MPI
-        id = TLAB_MPI_TRP_K_POISSON
+        ! id = TLAB_MPI_TRP_K_POISSON
 
         if (ims_npro_k > 1) then
             ! Pass memory address from complex array to real array
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeK_Forward(r_in, r_out, id)
+            call TLabMPI_TransposeK_Forward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
             p_org => out
             p_dst => in
         else
@@ -599,7 +599,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(r_in, r_out, id)
+            call TLabMPI_TransposeK_Backward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
             nullify (r_in, r_out)
         end if
 #endif
@@ -626,21 +626,21 @@ contains
 
         integer(wi) k_old1, k_old2, k_new1, k_new2
 #ifdef USE_MPI
-        integer(wi) id
+        ! integer(wi) id
         real(wp), pointer :: r_in(:) => null(), r_out(:) => null()
 #endif
 
         ! #######################################################################
         ! Forward complex FFT in z
 #ifdef USE_MPI
-        id = TLAB_MPI_TRP_K_POISSON
+        ! id = TLAB_MPI_TRP_K_POISSON
 
         if (ims_npro_k > 1) then
             ! Pass memory address from complex array to real array
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeK_Forward(r_in, r_out, id)
+            call TLabMPI_TransposeK_Forward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
             p_org => out
             p_dst => in
         else
@@ -670,7 +670,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(r_in, r_out, id)
+            call TLabMPI_TransposeK_Backward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
             nullify (r_in, r_out)
         end if
 #endif
