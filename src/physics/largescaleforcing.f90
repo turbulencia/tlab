@@ -8,9 +8,8 @@ module LargeScaleForcing
     implicit none
     private
 
-    type(term_dt) :: subsidenceProps
+    type(term_dt), public, protected :: subsidenceProps
 
-    public :: subsidenceProps
     public :: LargeScaleForcing_Initialize
     public :: LargeScaleForcing_Subsidence
 

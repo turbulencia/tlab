@@ -40,11 +40,9 @@ module Radiation
         real(wp) :: epsilon_b                               ! surface emissivity at ymin
     end type infrared_dt
 
-    type(term_dt) :: infraredProps               ! Radiation parameters
-    ! type(term_dt) :: visibleProps                ! Radiation parameters
+    type(term_dt), public, protected :: infraredProps               ! Radiation parameters
+    ! type(term_dt), public, protected :: visibleProps                ! Radiation parameters
 
-    public :: infraredProps
-    ! public :: visibleProps
     public :: Radiation_Initialize
     public :: Radiation_Infrared_Y
 
@@ -229,7 +227,7 @@ contains
     !########################################################################
     subroutine Radiation_Infrared_Y(localProps, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
         use THERMO_ANELASTIC
-        type(term_dt), intent(inout) :: localProps
+        type(term_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)

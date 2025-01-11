@@ -21,9 +21,8 @@ module SpecialForcing
     !     real(wp) auxiliar(MAX_PARS)
     !     real(wp) vector(3)
     ! end type term_dt
-    type(term_dt) :: forcingProps              ! Forcing parameters
+    type(term_dt), public, protected :: forcingProps              ! Forcing parameters
 
-    public :: forcingProps
     public :: SpecialForcing_Initialize
     public :: SpecialForcing_Source
     ! public :: Forcing_Sinusoidal, Forcing_Sinusoidal_NoSlip ! tbd

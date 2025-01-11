@@ -13,10 +13,9 @@ module Microphysics
     implicit none
     private
    
-    type(term_dt) :: sedimentationProps          ! Microphysics parameters
-    ! type(term_dt) :: evaporationProps            ! Microphysics parameters
+    type(term_dt), public, protected :: sedimentationProps          ! Microphysics parameters
+    ! type(term_dt), public, protected :: evaporationProps            ! Microphysics parameters
 
-    public :: sedimentationProps
     public :: Microphysics_Initialize
     public :: Microphysics_Sedimentation
 

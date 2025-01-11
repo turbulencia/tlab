@@ -9,9 +9,8 @@ module Chemistry
     implicit none
     private
 
-    type(term_dt) :: chemistryProps              ! Chemistry parameters
+    type(term_dt), public, protected :: chemistryProps
 
-    public :: chemistryProps
     public :: Chemistry_Initialize
     public :: Chemistry_Source
 
