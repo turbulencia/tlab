@@ -117,7 +117,7 @@ contains
             ! id = TLAB_MPI_TRP_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
             ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1,  id)
-            ims_trp_plan_k(TLAB_MPI_TRP_K_INFLOW) = TLabMPI_Trp_TypeK_Create_Devel(kmax, isize_loc, 1, 1, 1, 1, 'inflow filter.')
+            ims_trp_plan_k(TLAB_MPI_TRP_K_INFLOW) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'inflow filter.')
             FilterInflow(3)%mpitype = id
         end if
 #endif

@@ -374,14 +374,14 @@ contains
                 ! id = TLAB_MPI_TRP_K_OUTBCS
                 idummy = item%size*jmax
                 ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, id)
-                ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create_Devel(kmax, idummy, 1, 1, 1, 1, 'Ox BCs explicit filter.')
+                ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Ox BCs explicit filter.')
 
             case (2)
                 ! call TLab_Write_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
                 ! id = TLAB_MPI_TRP_K_TOPBCS
                 idummy = imax*item%size
                 ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, id)
-                ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create_Devel(kmax, idummy, 1, 1, 1, 1, 'Oy BCs explicit filter.')
+                ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Oy BCs explicit filter.')
 
             end select
         end if

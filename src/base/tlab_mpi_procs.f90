@@ -9,7 +9,6 @@ module TLabMPI_PROCS
 
     public :: TLabMPI_Initialize
     public :: TLabMPI_Panic
-    public :: TLabMPI_TagUpdate !, TLabMPI_TagReset
 
 contains
     ! ######################################################################
@@ -70,30 +69,7 @@ contains
             TLAB_MPI_REAL_TYPE = MPI_REAL4
         end select
 
-        call TLabMPI_TagReset
-
     end subroutine TLabMPI_Initialize
-
-    ! ######################################################################
-    ! ######################################################################
-    subroutine TLabMPI_TagUpdate
-
-        ims_tag = ims_tag + 1
-        if (ims_tag > 32000) then
-            call TLabMPI_TagReset
-        end if
-
-        return
-    end subroutine TLabMPI_TagUpdate
-
-    !########################################################################
-    !########################################################################
-    subroutine TLabMPI_TagReset
-
-        ims_tag = 0
-
-        return
-    end subroutine TLabMPI_TagReset
 
     ! ###################################################################
     ! ###################################################################
@@ -159,8 +135,6 @@ contains
 
             call MPI_WAITALL(4, mpireq, status, ims_err)
 
-            ! call TLabMPI_TagUpdate
-
         end if
 
         return
@@ -213,8 +187,6 @@ contains
 
             call MPI_WAITALL(4, mpireq, status, ims_err)
 
-            ! call TLabMPI_TagUpdate
-
             ! -----------------------------------------------------------------------
             ! second-left and second-right PEs.
             ! -----------------------------------------------------------------------
@@ -236,8 +208,6 @@ contains
                            ims_tag, MPI_COMM_WORLD, mpireq(6), ims_err)
 
             call MPI_WAITALL(4, mpireq(5:), status, ims_err)
-
-            ! call TLabMPI_TagUpdate
 
         end if
 
