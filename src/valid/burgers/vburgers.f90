@@ -83,7 +83,7 @@ program VBURGERS
     end do
     call IO_WRITE_FIELDS('fieldXdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-    call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), a, a, c, tmp1)
+    call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, a, a, c, tmp1)
     call IO_WRITE_FIELDS('fieldXburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
@@ -109,7 +109,7 @@ program VBURGERS
     end do
     call IO_WRITE_FIELDS('fieldYdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-    call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), a, a, c, tmp1)
+    call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, a, a, c, tmp1)
     call IO_WRITE_FIELDS('fieldYburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
@@ -137,7 +137,7 @@ program VBURGERS
         end do
         call IO_WRITE_FIELDS('fieldZdirect.out', IO_SCAL, imax, jmax, kmax, 1, b)
 
-        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), a, a, c, tmp1)
+        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, a, a, c, tmp1)
         call IO_WRITE_FIELDS('fieldZburgers.out', IO_SCAL, imax, jmax, kmax, 1, c)
 
         c = c - b; error = sum(c**2); dummy = sum(b**2)

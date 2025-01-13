@@ -6,7 +6,7 @@
 
 module OPR_Burgers
     use TLab_Constants, only: wp, wi, efile, lfile
-    use FDM, only: grid_dt
+    use FDM, only: grid_dt, g
     use IBM_VARS, only: ibm_burgers
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
@@ -46,7 +46,6 @@ contains
         ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
         use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
 #endif
-        use FDM, only: g
         use THERMO_ANELASTIC, only: rbackground, ribackground
 
         character(len=*), intent(in) :: inifile
@@ -136,12 +135,11 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Burgers_X(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
+    subroutine OPR_Burgers_X(ivel, is, nx, ny, nz, bcs, s, u, result, tmp1, u_t)
         integer, intent(in) :: ivel
         integer, intent(in) :: is                       ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2)                ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz), u(nx*ny*nz)
         real(wp), intent(out) :: result(nx*ny*nz)
         real(wp), intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
@@ -187,24 +185,26 @@ contains
             p_vel => u_t
         end if
 
+        ! maybe check that nx is equal to g(1)%size
+
         ! -------------------------------------------------------------------
         ! Local transposition: make x-direction the last one
         ! -------------------------------------------------------------------
 #ifdef USE_ESSL
-        call DGETMO(p_a, g%size, g%size, nyz, p_b, nyz)
+        call DGETMO(p_a, g(1)%size, g(1)%size, nyz, p_b, nyz)
 #else
-        call TLab_Transpose(p_a, g%size, nyz, g%size, p_b, nyz)
+        call TLab_Transpose(p_a, g(1)%size, nyz, g(1)%size, p_b, nyz)
 #endif
 
         ! ###################################################################
-        call OPR_Burgers_1D(is, nyz, bcs, g, Dealiasing(1), p_b, p_vel, p_d, p_c)
+        call OPR_Burgers_1D(is, nyz, bcs, g(1), Dealiasing(1), p_b, p_vel, p_d, p_c)
 
         ! ###################################################################
         ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
-        call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
+        call DGETMO(p_d, nyz, nyz, g(1)%size, p_c, g(1)%size)
 #else
-        call TLab_Transpose(p_d, nyz, g%size, nyz, p_c, g%size)
+        call TLab_Transpose(p_d, nyz, g(1)%size, nyz, p_c, g(1)%size)
 #endif
 
 #ifdef USE_MPI
@@ -220,12 +220,11 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Burgers_Y(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
+    subroutine OPR_Burgers_Y(ivel, is, nx, ny, nz, bcs, s, u, result, tmp1, u_t)
         integer, intent(in) :: ivel
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2) ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz), u(nx*ny*nz)
         real(wp), intent(out) :: result(nx*ny*nz)
         real(wp), intent(inout) :: tmp1(nx*ny*nz)      ! transposed velocity
@@ -239,7 +238,7 @@ contains
         real(wp), dimension(:, :), pointer :: p_dst1, p_dst2    ! need (nx*nz,ny) shape
 
         ! ###################################################################
-        if (g%size == 1) then ! Set to zero in 2D case
+        if (g(2)%size == 1) then ! Set to zero in 2D case
             result = 0.0_wp
 
         else
@@ -277,11 +276,11 @@ contains
             end if
 
             ! ###################################################################
-            call OPR_Burgers_1D(is, nxz, bcs, g, Dealiasing(2), p_org, p_vel, p_dst2, p_dst1)
+            call OPR_Burgers_1D(is, nxz, bcs, g(2), Dealiasing(2), p_org, p_vel, p_dst2, p_dst1)
 
             if (subsidenceProps%type == TYPE_SUB_CONSTANT_LOCAL) then
                 do j = 1, ny
-                    p_dst2(:, j) = p_dst2(:, j) + g%nodes(j)*subsidenceProps%parameters(1)*p_dst1(:, j)
+                    p_dst2(:, j) = p_dst2(:, j) + g(2)%nodes(j)*subsidenceProps%parameters(1)*p_dst1(:, j)
                 end do
             end if
 
@@ -304,12 +303,11 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Burgers_Z(ivel, is, nx, ny, nz, bcs, g, s, u, result, tmp1, u_t)
+    subroutine OPR_Burgers_Z(ivel, is, nx, ny, nz, bcs, s, u, result, tmp1, u_t)
         integer, intent(in) :: ivel
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(2, 2) ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz), u(nx*ny*nz)
         real(wp), intent(out) :: result(nx*ny*nz)
         real(wp), intent(inout) :: tmp1(nx*ny*nz)
@@ -325,7 +323,7 @@ contains
 ! #endif
 
         ! ###################################################################
-        if (g%size == 1) then ! Set to zero in 2D case
+        if (g(3)%size == 1) then ! Set to zero in 2D case
             result = 0.0_wp
 
         else
@@ -367,7 +365,7 @@ contains
             end if
 
             ! ###################################################################
-            call OPR_Burgers_1D(is, nxy, bcs, g, Dealiasing(3), p_a, p_vel, p_c, p_b)
+            call OPR_Burgers_1D(is, nxy, bcs, g(3), Dealiasing(3), p_a, p_vel, p_c, p_b)
 
             ! ###################################################################
             ! Put arrays back in the order in which they came in

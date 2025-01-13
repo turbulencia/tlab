@@ -91,25 +91,25 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
     if (decomposition == DCMP_ADVDIFF .or. decomposition == DCMP_TOTAL .or. decomposition == DCMP_ADVECTION) then
         !  Advection and diffusion terms
-        call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, u, p, tmp1) ! store u transposed in tmp1
+        call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, u, u, p, tmp1) ! store u transposed in tmp1
         tmp3 = tmp3 + p
-        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
+        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, v, u, p, tmp2, tmp1) ! tmp1 contains u transposed
         tmp4 = tmp4 + p
-        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, u, p, tmp2, tmp1) ! tmp1 contains u transposed
+        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, w, u, p, tmp2, tmp1) ! tmp1 contains u transposed
         tmp5 = tmp5 + p
 
-        call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, v, p, tmp1) ! store v transposed in tmp1
+        call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, v, v, p, tmp1) ! store v transposed in tmp1
         tmp4 = tmp4 + p
-        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, v, p, tmp2, tmp1) ! tmp1 contains v transposed
+        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, u, v, p, tmp2, tmp1) ! tmp1 contains v transposed
         tmp3 = tmp3 + p
-        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
+        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, w, v, p, tmp2, tmp1) ! tmp1 contains v transposed
         tmp5 = tmp5 + p
 
-        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, w, p, tmp1) ! store w transposed in tmp1
+        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, w, w, p, tmp1) ! store w transposed in tmp1
         tmp5 = tmp5 + p
-        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
+        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, v, w, p, tmp2, tmp1) ! tmp1 contains w transposed
         tmp4 = tmp4 + p
-        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
+        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, u, w, p, tmp2, tmp1) ! tmp1 contains w transposed
         tmp3 = tmp3 + p
 
     end if
@@ -118,27 +118,27 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
         tmp9 = 0.0_wp
         ! Sepereating Diffusion
         ! NSE X-Comp
-        call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(1), u, tmp9, p, tmp1)
+        call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, u, tmp9, p, tmp1)
         tmp6 = tmp6 + p   ! Diffusion d2u/dx2
-        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), v, tmp9, p, tmp2, tmp1)
+        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, v, tmp9, p, tmp2, tmp1)
         tmp7 = tmp7 + p
-        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(1), w, tmp9, p, tmp2, tmp1)
+        call OPR_Burgers_X(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, w, tmp9, p, tmp2, tmp1)
         tmp8 = tmp8 + p
 
         ! NSE Y-Comp
-        call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(2), v, tmp9, p, tmp1)
+        call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, v, tmp9, p, tmp1)
         tmp7 = tmp7 + p ! Diffusion d2v/dx2 + d2v/dy2
-        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), u, tmp9, p, tmp2, tmp1)
+        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, u, tmp9, p, tmp2, tmp1)
         tmp6 = tmp6 + p
-        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(2), w, tmp9, p, tmp2, tmp1)
+        call OPR_Burgers_Y(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, w, tmp9, p, tmp2, tmp1)
         tmp8 = tmp8 + p
 
         ! NSE Z-Comp
-        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, g(3), w, tmp9, p, tmp1)
+        call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, w, tmp9, p, tmp1)
         tmp8 = tmp8 + p  ! Diffusion d2w/dx2 + d2w/dy2 + d2w/dz2
-        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), v, tmp9, p, tmp2, tmp1)
+        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, v, tmp9, p, tmp2, tmp1)
         tmp7 = tmp7 + p
-        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, g(3), u, tmp9, p, tmp2, tmp1)
+        call OPR_Burgers_Z(OPR_B_U_IN, 0, imax, jmax, kmax, bcs, u, tmp9, p, tmp2, tmp1)
         tmp6 = tmp6 + p
 
     end if
