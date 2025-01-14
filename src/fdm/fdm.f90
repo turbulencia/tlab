@@ -13,7 +13,6 @@ module FDM
         integer mode_fdm1                   ! finite-difference method for 1. order derivative
         integer mode_fdm2                   ! finite-difference method for 2. order derivative
         logical uniform, periodic
-        logical :: anelastic = .false.
         logical :: need_1der = .false.      ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
         integer nb_diag_1(2)                ! # of left and right diagonals 1. order derivative (max 5/7)
         integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative (max 5/7)
@@ -38,8 +37,6 @@ module FDM
         real(wp), pointer :: lu2(:, :)      ! pointer to LU decomposition for 2. derivative
         real(wp), pointer :: lu2d(:, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
-        !
-        real(wp), allocatable :: rhoinv(:)  ! anelastic density correction
     end type grid_dt
 
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
@@ -512,15 +509,6 @@ contains
             call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
             ig = ig + 5
         end if
-
-! ! ###################################################################
-! ! Density correction in anelastic mode
-! ! ###################################################################
-!         g%rhoinv => x(:, ig)
-
-!         g%anelastic = .false. ! Default; activated in TLab_Initialize_Background
-
-!         ig = ig + 1
 
 ! ###################################################################
 ! Check array sizes

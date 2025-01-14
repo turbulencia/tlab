@@ -27,12 +27,18 @@ module OPR_Burgers
 
     ! Apply the non-linear operator N(u)(s) = visc* d^2/dx^2 s - u d/dx s
     ! the argument ivel indicates 2 options:
-    integer, parameter, public :: OPR_B_SELF = 0 ! velocity component is the scalar itself, the transposed velocity is returned
-    integer, parameter, public :: OPR_B_U_IN = 1 ! velocity component is passed through u, or u_t if transposed required
+    integer, parameter, public :: OPR_B_SELF = 0        ! velocity component is the scalar itself, the transposed velocity is returned
+    integer, parameter, public :: OPR_B_U_IN = 1        ! velocity component is passed through u, or u_t if transposed required
 
     type(filter_dt) :: Dealiasing(3)
+    real(wp), allocatable, target :: wrkdea(:, :)       ! Work arrays for dealiasing (scratch space)
 
-    real(wp), allocatable, target :: wrkdea(:, :)                   ! Work arrays for dealiasing (scratch space)
+    type :: rho_anelastic                               ! 1/rho in diffusion term in anelastic formulation
+        sequence
+        logical :: active = .false.
+        real(wp), allocatable :: values(:)
+    end type rho_anelastic
+    type(rho_anelastic) :: rhoinv(3)                    ! one for each direction
 
 contains
     !########################################################################
@@ -67,7 +73,7 @@ contains
             if (Dealiasing(ig)%type /= DNS_FILTER_NONE) call OPR_FILTER_INITIALIZE(g(ig), Dealiasing(ig))
         end do
 
-        if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then ! to be moved to OPR_Burgers_Initialize
+        if (any(Dealiasing(:)%type /= DNS_FILTER_NONE)) then
             call TLab_Allocate_Real(__FILE__, wrkdea, [isize_field, 2], 'wrk-dealiasing')
         end if
 
@@ -78,7 +84,7 @@ contains
 
             ! -----------------------------------------------------------------------
             ! Density correction term in the burgers operator along X
-            g(1)%anelastic = .true.
+            rhoinv(1)%active = .true.
 #ifdef USE_MPI
             if (ims_npro_i > 1) then
                 ! nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
@@ -91,10 +97,10 @@ contains
 #ifdef USE_MPI
             end if
 #endif
-            allocate (g(1)%rhoinv(nlines))
+            allocate (rhoinv(1)%values(nlines))
             do j = 1, nlines
                 ip = mod(offset + j - 1, g(2)%size) + 1
-                g(1)%rhoinv(j) = ribackground(ip)
+                rhoinv(1)%values(j) = ribackground(ip)
             end do
 
             ! -----------------------------------------------------------------------
@@ -109,7 +115,8 @@ contains
 
             ! -----------------------------------------------------------------------
             ! Density correction term in the burgers operator along Z
-            g(3)%anelastic = .true.
+            ! g(3)%anelastic = .true.
+            rhoinv(3)%active = .true.
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
                 ! nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
@@ -122,10 +129,10 @@ contains
 #ifdef USE_MPI
             end if
 #endif
-            allocate (g(3)%rhoinv(nlines))
+            allocate (rhoinv(3)%values(nlines))
             do j = 1, nlines
                 ip = (offset + j - 1)/imax + 1
-                g(3)%rhoinv(j) = ribackground(ip)
+                rhoinv(3)%values(j) = ribackground(ip)
             end do
 
         end if
@@ -150,9 +157,9 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) nyz
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d, p_vel
-! #ifdef USE_MPI
-!         integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
-! #endif
+        ! #ifdef USE_MPI
+        !         integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
+        ! #endif
 
         ! ###################################################################
         ! -------------------------------------------------------------------
@@ -197,7 +204,7 @@ contains
 #endif
 
         ! ###################################################################
-        call OPR_Burgers_1D(is, nyz, bcs, g(1), Dealiasing(1), p_b, p_vel, p_d, p_c)
+        call OPR_Burgers_1D(is, nyz, bcs, g(1), Dealiasing(1), rhoinv(1), p_b, p_vel, p_d, p_c)
 
         ! ###################################################################
         ! Put arrays back in the order in which they came in
@@ -276,7 +283,7 @@ contains
             end if
 
             ! ###################################################################
-            call OPR_Burgers_1D(is, nxz, bcs, g(2), Dealiasing(2), p_org, p_vel, p_dst2, p_dst1)
+            call OPR_Burgers_1D(is, nxz, bcs, g(2), Dealiasing(2), rhoinv(2), p_org, p_vel, p_dst2, p_dst1)
 
             if (subsidenceProps%type == TYPE_SUB_CONSTANT_LOCAL) then
                 do j = 1, ny
@@ -318,9 +325,9 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) nxy
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_vel
-! #ifdef USE_MPI
-!         integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
-! #endif
+        ! #ifdef USE_MPI
+        !         integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
+        ! #endif
 
         ! ###################################################################
         if (g(3)%size == 1) then ! Set to zero in 2D case
@@ -365,7 +372,7 @@ contains
             end if
 
             ! ###################################################################
-            call OPR_Burgers_1D(is, nxy, bcs, g(3), Dealiasing(3), p_a, p_vel, p_c, p_b)
+            call OPR_Burgers_1D(is, nxy, bcs, g(3), Dealiasing(3), rhoinv(3), p_a, p_vel, p_c, p_b)
 
             ! ###################################################################
             ! Put arrays back in the order in which they came in
@@ -388,7 +395,7 @@ contains
     !#
     !# Second derivative uses LE decomposition including diffusivity coefficient
     !########################################################################
-    subroutine OPR_Burgers_1D(is, nlines, bcs, g, dealiasing, s, u, result, dsdx)
+    subroutine OPR_Burgers_1D(is, nlines, bcs, g, dealiasing, rhoinv, s, u, result, dsdx)
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -396,6 +403,7 @@ contains
         !                                       1 forced to zero
         type(grid_dt), intent(in) :: g
         type(filter_dt), intent(in) :: dealiasing
+        type(rho_anelastic), intent(in) :: rhoinv
         real(wp), intent(in) :: s(nlines, g%size), u(nlines, g%size)  ! argument field and velocity field
         real(wp), intent(out) :: result(nlines, g%size)                ! N(u) applied to s
         real(wp), intent(inout) :: dsdx(nlines, g%size)                  ! dsdx
@@ -428,37 +436,37 @@ contains
 
             ! We duplicate a few lines of code instead of using pointers becasue
             ! creating pointers take some running time
-            if (g%anelastic) then
+            if (rhoinv%active) then
                 do ij = 1, g%size
-                    result(:, ij) = result(:, ij)*g%rhoinv(:) - uf(:, ij)*dsf(:, ij)
+                    result(:, ij) = result(:, ij)*rhoinv%values(:) - uf(:, ij)*dsf(:, ij)
                 end do
 
             else
-!$omp parallel default( shared ) private( ij )
-!$omp do
+                !$omp parallel default( shared ) private( ij )
+                !$omp do
                 do ij = 1, nlines*g%size
                     result(ij, 1) = result(ij, 1) - uf(ij, 1)*dsf(ij, 1)
                 end do
-!$omp end do
-!$omp end parallel
+                !$omp end do
+                !$omp end parallel
             end if
 
             nullify (uf, dsf)
 
         else
-            if (g%anelastic) then
+            if (rhoinv%active) then
                 do ij = 1, g%size
-                    result(:, ij) = result(:, ij)*g%rhoinv(:) - u(:, ij)*dsdx(:, ij)
+                    result(:, ij) = result(:, ij)*rhoinv%values(:) - u(:, ij)*dsdx(:, ij)
                 end do
 
             else
-!$omp parallel default( shared ) private( ij )
-!$omp do
+                !$omp parallel default( shared ) private( ij )
+                !$omp do
                 do ij = 1, nlines*g%size
                     result(ij, 1) = result(ij, 1) - u(ij, 1)*dsdx(ij, 1)
                 end do
-!$omp end do
-!$omp end parallel
+                !$omp end do
+                !$omp end parallel
             end if
         end if
 
