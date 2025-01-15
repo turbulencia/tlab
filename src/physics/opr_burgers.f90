@@ -14,6 +14,7 @@ module OPR_Burgers
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk2d, wrk3d
+    use TLAB_VARS, only: visc, schmidt
     use OPR_FILTERS
     use OPR_PARTIAL
     use LargeScaleForcing, only: subsidenceProps, TYPE_SUB_CONSTANT_LOCAL
@@ -58,7 +59,7 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) ig, is, j, ip, nlines, offset
-
+        real(wp) dummy
         character*32 bakfile
 
         ! ###################################################################
@@ -66,6 +67,45 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
 
         call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
+
+        ! ! ###################################################################
+        ! ! Initialize LU factorization second-order derivative times the diffusivities
+        ! do ig = 1, 3
+        !     ip = 0
+        !     do is = 0, inb_scal ! case 0 for the reynolds number
+        !         if (is == 0) then
+        !             dummy = visc
+        !         else
+        !             dummy = visc/schmidt(is)
+        !         end if
+
+        !         if (g(ig)%nb_diag_2(1) /= 3) then
+        !             call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
+        !             call TLab_Stop(DNS_ERROR_OPTION)
+        !         end if
+
+        !         if (g(ig)%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
+        !             g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
+        !             g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
+        !             g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)         ! matrix U is the same
+        !             g(ig)%lu2d(:, ip + 4) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
+        !             g(ig)%lu2d(:, ip + 5) = g(ig)%lu2(:, 5)         ! matrix U is the same
+
+        !             ! ig = ig + 5
+        !             ip = ip + 5
+
+        !         else                                        ! Check routines TRIDFS and TRIDSS
+        !             g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L is the same
+        !             g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
+        !             g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
+
+        !             ! ig = ig + 3
+        !             ip = ip + 3
+
+        !         end if
+
+        !     end do
+        ! end do
 
         ! ###################################################################
         ! Initialize dealiasing

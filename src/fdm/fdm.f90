@@ -437,6 +437,40 @@ contains
         end if
 
 ! ###################################################################
+! LU factorization interpolation, done in routine TRID*FS
+! ###################################################################
+! -------------------------------------------------------------------
+! Periodic case; pentadiagonal
+! -------------------------------------------------------------------
+        if ((stagger_on) .and. g%periodic) then
+            g%lu0i => x(:, ig:)
+
+            select case (g%mode_fdm1)
+            case DEFAULT
+                call FDM_C0INT6P_LHS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3))
+            end select
+            call TRIDPFS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5))
+            ig = ig + 5
+        end if
+
+! ###################################################################
+! LU factorization first interp. derivative, done in routine TRID*FS
+! ###################################################################
+! -------------------------------------------------------------------
+! Periodic case; pentadiagonal
+! -------------------------------------------------------------------
+        if ((stagger_on) .and. g%periodic) then
+            g%lu1i => x(:, ig:)
+
+            select case (g%mode_fdm1)
+            case DEFAULT
+                call FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3))
+            end select
+            call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
+            ig = ig + 5
+        end if
+
+! ###################################################################
 ! LU factorization second-order derivative times the diffusivities
 ! ###################################################################
         g%lu2d => x(:, ig:)
@@ -475,40 +509,6 @@ contains
             end if
 
         end do
-
-! ###################################################################
-! LU factorization interpolation, done in routine TRID*FS
-! ###################################################################
-! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
-! -------------------------------------------------------------------
-        if ((stagger_on) .and. g%periodic) then
-            g%lu0i => x(:, ig:)
-
-            select case (g%mode_fdm1)
-            case DEFAULT
-                call FDM_C0INT6P_LHS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3))
-            end select
-            call TRIDPFS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5))
-            ig = ig + 5
-        end if
-
-! ###################################################################
-! LU factorization first interp. derivative, done in routine TRID*FS
-! ###################################################################
-! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
-! -------------------------------------------------------------------
-        if ((stagger_on) .and. g%periodic) then
-            g%lu1i => x(:, ig:)
-
-            select case (g%mode_fdm1)
-            case DEFAULT
-                call FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3))
-            end select
-            call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
-            ig = ig + 5
-        end if
 
 ! ###################################################################
 ! Check array sizes
