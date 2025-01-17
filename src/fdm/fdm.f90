@@ -9,7 +9,7 @@ module FDM
     type grid_dt
         sequence
         character*8 name
-        integer(wi) size, inb_grid
+        integer(wi) size
         integer mode_fdm1                   ! finite-difference method for 1. order derivative
         integer mode_fdm2                   ! finite-difference method for 2. order derivative
         logical uniform, periodic
@@ -35,8 +35,9 @@ module FDM
         real(wp), pointer :: lhs2(:, :)     ! pointer to LHS for 2. derivative
         real(wp), pointer :: rhs2(:, :)     ! pointer to RHS for 2. derivative
         real(wp), pointer :: lu2(:, :)      ! pointer to LU decomposition for 2. derivative
-        real(wp), pointer :: lu2d(:, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
+
+        real(wp), pointer :: lu2d(:, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion; to be moved to opr_burgers
     end type grid_dt
 
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
@@ -50,8 +51,8 @@ contains
         use TLab_Constants, only: tfile
 #endif
         use TLAB_VARS, only: stagger_on
-        use TLAB_VARS, only: inb_scal
-        use TLAB_VARS, only: visc, schmidt
+        ! use TLAB_VARS, only: inb_scal
+        ! use TLAB_VARS, only: visc, schmidt
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         use TLab_Memory, only: TLab_Allocate_Real
         use FDM_PROCS, only: FDM_Bcs_Neumann
@@ -69,9 +70,9 @@ contains
         target x
 
 ! -------------------------------------------------------------------
-        integer(wi) i, ib, ip, is, ig, nx, ndl, ndr
+        integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid !is, 
         integer(wi) nmin, nmax, nsize, bcs_cases(4)
-        real(wp) dummy, coef(5), scale_loc
+        real(wp) coef(5), scale_loc !dummy, 
 
         integer, parameter :: i1 = 1
 
@@ -102,47 +103,47 @@ contains
         end if
 ! print *, abs((scale_loc - g%scale)/scale_loc)
         if (abs((scale_loc - g%scale)/scale_loc) > roundoff_wp) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Unmathed domain scale.')
+            call TLab_Write_ASCII(efile, __FILE__//'. Unmatched domain scale.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         ! ###################################################################
         ! Memory allocation
         ! ###################################################################
-        g%inb_grid = 1                          ! Nodes
-        g%inb_grid = g%inb_grid &
+        inb_grid = 1                          ! Nodes
+        inb_grid = inb_grid &
                      + 2 &                      ! Jacobians of first- and second-order derivatives
                      + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
 
-        g%inb_grid = g%inb_grid &
+        inb_grid = inb_grid &
                      + 5 &                      ! max # of diagonals in LHS for 1. order derivative
                      + 7 &                      ! max # of diagonals in RHS for 1. order derivative
                      + 5 &                      ! max # of diagonals in LHS for 2. order derivative
                      + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
-        g%inb_grid = g%inb_grid &
+        inb_grid = inb_grid &
                      + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
                      + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
         if (g%periodic) then
-            g%inb_grid = g%inb_grid &
+            inb_grid = inb_grid &
                          + 5 + 2 &                      ! LU decomposition 1. order
                          + 5 + 2 &                      ! LU decomposition 2. order
-                         + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
+                        !  + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
                          + 2                            ! modified wavenumbers
         else
-            g%inb_grid = g%inb_grid &
+            inb_grid = inb_grid &
                          + 5*4 &                ! LU decomposition 1. order, 4 bcs
-                         + 5 &                  ! LU decomposition 2. order, 1bcs
-                         + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
+                         + 5                    ! LU decomposition 2. order, 1bcs
+                        !  + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
         end if
-        ! g%inb_grid = g%inb_grid &
+        ! inb_grid = inb_grid &
         !              + 1                        ! Density correction in anelastic mode
         if ((stagger_on) .and. g%periodic) then
-            g%inb_grid = g%inb_grid &
+            inb_grid = inb_grid &
                          + 5 &                  ! LU decomposition interpolation
                          + 5                    ! LU decomposition 1. order interpolatory
         end if
 
-        call TLab_Allocate_Real(__FILE__, x, [g%size, g%inb_grid], g%name)
+        call TLab_Allocate_Real(__FILE__, x, [g%size, inb_grid], g%name)
 
         ! ###################################################################
         ! Setting pointers and filling FDM data
@@ -473,47 +474,47 @@ contains
 ! ###################################################################
 ! LU factorization second-order derivative times the diffusivities
 ! ###################################################################
-        g%lu2d => x(:, ig:)
+        ! g%lu2d => x(:, ig:)
 
-        ip = 0
-        do is = 0, inb_scal ! case 0 for the reynolds number
-            if (is == 0) then
-                dummy = visc
-            else
-                dummy = visc/schmidt(is)
-            end if
+        ! ip = 0
+        ! do is = 0, inb_scal ! case 0 for the reynolds number
+        !     if (is == 0) then
+        !         dummy = visc
+        !     else
+        !         dummy = visc/schmidt(is)
+        !     end if
 
-            if (g%nb_diag_2(1) /= 3) then
-                call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
-                call TLab_Stop(DNS_ERROR_OPTION)
-            end if
+        !     if (g%nb_diag_2(1) /= 3) then
+        !         call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
+        !         call TLab_Stop(DNS_ERROR_OPTION)
+        !     end if
 
-            if (g%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
-                g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L; 1. subdiagonal
-                g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
-                g%lu2d(:, ip + 3) = g%lu2(:, 3)         ! matrix U is the same
-                g%lu2d(:, ip + 4) = g%lu2(:, 4)/dummy   ! matrix L; Additional row/column
-                g%lu2d(:, ip + 5) = g%lu2(:, 5)         ! matrix U is the same
+        !     if (g%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
+        !         g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L; 1. subdiagonal
+        !         g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
+        !         g%lu2d(:, ip + 3) = g%lu2(:, 3)         ! matrix U is the same
+        !         g%lu2d(:, ip + 4) = g%lu2(:, 4)/dummy   ! matrix L; Additional row/column
+        !         g%lu2d(:, ip + 5) = g%lu2(:, 5)         ! matrix U is the same
 
-                ig = ig + 5
-                ip = ip + 5
+        !         ig = ig + 5
+        !         ip = ip + 5
 
-            else                                        ! Check routines TRIDFS and TRIDSS
-                g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L is the same
-                g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
-                g%lu2d(:, ip + 3) = g%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
+        !     else                                        ! Check routines TRIDFS and TRIDSS
+        !         g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L is the same
+        !         g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
+        !         g%lu2d(:, ip + 3) = g%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
 
-                ig = ig + 3
-                ip = ip + 3
+        !         ig = ig + 3
+        !         ip = ip + 3
 
-            end if
+        !     end if
 
-        end do
+        ! end do
 
 ! ###################################################################
 ! Check array sizes
 ! ###################################################################
-        if (ig >= g%inb_grid) then
+        if (ig >= inb_grid) then
             call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
             call TLab_Stop(DNS_ERROR_DIMGRID)
         end if

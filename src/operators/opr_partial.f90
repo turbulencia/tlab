@@ -188,7 +188,7 @@ contains
         real(wp), intent(inout) :: du(nlines, g%size)  ! First derivative
 
         real(wp), pointer :: lu2_p(:, :)
-
+        
         ! ###################################################################
         ! Check whether to calculate 1. order derivative
         ! ###################################################################

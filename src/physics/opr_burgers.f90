@@ -58,7 +58,7 @@ contains
         character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
-        integer(wi) ig, is, j, ip, nlines, offset
+        integer(wi) ig, is, j, ip, nlines, offset, idummy
         real(wp) dummy
         character*32 bakfile
 
@@ -68,44 +68,51 @@ contains
 
         call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
 
-        ! ! ###################################################################
-        ! ! Initialize LU factorization second-order derivative times the diffusivities
-        ! do ig = 1, 3
-        !     ip = 0
-        !     do is = 0, inb_scal ! case 0 for the reynolds number
-        !         if (is == 0) then
-        !             dummy = visc
-        !         else
-        !             dummy = visc/schmidt(is)
-        !         end if
+        ! ###################################################################
+        ! Initialize LU factorization second-order derivative times the diffusivities
+        do ig = 1, 3
+            if (g(ig)%size == 1) cycle
 
-        !         if (g(ig)%nb_diag_2(1) /= 3) then
-        !             call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
-        !             call TLab_Stop(DNS_ERROR_OPTION)
-        !         end if
+            if (g(ig)%nb_diag_2(1) /= 3) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
 
-        !         if (g(ig)%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
-        !             g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
-        !             g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
-        !             g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)         ! matrix U is the same
-        !             g(ig)%lu2d(:, ip + 4) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
-        !             g(ig)%lu2d(:, ip + 5) = g(ig)%lu2(:, 5)         ! matrix U is the same
+            if (g(ig)%periodic) then
+                idummy = (5 + 2)*(1 + inb_scal)
+            else
+                idummy = 5*(1 + inb_scal)
+            end if
+            allocate (g(ig)%lu2d(g(ig)%size, idummy))
 
-        !             ! ig = ig + 5
-        !             ip = ip + 5
+            ip = 0
+            do is = 0, inb_scal ! case 0 for the reynolds number
+                if (is == 0) then
+                    dummy = visc
+                else
+                    dummy = visc/schmidt(is)
+                end if
 
-        !         else                                        ! Check routines TRIDFS and TRIDSS
-        !             g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L is the same
-        !             g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
-        !             g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
+                if (g(ig)%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
+                    g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
+                    g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
+                    g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)         ! matrix U is the same
+                    g(ig)%lu2d(:, ip + 4) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
+                    g(ig)%lu2d(:, ip + 5) = g(ig)%lu2(:, 5)         ! matrix U is the same
 
-        !             ! ig = ig + 3
-        !             ip = ip + 3
+                    ip = ip + 5
 
-        !         end if
+                else                                            ! Check routines TRIDFS and TRIDSS
+                    g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L is the same
+                    g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
+                    g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
 
-        !     end do
-        ! end do
+                    ip = ip + 3
+
+                end if
+
+            end do
+        end do
 
         ! ###################################################################
         ! Initialize dealiasing
