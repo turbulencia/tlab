@@ -37,7 +37,7 @@ module FDM
         real(wp), pointer :: lu2(:, :)      ! pointer to LU decomposition for 2. derivative
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
 
-        real(wp), pointer :: lu2d(:, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion; to be moved to opr_burgers
+        real(wp), pointer :: lu2d(:, :, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion; to be moved to opr_burgers
     end type grid_dt
 
     type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
@@ -51,8 +51,6 @@ contains
         use TLab_Constants, only: tfile
 #endif
         use TLAB_VARS, only: stagger_on
-        ! use TLAB_VARS, only: inb_scal
-        ! use TLAB_VARS, only: visc, schmidt
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         use TLab_Memory, only: TLab_Allocate_Real
         use FDM_PROCS, only: FDM_Bcs_Neumann
@@ -70,9 +68,9 @@ contains
         target x
 
 ! -------------------------------------------------------------------
-        integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid !is, 
+        integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid
         integer(wi) nmin, nmax, nsize, bcs_cases(4)
-        real(wp) coef(5), scale_loc !dummy, 
+        real(wp) coef(5), scale_loc
 
         integer, parameter :: i1 = 1
 
@@ -92,7 +90,7 @@ contains
         if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
 
         if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-            call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+    call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
 
         if (g%size > 1) then
@@ -110,37 +108,35 @@ contains
         ! ###################################################################
         ! Memory allocation
         ! ###################################################################
-        inb_grid = 1                          ! Nodes
+        inb_grid = 1                            ! Nodes
         inb_grid = inb_grid &
-                     + 2 &                      ! Jacobians of first- and second-order derivatives
-                     + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
+                   + 2 &                      ! Jacobians of first- and second-order derivatives
+                   + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
 
         inb_grid = inb_grid &
-                     + 5 &                      ! max # of diagonals in LHS for 1. order derivative
-                     + 7 &                      ! max # of diagonals in RHS for 1. order derivative
-                     + 5 &                      ! max # of diagonals in LHS for 2. order derivative
-                     + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
+                   + 5 &                      ! max # of diagonals in LHS for 1. order derivative
+                   + 7 &                      ! max # of diagonals in RHS for 1. order derivative
+                   + 5 &                      ! max # of diagonals in LHS for 2. order derivative
+                   + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
         inb_grid = inb_grid &
-                     + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
-                     + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
+                   + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
+                   + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
+
         if (g%periodic) then
             inb_grid = inb_grid &
-                         + 5 + 2 &                      ! LU decomposition 1. order
-                         + 5 + 2 &                      ! LU decomposition 2. order
-                        !  + (5 + 2)*(1 + inb_scal) &     ! LU decomposition 2. order with diffusivities
-                         + 2                            ! modified wavenumbers
+                       + 5 + 2 &              ! LU decomposition 1. order
+                       + 5 + 2 &              ! LU decomposition 2. order
+                       + 2                    ! modified wavenumbers
         else
             inb_grid = inb_grid &
-                         + 5*4 &                ! LU decomposition 1. order, 4 bcs
-                         + 5                    ! LU decomposition 2. order, 1bcs
-                        !  + 5*(1 + inb_scal)     ! LU decomposition 2. order w/ diffusivities, 1 bcs
+                       + 5*4 &                ! LU decomposition 1. order, 4 bcs
+                       + 5                    ! LU decomposition 2. order, 1 bcs
         end if
-        ! inb_grid = inb_grid &
-        !              + 1                        ! Density correction in anelastic mode
+
         if ((stagger_on) .and. g%periodic) then
             inb_grid = inb_grid &
-                         + 5 &                  ! LU decomposition interpolation
-                         + 5                    ! LU decomposition 1. order interpolatory
+                       + 5 &                  ! LU decomposition interpolation
+                       + 5                    ! LU decomposition 1. order interpolatory
         end if
 
         call TLab_Allocate_Real(__FILE__, x, [g%size, inb_grid], g%name)
@@ -334,7 +330,7 @@ contains
                 case (3)
                     call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
                 case (5)
-                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                   call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
                 end select
 
                 ig = ig + 5
@@ -420,7 +416,7 @@ contains
             ! modified wavenumbers
             g%mwn2 => x(:, ig)
 
-            g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                         /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
             g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver
@@ -470,46 +466,6 @@ contains
             call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
             ig = ig + 5
         end if
-
-! ###################################################################
-! LU factorization second-order derivative times the diffusivities
-! ###################################################################
-        ! g%lu2d => x(:, ig:)
-
-        ! ip = 0
-        ! do is = 0, inb_scal ! case 0 for the reynolds number
-        !     if (is == 0) then
-        !         dummy = visc
-        !     else
-        !         dummy = visc/schmidt(is)
-        !     end if
-
-        !     if (g%nb_diag_2(1) /= 3) then
-        !         call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
-        !         call TLab_Stop(DNS_ERROR_OPTION)
-        !     end if
-
-        !     if (g%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
-        !         g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L; 1. subdiagonal
-        !         g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
-        !         g%lu2d(:, ip + 3) = g%lu2(:, 3)         ! matrix U is the same
-        !         g%lu2d(:, ip + 4) = g%lu2(:, 4)/dummy   ! matrix L; Additional row/column
-        !         g%lu2d(:, ip + 5) = g%lu2(:, 5)         ! matrix U is the same
-
-        !         ig = ig + 5
-        !         ip = ip + 5
-
-        !     else                                        ! Check routines TRIDFS and TRIDSS
-        !         g%lu2d(:, ip + 1) = g%lu2(:, 1)         ! matrix L is the same
-        !         g%lu2d(:, ip + 2) = g%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
-        !         g%lu2d(:, ip + 3) = g%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
-
-        !         ig = ig + 3
-        !         ip = ip + 3
-
-        !     end if
-
-        ! end do
 
 ! ###################################################################
 ! Check array sizes

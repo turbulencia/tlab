@@ -69,7 +69,7 @@ contains
         call FILTER_READBLOCK(bakfile, inifile, 'Dealiasing', Dealiasing)
 
         ! ###################################################################
-        ! Initialize LU factorization second-order derivative times the diffusivities
+        ! Initialize LU factorization of the second-order derivative times the diffusivities
         do ig = 1, 3
             if (g(ig)%size == 1) cycle
 
@@ -79,11 +79,11 @@ contains
             end if
 
             if (g(ig)%periodic) then
-                idummy = (5 + 2)*(1 + inb_scal)
+                idummy = g(ig)%nb_diag_2(1) + 2
             else
-                idummy = 5*(1 + inb_scal)
+                idummy = g(ig)%nb_diag_2(1)
             end if
-            allocate (g(ig)%lu2d(g(ig)%size, idummy))
+            allocate (g(ig)%lu2d(g(ig)%size, idummy, 0:inb_scal))
 
             ip = 0
             do is = 0, inb_scal ! case 0 for the reynolds number
@@ -94,20 +94,16 @@ contains
                 end if
 
                 if (g(ig)%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
-                    g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
-                    g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
-                    g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)         ! matrix U is the same
-                    g(ig)%lu2d(:, ip + 4) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
-                    g(ig)%lu2d(:, ip + 5) = g(ig)%lu2(:, 5)         ! matrix U is the same
-
-                    ip = ip + 5
+                    g(ig)%lu2d(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
+                    g(ig)%lu2d(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
+                    g(ig)%lu2d(:, 3, is) = g(ig)%lu2(:, 3)         ! matrix U is the same
+                    g(ig)%lu2d(:, 4, is) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
+                    g(ig)%lu2d(:, 5, is) = g(ig)%lu2(:, 5)         ! matrix U is the same
 
                 else                                            ! Check routines TRIDFS and TRIDSS
-                    g(ig)%lu2d(:, ip + 1) = g(ig)%lu2(:, 1)         ! matrix L is the same
-                    g(ig)%lu2d(:, ip + 2) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
-                    g(ig)%lu2d(:, ip + 3) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
-
-                    ip = ip + 3
+                    g(ig)%lu2d(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L is the same
+                    g(ig)%lu2d(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
+                    g(ig)%lu2d(:, 3, is) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
 
                 end if
 
@@ -153,11 +149,9 @@ contains
             ! -----------------------------------------------------------------------
             ! Density correction term in the burgers operator along Y; see FDM_Initialize
             ! we implement it directly in the tridiagonal system
-            ip = 0
             do is = 0, inb_scal ! case 0 for the velocity
-                g(2)%lu2d(:, ip + 2) = g(2)%lu2d(:, ip + 2)*ribackground(:)  ! matrix U; 1/diagonal
-                g(2)%lu2d(:g(2)%size - 1, ip + 3) = g(2)%lu2d(:, ip + 3)*rbackground(2:) ! matrix U; 1. superdiagonal
-                ip = ip + 3
+                g(2)%lu2d(:, 2, is) = g(2)%lu2d(:, 2, is)*ribackground(:)  ! matrix U; 1/diagonal
+                g(2)%lu2d(:g(2)%size - 1, 3, is) = g(2)%lu2d(:g(2)%size - 1, 3, is)*rbackground(2:) ! matrix U; 1. superdiagonal
             end do
 
             ! -----------------------------------------------------------------------
@@ -467,13 +461,13 @@ contains
 
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity
         if (ibm_burgers) then
-            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, s, result, dsdx)
+            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, g%lu2d(:, :, is), s, result, dsdx)
         else
-            call OPR_PARTIAL2(is, nlines, bcs, g, s, result, dsdx)
+            call OPR_PARTIAL2(is, nlines, bcs, g, g%lu2d(:, :, is), s, result, dsdx)
         end if
 
         ! ###################################################################
-        ! Operation; diffusivity included in 2.-order derivative
+        ! Operation; diffusivity included in 2.-order derivativelu2_p
         ! ###################################################################
         if (dealiasing%type /= DNS_FILTER_NONE) then
             uf(1:nlines, 1:g%size) => wrkdea(1:nlines*g%size, 1)
