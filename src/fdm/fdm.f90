@@ -90,7 +90,7 @@ contains
         if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
 
         if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-    call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+            call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
 
         if (g%size > 1) then
@@ -110,33 +110,38 @@ contains
         ! ###################################################################
         inb_grid = 1                            ! Nodes
         inb_grid = inb_grid &
-                   + 2 &                      ! Jacobians of first- and second-order derivatives
-                   + 2                        ! 1/dx and 1/dx**2 used in time-step stability constraint
+                   + 2 &                        ! Jacobians of first- and second-order derivatives
+                   + 2                          ! 1/dx and 1/dx**2 used in time-step stability constraint
 
         inb_grid = inb_grid &
-                   + 5 &                      ! max # of diagonals in LHS for 1. order derivative
-                   + 7 &                      ! max # of diagonals in RHS for 1. order derivative
-                   + 5 &                      ! max # of diagonals in LHS for 2. order derivative
-                   + 7 + 5                    ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
+                   + 5 &                        ! max # of diagonals in LHS for 1. order derivative
+                   + 7 &                        ! max # of diagonals in RHS for 1. order derivative
+                   + 5 &                        ! max # of diagonals in LHS for 2. order derivative
+                   + 7 + 5                      ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
         inb_grid = inb_grid &
-                   + 5*2 &                    ! max # of diagonals in LHS for 1. integral, 2 bcs
-                   + 7*2                      ! max # of diagonals in RHS for 1. integral, 2 bcs
+                   + 5*2 &                      ! max # of diagonals in LHS for 1. integral, 2 bcs
+                   + 7*2                        ! max # of diagonals in RHS for 1. integral, 2 bcs
 
         if (g%periodic) then
             inb_grid = inb_grid &
-                       + 5 + 2 &              ! LU decomposition 1. order
-                       + 5 + 2 &              ! LU decomposition 2. order
-                       + 2                    ! modified wavenumbers
+                       + 5 + 2 &                ! LU decomposition 1. order
+                       + 5 + 2                  ! LU decomposition 2. order
         else
             inb_grid = inb_grid &
-                       + 5*4 &                ! LU decomposition 1. order, 4 bcs
-                       + 5                    ! LU decomposition 2. order, 1 bcs
+                       + 5*4 &                  ! LU decomposition 1. order, 4 bcs
+                       + 5                      ! LU decomposition 2. order, 1 bcs
         end if
 
-        if ((stagger_on) .and. g%periodic) then
+        if (g%periodic) then
             inb_grid = inb_grid &
-                       + 5 &                  ! LU decomposition interpolation
-                       + 5                    ! LU decomposition 1. order interpolatory
+                       + 1 &                    ! modified wavenumbers for 1. order derivative
+                       + 1                      ! modified wavenumbers for 2. order derivative
+        end if
+
+        if (stagger_on .and. g%periodic) then
+            inb_grid = inb_grid &
+                       + 5 &                    ! LU decomposition interpolation
+                       + 5                      ! LU decomposition 1. order interpolatory
         end if
 
         call TLab_Allocate_Real(__FILE__, x, [g%size, inb_grid], g%name)
@@ -153,7 +158,7 @@ contains
         ! ###################################################################
         g%nodes => x(:, ig)             ! Define pointer inside x
 
-        g%nodes(:) = nodes(1:nx)     ! Calculate data
+        g%nodes(:) = nodes(1:nx)        ! Calculate data
 
         ig = ig + 1                     ! Advance counter
 
@@ -259,7 +264,7 @@ contains
         ndr = g%nb_diag_1(2)
 
         ! -------------------------------------------------------------------
-        ! LU decomposition and wave numbers
+        ! LU decomposition
         g%lu1 => x(:, ig:)
 
         g%lu1(:, 1:g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
@@ -273,9 +278,37 @@ contains
 
             ig = ig + g%nb_diag_1(1) + 2
 
-            ! -------------------------------------------------------------------
-            ! wavenumbers
-            do i = 1, nx
+        else                            ! biased,  different BCs
+            bcs_cases(1:4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
+            do ib = 1, 4
+                ip = (ib - 1)*5
+
+                g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
+
+                call FDM_Bcs_Neumann(bcs_cases(ib), g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
+
+                nmin = 1; nmax = nx
+                if (any([BCS_ND, BCS_NN] == bcs_cases(ib))) nmin = nmin + 1
+                if (any([BCS_DN, BCS_NN] == bcs_cases(ib))) nmax = nmax - 1
+                nsize = nmax - nmin + 1
+
+                select case (g%nb_diag_1(1))
+                case (3)
+                    call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
+                case (5)
+                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                end select
+
+                ig = ig + 5
+
+            end do
+
+        end if
+
+        ! -------------------------------------------------------------------
+        ! modified wavenumbers
+        if (g%periodic) then
+            do i = 1, nx        ! wavenumbers, the independent variable to construct the modified ones
                 if (i <= nx/2 + 1) then
                     wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
                 else
@@ -283,8 +316,6 @@ contains
                 end if
             end do
 
-            ! -------------------------------------------------------------------
-            ! modified wavenumbers
             g%mwn1 => x(:, ig)
 
             if (.not. stagger_on) then
@@ -306,36 +337,9 @@ contains
 
             end if
 
-            ! final calculations because it is mainly used in the Poisson solver like this
-            g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2
+            g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2      ! as used in Poisson solver
 
             ig = ig + 1
-
-            ! -------------------------------------------------------------------
-        else                            ! biased,  different BCs
-            bcs_cases(1:4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
-            do ib = 1, 4
-                ip = (ib - 1)*5
-
-                g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
-
-                call FDM_Bcs_Neumann(bcs_cases(ib), g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
-
-                nmin = 1; nmax = nx
-                if (any([BCS_ND, BCS_NN] == bcs_cases(ib))) nmin = nmin + 1
-                if (any([BCS_DN, BCS_NN] == bcs_cases(ib))) nmax = nmax - 1
-                nsize = nmax - nmin + 1
-
-                select case (g%nb_diag_1(1))
-                case (3)
-                    call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
-                case (5)
-                   call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
-                end select
-
-                ig = ig + 5
-
-            end do
 
         end if
 
@@ -412,24 +416,26 @@ contains
             end select
             ig = ig + g%nb_diag_2(1) + 2
 
-            ! -------------------------------------------------------------------
-            ! modified wavenumbers
-            g%mwn2 => x(:, ig)
-
-  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
-                        /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
-
-            g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver
-
-            ig = ig + 1
-
-            ! -------------------------------------------------------------------
         else
             select case (g%nb_diag_2(1))
             case (3)
                 call TRIDFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
             end select
             ig = ig + g%nb_diag_2(1)
+
+        end if
+
+        ! -------------------------------------------------------------------
+        ! modified wavenumbers
+        if (g%periodic) then
+            g%mwn2 => x(:, ig)
+
+            g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+                        /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
+
+            g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver
+
+            ig = ig + 1
 
         end if
 
