@@ -30,7 +30,7 @@ module OPR_PARTIAL
     public :: OPR_PARTIAL_X
     public :: OPR_PARTIAL_Y
     public :: OPR_PARTIAL_Z
-    public :: OPR_PARTIAL2, OPR_PARTIAL2_IBM
+    public :: OPR_PARTIAL1, OPR_PARTIAL2
 
 contains
 ! ###################################################################
@@ -70,7 +70,7 @@ contains
             call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, &
                                    g%periodic, ibc, g%rhs1_b, g%rhs1_t)
         case (7)
- call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, result, &
+           call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, result, &
                                    g%periodic, ibc, g%rhs1_b, g%rhs1_t)
         end select
 
@@ -87,7 +87,7 @@ contains
             case (3)
                 call TRIDSS(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), result(:, nmin:))
             case (5)
-                call PENTADSS2(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5), result(:, nmin:))
+   call PENTADSS2(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5), result(:, nmin:))
             end select
 
         end if
@@ -145,13 +145,12 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_IBM(nlines, g, u, result)
+    subroutine OPR_IBM(is, nlines, g, u, result)
+        integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: u(nlines*g%size)
         real(wp), intent(out) :: result(nlines*g%size)
-
-        integer(wi), parameter :: is = 0 ! scalar index; if 0, then velocity
 
         ! -------------------------------------------------------------------
         ! modify incoming fields (fill solids with spline functions, depending on direction)
@@ -170,31 +169,15 @@ contains
 
 ! ###################################################################################
 ! ###################################################################################
-    subroutine OPR_PARTIAL2(is, nlines, bcs, g, lu2, u, result, du)
-        ! bcs(*, 2) are not used, need to be updated
+    subroutine OPR_PARTIAL2(nlines, g, lu2, u, result, du)
         use TLab_Arrays, only: wrk2d
 
-        integer(wi), intent(in) :: is           ! premultiplying factor in second derivative
-        !                                       -1            factor 1, pure derivative
-        !                                       0            viscosity (velocity)
-        !                                       1:inb_scal   diffusivity
         integer(wi), intent(in) :: nlines                  ! # of lines to be solved
-        integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
-        !                                       0 biased, non-zero
-        !                                       1 forced to zero
         type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: u(nlines, g%size)
-        real(wp), intent(out) :: result(nlines, g%size)
-        real(wp), intent(inout) :: du(nlines, g%size)  ! First derivative
-
         real(wp), intent(in) :: lu2(:, :)
-
-        ! ###################################################################
-        ! Check whether to calculate 1. order derivative
-        ! ###################################################################
-        if (is >= 0 .or. g%need_1der) then   ! called from OPR_Burgers or need for 1. order derivative
-            call OPR_PARTIAL1(nlines, bcs(:, 1), g, u, du)
-        end if
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(in) :: du(nlines, g%size)          ! 1. derivative for correction in case of Jacobian formulation
+        real(wp), intent(out) :: result(nlines, g%size)
 
         ! ###################################################################
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
@@ -224,72 +207,6 @@ contains
 
         return
     end subroutine OPR_PARTIAL2
-
-! ###################################################################
-! ###################################################################
-    subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2, u, result, du)
-        integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
-        integer(wi), intent(in) :: nlines       ! # of lines to be solved
-        integer(wi), intent(in) :: bcs(2, 2)     ! BCs at xmin (1,*) and xmax (2,*):
-        !                                       0 biased, non-zero
-        !                                       1 forced to zero
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: u(nlines, g%size)
-        real(wp), intent(out) :: result(nlines, g%size)
-        real(wp), intent(inout) :: du(nlines, g%size)  ! First derivative
-
-        real(wp), pointer :: p_fld(:, :)
-        real(wp), pointer :: p_fld_ibm(:)
-
-        real(wp), intent(in) :: lu2(:, :)
-
-        target u
-
-        ! -------------------------------------------------------------------
-
-        ! pointer to field
-        p_fld => u
-
-        ! -------------------------------------------------------------------
-        ! modify incoming fields (fill solids with spline functions, depending on direction)
-
-        select case (g%name)
-
-        case ('x')
-            if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
-                p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
-                call OPR_PARTIAL2(is, nlines, bcs, g, lu2, p_fld_ibm, result, du)  ! now with modified u fields
-            else ! idle IBM-Tasks
-                call OPR_PARTIAL2(is, nlines, bcs, g, lu2, p_fld, result, du)  ! no splines needed
-            end if
-
-        case ('y')
-            if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
-                p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
-                call OPR_PARTIAL2(is, nlines, bcs, g, lu2, p_fld_ibm, result, du)  ! now with modified u fields
-            else ! idle IBM-Tasks
-                call OPR_PARTIAL2(is, nlines, bcs, g, lu2, p_fld, result, du)  ! no splines needed
-            end if
-
-        case ('z')
-            if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
-                call IBM_SPLINE_XYZ(is, p_fld, fld_ibm, g, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
-                p_fld_ibm => fld_ibm                                                     ! pointer to modified velocity
-                call OPR_PARTIAL2(is, nlines, bcs, g, lu2, p_fld_ibm, result, du)  ! now with modified u fields
-            else ! idle IBM-Tasks
-                call OPR_PARTIAL2(is, nlines, bcs, g, lu2, p_fld, result, du)  ! no splines needed
-            end if
-
-        end select
-
-        ! -------------------------------------------------------------------
-
-        nullify (p_fld, p_fld_ibm)
-
-        return
-    end subroutine OPR_PARTIAL2_IBM
 
 ! ###################################################################
 ! ###################################################################
@@ -395,7 +312,6 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) nyz
-        integer(wi), parameter :: is = -1 ! second derivative without viscosity/diffusivity
 
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d
 
@@ -446,14 +362,12 @@ contains
         select case (type)
 
         case (OPR_P2)
-            call OPR_PARTIAL2(is, nyz, bcs, g, g%lu2, p_b, p_c, p_d)
+            if (g%need_1der) call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
+            call OPR_PARTIAL2(nyz, g, g%lu2, p_b, p_c, p_d)
 
         case (OPR_P2_P1)
-            call OPR_PARTIAL2(is, nyz, bcs, g, g%lu2, p_b, p_c, p_d)
-
-            if (.not. g%need_1der) then  ! Check whether we need to calculate the 1. order derivative
-                call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
-            end if
+            call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
+            call OPR_PARTIAL2(nyz, g, g%lu2, p_b, p_c, p_d)
 
         case (OPR_P1)
             if (ibm_partial) then
@@ -475,7 +389,7 @@ contains
             call OPR_PARTIAL1_INT(1, nyz, g, p_b, p_c)
 
         case (OPR_P0_IBM)
-            call OPR_IBM(nyz, g, p_b, p_c)
+            call OPR_IBM(0, nyz, g, p_b, p_c)
 
         end select
 
@@ -532,7 +446,6 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) nxy
-        integer(wi), parameter :: is = -1 ! second derivative without viscosity/diffusivity
 
         real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
@@ -578,14 +491,12 @@ contains
             select case (type)
 
             case (OPR_P2)
-                call OPR_PARTIAL2(is, nxy, bcs, g, g%lu2, p_a, p_b, p_c)
+                if (g%need_1der) call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
+                call OPR_PARTIAL2(nxy, g, g%lu2, p_a, p_b, p_c)
 
             case (OPR_P2_P1)
-                call OPR_PARTIAL2(is, nxy, bcs, g, g%lu2, p_a, p_b, p_c)
-
-                if (.not. g%need_1der) then  ! Check whether we need to calculate the 1. order derivative
-                    call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
-                end if
+                call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
+                call OPR_PARTIAL2(nxy, g, g%lu2, p_a, p_b, p_c)
 
             case (OPR_P1)
                 if (ibm_partial) then
@@ -607,7 +518,7 @@ contains
                 call OPR_PARTIAL1_INT(1, nxy, g, p_a, p_b)
 
             case (OPR_P0_IBM)
-                call OPR_IBM(nxy, g, p_a, p_b)
+                call OPR_IBM(0, nxy, g, p_a, p_b)
 
             end select
 
@@ -650,7 +561,6 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) nxy, nxz
-        integer(wi), parameter :: is = -1 ! second derivative without viscosity/diffusivity
         real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
 ! ###################################################################
@@ -693,14 +603,12 @@ contains
             select case (type)
 
             case (OPR_P2)
-                call OPR_PARTIAL2(is, nxz, bcs, g, g%lu2, p_a, p_b, p_c)
+                if (g%need_1der) call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
+                call OPR_PARTIAL2(nxz, g, g%lu2, p_a, p_b, p_c)
 
             case (OPR_P2_P1)
-                call OPR_PARTIAL2(is, nxz, bcs, g, g%lu2, p_a, p_b, p_c)
-
-                if (.not. g%need_1der) then  ! Check whether we need to calculate the 1. order derivative
-                    call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
-                end if
+                call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
+                call OPR_PARTIAL2(nxz, g, g%lu2, p_a, p_b, p_c)
 
             case (OPR_P1)
                 if (ibm_partial) then
@@ -722,7 +630,7 @@ contains
                 call OPR_PARTIAL1_INT(1, nxz, g, p_a, p_b)
 
             case (OPR_P0_IBM)
-                call OPR_IBM(nxz, g, p_a, p_b)
+                call OPR_IBM(0, nxz, g, p_a, p_b)
 
             end select
 

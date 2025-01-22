@@ -203,6 +203,12 @@ contains
         ! #endif
 
         ! ###################################################################
+        if (g(1)%size == 1) then ! Set to zero in 2D case
+            result = 0.0_wp
+            return
+        end if
+
+        ! ###################################################################
         ! -------------------------------------------------------------------
         ! MPI transposition
         ! -------------------------------------------------------------------
@@ -288,63 +294,62 @@ contains
         ! ###################################################################
         if (g(2)%size == 1) then ! Set to zero in 2D case
             result = 0.0_wp
-
-        else
-            ! ###################################################################
-            nxy = nx*ny
-            nxz = nx*nz
-
-            ! -------------------------------------------------------------------
-            ! Local transposition: Make y-direction the last one
-            ! -------------------------------------------------------------------
-            if (nz == 1) then
-                p_org => s
-                p_dst1(1:nx*nz, 1:ny) => wrk3d(1:nx*nz*ny)
-                p_dst2(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
-            else
-#ifdef USE_ESSL
-                call DGETMO(s, nxy, nxy, nz, tmp1, nz)
-#else
-                call TLab_Transpose(s, nxy, nz, nxy, tmp1, nz)
-#endif
-                p_org => tmp1
-                p_dst1(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
-                p_dst2(1:nx*nz, 1:ny) => wrk3d(1:nx*nz*ny)
-            end if
-
-            ! pointer to velocity
-            if (ivel == OPR_B_SELF) then
-                p_vel => p_org
-            else
-                if (nz == 1) then  ! I do not need the transposed
-                    p_vel => u
-                else               ! I do need the transposed
-                    p_vel => u_t
-                end if
-            end if
-
-            ! ###################################################################
-            call OPR_Burgers_1D(is, nxz, bcs, g(2), Dealiasing(2), rhoinv(2), p_org, p_vel, p_dst2, p_dst1)
-
-            if (subsidenceProps%type == TYPE_SUB_CONSTANT_LOCAL) then
-                do j = 1, ny
-                    p_dst2(:, j) = p_dst2(:, j) + g(2)%nodes(j)*subsidenceProps%parameters(1)*p_dst1(:, j)
-                end do
-            end if
-
-            ! ###################################################################
-            ! Put arrays back in the order in which they came in
-            if (nz > 1) then
-#ifdef USE_ESSL
-                call DGETMO(p_dst2, nz, nz, nxy, result, nxy)
-#else
-                call TLab_Transpose(p_dst2, nz, nxy, nz, result, nxy)
-#endif
-            end if
-
-            nullify (p_org, p_dst1, p_dst2, p_vel)
-
+            return
         end if
+
+        ! ###################################################################
+        nxy = nx*ny
+        nxz = nx*nz
+
+        ! -------------------------------------------------------------------
+        ! Local transposition: Make y-direction the last one
+        ! -------------------------------------------------------------------
+        if (nz == 1) then
+            p_org => s
+            p_dst1(1:nx*nz, 1:ny) => wrk3d(1:nx*nz*ny)
+            p_dst2(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
+        else
+#ifdef USE_ESSL
+            call DGETMO(s, nxy, nxy, nz, tmp1, nz)
+#else
+            call TLab_Transpose(s, nxy, nz, nxy, tmp1, nz)
+#endif
+            p_org => tmp1
+            p_dst1(1:nx*nz, 1:ny) => result(1:nx*nz*ny)
+            p_dst2(1:nx*nz, 1:ny) => wrk3d(1:nx*nz*ny)
+        end if
+
+        ! pointer to velocity
+        if (ivel == OPR_B_SELF) then
+            p_vel => p_org
+        else
+            if (nz == 1) then  ! I do not need the transposed
+                p_vel => u
+            else               ! I do need the transposed
+                p_vel => u_t
+            end if
+        end if
+
+        ! ###################################################################
+        call OPR_Burgers_1D(is, nxz, bcs, g(2), Dealiasing(2), rhoinv(2), p_org, p_vel, p_dst2, p_dst1)
+
+        if (subsidenceProps%type == TYPE_SUB_CONSTANT_LOCAL) then
+            do j = 1, ny
+                p_dst2(:, j) = p_dst2(:, j) + g(2)%nodes(j)*subsidenceProps%parameters(1)*p_dst1(:, j)
+            end do
+        end if
+
+        ! ###################################################################
+        ! Put arrays back in the order in which they came in
+        if (nz > 1) then
+#ifdef USE_ESSL
+            call DGETMO(p_dst2, nz, nz, nxy, result, nxy)
+#else
+            call TLab_Transpose(p_dst2, nz, nxy, nz, result, nxy)
+#endif
+        end if
+
+        nullify (p_org, p_dst1, p_dst2, p_vel)
 
         return
     end subroutine OPR_Burgers_Y
@@ -373,59 +378,58 @@ contains
         ! ###################################################################
         if (g(3)%size == 1) then ! Set to zero in 2D case
             result = 0.0_wp
-
-        else
-            ! ###################################################################
-            ! -------------------------------------------------------------------
-            ! MPI transposition
-            ! -------------------------------------------------------------------
-#ifdef USE_MPI
-            if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Forward(s, tmp1, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
-                p_a => tmp1
-                p_b => result
-                p_c => wrk3d
-                ! nxy = ims_size_k(id)
-                nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
-            else
-#endif
-                p_a => s
-                p_b => wrk3d
-                p_c => result
-                nxy = nx*ny
-#ifdef USE_MPI
-            end if
-#endif
-
-            ! pointer to velocity
-            if (ivel == OPR_B_SELF) then
-                p_vel => p_a
-            else
-#ifdef USE_MPI
-                if (ims_npro_k > 1) then        ! I do need the transposed
-                    p_vel => u_t
-                else
-#endif
-                    p_vel => u                 ! I do not need the transposed
-#ifdef USE_MPI
-                end if
-#endif
-            end if
-
-            ! ###################################################################
-            call OPR_Burgers_1D(is, nxy, bcs, g(3), Dealiasing(3), rhoinv(3), p_a, p_vel, p_c, p_b)
-
-            ! ###################################################################
-            ! Put arrays back in the order in which they came in
-#ifdef USE_MPI
-            if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Backward(p_c, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
-            end if
-#endif
-
-            nullify (p_a, p_b, p_c, p_vel)
-
+            return
         end if
+
+        ! ###################################################################
+        ! -------------------------------------------------------------------
+        ! MPI transposition
+        ! -------------------------------------------------------------------
+#ifdef USE_MPI
+        if (ims_npro_k > 1) then
+            call TLabMPI_TransposeK_Forward(s, tmp1, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+            p_a => tmp1
+            p_b => result
+            p_c => wrk3d
+            ! nxy = ims_size_k(id)
+            nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+        else
+#endif
+            p_a => s
+            p_b => wrk3d
+            p_c => result
+            nxy = nx*ny
+#ifdef USE_MPI
+        end if
+#endif
+
+        ! pointer to velocity
+        if (ivel == OPR_B_SELF) then
+            p_vel => p_a
+        else
+#ifdef USE_MPI
+            if (ims_npro_k > 1) then        ! I do need the transposed
+                p_vel => u_t
+            else
+#endif
+                p_vel => u                 ! I do not need the transposed
+#ifdef USE_MPI
+            end if
+#endif
+        end if
+
+        ! ###################################################################
+        call OPR_Burgers_1D(is, nxy, bcs, g(3), Dealiasing(3), rhoinv(3), p_a, p_vel, p_c, p_b)
+
+        ! ###################################################################
+        ! Put arrays back in the order in which they came in
+#ifdef USE_MPI
+        if (ims_npro_k > 1) then
+            call TLabMPI_TransposeK_Backward(p_c, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        end if
+#endif
+
+        nullify (p_a, p_b, p_c, p_vel)
 
         return
     end subroutine OPR_Burgers_Z
@@ -463,7 +467,8 @@ contains
         if (ibm_burgers) then
             call OPR_PARTIAL2_IBM(is, nlines, bcs, g, g%lu2d(:, :, is), s, result, dsdx)
         else
-            call OPR_PARTIAL2(is, nlines, bcs, g, g%lu2d(:, :, is), s, result, dsdx)
+            call OPR_PARTIAL1(nlines, bcs(:, 1), g, s, dsdx)
+            call OPR_PARTIAL2(nlines, g, g%lu2d(:, :, is), s, result, dsdx)
         end if
 
         ! ###################################################################
@@ -513,5 +518,62 @@ contains
 
         return
     end subroutine OPR_Burgers_1D
+
+! ###################################################################
+! ###################################################################
+    ! modify incoming fields (fill solids with spline functions, depending on direction)
+    subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2, u, result, du)
+        use IBM_VARS
+        integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
+        integer(wi), intent(in) :: nlines       ! # of lines to be solved
+        integer(wi), intent(in) :: bcs(2, 2)     ! BCs at xmin (1,*) and xmax (2,*):
+        !                                       0 biased, non-zero
+        !                                       1 forced to zero
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: lu2(:, :)
+        real(wp), intent(in) :: u(nlines*g%size)
+        real(wp), intent(out) :: result(nlines*g%size)
+        real(wp), intent(inout) :: du(nlines*g%size)  ! First derivative
+
+        target u
+
+        ! -------------------------------------------------------------------
+        real(wp), pointer :: p_fld(:)
+
+        ! -------------------------------------------------------------------
+        select case (g%name)
+        case ('x')
+            if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
+                p_fld => fld_ibm
+            else ! idle IBM-Tasks
+                p_fld => u
+            end if
+
+        case ('y')
+            if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
+                p_fld => fld_ibm
+            else ! idle IBM-Tasks
+                p_fld => u
+            end if
+
+        case ('z')
+            if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
+                call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
+                p_fld => fld_ibm
+            else ! idle IBM-Tasks
+                p_fld => u
+            end if
+
+        end select
+
+        call OPR_PARTIAL1(nlines, bcs(:, 1), g, p_fld, du)
+        call OPR_PARTIAL2(nlines, g, lu2, p_fld, result, du)  ! no splines needed
+
+        nullify (p_fld)
+
+        return
+    end subroutine OPR_PARTIAL2_IBM
 
 end module OPR_Burgers
