@@ -80,9 +80,9 @@ contains
             idummy = 3
             call LIST_REAL(sRes, idummy, buoyancy%vector)
 
-            if (abs(buoyancy%vector(1)) > 0.0_wp) then; buoyancy%active(1) = .true.; call TLab_Write_ASCII(lfile, 'Body force along Ox.'); end if
-            if (abs(buoyancy%vector(2)) > 0.0_wp) then; buoyancy%active(2) = .true.; call TLab_Write_ASCII(lfile, 'Body force along Oy.'); end if
-            if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLab_Write_ASCII(lfile, 'Body force along Oz.'); end if
+            if (abs(buoyancy%vector(1)) > 0.0_wp) then; buoyancy%active(1) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Ox.'); end if
+            if (abs(buoyancy%vector(2)) > 0.0_wp) then; buoyancy%active(2) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Oy.'); end if
+            if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Oz.'); end if
 
             if (froude > 0.0_wp) then
                 buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into the vector g
