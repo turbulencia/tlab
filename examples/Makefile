@@ -9,9 +9,9 @@ PRJS=\
      Case06 \
      Case07 \
      Case08 \
-     Case09 \
      Case10 \
      Case11 \
+     Case12 \
      Case13 \
      Case14 \
      Case15 \
@@ -21,8 +21,6 @@ PRJS=\
      Case19 \
      Case20 \
      Case21 \
-     Case22 \
-     Case23 \
      Case24 \
      Case25 \
      Case26 \
@@ -30,22 +28,25 @@ PRJS=\
      Case28 \
      Case29 \
      Case30 \
-     Case31 \
-     Case32 \
-     Case33 \
-     Case37 \
      Case41 \
-     Case42 \
+     Case43 \
      Case44 \
-     Case45 \
      Case46 \
-     Case47 \
-     Case50 \
-     Case61 \
-     Case62 \
-     Case63
+     Case51 \
+     Case52 \
+     Case53 \
+     Case70 \
+     Case81 \
+     Case82 \
+     Case84 \
+     Case85 \
+     Case86 \
+     Case87 \
+     Case91 \
+     Case92 \
+     Case93
 
-    #  Case12 
+    #  Case42 
     #  Case34 
 
 FILES=avg* grid* flow* scal* dns.out tlab.log dns.obs tlab.err tlab.war tlab.ini.bak tower* part* traj* residence* eps*
