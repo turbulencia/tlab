@@ -32,7 +32,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use DNS_LOCAL, only: use_tower
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use FI_SOURCES
+    use TLab_Sources
     use DNS_TOWER
     use AVG_PHASE
 
@@ -424,8 +424,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         !
         ! Source terms
         !
-        call FI_SOURCES_FLOW(u, s, h1, tmp31)
-        call FI_SOURCES_SCAL(s, hs, tmp31, tmp32, tmp42)
+        call TLab_Sources_Flow(u, s, h1, tmp31)
+        call TLab_Sources_Scal(s, hs, tmp31, tmp32, tmp42)
         !
         ! Impose buffer zone as relaxation terms
         !

@@ -40,7 +40,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     use BOUNDARY_BCS
     use OPR_PARTIAL
     use OPR_ELLIPTIC
-    use FI_SOURCES
+    use TLab_Sources
     implicit none
 
     real(wp), intent(in) :: kex, kim, kco
@@ -126,7 +126,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     end do
 
 ! #######################################################################
-    call FI_SOURCES_FLOW(q, s, hq, tmp1)
+    call TLab_Sources_Flow(q, s, hq, tmp1)
 
 ! #######################################################################
 ! Impose buffer zone as relaxation terms (Flow)

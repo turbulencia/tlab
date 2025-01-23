@@ -7,7 +7,7 @@ program VTGVORTEX
     use OPR_FOURIER
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
-    use FI_SOURCES
+    use TLab_Sources
 
     implicit none
 

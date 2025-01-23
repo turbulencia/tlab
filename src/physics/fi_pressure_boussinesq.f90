@@ -19,7 +19,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use OPR_PARTIAL
     use OPR_Burgers
     use OPR_ELLIPTIC
-    use FI_SOURCES
+    use TLab_Sources
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
     use OPR_FILTERS
 
@@ -66,7 +66,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
 ! #######################################################################
 ! Sources
-    call FI_SOURCES_FLOW(q, s, tmp, tmp1)
+    call TLab_Sources_Flow(q, s, tmp, tmp1)
 
     tmp3 => tmp(:, 1)
     tmp4 => tmp(:, 2)

@@ -3,7 +3,7 @@
 !########################################################################
 !# Sources (processes) in the evolution equations.
 !########################################################################
-module FI_SOURCES
+module TLab_Sources
     use TLab_Constants, only: wp, wi, small_wp
     use TLab_Types, only: term_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
@@ -27,14 +27,14 @@ module FI_SOURCES
     integer ILEN
 #endif
 
-    public :: FI_SOURCES_FLOW
-    public :: FI_SOURCES_SCAL
+    public :: TLab_Sources_Flow
+    public :: TLab_Sources_Scal
     public :: FI_CORIOLIS
 
 contains
 ! #######################################################################
 ! #######################################################################
-    subroutine FI_SOURCES_FLOW(q, s, hq, tmp1)
+    subroutine TLab_Sources_Flow(q, s, hq, tmp1)
         use TLAB_VARS, only: rtime
         real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
@@ -129,11 +129,11 @@ contains
         end do
 
         return
-    end subroutine FI_SOURCES_FLOW
+    end subroutine TLab_Sources_Flow
 
     ! #######################################################################
     ! #######################################################################
-    subroutine FI_SOURCES_SCAL(s, hs, tmp1, tmp2, tmp3, tmp4)
+    subroutine TLab_Sources_Scal(s, hs, tmp1, tmp2, tmp3, tmp4)
         real(wp), intent(in) :: s(isize_field, *)
         real(wp), intent(out) :: hs(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field), tmp2(isize_field), tmp3(isize_field), tmp4(isize_field)
@@ -226,7 +226,7 @@ contains
         end do
 
         return
-    end subroutine FI_SOURCES_SCAL
+    end subroutine TLab_Sources_Scal
 
 !########################################################################
 !# Calculating the coriolis term
@@ -271,4 +271,4 @@ contains
 
     end subroutine FI_CORIOLIS
 
-end module FI_SOURCES
+end module TLab_Sources
