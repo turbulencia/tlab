@@ -50,13 +50,16 @@ contains
     !########################################################################
     subroutine SpecialForcing_Initialize(inifile)
         use TLAB_VARS, only: imax, jmax, kmax
+#ifdef USE_MPI
+        use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
+#endif
         use FDM, only: g
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
-        integer(wi) idummy, i, j, k, iwave
+        integer(wi) idummy, i, j, k, iwave, idsp, kdsp
         real(wp) :: dummy(MAX_PARS)
 
         real(wp), pointer :: p_envelope(:, :, :) => null(), p_phase(:, :, :) => null()
@@ -145,13 +148,18 @@ contains
 
         select case (forcingProps%type)
         case (TYPE_WAVEMAKER)
+#ifdef USE_MPI
+            idsp = ims_offset_i; kdsp = ims_offset_k
+#else
+            idsp = 0; kdsp = 0
+#endif
             p_envelope(1:imax, 1:jmax, 1:kmax) => tmp_envelope(1:imax*jmax*kmax, 1)
             p_phase(1:imax, 1:jmax, 1:nwaves) => tmp_phase(1:imax*jmax*nwaves, 1)
 
             dummy(1) = 0.5_wp/envelope(4)**2.0_wp
-            wrk1d(1:imax, 1) = g(1)%nodes(1:imax) - envelope(1)
+            wrk1d(1:imax, 1) = g(1)%nodes(idsp + 1:idsp + imax) - envelope(1)
             wrk1d(1:jmax, 2) = g(2)%nodes(1:jmax) - envelope(2)
-            wrk1d(1:kmax, 3) = g(3)%nodes(1:kmax) - envelope(3)
+            wrk1d(1:kmax, 3) = g(3)%nodes(kdsp + 1:kdsp + kmax) - envelope(3)
             do k = 1, kmax
                 do j = 1, jmax
                     do i = 1, imax
