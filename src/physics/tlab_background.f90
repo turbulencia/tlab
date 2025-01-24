@@ -18,6 +18,9 @@ module Tlab_Background
     public :: TLab_Initialize_Background
     public :: FLOW_SPATIAL_DENSITY, FLOW_SPATIAL_VELOCITY, FLOW_SPATIAL_SCALAR
 
+    ! background, reference profiles
+    real(wp), allocatable :: sbackground(:, :)              ! Scalars
+
 contains
 !########################################################################
 !# Initialize data of reference profiles
@@ -29,7 +32,7 @@ contains
         use TLAB_VARS, only: imode_eqns, inb_scal
         use TLAB_VARS, only: froude, schmidt
         use TLAB_VARS, only: imode_sim
-        use Thermodynamics, only: imixture
+        use Thermodynamics
         use THERMO_ANELASTIC
         use THERMO_AIRWATER
         use Profiles, only: Profiles_ReadBlock
@@ -143,7 +146,7 @@ contains
 
         ! #######################################################################
         ! mean_rho and delta_rho need to be defined, because of old version.
-        if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+        if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
             if (rbg%type == PROFILE_NONE .and. tbg%type /= PROFILE_NONE) then
                 rbg = tbg
 
@@ -186,31 +189,35 @@ contains
         end do
 
         ! #######################################################################
-        ! Anelastic reference profiles
-        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-            ! -----------------------------------------------------------------------
-            ! Construct reference thermodynamic profiles
-            allocate (sbackground(g(2)%size, inb_scal_array))
+        ! if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+
+        ! -----------------------------------------------------------------------
+        ! Construct reference  profiles
+        allocate (sbackground(g(2)%size, inb_scal_array))   ! scalar profiles
+
+        do is = 1, inb_scal
+            do j = 1, g(2)%size
+                sbackground(j, is) = Profiles_Calculate(sbg(is), g(2)%nodes(j))
+            end do
+        end do
+
+        if (imode_thermo == THERMO_TYPE_ANELASTIC) then     ! thermodynamic profiles
             allocate (epbackground(g(2)%size))
+            allocate (tbackground(g(2)%size))
+            allocate (pbackground(g(2)%size))
             allocate (rbackground(g(2)%size))
             allocate (ribackground(g(2)%size))
-            allocate (pbackground(g(2)%size))
-            allocate (tbackground(g(2)%size))
-
-            do is = 1, inb_scal
-                do j = 1, g(2)%size
-                    sbackground(j, is) = Profiles_Calculate(sbg(is), g(2)%nodes(j))
-                end do
-            end do
 
             call Gravity_Hydrostatic_Enthalpy(g(2), sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d(:, 1))
 
             call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, rbackground)
             ribackground = 1.0_wp/rbackground
 
-            ! -----------------------------------------------------------------------
-            ! Construct reference buoyancy profile
-            allocate (bbackground(g(2)%size))
+        end if
+
+        if (buoyancy%type /= EQNS_NONE) then
+            allocate (bbackground(g(2)%size))                   ! buoyancy profiles
+
             if (buoyancy%type == EQNS_EXPLICIT) then
                 call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, bbackground)
             else
@@ -222,19 +229,25 @@ contains
                 buoyancy%scalar(1) = min(inb_scal_array, buoyancy%scalar(1))
             end if
 
-            ! -----------------------------------------------------------------------
-            ! Add diagnostic fields to reference profile data, if any
-            do is = inb_scal + 1, inb_scal_array ! Add diagnostic fields, if any
-                sbg(is) = sbg(1)
-                schmidt(is) = schmidt(1)
-            end do
-            ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+        end if
+
+        ! -----------------------------------------------------------------------
+        ! Add diagnostic fields to reference profile data, if any
+        do is = inb_scal + 1, inb_scal_array ! Add diagnostic fields, if any
+            sbg(is) = sbg(1)
+            schmidt(is) = schmidt(1)
+        end do
+
+        ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
+        if (buoyancy%type /= EQNS_NONE) then
             sbg(is) = sbg(1)
             sbg(is)%mean = (bbackground(1) + bbackground(g(2)%size))/froude
             sbg(is)%delta = abs(bbackground(1) - bbackground(g(2)%size))/froude
             schmidt(is) = schmidt(1)
+        end if
 
-            ! theta_l as next scalar
+        ! theta_l as next scalar
+        if (imode_thermo == THERMO_TYPE_ANELASTIC) then
             if (imixture == MIXT_TYPE_AIRWATER) then
                 is = is + 1
                 call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, sbackground, p_wrk1d)
@@ -243,8 +256,9 @@ contains
                 sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(g(2)%size, 1))
                 schmidt(is) = schmidt(1)
             end if
-
         end if
+
+        ! end if
 
         return
     end subroutine TLab_Initialize_Background
@@ -614,5 +628,5 @@ contains
 
         return
     end subroutine FLOW_SPATIAL_SCALAR
-    
+
 end module Tlab_Background

@@ -23,9 +23,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
-    use Thermodynamics, only: imixture, itransport, CRATIO_INV, RRATIO
-    use Thermodynamics, only: rd_ov_rv, Cd, Rv, Cvl, Lvl, Ldl, Rd, PREF_1000
-    use Thermodynamics, only: Thermo_Psat_Polynomial
+    use Thermodynamics
     use THERMO_ANELASTIC
     use THERMO_CALORIC
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1
@@ -473,7 +471,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
     ! Density and Favre avrages
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE) then
-        rR(:) = rbackground(:)
+        rR(:) = 1.0_wp ! I divide below by density; rbackground(:)
 
         fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
@@ -723,7 +721,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #define S_LOC(i,j,k)     dwdz(i,j,k)
 
     if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE) then
-        rT(:) = tbackground(:)
+        ! rT(:) = tbackground(:)
 
     else if (imode_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, T_LOC(1, 1, 1))
@@ -890,12 +888,12 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
             RMEAN = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, :, :, 1))*Rd
 
             p_wrk3d = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
-                    (dudx/(dudx - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)  ! dudx is GAMMA_LOC
+                      (dudx/(dudx - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)  ! dudx is GAMMA_LOC
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, lapse_eq(1), wrk1d)
             lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)/RRATIO
 
             p_wrk3d = (dudz - buoyancy%vector(2)/RRATIO*p_wrk3d)/dwdx &
-                    *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, :, :, 1)))
+                      *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, :, :, 1)))
             p_wrk3d = p_wrk3d - Rd/RMEAN*dudy
             call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, bfreq_eq(1), wrk1d)
             bfreq_eq(:) = -bfreq_eq(:)*buoyancy%vector(2)
@@ -918,15 +916,16 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #undef GAMMA_LOC
 #undef T_LOC
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    select case (imode_thermo)
+    case (THERMO_TYPE_ANELASTIC)
         pref(:) = pbackground(:)
         tref(:) = tbackground(:)
         rref(:) = rbackground(:)
-    else
+    case (THERMO_TYPE_COMPRESSIBLE)
         pref(:) = rP(:)
         tref(:) = rT(:)
         rref(:) = rR(:)
-    end if
+    end select
 
     ! ###################################################################
     ! Potential energy
@@ -1156,7 +1155,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Mean viscous dissipation rate
     ! ##################################################################
     p_wrk3d = dudx**2 + dvdy**2 + dwdz**2 + 0.5_wp*((dudy + dvdx)**2 + (dudz + dwdx)**2 + (dvdz + dwdy)**2) &
-            - (dudx + dvdy + dwdz)**2/3.0_wp
+              - (dudx + dvdy + dwdz)**2/3.0_wp
 
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Phi(1), wrk1d)
     Phi(:) = Phi(:)*visc*2.0_wp
@@ -1181,19 +1180,19 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
     p_wrk3d = (dudx + dvdy + dwdz)*c23
     p_wrk3d = (dudx*2.0_wp - p_wrk3d)*dvdx + (dudy + dvdx)*dvdy + (dudz + dwdx)*dvdz &
-            + (dvdy*2.0_wp - p_wrk3d)*dudy + (dudy + dvdx)*dudx + (dvdz + dwdy)*dudz
+              + (dvdy*2.0_wp - p_wrk3d)*dudy + (dudy + dvdx)*dudx + (dvdz + dwdy)*dudz
     if (itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Exy(1), wrk1d)
 
     p_wrk3d = (dudx + dvdy + dwdz)*c23
     p_wrk3d = (dudx*2.0_wp - p_wrk3d)*dwdx + (dudy + dvdx)*dwdy + (dudz + dwdx)*dwdz &
-            + (dwdz*2.0_wp - p_wrk3d)*dudz + (dudz + dwdx)*dudx + (dvdz + dwdy)*dudy
+              + (dwdz*2.0_wp - p_wrk3d)*dudz + (dudz + dwdx)*dudx + (dvdz + dwdy)*dudy
     if (itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Exz(1), wrk1d)
 
     p_wrk3d = (dudx + dvdy + dwdz)*c23
     p_wrk3d = (dvdy*2.0_wp - p_wrk3d)*dwdy + (dudy + dvdx)*dwdx + (dvdz + dwdy)*dwdz &
-            + (dwdz*2.0_wp - p_wrk3d)*dvdz + (dudz + dwdx)*dvdx + (dvdz + dwdy)*dvdy
+              + (dwdz*2.0_wp - p_wrk3d)*dvdz + (dudz + dwdx)*dvdx + (dvdz + dwdy)*dvdy
     if (itransport == EQNS_TRANS_POWERLAW) p_wrk3d = p_wrk3d*vis
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Eyz(1), wrk1d)
 

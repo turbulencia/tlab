@@ -74,22 +74,24 @@ contains
             buoyancy%type = EQNS_NONE
         end if
 
-        buoyancy%vector = 0.0_wp; buoyancy%active = .false.
+        buoyancy%vector = 0.0_wp
+        call ScanFile_Char(bakfile, inifile, block, 'Vector', '0.0,0.0,0.0', sRes)
+        idummy = 3
+        call LIST_REAL(sRes, idummy, buoyancy%vector)
+
+        buoyancy%active = .false.
+        if (abs(buoyancy%vector(1)) > 0.0_wp) then; buoyancy%active(1) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Ox.'); end if
+        if (abs(buoyancy%vector(2)) > 0.0_wp) then; buoyancy%active(2) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Oy.'); end if
+        if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Oz.'); end if
+
+        if (froude > 0.0_wp) then
+            buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into the vector g
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Froude number must be nonzero if buoyancy is retained.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
         if (buoyancy%type /= EQNS_NONE) then
-            call ScanFile_Char(bakfile, inifile, block, 'Vector', '0.0,-1.0,0.0', sRes)
-            idummy = 3
-            call LIST_REAL(sRes, idummy, buoyancy%vector)
-
-            if (abs(buoyancy%vector(1)) > 0.0_wp) then; buoyancy%active(1) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Ox.'); end if
-            if (abs(buoyancy%vector(2)) > 0.0_wp) then; buoyancy%active(2) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Oy.'); end if
-            if (abs(buoyancy%vector(3)) > 0.0_wp) then; buoyancy%active(3) = .true.; call TLab_Write_ASCII(lfile, 'Gravity along Oz.'); end if
-
-            if (froude > 0.0_wp) then
-                buoyancy%vector(:) = buoyancy%vector(:)/froude ! adding the froude number into the vector g
-            else
-                call TLab_Write_ASCII(efile, __FILE__//'. Froude number must be nonzero if buoyancy is retained.')
-                call TLab_Stop(DNS_ERROR_OPTION)
-            end if
 
             buoyancy%parameters(:) = 0.0_wp
             call ScanFile_Char(bakfile, inifile, block, 'Parameters', '0.0', sRes)

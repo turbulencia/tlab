@@ -106,11 +106,7 @@ contains
         integer(wi) j
         real(wp) pmin, pmax
 
-        if (buoyancy%type == EQNS_NONE) then
-            p = pbg%mean
-
-        else            ! hydrostatic equilibrium
-
+        if (buoyancy%active(2)) then ! hydrostatic equilibrium
 #define p_loc(i)       p_wrk1d(i,1)
 #define r_loc(i)       p_wrk1d(i,2)
 #define t_loc(i)       p_wrk1d(i,3)
@@ -153,6 +149,9 @@ contains
                 call TLab_Write_ASCII(efile, 'PRESSURE_MEAN. Density case undeveloped.')
                 call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
+
+        else
+            p = pbg%mean
 
         end if
 
@@ -197,8 +196,25 @@ contains
         ! Calculate density from equation of state
         ! -------------------------------------------------------------------
         if (imode_sim == DNS_MODE_TEMPORAL) then
-            if (buoyancy%type == EQNS_NONE) then
+            if (buoyancy%active(2)) then
 
+                ! -------------------------------------------------------------------
+                ! Temporal shear layer case with volumetric force:
+                ! Calculate density from hydrostatic equilibrium
+                ! assuming a volumetric force along OY
+                ! -------------------------------------------------------------------
+                ! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
+                if (imixture == MIXT_TYPE_AIRWATER) then
+                    call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, T, rho)
+
+                    ! General case
+                else
+                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc)
+                    dummy = 1.0_wp/buoyancy%vector(2)
+                    rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
+                end if
+
+            else
 #define TEM_MEAN_LOC(i,j,k) p_wrk3d(i,j,k)
 #define RHO_MEAN_LOC(i,j,k) txc(i,j,k)
 
@@ -235,24 +251,6 @@ contains
 
 #undef TEM_MEAN_LOC
 #undef RHO_MEAN_LOC
-
-                ! -------------------------------------------------------------------
-                ! Temporal shear layer case with volumetric force:
-                ! Calculate density from hydrostatic equilibrium
-                ! assuming a volumetric force along OY
-                ! -------------------------------------------------------------------
-            else
-                ! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
-                if (imixture == MIXT_TYPE_AIRWATER) then
-                    call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, T, rho)
-
-                    ! General case
-                else
-                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc)
-                    dummy = 1.0_wp/buoyancy%vector(2)
-                    rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
-                end if
-
             end if
 
             ! -------------------------------------------------------------------
