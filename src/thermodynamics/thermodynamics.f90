@@ -24,6 +24,12 @@ module Thermodynamics
     implicit none
     private
 
+    integer, public :: imode_thermo
+    integer, parameter, public :: THERMO_TYPE_NONE = 0
+    integer, parameter, public :: THERMO_TYPE_COMPRESSIBLE = 1
+    integer, parameter, public :: THERMO_TYPE_ANELASTIC = 2
+    integer, parameter, public :: THERMO_TYPE_LINEAR = 3
+
     ! Thermodynamic description of the mixture
     integer(wi), public :: imixture
     character*128 :: chemkin_file                       ! File with thermodynamic data, if used
@@ -79,7 +85,7 @@ contains
     !########################################################################
     subroutine Thermodynamics_Initialize_Parameters(inifile)
         use TLAB_VARS, only: inb_scal, inb_scal_array
-        use TLAB_VARS, only: mach, imode_eqns
+        use TLAB_VARS, only: mach
         ! use THERMO_ANELASTIC, only: scaleheightinv, GRATIO
 
         character(len=*), intent(in), optional :: inifile
@@ -115,11 +121,22 @@ contains
 
             call TLab_Write_ASCII(bakfile, '#')
             call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+            call TLab_Write_ASCII(bakfile, '#Type=<compressible/anelastic>')
             call TLab_Write_ASCII(bakfile, '#Gama=<value>')
             call TLab_Write_ASCII(bakfile, '#Mixture=<value>')
             call TLab_Write_ASCII(bakfile, '#Transport=<constant/powerlaw/sutherland>')
             call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
             call TLab_Write_ASCII(bakfile, '#Nondimensional=<yes,no>')
+
+            call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
+            if (trim(adjustl(sRes)) == 'none') then; imode_thermo = THERMO_TYPE_NONE
+            else if (trim(adjustl(sRes)) == 'compressible') then; imode_thermo = THERMO_TYPE_COMPRESSIBLE
+            else if (trim(adjustl(sRes)) == 'anelastic') then; imode_thermo = THERMO_TYPE_ANELASTIC
+            else if (trim(adjustl(sRes)) == 'linear') then; imode_thermo = THERMO_TYPE_LINEAR
+            else
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in Thermodynamics.Type.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
 
             call ScanFile_Real(bakfile, inifile, block, 'HeatCapacityRatio', '1.4', gama0)      ! needed in compressible formulation
             call ScanFile_Real(bakfile, inifile, block, 'ScaleHeight', '0.0', scaleheightinv)   ! needed in anelastic formulation
@@ -164,6 +181,8 @@ contains
             end if
 
         end if
+
+        if (imode_thermo == THERMO_TYPE_NONE) return
 
         ! ###################################################################
         ! Species tags
@@ -478,7 +497,7 @@ contains
         GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
         if (nondimensional) then
             ! Parameters in the evolution equations
-            if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+            if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
                 RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
                 CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
             end if

@@ -10,7 +10,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLAB_VARS, only: inb_flow_array, inb_scal_array
     use TLAB_VARS, only: imode_eqns, damkohler
     use TLab_Arrays, only: wrk1d, wrk3d
-    use Thermodynamics, only: imixture, itransport
+    use Thermodynamics
     use Gravity, only: buoyancy, bbackground
     use THERMO_THERMAL
     use THERMO_CALORIC
@@ -28,21 +28,25 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     ! ###################################################################
     select case (imode_eqns)
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-        ! Calculate liquid content q_l
-        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
+        if (buoyancy%type == EQNS_BOD_NORMALIZEDMEAN .or. buoyancy%type == EQNS_BOD_SUBTRACTMEAN) then      ! Calculate mean buoyancy background
+            call AVG1V2D_V(nx, ny, nz, 1, s(:, 1), bbackground, wrk1d)
+        end if
+    end select
+
+    select case (imode_thermo)
+    case (THERMO_TYPE_ANELASTIC)
+        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then       ! Calculate liquid content q_l
             call THERMO_ANELASTIC_PH(nx, ny, nz, s(:, 2), s(1, 1))
 
-        else if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+        end if
+
+    case (THERMO_TYPE_LINEAR)
+        if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then                             ! Calculate liquid content q_l
             call THERMO_AIRWATER_LINEAR(nx*ny*nz, s, s(:, inb_scal_array))
 
         end if
 
-        ! Calculate mean bbackground
-        if (buoyancy%type == EQNS_BOD_NORMALIZEDMEAN .or. buoyancy%type == EQNS_BOD_SUBTRACTMEAN) then
-            call AVG1V2D_V(nx, ny, nz, 1, s(:, 1), bbackground, wrk1d)
-        end if
-
-    case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
+    case (THERMO_TYPE_COMPRESSIBLE)
 #define e(j)    q(j,4)
 #define rho(j)  q(j,5)
 #define p(j)    q(j,6)
