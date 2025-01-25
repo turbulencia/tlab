@@ -18,7 +18,7 @@ Let us consider first an ideal gas with one single species. The evolution equati
     \begin{align}
         \partial_t \rho       =& -\partial_k (\rho u_k)                                       \\
         \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )+\Re^{-1}\partial_k \tau_{ik}   \nonumber \\
-        &  - \partial_i p +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
+        &  - \partial_i p +\Fr^{-1} \rho g_i\,\rho +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                         \\
         \partial_t (\rho e)   =& -\partial_k (\rho e u_k ) +\Re^{-1}\Pr^{-1} \partial_k \left(\lambda^{*}\partial_kT\right) \nonumber \\
         &-(\gamma_0-1)\Ma^2\,p\, \partial_k u_k  + (\gamma_0-1)\Ma^2\Re^{-1}\phi           \\
         \partial_t (\rho \zeta_i) =& -\partial_k (\rho \zeta_i u_k)-\Re^{-1}\Sc_i^{-1} \partial_k j_{ik}
@@ -72,7 +72,7 @@ Let us consider a mixture of $N$ species or constituents with mass fractions $Y_
     \begin{align}
         \partial_t \rho       =& -\partial_k (\rho u_k)                                                \\
         \partial_t (\rho u_i) =& -\partial_k (\rho u_i u_k )+\Re^{-1}\partial_k \tau_{ik}  \nonumber\\
-        & -\partial_i p +\Fr^{-1} \rho g_i\,b +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
+        & -\partial_i p +\Fr^{-1} \rho g_i\,\rho +\Ro^{-1}\rho\epsilon_{ijk} f_ku_j                                     \\
         \partial_t (\rho e)   =& -\partial_k (\rho e u_k )+\Re^{-1}\Pr^{-1}\partial_k\color{red}{\left[(\lambda/C_p)^{*}\partial_kh\right]}\nonumber\\
         & \color{red}{+\Re^{-1}\Pr^{-1} \partial_k\left[\sum\left(\Le_i^{-1}(\rho D)_i^*
         -(\lambda/C_p)^*\right)h_i \partial_k  Y_i\right]}                                  \nonumber\\
@@ -163,11 +163,13 @@ We need to solve a Poisson equation for the pressure. The thermodynamics is norm
 Dynamics and thermodynamics are still coupled by the background density and the buoyancy field. The evolution equations are:
 \begin{subequations}
     \begin{align}
-        0                 =& -\partial_k(\rho_\mathrm{bg}u_k)   & \\
-        \partial_t  u_i   =& - u_k\partial_k u_i -\rho_\mathrm{bg}^{-1}\partial_i p' &
-        +\Re^{-1}\qquad\;\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) & +\Fr^{-1}\, g_i\,b+\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  \\
-        \partial_t\zeta_i =& -u_k \partial_k \zeta_i &
-        + \Re^{-1}\Sc_i^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &+ \Da_i\,\rho_\mathrm{bg}^{-1}w_i
+        0                 =& -\partial_k(\rho_\mathrm{bg}u_k)  \\
+        \partial_t  u_i   =& - u_k\partial_k u_i 
+        +\Re^{-1}\qquad\;\rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*} \partial_k u_i\right) -\rho_\mathrm{bg}^{-1}\partial_i p' &&
+        + \Fr^{-1}\, g_i\,b  +\Ro^{-1}\,\epsilon_{ijk} f_k\,u_j  & \\
+        \partial_t\zeta_i =& -u_k \partial_k \zeta_i 
+        + (\Re\,\Sc_i)^{-1}\, \rho_\mathrm{bg}^{-1}\partial_k \left( \mu^{*}\partial_k\zeta_i\right) &&
+        + \Da_i\,\rho_\mathrm{bg}^{-1}w_i  
     \end{align}
 \end{subequations}
 where the buoyancy is
