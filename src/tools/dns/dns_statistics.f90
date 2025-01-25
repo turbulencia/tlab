@@ -4,6 +4,8 @@
 
 module DNS_STATISTICS
     use TLab_Constants, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
+    use Thermodynamics
+    use Gravity, only: buoyancy, Gravity_Buoyancy
     implicit none
     save
     private
@@ -12,7 +14,8 @@ module DNS_STATISTICS
     real(wp), allocatable, public :: mean_flow(:, :, :)     ! These 2 are for spatial case
     real(wp), allocatable, public :: mean_scal(:, :, :, :)
 
-    logical, public :: stats_averages, stats_pdfs, stats_intermittency, stats_buoyancy
+    logical, public :: stats_averages, stats_pdfs, stats_intermittency
+    logical :: stats_buoyancy
 
     public :: DNS_STATISTICS_INITIALIZE, DNS_STATISTICS_TEMPORAL, DNS_STATISTICS_SPATIAL
 
@@ -32,6 +35,16 @@ contains
             allocate (mean_flow(nstatavg, jmax, MA_MOMENTUM_SIZE))
             allocate (mean_scal(nstatavg, jmax, MS_SCALAR_SIZE, inb_scal))
 
+        end if
+
+        stats_buoyancy = .false.  ! default
+
+        ! in case we need the buoyancy statistics
+        if (buoyancy%type == EQNS_BOD_QUADRATIC .or. &
+            buoyancy%type == EQNS_BOD_BILINEAR .or. &
+            imixture == MIXT_TYPE_AIRWATER .or. &
+            imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+            stats_buoyancy = .true.
         end if
 
         return
@@ -55,10 +68,8 @@ contains
         use TLab_Arrays
         use THERMO_ANELASTIC
         use DNS_ARRAYS
-        use Thermodynamics
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
-        use Gravity, only: buoyancy, Gravity_Buoyancy
         use FI_VORTICITY_EQN
 
         ! -------------------------------------------------------------------
@@ -75,16 +86,6 @@ contains
 #ifdef TRACE_ON
         call TLab_Write_ASCII(tfile, 'ENTERING STATS_TEMPORAL_LAYER')
 #endif
-
-        stats_buoyancy = .false.  ! default
-
-        ! in case we need the buoyancy statistics
-        if (buoyancy%type == EQNS_BOD_QUADRATIC .or. &
-            buoyancy%type == EQNS_BOD_BILINEAR .or. &
-            imixture == MIXT_TYPE_AIRWATER .or. &
-            imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-            stats_buoyancy = .true.
-        end if
 
         ! Calculate pressure
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then

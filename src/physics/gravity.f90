@@ -14,8 +14,8 @@ module Gravity
     implicit none
     private
 
-    type(term_dt) :: buoyancy
-    real(wp), allocatable :: bbackground(:)
+    type(term_dt), public, protected :: buoyancy
+    real(wp), allocatable, public :: bbackground(:)
 
     ! integer, parameter :: EQNS_BOD_HOMOGENEOUS = 5
     ! integer, parameter :: EQNS_BOD_LINEAR = 6
@@ -24,7 +24,6 @@ module Gravity
     ! integer, parameter :: EQNS_BOD_NORMALIZEDMEAN = 9
     ! integer, parameter :: EQNS_BOD_SUBTRACTMEAN = 10
 
-    public :: buoyancy, bbackground
     public :: Gravity_Initialize
     public :: Gravity_Hydrostatic_Enthalpy
     public :: Gravity_Buoyancy, Gravity_Buoyancy_Source
@@ -97,7 +96,8 @@ contains
             call ScanFile_Char(bakfile, inifile, block, 'Parameters', '0.0', sRes)
             idummy = MAX_PROF
             call LIST_REAL(sRes, idummy, buoyancy%parameters)
-            buoyancy%scalar(1) = idummy
+            buoyancy%scalar(1) = idummy                                     ! number of scalars affecting buoyancy function
+            buoyancy%scalar(1) = min(inb_scal_array, buoyancy%scalar(1))
 
         end if
 

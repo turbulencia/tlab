@@ -34,7 +34,6 @@ contains
         use TLAB_VARS, only: froude, schmidt
         use Thermodynamics
         use THERMO_ANELASTIC
-        use THERMO_AIRWATER
         use Profiles, only: Profiles_ReadBlock
         use Profiles, only: PROFILE_NONE, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
         use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
@@ -189,8 +188,6 @@ contains
         end do
 
         ! #######################################################################
-        ! if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
-
         ! -----------------------------------------------------------------------
         ! Construct reference  profiles
         allocate (sbackground(g(2)%size, inb_scal_array))   ! scalar profiles
@@ -218,15 +215,10 @@ contains
         if (buoyancy%type /= EQNS_NONE) then
             allocate (bbackground(g(2)%size))                   ! buoyancy profiles
 
-            if (buoyancy%type == EQNS_EXPLICIT) then
-                call THERMO_ANELASTIC_BUOYANCY(1, g(2)%size, 1, sbackground, bbackground)
-            else
-                bbackground(:) = 0.0_wp
-                if (buoyancy%active(2)) then
-                    call Gravity_Buoyancy(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
-                    bbackground(:) = p_wrk1d(:, 1)
-                end if
-                buoyancy%scalar(1) = min(inb_scal_array, buoyancy%scalar(1))
+            bbackground(:) = 0.0_wp
+            if (buoyancy%active(2)) then
+                call Gravity_Buoyancy(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
+                bbackground(:) = p_wrk1d(:, 1)
             end if
 
         end if
