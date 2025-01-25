@@ -1,8 +1,9 @@
 #include "dns_const.h"
+#include "dns_error.h"
 
 module Tlab_Background
-    use TLab_Constants, only: wp, wi, lfile, wfile, MAX_VARS
-    use TLab_WorkFlow, only: TLab_Write_ASCII
+    use TLab_Constants, only: wp, wi, efile, lfile, wfile, MAX_VARS
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Profiles, only: profiles_dt, Profiles_Calculate
     use THERMO_THERMAL
     implicit none
@@ -28,10 +29,9 @@ contains
     subroutine TLab_Initialize_Background(inifile)
         use TLab_Pointers_3D, only: p_wrk1d
         use FDM, only: g
-        use TLAB_VARS, only: inb_scal_array
-        use TLAB_VARS, only: imode_eqns, inb_scal
-        use TLAB_VARS, only: froude, schmidt
         use TLAB_VARS, only: imode_sim
+        use TLAB_VARS, only: inb_scal, inb_scal_array
+        use TLAB_VARS, only: froude, schmidt
         use Thermodynamics
         use THERMO_ANELASTIC
         use THERMO_AIRWATER
@@ -48,7 +48,7 @@ contains
 
         real(wp) ploc(2), rloc(2), Tloc(2), sloc(2, 1:MAX_VARS)
 
-        integer(wi) is, j
+        integer(wi) is, j, idummy
 
         ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
@@ -103,18 +103,18 @@ contains
         call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Temperature', tbg)
         call Profiles_ReadBlock(bakfile, inifile, 'Flow', 'Enthalpy', hbg)
 
-        ! ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
-        ! if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
-        !     idummy=0
-        !     if (pbg%type == PROFILE_NONE) idummy=idummy+1
-        !     if (rbg%type == PROFILE_NONE) idummy=idummy+1
-        !     if (tbg%type == PROFILE_NONE) idummy=idummy+1
-        !     if (hbg%type == PROFILE_NONE) idummy=idummy+1
-        !     if (idummy /= 2) then
-        !         call TLab_Write_ASCII(efile, __FILE__//'. Specify only 2 thermodynamic profiles.')
-        !         call TLab_Stop(DNS_ERROR_OPTION)
-        !     end if
-        ! end if
+        ! consistency check; two and only two are givem TO BE CHECKED BECAUSE PROFILE_NONE is used as constant profile
+        if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
+            idummy = 0
+            if (pbg%type == PROFILE_NONE) idummy = idummy + 1
+            if (rbg%type == PROFILE_NONE) idummy = idummy + 1
+            if (tbg%type == PROFILE_NONE) idummy = idummy + 1
+            if (hbg%type == PROFILE_NONE) idummy = idummy + 1
+            if (idummy /= 2) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Specify only 2 thermodynamic profiles.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
+        end if
 
         ! -----------------------------------------------------------------------
         if (imode_sim == DNS_MODE_SPATIAL) then     ! Thickness evolutions delta_i/diam_i=a*(x/diam_i+b)
