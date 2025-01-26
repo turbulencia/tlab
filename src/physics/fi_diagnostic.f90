@@ -7,9 +7,8 @@
 !########################################################################
 subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: inb_flow_array, inb_scal_array
+    use TLAB_VARS, only: inb_flow_array, inb_flow, inb_scal_array, inb_scal
     use TLAB_VARS, only: imode_eqns
-    use TLAB_VARS, only: damkohler
     use TLab_Arrays, only: wrk1d, wrk3d
     use Thermodynamics
     use Gravity, only: buoyancy, bbackground
@@ -34,31 +33,33 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
         end if
     end select
 
-    select case (imode_thermo)
-    case (THERMO_TYPE_ANELASTIC)
-        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then       ! Calculate liquid content q_l
-            call THERMO_ANELASTIC_PH(nx, ny, nz, s(:, 2), s(1, 1))
+    ! calculate diagnostic variables
+    if (inb_flow_array > inb_flow .or. inb_scal_array > inb_scal) then
+        select case (imode_thermo)
+        case (THERMO_TYPE_ANELASTIC)
+            if (imixture == MIXT_TYPE_AIRWATER) then                            ! Calculate liquid content q_l
+                call THERMO_ANELASTIC_PH(nx, ny, nz, s(:, 2), s(1, 1))
+            end if
 
-        end if
+        case (THERMO_TYPE_LINEAR)
+            if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then                     ! Calculate liquid content q_l
+                call THERMO_AIRWATER_LINEAR(nx*ny*nz, s, s(:, inb_scal_array))
+            end if
 
-    case (THERMO_TYPE_LINEAR)
-        if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then                             ! Calculate liquid content q_l
-            call THERMO_AIRWATER_LINEAR(nx*ny*nz, s, s(:, inb_scal_array))
-
-        end if
-
-    case (THERMO_TYPE_COMPRESSIBLE)
+        case (THERMO_TYPE_COMPRESSIBLE)
 #define e(j)    q(j,4)
 #define rho(j)  q(j,5)
 #define p(j)    q(j,6)
 #define T(j)    q(j,7)
 #define vis(j)  q(j,8)
 
-        call THERMO_CALORIC_TEMPERATURE(nx*ny*nz, s, e(1), rho(1), T(1), wrk3d)
-        call THERMO_THERMAL_PRESSURE(nx*ny*nz, s, rho(1), T(1), p(1))
-        if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) call THERMO_VISCOSITY(nx*ny*nz, T(1), vis(1))
+            call THERMO_CALORIC_TEMPERATURE(nx*ny*nz, s, e(1), rho(1), T(1), wrk3d)
+            call THERMO_THERMAL_PRESSURE(nx*ny*nz, s, rho(1), T(1), p(1))
+            if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) call THERMO_VISCOSITY(nx*ny*nz, T(1), vis(1))
 
-    end select
+        end select
+
+    end if
 
     return
 end subroutine FI_DIAGNOSTIC

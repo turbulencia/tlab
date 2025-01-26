@@ -8,7 +8,7 @@
 module Gravity
     use TLab_Constants, only: wp, wi, small_wp, efile, lfile, wfile, MAX_PROF
     use TLab_Types, only: term_dt
-    use TLAB_VARS, only: inb_scal, inb_scal_array
+    use TLAB_VARS, only: inb_scal, inb_scal_array, inb_flow, inb_flow_array
     use TLAB_VARS, only: froude
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
@@ -111,7 +111,6 @@ contains
     subroutine Gravity_Hydrostatic_Enthalpy(g, s, ep, T, p, yref, pref, wrk1d)
         use TLab_Constants, only: BCS_MIN
         use FDM, only: grid_dt
-        use TLAB_VARS, only: damkohler
         use Thermodynamics
         use THERMO_ANELASTIC
         use THERMO_AIRWATER
@@ -155,10 +154,8 @@ contains
 
         niter = 10
 
-        p(:) = pref             ! initialize iteration
-        if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then       ! Get ql, if necessary
-            s(:, 3) = 0.0_wp
-        end if
+        p(:) = pref                                                                 ! initialize iteration
+        s(:, inb_scal + 1:inb_scal_array) = 0.0_wp                                  ! initialize diagnostic
         do iter = 1, niter           ! iterate
             if (imode_thermo == THERMO_TYPE_ANELASTIC) then
                 pbackground(:) = p_aux(:)
@@ -184,25 +181,28 @@ contains
             dummy = pref/dummy
             p(:) = dummy*p(:)
 
-            select case (imode_thermo)                  ! Calculate diagnostic variables such as liquid content q_l
-            case (THERMO_TYPE_ANELASTIC)
-                pbackground(:) = p(:)
-                if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
-                    call THERMO_ANELASTIC_PH(1, g%size, 1, s(:, 2), s(:, 1))
-                    call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, T)
-                end if
+            if (inb_flow_array > inb_flow .or. inb_scal_array > inb_scal) then      ! calculate diagnostic s.a. liquid content q_l
+                select case (imode_thermo)
+                case (THERMO_TYPE_ANELASTIC)
+                    pbackground(:) = p(:)
+                    if (imixture == MIXT_TYPE_AIRWATER) then
+                        call THERMO_ANELASTIC_PH(1, g%size, 1, s(:, 2), s(:, 1))
+                        call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, T)
+                    end if
 
-            case (THERMO_TYPE_LINEAR)
-                if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                    call THERMO_AIRWATER_LINEAR(g%size, s, s(:, inb_scal_array))
+                case (THERMO_TYPE_LINEAR)
+                    if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
+                        call THERMO_AIRWATER_LINEAR(g%size, s, s(:, inb_scal_array))
 
-                end if
+                    end if
 
-            case (THERMO_TYPE_COMPRESSIBLE)
-                if (imixture == MIXT_TYPE_AIRWATER .and. damkohler(3) <= 0.0_wp) then
-                    call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
-                end if
-            end select
+                case (THERMO_TYPE_COMPRESSIBLE)
+                    if (imixture == MIXT_TYPE_AIRWATER) then
+                        call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
+                    end if
+                end select
+                
+            end if
 
         end do
 
