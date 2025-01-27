@@ -28,7 +28,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLAB_VARS, only: imode_eqns
     use FDM, only: g
     use TLAB_VARS, only: visc
     use Thermodynamics, only: itransport

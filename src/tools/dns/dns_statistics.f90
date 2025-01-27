@@ -61,10 +61,10 @@ contains
         use TLab_Pointers, only: pointers_dt
         use FDM, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
-        use TLAB_VARS, only: imode_eqns, scal_on
-        use TLAB_VARS, only: froude
+        use TLAB_VARS, only: imode_eqns
+        use TLAB_VARS, only: scal_on
+        use TLAB_VARS, only: froude, schmidt
         use TLAB_VARS, only: itime, rtime
-        use TLAB_VARS, only: schmidt
         use TLab_Arrays
         use THERMO_ANELASTIC
         use DNS_ARRAYS

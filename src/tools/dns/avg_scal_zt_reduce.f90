@@ -31,7 +31,8 @@ module AVG_SCAL_ZT
     use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-    use TLAB_VARS, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d, imode_eqns
+    use TLAB_VARS, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d
+    use TLAB_VARS, only: imode_eqns
     use FDM, only: g
     use Avg_Spatial
     use TLAB_VARS, only: visc

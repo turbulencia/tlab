@@ -5,7 +5,9 @@ module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
     use TLab_Types, only: term_dt
     use FDM, only: grid_dt
-    use TLAB_VARS, only: imode_eqns, inb_scal_array, isize_field
+    use TLAB_VARS, only: imode_eqns
+    use TLAB_VARS, only: inb_scal_array
+    use TLAB_VARS, only: isize_field
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real

@@ -5,7 +5,8 @@
 subroutine DNS_FILTER()
 
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal
-    use TLAB_VARS, only: imode_eqns, imode_sim
+    use TLAB_VARS, only: imode_eqns
+    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: itime, rtime
     use FDM, only: g
     use TLab_Arrays

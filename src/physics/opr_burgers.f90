@@ -47,7 +47,8 @@ contains
     subroutine OPR_Burgers_Initialize(inifile)
         use TLAB_VARS, only: isize_field, imax, jmax, kmax
         use TLab_Memory, only: TLab_Allocate_Real
-        use TLAB_VARS, only: imode_eqns, inb_scal
+        use TLAB_VARS, only: imode_eqns
+        use TLAB_VARS, only: inb_scal
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
         ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k

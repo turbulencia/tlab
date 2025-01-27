@@ -93,7 +93,8 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
         use TLab_Constants, only: efile, lfile
-        use TLAB_VARS, only: imode_eqns, stagger_on
+        use TLAB_VARS, only: imode_eqns
+        use TLAB_VARS, only: stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLab_Arrays
         use TLab_WorkFlow, only: TLab_Write_ASCII

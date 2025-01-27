@@ -22,7 +22,8 @@ module BOUNDARY_BUFFER
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use TLAB_VARS, only: imode_eqns, imode_sim
+    use TLAB_VARS, only: imode_eqns
+    use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use FDM, only: g
     use TLAB_VARS, only: itime

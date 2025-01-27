@@ -13,7 +13,8 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, imode_eqns
+    use TLAB_VARS, only: imax, jmax, kmax
+    use TLAB_VARS, only: imode_eqns
     use FDM, only: g
     use TLAB_VARS, only: visc
     use TLab_Pointers
