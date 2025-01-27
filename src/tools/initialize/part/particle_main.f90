@@ -15,6 +15,7 @@ program INIPART
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
     use PARTICLE_VARS

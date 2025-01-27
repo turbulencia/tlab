@@ -20,6 +20,7 @@ program PARTICLE_BUILD_PDF
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use Thermodynamics
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use THERMO_AIRWATER
     use PARTICLE_VARS
     use PARTICLE_ARRAYS

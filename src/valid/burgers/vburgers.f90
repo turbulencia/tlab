@@ -15,6 +15,7 @@ program VBURGERS
     use TLabMPI_VARS
 #endif
     use FDM, only: g, FDM_Initialize
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use IO_FIELDS
     use OPR_PARTIAL
     use OPR_Burgers

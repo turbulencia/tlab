@@ -18,14 +18,15 @@ program TRANSFIELDS
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
-    use FDM, only: g,  FDM_Initialize
-    use IO_FIELDS
+    use FDM, only: g, FDM_Initialize
     use Thermodynamics
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
+    use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
     use Gravity, only: Gravity_Initialize
     use THERMO_ANELASTIC
+    use IO_FIELDS
     use OPR_FILTERS
     use OPR_INTERPOLATORS
     use OPR_FOURIER
@@ -77,7 +78,7 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
 
     call NavierStokes_Initialize_Parameters(ifile)
@@ -282,10 +283,10 @@ call TLabMPI_Transpose_Initialize(ifile)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
+    call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
+    call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
     call TLab_Initialize_Background(ifile)
 

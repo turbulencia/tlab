@@ -41,6 +41,7 @@ program PARTICLE_POS_TRAJEC
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use Thermodynamics
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS

@@ -29,6 +29,7 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     use TLabMPI_VARS
 #endif
     use FDM, only: g, FDM_Initialize
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use OPR_PARTIAL
 
     implicit none

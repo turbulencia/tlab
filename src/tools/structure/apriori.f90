@@ -21,6 +21,7 @@ program APRIORI
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
     use IO_FIELDS
     use OPR_FILTERS

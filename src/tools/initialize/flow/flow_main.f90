@@ -21,6 +21,7 @@ program INIFLOW
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use TLab_Background, only: TLab_Initialize_Background

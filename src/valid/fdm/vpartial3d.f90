@@ -12,6 +12,7 @@ program VPARTIAL3D
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use IO_FIELDS
     use OPR_FOURIER
     use OPR_PARTIAL

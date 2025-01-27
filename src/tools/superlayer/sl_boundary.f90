@@ -20,6 +20,7 @@ program SL_BOUNDARY
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
 

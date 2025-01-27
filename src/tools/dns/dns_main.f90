@@ -9,20 +9,21 @@ program DNS
     use TLAB_VARS, only: imode_sim, fourier_on, scal_on, flow_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: itime
-    use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
-    use FDM, only: g, FDM_Initialize
     use TLab_Arrays
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
+    use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
     use Radiation, only: Radiation_Initialize
     use Microphysics, only: Microphysics_Initialize
     use Chemistry, only: Chemistry_Initialize
     use SpecialForcing, only: SpecialForcing_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
+    use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS

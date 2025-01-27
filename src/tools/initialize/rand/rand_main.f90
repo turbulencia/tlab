@@ -15,11 +15,12 @@ program INIRAND
     use TLabMPI_PROCS, only: TLabMPI_Initialize, ims_pro
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use RAND_LOCAL
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use IO_FIELDS
     use OPR_FOURIER
+    use RAND_LOCAL
 
     implicit none
 

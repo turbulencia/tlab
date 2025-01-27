@@ -46,10 +46,11 @@ program SPECTRA
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose
 #endif
-    use TLab_Background, only: TLab_Initialize_Background
     use FDM, only: g, FDM_Initialize
-    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: NavierStokes_Initialize_Parameters
+    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
+    use TLab_Background, only: TLab_Initialize_Background
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_ANELASTIC
     use Radiation
