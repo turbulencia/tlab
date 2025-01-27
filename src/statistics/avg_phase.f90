@@ -17,7 +17,7 @@ module AVG_PHASE
   use TLAB_ARRAYS, only: q, s
   use TLab_Arrays, only: wrk2d, wrk3d
   use Thermodynamics, only: gama0
-  use IO_FIELDS
+  use IO_FIELDS, only: IO_FLOW, IO_SCAL
   use TLab_Memory, only: Tlab_Allocate_Real_LONG
   use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
