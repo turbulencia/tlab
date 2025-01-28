@@ -16,7 +16,7 @@ program VTGVORTEX
     real(wp), dimension(:), allocatable :: wrk1d, wrk2d, wrk3d
 
     integer(wi) ij, iv, iopt
-    real(wp) dummy, error
+    real(wp) dummy, error, params(0)
     character*(32) fname
 
 ! ###################################################################
@@ -34,10 +34,10 @@ program VTGVORTEX
     allocate (q(isize_field, 4))
     allocate (txc(isize_txc_field, 4))
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call FDM_Initialize(x, g(1), wrk1d(:, 1), wrk1d(:, 4))
+    call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
+    call FDM_Initialize(z, g(3), wrk1d(:, 3), wrk1d(:, 4))
 
     call TLab_Initialize_Background(ifile)
 
@@ -67,7 +67,8 @@ program VTGVORTEX
         read (*, *) itime
 
         write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, 0, q)
+        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 3, 0, q, params)
+
         txc(:, 1) = C_0_R; txc(:, 4) = C_0_R
 !  CALL Forcing_Sinusoidal_NoSlip(imax,jmax,kmax,  &
 !       rtime,visc, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4))

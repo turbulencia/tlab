@@ -142,7 +142,7 @@ end subroutine IBM_INITIALIZE_GEOMETRY
 subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
     use IBM_VARS
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
     use IO_FIELDS, only: imode_files, IO_FLOW, IO_READ_FIELDS
     use TLab_Constants, only: wp, wi
 
@@ -152,6 +152,7 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
     logical, intent(inout) :: flag_epsp
 
     character(len=32) :: name
+    real(wp) params(0)
 
     ! ================================================================== !
     wrk3d(:) = 0.0_wp
@@ -168,10 +169,10 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
         case (IBM_IO_REAL)
             if (flag_epsp) then
                 name = epsp_name_real
-                call IO_READ_FIELDS(name, IO_FLOW, imax, jmax, kmax, 1, 0, epsp)
+                call IO_READ_FIELDS(name, imax, jmax, kmax, itime, 1, 0, epsp, params)
             else
                 name = eps_name_real
-                call IO_READ_FIELDS(name, IO_FLOW, imax, jmax, kmax, 1, 0, eps)
+                call IO_READ_FIELDS(name, imax, jmax, kmax, itime, 1, 0, eps, params)
             end if
         case (IBM_IO_INT)
             call IBM_IO_READ_INT_GEOMETRY(wrk3d, flag_epsp)

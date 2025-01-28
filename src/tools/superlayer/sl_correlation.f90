@@ -56,7 +56,9 @@ program SL_CORRELATION
 
     real(wp), dimension(:, :), pointer :: dx, dy, dz
 
-! ###################################################################
+    real(wp) params(1)
+
+    ! ###################################################################
     call DNS_START
 
     call TLab_Initialize_Parameters('tlab.ini')
@@ -163,10 +165,11 @@ program SL_CORRELATION
 
 ! read data
         write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, 0, q)
+        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 3, 0, q, params)
+        rtime = params(1)
 
         write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, inb_scal, z1)
+        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, z1, params)
 
 ! do correlations
         call SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, profiles, &

@@ -32,7 +32,7 @@ program VBURGERS
     real(wp), dimension(:, :, :), pointer :: a, b, c
 
     integer(wi) i, j, k, bcs(2, 2)
-    real(wp) dummy, error
+    real(wp) dummy, error, params(0)
 
 ! ###################################################################
     call TLab_Start()
@@ -68,7 +68,7 @@ program VBURGERS
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
     visc = 1.0_wp/big_wp
 

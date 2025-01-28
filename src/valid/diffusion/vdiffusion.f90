@@ -14,7 +14,7 @@ program VDIFFUSION
 
     integer(wi) i, j, ij, iopt
     integer(wi) isize_wrk3d
-    real(wp) dummy, error, pi_loc, factor, wavenumber, x_loc
+    real(wp) dummy, error, pi_loc, factor, wavenumber, x_loc, params(0)
     character*(32) fname
 
 ! ###################################################################
@@ -61,7 +61,7 @@ program VDIFFUSION
     write (*, *) 'Iteration?'; read (*, *) itime
 
     write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-    call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, 0, s)
+    call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 1, 0, s, params)
 
 ! Theoretical
     factor = exp(-visc*rtime*(C_2_R*pi_loc/scalex*wavenumber)**2)

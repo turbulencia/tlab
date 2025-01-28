@@ -5,7 +5,7 @@ module FLOW_LOCAL
     use TLab_Constants, only: efile, lfile, wfile
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN
     use Discrete, only: discrete_dt
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
     use TLAB_VARS, only: inb_wrk2d, inb_txc
     use TLAB_VARS, only: stagger_on
     use FDM, only: g
@@ -232,7 +232,6 @@ contains
 
     ! ###################################################################
     subroutine VELOCITY_BROADBAND(u, v, w, ax, ay, az, tmp4, tmp5)
-        use TLAB_VARS, only: visc
         use FI_VECTORCALCULUS
 
         real(wp), dimension(imax, jmax, kmax), intent(OUT) :: u, v, w
@@ -240,16 +239,14 @@ contains
 
         ! -------------------------------------------------------------------
         integer(wi) bcs(2, 2), bcs2(2, 2)
-        real(wp) dummy
+        real(wp) dummy, params(0)
 
         ! ###################################################################
         bcs = 0
 
-        dummy = visc
-        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 1, u)
-        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 2, v)
-        call IO_READ_FIELDS('flow.rand', IO_FLOW, imax, jmax, kmax, 3, 3, w)
-        visc = dummy
+        call IO_READ_FIELDS('flow.rand', imax, jmax, kmax, itime, 3, 1, u, params)
+        call IO_READ_FIELDS('flow.rand', imax, jmax, kmax, itime, 3, 2, v, params)
+        call IO_READ_FIELDS('flow.rand', imax, jmax, kmax, itime, 3, 3, w, params)
 
         do j = 1, jmax   ! Remove mean
             dummy = AVG1V2D(imax, jmax, kmax, j, 1, u)
@@ -422,7 +419,6 @@ contains
     !# Together discrete and broadband in one procedure
     !########################################################################
     subroutine DENSITY_FLUCTUATION(s, p, rho, T, h)
-        use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
         use Thermodynamics, only: imixture
 
         real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
@@ -430,7 +426,7 @@ contains
 
         ! -------------------------------------------------------------------
         real(wp) dummy
-        real(wp) xcenter, amplify
+        real(wp) xcenter, amplify, params(0)
         type(profiles_dt) :: prof_loc
 
         real(wp), dimension(:), pointer :: x, y, z
@@ -456,9 +452,7 @@ contains
 
         select case (flag_t)
         case (PERT_BROADBAND)
-            dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp(:, :))
-            rtime = dummy
+            call IO_READ_FIELDS('scal.rand', imax, 1, kmax, itime, 1, 1, disp(:, :), params)
             dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp(:, :))     ! remove mean
             disp(:, :) = disp(:, :) - dummy
 

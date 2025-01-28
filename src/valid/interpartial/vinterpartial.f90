@@ -47,7 +47,8 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     real(wp), dimension(:), allocatable :: wrk3d, tmp1, d
 
     integer(wi) bcs(2, 2)
-    real(wp) dummy, error
+    real(wp) dummy, error, params(0)
+
 ! ###################################################################
     call TLab_Start()
 
@@ -84,7 +85,7 @@ call TLabMPI_Transpose_Initialize(ifile)
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
 ! ###################################################################
 ! x-direction: Interpolation + interpolatory 1st derivative

@@ -70,6 +70,8 @@ program TRANSFIELDS
     integer(wi) iopt_size
     real(wp) opt_vec(iopt_size_max)
 
+    real(wp) params(1)
+    
     ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
@@ -459,12 +461,14 @@ program TRANSFIELDS
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
+            call IO_READ_FIELDS(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params)
+            rtime = params(1)
         end if
 
         if (iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+            call IO_READ_FIELDS(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params)
+            rtime = params(1)
         end if
 
         select case (opt_main)
@@ -516,9 +520,9 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                 + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                           + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-    + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
+              + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
@@ -536,9 +540,9 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                 + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                           + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-    + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
+              + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)

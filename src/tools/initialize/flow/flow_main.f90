@@ -36,6 +36,8 @@ program INIFLOW
 
     implicit none
 
+    real(wp) params(0)
+    
     !########################################################################
     call TLab_Start()
 
@@ -104,7 +106,7 @@ program INIFLOW
         call DENSITY_MEAN(rho, p, T, s, txc)
 
         if (flag_u /= 0) call PRESSURE_FLUCTUATION(q(1, 1), q(1, 2), q(1, 3), rho, p, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
-        if (imixture /= 0) call IO_READ_FIELDS(trim(adjustl(tag_scal))//'ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+        if (imixture /= 0) call IO_READ_FIELDS(trim(adjustl(tag_scal))//'ics', imax, jmax, kmax, itime, inb_scal, 0, s, params)
         if (flag_t /= 0) call DENSITY_FLUCTUATION(s, p, rho, txc(1, 1), txc(1, 2))
 
         ! Calculate specfic energy. Array s should contain the species fields at this point.

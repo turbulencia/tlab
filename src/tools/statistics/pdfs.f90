@@ -297,12 +297,14 @@ program PDFS
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            rtime = params(1)
         end if
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
+            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            rtime = params(1)
         end if
 
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)

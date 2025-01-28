@@ -67,10 +67,10 @@ contains
         real(wp), intent(INOUT) :: txc(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size)
 
         ! -------------------------------------------------------------------
-        integer(wi) is, itimetmp, bcs(2, 2)
+        integer(wi) is, bcs(2, 2)
         integer(wi) joffset, jglobal, j, iwrk_size
         real(wp) tolerance, dy
-        real(wp) visctmp, rtimetmp
+        real(wp) params(0)
         character*32 fname, sname, str
         character*128 line
 
@@ -155,14 +155,8 @@ contains
                 call TLab_Write_ASCII(lfile, line)
             end if
 
-            rtimetmp = rtime
-            itimetmp = itime
-            visctmp = visc
-            call IO_READ_FIELDS(fname, IO_FLOW, g_inf(1)%size, g_inf(2)%size, kmax, inb_flow, 0, q_inf)
-            call IO_READ_FIELDS(sname, IO_SCAL, g_inf(1)%size, g_inf(2)%size, kmax, inb_scal, 0, s_inf)
-            rtime = rtimetmp
-            itime = itimetmp
-            visc = visctmp
+            call IO_READ_FIELDS(fname, g_inf(1)%size, g_inf(2)%size, kmax, itime, inb_flow, 0, q_inf, params)
+            call IO_READ_FIELDS(sname, g_inf(1)%size, g_inf(2)%size, kmax, itime, inb_scal, 0, s_inf, params)
 
             ! array p contains the internal energy. Now we put in the pressure
             call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)

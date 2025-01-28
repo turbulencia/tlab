@@ -10,6 +10,7 @@ program VEFILTER2
     real(wp), dimension(:), allocatable :: a, cx, cy, cz
     real(wp), dimension(:, :), allocatable :: wrk3d
     integer(wi) :: i
+    real(wp) params(0)
 
 ! ###################################################################
     call DNS_START
@@ -24,13 +25,13 @@ program VEFILTER2
     allocate (cx(imax*5), cy(jmax*5), cz(kmax_total*5))
 
 ! ###################################################################
-    call IO_READ_GRID(gfile, imax, jmax, kmax_total, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call IO_READ_GRID(gfile, imax, jmax, kmax_total, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
 
     ! CALL FLT4E_INI(g(1)%scale, x, cx)
     ! CALL FLT4E_INI(g(2)%scale, y, cy)
     ! CALL FLT4E_INI(g(3)%scale, z, cz)
 
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, 1, a)
+    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
 !  CALL OPR_FILTER(i4, imax, jmax, kmax,  i1bc, j1bc, k1bc, i1, i1, i1, i1, a, &
 !       cx, cy, cz, wrk3d)

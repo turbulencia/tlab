@@ -63,6 +63,8 @@ program APRIORI
     integer(wi) iopt_size
     real(wp) opt_vec(iopt_size_max)
 
+    real(wp) params(1)
+
 ! ###################################################################
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
@@ -216,12 +218,14 @@ program APRIORI
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
+            call IO_READ_FIELDS(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            rtime = params(1)
         end if
 
         if (iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+            call IO_READ_FIELDS(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            rtime = params(1)
         end if
 
 ! -------------------------------------------------------------------

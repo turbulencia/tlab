@@ -62,7 +62,8 @@ program SL_NORMAL_ANALYSIS
 #endif
 
     real(wp), dimension(:, :), pointer :: dx, dy, dz
-
+    real(wp) params(1)
+    
 ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
@@ -210,10 +211,11 @@ program SL_NORMAL_ANALYSIS
 ! Binary data
 ! -------------------------------------------------------------------
         write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 4, 0, q)
+        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 4, 0, q, params(1:1))
+        rtime = params(1)
 
         write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, inb_scal, z1)
+        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, z1, params(1:1))
 
         call THERMO_CALORIC_TEMPERATURE(imax*jmax*kmax, z1, p, field, txc, wrk3d)
         call THERMO_THERMAL_PRESSURE(imax*jmax*kmax, z1, field, txc, p)

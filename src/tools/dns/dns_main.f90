@@ -53,9 +53,10 @@ program DNS
     character(len=32) fname, str
     integer ig
     integer, parameter :: i0 = 0, i1 = 1
-
+    real(wp) params(2)
+    
     ! ###################################################################
-    call SYSTEM_CLOCK(start_clock)
+    call system_clock(start_clock)
     call TLab_Start()
 
     call TLab_Initialize_Parameters(ifile)
@@ -146,11 +147,12 @@ program DNS
 
     if (scal_on) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
     end if
 
     write (fname, *) nitera_first; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-    call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
+    call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:2))
+    rtime = params(1); visc = params(2)
 
     call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)  ! Initialize diagnostic thermodynamic quantities
 

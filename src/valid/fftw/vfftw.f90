@@ -23,7 +23,7 @@ program VFFTW
     integer(8) fft_plan_bx, fft_plan_bz
 
 !  real(wp) fft_data_x, fft_data_z
-    real(wp) dummy, error
+    real(wp) dummy, error, params(0)
 
 ! ###################################################################
     call DNS_START
@@ -63,7 +63,7 @@ program VFFTW
 !        ENDDO
 !     ENDDO
 !  ENDDO
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
 !  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)

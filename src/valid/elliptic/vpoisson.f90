@@ -35,7 +35,7 @@ program VPOISSON
 
     real(wp), dimension(:, :), allocatable :: bcs_hb, bcs_ht
     real(wp), dimension(:, :, :), pointer :: a, b, c, d, e, f
-    real(wp) mean, lambda
+    real(wp) mean, lambda, params(0)
     ! real(wp) Int_Simpson, delta
 
     integer(wi) i, j, k, bcs(2, 2)
@@ -104,7 +104,7 @@ program VPOISSON
 ! ###################################################################
     case (1) ! The input field f is used as rhs in lap a = f and we solve for a
 
-        call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, f)
+        call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, f, params)
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
 
@@ -156,7 +156,8 @@ program VPOISSON
 
 ! ###################################################################
     case (2) ! The input field a is used to construct the forcing term as lap a = f
-        call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, a)
+        call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
         lambda = 1.0

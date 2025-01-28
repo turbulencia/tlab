@@ -153,22 +153,16 @@ contains
 #define LOC_UNIT_ID 54
 #define LOC_STATUS 'old'
 
-    subroutine IO_READ_FIELDS(fname, iheader, nx, ny, nz, nfield, iread, a)
-        use TLAB_VARS, only: itime, rtime, visc
-
+    subroutine IO_READ_FIELDS(fname, nx, ny, nz, nt, nfield, iread, a, params)
         character(LEN=*) fname
-        integer, intent(in) :: iheader         ! 1 for scalar header, 2 flow header
         integer, intent(in) :: nfield, iread   ! iread=0 reads all nfields, otherwise iread field
-        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz, nt
         real(wp), intent(out) :: a(nx*ny*nz, *)
+        real(wp), intent(inout) :: params(:)
 
         ! -------------------------------------------------------------------
-        integer(wi) header_offset
+        integer(wi) header_offset, isize
         integer ifield, iz
-
-        integer, parameter :: isize_max = 20
-        real(wp) params(isize_max)
-        integer isize
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -226,7 +220,7 @@ contains
 #endif
 #include "dns_open_file.h"
                         rewind (LOC_UNIT_ID)
-                        call IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total, ny_total, nz_total, itime, params)
+                        call IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total, ny_total, nz_total, nt, params)
                         close (LOC_UNIT_ID)
 
 #ifdef USE_MPI
@@ -235,7 +229,6 @@ contains
 
                     ! -------------------------------------------------------------------
                     ! field
-                    ! CALL IO_READ_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,iz),wrk3d)
                     mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
                     mpio_locsize = nx*ny*nz
                     call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
@@ -267,21 +260,8 @@ contains
             ! -------------------------------------------------------------------
             ! process header info
             isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
-            if (isize > isize_max) then
-                call TLab_Write_ASCII(efile, 'IO_READ_FIELDS. Parameters array size error')
-                call TLab_Stop(DNS_ERROR_ALLOC)
-            end if
-
-            rtime = params(1)
-            if (iheader == IO_FLOW) then
-                visc = params(2)
-            end if
 #ifdef USE_MPI
-            call MPI_BCAST(itime, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
-            call MPI_BCAST(rtime, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-            if (iheader == IO_FLOW) then
-                call MPI_BCAST(visc, 1, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
-            end if
+            if (isize > 0) call MPI_BCAST(params, size(params), MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
         end select
@@ -355,7 +335,7 @@ contains
         ! process header info
         isize = (header_offset - 5*SIZEOFINT)/SIZEOFREAL ! Size of array params
 #ifdef USE_MPI
-        if (isize > 0) call MPI_BCAST(params, isize, MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
+        if (isize > 0) call MPI_BCAST(params, size(params), MPI_REAL8, 0, MPI_COMM_WORLD, ims_err)
 #endif
 
         return
@@ -608,15 +588,15 @@ contains
 
         if (nt /= nt_loc) then
             call TLab_Write_ASCII(wfile, 'IO_READ_HEADER. ItNumber mismatch. Filename value ignored.')
-            !     nt = nt_loc
+            ! nt = nt_loc
         end if
 
         isize = offset - 5*SIZEOFINT
-        if (isize > 0 .and. mod(isize, SIZEOFREAL) == 0) then
-            isize = isize/SIZEOFREAL
-            read (unit) params(1:isize)
-        elseif (isize == 0) then
-            continue ! no params to read; header format is correct
+        if (isize >= 0 .and. mod(isize, SIZEOFREAL) == 0) then
+            ! isize = isize/SIZEOFREAL
+            read (unit) params(:)
+            ! elseif (isize == 0) then
+            !     continue ! no params to read; header format is correct
         else
             call TLab_Write_ASCII(efile, 'IO_READ_HEADER. Header format incorrect.')
             call TLab_Stop(DNS_ERROR_RECLEN)

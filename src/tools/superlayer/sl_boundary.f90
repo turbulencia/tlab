@@ -69,7 +69,8 @@ program SL_BOUNDARY
 #endif
 
     real(wp), dimension(:, :), pointer :: dx, dy, dz
-
+    real(wp) params(1)
+    
 ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
@@ -219,12 +220,14 @@ program SL_BOUNDARY
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, 0, q)
+            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 3, 0, q, params)
+            rtime = params(1)
         end if
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, inb_scal, s)
+            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, s, params)
+            rtime = params(1)
         end if
 
 ! -------------------------------------------------------------------

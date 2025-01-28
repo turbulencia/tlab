@@ -406,14 +406,16 @@ program VISUALS
 
         if (scal_on .and. iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, IO_SCAL, imax, jmax, kmax, inb_scal, 0, s)
+            call IO_READ_FIELDS(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            rtime = params(1)
         elseif (.not. scal_on) then
             s = 0.0_wp
         end if
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, IO_FLOW, imax, jmax, kmax, inb_flow, 0, q)
+            call IO_READ_FIELDS(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            rtime = params(1)
         end if
 
         if (imode_ibm == 1) then

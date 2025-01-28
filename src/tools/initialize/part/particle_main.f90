@@ -142,6 +142,8 @@ contains
 
         integer(longi) count
 
+        real(wp) params(0)
+
 !########################################################################
 #ifdef USE_MPI
         l_g%np = int(isize_part_total/int(ims_npro, KIND=8))
@@ -212,7 +214,7 @@ contains
             l_q(1:l_g%np, 2) = IniP%ymean
 
         case (PART_INITYPE_SCALAR)          ! Use the scalar field to create the particle distribution
-            call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
+            call IO_READ_FIELDS('scal.ics', imax, jmax, kmax, itime, inb_scal, 0, txc, params)
             is = 1 ! Reference scalar
 
             y_limits(1) = IniP%ymean - 0.5_wp*IniP%diam
@@ -261,7 +263,7 @@ contains
             l_q(:, 4:6) = 0.0_wp
 
         case (PART_TYPE_BIL_CLOUD_3, PART_TYPE_BIL_CLOUD_4) ! scalar fields
-            call IO_READ_FIELDS('scal.ics', IO_SCAL, imax, jmax, kmax, inb_scal, 0, txc)
+            call IO_READ_FIELDS('scal.ics', imax, jmax, kmax, itime, inb_scal, 0, txc, params)
 
             if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                 nvar = 0

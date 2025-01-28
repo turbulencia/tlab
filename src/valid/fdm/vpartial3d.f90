@@ -26,6 +26,7 @@ program VPARTIAL3D
 
     integer(wi) i, j, k, bcs(2, 2)
     integer(wi) type_of_problem
+    real(wp) params(0)
 
 ! ###################################################################
     call TLab_Start()
@@ -56,7 +57,7 @@ program VPARTIAL3D
     ! type_of_problem = 1     ! 1. order derivative
     type_of_problem = 2     ! 2. order derivative
 
-    call IO_READ_FIELDS('field.inp', IO_SCAL, imax, jmax, kmax, 1, 0, f)
+    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, f, params)
 
     select case (type_of_problem)
 ! ###################################################################

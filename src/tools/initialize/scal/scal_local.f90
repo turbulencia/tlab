@@ -4,9 +4,8 @@
 module SCAL_LOCAL
     use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
     use Discrete, only: discrete_dt, Discrete_ReadBlock
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal
+    use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field, inb_scal
     use Tlab_Background, only: sbg
-    use TLAB_VARS, only: rtime ! rtime is overwritten in io_read_fields
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -182,7 +181,7 @@ contains
         real(wp), dimension(imax, jmax, kmax), intent(inout) :: tmp
 
         ! -------------------------------------------------------------------
-        real(wp) dummy, amplify
+        real(wp) dummy, amplify, params(0)
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -198,9 +197,7 @@ contains
 
         select case (flag_s)
         case (PERT_LAYER_BROADBAND)
-            dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, jmax, kmax, inb_scal, is, tmp)
-            rtime = dummy
+            call IO_READ_FIELDS('scal.rand', imax, jmax, kmax, itime, inb_scal, is, tmp, params)
 
             amplify = 0.0_wp
             do j = 1, jmax
@@ -244,7 +241,7 @@ contains
 
         ! -------------------------------------------------------------------
         real(wp) dummy
-        real(wp) xcenter, zcenter, rcenter, amplify
+        real(wp) xcenter, zcenter, rcenter, amplify, params(0)
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -262,9 +259,7 @@ contains
         disp(:, :) = 0.0_wp
         select case (flag_s)
         case (PERT_PLANE_BROADBAND, PERT_DELTA_BROADBAND, PERT_FLUX_BROADBAND)
-            dummy = rtime   ! rtime is overwritten in io_read_fields
-            call IO_READ_FIELDS('scal.rand', IO_SCAL, imax, 1, kmax, 1, 1, disp(:, :))
-            rtime = dummy
+            call IO_READ_FIELDS('scal.rand', imax, 1, kmax, itime, 1, 1, disp(:, :), params)
             dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp(:, :))     ! remove mean
             disp(:, :) = disp(:, :) - dummy
 
