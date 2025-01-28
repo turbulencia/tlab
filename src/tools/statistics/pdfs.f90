@@ -311,8 +311,8 @@ program PDFS
         ! Calculate intermittency
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! External file
-            write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname)); params_size = 2
-            call IO_READ_FIELD_INT1(fname, 1, imax, jmax, kmax, itime, params_size, params, gate)
+            write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
+            call IO_READ_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then

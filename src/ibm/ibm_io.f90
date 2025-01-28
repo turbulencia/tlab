@@ -35,9 +35,7 @@ subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
     logical, intent(in) :: stag
 
     integer(1), pointer :: int_wrk(:) => null()
-    integer(wi), parameter :: params_size = 1
-    real(wp) :: params(params_size)
-    integer(wi) :: isize
+    real(wp) :: params(0)
     character(len=32) :: name
 
     ! ================================================================== !
@@ -53,10 +51,8 @@ subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
     int_wrk(:) = int(wrk3d(:), 1)
 
     ! header without params
-    isize = 0
-
     ! read eps field as int(1)
-    call IO_READ_FIELD_INT1(name, 1, imax, jmax, kmax, 0, isize, params, int_wrk)
+    call IO_READ_FIELD_INT1(name, imax, jmax, kmax, 0, int_wrk, params)
 
     ! type casting
     if (stag) then
@@ -84,9 +80,6 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
     integer(1), dimension(isize_field), intent(inout) :: wrk3d
     logical, intent(in) :: stag
 
-    integer(wi), parameter :: param_size = 1
-    integer(wi) :: isize
-    real(wp) :: params(param_size)
     character(len=32) :: name
 
     ! ================================================================== !
@@ -101,10 +94,8 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
     end if
 
     ! header (offset, nx, ny, nz, nt == 20 byte)
-    isize = 0 ! header without params
-
     ! write eps field as int(1)
-    call IO_WRITE_FIELD_INT1(name, 1, imax, jmax, kmax, 0, isize, params, wrk3d)
+    call IO_WRITE_FIELD_INT1(name, imax, jmax, kmax, 0, wrk3d)
 
     return
 end subroutine IBM_IO_WRITE_INT_GEOMETRY
@@ -124,9 +115,7 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
 
     integer(1), dimension(:), pointer :: eps_bit
 
-    integer(wi), parameter :: param_size = 1
-    integer(wi) :: isize, bsize_field, imax_bit
-    real(wp) :: params(param_size)
+    integer(wi) :: bsize_field, imax_bit
     character(len=32) :: name
 
     ! ================================================================== !
@@ -148,10 +137,8 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
     end if
 
     ! header (offset, nx, ny, nz, nt == 20 byte)
-    isize = 0 ! header without params
-
     ! write bitwise eps_bit field as int(1)
-    call IO_WRITE_FIELD_INT1(name, 1, imax_bit, jmax, kmax, 0, isize, params, eps_bit)
+    call IO_WRITE_FIELD_INT1(name, imax_bit, jmax, kmax, 0, eps_bit)
 
     nullify (eps_bit)
 
@@ -173,9 +160,8 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
     logical, intent(in) :: stag
 
     integer(1), pointer :: int_wrk(:) => null()
-    integer(wi), parameter :: params_size = 1
-    integer(wi) :: isize, bsize_field, imax_bit
-    real(wp) :: params(params_size)
+    integer(wi) :: bsize_field, imax_bit
+    real(wp) :: params(0)
     character(len=32) :: name
     ! ================================================================== !
 
@@ -194,10 +180,8 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
     int_wrk(:) = int(wrk3d(:), 1)
 
     ! header without params
-    isize = 0
-
     ! read eps field as int(1)
-    call IO_READ_FIELD_INT1(name, 1, imax_bit, jmax, kmax, 0, isize, params, int_wrk)
+    call IO_READ_FIELD_INT1(name, imax_bit, jmax, kmax, 0, int_wrk, params)
 
     ! wp real to bitwise int1
     if (stag) then

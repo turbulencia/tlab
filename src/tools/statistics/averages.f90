@@ -410,8 +410,8 @@ program AVERAGES
         ! Calculate intermittency
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! External file
-            write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname)); params_size = 2
-            call IO_READ_FIELD_INT1(fname, 1, imax, jmax, kmax, itime, params_size, params, gate)
+            write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
+            call IO_READ_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
             igate_size = int(params(2))
 
             if (opt_main == 2) rtime = params(1)
@@ -522,8 +522,8 @@ program AVERAGES
 
             if (opt_cond > 1) then ! write only if the gate information has not been read
                 write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
-                params(1) = rtime; params(2) = real(igate_size, wp); params_size = 2
-                call IO_WRITE_FIELD_INT1(fname, i1, imax, jmax, kmax, itime, params_size, params, gate)
+                params(1) = rtime; params(2) = real(igate_size, wp)
+                call IO_WRITE_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
 
                 do is = 1, igate_size
                     gate_level = int(is, KIND=1)

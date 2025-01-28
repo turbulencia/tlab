@@ -291,15 +291,14 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine IO_READ_FIELD_INT1(name, iheader, nx, ny, nz, nt, isize, params, a)
+    subroutine IO_READ_FIELD_INT1(name, nx, ny, nz, nt, a, params)
         character(len=*) name
-        integer, intent(in) :: iheader
         integer(wi), intent(in) :: nx, ny, nz, nt
-        integer, intent(inout) :: isize
-        real(wp), intent(inout) :: params(isize)
         integer(1), intent(out) :: a(nx*ny*nz)
+        real(wp), intent(inout) :: params(:)
 
-        integer(wi) header_offset
+        ! -------------------------------------------------------------------
+        integer(wi) header_offset, isize
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -327,14 +326,10 @@ contains
 #ifdef USE_MPI
         if (ims_pro == 0) then
 #endif
-            header_offset = 0
 #include "dns_open_file.h"
             rewind (LOC_UNIT_ID)
-            if (iheader > 0) then
-                call IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total, ny_total, nz_total, nt, params)
-            end if
+            call IO_READ_HEADER(LOC_UNIT_ID, header_offset, nx_total, ny_total, nz_total, nt, params)
             close (LOC_UNIT_ID)
-
 #ifdef USE_MPI
         end if
         call MPI_BCAST(header_offset, 1, MPI_INTEGER4, 0, MPI_COMM_WORLD, ims_err)
@@ -473,7 +468,7 @@ contains
                 if (ims_pro == 0) then
 #endif
 #include "dns_open_file.h"
-                    call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, itime, params)
+                    call IO_WRITE_HEADER(LOC_UNIT_ID, nx_total, ny_total, nz_total, itime, params(1:isize))
                     close (LOC_UNIT_ID)
 #ifdef USE_MPI
                 end if
@@ -518,12 +513,11 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine IO_WRITE_FIELD_INT1(name, iheader, nx, ny, nz, nt, isize, params, a)
+    subroutine IO_WRITE_FIELD_INT1(name, nx, ny, nz, nt, a, params)
         character(len=*) name
-        integer, intent(in) :: iheader, isize
         integer(wi), intent(in) :: nx, ny, nz, nt
-        real(wp), intent(in) :: params(isize)
         integer(1), intent(in) :: a(nx*ny*nz)
+        real(wp), intent(in), optional :: params(:)
 
         integer(wi) header_offset
 
@@ -551,22 +545,20 @@ contains
 
         ! -------------------------------------------------------------------
         ! header
-        if (iheader > 0) then
-            header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
+        header_offset = 5*SIZEOFINT
+        if (present(params)) then
+            header_offset = header_offset + size(params)*SIZEOFREAL
+        end if
+
 #ifdef USE_MPI
-            if (ims_pro == 0) then
+        if (ims_pro == 0) then
 #endif
 #include "dns_open_file.h"
-                call IO_WRITE_HEADER(LOC_UNIT_ID, isize, nx_total, ny_total, nz_total, nt, params)
-                close (LOC_UNIT_ID)
+            call IO_WRITE_HEADER(LOC_UNIT_ID, nx_total, ny_total, nz_total, nt, params(:))
+            close (LOC_UNIT_ID)
 #ifdef USE_MPI
-            end if
-#endif
-
-        else
-            header_offset = 0
-
         end if
+#endif
 
         ! -------------------------------------------------------------------
         ! field
@@ -636,21 +628,24 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine IO_WRITE_HEADER(unit, isize, nx, ny, nz, nt, params)
-        integer, intent(in) :: unit, isize
+    subroutine IO_WRITE_HEADER(unit, nx, ny, nz, nt, params)
+        integer, intent(in) :: unit
         integer(wi), intent(in) :: nx, ny, nz, nt
-        real(wp), intent(in) :: params(isize)
+        real(wp), intent(in), optional :: params(:)
 
         ! -------------------------------------------------------------------
         integer(wi) offset
 
         !########################################################################
-        offset = 5*SIZEOFINT + isize*SIZEOFREAL
+        offset = 5*SIZEOFINT
+        if (present(params)) then
+            offset = offset + size(params)*SIZEOFREAL
+        end if
 
         write (unit) offset, nx, ny, nz, nt
 
-        if (isize > 0) then   ! do not write params to file if there are none
-            write (unit) params(1:isize)
+        if (present(params)) then
+            write (unit) params(:)
         end if
 
         return
