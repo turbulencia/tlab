@@ -918,6 +918,7 @@ program AVERAGES
             ifield = 0
 
             call FI_DISSIPATION(i1, imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+            txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'Eps'
 

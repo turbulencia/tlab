@@ -27,12 +27,16 @@ contains
 ! Calculate tensor components
 !########################################################################
     subroutine FI_STRAIN_TENSOR(nx, ny, nz, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6)
+        use IBM_VARS,       only: imode_ibm, ibm_partial
+
         integer(wi), intent(IN) :: nx, ny, nz
         real(wp), dimension(nx*ny*nz), intent(IN) :: u, v, w
         real(wp), dimension(nx*ny*nz), intent(OUT) :: tmp1, tmp2, tmp3, tmp4, tmp5, tmp6 ! components Sxx, Syy, Szz, Sxy, Sxz, Syz
 
 ! ###################################################################
-! Off diagonal terms; result1 used as auxiliar array
+        if ( imode_ibm == 1 ) ibm_partial = .true.
+
+        ! Off diagonal terms; result1 used as auxiliar array
 ! Uy, Vx
         call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp1)
         call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp4)
@@ -52,6 +56,8 @@ contains
         call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1)
         call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2)
         call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp3)
+
+        if ( imode_ibm == 1 ) ibm_partial = .false.
 
         return
     end subroutine FI_STRAIN_TENSOR

@@ -43,7 +43,6 @@ program VISUALS
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
-    use FI_TOTAL_STRESS
     use OPR_PARTIAL
     use OPR_FOURIER
     use OPR_FILTERS
@@ -121,14 +120,14 @@ program VISUALS
     ! Read from tlab.ini
     ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'PressureDecomposition', 'total', sRes)
-    if (TRIM(ADJUSTL(sRes)) == '') then; pdecomp = DCMP_TOTAL
-    else if (TRIM(ADJUSTL(sRes)) == 'total') then; pdecomp = DCMP_TOTAL
-    else if (TRIM(ADJUSTL(sRes)) == 'resolved') then; pdecomp = DCMP_RESOLVED
-    else if (TRIM(ADJUSTL(sRes)) == 'advection') then; pdecomp = DCMP_ADVECTION
-    else if (TRIM(ADJUSTL(sRes)) == 'advdiff') then; pdecomp = DCMP_ADVDIFF
-    else if (TRIM(ADJUSTL(sRes)) == 'diffusion') then; pdecomp = DCMP_DIFFUSION
-    else if (TRIM(ADJUSTL(sRes)) == 'coriolis') then; pdecomp = DCMP_CORIOLIS
-    else if (TRIM(ADJUSTL(sRes)) == 'buoyancy') then; pdecomp = DCMP_BUOYANCY
+    if (trim(adjustl(sRes)) == '') then; pdecomp = DCMP_TOTAL
+    else if (trim(adjustl(sRes)) == 'total') then; pdecomp = DCMP_TOTAL
+    else if (trim(adjustl(sRes)) == 'resolved') then; pdecomp = DCMP_RESOLVED
+    else if (trim(adjustl(sRes)) == 'advection') then; pdecomp = DCMP_ADVECTION
+    else if (trim(adjustl(sRes)) == 'advdiff') then; pdecomp = DCMP_ADVDIFF
+    else if (trim(adjustl(sRes)) == 'diffusion') then; pdecomp = DCMP_DIFFUSION
+    else if (trim(adjustl(sRes)) == 'coriolis') then; pdecomp = DCMP_CORIOLIS
+    else if (trim(adjustl(sRes)) == 'buoyancy') then; pdecomp = DCMP_BUOYANCY
     else
         call TLAB_WRITE_ASCII(efile, C_FILE_LOC//'. VISUALS. Wrong Pressure decomposition option.')
         call TLAB_STOP(DNS_ERROR_PRESSURE_DECOMPOSITION)
@@ -893,8 +892,9 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 15) then ! Turbulent quantities
                 plot_file = 'LogDissipation'//time_str(1:MaskSize)
-                call FI_DISSIPATION(i1, imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
+                call FI_DISSIPATION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                     txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+                txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
                 txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
 
@@ -1007,7 +1007,14 @@ program VISUALS
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), DCMP_TOTAL) ! pressure in txc(1,7)
                 call VISUALS_ACCUMULATE_FIELDS(q, txc(1, 7), txc(1, 8), txc(1, 6))            ! avg vel. + pre. in time
                 if (it == itime_size) then
- call FI_TOTAL_STRESS_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 7), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                    call FI_STRAIN_TENSOR(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
+                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
+                    txc(1:isize_field, 1) = 2.0_wp*visc*txc(1:isize_field, 1) - txc(1:isize_field, 7)
+                    txc(1:isize_field, 2) = 2.0_wp*visc*txc(1:isize_field, 2) - txc(1:isize_field, 7)
+                    txc(1:isize_field, 3) = 2.0_wp*visc*txc(1:isize_field, 3) - txc(1:isize_field, 7)
+                    txc(1:isize_field, 4) = 2.0_wp*visc*txc(1:isize_field, 4)
+                    txc(1:isize_field, 5) = 2.0_wp*visc*txc(1:isize_field, 5)
+                    txc(1:isize_field, 6) = 2.0_wp*visc*txc(1:isize_field, 6)
                     if (imode_ibm == 1) then
                         txc(:, 8) = eps
                         plot_file = 'EpsSolid'//time_str(1:MaskSize)

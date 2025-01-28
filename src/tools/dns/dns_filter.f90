@@ -4,9 +4,10 @@
 !########################################################################
 subroutine DNS_FILTER()
 
-    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow, inb_scal
     use TLAB_VARS, only: imode_eqns
     use TLAB_VARS, only: imode_sim
+    use TLAB_VARS, only: visc
     use TLAB_VARS, only: itime, rtime
     use FDM, only: g
     use TLab_Arrays
@@ -41,8 +42,9 @@ subroutine DNS_FILTER()
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
         call FI_RTKE(imax, jmax, kmax, q, wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, Tke0(1), wrk1d)
-        call FI_DISSIPATION(i1, imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
-        call AVG_IK_V(imax, jmax, kmax, jmax, txc, Eps0(1), wrk1d)
+        call FI_DISSIPATION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+        txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
+        call AVG_IK_V(imax, jmax, kmax, jmax, txc(:, 1), Eps0(1), wrk1d)
     end if
 
     ! -------------------------------------------------------------------
@@ -88,7 +90,8 @@ subroutine DNS_FILTER()
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
         call FI_RTKE(imax, jmax, kmax, q, wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, Tke1(1), wrk1d)
-        call FI_DISSIPATION(i1, imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+        call FI_DISSIPATION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
+        txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
         call AVG_IK_V(imax, jmax, kmax, jmax, txc, Eps1(1), wrk1d)
 
         write (fname, *) itime; fname = 'kin'//trim(adjustl(fname))
@@ -102,3 +105,62 @@ subroutine DNS_FILTER()
 
     return
 end subroutine DNS_FILTER
+
+! #######################################################################
+! Calculate kinetic energy of fluctuating field per unit volume
+! #######################################################################
+#define rR(j)     wrk1d(j,1)
+#define fU(j)     wrk1d(j,2)
+#define fV(j)     wrk1d(j,3)
+#define fW(j)     wrk1d(j,4)
+#define aux(j)    wrk1d(j,5)
+
+subroutine FI_RTKE(nx, ny, nz, q, ke)
+    use TLab_Constants, only: wp, wi
+    use TLAB_VARS, only: imode_eqns
+    use TLAB_VARS, only: inb_flow
+    use TLab_Arrays, only: wrk1d
+    use THERMO_ANELASTIC, only : rbackground
+    use Averages, only: AVG_IK_V
+
+    implicit none
+
+    integer(wi) nx, ny, nz
+    real(wp), intent(in) :: q(nx, ny, nz, inb_flow)
+    real(wp), intent(out) :: ke(nx, ny, nz)
+
+    ! -----------------------------------------------------------------------
+    integer(wi) j
+
+    ! #######################################################################
+    select case (imode_eqns)
+    case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 5), rR(1), aux(1))
+
+        ke = q(:, :, :, 5)*q(:, :, :, 1)
+        call AVG_IK_V(nx, ny, nz, ny, ke, fU(1), aux(1))
+        fU(:) = fU(:)/rR(:)
+
+        ke = q(:, :, :, 5)*q(:, :, :, 2)
+        call AVG_IK_V(nx, ny, nz, ny, ke, fV(1), aux(1))
+        fV(:) = fV(:)/rR(:)
+
+        ke = q(:, :, :, 5)*q(:, :, :, 3)
+        call AVG_IK_V(nx, ny, nz, ny, ke, fW(1), aux(1))
+        fW(:) = fW(:)/rR(:)
+
+    case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
+        rR(:) = rbackground(:)
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 1), fU(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 2), fV(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 3), fW(1), aux(1))
+
+    end select
+
+    do j = 1, ny
+        ke(:, j, :) = 0.5_wp*rR(j)*((q(:, j, :, 1) - fU(j))**2 + (q(:, j, :, 2) - fV(j))**2 + (q(:, j, :, 3) - fW(j))**2)
+    end do
+
+    return
+end subroutine FI_RTKE
+
