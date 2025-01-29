@@ -143,7 +143,7 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
     use IBM_VARS
     use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
-    use IO_FIELDS, only: imode_files, IO_FLOW, IO_READ_FIELDS
+    use IO_FIELDS, only: io_fileformat, IO_FLOW, IO_READ_FIELDS
     use TLab_Constants, only: wp, wi
 
     implicit none
@@ -156,7 +156,7 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
     ! ================================================================== !
     wrk3d(:) = 0.0_wp
-    select case (imode_files)
+    select case (io_fileformat)
     case (IO_NOFILE) ! no IO
         if (flag_epsp) then
             epsp = 0.0_wp
@@ -190,7 +190,7 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
     use IBM_VARS
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use IO_FIELDS, only: imode_files, IO_FLOW, IO_WRITE_FIELDS
+    use IO_FIELDS, only: io_fileformat, IO_FLOW, IO_WRITE_FIELDS
     use TLab_Constants, only: wp, wi
 
     implicit none
@@ -202,7 +202,7 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
     ! ================================================================== !
     wrk3d(:) = 0.0_wp
-    select case (imode_files)
+    select case (io_fileformat)
     case (IO_NOFILE) ! no IO
     case (IO_NETCDF) ! not implemented
     case default       ! mpiio - file with header

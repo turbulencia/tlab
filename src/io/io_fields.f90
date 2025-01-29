@@ -18,7 +18,7 @@
 !########################################################################
 
 module IO_FIELDS
-    use TLab_Constants, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal
+    use TLab_Constants, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal, MAX_PARS, MAX_VARS
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use TLab_Arrays, only: wrk3d
 #ifdef USE_MPI
@@ -30,11 +30,18 @@ module IO_FIELDS
     implicit none
     private
 
-    integer, public :: imode_files              ! files format
-    integer, public :: imode_precision_files    ! single or double precision
+    integer, public :: io_fileformat                ! files format
+    integer, public :: io_datatype                  ! single or double precision
 
-    integer, parameter, public :: IO_SCAL = 1 ! Header of scalar field
-    integer, parameter, public :: IO_FLOW = 2 ! Header of flow field
+    integer, parameter, public :: IO_SCAL = 1       ! Header of scalar field
+    integer, parameter, public :: IO_FLOW = 2       ! Header of flow field
+
+    type :: io_header
+        sequence
+        integer size
+        real(wp) params(MAX_PARS)
+    end type
+    type(io_header), public :: io_header_q, io_header_s(MAX_VARS)
 
     public :: IO_READ_FIELDS, IO_WRITE_FIELDS
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
@@ -175,7 +182,7 @@ contains
         nz_total = nz
 #endif
 
-        if (imode_precision_files == IO_TYPE_SINGLE) then
+        if (io_datatype == IO_TYPE_SINGLE) then
             line = 'Reading single precision field '//trim(adjustl(fname))//' of size'
             ! Pass memory address from double precision array to single precision array
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[nx*ny*nz])
@@ -188,7 +195,7 @@ contains
         call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
-        select case (imode_files)
+        select case (io_fileformat)
 
         case (IO_NOFILE)         ! Do nothing
             a(:, 1:nfield) = 0.0_wp
@@ -197,7 +204,7 @@ contains
 
         case DEFAULT              ! One file with header per field
 #ifdef USE_MPI
-            if (imode_precision_files == IO_TYPE_SINGLE) then
+            if (io_datatype == IO_TYPE_SINGLE) then
                 subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL4)
             else
                 subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL8)
@@ -232,7 +239,7 @@ contains
                     mpio_disp = header_offset*SIZEOFBYTE ! Displacement to start of field
                     mpio_locsize = nx*ny*nz
                     call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-                    if (imode_precision_files == IO_TYPE_SINGLE) then
+                    if (io_datatype == IO_TYPE_SINGLE) then
                         call MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)
                         call MPI_File_read_all(mpio_fh, s_wrk, mpio_locsize, MPI_REAL4, status, ims_err)
                         a(:, iz) = real(s_wrk(:), dp)
@@ -244,7 +251,7 @@ contains
 
 #else
 #include "dns_open_file.h"
-                    if (imode_precision_files == IO_TYPE_SINGLE) then
+                    if (io_datatype == IO_TYPE_SINGLE) then
                         read (LOC_UNIT_ID, POS=header_offset + 1) s_wrk(:)
                         a(:, iz) = real(s_wrk(:), dp)
                     else
@@ -381,7 +388,7 @@ contains
         nz_total = nz
 #endif
 
-        if (imode_precision_files == IO_TYPE_SINGLE) then
+        if (io_datatype == IO_TYPE_SINGLE) then
             line = 'Writing single precision field '//trim(adjustl(fname))//' of size'
             ! Pass memory address from double precision array to single precision array
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[nx*ny*nz])
@@ -394,7 +401,7 @@ contains
         call TLab_Write_ASCII(lfile, line)
 
         ! ###################################################################
-        select case (imode_files)
+        select case (io_fileformat)
 
         case (IO_NOFILE)         ! Do nothing
 
@@ -402,7 +409,7 @@ contains
 
         case DEFAULT              ! One file with header per field
 #ifdef USE_MPI
-            if (imode_precision_files == IO_TYPE_SINGLE) then
+            if (io_datatype == IO_TYPE_SINGLE) then
                 subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL4)
             else
                 subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL8)
@@ -463,7 +470,7 @@ contains
                 mpio_disp = header_offset*SIZEOFBYTE
                 mpio_locsize = nx*ny*nz
                 call MPI_FILE_OPEN(MPI_COMM_WORLD, name, MPI_MODE_WRONLY, MPI_INFO_NULL, mpio_fh, ims_err)
-                if (imode_precision_files == IO_TYPE_SINGLE) then
+                if (io_datatype == IO_TYPE_SINGLE) then
                     call MPI_File_set_view(mpio_fh, mpio_disp, MPI_REAL4, subarray, 'native', MPI_INFO_NULL, ims_err)
                     s_wrk(:) = real(a(:, ifield), sp)
                     call MPI_File_write_all(mpio_fh, s_wrk, mpio_locsize, MPI_REAL4, status, ims_err)
@@ -475,7 +482,7 @@ contains
 
 #else
 #include "dns_open_file.h"
-                if (imode_precision_files == IO_TYPE_SINGLE) then
+                if (io_datatype == IO_TYPE_SINGLE) then
                     s_wrk(:) = real(a(:, ifield), sp)
                     write (LOC_UNIT_ID, POS=header_offset + 1) s_wrk(:)
                 else

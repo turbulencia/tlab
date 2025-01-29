@@ -11,7 +11,7 @@
 !########################################################################
 program VISUALS
 
-    use TLab_Constants, only: wp, wi, small_wp
+    use TLab_Constants, only: wp, wi, small_wp, MAX_PARS
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use TLAB_VARS
     use TLab_Arrays
@@ -55,7 +55,6 @@ program VISUALS
     integer(wi), parameter :: itime_size_max = 3000
     integer(wi), parameter :: iopt_size_max = 20
     integer(wi), parameter :: igate_size_max = 8
-    integer(wi), parameter :: params_size_max = 2
 
     ! Additional local arrays
     integer(1), dimension(:), allocatable, save :: gate
@@ -87,8 +86,7 @@ program VISUALS
     integer(wi) opt_vec(iopt_size_max)
     real(wp) opt_vec2(iopt_size_max)
 
-    integer(wi) params_size
-    real(wp) params(params_size_max)
+    real(wp) params(MAX_PARS)
 
     integer, parameter :: i1 = 1
 
@@ -115,6 +113,8 @@ program VISUALS
     call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
+
+    call TLab_Consistency_Check()
 
     ! -------------------------------------------------------------------
     ! Read from tlab.ini

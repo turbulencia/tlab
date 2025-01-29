@@ -51,6 +51,8 @@ program INIFLOW
     call Gravity_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
 
+    call TLab_Consistency_Check()
+
     call Iniflow_Initialize_Parameters(ifile)
 
     call TLab_Initialize_Memory(C_FILE_LOC)

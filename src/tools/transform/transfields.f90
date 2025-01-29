@@ -87,6 +87,8 @@ program TRANSFIELDS
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
 
+    call TLab_Consistency_Check()
+
     ! -------------------------------------------------------------------
     ! File names
     ! -------------------------------------------------------------------
@@ -669,8 +671,8 @@ program TRANSFIELDS
             q_dst(:, 1:inb_flow) = q(:, 1:inb_flow)
             s_dst(:, 1:inb_scal) = s(:, 1:inb_scal)
 
-            idummy = imode_precision_files
-            imode_precision_files = IO_TYPE_SINGLE
+            idummy = io_datatype
+            io_datatype = IO_TYPE_SINGLE
 
         end select
 
@@ -689,7 +691,7 @@ program TRANSFIELDS
         end if
 
         if (opt_main == 10) then
-            imode_precision_files = idummy
+            io_datatype = idummy
         end if
 
     end do

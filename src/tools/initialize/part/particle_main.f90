@@ -46,6 +46,8 @@ program INIPART
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
 
+    call TLab_Consistency_Check()
+
     if (part%type /= PART_TYPE_NONE) then
 
         ! -------------------------------------------------------------------

@@ -18,7 +18,7 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use FDM, only: g
-    use IO_FIELDS, only: imode_files, imode_precision_files
+    use IO_FIELDS, only: io_fileformat, io_datatype
     ! use Avg_Spatial
 #ifdef USE_MPI
     use TLabMPI_VARS
@@ -79,17 +79,17 @@ subroutine TLab_Initialize_Parameters(inifile)
 
 ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
-    if (trim(adjustl(sRes)) == 'mpiio') then; imode_files = IO_MPIIO
-    elseif (trim(adjustl(sRes)) == 'netcdf') then; imode_files = IO_NETCDF
-    elseif (trim(adjustl(sRes)) == 'none') then; imode_files = IO_NOFILE
+    if (trim(adjustl(sRes)) == 'mpiio') then; io_fileformat = IO_MPIIO
+    elseif (trim(adjustl(sRes)) == 'netcdf') then; io_fileformat = IO_NETCDF
+    elseif (trim(adjustl(sRes)) == 'none') then; io_fileformat = IO_NOFILE
     else
         call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong Main.FileFormat.')
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
     end if
 
     call ScanFile_Char(bakfile, inifile, 'Main', 'FileType', 'Double', sRes)
-    if (trim(adjustl(sRes)) == 'double') then; imode_precision_files = IO_TYPE_DOUBLE
-    elseif (trim(adjustl(sRes)) == 'single') then; imode_precision_files = IO_TYPE_SINGLE
+    if (trim(adjustl(sRes)) == 'double') then; io_datatype = IO_TYPE_DOUBLE
+    elseif (trim(adjustl(sRes)) == 'single') then; io_datatype = IO_TYPE_SINGLE
     else
         call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong Main.FileType.')
         call TLab_Stop(DNS_ERROR_UNDEVELOP)

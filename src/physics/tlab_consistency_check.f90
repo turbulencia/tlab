@@ -8,10 +8,12 @@ subroutine TLab_Consistency_Check()
     use TLAB_VARS, only: imode_eqns, iadvection
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on
+    use TLAB_VARS
     use OPR_Filters, only: PressureFilter
     use TLAB_VARS, only: schmidt
     use FDM, only: g
     use IBM_VARS, only: imode_ibm
+    use IO_FIELDS
     use Thermodynamics
     use Radiation
     use Microphysics
@@ -21,7 +23,10 @@ subroutine TLab_Consistency_Check()
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
 
-! ###################################################################
+    ! -------------------------------------------------------------------
+    integer is
+
+    ! ###################################################################
     if (stagger_on) then
         if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
             call TLab_Write_ASCII(efile, __FILE__//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
@@ -114,6 +119,27 @@ subroutine TLab_Consistency_Check()
         ! end if
 
     end select
+
+    ! ###################################################################
+    ! preparing headers of restart files
+    io_header_q%size = 0
+    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = rtime
+    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = visc ! inverse of reynolds
+    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = froude
+    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = rossby
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+        io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = gama0
+        io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = prandtl
+        io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = mach
+    end if
+
+    do is = 1, inb_scal
+        io_header_s(is)%size = 0
+        io_header_s(is)%size = io_header_s(is)%size + 1; io_header_s(is)%params(io_header_s(is)%size) = rtime
+        io_header_s(is)%size = io_header_s(is)%size + 1; io_header_s(is)%params(io_header_s(is)%size) = visc
+        io_header_s(is)%size = io_header_s(is)%size + 1; io_header_s(is)%params(io_header_s(is)%size) = schmidt(is)
+        io_header_s(is)%size = io_header_s(is)%size + 1; io_header_s(is)%params(io_header_s(is)%size) = damkohler(is)
+    end do
 
     return
 end subroutine TLab_Consistency_Check

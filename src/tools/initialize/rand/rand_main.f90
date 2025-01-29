@@ -39,6 +39,8 @@ program INIRAND
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 
+    call TLab_Consistency_Check()
+
     call RAND_READ_LOCAL(ifile)
 
     inb_txc = 3

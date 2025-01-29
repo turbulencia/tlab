@@ -88,8 +88,7 @@ program AVERAGES
     real(wp) opt_vec(iopt_size_max)
     real(wp) opt_vec2(iopt_size_max)
 
-    integer(wi) params_size
-    real(wp) params(params_size_max)
+    real(wp) params(2)
 
     integer(wi) io_sizes(5), id
 
@@ -118,6 +117,8 @@ program AVERAGES
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
+
+    call TLab_Consistency_Check()
 
     ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)

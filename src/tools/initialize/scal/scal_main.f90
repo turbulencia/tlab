@@ -47,6 +47,8 @@ program INISCAL
     call Radiation_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
 
+    call TLab_Consistency_Check()
+
     call SCAL_READ_LOCAL(ifile)
 
     if (imode_sim == DNS_MODE_SPATIAL) then

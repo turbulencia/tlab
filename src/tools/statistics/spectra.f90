@@ -142,6 +142,8 @@ program SPECTRA
     call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
 
+    call TLab_Consistency_Check()
+
     ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, ifile, 'IBMParameter', 'Status', 'off', sRes)
     if (trim(adjustl(sRes)) == 'off') then; imode_ibm = 0

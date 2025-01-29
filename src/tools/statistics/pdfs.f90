@@ -79,8 +79,7 @@ program PDFS
     integer(wi) opt_vec(iopt_size_max)
     real(wp) opt_vec2(iopt_size_max)
 
-    integer(wi) params_size
-    real(wp) params(params_size_max)
+    real(wp) params(2)
 
     !########################################################################
     !########################################################################
@@ -103,6 +102,8 @@ program PDFS
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
     call Chemistry_Initialize(ifile)
+
+    call TLab_Consistency_Check()
 
     ! -------------------------------------------------------------------
     ! File names
