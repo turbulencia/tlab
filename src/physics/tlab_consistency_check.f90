@@ -122,15 +122,15 @@ subroutine TLab_Consistency_Check()
 
     ! ###################################################################
     ! preparing headers of restart files
-    io_header_q%size = 0
-    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = rtime
-    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = visc ! inverse of reynolds
-    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = froude
-    io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = rossby
+    io_header_q(1)%size = 0
+    io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = rtime
+    io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = visc
+    io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = froude
+    io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = rossby
     if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
-        io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = gama0
-        io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = prandtl
-        io_header_q%size = io_header_q%size + 1; io_header_q%params(io_header_q%size) = mach
+        io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = gama0
+        io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = prandtl
+        io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = mach
     end if
 
     do is = 1, inb_scal

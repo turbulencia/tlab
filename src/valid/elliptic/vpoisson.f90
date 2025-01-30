@@ -151,7 +151,7 @@ program VPOISSON
 
         ! -------------------------------------------------------------------
         b(:, 1, :) = f(:, 1, :); b(:, jmax, :) = f(:, jmax, :)  ! The boundary points do not satisfy the PDE
-        call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
+        call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
         call check(f, b, txc(:, 1), 'field.dif')
 
 ! ###################################################################
@@ -218,7 +218,7 @@ program VPOISSON
         end if
 
         ! -------------------------------------------------------------------
-        call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, b)
+        call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
         call check(a, b, txc(:, 1), 'field.dif')
 
         call check(c, d, txc(:, 1))
@@ -250,7 +250,7 @@ contains
         end do
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         if (present(name)) then
-            call IO_WRITE_FIELDS(name, IO_SCAL, imax, jmax, kmax, 1, dif)
+            call IO_WRITE_FIELDS(name, imax, jmax, kmax, itime, 1, dif, io_header_s(1:1))
         end if
 
         return

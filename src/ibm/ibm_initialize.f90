@@ -143,7 +143,7 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
     use IBM_VARS
     use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
-    use IO_FIELDS, only: io_fileformat, IO_FLOW, IO_READ_FIELDS
+    use IO_FIELDS, only: io_fileformat, IO_READ_FIELDS
     use TLab_Constants, only: wp, wi
 
     implicit none
@@ -189,8 +189,8 @@ end subroutine IBM_IO_READ
 subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
     use IBM_VARS
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use IO_FIELDS, only: io_fileformat, IO_FLOW, IO_WRITE_FIELDS
+    use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
+    use IO_FIELDS
     use TLab_Constants, only: wp, wi
 
     implicit none
@@ -210,10 +210,10 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
         case (IBM_IO_REAL)
             if (flag_epsp) then
                 name = epsp_name_real
-                call IO_WRITE_FIELDS(name, IO_FLOW, imax, jmax, kmax, 1, epsp)
+                call IO_WRITE_FIELDS(name, imax, jmax, kmax, itime, 1, epsp, io_header_q)
             else
                 name = eps_name_real
-                call IO_WRITE_FIELDS(name, IO_FLOW, imax, jmax, kmax, 1, eps)
+                call IO_WRITE_FIELDS(name, imax, jmax, kmax, itime, 1, eps, io_header_q)
             end if
         case (IBM_IO_INT)
             call IBM_IO_WRITE_INT_GEOMETRY(wrk3d, flag_epsp)

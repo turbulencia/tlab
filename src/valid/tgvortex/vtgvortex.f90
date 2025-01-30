@@ -55,11 +55,11 @@ program VTGVORTEX
         call FLOW_TAYLORGREEN(imax, jmax, kmax, rtime, visc, x, y, z, q(1, 1), q(1, 2), q(1, 3), q(1, 4))
         q(:, 1) = q(:, 1) + mean_u
         fname = 'pt0'
-        call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, q)
+        call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 3, q)
 
         q(:, 4) = C_0_R
         fname = 'sc0'
-        call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, q(1, 4))
+        call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 1, q(1, 4))
 
 ! ###################################################################
     else if (iopt == 2) then
@@ -99,7 +99,7 @@ program VTGVORTEX
                 write (*, *) 'L-2 error ..........: ', sqrt(error*g(1)%jac(1, 1)*g(2)%jac(1, 1))
                 write (*, *) 'Relative error .....: ', sqrt(error)/sqrt(dummy)
                 write (fname, *) iv; fname = 'error'//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, txc(1, iv))
+                call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 1, txc(1, iv))
             end if
 
         end do

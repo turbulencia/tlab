@@ -47,7 +47,7 @@ program VEFILTER2
     call OPR_FILTER(i3, imax, jmax, kmax, i1bc, j1bc, k1bc, i1, i1, i1, i1, wrk3d(1, 2), &
                     cx, cy, cz, a)
 
-    call IO_WRITE_FIELDS('field.out', IO_SCAL, imax, jmax, kmax, 1, 1, a)
+    call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, 1, a, io_header_s(1))
 
     stop
 end program VEFILTER2

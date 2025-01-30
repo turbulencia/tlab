@@ -682,11 +682,11 @@ program TRANSFIELDS
         if (opt_main /= 4 .and. opt_main /= 7) then
             if (flow_on) then
                 flow_file = trim(adjustl(flow_file))//'.trn'
-                call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
+                call IO_WRITE_FIELDS(flow_file, imax_dst, jmax_dst, kmax_dst, itime, inb_flow, q_dst, io_header_q(1:1))
             end if
             if (scal_on) then
                 scal_file = trim(adjustl(scal_file))//'.trn'
-                call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
+                call IO_WRITE_FIELDS(scal_file, imax_dst, jmax_dst, kmax_dst, itime, inb_scal_dst, s_dst, io_header_s(1:inb_scal_dst))
             end if
         end if
 
@@ -702,11 +702,11 @@ program TRANSFIELDS
     if (opt_main == 4 .or. opt_main == 7) then
         if (flow_on) then
             flow_file = trim(adjustl(flow_file))//'.trn'
-            call IO_WRITE_FIELDS(flow_file, IO_FLOW, imax_dst, jmax_dst, kmax_dst, inb_flow, q_dst)
+            call IO_WRITE_FIELDS(flow_file, imax_dst, jmax_dst, kmax_dst, itime, inb_flow, q_dst, io_header_q(1:1))
         end if
         if (scal_on) then
             scal_file = trim(adjustl(scal_file))//'.trn'
-            call IO_WRITE_FIELDS(scal_file, IO_SCAL, imax_dst, jmax_dst, kmax_dst, inb_scal_dst, s_dst)
+            call IO_WRITE_FIELDS(scal_file, imax_dst, jmax_dst, kmax_dst, itime, inb_scal_dst, s_dst, io_header_s(1:inb_scal_dst))
         end if
     end if
 

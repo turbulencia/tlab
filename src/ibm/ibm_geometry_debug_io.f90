@@ -103,9 +103,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     if (ims_npro_i > 1) then
         call TLabMPI_TransposeI_Backward(tmp2, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
     end if
-    call IO_WRITE_FIELDS('nobi3d', IO_FLOW, imax, jmax, kmax, 1, tmp1)
+    call IO_WRITE_FIELDS('nobi3d', imax, jmax, kmax, itime, 1, tmp1, io_header_q)
 #else
-    call IO_WRITE_FIELDS('nobi3d', IO_FLOW, imax, jmax, kmax, 1, tmp2)
+    call IO_WRITE_FIELDS('nobi3d', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
 #endif
     tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp
 
@@ -125,7 +125,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     end do
 
     call TLab_Transpose(tmp1, kmax, imax*jmax, kmax, tmp2, imax*jmax)
-    call IO_WRITE_FIELDS('nobj3d', IO_FLOW, imax, jmax, kmax, 1, tmp2)
+    call IO_WRITE_FIELDS('nobj3d', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
     tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp
 
     ! ================================================================== !
@@ -147,9 +147,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     if (ims_npro_k > 1) then
         call TLabMPI_TransposeK_Backward(tmp1, tmp2, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
     end if
-    call IO_WRITE_FIELDS('nobk3d', IO_FLOW, imax, jmax, kmax, 1, tmp2)
+    call IO_WRITE_FIELDS('nobk3d', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
 #else
-    call IO_WRITE_FIELDS('nobk3d', IO_FLOW, imax, jmax, kmax, 1, tmp1)
+    call IO_WRITE_FIELDS('nobk3d', imax, jmax, kmax, itime, 1, tmp1, io_header_q)
 #endif
     if (ims_pro == 0) write (*, *) '============= Writing all geometry fields ==============='
     if (ims_pro == 0) write (*, *) 'done writing files: nobi3d,   nobj3d,   nobk3d'
@@ -192,9 +192,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     if (ims_npro_i > 1) then
         call TLabMPI_TransposeI_Backward(tmp3, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
     end if
-    call IO_WRITE_FIELDS('nobi3d_b', IO_FLOW, imax, jmax, kmax, 1, tmp1)
+    call IO_WRITE_FIELDS('nobi3d_b', imax, jmax, kmax, itime, 1, tmp1, io_header_q)
 #else
-    call IO_WRITE_FIELDS('nobi3d_b', IO_FLOW, imax, jmax, kmax, 1, tmp3)
+    call IO_WRITE_FIELDS('nobi3d_b', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
 #endif
 
     call TLab_Transpose(tmp2, nyz, g(1)%size, nyz, tmp3, g(1)%size)
@@ -202,9 +202,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     if (ims_npro_i > 1) then
         call TLabMPI_TransposeI_Backward(tmp3, tmp2, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
     end if
-    call IO_WRITE_FIELDS('nobi3d_e', IO_FLOW, imax, jmax, kmax, 1, tmp2)
+    call IO_WRITE_FIELDS('nobi3d_e', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
 #else
-    call IO_WRITE_FIELDS('nobi3d_e', IO_FLOW, imax, jmax, kmax, 1, tmp3)
+    call IO_WRITE_FIELDS('nobi3d_e', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
 #endif
     if (ims_pro == 0) write (*, *) 'done writing files: nobi3d_b, nobi3d_e'
     tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp; tmp3(:) = 0.0_wp
@@ -242,9 +242,9 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     end do
 
     call TLab_Transpose(tmp1, kmax, imax*jmax, kmax, tmp3, imax*jmax)
-    call IO_WRITE_FIELDS('nobj3d_b', IO_FLOW, imax, jmax, kmax, 1, tmp3)
+    call IO_WRITE_FIELDS('nobj3d_b', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
     call TLab_Transpose(tmp2, kmax, imax*jmax, kmax, tmp3, imax*jmax)
-    call IO_WRITE_FIELDS('nobj3d_e', IO_FLOW, imax, jmax, kmax, 1, tmp3)
+    call IO_WRITE_FIELDS('nobj3d_e', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
     if (ims_pro == 0) write (*, *) 'done writing files: nobj3d_b, nobj3d_e'
     tmp1(:) = 0.0_wp; tmp2(:) = 0.0_wp; tmp3(:) = 0.0_wp
 
@@ -284,14 +284,14 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     if (ims_npro_k > 1) then
         call TLabMPI_TransposeK_Backward(tmp1, tmp3, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
     end if
-    call IO_WRITE_FIELDS('nobk3d_b', IO_FLOW, imax, jmax, kmax, 1, tmp3)
+    call IO_WRITE_FIELDS('nobk3d_b', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
     if (ims_npro_k > 1) then
         call TLabMPI_TransposeK_Backward(tmp2, tmp3, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
     end if
-    call IO_WRITE_FIELDS('nobk3d_e', IO_FLOW, imax, jmax, kmax, 1, tmp3)
+    call IO_WRITE_FIELDS('nobk3d_e', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
 #else
-    call IO_WRITE_FIELDS('nobk3d_b', IO_FLOW, imax, jmax, kmax, 1, tmp1)
-    call IO_WRITE_FIELDS('nobk3d_e', IO_FLOW, imax, jmax, kmax, 1, tmp2)
+    call IO_WRITE_FIELDS('nobk3d_b', imax, jmax, kmax, itime, 1, tmp1, io_header_q)
+    call IO_WRITE_FIELDS('nobk3d_e', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
 #endif
     if (ims_pro == 0) write (*, *) 'done writing files: nobk3d_b, nobk3d_e'
     if (ims_pro == 0) write (*, *) '========================================================='

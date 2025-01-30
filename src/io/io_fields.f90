@@ -33,15 +33,12 @@ module IO_FIELDS
     integer, public :: io_fileformat                ! files format
     integer, public :: io_datatype                  ! single or double precision
 
-    integer, parameter, public :: IO_SCAL = 1       ! Header of scalar field
-    integer, parameter, public :: IO_FLOW = 2       ! Header of flow field
-
-    type :: io_header
+    type :: io_header                               ! header information
         sequence
         integer size
         real(wp) params(MAX_PARS)
     end type
-    type(io_header), public :: io_header_q, io_header_s(MAX_VARS)
+    type(io_header), public :: io_header_q(1), io_header_s(MAX_VARS)
 
     public :: IO_READ_FIELDS, IO_WRITE_FIELDS
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
@@ -356,26 +353,16 @@ contains
 #define LOC_UNIT_ID 55
 #define LOC_STATUS 'unknown'
 
-    subroutine IO_WRITE_FIELDS(fname, iheader, nx, ny, nz, nfield, a)
-        use TLAB_VARS, only: imode_eqns
-        use TLAB_VARS, only: itime, rtime
-        use TLAB_VARS, only: visc, froude, rossby, damkohler, prandtl, mach
-        use TLAB_VARS, only: schmidt
-        use Thermodynamics, only: gama0
-
-        character(len=*) fname
-        integer, intent(in) :: iheader         ! Scalar or Flow headers
+    subroutine IO_WRITE_FIELDS(fname, nx, ny, nz, nt, nfield, a, locHeader)
+        character(len=*), intent(in) :: fname
         integer, intent(in) :: nfield
-        integer(wi), intent(in) :: nx, ny, nz
+        integer(wi), intent(in) :: nx, ny, nz, nt
         real(wp), intent(in) :: a(nx*ny*nz, nfield)
+        type(io_header), intent(in), optional :: locHeader(:)
 
         ! -------------------------------------------------------------------
         integer(wi) header_offset
-        integer ifield
-
-        integer, parameter :: isize_max = 20
-        real(wp) params(isize_max)
-        integer isize
+        integer ifield, ih
 
         ! ###################################################################
 #ifdef USE_MPI
@@ -416,46 +403,27 @@ contains
             end if
 #endif
 
-            ! -------------------------------------------------------------------
-            ! process header info
-            isize = 0
-            isize = isize + 1; params(isize) = rtime
-            isize = isize + 1; params(isize) = visc ! inverse of reynolds
-            if (iheader == IO_SCAL) then
-                isize = isize + 1 + 1                     ! prepare space for schmidt and damkohler
-
-            else if (iheader == IO_FLOW) then
-                isize = isize + 1; params(isize) = froude
-                isize = isize + 1; params(isize) = rossby
-                if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
-                    isize = isize + 1; params(isize) = gama0
-                    isize = isize + 1; params(isize) = prandtl
-                    isize = isize + 1; params(isize) = mach
-                end if
-            end if
-
-            if (isize > isize_max) then
-                call TLab_Write_ASCII(efile, 'IO_WRITE_FIELDS. Parameters array size error.')
-                call TLab_Stop(DNS_ERROR_ALLOC)
-            end if
-
-            header_offset = 5*SIZEOFINT + isize*SIZEOFREAL
-
-            ! -------------------------------------------------------------------
-            ! write data
             do ifield = 1, nfield
-                if (iheader == IO_SCAL) params(isize - 1) = schmidt(ifield)   ! Scalar header
-                if (iheader == IO_SCAL) params(isize) = damkohler(ifield) ! Scalar header
                 write (name, '(I2)') ifield
                 name = trim(adjustl(fname))//'.'//trim(adjustl(name))
 
                 ! -------------------------------------------------------------------
                 ! header
+                header_offset = 5*SIZEOFINT
+                if (present(locHeader)) then
+                    ih = min(size(locHeader), ifield)      ! use always the 1 if you enter with one, or the ifield
+                    header_offset = header_offset + locHeader(ih)%size*SIZEOFREAL
+                end if
+
 #ifdef USE_MPI
                 if (ims_pro == 0) then
 #endif
 #include "dns_open_file.h"
-                    call IO_WRITE_HEADER(LOC_UNIT_ID, nx_total, ny_total, nz_total, itime, params(1:isize))
+                    if (present(locHeader)) then
+                        call IO_WRITE_HEADER(LOC_UNIT_ID, nx_total, ny_total, nz_total, nt, locHeader(ih)%params(1:locHeader(ih)%size))
+                    else
+                        call IO_WRITE_HEADER(LOC_UNIT_ID, nx_total, ny_total, nz_total, nt)
+                    end if
                     close (LOC_UNIT_ID)
 #ifdef USE_MPI
                 end if
@@ -463,7 +431,6 @@ contains
 
                 ! -------------------------------------------------------------------
                 ! field
-                ! CALL IO_WRITE_FIELD_XPENCIL(name, header_offset, nx,ny,nz, a(1,ifield),wrk3d)
 #ifdef USE_MPI
                 call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 

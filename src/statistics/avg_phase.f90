@@ -17,7 +17,6 @@ module AVG_PHASE
   use TLAB_ARRAYS, only: q, s
   use TLab_Arrays, only: wrk2d, wrk3d
   use Thermodynamics, only: gama0
-  use IO_FIELDS, only: IO_FLOW, IO_SCAL
   use TLab_Memory, only: Tlab_Allocate_Real_LONG
   use, intrinsic :: ISO_C_binding, only: c_f_pointer, c_loc
 
@@ -41,6 +40,9 @@ module AVG_PHASE
   character(len=32), parameter :: avgstr_name = 'avg_stress'
   character(len=32), parameter :: avgp_name = 'avg_p'
   character(len=32), parameter :: avgs_name = 'avg_scal'
+
+  integer, parameter, public :: IO_SCAL = 1       ! Header of scalar field
+  integer, parameter, public :: IO_FLOW = 2       ! Header of flow field
 
   public :: AvgPhaseSpace
   public :: avg_flow, avg_p, avg_scal, avg_stress, avg_planes

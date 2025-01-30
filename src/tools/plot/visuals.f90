@@ -1133,7 +1133,7 @@ contains
 
         if (iformat == 0) then ! standard scalar format
 
-            call IO_WRITE_FIELDS(fname, IO_SCAL, nx, ny, nz, nfield, field)
+            call IO_WRITE_FIELDS(fname, nx, ny, nz, itime, nfield, field)
 
             ! -------------------------------------------------------------------
         else if (iformat == 1) then  ! ensight; to be removed

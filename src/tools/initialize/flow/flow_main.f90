@@ -118,7 +118,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
-    call IO_WRITE_FIELDS(trim(adjustl(tag_flow))//'ics', IO_FLOW, imax, jmax, kmax, inb_flow, q)
+    call IO_WRITE_FIELDS(trim(adjustl(tag_flow))//'ics', imax, jmax, kmax, itime, inb_flow, q, io_header_q)
 
     call TLab_Stop(0)
 end program INIFLOW

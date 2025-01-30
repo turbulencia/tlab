@@ -50,11 +50,11 @@ program VDIFFUSION
             s(ij, 1) = sin(C_2_R*pi_loc/scalex*wavenumber*x(i))
         end do; end do
     fname = trim(adjustl(tag_scal))//'0'
-    call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, s)
+    call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 1, s, io_header_s(1))
 
     q(:, 1) = mean_u; q(:, 2) = C_0_R; q(:, 3) = C_0_R
     fname = trim(adjustl(tag_flow))//'0'
-    call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, 3, q)
+    call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 3, q, io_header_q(1))
 
 ! ###################################################################
     else if (iopt == 2) then
@@ -85,7 +85,7 @@ program VDIFFUSION
         write (*, *) 'Absolute error .............: ', sqrt(error/M_REAL(imax*jmax))
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         fname = 'error'
-        call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, 1, wrk3d)
+        call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 1, wrk3d, io_header_s(1))
     end if
 
     end if

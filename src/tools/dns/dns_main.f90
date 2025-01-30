@@ -316,12 +316,12 @@ program DNS
 
             if (flow_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, IO_FLOW, imax, jmax, kmax, inb_flow, q)
+                call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, q, io_header_q(1:1))
             end if
 
             if (scal_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, IO_SCAL, imax, jmax, kmax, inb_scal, s)
+                call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, s, io_header_s(1:inb_scal))
             end if
 
             if (use_tower) then
