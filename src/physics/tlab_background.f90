@@ -31,7 +31,7 @@ contains
         use FDM, only: g
         use TLAB_VARS, only: imode_sim
         use TLAB_VARS, only: inb_scal, inb_scal_array
-        use TLAB_VARS, only: froude, schmidt
+        use NavierStokes, only: froude, schmidt
         use Thermodynamics
         use THERMO_ANELASTIC
         use Profiles, only: Profiles_ReadBlock

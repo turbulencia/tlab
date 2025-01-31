@@ -20,7 +20,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
-    use TLAB_VARS, only: visc, prandtl, schmidt
+    use NavierStokes, only: visc, prandtl, schmidt
     use TLab_Arrays, only: s
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, T, rho
     use DNS_ARRAYS, only: hs, hq

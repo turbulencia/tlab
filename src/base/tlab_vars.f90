@@ -1,6 +1,6 @@
 module TLAB_VARS
     use TLab_Types, only: term_dt
-    use TLab_Constants, only: MAX_VARS, wp, wi, sp
+    use TLab_Constants, only: wp, wi, sp
     implicit none
     save
 
@@ -43,15 +43,7 @@ module TLAB_VARS
 ! ###################################################################
     type(term_dt) :: coriolis                       ! Coriolis parameters
 
-! ###################################################################
-! Nondimensional numbers
-! ###################################################################
-    real(wp) :: visc, prandtl, schmidt(MAX_VARS)    ! molecular transport
-    real(wp) :: mach                                ! compressibility
-    real(wp) :: damkohler(MAX_VARS)                 ! reaction
-    real(wp) :: froude                              ! gravity force
-    real(wp) :: rossby                              ! Coriolis force
-    real(wp) :: stokes                              ! particle inertial effects
-    real(wp) :: settling                            ! sedimentation effects
+    ! nondimensional parameters; to be moved to navierstokes
+    real(wp), public :: mach                                ! compressibility
 
 end module TLAB_VARS

@@ -27,7 +27,7 @@ contains
     !########################################################################
     subroutine Chemistry_Initialize(inifile)
         use Profiles, only: profiles_dt
-        use TLAB_VARS, only: damkohler
+        use NavierStokes, only: damkohler
         ! use FDM, only: g
         character(len=*), intent(in) :: inifile
 
@@ -92,7 +92,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine Chemistry_Source(locProps, nx, ny, nz, is, s, source)
-        use TLAB_VARS, only: damkohler
+        use NavierStokes, only: damkohler
 
         type(term_dt), intent(in) :: locProps
         integer(wi), intent(in) :: nx, ny, nz, is

@@ -18,7 +18,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
-    use TLAB_VARS, only: visc
+    use NavierStokes, only: visc
     use TLab_Pointers
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV

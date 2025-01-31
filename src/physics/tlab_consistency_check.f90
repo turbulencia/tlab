@@ -5,15 +5,14 @@
 ! Check for cross dependencies and undeveloped options.
 subroutine TLab_Consistency_Check()
     use TLab_Constants, only: efile, lfile, MAX_VARS
-    use NavierStokes, only: nse_eqns, nse_advection
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on
     use TLAB_VARS
     use OPR_Filters, only: PressureFilter
-    use TLAB_VARS, only: schmidt
     use FDM, only: g
     use IBM_VARS, only: imode_ibm
     use IO_FIELDS
+    use NavierStokes
     use Thermodynamics
     use Radiation
     use Microphysics

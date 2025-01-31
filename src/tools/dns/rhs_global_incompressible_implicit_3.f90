@@ -33,7 +33,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLAB_VARS, only: scal_on
-    use TLAB_VARS, only: visc, schmidt, rossby
+    use NavierStokes, only: visc, schmidt, rossby
     use TLAB_VARS, only: coriolis
     use Gravity, only: buoyancy
     use TLab_Arrays, only: wrk2d, wrk3d

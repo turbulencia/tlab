@@ -17,7 +17,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
-    use TLAB_VARS, only: visc, prandtl
+    use NavierStokes, only: visc, prandtl
     use TLab_Pointers
     use TLab_Arrays, only: s
     use THERMO_CALORIC

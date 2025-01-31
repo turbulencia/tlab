@@ -48,7 +48,7 @@ program SPECTRA
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, froude
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
     use TLab_Background, only: TLab_Initialize_Background

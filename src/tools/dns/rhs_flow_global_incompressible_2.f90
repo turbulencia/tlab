@@ -12,7 +12,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TLab_Constants, only: wp, wi, BCS_NN
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
-    use TLAB_VARS, only: visc
+    use NavierStokes, only: visc
     use TLAB_VARS, only: stagger_on
     use TLab_Arrays, only: q
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6

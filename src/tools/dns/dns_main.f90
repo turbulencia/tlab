@@ -406,7 +406,7 @@ contains
 !########################################################################
     subroutine DNS_LOGS_INITIALIZE()
         use Thermodynamics, only: imixture
-        use TLAB_VARS, only: damkohler
+        use NavierStokes, only: damkohler
 
         integer ip
         character(len=256) line1
@@ -450,7 +450,7 @@ contains
 
     subroutine DNS_LOGS()
         use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
-        use TLAB_VARS, only: damkohler
+        use NavierStokes, only: damkohler
 #ifdef USE_MPI
         use MPI
         use TLabMPI_VARS, only: ims_err

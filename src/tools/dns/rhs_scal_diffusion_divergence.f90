@@ -15,7 +15,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
-    use TLAB_VARS, only: visc, prandtl, schmidt
+    use NavierStokes, only: visc, prandtl, schmidt
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs

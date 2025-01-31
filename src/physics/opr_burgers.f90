@@ -14,7 +14,7 @@ module OPR_Burgers
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk2d, wrk3d
-    use TLAB_VARS, only: visc, schmidt
+    use NavierStokes, only: visc, schmidt
     use OPR_FILTERS
     use OPR_PARTIAL
     use LargeScaleForcing, only: subsidenceProps, TYPE_SUB_CONSTANT_LOCAL

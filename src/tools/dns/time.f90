@@ -22,7 +22,7 @@ module TIME
     use FDM, only: g
     use NavierStokes, only: nse_eqns, nse_advection, nse_viscous, nse_diffusion
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLAB_VARS, only: visc, prandtl, schmidt
+    use NavierStokes, only: visc, prandtl, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_OpenMP
     use PARTICLE_VARS

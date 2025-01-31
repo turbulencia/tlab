@@ -63,7 +63,7 @@ contains
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
         use NavierStokes, only: nse_eqns
         use TLAB_VARS, only: scal_on
-        use TLAB_VARS, only: froude, schmidt
+        use NavierStokes, only: froude, schmidt
         use TLAB_VARS, only: itime, rtime
         use TLab_Arrays
         use THERMO_ANELASTIC

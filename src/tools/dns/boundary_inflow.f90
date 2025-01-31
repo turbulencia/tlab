@@ -17,7 +17,7 @@ module BOUNDARY_INFLOW
     use NavierStokes, only: nse_eqns
     use FDM, only: g, FDM_Initialize
     use TLAB_VARS, only: rtime, itime
-    use TLAB_VARS, only: visc 
+    use NavierStokes, only: visc 
     use TLab_Background, only: qbg
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

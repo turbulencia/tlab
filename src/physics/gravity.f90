@@ -9,7 +9,7 @@ module Gravity
     use TLab_Constants, only: wp, wi, small_wp, efile, lfile, wfile, MAX_PROF
     use TLab_Types, only: term_dt
     use TLAB_VARS, only: inb_scal, inb_scal_array, inb_flow, inb_flow_array
-    use TLAB_VARS, only: froude
+    use NavierStokes, only: froude
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private

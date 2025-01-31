@@ -6,8 +6,17 @@ module NavierStokes
     implicit none
     private
 
-    integer, public, protected :: nse_eqns                       ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
+    integer, public, protected :: nse_eqns                          ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
     integer, public, protected :: nse_advection, nse_viscous, nse_diffusion ! formulation of the Burgers operator
+
+    ! Nondimensional numbers
+    real(wp), public :: visc, schmidt(MAX_VARS)                     ! molecular transport
+    real(wp), public, protected :: prandtl                          ! molecular transport
+    real(wp), public, protected :: damkohler(MAX_VARS)              ! reaction
+    real(wp), public, protected :: froude                           ! gravity force
+    real(wp), public, protected :: rossby                           ! Coriolis force
+    real(wp), public, protected :: stokes                           ! particle inertial effects
+    real(wp), public, protected :: settling                         ! sedimentation effects
 
     public :: NavierStokes_Initialize_Parameters
 
@@ -18,7 +27,7 @@ contains
         use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
         use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
         use TLAB_VARS, only: coriolis
-        use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
+        use TLAB_VARS, only: mach
         use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
         ! use Avg_Spatial
         implicit none

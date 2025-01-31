@@ -511,7 +511,7 @@ contains
         use TLab_Constants, only: lfile
         use TLAB_VARS, only: imax, jmax, kmax
         use TLAB_VARS, only: isize_field
-        use TLAB_VARS, only: visc, schmidt
+        use NavierStokes, only: visc, schmidt
         use FDM, only: g
         use Averages, only: AVG1V2D
         use OPR_PARTIAL

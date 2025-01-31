@@ -28,7 +28,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine Microphysics_Initialize(inifile)
-        use TLAB_VARS, only: settling
+        use NavierStokes, only: settling
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------

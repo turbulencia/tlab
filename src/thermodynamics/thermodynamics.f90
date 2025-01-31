@@ -487,22 +487,7 @@ contains
         ! Nondimensionalization
         !- Compressible formulations use p nondimensionalized by reference dynamic pressure rho_0 U_0^2
         !- Incompressible and anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
-        if (imixture == MIXT_TYPE_NONE .and. .not. nondimensional) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
-            call TLab_Stop(DNS_ERROR_OPTION)
-        end if
-
-        RRATIO = 1.0_wp                                 ! Compressible formulation uses RRATIO, CRATIO_INV, but RRATIO also used below
-        CRATIO_INV = 1.0_wp
-        GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
         if (nondimensional) then
-            ! Parameters in the evolution equations
-            if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
-                RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
-                CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-            end if
-            GRATIO = (gama0 - 1.0_wp)/gama0             ! R_0/C_{p,0}
-
             ! Thermal equation of state
             THERMO_R(:) = THERMO_R(:)/RREF              ! normalized gas constants (Inverse of molar masses)
 
@@ -526,6 +511,23 @@ contains
                 THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
             end do
 
+        else
+            if (imixture == MIXT_TYPE_NONE) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
+        end if
+
+        ! Parameters in the evolution equations
+        RRATIO = 1.0_wp                                 ! Compressible formulation uses RRATIO, CRATIO_INV, but RRATIO also used below
+        CRATIO_INV = 1.0_wp
+        GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
+        if (nondimensional) then
+            if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
+                RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
+                CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+            end if
+            GRATIO = (gama0 - 1.0_wp)/gama0             ! R_0/C_{p,0}
         end if
 
         ! Derived parameters to save operations

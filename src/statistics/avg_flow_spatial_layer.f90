@@ -12,6 +12,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     use TLab_Constants, only: efile, tfile, wp, wi, big_wp
     use FDM, only: g
     use TLAB_VARS
+    use NavierStokes
     use Tlab_Background, only: rbg, tbg, pbg, qbg
     use Avg_Spatial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

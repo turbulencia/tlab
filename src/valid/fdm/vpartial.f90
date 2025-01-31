@@ -4,7 +4,7 @@ program VPARTIAL
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use FDM, only: grid_dt, FDM_Initialize
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
-    use TLAB_VARS, only: visc, schmidt
+    use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d, wrk2d, txc, x
@@ -25,7 +25,7 @@ program VPARTIAL
     real(wp), dimension(:, :), pointer :: du1_a, du1_b, du1_c, du1_n
     real(wp), dimension(:, :), pointer :: du2_a, du2_n1, du2_n2, du2_n3
     integer(wi) bcs_aux(2, 2)
-    real(wp) :: wk, coef(5), dummy
+    real(wp) :: wk, coef(5)!, dummy
     integer(wi) :: test_type, ibc, ip, ic, ndr, idr, ndl, idl, im
     integer(wi) :: nmin, nmax, nsize
 

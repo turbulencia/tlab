@@ -3,7 +3,7 @@
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
     use FDM, only: grid_dt, FDM_Initialize
-    use TLAB_VARS, only: visc, schmidt
+    use NavierStokes, only: visc, schmidt
     USE OPR_FILTERS
 
     implicit none

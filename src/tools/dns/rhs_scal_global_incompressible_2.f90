@@ -11,7 +11,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
-    use TLAB_VARS, only: visc, schmidt
+    use NavierStokes, only: visc, schmidt
     use IBM_VARS, only: imode_ibm, imode_ibm_scal, ibm_partial
     use TLab_Arrays, only: s
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6

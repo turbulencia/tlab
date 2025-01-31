@@ -5,7 +5,7 @@ program VINTEGRAL
     use TLab_Constants, only: efile
     use FDM, only: grid_dt, FDM_Initialize
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
-    use TLAB_VARS, only: visc, schmidt
+    use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d, txc, x

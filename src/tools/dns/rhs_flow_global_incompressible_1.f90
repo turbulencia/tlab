@@ -17,7 +17,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow
     use FDM, only: g
-    use TLAB_VARS, only: visc
+    use NavierStokes, only: visc
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use TLab_OpenMP
     use DNS_ARRAYS
