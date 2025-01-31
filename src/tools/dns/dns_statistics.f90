@@ -61,7 +61,7 @@ contains
         use TLab_Pointers, only: pointers_dt
         use FDM, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
-        use TLAB_VARS, only: imode_eqns
+        use NavierStokes, only: nse_eqns
         use TLAB_VARS, only: scal_on
         use TLAB_VARS, only: froude, schmidt
         use TLAB_VARS, only: itime, rtime
@@ -88,7 +88,7 @@ contains
 #endif
 
         ! Calculate pressure
-        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
             call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 3), txc(1, 1), txc(1, 2), txc(1, 4), DCMP_TOTAL)
         end if
 
@@ -123,7 +123,7 @@ contains
             nfield = nfield + 1; vars(nfield)%field => q(:, 1); vars(nfield)%tag = 'u'
             nfield = nfield + 1; vars(nfield)%field => q(:, 2); vars(nfield)%tag = 'v'
             nfield = nfield + 1; vars(nfield)%field => q(:, 3); vars(nfield)%tag = 'w'
-            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 nfield = nfield + 1; vars(nfield)%field => txc(:, 3); vars(nfield)%tag = 'p'
             else
                 nfield = nfield + 1; vars(nfield)%field => q(:, 6); vars(nfield)%tag = 'p'
@@ -157,7 +157,7 @@ contains
                                      txc(1, 1), txc(1, 2), txc(1, 4), txc(1, 5), txc(1, 6), hq(1, 3), mean)
                 end do
 
-                ! if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+                ! if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
                 if (stats_buoyancy) then
                     if (buoyancy%type == EQNS_EXPLICIT) then

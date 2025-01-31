@@ -6,7 +6,7 @@
 subroutine RHS_FLOW_EULER_DIVERGENCE()
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use FDM, only: g
     use TLab_Pointers
     use DNS_ARRAYS, only: hq
@@ -105,7 +105,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! Total energy formulation
 ! -------------------------------------------------------------------
-    if (imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL) then
         do i = 1, imax*jmax*kmax
             dummy = rho(i)*(e(i) + CRATIO_INV*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) + CRATIO_INV*p(i)
             tmp3(i) = dummy*w(i)
@@ -121,7 +121,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
 ! Internal energy formulation
 ! the term p div u is add in RHS_FLOW_VISCOUS to save derivatives
 ! -------------------------------------------------------------------
-    else if (imode_eqns == DNS_EQNS_INTERNAL) then
+    else if (nse_eqns == DNS_EQNS_INTERNAL) then
         do i = 1, imax*jmax*kmax
             dummy = rho(i)*e(i)
             tmp3(i) = dummy*w(i)

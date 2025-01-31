@@ -29,7 +29,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use FDM, only: g
     use TLAB_VARS, only: visc
     use Thermodynamics, only: itransport
@@ -74,7 +74,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     u => q(:, :, :, 1)
     v => q(:, :, :, 2)
     w => q(:, :, :, 3)
-    if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL .or. nse_eqns == DNS_EQNS_INTERNAL) then
         rho => q(:, :, :, 5)
         p => q(:, :, :, 6)
         T => q(:, :, :, 7)

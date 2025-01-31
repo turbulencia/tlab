@@ -5,7 +5,7 @@ module Microphysics
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_PARS
     use TLab_Types, only: term_dt
     use FDM, only: grid_dt
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: inb_scal_array
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
@@ -123,7 +123,7 @@ contains
         exponent = locProps%auxiliar(1)
         dummy = 1.0_wp + exponent
 
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, s(:, locProps%scalar(is)), source)
             s_active => source
         else

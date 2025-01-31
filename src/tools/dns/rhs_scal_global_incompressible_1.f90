@@ -14,7 +14,8 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use FDM, only: g
-    use TLAB_VARS, only: idiffusion, visc, schmidt
+    use NavierStokes, only: nse_diffusion
+    use TLAB_VARS, only: visc, prandtl, schmidt
     use TLab_Arrays, only: s
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hs
@@ -36,7 +37,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
 
     bcs = 0
 
-    if (idiffusion == EQNS_NONE) then; diff = 0.0_wp
+    if (nse_diffusion == EQNS_NONE) then; diff = 0.0_wp
     else; diff = visc/schmidt(is); end if
 
 ! #######################################################################

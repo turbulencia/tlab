@@ -14,7 +14,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use FDM, only: g
     use TLAB_VARS, only: visc
     use TLab_Pointers
@@ -54,7 +54,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
-    if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
+    if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xx(i) = c23*vis(i)*(2.0_wp*tmp1(i) - (tmp2(i) + tmp3(i)))
             tau_yy(i) = c23*vis(i)*(2.0_wp*tmp2(i) - (tmp1(i) + tmp3(i)))
@@ -63,7 +63,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
             hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_xx(i)*tmp1(i) + tau_yy(i)*tmp2(i) + tau_zz(i)*tmp3(i) - p(i)*dil)
         end do
 
-    else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
+    else if (nse_eqns == DNS_EQNS_TOTAL) then ! total energy equation
         do i = 1, imax*jmax*kmax
             tau_xx(i) = c23*vis(i)*(2.0_wp*tmp1(i) - (tmp2(i) + tmp3(i)))
             tau_yy(i) = c23*vis(i)*(2.0_wp*tmp2(i) - (tmp1(i) + tmp3(i)))
@@ -77,13 +77,13 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 ! -------------------------------------------------------------------
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp1)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
-    if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
+    if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xy(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
             hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_xy(i)*(tmp1(i) + tmp2(i)))
         end do
 
-    else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
+    else if (nse_eqns == DNS_EQNS_TOTAL) then ! total energy equation
         tau_xy(:) = visc*vis*(tmp1 + tmp2)
 
     end if
@@ -91,13 +91,13 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp1)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp2)
 
-    if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
+    if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xz(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
             hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_xz(i)*(tmp1(i) + tmp2(i)))
         end do
 
-    else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
+    else if (nse_eqns == DNS_EQNS_TOTAL) then ! total energy equation
         tau_xz(:) = visc*vis*(tmp1 + tmp2)
 
     end if
@@ -105,13 +105,13 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp1)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
 
-    if (imode_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
+    if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_yz(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
             hq(i, 4) = hq(i, 4) + CRATIO_INV*(tau_yz(i)*(tmp1(i) + tmp2(i)))
         end do
 
-    else if (imode_eqns == DNS_EQNS_TOTAL) then ! total energy equation
+    else if (nse_eqns == DNS_EQNS_TOTAL) then ! total energy equation
         tau_yz(:) = visc*vis*(tmp1 + tmp2)
 
     end if
@@ -140,7 +140,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! Total energy formulation
 ! -------------------------------------------------------------------
-    if (imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL) then
         do i = 1, imax*jmax*kmax
             tau_xx(i) = tau_xx(i)*u(i) + tau_xy(i)*v(i) + tau_xz(i)*w(i)
             tau_yy(i) = tau_xy(i)*u(i) + tau_yy(i)*v(i) + tau_yz(i)*w(i)

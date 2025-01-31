@@ -18,7 +18,8 @@ subroutine RHS_FLOW_GLOBAL_2()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
     use FDM, only: g
-    use TLAB_VARS, only: idiffusion, visc, prandtl
+    use NavierStokes, only: nse_diffusion
+    use TLAB_VARS, only: visc, prandtl
     use Gravity, only: buoyancy
     use TLab_Arrays, only: s
     use TLab_Pointers
@@ -335,7 +336,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 ! ###################################################################
 ! Enthalpy diffusion in energy equation
 ! ###################################################################
-    if (idiffusion == EQNS_NONE) then; cond = 0.0_wp
+    if (nse_diffusion == EQNS_NONE) then; cond = 0.0_wp
     else; cond = visc/prandtl; end if
 
 ! calculate the enthalpy

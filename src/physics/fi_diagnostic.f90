@@ -8,7 +8,7 @@
 subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLab_Constants, only: wp, wi
     use TLAB_VARS, only: inb_flow_array, inb_flow, inb_scal_array, inb_scal
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLab_Arrays, only: wrk1d, wrk3d
     use Thermodynamics
     use Gravity, only: buoyancy, bbackground
@@ -26,7 +26,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
 
     ! -------------------------------------------------------------------
     ! ###################################################################
-    select case (imode_eqns)
+    select case (nse_eqns)
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         if (buoyancy%type == EQNS_BOD_NORMALIZEDMEAN .or. buoyancy%type == EQNS_BOD_SUBTRACTMEAN) then      ! Calculate mean buoyancy background
             call AVG1V2D_V(nx, ny, nz, 1, s(:, 1), bbackground, wrk1d)

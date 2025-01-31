@@ -7,7 +7,7 @@ module TLab_Sources
     use TLab_Constants, only: wp, wi, small_wp
     use TLab_Types, only: term_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use FDM, only: g
     use TLAB_VARS, only: coriolis
     use TLab_OpenMP
@@ -153,7 +153,7 @@ contains
             if (infraredProps%active(is)) then
                 call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
 
-                if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (nse_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
 !$omp parallel default( shared ) &
@@ -174,7 +174,7 @@ contains
             if (sedimentationProps%active(is)) then
                 call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
 
-                if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (nse_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
 !$omp parallel default( shared ) &forcingProps%vector

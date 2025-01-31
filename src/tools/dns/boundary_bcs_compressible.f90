@@ -9,7 +9,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLab_Constants, only: efile, wp, wi
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array
     use TLAB_VARS, only: inb_flow, inb_scal
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: imode_sim, scal_on, flow_on
     use Tlab_Background, only: qbg
     use FDM, only: g
@@ -187,12 +187,12 @@ contains
                 dpdn_loc(j, k) = txc(1, j, k, 5)
             end do
         end do
-        if (imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL) then
             call BOUNDARY_BCS_FLOW_NR_2(0, nt, pl_out_min, BcsFlowImin%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(1), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
-        else if (imode_eqns == DNS_EQNS_INTERNAL) then
+        else if (nse_eqns == DNS_EQNS_INTERNAL) then
             call BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_aux, pl_inf_min, inf_rhs, BcsFlowImin%ref, &
                                         BcsFlowImin%ref(1, 1, inb_flow + 1), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
@@ -246,12 +246,12 @@ contains
                 dpdn_loc(j, k) = txc(imax, j, k, 5)
             end do
         end do
-        if (imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL) then
             call BOUNDARY_BCS_FLOW_NR_2(1, nt, pl_out_max, BcsFlowImax%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(1), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
-        else if (imode_eqns == DNS_EQNS_INTERNAL) then
+        else if (nse_eqns == DNS_EQNS_INTERNAL) then
             call BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowImax%ref, &
                                         BcsFlowImax%ref(1, 1, inb_flow + 1), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
@@ -594,12 +594,12 @@ contains
                 dwdn_loc(i, k) = tmp4(i, 1, k)
                 dpdn_loc(i, k) = tmp5(i, 1, k)
             end do; end do
-        if (imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL) then
             call BOUNDARY_BCS_FLOW_NR_2(0, nt, pl_out_min, BcsFlowJmin%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(2), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
-        else if (imode_eqns == DNS_EQNS_INTERNAL) then
+        else if (nse_eqns == DNS_EQNS_INTERNAL) then
             call BOUNDARY_BCS_FLOW_NR_3(iflag_min, idir, nt, pl_out_min, pl_inf_min, inf_rhs, BcsFlowJmin%ref, &
                                         BcsFlowJmin%ref(1, 1, inb_flow + 1), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
@@ -642,12 +642,12 @@ contains
                 dwdn_loc(i, k) = tmp4(i, jmax, k)
                 dpdn_loc(i, k) = tmp5(i, jmax, k)
             end do; end do
-        if (imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL) then
             call BOUNDARY_BCS_FLOW_NR_2(1, nt, pl_out_max, BcsFlowJmax%ref(1, 1, 5), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &
                                         drdn_loc(1, 1), dudn_loc(1, 1), dvdn_loc(1, 1), dwdn_loc(1, 1), dpdn_loc(1, 1), &
                                         buoyancy%vector(2), hr_loc(1, 1), hu_loc(1, 1), hv_loc(1, 1), hw_loc(1, 1), he_loc(1, 1))
-        else if (imode_eqns == DNS_EQNS_INTERNAL) then
+        else if (nse_eqns == DNS_EQNS_INTERNAL) then
             call BOUNDARY_BCS_FLOW_NR_3(iflag_max, idir, nt, pl_out_max, pl_inf_max, inf_rhs, BcsFlowJmax%ref, &
                                         BcsFlowJmax%ref(1, 1, inb_flow + 1), &
                                         r_loc(1, 1), u_loc(1, 1), v_loc(1, 1), w_loc(1, 1), p_loc(1, 1), g_loc(1, 1), &

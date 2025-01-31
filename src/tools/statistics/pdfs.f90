@@ -17,6 +17,7 @@ program PDFS
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: nse_eqns
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy
@@ -175,7 +176,7 @@ program PDFS
     ! -------------------------------------------------------------------
     iread_flow = .false.
     iread_scal = .false.
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then; inb_txc = 6; 
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then; inb_txc = 6; 
     else; inb_txc = 1
     end if
     if (fourier_on) inb_txc = max(inb_txc, 1)
@@ -185,7 +186,7 @@ program PDFS
     case (1)
         iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 4 + inb_scal_array; isize_pdf = opt_bins(1) + 2
-        if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) nfield = nfield + 2
+        if (nse_eqns == DNS_EQNS_INTERNAL .or. nse_eqns == DNS_EQNS_TOTAL) nfield = nfield + 2
     case (2) ! Scalar gradient equation
         iread_scal = .true.; iread_flow = .true.; inb_txc = max(inb_txc, 6)
         nfield = 5; isize_pdf = opt_bins(1) + 2
@@ -349,7 +350,7 @@ program PDFS
             ifield = ifield + 1; vars(ifield)%field => q(:, 1); vars(ifield)%tag = 'u'
             ifield = ifield + 1; vars(ifield)%field => q(:, 2); vars(ifield)%tag = 'v'
             ifield = ifield + 1; vars(ifield)%field => q(:, 3); vars(ifield)%tag = 'w'
-            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'p'
             else
@@ -394,7 +395,7 @@ program PDFS
         case (3)
             call TLab_Write_ASCII(lfile, 'Computing enstrophy equation...')
 
-            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 if (buoyancy%type == EQNS_NONE) then
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
@@ -449,7 +450,7 @@ program PDFS
         case (4)
             call TLab_Write_ASCII(lfile, 'Computing strain equation...')
 
-            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                         txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))

@@ -20,7 +20,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use TLab_Constants, only: lfile, wfile, efile, tfile
     !
     use FDM, only: g
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: inb_flow, inb_scal, inb_scal_array
     use TLAB_VARS, only: isize_field, isize_wrk1d, imax, jmax, kmax
     use TLAB_VARS, only: rbackground, ribackground
@@ -438,7 +438,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         tdummy = 1.0_wp/dte
         tmp32 = h1 + u*tdummy
         tmp42 = h3 + w*tdummy
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp32)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp42)
         end if
@@ -531,7 +531,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         t_tmp = -MPI_WTime()
         tdummy = 1.0_wp/dte
         tmp11 = h2 + v*tdummy
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp11)
         end if
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp11, tmp12)
@@ -600,7 +600,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     end do
 
 ! Adding density in BCs
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         BcsFlowJmin%ref(:, :, 2) = BcsFlowJmin%ref(:, :, 2)*rbackground(1)
         BcsFlowJmax%ref(:, :, 2) = BcsFlowJmax%ref(:, :, 2)*rbackground(g(2)%size)
     end if
@@ -620,7 +620,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp12, tmp42)
 
 
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp41, h1)
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp11, h2)
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp42, h3)

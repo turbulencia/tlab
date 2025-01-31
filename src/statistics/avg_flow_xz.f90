@@ -34,7 +34,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
-    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+use NavierStokes, only: nse_eqns
+use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use OPR_PARTIAL
 
     implicit none
@@ -68,7 +69,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     u => q(:, :, :, 1)
     v => q(:, :, :, 2)
     w => q(:, :, :, 3)
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         e => q(:, :, :, 4)
         rho => q(:, :, :, 5)
         p => q(:, :, :, 6)
@@ -384,7 +385,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     sg(ng) = 14
 
     groupname(ng) = 'Stratification'
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         varname(ng) = 'Pot rRref rTref BuoyFreq_fr BuoyFreq_eq LapseRate_fr LapseRate_eq ' &
                       //'PotTemp PotTemp_v SaturationPressure rPref RelativeHumidity Dewpoint LapseRate_dew'
     else
@@ -470,12 +471,12 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     W_y1(:) = rW_y(:)
 
     ! Density and Favre avrages
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE) then
+    if (nse_eqns == DNS_EQNS_INCOMPRESSIBLE) then
         rR(:) = 1.0_wp ! I divide below by density; rbackground(:)
 
         fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
-    else if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    else if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, dwdx)
         call AVG_IK_V(imax, jmax, kmax, jmax, dwdx, rR(1), wrk1d)
 
@@ -518,7 +519,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         dwdz(:, j, :) = w(:, j, :) - fW(j)
     end do
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         dvdx = dwdx*dwdx
         dvdy = dwdy*dwdy
         dvdz = dwdz*dwdz
@@ -530,13 +531,13 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, Rxx(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, Ryy(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, Rzz(1), wrk1d)
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         Rxx(:) = Rxx(:)/rR(:)
         Ryy(:) = Ryy(:)/rR(:)
         Rzz(:) = Rzz(:)/rR(:)
     end if
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         dvdx = dwdx*dwdy
         dvdy = dwdx*dwdz
         dvdz = dwdy*dwdz
@@ -548,7 +549,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, Rxy(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, Rxz(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, Ryz(1), wrk1d)
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         Rxy(:) = Rxy(:)/rR(:)
         Rxz(:) = Rxz(:)/rR(:)
         Ryz(:) = Ryz(:)/rR(:)
@@ -562,8 +563,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ryz(1), Ryz_y(1))
 
     ! Density
-    if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (.not. (nse_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, p_wrk3d)
             do j = 1, jmax
                 p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - rR(j)
@@ -615,7 +616,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     dvdx = dwdx*dwdx*dwdy
     dvdy = dwdy*dwdy*dwdy
     dvdz = dwdz*dwdz*dwdy
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         dvdx = dvdx*rho
         dvdy = dvdy*rho
         dvdz = dvdz*rho
@@ -628,7 +629,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     dvdx = dwdx*dwdy*dwdy
     dvdy = dwdx*dwdy*dwdz
     dvdz = dwdy*dwdy*dwdz
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         dvdx = dvdx*rho
         dvdy = dvdy*rho
         dvdz = dvdz*rho
@@ -720,10 +721,10 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #define T_LOC(i,j,k)     dwdx(i,j,k)
 #define S_LOC(i,j,k)     dwdz(i,j,k)
 
-    if (imode_eqns == DNS_EQNS_INCOMPRESSIBLE) then
+    if (nse_eqns == DNS_EQNS_INCOMPRESSIBLE) then
         ! rT(:) = tbackground(:)
 
-    else if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    else if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, T_LOC(1, 1, 1))
         call AVG_IK_V(imax, jmax, kmax, jmax, T_LOC(1, 1, 1), rT(1), wrk1d)
 
@@ -933,7 +934,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! dudx = buoyancy
     !
     ! ###################################################################
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
 
         if (buoyancy%type /= EQNS_NONE) then
             if (buoyancy%type == EQNS_EXPLICIT) then
@@ -1137,7 +1138,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! ###################################################################
     ! Density Fluctuations Budget
     ! ###################################################################
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_INTERNAL .or. nse_eqns == DNS_EQNS_TOTAL) then
         p_wrk3d = dudx + dvdy + dwdz
         do j = 1, jmax
             p_wrk3d(:, j, :) = (p_wrk3d(:, j, :) - rV_y(j))*(rho(:, j, :) - rR(j))
@@ -1292,7 +1293,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Complete budget equations
     ! ###################################################################
     ! Density fluctuations budget equation
-    if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_INTERNAL .or. nse_eqns == DNS_EQNS_TOTAL) then
         rR2_prod(:) = -2.0_wp*(rR2_flux_y(:)*rR_y(:) + rR2(:)*rV_y(:))
         rR2_conv(:) = -rV(:)*rR2_y(:)
         rR2_dil1(:) = 2.0_wp*rR(:)*rR2_dil1(:)
@@ -1366,7 +1367,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     Tke_t(:) = Buo(:) + Con(:) + Prd(:) - Eps(:) + (-Ty_y(:) + Pi(:) - Gkin(:) + Dkin(:))/rR(:)
 
     ! Potential energy equation
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         Pot(:) = -rB(:)*(g(2)%nodes(:) - sbg(inb_scal)%ymean)
 
     else

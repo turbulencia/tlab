@@ -20,7 +20,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLab_Constants, only: tfile
 #endif
     use TLab_Constants, only: wp, wi, BCS_NN
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use FDM, only: g
     use TLAB_VARS, only: stagger_on
@@ -208,7 +208,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call IBM_BCS_FIELD(tmp3)
             call IBM_BCS_FIELD(tmp4)
         end if
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp2)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
@@ -236,7 +236,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call IBM_BCS_FIELD(hq(:, 1))
             call IBM_BCS_FIELD(hq(:, 3))
         end if
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 2), tmp2)
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 1), tmp3)
             call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 3), tmp4)
@@ -272,7 +272,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
         p_bcs(1:imax, 1:jmax, 1:kmax) => hq(1:imax*jmax*kmax, 2)
     end if
 
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         BcsFlowJmin%ref(:, :, 2) = p_bcs(:, 1, :)*rbackground(1)
         BcsFlowJmax%ref(:, :, 2) = p_bcs(:, jmax, :)*rbackground(g(2)%size)
     else
@@ -329,7 +329,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     ! -----------------------------------------------------------------------
     ! Add pressure gradient
     ! -----------------------------------------------------------------------
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:, 1))
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:, 2))
         call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:, 3))

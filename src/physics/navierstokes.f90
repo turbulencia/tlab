@@ -6,8 +6,8 @@ module NavierStokes
     implicit none
     private
 
-    ! integer, public, protected :: imode_eqns                       ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
-    ! integer, public, protected :: iadvection, iviscous, idiffusion ! formulation of the Burgers operator
+    integer, public, protected :: nse_eqns                       ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
+    integer, public, protected :: nse_advection, nse_viscous, nse_diffusion ! formulation of the Burgers operator
 
     public :: NavierStokes_Initialize_Parameters
 
@@ -17,7 +17,6 @@ contains
         use TLAB_VARS, only: imode_sim
         use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
         use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
-        use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
         use TLAB_VARS, only: coriolis
         use TLAB_VARS, only: visc, prandtl, schmidt, mach, damkohler, froude, rossby, stokes, settling
         use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
@@ -50,56 +49,56 @@ contains
 
 ! -------------------------------------------------------------------
         call ScanFile_Char(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
-        if (trim(adjustl(sRes)) == 'total') then; imode_eqns = DNS_EQNS_TOTAL
-        elseif (trim(adjustl(sRes)) == 'internal') then; imode_eqns = DNS_EQNS_INTERNAL
-        elseif (trim(adjustl(sRes)) == 'incompressible') then; imode_eqns = DNS_EQNS_INCOMPRESSIBLE
-        elseif (trim(adjustl(sRes)) == 'anelastic') then; imode_eqns = DNS_EQNS_ANELASTIC
+        if (trim(adjustl(sRes)) == 'total') then; nse_eqns = DNS_EQNS_TOTAL
+        elseif (trim(adjustl(sRes)) == 'internal') then; nse_eqns = DNS_EQNS_INTERNAL
+        elseif (trim(adjustl(sRes)) == 'incompressible') then; nse_eqns = DNS_EQNS_INCOMPRESSIBLE
+        elseif (trim(adjustl(sRes)) == 'anelastic') then; nse_eqns = DNS_EQNS_ANELASTIC
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong entry Main.Equations option.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call ScanFile_Char(bakfile, inifile, 'Main', 'TermAdvection', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; iadvection = EQNS_NONE
-        else if (trim(adjustl(sRes)) == 'divergence') then; iadvection = EQNS_DIVERGENCE
-        else if (trim(adjustl(sRes)) == 'skewsymmetric') then; iadvection = EQNS_SKEWSYMMETRIC
-        else if (trim(adjustl(sRes)) == 'convective') then; iadvection = EQNS_CONVECTIVE
+        if (trim(adjustl(sRes)) == 'none') then; nse_advection = EQNS_NONE
+        else if (trim(adjustl(sRes)) == 'divergence') then; nse_advection = EQNS_DIVERGENCE
+        else if (trim(adjustl(sRes)) == 'skewsymmetric') then; nse_advection = EQNS_SKEWSYMMETRIC
+        else if (trim(adjustl(sRes)) == 'convective') then; nse_advection = EQNS_CONVECTIVE
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermAdvection option.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call ScanFile_Char(bakfile, inifile, 'Main', 'TermViscous', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; iviscous = EQNS_NONE
-        else if (trim(adjustl(sRes)) == 'divergence') then; iviscous = EQNS_DIVERGENCE
-        else if (trim(adjustl(sRes)) == 'explicit') then; iviscous = EQNS_EXPLICIT
+        if (trim(adjustl(sRes)) == 'none') then; nse_viscous = EQNS_NONE
+        else if (trim(adjustl(sRes)) == 'divergence') then; nse_viscous = EQNS_DIVERGENCE
+        else if (trim(adjustl(sRes)) == 'explicit') then; nse_viscous = EQNS_EXPLICIT
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermViscous option.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call ScanFile_Char(bakfile, inifile, 'Main', 'TermDiffusion', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; idiffusion = EQNS_NONE
-        else if (trim(adjustl(sRes)) == 'divergence') then; idiffusion = EQNS_DIVERGENCE
-        else if (trim(adjustl(sRes)) == 'explicit') then; idiffusion = EQNS_EXPLICIT
+        if (trim(adjustl(sRes)) == 'none') then; nse_diffusion = EQNS_NONE
+        else if (trim(adjustl(sRes)) == 'divergence') then; nse_diffusion = EQNS_DIVERGENCE
+        else if (trim(adjustl(sRes)) == 'explicit') then; nse_diffusion = EQNS_EXPLICIT
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermDiffusion option.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         ! consistency check
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INTERNAL)
         case (DNS_EQNS_TOTAL)
             call TLab_Write_ASCII(efile, 'RHS_SCAL_GLOBAL_2. No total energy formulation.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-            if (iviscous /= EQNS_EXPLICIT) then
+            if (nse_viscous /= EQNS_EXPLICIT) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Main.TermViscous undeveloped.')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
-            if (idiffusion /= EQNS_EXPLICIT) then
+            if (nse_diffusion /= EQNS_EXPLICIT) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Main.TermDiffusion undeveloped.')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
@@ -183,13 +182,13 @@ contains
         call ScanFile_Real(bakfile, inifile, 'Parameters', 'Settling', '0.0', settling)
 
         ! consistency check
-        if (iviscous == EQNS_NONE) then
+        if (nse_viscous == EQNS_NONE) then
             visc = 0.0_wp
         else
             visc = 1.0_wp/reynolds
         end if
 
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             prandtl = schmidt(1)
 
@@ -271,7 +270,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#')
 
 ! prognostic and diagnostic variables
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             inb_flow = 3                            ! space for u, v, w
             inb_flow_array = inb_flow

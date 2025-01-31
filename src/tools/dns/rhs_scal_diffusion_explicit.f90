@@ -14,7 +14,8 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
-    use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
+    use NavierStokes, only: nse_diffusion
+    use TLAB_VARS, only: visc, prandtl, schmidt
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use TLab_Pointers
     use TLab_Arrays, only: s
@@ -35,7 +36,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
 
     bcs = 0
 
-    if (idiffusion == EQNS_NONE) then
+    if (nse_diffusion == EQNS_NONE) then
         diff = 0.0_wp; cond = 0.0_wp
     else
         diff = visc/schmidt(is); cond = visc/prandtl

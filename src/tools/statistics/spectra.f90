@@ -48,6 +48,7 @@ program SPECTRA
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: nse_eqns
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
     use TLab_Background, only: TLab_Initialize_Background
@@ -231,7 +232,7 @@ program SPECTRA
 
     flag_buoyancy = 0 ! default
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
 ! in case we need the buoyancy statistics
         if (buoyancy%type == EQNS_BOD_QUADRATIC .or. &
             buoyancy%type == EQNS_BOD_BILINEAR .or. &
@@ -364,7 +365,7 @@ program SPECTRA
         end if
     end if
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         write (str, *) isize_txc_field; line = 'Allocating array p_aux of size '//trim(adjustl(str))
         call TLab_Write_ASCII(lfile, line)
         allocate (p_aux(isize_txc_field), stat=ierr)
@@ -457,7 +458,7 @@ program SPECTRA
         iv = iv + 1; vars(iv)%field => q(:, 1); tag_var(iv) = 'u'
         iv = iv + 1; vars(iv)%field => q(:, 2); tag_var(iv) = 'v'
         iv = iv + 1; vars(iv)%field => q(:, 3); tag_var(iv) = 'w'
-        if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_INTERNAL .or. nse_eqns == DNS_EQNS_TOTAL) then
             iv = iv + 1; vars(iv)%field => q(:, 6); tag_var(iv) = 'p'
             iv = iv + 1; vars(iv)%field => q(:, 5); tag_var(iv) = 'r'
             iv = iv + 1; vars(iv)%field => q(:, 7); tag_var(iv) = 't'
@@ -560,7 +561,7 @@ program SPECTRA
         call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)
 
 ! Calculate additional diagnostic quantities to be processed
-        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
             call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3), DCMP_TOTAL)
             if (flag_buoyancy == 1) then
                 if (buoyancy%type == EQNS_EXPLICIT) then

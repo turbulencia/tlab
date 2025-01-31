@@ -5,7 +5,7 @@
 subroutine DNS_FILTER()
 
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow, inb_scal
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: visc
     use TLAB_VARS, only: itime, rtime
@@ -51,13 +51,13 @@ subroutine DNS_FILTER()
     ! filtering
 
     ! Might be better to filter the pressure instead of the energy in compressible flows
-    ! IF ( imode_eqns .EQ. DNS_EQNS_TOTAL .OR. imode_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
+    ! IF ( nse_eqns .EQ. DNS_EQNS_TOTAL .OR. nse_eqns .EQ. DNS_EQNS_INTERNAL ) THEN
     !    iq_loc = (/ 5,1,2,3,6 /) ! Filtered variables: rho, u,v,w, p
     ! ELSE
     !    iq_loc = (/ 1,2,3 /)
     ! ENDIF
 
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then ! contruct fields per unit volume
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then ! contruct fields per unit volume
         do iq = 1, inb_flow - 1
             q(:, iq) = q(:, iq)*q(:, inb_flow)
         end do
@@ -73,7 +73,7 @@ subroutine DNS_FILTER()
         call OPR_FILTER(imax, jmax, kmax, FilterDomain, s(1, is), txc)
     end do
 
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then ! re-contruct fields per unit mass
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then ! re-contruct fields per unit mass
         do iq = 1, inb_flow - 1
             q(:, iq) = q(:, iq)/q(:, inb_flow)
         end do
@@ -117,7 +117,7 @@ end subroutine DNS_FILTER
 
 subroutine FI_RTKE(nx, ny, nz, q, ke)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: inb_flow
     use TLab_Arrays, only: wrk1d
     use THERMO_ANELASTIC, only : rbackground
@@ -133,7 +133,7 @@ subroutine FI_RTKE(nx, ny, nz, q, ke)
     integer(wi) j
 
     ! #######################################################################
-    select case (imode_eqns)
+    select case (nse_eqns)
     case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
         call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 5), rR(1), aux(1))
 

@@ -422,7 +422,7 @@ contains
         line1 = line1(1:ip)//' '//' D#'; ip = ip + 1 + 10
         line1 = line1(1:ip)//' '//' visc'; ip = ip + 1 + 10
 
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             line1 = line1(1:ip)//' '//' DilMin'; ip = ip + 1 + 13
             line1 = line1(1:ip)//' '//' DilMax'; ip = ip + 1 + 13
@@ -463,7 +463,7 @@ contains
         write (line1, 100) int(logs_data(1)), itime, rtime, dtime, (logs_data(ip), ip=2, 3), visc
 100     format((1x, I1), (1x, I7), (1x, E13.6), 4(1x, E10.3))
 
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             write (line2, 200) logs_data(10), logs_data(11)
 200         format(2(1x, E13.6))

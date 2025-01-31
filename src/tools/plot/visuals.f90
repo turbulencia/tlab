@@ -25,6 +25,7 @@ program VISUALS
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
+    use NavierStokes, only: nse_eqns, nse_diffusion
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
@@ -498,7 +499,7 @@ program VISUALS
             ! ###################################################################
             ! Thermodynamic state
             ! ###################################################################
-            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+            if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
                     if (buoyancy%type == EQNS_EXPLICIT) then
@@ -687,7 +688,7 @@ program VISUALS
                     end if
 
                     if (opt_vec(iv) == iscal_offset + 3 .and. is <= inb_scal) then ! Scalar gradient equation
-                        if (idiffusion == EQNS_NONE) then; diff = 0.0_wp
+                        if (nse_diffusion == EQNS_NONE) then; diff = 0.0_wp
                         else; diff = visc/schmidt(is)
                         end if
 
@@ -785,7 +786,7 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 9) then ! StrainEquation (I need the pressure)
                 call TLab_Write_ASCII(lfile, 'Computing strain pressure...')
                 plot_file = 'StrainPressure'//time_str(1:MaskSize)
-                if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+                if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                     call TLab_Write_ASCII(efile, 'VISUALS. Strain eqn for incompressible undeveloped.')
                     call TLab_Stop(DNS_ERROR_UNDEVELOP)
                 else

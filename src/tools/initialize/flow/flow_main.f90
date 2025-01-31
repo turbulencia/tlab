@@ -7,7 +7,7 @@ program INIFLOW
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
     use TLAB_VARS, only: fourier_on
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: itime, rtime
@@ -101,7 +101,7 @@ program INIFLOW
 
     ! ###################################################################
     ! Compressible formulation
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         call TLab_Write_ASCII(lfile, 'Initializing pressure and density.')
 
         call PRESSURE_MEAN(p, T, s)

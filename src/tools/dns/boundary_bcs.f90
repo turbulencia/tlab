@@ -126,7 +126,7 @@ contains
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
 #endif
-        use TLAB_VARS, only: imode_eqns
+        use NavierStokes, only: nse_eqns
         use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use FDM, only: g
         use Tlab_Background, only: pbg, qbg
@@ -182,7 +182,7 @@ contains
 ! #######################################################################
 ! Incompressible mode
 ! #######################################################################
-        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
 
             ! LU decomposition for the 3 possible neumann boudary conditions
             ! ny = g(2)%size
@@ -261,7 +261,7 @@ contains
                 BcsFlowJmin%ref(:, :, 3) = BuffFlowJmin%Ref(:, 1, :, 1)/BcsFlowJmin%ref(:, :, 1)
                 BcsFlowJmin%ref(:, :, 4) = BuffFlowJmin%Ref(:, 1, :, 3)/BcsFlowJmin%ref(:, :, 1)
                 BcsFlowJmin%ref(:, :, 6) = BuffFlowJmin%Ref(:, 1, :, 4)/BcsFlowJmin%ref(:, :, 1) ! energy, to get pressure into ref5 below
-                if (imode_eqns == DNS_EQNS_TOTAL) then
+                if (nse_eqns == DNS_EQNS_TOTAL) then
                     BcsFlowJmin%ref(:, :, 6) = BcsFlowJmin%ref(:, :, 6) &
                                                - prefactor*(BcsFlowJmin%ref(:, :, 2)*BcsFlowJmin%ref(:, :, 2) &
                                                             + BcsFlowJmin%ref(:, :, 3)*BcsFlowJmin%ref(:, :, 3) &
@@ -291,7 +291,7 @@ contains
                 BcsFlowJmax%ref(:, :, 3) = BuffFlowJmax%Ref(:, j, :, 1)/BcsFlowJmax%ref(:, :, 1)
                 BcsFlowJmax%ref(:, :, 4) = BuffFlowJmax%Ref(:, j, :, 3)/BcsFlowJmax%ref(:, :, 1)
                 BcsFlowJmax%ref(:, :, 6) = BuffFlowJmax%Ref(:, j, :, 4)/BcsFlowJmax%ref(:, :, 1) ! energy, to get pressure into ref5 below
-                if (imode_eqns == DNS_EQNS_TOTAL) then
+                if (nse_eqns == DNS_EQNS_TOTAL) then
                     BcsFlowJmax%ref(:, :, 6) = BcsFlowJmax%ref(:, :, 6) &
                                                - prefactor*(BcsFlowJmax%ref(:, :, 2)*BcsFlowJmax%ref(:, :, 2) &
                                                             + BcsFlowJmax%ref(:, :, 3)*BcsFlowJmax%ref(:, :, 3) &
@@ -319,7 +319,7 @@ contains
                 BcsFlowImin%ref(:, :, 3) = BuffFlowImin%Ref(:, :, 1, 2)/BcsFlowImin%ref(:, :, 1)
                 BcsFlowImin%ref(:, :, 4) = BuffFlowImin%Ref(:, :, 1, 3)/BcsFlowImin%ref(:, :, 1)
                 BcsFlowImin%ref(:, :, 6) = BuffFlowImin%Ref(:, :, 1, 4)/BcsFlowImin%ref(:, :, 1) ! energy, to get pressure into ref5 below
-                if (imode_eqns == DNS_EQNS_TOTAL) then
+                if (nse_eqns == DNS_EQNS_TOTAL) then
                     BcsFlowImin%ref(:, :, 6) = BcsFlowImin%ref(:, :, 6) &
                                                - prefactor*(BcsFlowImin%ref(:, :, 2)*BcsFlowImin%ref(:, :, 2) &
                                                             + BcsFlowImin%ref(:, :, 3)*BcsFlowImin%ref(:, :, 3) &
@@ -353,7 +353,7 @@ contains
                 BcsFlowImax%ref(:, :, 3) = BuffFlowImax%Ref(:, :, 1, 2)/BcsFlowImax%ref(:, :, 1)
                 BcsFlowImax%ref(:, :, 4) = BuffFlowImax%Ref(:, :, 1, 3)/BcsFlowImax%ref(:, :, 1)
                 BcsFlowImax%ref(:, :, 6) = BuffFlowImax%Ref(:, :, 1, 4)/BcsFlowImax%ref(:, :, 1) ! energy, to get pressure into ref5 below
-                if (imode_eqns == DNS_EQNS_TOTAL) then
+                if (nse_eqns == DNS_EQNS_TOTAL) then
                     BcsFlowImax%ref(:, :, 6) = BcsFlowImax%ref(:, :, 6) &
                                                - prefactor*(BcsFlowImax%ref(:, :, 2)*BcsFlowImax%ref(:, :, 2) &
                                                             + BcsFlowImax%ref(:, :, 3)*BcsFlowImax%ref(:, :, 3) &

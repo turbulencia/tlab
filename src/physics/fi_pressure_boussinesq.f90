@@ -9,7 +9,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLab_Constants, only: wp, wi, BCS_NN
     use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_txc
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: stagger_on
     use TLAB_VARS, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
@@ -210,7 +210,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     end if
 
 ! Calculate forcing term Ox
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
     end if
     if (stagger_on) then
@@ -222,7 +222,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     p = p + tmp1
 
 ! Calculate forcing term Oy
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
     end if
     if (stagger_on) then
@@ -235,7 +235,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     p = p + tmp1
 
 ! Calculate forcing term Oz
-    if (imode_eqns == DNS_EQNS_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC) then
         call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp5)
     end if
     if (stagger_on) then

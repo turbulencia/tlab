@@ -32,7 +32,7 @@ module AVG_SCAL_ZT
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use FDM, only: g
     use Avg_Spatial
     use TLAB_VARS, only: visc
@@ -78,7 +78,7 @@ contains
         u => q(:, 1)
         v => q(:, 2)
         w => q(:, 3)
-        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL .or. nse_eqns == DNS_EQNS_INTERNAL) then
             rho => q(:, 5)
             p => q(:, 6)
             if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) vis => q(:, 8)

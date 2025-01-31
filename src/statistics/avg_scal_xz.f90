@@ -30,6 +30,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLabMPI_VARS
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use NavierStokes, only: nse_eqns, nse_diffusion
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Radiation
     use Microphysics
@@ -67,7 +68,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     u => q(:, :, :, 1)
     v => q(:, :, :, 2)
     w => q(:, :, :, 3)
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         rho => q(:, :, :, 5)
         p => q(:, :, :, 6)
         if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) vis => q(:, :, :, 8)
@@ -75,7 +76,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         p => tmp3
     end if
 
-    if (idiffusion == EQNS_NONE) then; diff = 0.0_wp
+    if (nse_diffusion == EQNS_NONE) then; diff = 0.0_wp
     else; diff = visc/schmidt(is)
     end if
 
@@ -312,7 +313,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call AVG_IK_V(imax, jmax, kmax, jmax, v, rV(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, w, rW(1), wrk1d)
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         rR(:) = 1.0_wp
 
         fU(:) = rU(:)
@@ -343,11 +344,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
 
     dsdx = v*u
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) dsdx = dsdx*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) dsdx = dsdx*rho
     dsdy = v*v
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) dsdy = dsdy*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) dsdy = dsdy*rho
     dsdz = v*w
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) dsdz = dsdz*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) dsdz = dsdz*rho
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, Rvu(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, Rvv(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, Rvw(1), wrk1d)
@@ -360,7 +361,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     call AVG_IK_V(imax, jmax, kmax, jmax, s_local, rS(1), wrk1d)
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         fS(:) = rS(:)
     else
         p_wrk3d = rho*s_local
@@ -383,7 +384,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     tmp1 = p_wrk3d*tmp1
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, rS4(1), wrk1d)
 
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         fS2(:) = rS2(:)
         fS3(:) = rS3(:)
         fS4(:) = rS4(:)
@@ -411,7 +412,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     do j = 1, jmax
         p_wrk3d(:, j, :) = s_local(:, j, :) - fS(j)
     end do
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) p_wrk3d = p_wrk3d*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) p_wrk3d = p_wrk3d*rho
 
     do j = 1, jmax
         dsdx(:, j, :) = p_wrk3d(:, j, :)*(u(:, j, :) - fU(j))
@@ -483,14 +484,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     if (infraredProps%active(is)) then       ! Radiation in tmp1 and dsdx
         call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
         end if
     end if
 
     if (sedimentationProps%active(is)) then      ! Transport in tmp3 and dsdz
         call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp3, dsdy, dsdz)
-        if (imode_eqns == DNS_EQNS_ANELASTIC) then
+        if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
         end if
     end if
@@ -580,7 +581,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         p_wrk3d = p_wrk3d + tmp3
     end if
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, rQ(1), wrk1d)
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) p_wrk3d = p_wrk3d*rho
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) p_wrk3d = p_wrk3d*rho
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, fQ(1), wrk1d)
     fQ(:) = fQ(:)/rR(:)
 
@@ -768,7 +769,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Source terms in transport equations
     ! #######################################################################
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         if (buoyancy%type == EQNS_EXPLICIT) then
             call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, p_wrk3d)
         else

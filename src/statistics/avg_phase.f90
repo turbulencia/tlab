@@ -12,7 +12,7 @@ module AVG_PHASE
   use TLAB_VARS, only: imax, jmax, kmax, isize_field
   use TLAB_VARS, only: rtime
   use TLAB_VARS, only: visc, froude, rossby, prandtl, mach
-  use TLAB_VARS, only: imode_eqns
+  use NavierStokes, only: nse_eqns
   use TLAB_VARS, only: inb_flow, inb_scal
   use TLAB_ARRAYS, only: q, s
   use TLab_Arrays, only: wrk2d, wrk3d
@@ -315,7 +315,7 @@ CONTAINS
       use FDM, only: g
       use TLAB_VARS, only: rtime, itime
       use TLAB_VARS, only: visc, froude, rossby, prandtl, mach
-      use TLAB_VARS, only: imode_eqns
+      use NavierStokes, only: nse_eqns
       use TLAB_CONSTANTS, only: sizeofint, sizeofreal
       use Thermodynamics, only: gama0
       
@@ -364,7 +364,7 @@ CONTAINS
       else if (iheader == IO_FLOW) then
           isize = isize + 1; params(isize) = froude
           isize = isize + 1; params(isize) = rossby
-          if (imode_eqns == DNS_EQNS_INTERNAL .or. imode_eqns == DNS_EQNS_TOTAL) then
+          if (nse_eqns == DNS_EQNS_INTERNAL .or. nse_eqns == DNS_EQNS_TOTAL) then
           isize = isize + 1; params(isize) = gama0
           isize = isize + 1; params(isize) = prandtl
           isize = isize + 1; params(isize) = mach

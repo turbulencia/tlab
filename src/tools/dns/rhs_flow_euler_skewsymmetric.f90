@@ -13,7 +13,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use Gravity, only: buoyancy
     use FDM, only: g
     use TLab_Pointers
@@ -71,10 +71,10 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! energy equation
 ! -------------------------------------------------------------------
 ! Total energy
-    if (imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL) then
         hq(:,4) = hq(:,4) - (e + CRATIO_INV*0.5_wp*(u*u + v*v + w*w))*tmp5
 ! Internal energy
-    else if (imode_eqns == DNS_EQNS_INTERNAL) then
+    else if (nse_eqns == DNS_EQNS_INTERNAL) then
         hq(:,4) = hq(:,4) - e*tmp5
     end if
 
@@ -117,10 +117,10 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! energy equation
 ! -------------------------------------------------------------------
 ! Total energy
-    if (imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL) then
         hq(:,4) = hq(:,4) - (e + CRATIO_INV*0.5_wp*(u*u + v*v + w*w))*tmp5
 ! Internal energy
-    else if (imode_eqns == DNS_EQNS_INTERNAL) then
+    else if (nse_eqns == DNS_EQNS_INTERNAL) then
         hq(:,4) = hq(:,4) - e*tmp5
     end if
 
@@ -163,10 +163,10 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! energy equation
 ! -------------------------------------------------------------------
 ! Total energy
-    if (imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL) then
         hq(:,4) = hq(:,4) - (e + CRATIO_INV*0.5_wp*(u*u + v*v + w*w))*tmp5
 ! Internal energy
-    else if (imode_eqns == DNS_EQNS_INTERNAL) then
+    else if (nse_eqns == DNS_EQNS_INTERNAL) then
         hq(:,4) = hq(:,4) - e*tmp5
     end if
 
@@ -183,7 +183,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! -------------------------------------------------------------------
 ! Total energy formulation
 ! -------------------------------------------------------------------
-    if (imode_eqns == DNS_EQNS_TOTAL) then
+    if (nse_eqns == DNS_EQNS_TOTAL) then
         do i = 1, imax*jmax*kmax
             dummy = 0.5_wp*rho(i)*(e(i) + CRATIO_INV*0.5_wp*(u(i)*u(i) + v(i)*v(i) + w(i)*w(i))) + CRATIO_INV*p(i)
             tmp3(i) = dummy*w(i)
@@ -200,7 +200,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! Internal energy formulation
 ! the term p div u is add in RHS_FLOW_VISCOUS to save derivatives
 ! -------------------------------------------------------------------
-    else if (imode_eqns == DNS_EQNS_INTERNAL) then
+    else if (nse_eqns == DNS_EQNS_INTERNAL) then
         do i = 1, imax*jmax*kmax
             dummy = 0.5_wp*rho(i)*e(i)
             tmp3(i) = dummy*w(i)

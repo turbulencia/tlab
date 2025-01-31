@@ -22,7 +22,7 @@ module BOUNDARY_BUFFER
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use FDM, only: g
@@ -168,12 +168,12 @@ contains
 
         ! ###################################################################
         txc(:, 2:inb_flow + 1) = q(:, 1:inb_flow)
-        if (imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL) then
             txc(:, 1) = q(:, 5) ! Density
             dummy = 0.5_wp*CRATIO_INV
             txc(:, 5) = q(:, 4) + dummy*(q(:, 1)*q(:, 1) + q(:, 2)*q(:, 2) + q(:, 3)*q(:, 3))
             txc(:, 6) = 1.0_wp
-        else if (imode_eqns == DNS_EQNS_INTERNAL) then
+        else if (nse_eqns == DNS_EQNS_INTERNAL) then
             txc(:, 1) = q(:, 5) ! Density
             txc(:, 6) = 1.0_wp
         else
@@ -402,7 +402,7 @@ contains
         use DNS_ARRAYS, only: hs
 
         ! ###################################################################
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
             if (BuffScalImin%size > 0) call RELAX_BLOCK_RHO(1, BuffScalImin, s, hs, q(:, 5))
             if (BuffScalImax%size > 0) call RELAX_BLOCK_RHO(1, BuffScalImax, s, hs, q(:, 5))
@@ -443,7 +443,7 @@ contains
         use DNS_ARRAYS, only: hq
 
         ! ###################################################################
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
             if (BuffFlowImin%size > 0) call RELAX_BLOCK_CF(1, BuffFlowImin, q, hq)
             if (BuffFlowImax%size > 0) call RELAX_BLOCK_CF(1, BuffFlowImax, q, hq)
@@ -560,7 +560,7 @@ contains
         real(wp), intent(OUT) :: hq(imax, jmax, kmax, item%nfields)
 
         ! ###################################################################
-        if (imode_eqns == DNS_EQNS_TOTAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL) then
             dummy = 0.5_wp*CRATIO_INV
         end if
 
@@ -573,7 +573,7 @@ contains
                 end do
             end do
             iq = item%nfields - 1       ! Energy variable
-            if (imode_eqns == DNS_EQNS_TOTAL) then
+            if (nse_eqns == DNS_EQNS_TOTAL) then
                 do jloc = 1, item%size
                     j = item%offset + jloc
                     hq(j, :, :, iq) = hq(j, :, :, iq) - item%Tau(jloc, iq)*(q(j, :, :, 5)*(q(j, :, :, iq) &
@@ -600,7 +600,7 @@ contains
                 end do
             end do
             iq = item%nfields - 1       ! Energy variable
-            if (imode_eqns == DNS_EQNS_TOTAL) then
+            if (nse_eqns == DNS_EQNS_TOTAL) then
                 do jloc = 1, item%size
                     j = item%offset + jloc
                     hq(:, j, :, iq) = hq(:, j, :, iq) - item%Tau(jloc, iq)*(q(:, j, :, 5)*(q(:, j, :, iq) &

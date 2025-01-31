@@ -14,7 +14,8 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
-    use TLAB_VARS, only: idiffusion, visc, prandtl, schmidt
+    use NavierStokes, only: nse_diffusion
+    use TLAB_VARS, only: visc, prandtl, schmidt
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs
@@ -37,7 +38,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
 
     bcs = 0
 
-    if (idiffusion == EQNS_NONE) then
+    if (nse_diffusion == EQNS_NONE) then
         diff = 0.0_wp; cond = 0.0_wp
     else
         diff = visc/schmidt(is); cond = visc/prandtl
@@ -106,7 +107,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
 ! Numerical liquid correction term in the AIRWATER case
 ! ###################################################################
     if (imixture == MIXT_TYPE_AIRWATER) then
-        if (idiffusion == EQNS_NONE) then; diff = 0.0_wp
+        if (nse_diffusion == EQNS_NONE) then; diff = 0.0_wp
         else; diff = visc/schmidt(3); end if
 
 ! gradient of liquid content

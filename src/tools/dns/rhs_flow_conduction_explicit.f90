@@ -16,7 +16,8 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
 #endif
     use TLAB_VARS, only: imax, jmax, kmax
     use FDM, only: g
-    use TLAB_VARS, only: idiffusion, visc, prandtl
+    use NavierStokes, only: nse_diffusion
+    use TLAB_VARS, only: visc, prandtl
     use TLab_Pointers
     use TLab_Arrays, only: s
     use THERMO_CALORIC
@@ -34,7 +35,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
 #endif
 
 ! ###################################################################
-    if (idiffusion == EQNS_NONE) then
+    if (nse_diffusion == EQNS_NONE) then
         cond = 0.0_wp
     else
         cond = visc/prandtl

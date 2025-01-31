@@ -159,7 +159,7 @@ subroutine DNS_READ_LOCAL(inifile)
     call ScanFile_Real(bakfile, inifile, 'Control', 'MaxDensity', '-1.0', bound_r%max)
 
     bound_d%active = .false.
-    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == imode_eqns)) then
+    if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         bound_d%active = .true.
         bound_d%max = big_wp ! default
         call ScanFile_Char(bakfile, inifile, 'Control', 'MaxDilatation', 'void', sRes)
@@ -629,7 +629,7 @@ subroutine DNS_READ_LOCAL(inifile)
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
-        if (imode_eqns /= DNS_EQNS_INCOMPRESSIBLE) then
+        if (nse_eqns /= DNS_EQNS_INCOMPRESSIBLE) then
             call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Implicit formulation only available for incompressible case.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if

@@ -93,7 +93,7 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
         use TLab_Constants, only: efile, lfile
-        use TLAB_VARS, only: imode_eqns
+        use NavierStokes, only: nse_eqns
         use TLAB_VARS, only: stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLab_Arrays
@@ -133,7 +133,7 @@ contains
         ! ###################################################################
         ! Compressible flow
         ! ###################################################################
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
 
 #define p_min_loc logs_data(5)
@@ -156,7 +156,7 @@ contains
             end if
 
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (nse_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 1), txc(1, 3))
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 2), txc(1, 4))
                 call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 3), txc(1, 5))

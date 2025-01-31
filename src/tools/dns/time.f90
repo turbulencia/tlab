@@ -20,7 +20,7 @@ module TIME
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use TLAB_VARS, only: rtime
     use FDM, only: g
-    use TLAB_VARS, only: imode_eqns, iadvection, iviscous, idiffusion
+    use NavierStokes, only: nse_eqns, nse_advection, nse_viscous, nse_diffusion
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: visc, prandtl, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -200,7 +200,7 @@ contains
                 call TIME_SUBSTEP_PARTICLE()
             end if
 
-            select case (imode_eqns)
+            select case (nse_eqns)
             case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
                 if (rkm_mode == RKM_EXP3 .or. rkm_mode == RKM_EXP4) then
                     call TIME_SUBSTEP_INCOMPRESSIBLE_EXPLICIT()
@@ -366,7 +366,7 @@ contains
         ! -------------------------------------------------------------------
         ! Incompressible: Calculate global maximum of u/dx + v/dy + w/dz
         ! -------------------------------------------------------------------
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             if (g(3)%size > 1) then
                 do k = 1, kmax
@@ -429,7 +429,7 @@ contains
         ! -------------------------------------------------------------------
         ! Incompressible: Calculate global maximum of \nu*(1/dx^2 + 1/dy^2 + 1/dz^2)
         ! -------------------------------------------------------------------
-        select case (imode_eqns)
+        select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             pmax(2) = schmidtfactor*dx2i
 
@@ -544,7 +544,7 @@ contains
         ij_len = isize_field
 #endif
 
-        select case (iadvection)
+        select case (nse_advection)
         case (EQNS_DIVERGENCE)
             call TLab_Sources_Flow(q, s, hq, txc(1, 1))
             call RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
@@ -679,10 +679,10 @@ contains
         ! Evaluate standard RHS of equations
         ! global formulation
         ! ###################################################################
-        if (imode_eqns == DNS_EQNS_INTERNAL .and. &
-            iadvection == EQNS_SKEWSYMMETRIC .and. &
-            iviscous == EQNS_EXPLICIT .and. &
-            idiffusion == EQNS_EXPLICIT) then
+        if (nse_eqns == DNS_EQNS_INTERNAL .and. &
+            nse_advection == EQNS_SKEWSYMMETRIC .and. &
+            nse_viscous == EQNS_EXPLICIT .and. &
+            nse_diffusion == EQNS_EXPLICIT) then
             call RHS_FLOW_GLOBAL_2()
 
             do is = 1, inb_scal
@@ -694,28 +694,28 @@ contains
             ! Evaluate standard RHS of equations
             ! split formulation
             ! ###################################################################
-            if (iadvection == EQNS_DIVERGENCE) then
+            if (nse_advection == EQNS_DIVERGENCE) then
                 call RHS_FLOW_EULER_DIVERGENCE()
                 do is = 1, inb_scal
                     call RHS_SCAL_EULER_DIVERGENCE()
                 end do
 
-            else if (iadvection == EQNS_SKEWSYMMETRIC) then
+            else if (nse_advection == EQNS_SKEWSYMMETRIC) then
                 call RHS_FLOW_EULER_SKEWSYMMETRIC()
                 do is = 1, inb_scal
                     call RHS_SCAL_EULER_SKEWSYMMETRIC(is)
                 end do
             end if
 
-            if (iviscous == EQNS_DIVERGENCE) then
+            if (nse_viscous == EQNS_DIVERGENCE) then
                 call RHS_FLOW_VISCOUS_DIVERGENCE()
 
-            else if (iviscous == EQNS_EXPLICIT) then
+            else if (nse_viscous == EQNS_EXPLICIT) then
                 call RHS_FLOW_VISCOUS_EXPLICIT()
 
             end if
 
-            if (idiffusion == EQNS_DIVERGENCE) then
+            if (nse_diffusion == EQNS_DIVERGENCE) then
                 ! diffusion transport of enthalpy is accumulated in txc5:7 and used in RHS_FLOW_CONDUCTION
                 txc(:, 5:7) = 0.0_wp
                 do is = 1, inb_scal
@@ -724,7 +724,7 @@ contains
                 end do
                 call RHS_FLOW_CONDUCTION_DIVERGENCE()
 
-            else if (idiffusion == EQNS_EXPLICIT) then
+            else if (nse_diffusion == EQNS_EXPLICIT) then
                 do is = 1, inb_scal
                     call RHS_SCAL_DIFFUSION_EXPLICIT(is)
                 end do
@@ -793,7 +793,7 @@ contains
             ! -------------------------------------------------------------------
             ! Total energy formulation
             ! -------------------------------------------------------------------
-            if (imode_eqns == DNS_EQNS_TOTAL) then
+            if (nse_eqns == DNS_EQNS_TOTAL) then
 !$omp parallel default( shared ) private( i, is, rho_ratio, dt_rho_ratio )
 !$omp do
                 do i = 1, isize_field
@@ -821,7 +821,7 @@ contains
                 ! -------------------------------------------------------------------
                 ! Internal energy formulation
                 ! -------------------------------------------------------------------
-            else if (imode_eqns == DNS_EQNS_INTERNAL) then
+            else if (nse_eqns == DNS_EQNS_INTERNAL) then
 !$omp parallel default( shared ) private( i, is, rho_ratio, dt_rho_ratio )
 !$omp do
                 do i = 1, isize_field

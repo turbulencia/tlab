@@ -5,7 +5,7 @@
 ! Check for cross dependencies and undeveloped options.
 subroutine TLab_Consistency_Check()
     use TLab_Constants, only: efile, lfile, MAX_VARS
-    use TLAB_VARS, only: imode_eqns, iadvection
+    use NavierStokes, only: nse_eqns, nse_advection
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
     use TLAB_VARS, only: stagger_on
     use TLAB_VARS
@@ -28,11 +28,11 @@ subroutine TLab_Consistency_Check()
 
     ! ###################################################################
     if (stagger_on) then
-        if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
+        if (.not. ((nse_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (nse_eqns == DNS_EQNS_ANELASTIC))) then
             call TLab_Write_ASCII(efile, __FILE__//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-        if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
+        if (.not. ((nse_advection == EQNS_CONVECTIVE) .or. (nse_advection == EQNS_SKEWSYMMETRIC))) then
             call TLab_Write_ASCII(efile, __FILE__//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
@@ -44,11 +44,11 @@ subroutine TLab_Consistency_Check()
 
     ! ###################################################################
     if (imode_ibm == 1) then
-        if (.not. (imode_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
+        if (.not. (nse_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
             call TLab_Write_ASCII(efile, __FILE__//'. IBM only implemented for incompressible mode.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-        if (.not. ((iadvection == EQNS_CONVECTIVE) .or. (iadvection == EQNS_SKEWSYMMETRIC))) then
+        if (.not. ((nse_advection == EQNS_CONVECTIVE) .or. (nse_advection == EQNS_SKEWSYMMETRIC))) then
             call TLab_Write_ASCII(efile, __FILE__//'. IBM only implemented for convective advection scheme.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
@@ -75,11 +75,11 @@ subroutine TLab_Consistency_Check()
     ! if (PressureFilter(3)%type /= DNS_FILTER_NONE) call TLab_Write_ASCII(lfile, 'Pressure and dpdy filter along Oz.')
 
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then
-        if (.not. ((imode_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (imode_eqns == DNS_EQNS_ANELASTIC))) then
+        if (.not. ((nse_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (nse_eqns == DNS_EQNS_ANELASTIC))) then
             call TLab_Write_ASCII(efile, __FILE__//'. Pressure and dpdy filter only implemented for anelastic or incompressible mode.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-        if (.not. (iadvection == EQNS_CONVECTIVE)) then
+        if (.not. (nse_advection == EQNS_CONVECTIVE)) then
             call TLab_Write_ASCII(efile, __FILE__//'. Pressure and dpdy filter not implemented for current advection scheme.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
@@ -89,17 +89,17 @@ subroutine TLab_Consistency_Check()
     if (any([EQNS_TRANS_SUTHERLAND, EQNS_TRANS_POWERLAW] == itransport)) inb_flow_array = inb_flow_array + 1    ! space for viscosity
 
     ! ###################################################################
-    if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns) .and. imode_thermo /= THERMO_TYPE_COMPRESSIBLE) then
+    if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == nse_eqns) .and. imode_thermo /= THERMO_TYPE_COMPRESSIBLE) then
         call TLab_Write_ASCII(efile, __FILE__//'. Incorrect combination of thermodynamics and type of evolution equations.')
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    if (imode_eqns == DNS_EQNS_ANELASTIC .and. imode_thermo /= THERMO_TYPE_ANELASTIC) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC .and. imode_thermo /= THERMO_TYPE_ANELASTIC) then
         call TLab_Write_ASCII(efile, __FILE__//'. Incorrect combination of thermodynamics and type of evolution equations.')
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    if (imode_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
+    if (nse_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
         call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
@@ -109,7 +109,7 @@ subroutine TLab_Consistency_Check()
         !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)
 
     case (MIXT_TYPE_AIRWATER)
-        if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == imode_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
+        if (any([DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL] == nse_eqns)) schmidt(2:3) = schmidt(1) ! used in diffusion eqns, though should be fixed
 
         ! if (all([damkohler(1:2)] == 0.0_wp)) then
         !     damkohler(1:2) = damkohler(3)
@@ -127,7 +127,7 @@ subroutine TLab_Consistency_Check()
     io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = visc
     io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = froude
     io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = rossby
-    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+    if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
         io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = gama0
         io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = prandtl
         io_header_q(1)%size = io_header_q(1)%size + 1; io_header_q(1)%params(io_header_q(1)%size) = mach

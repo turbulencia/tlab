@@ -5,7 +5,7 @@ module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
     use TLab_Types, only: term_dt
     use FDM, only: grid_dt
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: inb_scal_array
     use TLAB_VARS, only: isize_field
     use TLab_Arrays, only: wrk2d, wrk3d
@@ -264,7 +264,7 @@ contains
         select case (localProps%type)
         case (TYPE_IR_GRAY_LIQUID)
             wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1))          ! absorption coefficient in array source to save memory
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (nse_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
             ! Local transposition: make x-direction the last one. Same in the similar blocks below
@@ -284,7 +284,7 @@ contains
 
             ! -----------------------------------------------------------------------
         case (TYPE_IR_GRAY)
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (nse_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
             else
                 ! tbd
@@ -297,7 +297,7 @@ contains
 #endif
 
             wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1)) + kappa(2, 1)*(s(:, 2) - s(:, localProps%scalar(1))) + kappa(3, 1) ! absorption coefficient
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (nse_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
 #ifdef USE_ESSL
@@ -320,7 +320,7 @@ contains
 
             ! -----------------------------------------------------------------------
         case (TYPE_IR_BAND)
-            if (imode_eqns == DNS_EQNS_ANELASTIC) then
+            if (nse_eqns == DNS_EQNS_ANELASTIC) then
                 call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d) ! calculate temperature T into tmp_rad1
             else
                 ! tbd
@@ -341,7 +341,7 @@ contains
                 tmp_rad(:, 5) = sigma*tmp_rad(:, 1)**4.0_wp*(beta(1, iband) + tmp_rad(:, 1)*(beta(2, iband) + tmp_rad(:, 1)*beta(3, iband)))  ! emission function, Stefan-Boltzmann law
 
                 wrk3d(1:nx*ny*nz) = kappa(1, iband)*s(:, localProps%scalar(1)) + kappa(2, iband)*tmp_rad(:, 2) + kappa(3, iband) ! calculate absorption coefficient into tmp_rad3
-                if (imode_eqns == DNS_EQNS_ANELASTIC) then
+                if (nse_eqns == DNS_EQNS_ANELASTIC) then
                     call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
                 end if
 #ifdef USE_ESSL

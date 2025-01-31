@@ -14,7 +14,7 @@ module BOUNDARY_INFLOW
     use TLab_Constants, only: tfile
 #endif
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
-    use TLAB_VARS, only: imode_eqns
+    use NavierStokes, only: nse_eqns
     use FDM, only: g, FDM_Initialize
     use TLAB_VARS, only: rtime, itime
     use TLAB_VARS, only: visc 
@@ -461,7 +461,7 @@ contains
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
         ! Define pointers
-        if (imode_eqns == DNS_EQNS_TOTAL .or. imode_eqns == DNS_EQNS_INTERNAL) then
+        if (nse_eqns == DNS_EQNS_TOTAL .or. nse_eqns == DNS_EQNS_INTERNAL) then
             e => q(:, :, :, 4)
             rho => q(:, :, :, 5)
             p => q(:, :, :, 6)
@@ -481,7 +481,7 @@ contains
         ifltmx = imx - 1 + 1
         jfltmx = jmx - j1 + 1
 
-        if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == imode_eqns)) then
+        if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
             iq_loc = (/5, 1, 2, 3, 6/) ! Filtered variables: rho, u,v,w, p
         else
             iq_loc = (/1, 2, 3/)
