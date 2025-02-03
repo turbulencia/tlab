@@ -18,10 +18,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLab_Constants, only: MAX_AVG_TEMPORAL
     use TLab_Constants, only: efile, lfile, wp, wi
     use TLAB_VARS
-    use FDM, only: g
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
-    use Thermodynamics, only: imixture, thermo_param, itransport
     use THERMO_ANELASTIC, only: THERMO_ANELASTIC_WEIGHT_INPLACE, THERMO_ANELASTIC_BUOYANCY, ribackground
     use THERMO_AIRWATER
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1, scal_bcs
@@ -30,8 +28,11 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLabMPI_VARS
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use FDM, only: g
+    use Thermodynamics, only: imixture, thermo_param, itransport
     use NavierStokes
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use Rotation, only: coriolis
     use Radiation
     use Microphysics
     use FI_GRADIENT_EQN

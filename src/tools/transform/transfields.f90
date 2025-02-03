@@ -25,6 +25,7 @@ program TRANSFIELDS
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
     use Gravity, only: Gravity_Initialize
+use Rotation, only: Rotation_Initialize
     use THERMO_ANELASTIC
     use IO_FIELDS
     use OPR_FILTERS
@@ -86,6 +87,7 @@ program TRANSFIELDS
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
 
     call TLab_Consistency_Check()
 
@@ -837,6 +839,7 @@ contains
         imixture = MIXT_TYPE_AIRWATER
         call Thermodynamics_Initialize_Parameters(ifile)
         call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
         inb_scal = 1
 
         qt_0 = 9.0d-3; qt_1 = 1.5d-3

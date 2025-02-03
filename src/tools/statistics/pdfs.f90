@@ -20,6 +20,7 @@ program PDFS
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy
+use Rotation, only: Rotation_Initialize
     use THERMO_ANELASTIC
     use Radiation
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
@@ -98,6 +99,7 @@ program PDFS
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)

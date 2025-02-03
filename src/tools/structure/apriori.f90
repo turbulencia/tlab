@@ -23,6 +23,7 @@ program APRIORI
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
+use Rotation, only: Rotation_Initialize
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
@@ -80,6 +81,7 @@ program APRIORI
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space

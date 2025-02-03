@@ -26,7 +26,6 @@ contains
         use TLAB_VARS, only: imode_sim
         use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
         use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
-        use TLAB_VARS, only: coriolis
         use TLAB_VARS, only: mach
         use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
         ! use Avg_Spatial
@@ -53,8 +52,6 @@ contains
         call TLab_Write_ASCII(bakfile, '#TermAdvection=<divergence/skewsymmetric>')
         call TLab_Write_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
         call TLab_Write_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
-        !
-        call TLab_Write_ASCII(bakfile, '#TermCoriolis=<none/explicit/normalized>')
 
 ! -------------------------------------------------------------------
         call ScanFile_Char(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
@@ -113,16 +110,6 @@ contains
             end if
 
         end select
-
-! -------------------------------------------------------------------
-        call ScanFile_Char(bakfile, inifile, 'Main', 'TermCoriolis', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_NONE
-        else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_EXPLICIT
-        else if (trim(adjustl(sRes)) == 'normalized') then; coriolis%type = EQNS_COR_NORMALIZED
-        else
-            call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermCoriolis option.')
-            call TLab_Stop(DNS_ERROR_OPTION)
-        end if
 
 ! ###################################################################
         block = 'Parameters'
@@ -202,51 +189,6 @@ contains
             prandtl = schmidt(1)
 
         end select
-
-! ###################################################################
-        block = 'Rotation'
-
-        call TLab_Write_ASCII(bakfile, '#')
-        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
-        call TLab_Write_ASCII(bakfile, '#Vector=<Fx,Fy,Fz>')
-        call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
-
-        coriolis%vector(:) = 0.0_wp; coriolis%active = .false.
-        if (coriolis%type /= EQNS_NONE) then
-            call ScanFile_Char(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
-            idummy = 3
-            call LIST_REAL(sRes, idummy, coriolis%vector)
-
-            if (abs(coriolis%vector(1)) > 0.0_wp) then; coriolis%active(2) = .true.; coriolis%active(3) = .true.; call TLab_Write_ASCII(lfile, 'Angular velocity along Ox.'); end if
-            if (abs(coriolis%vector(2)) > 0.0_wp) then; coriolis%active(3) = .true.; coriolis%active(1) = .true.; call TLab_Write_ASCII(lfile, 'Angular velocity along Oy.'); end if
-            if (abs(coriolis%vector(3)) > 0.0_wp) then; coriolis%active(1) = .true.; coriolis%active(2) = .true.; call TLab_Write_ASCII(lfile, 'Angular velocity along Oz.'); end if
-
-            if (rossby > 0.0_wp) then
-                coriolis%vector(:) = coriolis%vector(:)/rossby ! adding the rossby number into the vector
-            else
-                call TLab_Write_ASCII(efile, __FILE__//'. Rossby number must be nonzero if coriolis is retained.')
-                call TLab_Stop(DNS_ERROR_OPTION)
-            end if
-
-            coriolis%parameters(:) = 0.0_wp
-            call ScanFile_Char(bakfile, inifile, 'Rotation', 'Parameters', '0.0,1.0', sRes)
-            idummy = MAX_PROF
-            call LIST_REAL(sRes, idummy, coriolis%parameters)
-
-            if (coriolis%parameters(2) == 0.0_wp) then
-                call TLab_Write_ASCII(lfile, __FILE__//'. Default normalized geostrophic velocity set to one.')
-                coriolis%parameters(2) = 1.0_wp
-            end if
-
-        end if
-
-! Consistency check
-        if (coriolis%type == EQNS_COR_NORMALIZED) then
-            if (coriolis%active(2)) then
-                call TLab_Write_ASCII(efile, __FILE__//'. TermCoriolis option only allows for angular velocity along Oy.')
-                call TLab_Stop(DNS_ERROR_OPTION)
-            end if
-        end if
 
 ! ###################################################################
         if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &

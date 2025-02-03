@@ -38,11 +38,6 @@ module TLAB_VARS
     integer(wi) :: isize_txc_field, inb_txc         ! 3D arrays for intermediate calculations
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
 
-! ###################################################################
-! phenomena in addition to the navier-stokes equations
-! ###################################################################
-    type(term_dt) :: coriolis                       ! Coriolis parameters
-
     ! nondimensional parameters; to be moved to navierstokes
     real(wp), public :: mach                                ! compressibility
 

@@ -44,6 +44,7 @@ program VPARTIAL
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
 ! Initialize
     
     len = jmax*kmax

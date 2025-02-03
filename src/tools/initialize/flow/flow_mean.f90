@@ -6,7 +6,7 @@ module FLOW_MEAN
     use FDM, only: g
     use TLAB_VARS, only: imode_sim, imax, jmax, kmax, inb_scal
     use Tlab_Background, only: qbg, pbg, rbg, tbg, hbg, sbg
-    use TLAB_VARS, only: coriolis
+    use Rotation, only: coriolis
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

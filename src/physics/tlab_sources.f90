@@ -9,10 +9,10 @@ module TLab_Sources
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use NavierStokes, only: nse_eqns
     use FDM, only: g
-    use TLAB_VARS, only: coriolis
     use TLab_OpenMP
     use THERMO_ANELASTIC
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
+    use Rotation, only: coriolis, Rotation_Coriolis
     use Radiation
     use Microphysics
     use Chemistry
@@ -29,7 +29,6 @@ module TLab_Sources
 
     public :: TLab_Sources_Flow
     public :: TLab_Sources_Scal
-    public :: FI_CORIOLIS
 
 contains
 ! #######################################################################
@@ -52,7 +51,7 @@ contains
         ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
         ! -----------------------------------------------------------------------
 
-        call FI_CORIOLIS(coriolis, imax, jmax, kmax, q, hq)
+        call Rotation_Coriolis(coriolis, imax, jmax, kmax, q, hq)
 
         ! -----------------------------------------------------------------------
         do iq = 1, 3
@@ -227,48 +226,5 @@ contains
 
         return
     end subroutine TLab_Sources_Scal
-
-!########################################################################
-!# Calculating the coriolis term
-!########################################################################
-    subroutine FI_CORIOLIS(coriolis, nx, ny, nz, u, r)
-        type(term_dt), intent(in) :: coriolis
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: u(nx*ny*nz, *)
-        real(wp), intent(out) :: r(nx*ny*nz, *)
-
-        ! -----------------------------------------------------------------------
-        integer(wi) ii, field_sz
-        real(wp) dummy, dtr3, dtr1, geo_u, geo_w
-        field_sz = nx*ny*nz
-        ! -----------------------------------------------------------------------
-        ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
-        ! -----------------------------------------------------------------------
-        select case (coriolis%type)
-        case (EQNS_EXPLICIT)
-            do ii = 1, field_sz
-                r(ii, 1) = r(ii, 1) + coriolis%vector(3)*u(ii, 2) - coriolis%vector(2)*u(ii, 3)
-                r(ii, 2) = r(ii, 2) + coriolis%vector(1)*u(ii, 3) - coriolis%vector(3)*u(ii, 1)
-                r(ii, 3) = r(ii, 3) + coriolis%vector(2)*u(ii, 1) - coriolis%vector(1)*u(ii, 2)
-            end do
-
-        case (EQNS_COR_NORMALIZED)
-            geo_u = cos(coriolis%parameters(1))*coriolis%parameters(2)
-            geo_w = -sin(coriolis%parameters(1))*coriolis%parameters(2)
-
-!$omp parallel default( shared ) &
-!$omp private( ij, dummy,srt,end,siz )
-            call TLab_OMP_PARTITION(field_sz, srt, end, siz)
-
-            dummy = coriolis%vector(2)
-            dtr3 = 0.0_wp; dtr1 = 0.0_wp
-            do ii = srt, end
-                r(ii, 1) = r(ii, 1) + dummy*(geo_w - u(ii, 3))
-                r(ii, 3) = r(ii, 3) + dummy*(u(ii, 1) - geo_u)
-            end do
-!$omp end parallel
-        end select
-
-    end subroutine FI_CORIOLIS
 
 end module TLab_Sources

@@ -20,6 +20,7 @@ program INISCAL
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
+use Rotation, only: Rotation_Initialize
     use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_AIRWATER
@@ -44,6 +45,7 @@ program INISCAL
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
 

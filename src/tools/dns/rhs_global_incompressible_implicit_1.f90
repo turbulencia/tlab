@@ -30,7 +30,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     use TLAB_VARS, only: scal_on
     use NavierStokes, only: visc, schmidt, rossby
     use Gravity, only: buoyancy
-    use TLAB_VARS, only: coriolis
+    use Rotation, only: coriolis
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TIME, only: dte

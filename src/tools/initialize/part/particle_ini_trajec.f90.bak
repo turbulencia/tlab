@@ -85,6 +85,7 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
 call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
     call Particle_Initialize_Parameters(ifile)
 
 #ifdef USE_MPI

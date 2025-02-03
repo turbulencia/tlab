@@ -23,6 +23,7 @@ program AVERAGES
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source
+use Rotation, only: Rotation_Initialize
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -113,6 +114,7 @@ program AVERAGES
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)

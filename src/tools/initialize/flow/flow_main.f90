@@ -23,6 +23,7 @@ program INIFLOW
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
+use Rotation, only: Rotation_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use THERMO_THERMAL
@@ -49,6 +50,7 @@ program INIFLOW
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
 
     call TLab_Consistency_Check()

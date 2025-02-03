@@ -39,6 +39,7 @@ program PARTICLE_TRAJEC
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
+use Rotation, only: Rotation_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -84,6 +85,7 @@ program PARTICLE_TRAJEC
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
 ! Get the local information from the tlab.ini
     call ScanFile_Int(bakfile, ifile, 'Particle', 'TrajNumber', '0', isize_traj)
     call ScanFile_Int(bakfile, ifile, 'Iteration', 'End', '0', nitera_last)

@@ -11,7 +11,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_txc
     use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: stagger_on
-    use TLAB_VARS, only: coriolis
+    use Rotation, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d
     use THERMO_ANELASTIC
@@ -21,6 +21,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use OPR_ELLIPTIC
     use TLab_Sources
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
+    use Rotation, only: Rotation_Coriolis
     use OPR_FILTERS
 
     implicit none
@@ -157,7 +158,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
     ! Coriolis Forcing term
     if (decomposition == DCMP_CORIOLIS) then
-        call FI_CORIOLIS(coriolis, imax, jmax, kmax, q, tmp)
+        call Rotation_Coriolis(coriolis, imax, jmax, kmax, q, tmp)
         tmp3 => tmp(:, 1)
         tmp4 => tmp(:, 2)
         tmp5 => tmp(:, 3)

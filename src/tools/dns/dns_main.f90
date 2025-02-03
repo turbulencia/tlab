@@ -18,6 +18,8 @@ program DNS
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
+use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use Radiation, only: Radiation_Initialize
     use Microphysics, only: Microphysics_Initialize
     use Chemistry, only: Chemistry_Initialize
@@ -73,6 +75,7 @@ program DNS
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)

@@ -18,13 +18,10 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLab_Constants, only: MAX_AVG_TEMPORAL
     use TLab_Constants, only: efile, lfile, wp, wi
     use TLAB_VARS
-    use NavierStokes
     use Tlab_Background, only: sbg, rbg
-    use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
-    use Thermodynamics
     use THERMO_ANELASTIC
     use THERMO_CALORIC
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1
@@ -35,8 +32,11 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
-use NavierStokes, only: nse_eqns
-use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use FDM, only: g
+    use Thermodynamics
+    use NavierStokes
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use Rotation, only: coriolis
     use OPR_PARTIAL
 
     implicit none

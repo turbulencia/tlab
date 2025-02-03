@@ -84,6 +84,7 @@ program SL_BOUNDARY
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
 
     call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmin', '0', buff_nps_u_jmin)
     call ScanFile_Int(bakfile, ifile, 'BufferZone', 'PointsUJmax', '0', buff_nps_u_jmax)

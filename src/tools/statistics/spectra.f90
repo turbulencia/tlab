@@ -51,6 +51,7 @@ program SPECTRA
     use NavierStokes, only: nse_eqns, froude
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
+use Rotation, only: Rotation_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_ANELASTIC
@@ -138,6 +139,7 @@ program SPECTRA
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)

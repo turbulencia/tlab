@@ -77,6 +77,7 @@ program SL_NORMAL_ANALYSIS
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
+call Rotation_Initialize(ifile)
 
     call ScanFile_Int(bakfile, ifile, 'BufferZone', 'NumPointsY', '0', ibuffer_npy)
 
