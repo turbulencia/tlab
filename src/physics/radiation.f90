@@ -3,7 +3,6 @@
 
 module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
-    use TLab_Types, only: term_dt
     use FDM, only: grid_dt
     use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: inb_scal_array
@@ -17,33 +16,33 @@ module Radiation
     implicit none
     private
 
-    ! to be changed to the local one
-    ! type term_dt
-    !     sequence
-    !     integer type
-    !     integer scalar(MAX_VARS)                ! fields defining this term
-    !     logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
-    !     real(wp) parameters(MAX_PARS)
-    !     real(wp) auxiliar(MAX_PARS)
-    !     real(wp) vector(3)
-    ! end type term_dt
-    integer, parameter :: ncomps_max = 10                ! maximum number of radiatively active components
-    integer, parameter :: nbands_max = 10                ! maximum number of spectral bands
-    type infrared_dt
+    type, public :: radterm_dt
         sequence
         integer type
-        logical active(MAX_VARS), lpadding(3)               ! evolution equations affected by this term
-        integer ncomps                                      ! number of radiatively active components
-        integer nbands                                      ! number of spectral bands
-        real(wp) :: kappa(ncomps_max, nbands_max)           ! mass absorption coefficients for each radiatively active component
-        real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band emission functions; assuming second-order polynomial
-        real(wp) bcs_t(3, nbands_max)                       ! downward fluxes at the top of the domain
-        real(wp) bcs_b(3, nbands_max)                       ! upward fluxes at the bottom of the domain
-        real(wp) :: epsilon_b                               ! surface emissivity at ymin
-    end type infrared_dt
+        integer scalar(MAX_VARS)                ! fields defining this term
+        logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
+        real(wp) parameters(MAX_PARS)
+        real(wp) auxiliar(MAX_PARS)
+        real(wp) vector(3)
+    end type radterm_dt
 
-    type(term_dt), public, protected :: infraredProps               ! Radiation parameters
-    ! type(term_dt), public, protected :: visibleProps                ! Radiation parameters
+    integer, parameter :: ncomps_max = 10                ! maximum number of radiatively active components
+    integer, parameter :: nbands_max = 10                ! maximum number of spectral bands
+    ! type infrared_dt
+    !     sequence
+    !     integer type
+    !     logical active(MAX_VARS), lpadding(3)               ! evolution equations affected by this term
+    !     integer ncomps                                      ! number of radiatively active components
+    !     integer nbands                                      ! number of spectral bands
+    !     real(wp) :: kappa(ncomps_max, nbands_max)           ! mass absorption coefficients for each radiatively active component
+    !     real(wp) beta(3, nbands_max)                        ! polynomial coefficients for band emission functions; assuming second-order polynomial
+    !     real(wp) bcs_t(3, nbands_max)                       ! downward fluxes at the top of the domain
+    !     real(wp) bcs_b(3, nbands_max)                       ! upward fluxes at the bottom of the domain
+    !     real(wp) :: epsilon_b                               ! surface emissivity at ymin
+    ! end type infrared_dt
+
+    type(radterm_dt), public, protected :: infraredProps               ! Radiation parameters
+    ! type(radterm_dt), public, protected :: visibleProps                ! Radiation parameters
 
     public :: Radiation_Initialize
     public :: Radiation_Infrared_Y
@@ -229,7 +228,7 @@ contains
     !########################################################################
     subroutine Radiation_Infrared_Y(localProps, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
         use THERMO_ANELASTIC
-        type(term_dt), intent(in) :: localProps
+        type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
@@ -399,7 +398,7 @@ contains
     ! We do not treat separately 2d and 3d cases for the transposition because it was a bit messy...
     !########################################################################
     subroutine IR_RTE1_OnlyLiquid(localProps, nlines, ny, g, a_source, flux_down, flux_up)
-        type(term_dt), intent(in) :: localProps
+        type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
         type(grid_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)      ! input as bulk absorption coefficent, output as source
@@ -446,7 +445,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine IR_RTE1_Incremental(localProps, nlines, ny, g, a_source, b, flux_down, flux_up)
-        type(term_dt), intent(in) :: localProps
+        type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
         type(grid_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
@@ -543,7 +542,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine IR_RTE1_Local(localProps, nlines, ny, g, a_source, b, flux_down, tmp2, flux_up)
-        type(term_dt), intent(in) :: localProps
+        type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
         type(grid_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
@@ -657,7 +656,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine IR_RTE1_Global(localProps, nlines, ny, g, a_source, b, flux_down, flux_up)
-        type(term_dt), intent(in) :: localProps
+        type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
         type(grid_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source

@@ -2,12 +2,20 @@
 #include "dns_error.h"
 
 module LargeScaleForcing
-    use TLab_Constants, only: wp, wi, efile, MAX_PROF
-    use TLab_Types, only: term_dt
+    use TLab_Constants, only: wp, wi, efile, MAX_PROF, MAX_VARS, MAX_PARS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
+    type term_dt
+        sequence
+        integer type
+        integer scalar(MAX_VARS)                ! fields defining this term
+        logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
+        real(wp) parameters(MAX_PARS)
+        real(wp) auxiliar(MAX_PARS)
+        real(wp) vector(3)
+    end type term_dt
     type(term_dt), public, protected :: subsidenceProps
 
     public :: LargeScaleForcing_Initialize

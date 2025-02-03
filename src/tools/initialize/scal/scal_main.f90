@@ -20,8 +20,8 @@ program INISCAL
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
-use Rotation, only: Rotation_Initialize
-    use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y
+    use Rotation, only: Rotation_Initialize
+    use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y, radterm_dt
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_AIRWATER
     use THERMO_ANELASTIC
@@ -32,7 +32,7 @@ use Rotation, only: Rotation_Initialize
 
     ! -------------------------------------------------------------------
     integer(wi) is
-    type(term_dt) localInfraredProps
+    type(radterm_dt) localInfraredProps
 
     ! ###################################################################
     call TLab_Start()

@@ -2,7 +2,7 @@
 ! Jet Statistic
 ! ###################################################################
 module Avg_Spatial
-    use TLab_Types, only: wp
+    use TLab_Constants, only: wp
     implicit none
     private
 

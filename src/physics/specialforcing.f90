@@ -2,8 +2,7 @@
 #include "dns_error.h"
 
 module SpecialForcing
-    use TLab_Constants, only: wp, wi, pi_wp, efile, lfile, MAX_PARS
-    use TLab_Types, only: term_dt
+    use TLab_Constants, only: wp, wi, pi_wp, efile, lfile, MAX_VARS, MAX_PARS
     use FDM, only: grid_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
@@ -11,16 +10,15 @@ module SpecialForcing
     implicit none
     private
 
-    ! to be changed to the local one
-    ! type term_dt
-    !     sequence
-    !     integer type
-    !     integer scalar(MAX_VARS)                ! fields defining this term
-    !     logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
-    !     real(wp) parameters(MAX_PARS)
-    !     real(wp) auxiliar(MAX_PARS)
-    !     real(wp) vector(3)
-    ! end type term_dt
+    type term_dt
+        sequence
+        integer type
+        integer scalar(MAX_VARS)                ! fields defining this term
+        logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
+        real(wp) parameters(MAX_PARS)
+        real(wp) auxiliar(MAX_PARS)
+        real(wp) vector(3)
+    end type term_dt
     type(term_dt), public, protected :: forcingProps              ! Forcing parameters
 
     public :: SpecialForcing_Initialize

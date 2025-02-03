@@ -1,5 +1,4 @@
 module TLAB_VARS
-    use TLab_Types, only: term_dt
     use TLab_Constants, only: wp, wi, sp
     implicit none
     save

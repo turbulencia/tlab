@@ -5,7 +5,6 @@
 !########################################################################
 module TLab_Sources
     use TLab_Constants, only: wp, wi, small_wp
-    use TLab_Types, only: term_dt
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use NavierStokes, only: nse_eqns
     use FDM, only: g

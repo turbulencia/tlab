@@ -1,6 +1,5 @@
 module PARTICLE_VARS
-    use TLab_Constants, only: wp, wi, longi, MAX_VARS
-    use TLab_Types, only: term_dt
+    use TLab_Constants, only: wp, wi, longi, MAX_VARS, MAX_PARS
     use PARTICLE_TYPES
     implicit none
     save
@@ -14,6 +13,15 @@ module PARTICLE_VARS
     ! integer, parameter :: PART_TYPE_NEW_CASES = 6
     integer, parameter :: PART_TYPE_TINIA_1 = 6
 
+    type term_dt
+        sequence
+        integer type
+        integer scalar(MAX_VARS)                ! fields defining this term
+        logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
+        real(wp) parameters(MAX_PARS)
+        real(wp) auxiliar(MAX_PARS)
+        real(wp) vector(3)
+    end type term_dt
     type(term_dt)     :: part                         ! particle formulation, e.g., tracer, inertia... Maybe new derived type
 
     ! Possible values of part_bcs

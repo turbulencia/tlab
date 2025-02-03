@@ -6,14 +6,22 @@
 ! Anelastic formulation uses (rho-rho_ref) *g and scaleheight defines rho_ref
 
 module Gravity
-    use TLab_Constants, only: wp, wi, small_wp, efile, lfile, wfile, MAX_PROF
-    use TLab_Types, only: term_dt
+    use TLab_Constants, only: wp, wi, small_wp, efile, lfile, wfile, MAX_PROF, MAX_VARS, MAX_PARS
     use TLAB_VARS, only: inb_scal, inb_scal_array, inb_flow, inb_flow_array
     use NavierStokes, only: froude
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
 
+    type term_dt
+        sequence
+        integer type
+        integer scalar(MAX_VARS)                ! fields defining this term
+        logical active(MAX_VARS), lpadding(3)   ! fields affected by this term
+        real(wp) parameters(MAX_PARS)
+        real(wp) auxiliar(MAX_PARS)
+        real(wp) vector(3)
+    end type term_dt
     type(term_dt), public, protected :: buoyancy
     real(wp), allocatable, public :: bbackground(:)
 
