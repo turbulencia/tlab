@@ -17,6 +17,15 @@ module TLab_WorkFlow
     character*128 :: line
 
     integer, public :: imode_verbosity = 1      ! level of verbosity used in log files
+
+    integer, public :: imode_sim                ! type of simulation (spatial, temporal)
+
+    logical, public :: flow_on = .true.         ! calculate flow parts of the code
+    logical, public :: scal_on = .true.         ! calculate scal parts of the code
+    logical, public :: fourier_on = .false.     ! using FFT libraries
+    logical, public :: stagger_on = .false.     ! horizontal staggering of pressure
+
+
     public :: TLab_Start
     public :: TLab_Stop
     public :: TLab_Write_ASCII

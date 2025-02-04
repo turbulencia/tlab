@@ -11,7 +11,7 @@ program VPOISSON
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: ifile, gfile, wfile
     use TLAB_VARS
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, stagger_on
     use TLab_Memory, only: TLab_Initialize_Memory
     use TLab_Arrays
 #ifdef USE_MPI

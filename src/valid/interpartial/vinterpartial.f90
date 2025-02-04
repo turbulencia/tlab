@@ -20,7 +20,7 @@
 program VINTERPARTIAL
     use TLab_Constants, only: wp, wi, ifile, gfile, efile
     use TLAB_VARS
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, stagger_on
     use IO_FIELDS
 #ifdef USE_MPI
     use MPI

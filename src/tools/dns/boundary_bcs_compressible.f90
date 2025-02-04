@@ -10,7 +10,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLAB_VARS, only: imax, jmax, kmax, inb_scal_array
     use TLAB_VARS, only: inb_flow, inb_scal
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: imode_sim, scal_on, flow_on
+    use TLab_WorkFlow, only: imode_sim, scal_on, flow_on
     use Tlab_Background, only: qbg
     use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

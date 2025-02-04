@@ -34,7 +34,7 @@ subroutine IBM_GENERATE_GEOMETRY_XBARS(wrk3d)
   use FDM,      only : g
   use TLAB_VARS,      only : imax, jmax, kmax, isize_field
   use TLab_Constants, only : wi, wp
-  use TLAB_VARS,      only : stagger_on
+  use TLab_WorkFlow, only: stagger_on
 #ifdef USE_MPI 
   use TLabMPI_VARS,  only : ims_offset_i, ims_offset_j, ims_offset_k
 #ifdef IBM_DEBUG

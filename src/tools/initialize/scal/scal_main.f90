@@ -9,7 +9,7 @@ program INISCAL
     use TLab_Constants, only: ifile, gfile, lfile
     use TLAB_VARS
     use TLab_Arrays
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, imode_sim
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize

@@ -13,7 +13,8 @@ module BOUNDARY_INFLOW
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array, flow_on, scal_on
+    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
+    use TLab_WorkFlow, only: flow_on, scal_on
     use NavierStokes, only: nse_eqns
     use FDM, only: g, FDM_Initialize
     use TLAB_VARS, only: rtime, itime

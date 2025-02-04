@@ -26,7 +26,7 @@
 subroutine IBM_ALLOCATE(C_FILE_LOC)
     use TLab_Constants, only: wi
     use FDM, only: g
-    use TLAB_VARS, only: stagger_on
+    use TLab_WorkFlow, only: stagger_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal
     use IBM_VARS
     use TLab_WorkFlow, only: TLab_Write_ASCII

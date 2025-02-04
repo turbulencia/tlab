@@ -94,7 +94,7 @@ contains
     subroutine DNS_BOUNDS_CONTROL()
         use TLab_Constants, only: efile, lfile
         use NavierStokes, only: nse_eqns
-        use TLAB_VARS, only: stagger_on
+        use TLab_WorkFlow, only: stagger_on
         use TLAB_VARS, only: imax, jmax, kmax
         use TLab_Arrays
         use TLab_WorkFlow, only: TLab_Write_ASCII
@@ -236,7 +236,7 @@ contains
 !########################################################################
     subroutine DNS_OBS_CONTROL()
         use TLAB_VARS, only: imax, jmax, kmax, inb_scal
-        use TLAB_VARS, only: scal_on
+        use TLab_WorkFlow, only: scal_on
         use FDM, only: g
         use FI_VORTICITY_EQN, only: FI_VORTICITY
         use TLab_Arrays

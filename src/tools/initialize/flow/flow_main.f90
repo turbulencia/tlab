@@ -6,14 +6,13 @@
 program INIFLOW
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
-    use TLAB_VARS, only: fourier_on
     use NavierStokes, only: nse_eqns
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: inb_flow, inb_scal
     use TLAB_VARS, only: itime, rtime
     use TLab_Arrays
     use TLab_Pointers, only: e, rho, p, T
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize

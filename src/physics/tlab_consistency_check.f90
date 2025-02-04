@@ -6,7 +6,7 @@
 subroutine TLab_Consistency_Check()
     use TLab_Constants, only: efile, lfile, MAX_VARS
     use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
-    use TLAB_VARS, only: stagger_on
+    use TLab_WorkFlow, only: stagger_on
     use TLAB_VARS
     use OPR_Filters, only: PressureFilter
     use FDM, only: g

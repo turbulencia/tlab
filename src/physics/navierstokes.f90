@@ -23,7 +23,7 @@ module NavierStokes
 contains
     subroutine NavierStokes_Initialize_Parameters(inifile)
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-        use TLAB_VARS, only: imode_sim
+        use TLab_WorkFlow, only: imode_sim
         use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
         use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
         use TLAB_VARS, only: mach

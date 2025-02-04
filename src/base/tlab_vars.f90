@@ -6,13 +6,6 @@ module TLAB_VARS
 ! ###################################################################
 ! General options
 ! ###################################################################
-    integer :: imode_sim                ! type of simulation (spatial, temporal)
-
-    logical :: flow_on = .true.         ! calculate flow parts of the code
-    logical :: scal_on = .true.         ! calculate scal parts of the code
-    logical :: fourier_on = .false.     ! using FFT libraries
-    logical :: stagger_on = .false.     ! horizontal staggering of pressure
-
 ! ###################################################################
 ! Iteration
 ! ###################################################################

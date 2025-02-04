@@ -20,7 +20,7 @@ module BOUNDARY_BUFFER
     use TLab_Constants, only: tfile
 #endif
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: imode_sim
+    use TLab_WorkFlow, only: imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use FDM, only: g
     use TLAB_VARS, only: itime

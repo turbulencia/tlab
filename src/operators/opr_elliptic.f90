@@ -6,7 +6,7 @@ module OPR_ELLIPTIC
     use TLab_Constants, only: efile
     use FDM, only: grid_dt
     use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
-    use TLAB_VARS, only: stagger_on
+    use TLab_WorkFlow, only: stagger_on
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

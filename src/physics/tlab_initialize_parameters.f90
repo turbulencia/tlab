@@ -12,8 +12,8 @@
 subroutine TLab_Initialize_Parameters(inifile)
     use TLab_Constants, only: wp, wi, lfile, efile, wfile, MajorVersion, MinorVersion
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, imode_verbosity
-    use TLAB_VARS, only: imode_sim
-    use TLAB_VARS, only: flow_on, scal_on, fourier_on, stagger_on
+    use TLab_WorkFlow, only: imode_sim
+    use TLab_WorkFlow, only: flow_on, scal_on, fourier_on, stagger_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz

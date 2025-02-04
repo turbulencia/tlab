@@ -25,7 +25,8 @@ contains
     ! ###################################################################
     subroutine DNS_STATISTICS_INITIALIZE()
 
-        use TLAB_VARS, only: imode_sim, jmax, inb_scal
+        use TLab_WorkFlow, only: imode_sim
+        use TLAB_VARS, only: jmax, inb_scal
         use Avg_Spatial, only: nstatavg
 
         if (imode_sim == DNS_MODE_TEMPORAL) then
@@ -62,7 +63,7 @@ contains
         use FDM, only: g
         use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
         use NavierStokes, only: nse_eqns
-        use TLAB_VARS, only: scal_on
+        use TLab_WorkFlow, only: scal_on
         use NavierStokes, only: froude, schmidt
         use TLAB_VARS, only: itime, rtime
         use TLab_Arrays
@@ -236,6 +237,7 @@ contains
         use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
         use TLAB_VARS
+        use TLab_WorkFlow, only: scal_on
         use TLab_Arrays
         use DNS_LOCAL
         use BOUNDARY_BUFFER

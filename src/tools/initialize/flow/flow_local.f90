@@ -7,7 +7,7 @@ module FLOW_LOCAL
     use Discrete, only: discrete_dt
     use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
     use TLAB_VARS, only: inb_wrk2d, inb_txc
-    use TLAB_VARS, only: stagger_on
+    use TLab_WorkFlow, only: stagger_on
     use FDM, only: g
     use Tlab_Background, only: tbg, hbg
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d

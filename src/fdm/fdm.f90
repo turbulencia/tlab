@@ -50,7 +50,7 @@ contains
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
 #endif
-        use TLAB_VARS, only: stagger_on
+        use TLab_WorkFlow, only: stagger_on
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         use TLab_Memory, only: TLab_Allocate_Real
         use FDM_PROCS, only: FDM_Bcs_Neumann

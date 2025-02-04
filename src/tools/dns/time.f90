@@ -14,7 +14,7 @@ module TIME
     use OMP_LIB
 #endif
     use TLab_Constants, only: efile, wp, wi, big_wp
-    use TLAB_VARS, only: flow_on, scal_on, fourier_on, stagger_on
+    use TLab_WorkFlow, only: flow_on, scal_on, fourier_on, stagger_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz

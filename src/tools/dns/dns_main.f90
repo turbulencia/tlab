@@ -6,7 +6,7 @@ program DNS
     use TLab_Constants, only: ifile, efile, wfile, lfile, gfile, tag_flow, tag_scal, tag_part, tag_traj
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLAB_VARS, only: imode_sim, fourier_on, scal_on, flow_on
+    use TLab_WorkFlow, only: imode_sim, fourier_on, scal_on, flow_on
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: itime
     use TLab_Arrays

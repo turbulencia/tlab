@@ -27,12 +27,11 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     use FDM, only: g
     use TLAB_VARS, only: imax, jmax, kmax
     use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
-    use TLAB_VARS, only: scal_on
     use NavierStokes, only: visc, schmidt, rossby
     use Gravity, only: buoyancy
     use Rotation, only: coriolis
     use TLab_Arrays, only: wrk2d, wrk3d
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, scal_on
     use TIME, only: dte
     use DNS_LOCAL, only: remove_divergence
     use BOUNDARY_BUFFER

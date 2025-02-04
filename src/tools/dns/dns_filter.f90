@@ -6,7 +6,7 @@ subroutine DNS_FILTER()
 
     use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow, inb_scal
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: imode_sim
+    use TLab_WorkFlow, only: imode_sim
     use NavierStokes, only: visc
     use TLAB_VARS, only: itime, rtime
     use FDM, only: g

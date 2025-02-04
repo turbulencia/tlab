@@ -30,7 +30,7 @@ subroutine IBM_VERIFY_GEOMETRY()
     use IBM_VARS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM, only: g
-    use TLAB_VARS, only: scal_on
+    use TLab_WorkFlow, only: scal_on
     use TLAB_VARS, only: imax, jmax, kmax
     use TLab_Constants, only: efile, wp, wi
 #ifdef USE_MPI
