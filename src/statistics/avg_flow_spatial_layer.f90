@@ -12,12 +12,13 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     use TLab_Constants, only: efile, tfile, wp, wi, big_wp
     use FDM, only: g
     use TLAB_VARS
+    use Timer, only: itime, rtime
     use NavierStokes
     use Tlab_Background, only: rbg, tbg, pbg, qbg
     use Avg_Spatial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk1d, wrk2d
-    use Thermodynamics, only: RRATIO_INV, gama0
+    use Thermodynamics, only: RRATIO_INV, gama0, mach
     use OPR_PARTIAL
     use Integration, only: Int_Simpson
     implicit none

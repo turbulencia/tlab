@@ -142,7 +142,8 @@ end subroutine IBM_INITIALIZE_GEOMETRY
 subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
     use IBM_VARS
-    use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use Timer, only: itime
     use IO_FIELDS, only: io_fileformat, IO_READ_FIELDS
     use TLab_Constants, only: wp, wi
 
@@ -189,7 +190,8 @@ end subroutine IBM_IO_READ
 subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
     use IBM_VARS
-    use TLAB_VARS, only: imax, jmax, kmax, itime, isize_field
+    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use Timer, only: itime
     use IO_FIELDS
     use TLab_Constants, only: wp, wi
 

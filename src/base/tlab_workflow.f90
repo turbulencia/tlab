@@ -25,7 +25,6 @@ module TLab_WorkFlow
     logical, public :: fourier_on = .false.     ! using FFT libraries
     logical, public :: stagger_on = .false.     ! horizontal staggering of pressure
 
-
     public :: TLab_Start
     public :: TLab_Stop
     public :: TLab_Write_ASCII

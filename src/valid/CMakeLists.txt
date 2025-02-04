@@ -2,7 +2,7 @@ set(LEVEL1_LIBS utils base)
 
 FILE(GLOB sourcefiles "efilter/*.f90")
 add_executable(vefilter.x efilter/vefilter.f90)
-target_link_libraries(vefilter.x physics operators filters fdm ibm io ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(vefilter.x physics operators  io thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "fdm/vpartial.f90")
 add_executable(vpartial.x ${sourcefiles})
@@ -14,7 +14,7 @@ target_link_libraries(vpartial3d.x physics mappings operators io thermodynamics 
 
 FILE(GLOB sourcefiles "fdm/vintegral.f90")
 add_executable(vintegral.x ${sourcefiles})
-target_link_libraries(vintegral.x physics operators io filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(vintegral.x physics operators io thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "elliptic/vpoisson.f90")
 add_executable(vpoisson.x ${sourcefiles})

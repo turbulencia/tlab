@@ -65,7 +65,7 @@ contains
         use NavierStokes, only: nse_eqns
         use TLab_WorkFlow, only: scal_on
         use NavierStokes, only: froude, schmidt
-        use TLAB_VARS, only: itime, rtime
+        use Timer, only: itime, rtime
         use TLab_Arrays
         use THERMO_ANELASTIC
         use DNS_ARRAYS

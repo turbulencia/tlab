@@ -12,6 +12,7 @@ program TRANSFIELDS
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use FDM, only: grid_dt
     use TLAB_VARS
+    use Timer, only: itime, rtime
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, scal_on, flow_on, fourier_on
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real

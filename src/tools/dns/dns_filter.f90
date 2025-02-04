@@ -8,7 +8,7 @@ subroutine DNS_FILTER()
     use NavierStokes, only: nse_eqns
     use TLab_WorkFlow, only: imode_sim
     use NavierStokes, only: visc
-    use TLAB_VARS, only: itime, rtime
+    use Timer, only: itime, rtime
     use FDM, only: g
     use TLab_Arrays
     use OPR_FILTERS

@@ -63,6 +63,9 @@ module Thermodynamics
     ! Anelastic and incompressible formulation
     real(wp), public :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
     real(wp), public :: scaleheightinv                  ! Inverse of pressure scale height. Equivalent to 1/(Fr*RRATIO) in compressible formulation
+    ! nondimensional parameters; to be moved to navierstokes
+    real(wp), public :: mach                                ! compressibility
+
 
     ! Nondimensional formulation
     logical, public :: nondimensional = .true.          ! consider nondimensional formulation
@@ -85,7 +88,6 @@ contains
     !########################################################################
     subroutine Thermodynamics_Initialize_Parameters(inifile)
         use TLAB_VARS, only: inb_scal, inb_scal_array
-        use TLAB_VARS, only: mach
         ! use THERMO_ANELASTIC, only: scaleheightinv, GRATIO
 
         character(len=*), intent(in), optional :: inifile

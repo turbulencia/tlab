@@ -18,6 +18,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLab_Constants, only: MAX_AVG_TEMPORAL
     use TLab_Constants, only: efile, lfile, wp, wi
     use TLAB_VARS
+    use Timer, only: itime, rtime
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d
     use THERMO_ANELASTIC, only: THERMO_ANELASTIC_WEIGHT_INPLACE, THERMO_ANELASTIC_BUOYANCY, ribackground

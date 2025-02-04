@@ -158,7 +158,7 @@ contains
         use TLab_Pointers_3D, only: pointers3d_dt
         use TLAB_VARS, only: inb_flow_array, inb_scal_array
         use TLAB_VARS, only: imax, jmax, kmax
-        use TLAB_VARS, only: rtime
+        use Timer, only: rtime
         use TLab_Arrays
         use FI_VECTORCALCULUS
         use DNS_ARRAYS

@@ -23,7 +23,7 @@ module BOUNDARY_BUFFER
     use TLab_WorkFlow, only: imode_sim
     use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use FDM, only: g
-    use TLAB_VARS, only: itime
+    use Timer, only: itime
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: CRATIO_INV
     use IO_FIELDS

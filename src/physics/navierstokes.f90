@@ -26,7 +26,7 @@ contains
         use TLab_WorkFlow, only: imode_sim
         use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
         use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
-        use TLAB_VARS, only: mach
+        use Thermodynamics, only: mach
         use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
         ! use Avg_Spatial
         implicit none

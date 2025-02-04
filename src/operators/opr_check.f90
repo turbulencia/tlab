@@ -12,7 +12,7 @@ subroutine OPR_CHECK()
     use TLab_Arrays
     use OPR_FOURIER
 #ifdef USE_MPI
-    use TLAB_VARS, only: itime
+    use Timer, only: itime
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k

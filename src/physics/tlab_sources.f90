@@ -33,7 +33,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine TLab_Sources_Flow(q, s, hq, tmp1)
-        use TLAB_VARS, only: rtime
+        use Timer, only: rtime
         real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field)

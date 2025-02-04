@@ -36,6 +36,7 @@ program SPECTRA
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use TLab_Pointers, only: pointers_dt
     use TLAB_VARS
+    use Timer, only: itime, rtime
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on, flow_on, scal_on
     use TLab_Memory, only: TLab_Initialize_Memory

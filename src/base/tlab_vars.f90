@@ -1,16 +1,16 @@
+module Timer
+    use TLab_Constants, only: wp, wi, sp
+    implicit none
+
+    integer(wi) :: itime                ! iteration number
+    real(wp) :: rtime                   ! physical time
+
+end module Timer
+
 module TLAB_VARS
     use TLab_Constants, only: wp, wi, sp
     implicit none
     save
-
-! ###################################################################
-! General options
-! ###################################################################
-! ###################################################################
-! Iteration
-! ###################################################################
-    integer(wi) :: itime                ! iteration number
-    real(wp) :: rtime                   ! physical time
 
 ! ###################################################################
 ! Arrays sizes
@@ -29,8 +29,5 @@ module TLAB_VARS
     integer(wi) :: isize_wrk3d                      ! 3D scratch array (only 1)
     integer(wi) :: isize_txc_field, inb_txc         ! 3D arrays for intermediate calculations
     integer(wi) :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
-
-    ! nondimensional parameters; to be moved to navierstokes
-    real(wp), public :: mach                                ! compressibility
 
 end module TLAB_VARS

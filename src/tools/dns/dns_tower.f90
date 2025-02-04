@@ -213,7 +213,7 @@ contains
 #endif
 
         use TLAB_VARS, only: imax, jmax, kmax
-        use TLAB_VARS, only: itime, rtime
+        use Timer, only: itime, rtime
 
         implicit none
 
@@ -294,7 +294,7 @@ contains
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         use DNS_LOCAL, only: nitera_save
-        use TLAB_VARS, only: itime
+        use Timer, only: itime
         use TLab_Constants, only: wfile
 #ifdef USE_MPI
         use MPI

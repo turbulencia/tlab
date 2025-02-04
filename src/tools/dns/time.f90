@@ -18,7 +18,7 @@ module TIME
     use TLAB_VARS, only: imax, jmax, kmax, isize_field
     use TLAB_VARS, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLAB_VARS, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
-    use TLAB_VARS, only: rtime
+    use Timer, only: rtime
     use FDM, only: g
     use NavierStokes, only: nse_eqns, nse_advection, nse_viscous, nse_diffusion
     use TLAB_VARS, only: inb_flow, inb_scal

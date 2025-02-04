@@ -10,9 +10,9 @@ module AVG_PHASE
   use TLAB_CONSTANTS, only: sizeofint, sizeofreal
   use FDM, only: g
   use TLAB_VARS, only: imax, jmax, kmax, isize_field
-  use TLAB_VARS, only: rtime
+  use Timer, only: rtime
   use NavierStokes, only: visc, froude, rossby, prandtl
-  use TLAB_VARS, only: mach
+  use Thermodynamics, only: mach
   use NavierStokes, only: nse_eqns
   use TLAB_VARS, only: inb_flow, inb_scal
   use TLAB_ARRAYS, only: q, s
@@ -314,9 +314,9 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       use TLAB_VARS, only: imax, jmax
       use FDM, only: g
-      use TLAB_VARS, only: rtime, itime
+      use Timer, only: rtime, itime
       use NavierStokes, only: visc, froude, rossby, prandtl
-      use TLAB_VARS, only: mach
+      use Thermodynamics, only: mach
       use NavierStokes, only: nse_eqns
       use TLAB_CONSTANTS, only: sizeofint, sizeofreal
       use Thermodynamics, only: gama0

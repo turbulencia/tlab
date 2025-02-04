@@ -8,6 +8,7 @@ program PDFS
     use TLab_Constants, only: wp, wi, small_wp, ifile, efile, lfile, gfile, tag_flow, tag_scal
     use TLab_Pointers, only: pointers_dt
     use TLAB_VARS
+    use Timer, only: itime, rtime
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on
     use TLab_Memory, only: TLab_Initialize_Memory
