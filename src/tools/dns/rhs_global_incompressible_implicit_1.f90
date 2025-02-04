@@ -25,8 +25,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
 #endif
     use TLab_Constants, only: wp, wi, BCS_NN, efile
     use FDM, only: g
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
+    use TLab_Memory, only: imax, jmax, kmax
+    use TLab_Memory, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use NavierStokes, only: visc, schmidt, rossby
     use Gravity, only: buoyancy
     use Rotation, only: coriolis

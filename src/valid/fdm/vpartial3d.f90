@@ -2,9 +2,9 @@
 
 program VPARTIAL3D
     use TLab_Constants, only: wp, wi, gfile, ifile
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_Memory, only: imax, jmax, kmax, inb_txc
     use TLab_Memory, only: TLab_Initialize_Memory
     use TLab_Arrays
 #ifdef USE_MPI

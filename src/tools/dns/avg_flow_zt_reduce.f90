@@ -28,7 +28,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use NavierStokes, only: nse_eqns
     use FDM, only: g
     use NavierStokes, only: visc
@@ -3363,9 +3363,9 @@ subroutine AVG_TKE_ZT_REDUCE(rho, u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, t
     ! #
     ! # 10/12/2000 Juan Pedro Mellado
     ! ##############################################
-
-    use TLAB_VARS
+    use TLab_Constants, only: wp, wi
     use Avg_Spatial
+    use TLab_Memory, only: imax, jmax, kmax, isize_wrk2d
     use Averages, only: SUM1V1D_V
 
     implicit none

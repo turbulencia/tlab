@@ -107,14 +107,26 @@ end module TLab_Pointers_C
 
 module TLab_Memory
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_field, inb_flow_array, inb_scal_array
-    use TLAB_VARS, only: isize_txc_field, inb_txc, isize_txc_dimx, isize_txc_dimz
-    use TLAB_VARS, only: isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private
     save
+
+    ! Arrays sizes
+    ! fields
+    integer(wi), public :: imax, jmax, kmax     ! number of grid nodes per direction locally per processor
+    integer(wi), public :: isize_field          ! =imax*jmax*kmax, 3D fields sizes locally per processor
+    integer(wi), public :: inb_flow             ! # of prognostic 3d flow fields (flow evolution equations)
+    integer(wi), public :: inb_flow_array       ! >= inb_flow, # of prognostic and diagnostic 3d flow arrays
+    integer(wi), public :: inb_scal             ! # of prognostic 3d scal fields (scal evolution equations)
+    integer(wi), public :: inb_scal_array       ! >= inb_scal, # of prognostic and diagnostic 3d scal arrays
+
+    ! auxiliary arrays
+    integer(wi), public :: isize_wrk1d, inb_wrk1d           ! 1D scratch arrays
+    integer(wi), public :: isize_wrk2d, inb_wrk2d           ! 2D scratch arrays
+    integer(wi), public :: isize_wrk3d                      ! 3D scratch array (only 1)
+    integer(wi), public :: isize_txc_field, inb_txc         ! 3D arrays for intermediate calculations
+    integer(wi), public :: isize_txc_dimx, isize_txc_dimz   ! partition for MPI data transposition
 
     character*128 :: str, line
     integer :: ierr
@@ -304,7 +316,7 @@ contains
         call Tlab_Allocate_Log_LONG(lfile, dims, s)
         allocate (a(dims(1)), stat=ierr)
         call TLAB_ALLOCATE_ERR(C_FILE_LOC, efile, s)
-        
+
     end subroutine Tlab_Allocate_Real_LONG
 
     ! ######################################################################

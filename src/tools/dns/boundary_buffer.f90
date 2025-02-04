@@ -21,9 +21,9 @@ module BOUNDARY_BUFFER
 #endif
     use NavierStokes, only: nse_eqns
     use TLab_WorkFlow, only: imode_sim
-    use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
+    use TLab_Memory, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use FDM, only: g
-    use Timer, only: itime
+    use TLab_Time, only: itime
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: CRATIO_INV
     use IO_FIELDS

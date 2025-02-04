@@ -65,7 +65,7 @@ contains
 ! Limit min/max values of fields, if required
 !########################################################################
     subroutine DNS_BOUNDS_LIMIT()
-        use TLAB_VARS, only: inb_scal
+        use TLab_Memory, only: inb_scal
         use TLab_Arrays
 
         ! -------------------------------------------------------------------
@@ -95,7 +95,7 @@ contains
         use TLab_Constants, only: efile, lfile
         use NavierStokes, only: nse_eqns
         use TLab_WorkFlow, only: stagger_on
-        use TLAB_VARS, only: imax, jmax, kmax
+        use TLab_Memory, only: imax, jmax, kmax
         use TLab_Arrays
         use TLab_WorkFlow, only: TLab_Write_ASCII
         use THERMO_ANELASTIC
@@ -235,7 +235,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine DNS_OBS_CONTROL()
-        use TLAB_VARS, only: imax, jmax, kmax, inb_scal
+        use TLab_Memory, only: imax, jmax, kmax, inb_scal
         use TLab_WorkFlow, only: scal_on
         use FDM, only: g
         use FI_VORTICITY_EQN, only: FI_VORTICITY

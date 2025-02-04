@@ -12,7 +12,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
     use NavierStokes, only: visc, schmidt

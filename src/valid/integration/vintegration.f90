@@ -6,7 +6,7 @@ program vintegration
     integer(wi), parameter :: nmax = 768
     integer(wi) l, n
     real(wp) x(nmax), scale, f(1, nmax), I_a(1, nmax), I_n(1, nmax)
-    real(wp) kappa, parameter1, xref
+    real(wp) parameter1, xref
 
     open (21, file='y.dat')
     do n = 1, nmax

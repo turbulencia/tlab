@@ -4,11 +4,11 @@
 !########################################################################
 subroutine DNS_FILTER()
 
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow, inb_scal
+    use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_flow, inb_scal
     use NavierStokes, only: nse_eqns
     use TLab_WorkFlow, only: imode_sim
     use NavierStokes, only: visc
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime, rtime
     use FDM, only: g
     use TLab_Arrays
     use OPR_FILTERS
@@ -118,7 +118,7 @@ end subroutine DNS_FILTER
 subroutine FI_RTKE(nx, ny, nz, q, ke)
     use TLab_Constants, only: wp, wi
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: inb_flow
+    use TLab_Memory, only: inb_flow
     use TLab_Arrays, only: wrk1d
     use THERMO_ANELASTIC, only : rbackground
     use Averages, only: AVG_IK_V

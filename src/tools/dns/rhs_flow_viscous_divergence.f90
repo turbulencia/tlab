@@ -13,7 +13,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use NavierStokes, only: nse_eqns
     use FDM, only: g
     use NavierStokes, only: visc

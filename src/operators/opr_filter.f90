@@ -7,7 +7,7 @@
 module OPR_FILTERS
     use TLab_Constants, only: wp, wi, MAX_PARS, MAX_VARS
     use FDM, only: grid_dt
-    use TLAB_VARS, only: isize_txc_field, isize_txc_dimz
+    use TLab_Memory, only: isize_txc_field, isize_txc_dimz
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Filters_Compact

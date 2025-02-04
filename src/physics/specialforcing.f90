@@ -47,7 +47,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine SpecialForcing_Initialize(inifile)
-        use TLAB_VARS, only: imax, jmax, kmax
+        use TLab_Memory, only: imax, jmax, kmax
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif

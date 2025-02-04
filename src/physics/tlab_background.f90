@@ -30,7 +30,7 @@ contains
         use TLab_Pointers_3D, only: p_wrk1d
         use FDM, only: g
         use TLab_WorkFlow, only: imode_sim
-        use TLAB_VARS, only: inb_scal, inb_scal_array
+        use TLab_Memory, only: inb_scal, inb_scal_array
         use NavierStokes, only: froude, schmidt
         use Thermodynamics
         use THERMO_ANELASTIC

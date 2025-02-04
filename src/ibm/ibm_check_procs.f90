@@ -23,7 +23,7 @@
 subroutine IBM_CHECK_PROCS(epsi, epsj, epsk)
   
   use IBM_VARS,       only : ims_pro_ibm_x, ims_pro_ibm_y, ims_pro_ibm_z
-  use TLAB_VARS,      only : isize_field
+  use TLab_Memory, only: isize_field
   use TLab_Constants, only : wi, wp
 #ifdef IBM_DEBUG
 #ifdef USE_MPI 

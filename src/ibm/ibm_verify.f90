@@ -31,7 +31,7 @@ subroutine IBM_VERIFY_GEOMETRY()
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM, only: g
     use TLab_WorkFlow, only: scal_on
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use TLab_Constants, only: efile, wp, wi
 #ifdef USE_MPI
     use MPI
@@ -227,7 +227,7 @@ end subroutine IBM_VERIFY
 subroutine IBM_VERIFY_UP(eps)
 
     use IBM_VARS, only: ibm_objup, max_height_objlo, max_height_objup
-    use TLAB_VARS, only: isize_field, imax, jmax, kmax
+    use TLab_Memory, only: isize_field, imax, jmax, kmax
     use TLab_Constants, only: efile, wp, wi
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI

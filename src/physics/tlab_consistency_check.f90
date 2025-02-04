@@ -5,10 +5,9 @@
 ! Check for cross dependencies and undeveloped options.
 subroutine TLab_Consistency_Check()
     use TLab_Constants, only: efile, lfile, MAX_VARS
-    use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal
+    use TLab_Memory, only: inb_flow, inb_flow_array, inb_scal
     use TLab_WorkFlow, only: stagger_on
-    use Timer, only: rtime
-    use TLAB_VARS
+    use TLab_Time, only: rtime
     use OPR_Filters, only: PressureFilter
     use FDM, only: g
     use IBM_VARS, only: imode_ibm

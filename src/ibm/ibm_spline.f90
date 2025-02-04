@@ -30,7 +30,7 @@
 subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob_b, nob_e, ibm_case)
     use TLab_Constants, only: efile, wp, wi
     use IBM_VARS, only: xa, xb, ya, yb, ibmscaljmin
-    use TLAB_VARS, only: isize_field
+    use TLab_Memory, only: isize_field
     use TLab_Arrays, only: wrk1d
     use FDM, only: grid_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -128,7 +128,7 @@ end subroutine IBM_SPLINE_XYZ
 subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir, nlines, plane)
 
     use IBM_VARS, only: nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
-    use TLAB_VARS, only: isize_field
+    use TLab_Memory, only: isize_field
     use FDM, only: grid_dt
     use TLab_Constants, only: wp, wi, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

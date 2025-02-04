@@ -45,7 +45,7 @@
 
 subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
     use TLab_Constants, only: wp
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
     use Averages, only: AVG_IK_V
 
     implicit none
@@ -68,7 +68,7 @@ subroutine IBM_AVG_SCAL_BCS(is, scalv_bcs)
 
     use IBM_VARS, only: ibm_objup, max_height_objlo, max_height_objup
     use IBM_VARS, only: ibmscaljmin, ibmscaljmax
-    use TLAB_VARS, only: jmax
+    use TLab_Memory, only: jmax
     use TLab_Constants, only: wi, wp
 
     implicit none

@@ -7,8 +7,8 @@ program DNS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_WorkFlow, only: imode_sim, fourier_on, scal_on, flow_on
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use Timer, only: itime
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
+    use TLab_Time, only: itime
     use TLab_Arrays
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize

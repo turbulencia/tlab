@@ -49,7 +49,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine BOUNDARY_BCS_SCAL_READBLOCK(bakfile, inifile, tag, var)
-        use TLAB_VARS, only: inb_scal
+        use TLab_Memory, only: inb_scal
         character(len=*), intent(in) :: bakfile, inifile, tag
         type(bcs_dt), intent(out) :: var
 
@@ -127,7 +127,7 @@ contains
         use TLab_Constants, only: tfile
 #endif
         use NavierStokes, only: nse_eqns
-        use TLAB_VARS, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
+        use TLab_Memory, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
         use FDM, only: g
         use Tlab_Background, only: pbg, qbg
         use Thermodynamics, only: CRATIO_INV
@@ -137,7 +137,7 @@ contains
         use Profiles, only: profiles_dt, Profiles_Calculate, PROFILE_TANH
 #ifdef USE_MPI
         use MPI
-        use TLAB_VARS, only: inb_scal_array
+        use TLab_Memory, only: inb_scal_array
         use TLabMPI_VARS, only: ims_npro_k
         use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
         use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
@@ -509,8 +509,8 @@ contains
         use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
         use TLab_Constants, only: lfile
-        use TLAB_VARS, only: imax, jmax, kmax
-        use TLAB_VARS, only: isize_field
+        use TLab_Memory, only: imax, jmax, kmax
+        use TLab_Memory, only: isize_field
         use NavierStokes, only: visc, schmidt
         use FDM, only: g
         use Averages, only: AVG1V2D

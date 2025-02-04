@@ -27,8 +27,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
 #endif
     use TLab_Constants, only: wp, wi, BCS_NN, efile
     use FDM, only: g
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLab_Memory, only: imax, jmax, kmax
+    use TLab_Memory, only: inb_flow, inb_scal
     use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII, scal_on
     use TLab_Arrays

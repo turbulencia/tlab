@@ -165,7 +165,7 @@ end subroutine INTEGRATE_SPECTRUM
 !########################################################################
 subroutine REDUCE_SPECTRUM(nx, ny, nz, nblock, in, out, tmp1, variance)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: isize_txc_dimz
+    use TLab_Memory, only: isize_txc_dimz
 
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
@@ -254,7 +254,7 @@ end subroutine REDUCE_SPECTRUM
 subroutine REDUCE_CORRELATION(nx, ny, nz, nblock, nr_total, &
                               in, data_2d, data_x, data_z, data_r, variance1, variance2, icalc_radial)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: isize_wrk1d
+    use TLab_Memory, only: isize_wrk1d
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -423,7 +423,7 @@ end subroutine WRITE_SPECTRUM1D
 
 subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use IO_FIELDS, only: io_aux
     use MPI
     use TLabMPI_VARS

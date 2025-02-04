@@ -21,10 +21,10 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
 #endif
     use TLab_Constants, only: wp, wi, BCS_NN
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
     use FDM, only: g
     use TLab_WorkFlow, only: stagger_on
-    use Timer, only: itime
+    use TLab_Time, only: itime
     use TLab_Arrays
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
     use THERMO_ANELASTIC

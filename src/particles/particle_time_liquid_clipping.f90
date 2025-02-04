@@ -18,9 +18,9 @@ subroutine PARTICLE_TIME_LIQUID_CLIPPING(s, l_q, l_txc)
     use TLab_Constants, only: wp, wi
     use TLab_Pointers, only: pointers_dt
     use TLab_Pointers_3D, only: pointers3d_dt
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use PARTICLE_VARS, only: isize_part, inb_part_array
-    use TLAB_VARS, only: isize_field, inb_scal_array
+    use TLab_Memory, only: isize_field, inb_scal_array
     use PARTICLE_ARRAYS, only: l_g
     use PARTICLE_INTERPOLATE
     

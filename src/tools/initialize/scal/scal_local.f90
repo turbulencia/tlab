@@ -4,8 +4,8 @@
 module SCAL_LOCAL
     use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
     use Discrete, only: discrete_dt, Discrete_ReadBlock
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal
-    use Timer, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal
+    use TLab_Time, only: itime, rtime
     use Tlab_Background, only: sbg
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d

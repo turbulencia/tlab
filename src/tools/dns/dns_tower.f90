@@ -33,7 +33,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 module DNS_TOWER
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: inb_flow, inb_scal
+    use TLab_Memory, only: inb_flow, inb_scal
     use TLab_WorkFlow, only: TLab_Write_ASCII
 
     integer(wi) tower_imax, tower_jmax, tower_kmax, tower_isize_field
@@ -62,7 +62,7 @@ contains
     subroutine DNS_TOWER_INITIALIZE(stride)
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        use TLAB_VARS, only: imax, jmax, kmax
+        use TLab_Memory, only: imax, jmax, kmax
         use DNS_LOCAL, only: nitera_save
 
 #ifdef USE_MPI
@@ -212,8 +212,8 @@ contains
         use TLabMPI_VARS, only: ims_err
 #endif
 
-        use TLAB_VARS, only: imax, jmax, kmax
-        use Timer, only: itime, rtime
+        use TLab_Memory, only: imax, jmax, kmax
+        use TLab_Time, only: itime, rtime
 
         implicit none
 
@@ -294,7 +294,7 @@ contains
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         use DNS_LOCAL, only: nitera_save
-        use Timer, only: itime
+        use TLab_Time, only: itime
         use TLab_Constants, only: wfile
 #ifdef USE_MPI
         use MPI

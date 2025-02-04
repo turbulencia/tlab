@@ -4,6 +4,7 @@
 
 module DNS_STATISTICS
     use TLab_Constants, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
+    use TLab_Memory, only: jmax, inb_scal, isize_txc_field, inb_txc, isize_wrk2d
     use Thermodynamics
     use Gravity, only: buoyancy, Gravity_Buoyancy
     implicit none
@@ -26,7 +27,6 @@ contains
     subroutine DNS_STATISTICS_INITIALIZE()
 
         use TLab_WorkFlow, only: imode_sim
-        use TLAB_VARS, only: jmax, inb_scal
         use Avg_Spatial, only: nstatavg
 
         if (imode_sim == DNS_MODE_TEMPORAL) then
@@ -61,11 +61,11 @@ contains
 #endif
         use TLab_Pointers, only: pointers_dt
         use FDM, only: g
-        use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal_array
+        use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal_array
         use NavierStokes, only: nse_eqns
         use TLab_WorkFlow, only: scal_on
         use NavierStokes, only: froude, schmidt
-        use Timer, only: itime, rtime
+        use TLab_Time, only: itime, rtime
         use TLab_Arrays
         use THERMO_ANELASTIC
         use DNS_ARRAYS
@@ -236,7 +236,6 @@ contains
         use TLab_Constants, only: tfile
         use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-        use TLAB_VARS
         use TLab_WorkFlow, only: scal_on
         use TLab_Arrays
         use DNS_LOCAL

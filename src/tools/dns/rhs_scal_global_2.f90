@@ -17,7 +17,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use TLab_Constants, only: tfile
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
     use NavierStokes, only: visc, prandtl, schmidt

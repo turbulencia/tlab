@@ -3,7 +3,7 @@
 
 module Chemistry
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_VARS, MAX_PARS
-    use TLAB_VARS, only: inb_scal
+    use TLab_Memory, only: inb_scal
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
     private

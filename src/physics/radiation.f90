@@ -5,8 +5,8 @@ module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
     use FDM, only: grid_dt
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: inb_scal_array
-    use TLAB_VARS, only: isize_field
+    use TLab_Memory, only: inb_scal_array
+    use TLab_Memory, only: isize_field
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
@@ -73,7 +73,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine Radiation_Initialize(inifile)
-        use TLAB_VARS, only: imax, kmax
+        use TLab_Memory, only: imax, kmax
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------

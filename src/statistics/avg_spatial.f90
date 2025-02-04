@@ -31,8 +31,8 @@ contains
     !########################################################################
     subroutine IO_WRITE_AVG_SPATIAL(name, mean_flow, mean_scal)
         use TLab_Constants, only: lfile, wp, wi
-        use Timer, only: itime, rtime
-        use TLAB_VARS, only: jmax, inb_scal
+        use TLab_Time, only: itime, rtime
+        use TLab_Memory, only: jmax, inb_scal
 
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro
@@ -143,8 +143,8 @@ contains
 
     subroutine IO_READ_AVG_SPATIAL(name, mean_flow, mean_scal)
         use TLab_Constants, only: lfile, wp, wi
-        use Timer, only: itime, rtime
-        use TLAB_VARS, only: jmax, inb_scal
+        use TLab_Time, only: itime, rtime
+        use TLab_Memory, only: jmax, inb_scal
         use TLab_WorkFlow, only: TLab_Write_ASCII
 
 #ifdef USE_MPI

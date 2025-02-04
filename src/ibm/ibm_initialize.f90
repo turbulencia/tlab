@@ -34,7 +34,7 @@
 subroutine IBM_INITIALIZE_GEOMETRY(txc, wrk3d)
     use TLab_Constants, only: efile, wp
     use IBM_VARS
-    use TLAB_VARS, only: isize_field, inb_txc
+    use TLab_Memory, only: isize_field, inb_txc
     use TLab_WorkFlow, only: stagger_on
     use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -142,8 +142,8 @@ end subroutine IBM_INITIALIZE_GEOMETRY
 subroutine IBM_IO_READ(wrk3d, flag_epsp)
 
     use IBM_VARS
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use Timer, only: itime
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
+    use TLab_Time, only: itime
     use IO_FIELDS, only: io_fileformat, IO_READ_FIELDS
     use TLab_Constants, only: wp, wi
 
@@ -190,8 +190,8 @@ end subroutine IBM_IO_READ
 subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
 
     use IBM_VARS
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use Timer, only: itime
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
+    use TLab_Time, only: itime
     use IO_FIELDS
     use TLab_Constants, only: wp, wi
 

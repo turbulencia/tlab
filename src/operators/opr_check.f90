@@ -5,14 +5,14 @@
 
 subroutine OPR_CHECK()
     use TLab_Constants, only: lfile, wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow_array, inb_txc
+    use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_flow_array, inb_txc
     use FDM, only: g
     use TLab_WorkFlow, only: fourier_on
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Arrays
     use OPR_FOURIER
 #ifdef USE_MPI
-    use Timer, only: itime
+    use TLab_Time, only: itime
     use MPI
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k

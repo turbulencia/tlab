@@ -5,7 +5,7 @@ module FLOW_MEAN
     use TLab_Constants, only: wp, wi, efile
     use FDM, only: g
     use TLab_WorkFlow, only: imode_sim
-    use TLAB_VARS, only: imax, jmax, kmax, inb_scal
+    use TLab_Memory, only: imax, jmax, kmax, inb_scal
     use Tlab_Background, only: qbg, pbg, rbg, tbg, hbg, sbg
     use Rotation, only: coriolis
     use TLab_Arrays, only: wrk1d

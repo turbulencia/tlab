@@ -15,7 +15,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_flow
+    use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_flow
     use FDM, only: g
     use NavierStokes, only: visc
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6

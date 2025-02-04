@@ -10,8 +10,8 @@
 program VPOISSON
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: ifile, gfile, wfile
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime
+    use TLab_Memory, only: imax, jmax, kmax, inb_txc
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, stagger_on
     use TLab_Memory, only: TLab_Initialize_Memory
     use TLab_Arrays

@@ -5,9 +5,9 @@ module FLOW_LOCAL
     use TLab_Constants, only: efile, lfile, wfile
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN
     use Discrete, only: discrete_dt
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: inb_wrk2d, inb_txc
-    use Timer, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
+    use TLab_Memory, only: inb_wrk2d, inb_txc
+    use TLab_Time, only: itime, rtime
     use TLab_WorkFlow, only: stagger_on
     use FDM, only: g
     use Tlab_Background, only: tbg, hbg

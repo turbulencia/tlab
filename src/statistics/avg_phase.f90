@@ -9,12 +9,12 @@ module AVG_PHASE
   use TLab_Constants, only: wp, wi, longi, efile
   use TLAB_CONSTANTS, only: sizeofint, sizeofreal
   use FDM, only: g
-  use TLAB_VARS, only: imax, jmax, kmax, isize_field
-  use Timer, only: rtime
+  use TLab_Memory, only: imax, jmax, kmax, isize_field
+  use TLab_Time, only: rtime
   use NavierStokes, only: visc, froude, rossby, prandtl
   use Thermodynamics, only: mach
   use NavierStokes, only: nse_eqns
-  use TLAB_VARS, only: inb_flow, inb_scal
+  use TLab_Memory, only: inb_flow, inb_scal
   use TLAB_ARRAYS, only: q, s
   use TLab_Arrays, only: wrk2d, wrk3d
   use Thermodynamics, only: gama0
@@ -312,9 +312,9 @@ CONTAINS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine IO_Write_AvgPhase(avg_planes, nfield, iheader, it_save, stride, basename, index, avg_ptr, avg_start)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      use TLAB_VARS, only: imax, jmax
+      use TLab_Memory, only: imax, jmax
       use FDM, only: g
-      use Timer, only: rtime, itime
+      use TLab_Time, only: rtime, itime
       use NavierStokes, only: visc, froude, rossby, prandtl
       use Thermodynamics, only: mach
       use NavierStokes, only: nse_eqns

@@ -5,7 +5,7 @@ module OPR_ELLIPTIC
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: efile
     use FDM, only: grid_dt
-    use TLAB_VARS, only: isize_txc_dimz, imax, jmax, kmax
+    use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
     use TLab_WorkFlow, only: stagger_on
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
@@ -28,7 +28,7 @@ module OPR_ELLIPTIC
         subroutine OPR_Poisson_interface(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
             use TLab_Constants, only: wi, wp
             use FDM, only: grid_dt
-            use TLAB_VARS, only: isize_txc_dimz
+            use TLab_Memory, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
             type(grid_dt), intent(in) :: g(3)
@@ -45,7 +45,7 @@ module OPR_ELLIPTIC
         subroutine OPR_Helmholtz_interface(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
             use TLab_Constants, only: wi, wp
             use FDM, only: grid_dt
-            use TLAB_VARS, only: isize_txc_dimz
+            use TLab_Memory, only: isize_txc_dimz
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
             type(grid_dt), intent(in) :: g(3)

@@ -18,8 +18,8 @@ subroutine AVG_SCAL_SPATIAL_LAYER(is, itxc, jmin_loc, jmax_loc, mean1d, mean1d_s
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime, rtime
+    use TLab_Memory, only: jmax, inb_scal
     use NavierStokes
     use Tlab_Background, only: sbg, qbg
     use FDM, only: g

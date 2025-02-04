@@ -6,8 +6,8 @@
 
 program VFFT
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_txc_dimz
+    use TLab_Memory, only: imax, jmax, kmax
+    use TLab_Memory, only: isize_txc_dimz
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use OPR_FOURIER
 #ifdef USE_MPI

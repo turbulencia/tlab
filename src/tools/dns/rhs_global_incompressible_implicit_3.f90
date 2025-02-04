@@ -30,8 +30,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use OMP_LIB
 #endif
     use FDM, only: g
-    use TLAB_VARS, only: imax, jmax, kmax
-    use TLAB_VARS, only: isize_field, isize_txc_field, inb_scal, inb_flow
+    use TLab_Memory, only: imax, jmax, kmax
+    use TLab_Memory, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use TLab_WorkFlow, only: scal_on
     use NavierStokes, only: visc, schmidt, rossby
     use Rotation, only: coriolis

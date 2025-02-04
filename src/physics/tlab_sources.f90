@@ -5,7 +5,7 @@
 !########################################################################
 module TLab_Sources
     use TLab_Constants, only: wp, wi, small_wp
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
+    use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use NavierStokes, only: nse_eqns
     use FDM, only: g
     use TLab_OpenMP
@@ -33,7 +33,7 @@ contains
 ! #######################################################################
 ! #######################################################################
     subroutine TLab_Sources_Flow(q, s, hq, tmp1)
-        use Timer, only: rtime
+        use TLab_Time, only: rtime
         real(wp), intent(in) :: q(isize_field, *), s(isize_field, *)
         real(wp), intent(out) :: hq(isize_field, *)
         real(wp), intent(inout) :: tmp1(isize_field)

@@ -24,8 +24,8 @@ contains
     subroutine NavierStokes_Initialize_Parameters(inifile)
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
         use TLab_WorkFlow, only: imode_sim
-        use TLAB_VARS, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
-        use TLAB_VARS, only: inb_wrk1d, inb_wrk2d
+        use TLab_Memory, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
+        use TLab_Memory, only: inb_wrk1d, inb_wrk2d
         use Thermodynamics, only: mach
         use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
         ! use Avg_Spatial

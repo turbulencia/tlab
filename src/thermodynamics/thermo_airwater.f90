@@ -7,7 +7,7 @@
 
 module THERMO_AIRWATER
     use TLab_Constants, only: wp, wi, small_wp, big_wp
-    use TLAB_VARS, only: inb_scal
+    use TLab_Memory, only: inb_scal
     use Thermodynamics, only: imixture, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
     use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial
     use Thermodynamics, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv

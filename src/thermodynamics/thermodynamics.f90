@@ -87,7 +87,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine Thermodynamics_Initialize_Parameters(inifile)
-        use TLAB_VARS, only: inb_scal, inb_scal_array
+        use TLab_Memory, only: inb_scal, inb_scal_array
         ! use THERMO_ANELASTIC, only: scaleheightinv, GRATIO
 
         character(len=*), intent(in), optional :: inifile

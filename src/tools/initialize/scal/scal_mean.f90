@@ -4,7 +4,7 @@ subroutine SCAL_MEAN(is, s)
 
     use TLab_Constants, only: wp, wi
     use FDM, only: g
-    use TLAB_VARS, only: imax, jmax, kmax, inb_wrk2d
+    use TLab_Memory, only: imax, jmax, kmax, inb_wrk2d
     use TLab_WorkFlow, only: imode_sim
     use Tlab_Background, only: sbg, pbg, tbg, rbg, qbg
     use TLab_Arrays, only: wrk2d

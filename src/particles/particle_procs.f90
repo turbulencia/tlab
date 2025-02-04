@@ -5,7 +5,7 @@ module PARTICLE_PROCS
     use TLab_Constants, only: wp, wi, longi, efile, lfile, MAX_PARS
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
-    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d
+    use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
     use MPI

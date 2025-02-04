@@ -5,8 +5,8 @@
 program INIPART
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime
+    use TLab_Memory, only: inb_scal, inb_txc, inb_scal_array, inb_flow_array
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory
@@ -107,7 +107,7 @@ contains
         use TLab_Constants, only: wp, wi, longi
         use TLab_Pointers, only: pointers_dt
         use TLab_Pointers_3D, only: pointers3d_dt
-        use TLAB_VARS, only: imax, jmax, kmax, inb_scal
+        use TLab_Memory, only: imax, jmax, kmax, inb_scal
         use Tlab_Background, only: sbg
         use FDM, only: g
         use PARTICLE_TYPES, only: particle_dt

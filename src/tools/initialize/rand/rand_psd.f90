@@ -1,6 +1,6 @@
 subroutine RAND_PSD(nx, ny, nz, u)
     use TLab_Constants, only: wp, wi, pi_wp
-    use TLAB_VARS, only: isize_txc_dimz
+    use TLab_Memory, only: isize_txc_dimz
     use FDM, only: g
     use RAND_LOCAL
 #ifdef USE_MPI

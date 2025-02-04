@@ -3,7 +3,7 @@
 module TLabMPI_PROCS
     use MPI
     use TLab_Constants, only: wp, dp, sp, wi, lfile, efile
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLabMPI_VARS
 

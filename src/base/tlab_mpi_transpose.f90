@@ -6,7 +6,7 @@
 module TLabMPI_Transpose
     use MPI
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi, sizeofreal
-    use TLAB_VARS, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
+    use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use TLabMPI_VARS

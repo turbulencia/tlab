@@ -19,8 +19,8 @@
 !########################################################################
 program VINTERPARTIAL
     use TLab_Constants, only: wp, wi, ifile, gfile, efile
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime
+    use TLab_Memory, only: imax, jmax, kmax, isize_wrk1d, isize_wrk2d, isize_wrk3d, inb_wrk1d, isize_txc_field, inb_wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, stagger_on
     use IO_FIELDS
 #ifdef USE_MPI

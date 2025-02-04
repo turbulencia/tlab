@@ -11,8 +11,8 @@ program TRANSFIELDS
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
     use FDM, only: grid_dt
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, inb_txc, isize_wrk3d, inb_flow, inb_scal, isize_txc_field, isize_wrk1d, inb_wrk1d
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, scal_on, flow_on, fourier_on
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real

@@ -7,8 +7,8 @@ program INISCAL
 
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, inb_scal_array, inb_txc, inb_scal, isize_field, inb_wrk2d
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, imode_sim
     use TLab_Memory, only: TLab_Initialize_Memory

@@ -21,9 +21,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     !
     use FDM, only: g
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: inb_flow, inb_scal, inb_scal_array
-    use TLAB_VARS, only: isize_field, isize_wrk1d, imax, jmax, kmax
-    use TLAB_VARS, only: rbackground, ribackground
+    use TLab_Memory, only: inb_flow, inb_scal, inb_scal_array
+    use TLab_Memory, only: isize_field, isize_wrk1d, imax, jmax, kmax
+    use TLab_Memory, only: rbackground, ribackground
     !
     use THERMO_ANELASTIC
     use BOUNDARY_BUFFER

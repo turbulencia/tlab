@@ -9,8 +9,8 @@ program AVERAGES
     use TLab_Pointers, only: pointers_dt
     use TLab_Constants, only: wp, wi, small_wp, MAX_AVG_TEMPORAL
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, inb_scal_array, inb_txc, isize_wrk3d, inb_flow, inb_scal, isize_field
+    use TLab_Time, only: itime, rtime
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory

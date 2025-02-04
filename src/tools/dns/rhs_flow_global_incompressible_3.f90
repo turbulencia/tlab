@@ -10,7 +10,7 @@
 !########################################################################
 subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     use TLab_Constants, only: wp, wi, BCS_NN
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: visc
     use TLab_Arrays, only: q

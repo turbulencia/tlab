@@ -17,8 +17,8 @@
 subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz, mean2d)
     use TLab_Constants, only: MAX_AVG_TEMPORAL
     use TLab_Constants, only: efile, lfile, wp, wi
-    use TLAB_VARS
-    use Timer, only: itime, rtime
+    use TLab_Time, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, inb_flow_array, inb_scal_array, inb_scal
     use Tlab_Background, only: sbg, rbg
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk1d

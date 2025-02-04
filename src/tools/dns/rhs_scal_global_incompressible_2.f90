@@ -8,7 +8,7 @@
 !########################################################################
 subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_2(is)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS, only: imax, jmax, kmax
+    use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
     use NavierStokes, only: nse_diffusion
     use NavierStokes, only: visc, schmidt

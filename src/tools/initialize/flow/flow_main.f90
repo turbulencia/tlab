@@ -7,9 +7,9 @@ program INIFLOW
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
     use NavierStokes, only: nse_eqns
-    use TLAB_VARS, only: imax, jmax, kmax, isize_field
-    use TLAB_VARS, only: inb_flow, inb_scal
-    use Timer, only: itime, rtime
+    use TLab_Memory, only: imax, jmax, kmax, isize_field
+    use TLab_Memory, only: inb_flow, inb_scal
+    use TLab_Time, only: itime, rtime
     use TLab_Arrays
     use TLab_Pointers, only: e, rho, p, T
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on
