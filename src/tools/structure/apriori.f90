@@ -18,6 +18,7 @@ program APRIORI
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLab_Memory, only: isize_wrk3d
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics

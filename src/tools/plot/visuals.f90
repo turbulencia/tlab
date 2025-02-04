@@ -23,6 +23,7 @@ program VISUALS
     use TLabMPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLab_Memory, only: isize_wrk3d
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
