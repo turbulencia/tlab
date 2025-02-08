@@ -41,8 +41,8 @@ module DNS_MPI
     integer(KIND=4), dimension(:, :), allocatable :: ims_ds_k, ims_dr_k
     integer, dimension(:, :), allocatable :: ims_ts_k, ims_tr_k
 
-    integer(KIND=4), dimension(:), allocatable :: ims_plan_trps_i, ims_plan_trpr_i
-    integer(KIND=4), dimension(:), allocatable :: ims_plan_trps_k, ims_plan_trpr_k
+    integer(KIND=4), dimension(:), allocatable :: tmpi_plan_trps_i, tmpi_plan_trpr_i
+    integer(KIND=4), dimension(:), allocatable :: tmpi_plan_trps_k, tmpi_plan_trpr_k
 
 end module DNS_MPI
 
@@ -269,10 +269,10 @@ subroutine TLabMPI_Initialize()
     allocate (ims_ts_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
     allocate (ims_tr_k(ims_npro_k, TLAB_MPI_TRP_K_MAXTYPES))
 
-    allocate (ims_plan_trps_i(ims_npro_i))
-    allocate (ims_plan_trpr_i(ims_npro_i))
-    allocate (ims_plan_trps_k(ims_npro_k))
-    allocate (ims_plan_trpr_k(ims_npro_k))
+    allocate (tmpi_plan_trps_i(ims_npro_i))
+    allocate (tmpi_plan_trpr_i(ims_npro_i))
+    allocate (tmpi_plan_trps_k(ims_npro_k))
+    allocate (tmpi_plan_trpr_k(ims_npro_k))
 
 ! #######################################################################
     ims_pro_i = mod(ims_pro, ims_npro_i) ! Starting at 0
@@ -329,25 +329,25 @@ subroutine TLabMPI_Initialize()
 ! Work plans for circular transposes
 ! ######################################################################
     do ip = 0, ims_npro_i - 1
-        ims_plan_trps_i(ip + 1) = ip
-        ims_plan_trpr_i(ip + 1) = mod(ims_npro_i - ip, ims_npro_i)
+        tmpi_plan_trps_i(ip + 1) = ip
+        tmpi_plan_trpr_i(ip + 1) = mod(ims_npro_i - ip, ims_npro_i)
     end do
 
     do ip = 0, ims_npro_k - 1
-        ims_plan_trps_k(ip + 1) = ip
-        ims_plan_trpr_k(ip + 1) = mod(ims_npro_k - ip, ims_npro_k)
+        tmpi_plan_trps_k(ip + 1) = ip
+        tmpi_plan_trpr_k(ip + 1) = mod(ims_npro_k - ip, ims_npro_k)
     end do
 
-    ims_plan_trps_i = cshift(ims_plan_trps_i, ims_pro_i)
-    ims_plan_trpr_i = cshift(ims_plan_trpr_i, -(ims_pro_i))
+    tmpi_plan_trps_i = cshift(tmpi_plan_trps_i, ims_pro_i)
+    tmpi_plan_trpr_i = cshift(tmpi_plan_trpr_i, -(ims_pro_i))
 
-    ims_plan_trps_k = cshift(ims_plan_trps_k, ims_pro_k)
-    ims_plan_trpr_k = cshift(ims_plan_trpr_k, -(ims_pro_k))
+    tmpi_plan_trps_k = cshift(tmpi_plan_trps_k, ims_pro_k)
+    tmpi_plan_trpr_k = cshift(tmpi_plan_trpr_k, -(ims_pro_k))
 
     do ip = 0, ims_npro_i - 1
         if (ims_pro == ip) then
-            write (*, *) ims_pro, ims_pro_i, 'SEND:', ims_plan_trps_i
-            write (*, *) ims_pro, ims_pro_i, 'RECV:', ims_plan_trpr_i
+            write (*, *) ims_pro, ims_pro_i, 'SEND:', tmpi_plan_trps_i
+            write (*, *) ims_pro, ims_pro_i, 'RECV:', tmpi_plan_trpr_i
         end if
         call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
     end do
@@ -493,7 +493,7 @@ subroutine TLabMPI_TransposeK_Forward(a, b, dsend, drecv, tsend, trecv)
     use TLabMPI_VARS, only: ims_npro_k
     use TLabMPI_VARS, only: ims_comm_z
     use TLabMPI_VARS, only: ims_tag, ims_err
-    use TLabMPI_VARS, only: ims_plan_trps_k, ims_plan_trpr_k, ims_trp_blocking
+    use TLabMPI_VARS, only: tmpi_plan_trps_k, tmpi_plan_trpr_k, ims_trp_blocking
 
     implicit none
 
@@ -521,8 +521,8 @@ subroutine TLabMPI_TransposeK_Forward(a, b, dsend, drecv, tsend, trecv)
 
     l = 0
     do m = 1, ims_npro_k
-        ns = ims_plan_trps_k(m) + 1; ips = ns - 1
-        nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
+        ns = tmpi_plan_trps_k(m) + 1; ips = ns - 1
+        nr = tmpi_plan_trpr_k(m) + 1; ipr = nr - 1
         if (.not. ims_trp_blocking) then
             l = l + 1
             call MPI_ISEND(a(dsend(ns) + 1), 1, tsend(ns), ips, ims_tag, ims_comm_z, mpireq(l), ims_err)
@@ -551,7 +551,7 @@ subroutine TLabMPI_TransposeI_Forward(a, b, dsend, drecv, tsend, trecv)
     use TLabMPI_VARS, only: ims_npro_i
     use TLabMPI_VARS, only: ims_comm_x
     use TLabMPI_VARS, only: ims_tag, ims_err
-    use TLabMPI_VARS, only: ims_plan_trpr_i, ims_plan_trps_i
+    use TLabMPI_VARS, only: tmpi_plan_trpr_i, tmpi_plan_trps_i
     use TLabMPI_VARS, only: ims_trp_blocking
 
     implicit none
@@ -573,8 +573,8 @@ subroutine TLabMPI_TransposeI_Forward(a, b, dsend, drecv, tsend, trecv)
 
     do m = 1, ims_npro_i
 
-        ns = ims_plan_trps_i(m) + 1; ips = ns - 1
-        nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
+        ns = tmpi_plan_trps_i(m) + 1; ips = ns - 1
+        nr = tmpi_plan_trpr_i(m) + 1; ipr = nr - 1
 
         if (.not. ims_trp_blocking) then
             l = l + 1
@@ -603,7 +603,7 @@ subroutine TLabMPI_TransposeK_Backward(b, a, dsend, drecv, tsend, trecv)
     use TLabMPI_VARS, only: ims_npro_k
     use TLabMPI_VARS, only: ims_comm_z
     use TLabMPI_VARS, only: ims_tag, ims_err
-    use TLabMPI_VARS, only: ims_plan_trps_k, ims_plan_trpr_k, ims_trp_blocking
+    use TLabMPI_VARS, only: tmpi_plan_trps_k, tmpi_plan_trpr_k, ims_trp_blocking
 
     implicit none
 
@@ -635,8 +635,8 @@ subroutine TLabMPI_TransposeK_Backward(b, a, dsend, drecv, tsend, trecv)
     l = 0
     !DO n = 1,ims_npro_k
     do m = 1, ims_npro_k
-        ns = ims_plan_trps_k(m) + 1; ips = ns - 1
-        nr = ims_plan_trpr_k(m) + 1; ipr = nr - 1
+        ns = tmpi_plan_trps_k(m) + 1; ips = ns - 1
+        nr = tmpi_plan_trpr_k(m) + 1; ipr = nr - 1
         if (.not. ims_trp_blocking) then
             l = l + 1
             call MPI_ISEND(b(drecv(nr) + 1), 1, trecv(nr), ipr, ims_tag, ims_comm_z, mpireq(l), ims_err)
@@ -664,7 +664,7 @@ subroutine TLabMPI_TransposeI_Backward(b, a, dsend, drecv, tsend, trecv)
     use TLabMPI_VARS, only: ims_npro_i
     use TLabMPI_VARS, only: ims_comm_x
     use TLabMPI_VARS, only: ims_tag, ims_err
-    use TLabMPI_VARS, only: ims_plan_trpr_i, ims_plan_trps_i, ims_trp_blocking
+    use TLabMPI_VARS, only: tmpi_plan_trpr_i, tmpi_plan_trps_i, ims_trp_blocking
 
     implicit none
 
@@ -683,8 +683,8 @@ subroutine TLabMPI_TransposeI_Backward(b, a, dsend, drecv, tsend, trecv)
 
     l = 0
     do m = 1, ims_npro_i
-        ns = ims_plan_trps_i(m) + 1; ips = ns - 1
-        nr = ims_plan_trpr_i(m) + 1; ipr = nr - 1
+        ns = tmpi_plan_trps_i(m) + 1; ips = ns - 1
+        nr = tmpi_plan_trpr_i(m) + 1; ipr = nr - 1
         if (.not. ims_trp_blocking) then
             l = l + 1
             call MPI_ISEND(b(drecv(nr) + 1), 1, trecv(nr), ipr, ims_tag, ims_comm_x, mpireq(l), ims_err)

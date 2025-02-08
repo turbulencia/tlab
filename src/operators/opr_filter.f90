@@ -190,8 +190,8 @@ contains
         end do
 
 #ifdef USE_MPI
-        variable(1)%trp_plan = ims_plan_dx
-        variable(3)%trp_plan = ims_plan_dx
+        variable(1)%trp_plan = tmpi_plan_dx
+        variable(3)%trp_plan = tmpi_plan_dx
 #endif
 
         return

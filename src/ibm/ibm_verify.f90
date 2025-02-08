@@ -35,7 +35,7 @@ subroutine IBM_VERIFY_GEOMETRY()
     use TLab_Constants, only: efile, wp, wi
 #ifdef USE_MPI
     use MPI
-    use TLabMPI_Transpose, only: ims_plan_dx, ims_plan_dz
+    use TLabMPI_Transpose, only: tmpi_plan_dx, tmpi_plan_dz
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err
 #ifdef IBM_DEBUG
     use TLabMPI_VARS, only: ims_pro
@@ -63,7 +63,7 @@ subroutine IBM_VERIFY_GEOMETRY()
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         ! nyz = ims_size_i(idi)
-        nyz = ims_plan_dx%nlines
+        nyz = tmpi_plan_dx%nlines
     else
 #endif
         nyz = jmax*kmax
@@ -76,7 +76,7 @@ subroutine IBM_VERIFY_GEOMETRY()
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
         ! nxy = ims_size_k(idk)
-        nxy = ims_plan_dz%nlines
+        nxy = tmpi_plan_dz%nlines
     else
 #endif
         nxy = imax*jmax

@@ -332,7 +332,7 @@ program SPECTRA
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        ims_plan_z = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, 1, 1, 1, 1, 'type-2 Oz spectra integration.')
+        tmpi_plan_z = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, 1, 1, 1, 1, 'type-2 Oz spectra integration.')
 
     end if
 #endif

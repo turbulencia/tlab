@@ -806,10 +806,10 @@ contains
         ! Transposing along Ox
         ! -------------------------------------------------------------------
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, tmp1, ims_plan_dx)
+            call TLabMPI_TransposeI_Forward(u, tmp1, tmpi_plan_dx)
             p_org => tmp1
             ! nyz = ims_size_i(id)
-            nyz = ims_plan_dx%nlines
+            nyz = tmpi_plan_dx%nlines
         else
             p_org => u
             nyz = ny*nz

@@ -130,7 +130,7 @@ contains
 #ifdef USE_MPI
             if (ims_npro_i > 1) then
                 ! nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
-                nlines = ims_plan_dx%nlines
+                nlines = tmpi_plan_dx%nlines
                 offset = nlines*ims_pro_i
             else
 #endif
@@ -160,7 +160,7 @@ contains
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
                 ! nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
-                nlines = ims_plan_dz%nlines
+                nlines = tmpi_plan_dz%nlines
                 offset = nlines*ims_pro_k
             else
 #endif
@@ -213,13 +213,13 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(s, result, ims_plan_dx)
+            call TLabMPI_TransposeI_Forward(s, result, tmpi_plan_dx)
             p_a => result
             p_b => tmp1
             p_c => wrk3d
             p_d => result
             ! nyz = ims_size_i(id)
-            nyz = ims_plan_dx%nlines
+            nyz = tmpi_plan_dx%nlines
         else
 #endif
             p_a => s
@@ -262,7 +262,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Backward(p_c, result, ims_plan_dx)
+            call TLabMPI_TransposeI_Backward(p_c, result, tmpi_plan_dx)
         end if
 #endif
 
@@ -386,12 +386,12 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(s, tmp1, ims_plan_dz)
+            call TLabMPI_TransposeK_Forward(s, tmp1, tmpi_plan_dz)
             p_a => tmp1
             p_b => result
             p_c => wrk3d
             ! nxy = ims_size_k(id)
-            nxy = ims_plan_dz%nlines
+            nxy = tmpi_plan_dz%nlines
         else
 #endif
             p_a => s
@@ -424,7 +424,7 @@ contains
         ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(p_c, result, ims_plan_dz)
+            call TLabMPI_TransposeK_Backward(p_c, result, tmpi_plan_dz)
         end if
 #endif
 

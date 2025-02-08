@@ -1,5 +1,3 @@
-#include "dns_const.h"
-
 #include "dns_error.h"
 
 ! Circular transposition across directional communicators
@@ -21,34 +19,33 @@ module TLabMPI_Transpose
 
     type, public :: tmpi_transpose_dt
         sequence
-        integer :: type_s, type_r                           ! send/recv types
-        integer(wi) :: nlines                               !
-        integer(wi) :: size3d                               !
-        integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
+        integer :: type_s, type_r                               ! send/recv types
+        integer(wi) :: nlines                                   !
+        integer(wi) :: size3d                                   !
+        integer(wi), allocatable :: disp_s(:), disp_r(:)        ! send/recv displacements
     end type tmpi_transpose_dt
-    type(tmpi_transpose_dt), public :: ims_plan_dx          ! general plans used in derivatives and other operators
-    type(tmpi_transpose_dt), public :: ims_plan_dz
+    type(tmpi_transpose_dt), public :: tmpi_plan_dx             ! general plans used in derivatives and other operators
+    type(tmpi_transpose_dt), public :: tmpi_plan_dz
 
 
-    integer :: ims_trp_mode_i, ims_trp_mode_k               ! Mode of transposition
+    integer :: trp_mode_i, trp_mode_k                               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
     integer, parameter :: TLAB_MPI_TRP_ASYNCHRONOUS = 1
     integer, parameter :: TLAB_MPI_TRP_SENDRECV = 2
     integer, parameter :: TLAB_MPI_TRP_ALLTOALL = 3
 
-    integer(wi) :: ims_sizBlock_i, ims_sizBlock_k                   ! group sizes of rend/recv messagest to use explicit sed/recv
+    integer(wi) :: trp_sizBlock_i, trp_sizBlock_k                   ! explicit sed/recv: group sizes of rend/recv messages 
     integer(wi), allocatable :: maps_send_i(:), maps_recv_i(:)      ! PE maps to use explicit sed/recv
     integer(wi), allocatable :: maps_send_k(:), maps_recv_k(:)
+    integer, allocatable :: counts(:), types_send(:), types_recv(:) ! alltoallw
 
-    integer, allocatable :: counts(:), types_send(:), types_recv(:) ! to use alltoallw
-
-    integer, allocatable :: ims_status(:, :)
-    integer, allocatable :: ims_request(:)
-
-    integer :: ims_trp_type_i, ims_trp_type_k               ! Tranposition in double or single precission
+    integer :: trp_datatype_i, trp_datatype_k               ! Transposition in double or single precision
 
     real(wp), allocatable, target :: wrk_mpi(:)             ! 3D work array for MPI; maybe in tlab_memory
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
+
+    integer, allocatable :: status(:, :)
+    integer, allocatable :: request(:)
 
 contains
 
@@ -73,10 +70,10 @@ contains
         call ScanFile_Char(bakfile, inifile, block, 'TransposeModeI', 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeITranspose', 'asynchronous', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_i = TLAB_MPI_TRP_NONE
-        elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_i = TLAB_MPI_TRP_ASYNCHRONOUS
-        elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_i = TLAB_MPI_TRP_SENDRECV
-        elseif (trim(adjustl(sRes)) == 'alltoall') then; ims_trp_mode_i = TLAB_MPI_TRP_ALLTOALL
+        if (trim(adjustl(sRes)) == 'none') then; trp_mode_i = TLAB_MPI_TRP_NONE
+        elseif (trim(adjustl(sRes)) == 'asynchronous') then; trp_mode_i = TLAB_MPI_TRP_ASYNCHRONOUS
+        elseif (trim(adjustl(sRes)) == 'sendrecv') then; trp_mode_i = TLAB_MPI_TRP_SENDRECV
+        elseif (trim(adjustl(sRes)) == 'alltoall') then; trp_mode_i = TLAB_MPI_TRP_ALLTOALL
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeModeI option.')
             call TLab_Stop(DNS_ERROR_OPTION)
@@ -85,26 +82,26 @@ contains
         call ScanFile_Char(bakfile, inifile, block, 'TransposeModeK', 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'ComModeKTranspose', 'asynchronous', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; ims_trp_mode_k = TLAB_MPI_TRP_NONE
-        elseif (trim(adjustl(sRes)) == 'asynchronous') then; ims_trp_mode_k = TLAB_MPI_TRP_ASYNCHRONOUS
-        elseif (trim(adjustl(sRes)) == 'sendrecv') then; ims_trp_mode_k = TLAB_MPI_TRP_SENDRECV
-        elseif (trim(adjustl(sRes)) == 'alltoall') then; ims_trp_mode_k = TLAB_MPI_TRP_ALLTOALL
+        if (trim(adjustl(sRes)) == 'none') then; trp_mode_k = TLAB_MPI_TRP_NONE
+        elseif (trim(adjustl(sRes)) == 'asynchronous') then; trp_mode_k = TLAB_MPI_TRP_ASYNCHRONOUS
+        elseif (trim(adjustl(sRes)) == 'sendrecv') then; trp_mode_k = TLAB_MPI_TRP_SENDRECV
+        elseif (trim(adjustl(sRes)) == 'alltoall') then; trp_mode_k = TLAB_MPI_TRP_ALLTOALL
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeModeK option.')
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         call ScanFile_Char(bakfile, inifile, block, 'TransposeTypeK', 'Double', sRes)
-        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_k = MPI_REAL8
-        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_k = MPI_REAL4
+        if (trim(adjustl(sRes)) == 'double') then; trp_datatype_k = MPI_REAL8
+        elseif (trim(adjustl(sRes)) == 'single') then; trp_datatype_k = MPI_REAL4
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeTypeK.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
         call ScanFile_Char(bakfile, inifile, block, 'TransposeTypeI', 'Double', sRes)
-        if (trim(adjustl(sRes)) == 'double') then; ims_trp_type_i = MPI_REAL8
-        elseif (trim(adjustl(sRes)) == 'single') then; ims_trp_type_i = MPI_REAL4
+        if (trim(adjustl(sRes)) == 'double') then; trp_datatype_i = MPI_REAL8
+        elseif (trim(adjustl(sRes)) == 'single') then; trp_datatype_i = MPI_REAL4
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TransposeTypeI.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
@@ -117,30 +114,30 @@ contains
 #ifdef HLRS_HAWK
         ! On hawk, we tested that 192 yields optimum performace;
         ! Blocking will thus only take effect in very large cases
-        ims_sizBlock_k = 192
-        ims_sizBlock_i = 384
+        trp_sizBlock_k = 192
+        trp_sizBlock_i = 384
 #else
         ! We assume that this will help to release some of the very heavy
         ! network load in transpositions on most systems
-        ims_sizBlock_k = 64
-        ims_sizBlock_i = 128
-        ! ims_sizBlock_k=1e5   -- would essentially switch off the blocking
+        trp_sizBlock_k = 64
+        trp_sizBlock_i = 128
+        ! trp_sizBlock_k=1e5   -- would essentially switch off the blocking
 #endif
 
-        if (ims_npro_i > ims_sizBlock_i) then
-            write (line, *) ims_sizBlock_i
+        if (ims_npro_i > trp_sizBlock_i) then
+            write (line, *) trp_sizBlock_i
             line = 'Using blocking of '//trim(adjustl(line))//' in TLabMPI_TRP<F,B>_I'
             call TLab_Write_ASCII(lfile, line)
         end if
 
-        if (ims_npro_k > ims_sizBlock_k) then
-            write (line, *) ims_sizBlock_k
+        if (ims_npro_k > trp_sizBlock_k) then
+            write (line, *) trp_sizBlock_k
             line = 'Using blocking of '//trim(adjustl(line))//' in TLabMPI_TRP<F,B>_K'
             call TLab_Write_ASCII(lfile, line)
         end if
 
-        allocate (ims_status(MPI_STATUS_SIZE, 2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
-        allocate (ims_request(2*max(ims_sizBlock_i, ims_sizBlock_k, ims_npro_i, ims_npro_k)))
+        allocate (status(MPI_STATUS_SIZE, 2*max(trp_sizBlock_i, trp_sizBlock_k, ims_npro_i, ims_npro_k)))
+        allocate (request(2*max(trp_sizBlock_i, trp_sizBlock_k, ims_npro_i, ims_npro_k)))
 
         ! -----------------------------------------------------------------------
         ! local PE mappings for explicit send/recv
@@ -177,12 +174,12 @@ contains
         ! Create basic transposition plans used for partial X and partial Z; could be in another module...
         if (ims_npro_i > 1) then
             npage = kmax*jmax
-            ims_plan_dx = TLabMPI_Trp_TypeI_Create(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
+            tmpi_plan_dx = TLabMPI_Trp_TypeI_Create(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
         end if
 
         if (ims_npro_k > 1) then
             npage = imax*jmax
-            ims_plan_dz = TLabMPI_Trp_TypeK_Create(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
+            tmpi_plan_dz = TLabMPI_Trp_TypeK_Create(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
         end if
 
         return
@@ -228,13 +225,13 @@ contains
         ims_tmp1 = trp_plan%nlines*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = ims_tmp2  ! stride = block because things are together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, trp_plan%type_s, ims_err)
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_i, trp_plan%type_s, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
         ims_tmp1 = trp_plan%nlines*n1 ! count
         ims_tmp2 = nmax*n2 ! block
         ims_tmp3 = nmax*ims_npro_i*n2 ! stride is a multiple of nmax_total=nmax*ims_npro_i
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_i, trp_plan%type_r, ims_err)
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_i, trp_plan%type_r, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
 
         call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
@@ -289,13 +286,13 @@ contains
         ims_tmp1 = nmax*n1                  ! count
         ims_tmp2 = trp_plan%nlines*n2       ! block
         ims_tmp3 = npage*n2                 ! stride
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, trp_plan%type_s, ims_err)
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_k, trp_plan%type_s, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
         ims_tmp1 = nmax*n1                  ! count
         ims_tmp2 = trp_plan%nlines*n2       ! block
         ims_tmp3 = ims_tmp2                 ! stride = block to put things together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, ims_trp_type_k, trp_plan%type_r, ims_err)
+        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_k, trp_plan%type_r, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
 
         call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
@@ -342,20 +339,20 @@ contains
         time_loc_1 = MPI_WTIME()
 #endif
 
-        if (ims_trp_type_k == MPI_REAL4 .and. wp == dp) then
+        if (trp_datatype_k == MPI_REAL4 .and. wp == dp) then
             size = trp_plan%size3d
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
             call Transpose_Kernel_Single(a_wrk, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                          b_wrk, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                         ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+                                         ims_comm_z, trp_sizBlock_k, trp_mode_k)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
             call Transpose_Kernel(a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                   b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                  ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+                                  ims_comm_z, trp_sizBlock_k, trp_mode_k)
         end if
 
 #ifdef PROFILE_ON
@@ -386,20 +383,20 @@ contains
         time_loc_1 = MPI_WTIME()
 #endif
 
-        if (ims_trp_type_k == MPI_REAL4 .and. wp == dp) then
+        if (trp_datatype_k == MPI_REAL4 .and. wp == dp) then
             size = trp_plan%size3d
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
             call Transpose_Kernel_Single(b_wrk, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                          a_wrk, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                         ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+                                         ims_comm_z, trp_sizBlock_k, trp_mode_k)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
             call Transpose_Kernel(b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                   a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                  ims_comm_z, ims_sizBlock_k, ims_trp_mode_k)
+                                  ims_comm_z, trp_sizBlock_k, trp_mode_k)
         end if
 
 #ifdef PROFILE_ON
@@ -423,20 +420,20 @@ contains
         integer(wi) size
 
         ! #######################################################################
-        if (ims_trp_type_i == MPI_REAL4 .and. wp == dp) then
+        if (trp_datatype_i == MPI_REAL4 .and. wp == dp) then
             size = trp_plan%size3d
             call c_f_pointer(c_loc(b), a_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), b_wrk, shape=[size])
             a_wrk(1:size) = real(a(1:size), sp)
             call Transpose_Kernel_Single(a_wrk, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                          b_wrk, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                         ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+                                         ims_comm_x, trp_sizBlock_i, trp_mode_i)
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
             call Transpose_Kernel(a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
                                   b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                  ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+                                  ims_comm_x, trp_sizBlock_i, trp_mode_i)
         end if
 
         return
@@ -455,20 +452,20 @@ contains
         integer(wi) size
 
         ! #######################################################################
-        if (ims_trp_type_i == MPI_REAL4 .and. wp == dp) then
+        if (trp_datatype_i == MPI_REAL4 .and. wp == dp) then
             size = trp_plan%size3d
             call c_f_pointer(c_loc(a), b_wrk, shape=[size])
             call c_f_pointer(c_loc(wrk_mpi), a_wrk, shape=[size])
             b_wrk(1:size) = real(b(1:size), sp)
             call Transpose_Kernel_Single(b_wrk, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                          a_wrk, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                         ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+                                         ims_comm_x, trp_sizBlock_i, trp_mode_i)
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
             call Transpose_Kernel(b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
                                   a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                  ims_comm_x, ims_sizBlock_i, ims_trp_mode_i)
+                                  ims_comm_x, trp_sizBlock_i, trp_mode_i)
         end if
 
         return
@@ -502,11 +499,11 @@ contains
                     ns = msend(m) + 1; ips = ns - 1
                     nr = mrecv(m) + 1; ipr = nr - 1
                     l = l + 1
-                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, ims_request(l), ims_err)
+                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, request(l), ims_err)
                     l = l + 1
-                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_request(l), ims_err)
+                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, request(l), ims_err)
                 end do
-                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+                call MPI_WAITALL(l, request, status, ims_err)
             end do
 
         case (TLAB_MPI_TRP_SENDRECV)
@@ -515,7 +512,7 @@ contains
                     ns = msend(m) + 1; ips = ns - 1
                     nr = mrecv(m) + 1; ipr = nr - 1
                     call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(:, 1), ims_err)
                 end do
             end do
 
@@ -559,11 +556,11 @@ contains
                     ns = msend(m) + 1; ips = ns - 1
                     nr = mrecv(m) + 1; ipr = nr - 1
                     l = l + 1
-                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, ims_request(l), ims_err)
+                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, request(l), ims_err)
                     l = l + 1
-                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_request(l), ims_err)
+                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, request(l), ims_err)
                 end do
-                call MPI_WAITALL(l, ims_request, ims_status, ims_err)
+                call MPI_WAITALL(l, request, status, ims_err)
             end do
 
         case (TLAB_MPI_TRP_SENDRECV)
@@ -572,7 +569,7 @@ contains
                     ns = msend(m) + 1; ips = ns - 1
                     nr = mrecv(m) + 1; ipr = nr - 1
                     call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, ims_status(:, 1), ims_err)
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(:, 1), ims_err)
                 end do
             end do
 
