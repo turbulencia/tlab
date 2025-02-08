@@ -1,5 +1,5 @@
 #include "dns_const.h"
-#include "dns_const_mpi.h"
+
 #include "dns_error.h"
 
 ! Circular transposition across directional communicators
@@ -26,8 +26,9 @@ module TLabMPI_Transpose
         integer(wi) :: size3d                               !
         integer(wi), allocatable :: disp_s(:), disp_r(:)    ! send/recv displacements
     end type tmpi_transpose_dt
-    type(tmpi_transpose_dt), public :: ims_trp_plan_i(TLAB_MPI_TRP_I_MAXTYPES)
-    type(tmpi_transpose_dt), public :: ims_trp_plan_k(TLAB_MPI_TRP_K_MAXTYPES)
+    type(tmpi_transpose_dt), public :: ims_plan_dx          ! general plans used in derivatives and other operators
+    type(tmpi_transpose_dt), public :: ims_plan_dz
+
 
     integer :: ims_trp_mode_i, ims_trp_mode_k               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
@@ -176,12 +177,12 @@ contains
         ! Create basic transposition plans used for partial X and partial Z; could be in another module...
         if (ims_npro_i > 1) then
             npage = kmax*jmax
-            ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL) = TLabMPI_Trp_TypeI_Create(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
+            ims_plan_dx = TLabMPI_Trp_TypeI_Create(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
         end if
 
         if (ims_npro_k > 1) then
             npage = imax*jmax
-            ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL) = TLabMPI_Trp_TypeK_Create(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
+            ims_plan_dz = TLabMPI_Trp_TypeK_Create(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
         end if
 
         return

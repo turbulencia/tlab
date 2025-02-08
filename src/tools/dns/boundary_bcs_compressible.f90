@@ -1,7 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 !  Nonperiodic characteristic BCs at xmin and xmax

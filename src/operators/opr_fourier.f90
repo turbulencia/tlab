@@ -1,6 +1,6 @@
 #ifdef USE_MPI
 #include "dns_error.h"
-#include "dns_const_mpi.h"
+
 #endif
 
 module OPR_FOURIER
@@ -25,6 +25,10 @@ module OPR_FOURIER
     integer(8) :: fft_plan_fx, fft_plan_bx, fft_plan_fx_bcs
     integer(8) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
     integer(8) :: fft_plan_fz, fft_plan_bz
+#ifdef USE_MPI
+    type(tmpi_transpose_dt), public :: ims_plan_poissonx1, ims_plan_poissonx2
+    type(tmpi_transpose_dt), public :: ims_plan_poissonz
+#endif
 
     logical :: fft_reordering
 
@@ -59,11 +63,11 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1) = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
-            ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2) = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
+            ims_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
+            ims_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
 
             ! if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
-            if (ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines /= ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2)%nlines) then
+            if (ims_plan_poissonx1%nlines /= ims_plan_poissonx2%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
                 call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
@@ -75,10 +79,10 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON) = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
-            
+            ims_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
+
             ! isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
-            isize_fft_z = ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2 ! divide by 2 bcs. we work w complex #
+            isize_fft_z = ims_plan_poissonz%nlines/2 ! divide by 2 bcs. we work w complex #
         else
 #endif
             isize_fft_z = (imax/2 + 1)*(jmax + 2)
@@ -114,7 +118,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             ! isize_fft_x = ims_size_i(TLAB_MPI_TRP_I_POISSON1)
-            isize_fft_x = ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines
+            isize_fft_x = ims_plan_poissonx1%nlines
         else
 #endif
             isize_fft_x = jmax
@@ -375,7 +379,7 @@ contains
             ! Pass memory address from complex array to real array
             ! id = TLAB_MPI_TRP_I_POISSON1
             ! call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
-            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines])
+            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_plan_poissonx1%nlines])
             call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
             out_aux(1:nx/2 + 1, 1:(ny + 2)*nz) => out(1:isize_txc_dimz/2*nz, 1)
@@ -386,7 +390,7 @@ contains
 
             ! Transpose array a into b
             ! id = TLAB_MPI_TRP_I_POISSON1
-            call TLabMPI_TransposeI_Forward(in, r_out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1))
+            call TLabMPI_TransposeI_Forward(in, r_out, ims_plan_poissonx1)
 
             ! ims_trp_plan_i(id)%nlines FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
@@ -394,7 +398,7 @@ contains
             ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
             ! id = TLAB_MPI_TRP_I_POISSON1
             ! do k = 1, ims_size_i(id)
-            do k = 1, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines
+            do k = 1, ims_plan_poissonx1%nlines
                 inew = (nx/2 + 1)*ims_npro_i
                 iold = g(1)%size/2 + 1
                 wrk1(inew, k) = wrk1(iold, k)
@@ -409,7 +413,7 @@ contains
 
             ! Transpose array back
             ! id = TLAB_MPI_TRP_I_POISSON2
-            call TLabMPI_TransposeI_Backward(wrk3d, r_out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2))
+            call TLabMPI_TransposeI_Backward(wrk3d, r_out, ims_plan_poissonx2)
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
             wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
@@ -495,12 +499,12 @@ contains
 
             ! Transpose array
             ! id = TLAB_MPI_TRP_I_POISSON2
-            call TLabMPI_TransposeI_Forward(r_in, out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON2))
+            call TLabMPI_TransposeI_Forward(r_in, out, ims_plan_poissonx2)
 
             ! reorganize a (FFTW make a stride in a already before)
             ! id = TLAB_MPI_TRP_I_POISSON1
             ! do k = 1, ims_size_i(id)
-            do k = 1, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1)%nlines
+            do k = 1, ims_plan_poissonx1%nlines
                 do ip = 2, ims_npro_i
                     do i = 1, nx/2
                         iold = (ip - 1)*(nx/2 + 1) + i
@@ -518,7 +522,7 @@ contains
 
             ! Transpose array wrk into out
             ! id = TLAB_MPI_TRP_I_POISSON1
-            call TLabMPI_TransposeI_Backward(r_in, out, ims_trp_plan_i(TLAB_MPI_TRP_I_POISSON1))
+            call TLabMPI_TransposeI_Backward(r_in, out, ims_plan_poissonx1)
 
             nullify (in_aux, r_in, c_out)
 
@@ -545,7 +549,7 @@ contains
 
 #ifdef USE_MPI
         ! complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
-        complex(wp), dimension(ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2, g(3)%size), target :: in, out
+        complex(wp), dimension(ims_plan_poissonz%nlines/2, g(3)%size), target :: in, out
 #else
         complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
 #endif
@@ -569,7 +573,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeK_Forward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
+            call TLabMPI_TransposeK_Forward(r_in, r_out, ims_plan_poissonz)
             p_org => out
             p_dst => in
         else
@@ -599,7 +603,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
+            call TLabMPI_TransposeK_Backward(r_in, r_out, ims_plan_poissonz)
             nullify (r_in, r_out)
         end if
 #endif
@@ -616,7 +620,7 @@ contains
 
 #ifdef USE_MPI
         ! complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
-        complex(wp), dimension(ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON)%nlines/2, g(3)%size), target :: in, out
+        complex(wp), dimension(ims_plan_poissonz%nlines/2, g(3)%size), target :: in, out
 #else
         complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
 #endif
@@ -640,7 +644,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeK_Forward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
+            call TLabMPI_TransposeK_Forward(r_in, r_out, ims_plan_poissonz)
             p_org => out
             p_dst => in
         else
@@ -670,7 +674,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(r_in, r_out, ims_trp_plan_k(TLAB_MPI_TRP_K_POISSON))
+            call TLabMPI_TransposeK_Backward(r_in, r_out, ims_plan_poissonz)
             nullify (r_in, r_out)
         end if
 #endif

@@ -1,5 +1,5 @@
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 !########################################################################
@@ -49,9 +49,9 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
     ! MPI  and local transposition in x
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        call TLabMPI_TransposeI_Forward(eps, tmp, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+        call TLabMPI_TransposeI_Forward(eps, tmp, ims_plan_dx)
         ! nyz = ims_size_i(idi)
-        nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+        nyz = ims_plan_dx%nlines
     else
 #endif
         tmp = eps
@@ -77,7 +77,7 @@ subroutine IBM_GEOMETRY_TRANSPOSE(epsi, epsj, epsk, tmp)
     ! MPI transposition in z
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        call TLabMPI_TransposeK_Forward(eps, epsk, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        call TLabMPI_TransposeK_Forward(eps, epsk, ims_plan_dz)
     else
 #endif
         epsk = eps

@@ -1,7 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 module OPR_PARTIAL
@@ -325,7 +325,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, result, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+            call TLabMPI_TransposeI_Forward(u, result, ims_plan_dx)
             p_a => result
             p_b => wrk3d
             p_c => result
@@ -333,7 +333,7 @@ contains
                 p_d => tmp1
             end if
             ! nyz = ims_size_i(id)
-            nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+            nyz = ims_plan_dx%nlines
         else
 #endif
             p_a => u
@@ -412,9 +412,9 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (type == OPR_P2_P1) then ! only if you really want first derivative back
-                call TLabMPI_TransposeI_Backward(p_c, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+                call TLabMPI_TransposeI_Backward(p_c, tmp1, ims_plan_dx)
             end if
-            call TLabMPI_TransposeI_Backward(p_b, result, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+            call TLabMPI_TransposeI_Backward(p_b, result, ims_plan_dx)
         end if
 #endif
 
@@ -465,7 +465,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Forward(u, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+                call TLabMPI_TransposeK_Forward(u, result, ims_plan_dz)
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
@@ -474,7 +474,7 @@ contains
                     p_b => wrk3d
                 end if
                 ! nxy = ims_size_k(id)
-                nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+                nxy = ims_plan_dz%nlines
             else
 #endif
                 p_a => u
@@ -526,9 +526,9 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Backward(p_b, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+                call TLabMPI_TransposeK_Backward(p_b, result, ims_plan_dz)
                 if (type == OPR_P2_P1) then
-                    call TLabMPI_TransposeK_Backward(p_c, tmp1, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+                    call TLabMPI_TransposeK_Backward(p_c, tmp1, ims_plan_dz)
                 end if
             end if
 #endif

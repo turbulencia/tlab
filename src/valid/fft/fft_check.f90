@@ -1,6 +1,6 @@
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 subroutine FFT_CHECK(check_mode, err_count, case_count, &

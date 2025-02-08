@@ -1,7 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 module OPR_Burgers
@@ -51,8 +51,6 @@ contains
         use TLab_Memory, only: inb_scal
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k
-        ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-        use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
 #endif
         use THERMO_ANELASTIC, only: rbackground, ribackground
 
@@ -132,7 +130,7 @@ contains
 #ifdef USE_MPI
             if (ims_npro_i > 1) then
                 ! nlines = ims_size_i(TLAB_MPI_TRP_I_PARTIAL)
-                nlines = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+                nlines = ims_plan_dx%nlines
                 offset = nlines*ims_pro_i
             else
 #endif
@@ -162,7 +160,7 @@ contains
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
                 ! nlines = ims_size_k(TLAB_MPI_TRP_K_PARTIAL)
-                nlines = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+                nlines = ims_plan_dz%nlines
                 offset = nlines*ims_pro_k
             else
 #endif
@@ -215,13 +213,13 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(s, result, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+            call TLabMPI_TransposeI_Forward(s, result, ims_plan_dx)
             p_a => result
             p_b => tmp1
             p_c => wrk3d
             p_d => result
             ! nyz = ims_size_i(id)
-            nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+            nyz = ims_plan_dx%nlines
         else
 #endif
             p_a => s
@@ -264,7 +262,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Backward(p_c, result, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+            call TLabMPI_TransposeI_Backward(p_c, result, ims_plan_dx)
         end if
 #endif
 
@@ -388,12 +386,12 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(s, tmp1, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+            call TLabMPI_TransposeK_Forward(s, tmp1, ims_plan_dz)
             p_a => tmp1
             p_b => result
             p_c => wrk3d
             ! nxy = ims_size_k(id)
-            nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+            nxy = ims_plan_dz%nlines
         else
 #endif
             p_a => s
@@ -426,7 +424,7 @@ contains
         ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(p_c, result, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+            call TLabMPI_TransposeK_Backward(p_c, result, ims_plan_dz)
         end if
 #endif
 

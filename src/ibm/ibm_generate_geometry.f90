@@ -1,5 +1,5 @@
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 !########################################################################
@@ -36,8 +36,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #ifdef USE_MPI
     use MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err
-    ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-    use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
+    use TLabMPI_Transpose, only: ims_plan_dx, ims_plan_dz
 #ifdef IBM_DEBUG
     use TLabMPI_VARS, only: ims_pro
 #endif
@@ -47,10 +46,6 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 
     real(wp), dimension(isize_field), intent(in) :: epsi, epsj, epsk
 
-! #ifdef USE_MPI
-!     integer(wi), parameter :: idi = TLAB_MPI_TRP_I_PARTIAL
-!     integer(wi), parameter :: idk = TLAB_MPI_TRP_K_PARTIAL
-! #endif
     integer(wi) :: i, j, k, ij, ik, jk, ip, inum, rse
     integer(wi) :: nyz, nxz, nxy
 
@@ -67,7 +62,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         ! nyz = ims_size_i(idi)
-        nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+        nyz = ims_plan_dx%nlines
     else
 #endif
         nyz = jmax*kmax
@@ -80,7 +75,7 @@ subroutine IBM_GENERATE_GEOMETRY(epsi, epsj, epsk)
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
         ! nxy = ims_size_k(idk)
-        nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+        nxy = ims_plan_dz%nlines
     else
 #endif
         nxy = imax*jmax

@@ -1,7 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 module OPR_FILTERS
@@ -31,7 +31,9 @@ module OPR_FILTERS
         real(wp) parameters(MAX_PARS)
         integer BcsMin, BcsMax                  ! boundary conditions
         integer repeat
-        integer mpitype
+#ifdef USE_MPI
+        type(tmpi_transpose_dt) trp_plan
+#endif
         real(wp), allocatable :: coeffs(:, :)    ! filted coefficients
     end type filter_dt
 
@@ -188,8 +190,8 @@ contains
         end do
 
 #ifdef USE_MPI
-        variable(1)%mpitype = TLAB_MPI_TRP_I_PARTIAL
-        variable(3)%mpitype = TLAB_MPI_TRP_K_PARTIAL
+        variable(1)%trp_plan = ims_plan_dx
+        variable(3)%trp_plan = ims_plan_dx
 #endif
 
         return
@@ -427,25 +429,16 @@ contains
         real(wp), dimension(:), pointer :: p_a, p_b
         target u
 
-! #ifdef USE_MPI
-!         integer(wi) id
-! #endif
-
-        !###################################################################
-! #ifdef USE_MPI
-!         id = f%mpitype  !TLAB_MPI_TRP_I_PARTIAL
-! #endif
-
         !-------------------------------------------------------------------
         !Transposition
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, wrk3d, ims_trp_plan_i(f%mpitype))
+            call TLabMPI_TransposeI_Forward(u, wrk3d, f%trp_plan)
             p_a => wrk3d
             p_b => u
             ! nyz = ims_size_i(id)
-            nyz = ims_trp_plan_i(f%mpitype)%nlines
+            nyz = f%trp_plan%nlines
         else
 #endif
             p_a => u
@@ -482,7 +475,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Backward(p_b, p_a, ims_trp_plan_i(f%mpitype))
+            call TLabMPI_TransposeI_Backward(p_b, p_a, f%trp_plan)
         end if
 #endif
 
@@ -575,11 +568,11 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(u, wrk3d, ims_trp_plan_k(f%mpitype))
+            call TLabMPI_TransposeK_Forward(u, wrk3d, f%trp_plan)
             p_a => wrk3d
             p_b => u
             ! nxy = ims_size_k(id)
-            nxy = ims_trp_plan_k(f%mpitype)%nlines
+            nxy = f%trp_plan%nlines
         else
 #endif
             p_a => u
@@ -598,7 +591,7 @@ contains
         !-------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(p_b, p_a, ims_trp_plan_k(f%mpitype))
+            call TLabMPI_TransposeK_Backward(p_b, p_a, f%trp_plan)
         end if
 #endif
 

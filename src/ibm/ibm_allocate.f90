@@ -1,5 +1,5 @@
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 !########################################################################
@@ -32,8 +32,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory
 #ifdef USE_MPI
-    ! use TLabMPI_Transpose, only: ims_size_i, ims_size_k
-    use TLabMPI_Transpose, only: ims_trp_plan_i, ims_trp_plan_k
+    use TLabMPI_Transpose, only: ims_plan_dx, ims_plan_dz
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
 
@@ -52,7 +51,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         ! nyz = ims_size_i(idi)
-        nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+        nyz = ims_plan_dx%nlines
     else
 #endif
         nyz = jmax*kmax
@@ -65,7 +64,7 @@ subroutine IBM_ALLOCATE(C_FILE_LOC)
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
         ! nxy = ims_size_k(idk)
-        nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+        nxy = ims_plan_dz%nlines
     else
 #endif
         nxy = imax*jmax

@@ -2,7 +2,7 @@
 #include "dns_error.h"
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 #endif
 !########################################################################

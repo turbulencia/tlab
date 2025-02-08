@@ -1,7 +1,7 @@
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 #define SPEC_SINGLE  0
@@ -52,7 +52,7 @@ program SPECTRA
     use NavierStokes, only: nse_eqns, froude
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_ANELASTIC
@@ -69,6 +69,7 @@ use Rotation, only: Rotation_Initialize
 #ifdef USE_OPENMP
     use OMP_LIB
 #endif
+    use SpectraMod
 
     implicit none
 
@@ -140,7 +141,7 @@ use Rotation, only: Rotation_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
@@ -331,10 +332,7 @@ call Rotation_Initialize(ifile)
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz spectra integration.')
-        ! id = TLAB_MPI_TRP_K_AUX2
-        ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_aux, i1, i1, i1, i1, id)
-        ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2) = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, 1, 1, 1, 1, 'type-2 Oz spectra integration.')
+        ims_plan_z = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, 1, 1, 1, 1, 'type-2 Oz spectra integration.')
 
     end if
 #endif
@@ -406,7 +404,6 @@ call Rotation_Initialize(ifile)
     call OPR_Burgers_Initialize(ifile)
 
     call OPR_Elliptic_Initialize(ifile)
-
 
     icalc_radial = 0
     if (flag_mode == 1 .and. g(1)%size == g(3)%size) icalc_radial = 1 ! Calculate radial spectra
@@ -648,7 +645,7 @@ call Rotation_Initialize(ifile)
 ! Reduce 2D spectra into array wrk3d
                     wrk3d = 0.0_wp
                     call REDUCE_SPECTRUM(imax, jmax, kmax, opt_block, &
-                                         txc(1, 1), wrk3d, txc(1, 3), wrk1d(1, 4))
+                                         (txc(:, 1)), wrk3d, txc(:, 3), wrk1d(1, 4))
 
 ! Calculate and accumulate 1D spectra; only the half of wrk3d with the power data is necessary
                     call INTEGRATE_SPECTRUM(imax/2, jmax_aux, kmax, kr_total, isize_aux, &

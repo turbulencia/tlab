@@ -1,7 +1,7 @@
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 #define C_FILE_LOC "PARTICLE_PDF"

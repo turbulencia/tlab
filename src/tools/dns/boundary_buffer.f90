@@ -1,6 +1,6 @@
 #include "dns_const.h"
 #include "dns_error.h"
-#include "dns_const_mpi.h"
+
 
 !########################################################################
 !# Implementation of relaxation terms in buffer regions of the computational domain
@@ -34,7 +34,7 @@ module BOUNDARY_BUFFER
     use MPI
     use TLabMPI_VARS
     use TLabMPI_PROCS, only: TLabMPI_Panic
-    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
+    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
 #endif
 
     implicit none
@@ -368,18 +368,12 @@ contains
         if (item%type == DNS_BUFFER_FILTER) then
             select case (idir)
             case (1)
-                ! call TLab_Write_ASCII(lfile, 'Initialize MPI types for Ox BCs explicit filter.')
-                ! id = TLAB_MPI_TRP_K_OUTBCS
                 idummy = item%size*jmax
-                ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, id)
-                ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Ox BCs explicit filter.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Ox BCs explicit filter.')
 
             case (2)
-                ! call TLab_Write_ASCII(lfile, 'Initialize MPI types for Oy BCs explicit filter.')
-                ! id = TLAB_MPI_TRP_K_TOPBCS
                 idummy = imax*item%size
-                ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, idummy, 1, 1, 1, 1, id)
-                ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Oy BCs explicit filter.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Oy BCs explicit filter.')
 
             end select
         end if
@@ -629,7 +623,7 @@ contains
         real(wp), dimension(BuffFlowImax%size, jmax, kmax) :: txc1, txc2, txc3, txc4, txc5
 
         ! -------------------------------------------------------------------
-        integer(wi) id, k, buff_imax!, ibc_x(4), ibc_y(4), ibc_z(4)
+        integer(wi) k, buff_imax!, ibc_x(4), ibc_y(4), ibc_z(4)
         real(wp) eta, delta, amp, ampr, rho_ratio
 
         ! ###################################################################
@@ -662,7 +656,7 @@ contains
         ! Outflow boundary
         ! ###################################################################
         if (BuffFlowImax%size > 1) then
-            id = TLAB_MPI_TRP_K_OUTBCS
+            ! id = TLAB_MPI_TRP_K_OUTBCS
             buff_imax = imax - BuffFlowImax%size + iloc
             ! -------------------------------------------------------------------
             ! Flow

@@ -1,6 +1,6 @@
 #ifdef IBM_DEBUG
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 !########################################################################
@@ -60,7 +60,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         ! nyz = ims_size_i(idi)
-        nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL)%nlines
+        nyz = ims_plan_dx%nlines
     else
 #endif
         nyz = jmax*kmax
@@ -73,7 +73,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
         ! nxy = ims_size_k(idk)
-        nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL)%nlines
+        nxy = ims_plan_dz%nlines
     else
 #endif
         nxy = imax*jmax
@@ -101,7 +101,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     call TLab_Transpose(tmp1, nyz, g(1)%size, nyz, tmp2, g(1)%size)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        call TLabMPI_TransposeI_Backward(tmp2, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+        call TLabMPI_TransposeI_Backward(tmp2, tmp1, ims_plan_dx)
     end if
     call IO_WRITE_FIELDS('nobi3d', imax, jmax, kmax, itime, 1, tmp1, io_header_q)
 #else
@@ -145,7 +145,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        call TLabMPI_TransposeK_Backward(tmp1, tmp2, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        call TLabMPI_TransposeK_Backward(tmp1, tmp2, ims_plan_dz)
     end if
     call IO_WRITE_FIELDS('nobk3d', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
 #else
@@ -190,7 +190,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     call TLab_Transpose(tmp1, nyz, g(1)%size, nyz, tmp3, g(1)%size)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        call TLabMPI_TransposeI_Backward(tmp3, tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+        call TLabMPI_TransposeI_Backward(tmp3, tmp1, ims_plan_dx)
     end if
     call IO_WRITE_FIELDS('nobi3d_b', imax, jmax, kmax, itime, 1, tmp1, io_header_q)
 #else
@@ -200,7 +200,7 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
     call TLab_Transpose(tmp2, nyz, g(1)%size, nyz, tmp3, g(1)%size)
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        call TLabMPI_TransposeI_Backward(tmp3, tmp2, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+        call TLabMPI_TransposeI_Backward(tmp3, tmp2, ims_plan_dx)
     end if
     call IO_WRITE_FIELDS('nobi3d_e', imax, jmax, kmax, itime, 1, tmp2, io_header_q)
 #else
@@ -282,11 +282,11 @@ subroutine IBM_GEOMETRY_DEBUG_IO(epsi, epsj, epsk, tmp1, tmp2, tmp3)
 
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        call TLabMPI_TransposeK_Backward(tmp1, tmp3, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        call TLabMPI_TransposeK_Backward(tmp1, tmp3, ims_plan_dz)
     end if
     call IO_WRITE_FIELDS('nobk3d_b', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
     if (ims_npro_k > 1) then
-        call TLabMPI_TransposeK_Backward(tmp2, tmp3, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        call TLabMPI_TransposeK_Backward(tmp2, tmp3, ims_plan_dz)
     end if
     call IO_WRITE_FIELDS('nobk3d_e', imax, jmax, kmax, itime, 1, tmp3, io_header_q)
 #else

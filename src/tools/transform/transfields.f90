@@ -1,7 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 #define C_FILE_LOC "TRANSFORM"

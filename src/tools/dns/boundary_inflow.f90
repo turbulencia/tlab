@@ -1,6 +1,6 @@
 #include "dns_error.h"
 #include "dns_const.h"
-#include "dns_const_mpi.h"
+
 
 !########################################################################
 !#
@@ -34,12 +34,11 @@ module BOUNDARY_INFLOW
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_k
     use TLabMPI_PROCS, only: TLabMPI_Panic
-    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
+    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
 #endif
     use OPR_PARTIAL
 
     implicit none
-    save
     private
 
     type(grid_dt), public :: g_inf(3)
@@ -114,12 +113,8 @@ contains
         ! #######################################################################
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
-            ! call TLab_Write_ASCII(lfile, 'Initialize MPI types for inflow filter.')
-            ! id = TLAB_MPI_TRP_K_INFLOW
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
-            ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1,  id)
-            ims_trp_plan_k(TLAB_MPI_TRP_K_INFLOW) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'inflow filter.')
-            FilterInflow(3)%mpitype = TLAB_MPI_TRP_K_INFLOW
+            FilterInflow(3)%trp_plan = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'inflow filter.')
         end if
 #endif
 

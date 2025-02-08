@@ -1,7 +1,7 @@
 #include "dns_error.h"
 #include "dns_const.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 !########################################################################
@@ -24,9 +24,9 @@ module OPR_INTERPOLATORS
 
     public :: OPR_INTERPOLATE
 
-! #ifdef USE_MPI
-!     integer(wi) id
-! #endif
+#ifdef USE_MPI
+    type(tmpi_transpose_dt) ims_plan_x, ims_plan_z, ims_plan_xback, ims_plan_zback
+#endif
 
 contains
 !########################################################################
@@ -54,39 +54,27 @@ contains
 ! This should be OPR_INTERPOLATE_INITIALIZE
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Ox interpolation.')
-            ! id = TLAB_MPI_TRP_I_AUX1
             npage = nz*ny
             if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            ! call TLabMPI_TypeI_Create(ims_npro_i, nx, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_i(TLAB_MPI_TRP_I_AUX1) = TLabMPI_Trp_TypeI_Create(nx, npage, 1, 1, 1, 1, 'type-1 Ox interpolation')
+            ims_plan_x = TLabMPI_Trp_TypeI_Create(nx, npage, 1, 1, 1, 1, 'type-1 Ox interpolation')
 
-            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Ox interpolation.')
-            ! id = TLAB_MPI_TRP_I_AUX2
             npage = nz*ny
             if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            ! call TLabMPI_TypeI_Create(ims_npro_i, nx_dst, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_i(TLAB_MPI_TRP_I_AUX2) = TLabMPI_Trp_TypeI_Create(nx_dst, npage, 1, 1, 1, 1, 'type-2 Ox interpolation')
+            ims_plan_xback = TLabMPI_Trp_TypeI_Create(nx_dst, npage, 1, 1, 1, 1, 'type-2 Ox interpolation')
         end if
 
         if (ims_npro_k > 1) then
-            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 1 for Oz interpolation.')
-            ! id = TLAB_MPI_TRP_K_AUX1
             npage = nx_dst*ny_dst
-            ! call TLabMPI_TypeK_Create(ims_npro_k, nz, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_k(TLAB_MPI_TRP_K_AUX1) = TLabMPI_Trp_TypeK_Create(nz, npage, 1, 1, 1, 1, 'type-1 Oz interpolation')
+            ims_plan_z = TLabMPI_Trp_TypeK_Create(nz, npage, 1, 1, 1, 1, 'type-1 Oz interpolation')
 
-            ! call TLab_Write_ASCII(lfile, 'Initialize MPI type 2 for Oz interpolation.')
-            ! id = TLAB_MPI_TRP_K_AUX2
             npage = nx_dst*ny_dst
-            ! call TLabMPI_TypeK_Create(ims_npro_k, nz_dst, npage, 1, 1, 1, 1, id)
-            ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2) = TLabMPI_Trp_TypeK_Create(nz_dst, npage, 1, 1, 1, 1, 'type-2 Oz interpolation')
+            ims_plan_zback = TLabMPI_Trp_TypeK_Create(nz_dst, npage, 1, 1, 1, 1, 'type-2 Oz interpolation')
 
         end if
 #endif
@@ -142,15 +130,13 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            ! id = TLAB_MPI_TRP_I_AUX1
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_AUX1))
+            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, ims_plan_x)
 
             p_a => u_tmp1
             p_b => u_tmp2
 
-            ! nyz = ims_size_i(id)
-            nyz = ims_trp_plan_i(TLAB_MPI_TRP_I_AUX1)%nlines
+            nyz = ims_plan_x%nlines
             nx_total = nx*ims_npro_i
             nx_total_dst = nx_dst*ims_npro_i
 
@@ -175,8 +161,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            ! id = TLAB_MPI_TRP_I_AUX2
-            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, ims_trp_plan_i(TLAB_MPI_TRP_I_AUX2))
+            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, ims_plan_xback)
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -210,14 +195,12 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            ! id = TLAB_MPI_TRP_K_AUX1
-            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, ims_trp_plan_k(TLAB_MPI_TRP_K_AUX1))
+            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, ims_plan_z)
 
             p_a => u_tmp2
             p_b => u_tmp1
 
-            ! nxy = ims_size_k(id)
-            nxy = ims_trp_plan_k(TLAB_MPI_TRP_K_AUX1)%nlines
+            nxy = ims_plan_z%nlines
             nz_total = nz*ims_npro_k
             nz_total_dst = nz_dst*ims_npro_k
 
@@ -259,8 +242,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            ! id = TLAB_MPI_TRP_K_AUX2
-            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, ims_trp_plan_k(TLAB_MPI_TRP_K_AUX2))
+            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, ims_plan_zback)
         end if
 #endif
         nullify (p_a, p_b)

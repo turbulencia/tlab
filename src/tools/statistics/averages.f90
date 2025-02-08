@@ -1,5 +1,5 @@
 #include "dns_const.h"
-#include "dns_const_mpi.h"
+
 #include "dns_error.h"
 
 #define C_FILE_LOC "AVERAGES"

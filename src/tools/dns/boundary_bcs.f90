@@ -1,6 +1,6 @@
 #include "dns_error.h"
 #include "dns_const.h"
-#include "dns_const_mpi.h"
+
 
 module BOUNDARY_BCS
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH, MAX_VARS
@@ -140,7 +140,7 @@ contains
         use TLab_Memory, only: inb_scal_array
         use TLabMPI_VARS, only: ims_npro_k
         use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
-        use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create, ims_trp_plan_k
+        use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
 #endif
 
 ! -------------------------------------------------------------------
@@ -152,7 +152,6 @@ contains
 #ifdef USE_MPI
         character*32 str
         integer(wi) isize_loc
-        ! integer id
 #endif
 
 ! ###################################################################
@@ -212,33 +211,29 @@ contains
 ! Characteristic BCs
 ! -------------------------------------------------------------------
             if (.not. g(1)%periodic) then ! Required for NRBCs in Ox
-                ! id = TLAB_MPI_TRP_K_NRBCX
                 isize_loc = mod(jmax, ims_npro_k)
                 ims_bcs_imax = 2*(inb_flow + inb_scal_array)
                 do while (mod(isize_loc*ims_bcs_imax, ims_npro_k) > 0)
                     ims_bcs_imax = ims_bcs_imax + 1
                 end do
                 write (str, *) ims_bcs_imax
-                ! str = 'Initialize MPI types for Ox BCs transverse terms. '//trim(adjustl(str))//' planes.'
-                ! call TLab_Write_ASCII(lfile, str)
-                isize_loc = ims_bcs_imax*jmax
-                ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, id)
-                ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCX) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'Ox BCs transverse terms. '//trim(adjustl(str))//' planes.')
+
+                ! to be checked
+                ! isize_loc = ims_bcs_imax*jmax
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCX) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'Ox BCs transverse terms. '//trim(adjustl(str))//' planes.')
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
-                ! id = TLAB_MPI_TRP_K_NRBCY
                 isize_loc = mod(imax, ims_npro_k)
                 ims_bcs_jmax = 2*(inb_flow + inb_scal_array)
                 do while (mod(isize_loc*ims_bcs_jmax, ims_npro_k) > 0)
                     ims_bcs_jmax = ims_bcs_jmax + 1
                 end do
                 write (str, *) ims_bcs_jmax
-                ! str = 'Initialize MPI types for Oy BCs transverse terms. '//trim(adjustl(str))//' planes.'
-                ! call TLab_Write_ASCII(lfile, str)
-                isize_loc = imax*ims_bcs_jmax
-                ! call TLabMPI_TypeK_Create(ims_npro_k, kmax, isize_loc, 1, 1, 1, 1, id)
-                ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCY) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'Oy BCs transverse terms. '//trim(adjustl(str))//' planes.')
+
+                ! to be checked
+                ! isize_loc = imax*ims_bcs_jmax
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCY) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'Oy BCs transverse terms. '//trim(adjustl(str))//' planes.')
             end if
 #endif
 

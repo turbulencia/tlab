@@ -1,6 +1,6 @@
 #include "dns_const.h"
 #ifdef USE_MPI
-#include "dns_const_mpi.h"
+
 #endif
 
 subroutine OPR_CHECK()
@@ -47,8 +47,8 @@ subroutine OPR_CHECK()
         ! id = TLAB_MPI_TRP_I_PARTIAL
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call TLabMPI_TransposeI_Forward(q(1, 1), wrk3d, ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
-        call TLabMPI_TransposeI_Backward(wrk3d, q(1, 2), ims_trp_plan_i(TLAB_MPI_TRP_I_PARTIAL))
+        call TLabMPI_TransposeI_Forward(q(1, 1), wrk3d, ims_plan_dx)
+        call TLabMPI_TransposeI_Backward(wrk3d, q(1, 2), ims_plan_dx)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
@@ -75,9 +75,9 @@ subroutine OPR_CHECK()
 
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
-        call TLabMPI_TransposeK_Forward(q(:, 1), wrk3d, ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        call TLabMPI_TransposeK_Forward(q(:, 1), wrk3d, ims_plan_dz)
         itime = idummy
-        call TLabMPI_TransposeK_Backward(wrk3d, q(:, 2), ims_trp_plan_k(TLAB_MPI_TRP_K_PARTIAL))
+        call TLabMPI_TransposeK_Backward(wrk3d, q(:, 2), ims_plan_dz)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
