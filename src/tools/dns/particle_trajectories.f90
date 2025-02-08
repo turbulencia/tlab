@@ -12,7 +12,7 @@ module ParticleTrajectories
     use PARTICLE_VARS, only: inb_part, isize_part_total, inb_part_interp, inb_part_txc, part, PART_TYPE_NONE
     use DNS_LOCAL, only: nitera_save
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_pro, ims_err
 #endif
     use FI_VECTORCALCULUS

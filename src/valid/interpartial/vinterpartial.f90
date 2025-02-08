@@ -24,7 +24,7 @@ program VINTERPARTIAL
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, stagger_on
     use IO_FIELDS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
 use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     use TLabMPI_VARS

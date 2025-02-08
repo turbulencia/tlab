@@ -66,7 +66,7 @@ contains
         use DNS_LOCAL, only: nitera_save
 
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use FDM, only: g
         use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro
 #endif
@@ -208,7 +208,7 @@ contains
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS, only: ims_err
 #endif
 
@@ -297,7 +297,7 @@ contains
         use TLab_Time, only: itime
         use TLab_Constants, only: wfile
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS, only: ims_offset_i, ims_offset_j, ims_offset_k, ims_pro, ims_err
 #endif
 
@@ -504,7 +504,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
 #endif
 

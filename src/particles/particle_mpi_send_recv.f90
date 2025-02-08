@@ -1,4 +1,3 @@
-
 !########################################################################
 !#
 !# Send particles to neighbouring processors
@@ -15,7 +14,7 @@ subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_h
     use TLab_Constants, only: wp, wi
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k, ims_pro, ims_npro, ims_err
 
     implicit none
@@ -32,8 +31,8 @@ subroutine PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_h
     integer(wi) source_west, source_east
     integer(wi) dest_west, dest_east
     integer(wi) l
-    integer(wi) mpireq(ims_npro*4)
-    integer(wi) status(MPI_STATUS_SIZE, ims_npro*4)
+    type(MPI_Request) mpireq(ims_npro*4)
+    type(MPI_Status) status(ims_npro*4)
     integer(wi) i, k, k_loc, m
 
 !#######################################################################
@@ -238,7 +237,7 @@ subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l
     use TLab_Constants, only: wp, wi
     use PARTICLE_VARS, only: isize_part, inb_part_array, inb_part
     use PARTICLE_ARRAYS, only: p_buffer_1, p_buffer_2
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k, ims_pro, ims_npro, ims_err
 
     implicit none
@@ -255,8 +254,8 @@ subroutine PARTICLE_MPI_SEND_RECV_K(nzone_grid, nzone_south, nzone_north, l_q, l
     integer(wi) source_south, source_north
     integer(wi) dest_south, dest_north
     integer(wi) l
-    integer(wi) mpireq(ims_npro*4)
-    integer(wi) status(MPI_STATUS_SIZE, ims_npro*4)
+    type(MPI_Request) mpireq(ims_npro*4)
+    type(MPI_Status) status(ims_npro*4)
     integer(wi) i, k, k_loc, m
 
 !#######################################################################

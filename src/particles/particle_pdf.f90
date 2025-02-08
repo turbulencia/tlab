@@ -17,7 +17,6 @@ subroutine PARTICLE_PDF(fname, s, l_g, l_q, l_txc)
     use PARTICLE_VARS, only: particle_pdf_subdomain, particle_pdf_max, particle_pdf_interval
     use PARTICLE_INTERPOLATE
 #ifdef USE_MPI
-    use MPI
     use TLabMPI_VARS
 #endif
 

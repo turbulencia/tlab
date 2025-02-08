@@ -1,7 +1,8 @@
 #include "dns_error.h"
 
 module TLabMPI_PROCS
-    use MPI
+    ! use mpi_f08
+    ! use mpi_f08
     use TLab_Constants, only: wp, dp, sp, wi, lfile, efile
     use TLab_Memory, only: imax, jmax, kmax
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -103,8 +104,8 @@ contains
         real(wp) br(ijmax, *)
 
         ! -----------------------------------------------------------------------
-        integer status(MPI_STATUS_SIZE, 4)
-        integer mpireq(4)
+        type(MPI_Status) status(4)
+        type(MPI_Request) mpireq(4)
         integer ims_pro_l, ims_pro_r
         integer icount
 
@@ -151,8 +152,8 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) npl_loc
-        integer status(MPI_STATUS_SIZE, 8)
-        integer mpireq(8)
+        type(MPI_Status) status(8)
+        type(MPI_Request) mpireq(8)
         integer ims_pro_l, ims_pro_r
         integer icount
 
@@ -185,7 +186,7 @@ contains
             call MPI_ISEND(a(1, 1), icount, MPI_REAL8, ims_pro_r, &
                            ims_tag, MPI_COMM_WORLD, mpireq(2), ims_err)
 
-            call MPI_WAITALL(4, mpireq, status, ims_err)
+            call MPI_WAITALL(4, mpireq(1:4), status(1:4), ims_err)
 
             ! -----------------------------------------------------------------------
             ! second-left and second-right PEs.
@@ -207,7 +208,7 @@ contains
             call MPI_ISEND(a(1, kmax + 1 - npl_loc), icount, MPI_REAL8, ims_pro_r, &
                            ims_tag, MPI_COMM_WORLD, mpireq(6), ims_err)
 
-            call MPI_WAITALL(4, mpireq(5:), status, ims_err)
+            call MPI_WAITALL(4, mpireq(5:8), status(5:8), ims_err)
 
         end if
 

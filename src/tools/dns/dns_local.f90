@@ -101,7 +101,7 @@ contains
         use THERMO_ANELASTIC
         use IBM_VARS, only: imode_ibm
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
         use TLabMPI_VARS, only: ims_time_min, ims_err
 #endif

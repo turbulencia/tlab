@@ -41,7 +41,7 @@ program SPECTRA
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on, flow_on, scal_on
     use TLab_Memory, only: TLab_Initialize_Memory
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro_k
     use TLabMPI_PROCS, only: TLabMPI_Initialize

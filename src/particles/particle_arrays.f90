@@ -2,14 +2,17 @@ module PARTICLE_ARRAYS
     use TLab_Constants, only: wp, wi
     use TLab_Pointers_3D, only: pointers3d_dt
     use PARTICLE_TYPES
+#ifdef USE_MPI
+    use mpi_f08
+#endif
     implicit none
     save
 
     type(particle_dt) :: l_g                    ! particle tags and Oy-node information in local processor, changes in time
 #ifdef USE_MPI
     integer(wi), allocatable :: ims_np_all(:)   ! vector with all # of particles per processor
-    integer, allocatable :: ims_status(:, :)
-    integer, allocatable :: ims_request(:)
+    type(MPI_Status), allocatable :: ims_status(:)
+    type(MPI_Request), allocatable :: ims_request(:)
 #endif
 
     real(wp), allocatable :: l_q(:, :)          ! Lagrangian fields, flow vartiables

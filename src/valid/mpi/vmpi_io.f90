@@ -1,7 +1,7 @@
 ! debug code for levante where we are experiencing some problems possibly due to stripping of disks.
 ! mpifort -nbs -save-temps -heap-arrays -simd -vec-threshold50 -unroll-aggressive -march=core-avx2 -mtune=core-avx2 -qopt-prefetch -O3 -ipo vmpi_io.f90
 program vmpi_io_levante
-    use MPI
+    use mpi_f08
     implicit none
 
     integer mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE), ims_Err

@@ -22,7 +22,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     use TLab_Constants, only: wp, wi
     use TLAB_VARS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS
 #endif
     use OPR_PARTIAL

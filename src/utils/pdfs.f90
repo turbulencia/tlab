@@ -1,7 +1,7 @@
 module PDFS
     use TLab_Constants, only: wp, wi, big_wp
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
     implicit none
     private

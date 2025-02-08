@@ -27,7 +27,7 @@ module TIME
     use TLab_OpenMP
     use PARTICLE_VARS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS
 #endif
     implicit none

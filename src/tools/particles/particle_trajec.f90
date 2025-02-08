@@ -30,7 +30,7 @@ program PARTICLE_TRAJEC
     use TLAB_VARS
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro
     use TLabMPI_PROCS, only: TLabMPI_Initialize

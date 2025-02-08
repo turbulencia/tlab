@@ -455,7 +455,7 @@ contains
         use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
         use NavierStokes, only: damkohler
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS, only: ims_err
         real(wp) dummy
 #endif

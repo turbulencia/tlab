@@ -21,12 +21,11 @@ module IO_FIELDS
     use TLab_Constants, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal, MAX_PARS, MAX_VARS
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use TLab_Arrays, only: wrk3d
+    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 #ifdef USE_MPI
-    use MPI
     use TLabMPI_VARS
     use TLabMPI_PROCS, only: TLabMPI_Panic
 #endif
-    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
 
@@ -43,20 +42,19 @@ module IO_FIELDS
     public :: IO_READ_FIELDS, IO_WRITE_FIELDS
     public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
 
-    type subarray_dt
-        sequence
+    type, public :: subarray_dt
+        ! sequence
         integer :: precision = IO_TYPE_DOUBLE
 #ifdef USE_MPI
         logical active, lpadding(3)
-        integer communicator
-        integer subarray
+        type(MPI_Comm) communicator
+        type(MPI_Datatype) subarray
         integer(KIND=MPI_OFFSET_KIND) offset
 #else
         integer offset
 #endif
     end type subarray_dt
 
-    public :: subarray_dt
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
     public :: TLabMPI_WRITE_PE0_SINGLE
@@ -87,9 +85,11 @@ module IO_FIELDS
     real(sp), pointer :: s_wrk(:) => null()
 
 #ifdef USE_MPI
-    integer mpio_fh, mpio_locsize, status(MPI_STATUS_SIZE)
+    type(MPI_File) mpio_fh
+    integer mpio_locsize
+    type(MPI_Status) status
     integer(KIND=MPI_OFFSET_KIND) mpio_disp
-    integer subarray
+    type(MPI_Datatype) subarray
 #endif
 
 contains
@@ -99,9 +99,9 @@ contains
     !########################################################################
     function IO_CREATE_SUBARRAY_XOY(nx, ny, mpi_type) result(subarray)
         integer(wi), intent(in) :: nx, ny
-        integer, intent(in) :: mpi_type
+        type(MPI_Datatype), intent(in) :: mpi_type
 
-        integer :: subarray
+        type(MPI_Datatype) :: subarray
         integer, parameter :: ndims = 2
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
@@ -117,9 +117,9 @@ contains
 
     function IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, mpi_type) result(subarray)
         integer(wi), intent(in) :: nx, ny, nz
-        integer, intent(in) :: mpi_type
+        type(MPI_Datatype), intent(in) :: mpi_type
 
-        integer :: subarray
+        type(MPI_Datatype) :: subarray
         integer, parameter :: ndims = 3
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
@@ -135,9 +135,9 @@ contains
 
     function IO_CREATE_SUBARRAY_ZOY(ny, nz, mpi_type) result(subarray)
         integer(wi), intent(in) :: ny, nz
-        integer, intent(in) :: mpi_type
+        type(MPI_Datatype), intent(in) :: mpi_type
 
-        integer :: subarray
+        type(MPI_Datatype) :: subarray
         integer, parameter :: ndims = 2
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
@@ -784,7 +784,6 @@ contains
         integer(wi) ip_i, ip_k, joffset_loc, koffset_loc, id
         integer(wi) i, jk, j_loc, k_loc
         integer mpio_size, mpio_ip
-        integer status(MPI_STATUS_SIZE)
 
         real(wp), dimension(:), pointer :: p_org
 

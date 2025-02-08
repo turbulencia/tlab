@@ -13,7 +13,7 @@ subroutine OPR_CHECK()
     use OPR_FOURIER
 #ifdef USE_MPI
     use TLab_Time, only: itime
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_Transpose

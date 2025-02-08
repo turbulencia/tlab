@@ -90,7 +90,7 @@ contains
     ! ###################################################################
     subroutine PLANES_INITIALIZE()
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS
 #endif
 

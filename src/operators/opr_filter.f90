@@ -24,7 +24,7 @@ module OPR_FILTERS
     private
 
     type, public :: filter_dt
-        sequence
+        ! sequence
         integer type, ipadding
         integer(wi) size, inb_filter
         logical uniform, periodic, lpadding(2)

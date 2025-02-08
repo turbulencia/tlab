@@ -6,7 +6,7 @@
 subroutine MINMAX(imax, jmax, kmax, a, amn, amx)
     use TLab_Constants, only: wp, wi
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
 
     implicit none

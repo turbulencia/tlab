@@ -8,7 +8,7 @@ program VPARTIAL3D
     use TLab_Memory, only: TLab_Initialize_Memory
     use TLab_Arrays
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif

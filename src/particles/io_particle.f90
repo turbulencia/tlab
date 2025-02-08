@@ -18,7 +18,7 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     use PARTICLE_VARS, only: isize_part, inb_part_array, isize_part_total
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_pro, ims_npro, ims_err
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
@@ -34,9 +34,9 @@ subroutine IO_READ_PARTICLE(fname, l_g, l_q)
     character(len=32) name
 #ifdef USE_MPI
     integer(wi) ims_npro_loc
-    integer(wi) mpio_fh
+    type(MPI_File) mpio_fh
     integer(longi) mpio_disp, count
-    integer(wi) status(MPI_STATUS_SIZE)
+    type(MPI_Status) status
 #else
     integer(wi) idummy
 #endif
@@ -154,11 +154,11 @@ end subroutine IO_READ_PARTICLE
 subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
 
     use TLab_Constants, only: wp, wi, longi, lfile, sizeofint, sizeoflongint
-    use PARTICLE_VARS,  only: isize_part, inb_part_array
+    use PARTICLE_VARS, only: isize_part, inb_part_array
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use PARTICLE_TYPES, only: particle_dt
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_pro, ims_npro, ims_err
     use PARTICLE_ARRAYS, only: ims_np_all
 #endif
@@ -173,9 +173,9 @@ subroutine IO_WRITE_PARTICLE(fname, l_g, l_q)
     integer(wi) i
     character(len=32) name
 #ifdef USE_MPI
-    integer(wi) mpio_fh
+    type(MPI_File) mpio_fh
     integer(KIND=8) mpio_disp, count
-    integer(wi) status(MPI_STATUS_SIZE)
+    type(MPI_Status) status
 #else
     integer(wi) idummy
 #endif

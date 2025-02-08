@@ -136,7 +136,7 @@ contains
         use BOUNDARY_BUFFER
         use Profiles, only: profiles_dt, Profiles_Calculate, PROFILE_TANH
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLab_Memory, only: inb_scal_array
         use TLabMPI_VARS, only: ims_npro_k
         use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax

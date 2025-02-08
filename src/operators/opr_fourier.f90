@@ -11,13 +11,13 @@ module OPR_FOURIER
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_C, only: c_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro, ims_err
     use TLabMPI_Transpose
 #endif
-    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
     implicit none
     private

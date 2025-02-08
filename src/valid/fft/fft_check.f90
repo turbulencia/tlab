@@ -19,7 +19,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     use TLab_Memory, only: isize_txc_dimx, isize_txc_dimz
     use OPR_FOURIER
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS
 #endif
 

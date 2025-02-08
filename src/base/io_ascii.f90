@@ -93,7 +93,7 @@ subroutine TLab_Read_ASCII(fname, title, name, value, default)
     use TLab_Constants, only: wp, wi
 
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_pro, ims_err
 #endif
     implicit none

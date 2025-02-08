@@ -8,7 +8,7 @@ module PARTICLE_PROCS
     use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_npro, ims_npro_i, ims_npro_k
 #endif
     implicit none
@@ -168,7 +168,7 @@ contains
         call TLab_Allocate_INT(C_FILE_LOC, l_g%nodes, [isize_part], 'l_g')
 #ifdef USE_MPI
         allocate (ims_np_all(ims_npro))
-        allocate (ims_status(MPI_STATUS_SIZE, 2*max(ims_npro_i, ims_npro_k)))
+        allocate (ims_status(2*max(ims_npro_i, ims_npro_k)))
         allocate (ims_request(2*max(ims_npro_i, ims_npro_k)))
 #endif
 

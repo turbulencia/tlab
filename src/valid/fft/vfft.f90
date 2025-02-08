@@ -11,7 +11,7 @@ program VFFT
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use OPR_FOURIER
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
 use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif

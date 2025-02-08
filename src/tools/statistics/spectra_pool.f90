@@ -8,15 +8,15 @@ module SpectraMod
 
     use TLab_Constants, only: wp, wi
     use FDM, only: g
+    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_npro_k
     use TLabMPI_VARS, only: ims_comm_x, ims_comm_z
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
     use TLabMPI_Transpose
 #endif
-    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
 
@@ -189,7 +189,7 @@ contains
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
-        use MPI
+        ! use mpi_f08
         use TLabMPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
@@ -454,7 +454,7 @@ contains
         use TLab_Constants, only: wp, wi
         use TLab_Memory, only: imax, jmax, kmax
         use IO_FIELDS, only: io_aux
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS
 
         implicit none

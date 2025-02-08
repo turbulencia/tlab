@@ -51,7 +51,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use NB3DFFT, only: nb3dfft_r2r_y1unpack, nb3dfft_r2r_y2unpack
     use NB3DFFT, only: nb3dfft_r2r_ready, mytype
 
-    use MPI
+    use mpi_f08
 
     implicit none
 

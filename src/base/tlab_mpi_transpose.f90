@@ -2,13 +2,12 @@
 
 ! Circular transposition across directional communicators
 module TLabMPI_Transpose
-    use MPI
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi, sizeofreal
     use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
-    use TLabMPI_VARS
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
+    use TLabMPI_VARS
     implicit none
     private
 
@@ -18,8 +17,8 @@ module TLabMPI_Transpose
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
 
     type, public :: tmpi_transpose_dt
-        sequence
-        integer :: type_s, type_r                               ! send/recv types
+        ! sequence
+        type(MPI_Datatype) :: type_s, type_r                               ! send/recv types
         integer(wi) :: nlines                                   !
         integer(wi) :: size3d                                   !
         integer(wi), allocatable :: disp_s(:), disp_r(:)        ! send/recv displacements
@@ -27,25 +26,25 @@ module TLabMPI_Transpose
     type(tmpi_transpose_dt), public :: tmpi_plan_dx             ! general plans used in derivatives and other operators
     type(tmpi_transpose_dt), public :: tmpi_plan_dz
 
-
     integer :: trp_mode_i, trp_mode_k                               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
     integer, parameter :: TLAB_MPI_TRP_ASYNCHRONOUS = 1
     integer, parameter :: TLAB_MPI_TRP_SENDRECV = 2
     integer, parameter :: TLAB_MPI_TRP_ALLTOALL = 3
 
-    integer(wi) :: trp_sizBlock_i, trp_sizBlock_k                   ! explicit sed/recv: group sizes of rend/recv messages 
+    integer(wi) :: trp_sizBlock_i, trp_sizBlock_k                   ! explicit sed/recv: group sizes of rend/recv messages
     integer(wi), allocatable :: maps_send_i(:), maps_recv_i(:)      ! PE maps to use explicit sed/recv
     integer(wi), allocatable :: maps_send_k(:), maps_recv_k(:)
-    integer, allocatable :: counts(:), types_send(:), types_recv(:) ! alltoallw
+    type(MPI_Datatype), allocatable :: types_send(:), types_recv(:) ! alltoallw
+    integer, allocatable :: counts(:)
 
-    integer :: trp_datatype_i, trp_datatype_k               ! Transposition in double or single precision
+    type(MPI_Datatype) :: trp_datatype_i, trp_datatype_k               ! Transposition in double or single precision
 
     real(wp), allocatable, target :: wrk_mpi(:)             ! 3D work array for MPI; maybe in tlab_memory
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
 
-    integer, allocatable :: status(:, :)
-    integer, allocatable :: request(:)
+    type(MPI_Status), allocatable :: status(:)
+    type(MPI_Request), allocatable :: request(:)
 
 contains
 
@@ -136,7 +135,7 @@ contains
             call TLab_Write_ASCII(lfile, line)
         end if
 
-        allocate (status(MPI_STATUS_SIZE, 2*max(trp_sizBlock_i, trp_sizBlock_k, ims_npro_i, ims_npro_k)))
+        allocate (status(2*max(trp_sizBlock_i, trp_sizBlock_k, ims_npro_i, ims_npro_k)))
         allocate (request(2*max(trp_sizBlock_i, trp_sizBlock_k, ims_npro_i, ims_npro_k)))
 
         ! -----------------------------------------------------------------------
@@ -442,8 +441,9 @@ contains
     !########################################################################
     !########################################################################
     subroutine TLabMPI_TransposeI_Backward(b, a, trp_plan)
-        real(wp), dimension(*), intent(in) :: b
-        real(wp), dimension(*), intent(out) :: a
+        use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
+        real(wp), intent(in) :: b(*)
+        real(wp), intent(out) :: a(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target a
@@ -477,8 +477,8 @@ contains
         real(wp), intent(in) :: a(*)
         real(wp), intent(out) :: b(*)
 
-        integer, intent(in) :: comm                         ! communicator
-        integer, intent(in) :: tsend, trecv                 ! types send/receive
+        type(MPI_Comm), intent(in) :: comm                         ! communicator
+        type(MPI_Datatype), intent(in) :: tsend, trecv                 ! types send/receive
         integer(wi), intent(in) :: dsend(:), drecv(:)       ! displacements send/receive
         integer(wi), intent(in) :: msend(:), mrecv(:)       ! maps send/receive
         integer(wi), intent(in) :: step
@@ -512,7 +512,7 @@ contains
                     ns = msend(m) + 1; ips = ns - 1
                     nr = mrecv(m) + 1; ipr = nr - 1
                     call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(:, 1), ims_err)
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(1), ims_err)
                 end do
             end do
 
@@ -534,8 +534,8 @@ contains
         real(sp), intent(in) :: a(*)
         real(sp), intent(out) :: b(*)
 
-        integer, intent(in) :: comm                         ! communicator
-        integer, intent(in) :: tsend, trecv                 ! types send/receive
+        type(MPI_Comm), intent(in) :: comm                         ! communicator
+        type(MPI_Datatype), intent(in) :: tsend, trecv                 ! types send/receive
         integer(wi), intent(in) :: dsend(:), drecv(:)       ! displacements send/receive
         integer(wi), intent(in) :: msend(:), mrecv(:)       ! maps send/receive
         integer(wi), intent(in) :: step
@@ -569,7 +569,7 @@ contains
                     ns = msend(m) + 1; ips = ns - 1
                     nr = mrecv(m) + 1; ipr = nr - 1
                     call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
-                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(:, 1), ims_err)
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(1), ims_err)
                 end do
             end do
 

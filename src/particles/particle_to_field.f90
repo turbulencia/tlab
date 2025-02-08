@@ -15,7 +15,7 @@ subroutine PARTICLE_TO_FIELD(l_q, particle_property, field_out, wrk3d)
     use PARTICLE_VARS, only: isize_part
 #ifdef USE_MPI
     use PARTICLE_ARRAYS, only: l_work
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
 #endif
 
@@ -64,7 +64,6 @@ subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
     use PARTICLE_VARS, only: isize_part
     use PARTICLE_ARRAYS, only: l_g
 #ifdef USE_MPI
-    use MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
 
@@ -80,8 +79,8 @@ subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
     real(wp) dx_loc_inv, dz_loc_inv
 
 ! ######################################################################
-    dx_loc_inv = real(g(1)%size,wp)/g(1)%scale
-    dz_loc_inv = real(g(3)%size,wp)/g(3)%scale
+    dx_loc_inv = real(g(1)%size, wp)/g(1)%scale
+    dz_loc_inv = real(g(3)%size, wp)/g(3)%scale
 
     g_p(5) = 1 ! Default is 2D
     g_p(6) = 1
@@ -91,7 +90,7 @@ subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
 
         length_g_p(1) = l_q(i, 1)*dx_loc_inv            ! Local X position
         g_p(1) = floor(length_g_p(1))
-        length_g_p(1) = length_g_p(1) - real(g_p(1),wp)
+        length_g_p(1) = length_g_p(1) - real(g_p(1), wp)
 #ifdef USE_MPI
         g_p(1) = g_p(1) + 1 - ims_offset_i
 #else
@@ -103,7 +102,7 @@ subroutine PARTICLE_TO_FIELD_INTERPOLATE(l_q, particle_property, field)
         if (g(3)%size /= 1) then
             length_g_p(5) = l_q(i, 3)*dz_loc_inv            ! Local Z position
             g_p(5) = floor(length_g_p(5))
-            length_g_p(5) = length_g_p(5) - real(g_p(5),wp)
+            length_g_p(5) = length_g_p(5) - real(g_p(5), wp)
 #ifdef USE_MPI
             g_p(5) = g_p(5) + 1 - ims_offset_k
 #else
@@ -166,7 +165,7 @@ end subroutine PARTICLE_TO_FIELD_INTERPOLATE
 subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1, f_buffer_2, field)
     use TLab_Constants, only: wp, wi
     use TLab_Memory, only: imax, jmax, kmax
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS
 
     implicit none
@@ -174,8 +173,8 @@ subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST(f_buffer_1, f_buffer_2, field)
     integer(wi) source_east
     integer(wi) dest_east
     integer(wi) l
-    integer(wi) mpireq(ims_npro*2)
-    integer(wi) status(MPI_STATUS_SIZE, ims_npro*2)
+    type(MPI_Request) mpireq(ims_npro*2)
+    type(MPI_Status) status(ims_npro*2)
 
     real(wp), dimension(imax + 1, jmax, kmax + 1) :: field
     real(wp), dimension(jmax, kmax + 1) :: f_buffer_1, f_buffer_2
@@ -225,7 +224,7 @@ end subroutine PARTICLE_TO_FIELD_SEND_RECV_EAST
 subroutine PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1, f_buffer_2, field)
     use TLab_Constants, only: wp, wi
     use TLab_Memory, only: imax, jmax, kmax
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS
 
     implicit none
@@ -233,8 +232,8 @@ subroutine PARTICLE_TO_FIELD_SEND_RECV_NORTH(f_buffer_1, f_buffer_2, field)
     integer(wi) source_north
     integer(wi) dest_north
     integer(wi) l
-    integer(wi) mpireq(ims_npro*2)
-    integer(wi) status(MPI_STATUS_SIZE, ims_npro*2)
+    type(MPI_Request) mpireq(ims_npro*2)
+    type(MPI_Status) status(ims_npro*2)
 
     real(wp), dimension(imax + 1, jmax, kmax + 1) :: field
     real(wp), dimension(imax + 1, jmax) :: f_buffer_1, f_buffer_2

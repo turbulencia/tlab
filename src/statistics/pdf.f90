@@ -18,7 +18,7 @@ subroutine PDF1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igate
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use PDFS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
 
     implicit none
@@ -126,7 +126,7 @@ subroutine PDF2V(fname, time, nx, ny, nz, nbins, u, v, y, pdf)
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use PDFS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
 
     implicit none

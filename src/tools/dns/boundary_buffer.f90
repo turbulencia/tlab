@@ -31,7 +31,7 @@ module BOUNDARY_BUFFER
     use Averages, only: COV2V1D, COV2V2D
 
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS
     use TLabMPI_PROCS, only: TLabMPI_Panic
     use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
@@ -260,7 +260,7 @@ contains
                 else
                     io_aux(id)%active = .false.
                 end if
-                io_aux(id)%communicator = MPI_UNDEFINED
+                ! io_aux(id)%communicator = MPI_UNDEFINED
                 call MPI_Comm_Split(MPI_COMM_WORLD, sa_comm_color, ims_pro, io_aux(id)%communicator, ims_err)
                 if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 

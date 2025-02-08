@@ -1,7 +1,7 @@
 module Averages
     use TLab_Constants, only: wp, wi
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_comm_z, ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_err
 #endif

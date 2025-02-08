@@ -11,7 +11,7 @@ subroutine CAVG1V_N(fname, time, nx, ny, nz, nv, nbins, ibc, umin, umax, u, igat
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use PDFS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
 
     implicit none
@@ -96,7 +96,7 @@ subroutine CAVG2V(fname, time, nx, ny, nz, nbins, u, v, a, y, avg)
     use TLab_Arrays, only: wrk2d
     use PDFS
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
 
     implicit none

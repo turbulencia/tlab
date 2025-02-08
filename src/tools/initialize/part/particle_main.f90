@@ -116,7 +116,7 @@ contains
         use Thermodynamics, only: imixture
         use THERMO_AIRWATER
 #ifdef USE_MPI
-        use MPI
+        use mpi_f08
         use TLabMPI_VARS
         use PARTICLE_ARRAYS, only: ims_np_all
 #endif

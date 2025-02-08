@@ -1,11 +1,12 @@
 module TLabMPI_VARS
     use TLab_Constants, only: wp, wi
+    use mpi_f08
     implicit none
 
-    integer :: ims_comm_xz                                      ! Plane communicators
-    integer :: ims_comm_x, ims_comm_z                           ! Directional communicators
-    integer :: ims_comm_xz_aux
-    integer :: ims_comm_x_aux, ims_comm_z_aux
+    type(MPI_Comm) :: ims_comm_xz                                      ! Plane communicators
+    type(MPI_Comm) :: ims_comm_x, ims_comm_z                           ! Directional communicators
+    type(MPI_Comm) :: ims_comm_xz_aux
+    type(MPI_Comm) :: ims_comm_x_aux, ims_comm_z_aux
 
     integer :: ims_pro                                          ! Local PE number in global communicator
     integer :: ims_pro_i, ims_pro_j, ims_pro_k                  ! Local PE number in directional communicators
@@ -18,7 +19,7 @@ module TLabMPI_VARS
     real(wp) :: ims_time_min, ims_time_max, ims_time_trans      ! Profiling
     integer(wi) :: ims_bcs_imax, ims_bcs_jmax
 
-    integer :: TLAB_MPI_REAL_TYPE                               ! MPI Type control
+    type(MPI_Datatype) :: TLAB_MPI_REAL_TYPE                               ! MPI Type control
 
 #ifdef USE_PSFFT
     integer :: ims_nb_thrsupp_provided

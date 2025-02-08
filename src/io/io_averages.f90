@@ -10,7 +10,7 @@ subroutine IO_WRITE_AVERAGES(fname, itime, rtime, ny, nv, ng, y, varnames, group
     use TLab_Constants, only: lfile, efile, wp, wi
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
 #endif
 #ifdef USE_NETCDF
     use NETCDF

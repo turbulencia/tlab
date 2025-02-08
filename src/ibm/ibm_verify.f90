@@ -34,7 +34,7 @@ subroutine IBM_VERIFY_GEOMETRY()
     use TLab_Memory, only: imax, jmax, kmax
     use TLab_Constants, only: efile, wp, wi
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_Transpose, only: tmpi_plan_dx, tmpi_plan_dz
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_err
 #ifdef IBM_DEBUG
@@ -228,7 +228,7 @@ subroutine IBM_VERIFY_UP(eps)
     use TLab_Constants, only: efile, wp, wi
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
 #endif
 
@@ -310,7 +310,7 @@ subroutine IBM_VERIFY_SCAL()
     use TLab_Constants, only: efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_VARS, only: ims_err
 #endif
 

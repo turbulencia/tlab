@@ -10,7 +10,7 @@ program VBURGERS
     use TLab_Arrays
     use TLab_Pointers_3D, only: tmp1
 #ifdef USE_MPI
-    use MPI
+    use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     use TLabMPI_VARS
