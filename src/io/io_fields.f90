@@ -39,10 +39,7 @@ module IO_FIELDS
     end type
     type(io_header), public :: io_header_q(1), io_header_s(MAX_VARS)
 
-    public :: IO_READ_FIELDS, IO_WRITE_FIELDS
-    public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
-
-    type, public :: subarray_dt
+    type, public :: io_subarray_dt
         ! sequence
         integer :: precision = IO_TYPE_DOUBLE
 #ifdef USE_MPI
@@ -53,31 +50,17 @@ module IO_FIELDS
 #else
         integer offset
 #endif
-    end type subarray_dt
+    end type io_subarray_dt
 
+    public :: IO_READ_FIELDS, IO_WRITE_FIELDS
+    public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
+    public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
 #ifdef USE_MPI
     public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
     public :: TLabMPI_WRITE_PE0_SINGLE
 #endif
-    public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
 
-    ! Global IO subarrays; to be transformed into local variables in corrresponding apps
-    integer, parameter, public :: IO_SUBARRAY_VISUALS_XOY = 1
-    integer, parameter, public :: IO_SUBARRAY_VISUALS_ZOY = 2
-    integer, parameter, public :: IO_SUBARRAY_VISUALS_XOZ = 3
-    integer, parameter, public :: IO_SUBARRAY_PLANES_XOY = 4
-    integer, parameter, public :: IO_SUBARRAY_PLANES_ZOY = 5
-    integer, parameter, public :: IO_SUBARRAY_PLANES_XOZ = 6
-    integer, parameter, public :: IO_SUBARRAY_BUFFER_ZOY = 7
-    integer, parameter, public :: IO_SUBARRAY_BUFFER_XOZ = 8
-    integer, parameter, public :: IO_SUBARRAY_SPECTRA_X = 9
-    integer, parameter, public :: IO_SUBARRAY_SPECTRA_Z = 10
-    integer, parameter, public :: IO_SUBARRAY_SPECTRA_XZ = 11
-    integer, parameter, public :: IO_SUBARRAY_ENVELOPES = 12
-    integer, parameter, public :: IO_SUBARRAY_AUX = 13
-    integer, parameter, public :: IO_SUBARRAY_SIZE = 13
-    type(subarray_dt), public :: io_aux(IO_SUBARRAY_SIZE)
-
+    ! -------------------------------------------------------------------
     integer(wi) nx_total, ny_total, nz_total
     character(len=64) str, name
     character(len=128) line
@@ -608,7 +591,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine IO_WRITE_SUBARRAY(aux, fname, varname, data, sizes)
-        type(subarray_dt), intent(in) :: aux
+        type(io_subarray_dt), intent(in) :: aux
         character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
         character*32, intent(in) :: varname(sizes(5))
@@ -687,7 +670,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine IO_READ_SUBARRAY(aux, fname, varname, data, sizes)
-        type(subarray_dt), intent(in) :: aux
+        type(io_subarray_dt), intent(in) :: aux
         character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
         character*32, intent(in) :: varname(sizes(5))

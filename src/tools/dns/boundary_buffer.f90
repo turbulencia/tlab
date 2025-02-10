@@ -1,7 +1,6 @@
 #include "dns_const.h"
 #include "dns_error.h"
 
-
 !########################################################################
 !# Implementation of relaxation terms in buffer regions of the computational domain
 !#
@@ -29,7 +28,6 @@ module BOUNDARY_BUFFER
     use IO_FIELDS
     use OPR_FILTERS
     use Averages, only: COV2V1D, COV2V2D
-
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_VARS
@@ -40,9 +38,6 @@ module BOUNDARY_BUFFER
     implicit none
     save
     private
-
-    integer(wi), parameter :: FORM_POWER_MIN = 1
-    integer(wi), parameter :: FORM_POWER_MAX = 2
 
     type buffer_dt
         sequence
@@ -73,8 +68,16 @@ module BOUNDARY_BUFFER
     public :: BOUNDARY_BUFFER_RELAX_SCAL_I
     public :: BOUNDARY_BUFFER_FILTER
 
+    ! -------------------------------------------------------------------
+    integer(wi), parameter :: FORM_POWER_MIN = 1
+    integer(wi), parameter :: FORM_POWER_MAX = 2
+
     integer(wi) j, jloc, i, iloc, iq, is, idummy
     real(wp) dummy
+
+    integer, parameter :: IO_SUBARRAY_BUFFER_ZOY = 1
+    integer, parameter :: IO_SUBARRAY_BUFFER_XOZ = 2
+    type(io_subarray_dt) :: io_subarrays(2)
 
 contains
 
@@ -229,20 +232,20 @@ contains
         case (1)
 #ifdef USE_MPI
             id = IO_SUBARRAY_BUFFER_ZOY
-            io_aux(id)%offset = 0
+            io_subarrays(id)%offset = 0
             if (ims_npro_i > 1 .and. item%total_size == imax) then
                 ! Buffer lives on exactly one PE in x; we can use ims_comm_z
                 if (item%size > 0) then
-                    io_aux(id)%active = .true.
-                    io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*item%total_size, kmax, MPI_REAL8)
-                    io_aux(id)%communicator = ims_comm_z
+                    io_subarrays(id)%active = .true.
+                    io_subarrays(id)%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*item%total_size, kmax, MPI_REAL8)
+                    io_subarrays(id)%communicator = ims_comm_z
                 else
-                    io_aux(id)%active = .false.
+                    io_subarrays(id)%active = .false.
                 end if
             else ! Buffer occupies more or less than one PE --> need new subarray and communicator
                 sa_comm_color = MPI_UNDEFINED
                 if (item%size > 0) then
-                    io_aux(id)%active = .true.
+                    io_subarrays(id)%active = .true.
                     sa_size = [item%total_size, jmax, kmax*ims_npro_k]
                     sa_locsize = [item%size, jmax, kmax]
                     if (item%offset == 0) then
@@ -251,17 +254,17 @@ contains
                         sa_offset = [max(0, ims_offset_i - item%offset), 0, kmax*ims_pro_k]
                     end if
 
-                    call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_aux(id)%subarray, ims_err)
+                    call MPI_Type_create_subarray(sa_ndims, sa_size, sa_locsize, sa_offset, MPI_ORDER_FORTRAN, MPI_REAL8, io_subarrays(id)%subarray, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
-                    call MPI_TYPE_COMMIT(io_aux(id)%subarray, ims_err)
+                    call MPI_TYPE_COMMIT(io_subarrays(id)%subarray, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 
                     sa_comm_color = 1
                 else
-                    io_aux(id)%active = .false.
+                    io_subarrays(id)%active = .false.
                 end if
-                ! io_aux(id)%communicator = MPI_UNDEFINED
-                call MPI_Comm_Split(MPI_COMM_WORLD, sa_comm_color, ims_pro, io_aux(id)%communicator, ims_err)
+                ! io_subarrays(id)%communicator = MPI_UNDEFINED
+                call MPI_Comm_Split(MPI_COMM_WORLD, sa_comm_color, ims_pro, io_subarrays(id)%communicator, ims_err)
                 if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 
             end if
@@ -270,18 +273,18 @@ contains
             io_sizes = [idummy, 1, idummy, 1, item%nfields]
         case (2)
             id = IO_SUBARRAY_BUFFER_XOZ
-            io_aux(id)%offset = 0
-            io_aux(id)%precision = IO_TYPE_DOUBLE
+            io_subarrays(id)%offset = 0
+            io_subarrays(id)%precision = IO_TYPE_DOUBLE
 #ifdef USE_MPI
-            io_aux(id)%active = .true.
-            io_aux(id)%communicator = MPI_COMM_WORLD
-            io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, item%size, kmax, MPI_REAL8)
+            io_subarrays(id)%active = .true.
+            io_subarrays(id)%communicator = MPI_COMM_WORLD
+            io_subarrays(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, item%size, kmax, MPI_REAL8)
 #endif
             idummy = imax*item%size*kmax; io_sizes = (/idummy, 1, idummy, 1, item%nfields/)
         end select
 
         if (BuffLoad) then
-            call IO_READ_SUBARRAY(io_aux(id), tag, varname, item%ref, io_sizes)
+            call IO_READ_SUBARRAY(io_subarrays(id), tag, varname, item%ref, io_sizes)
 
         else
             select case (idir)
@@ -320,13 +323,13 @@ contains
             end select
 
             write (str, *) itime; str = trim(adjustl(tag))//'.'//trim(adjustl(str))
-            call IO_WRITE_SUBARRAY(io_aux(id), str, varname, item%ref, io_sizes)
+            call IO_WRITE_SUBARRAY(io_subarrays(id), str, varname, item%ref, io_sizes)
 
         end if
 
         do iq = 1, item%nfields ! Control
 #ifdef USE_MPI
-            if (io_aux(id)%active) then
+            if (io_subarrays(id)%active) then
                 var_minmax = [minval(item%ref(:, :, :, iq)), -maxval(item%ref(:, :, :, iq))]
             else
                 var_minmax = [huge(dummy), huge(dummy)]
@@ -568,7 +571,7 @@ contains
                 do jloc = 1, item%size
                     j = item%offset + jloc
                     hq(j, :, :, iq) = hq(j, :, :, iq) - item%Tau(jloc, iq)*(q(j, :, :, 5)*(q(j, :, :, iq) &
-                                + dummy*(q(j, :, :, 1)*q(j, :, :, 1) + q(j, :, :, 2)*q(j, :, :, 2) + q(j, :, :, 3)*q(j, :, :, 3))) &
+                                                            + dummy*(q(j, :, :, 1)*q(j, :, :, 1) + q(j, :, :, 2)*q(j, :, :, 2) + q(j, :, :, 3)*q(j, :, :, 3))) &
                                                                             - item%Ref(jloc, :, :, iq))
                 end do
             else
@@ -595,7 +598,7 @@ contains
                 do jloc = 1, item%size
                     j = item%offset + jloc
                     hq(:, j, :, iq) = hq(:, j, :, iq) - item%Tau(jloc, iq)*(q(:, j, :, 5)*(q(:, j, :, iq) &
-                                + dummy*(q(:, j, :, 1)*q(:, j, :, 1) + q(:, j, :, 2)*q(:, j, :, 2) + q(:, j, :, 3)*q(:, j, :, 3))) &
+                                                            + dummy*(q(:, j, :, 1)*q(:, j, :, 1) + q(:, j, :, 2)*q(:, j, :, 2) + q(:, j, :, 3)*q(:, j, :, 3))) &
                                                                             - item%Ref(:, jloc, :, iq))
                 end do
             else

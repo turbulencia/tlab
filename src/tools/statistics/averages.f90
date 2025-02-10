@@ -92,10 +92,12 @@ use Rotation, only: Rotation_Initialize
 
     real(wp) params(2)
 
-    integer(wi) io_sizes(5), id
+    integer(wi) io_sizes(5)
 
     ! Pointers to existing allocated space
     real(wp), dimension(:), pointer :: u, v, w, p
+
+    type(io_subarray_dt) io_envelopes
 
     !########################################################################
     !########################################################################
@@ -308,13 +310,12 @@ call Rotation_Initialize(ifile)
     if (opt_main == 2 .and. opt_cond > 1 .and. igate_size /= 0) then
         ! Info for IO routines: total size, lower bound, upper bound, stride, # variables
         idummy = imax*2*igate_size*kmax; io_sizes = [idummy, 1, idummy, 1, 1]
-        id = IO_SUBARRAY_ENVELOPES
-        io_aux(id)%offset = 0
-        io_aux(id)%precision = IO_TYPE_SINGLE
+        io_envelopes%offset = 0
+        io_envelopes%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
-        io_aux(id)%active = .true.
-        io_aux(id)%communicator = MPI_COMM_WORLD
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, igate_size*2, kmax, MPI_REAL4)
+        io_envelopes%active = .true.
+        io_envelopes%communicator = MPI_COMM_WORLD
+        io_envelopes%subarray = IO_CREATE_SUBARRAY_XOZ(imax, igate_size*2, kmax, MPI_REAL4)
 #endif
 
         allocate (surface(imax, 2*igate_size, kmax))
@@ -546,7 +547,7 @@ call Rotation_Initialize(ifile)
                 end do
                 varname = ''
                 write (fname, *) itime; fname = 'envelopesJ.'//trim(adjustl(fname))
-                call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_ENVELOPES), fname, varname, surface, io_sizes)
+                call IO_WRITE_SUBARRAY(io_envelopes, fname, varname, surface, io_sizes)
 
             end if
 

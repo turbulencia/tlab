@@ -31,7 +31,11 @@ module PLANES
         integer(wi) io(5)
     end type planes_dt
 
-    type(planes_dt) :: iplanes, jplanes, kplanes
+    type(planes_dt), public :: iplanes, jplanes, kplanes
+
+    public :: PLANES_READBLOCK, PLANES_INITIALIZE, PLANES_SAVE
+
+    ! -------------------------------------------------------------------
     integer, parameter :: PLANES_NONE = 0
     integer, parameter :: PLANES_FIX = 1
     integer, parameter :: PLANES_CBL = 2
@@ -43,8 +47,7 @@ module PLANES
 
     real(wp), pointer :: data_i(:, :, :), data_j(:, :, :), data_k(:, :, :)
 
-    public :: iplanes, jplanes, kplanes
-    public :: PLANES_READBLOCK, PLANES_INITIALIZE, PLANES_SAVE
+    type(io_subarray_dt) :: io_subarray_xy, io_subarray_zy, io_subarray_xz
 
 contains
 
@@ -90,12 +93,12 @@ contains
     ! ###################################################################
     subroutine PLANES_INITIALIZE()
 #ifdef USE_MPI
-        use mpi_f08
-        use TLabMPI_VARS
+        use mpi_f08, only: MPI_REAL4, MPI_COMM_WORLD
+        use TLabMPI_VARS, only: ims_comm_x, ims_comm_z, ims_pro_i, ims_pro_k
 #endif
 
         ! -------------------------------------------------------------------
-        integer(wi) id, inb_scal_dummy
+        integer(wi) inb_scal_dummy
 
         ! ###################################################################
         if (scal_on) then; inb_scal_dummy = inb_scal_array
@@ -170,37 +173,34 @@ contains
         varname = ['']
 
         if (kplanes%n > 0) then ! Saving full vertical xOy planes; writing only info of PE containing the first plane
-            id = IO_SUBARRAY_PLANES_XOY
-            io_aux(id)%offset = 0
-            io_aux(id)%precision = IO_TYPE_SINGLE
+            io_subarray_xy%offset = 0
+            io_subarray_xy%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
-            io_aux(id)%active = .false.  ! defaults
-            if (ims_pro_k == (kplanes%nodes(1)/kmax)) io_aux(id)%active = .true.
-            io_aux(id)%communicator = ims_comm_x
-            io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax*kplanes%size, MPI_REAL4)
+            io_subarray_xy%active = .false.  ! defaults
+            if (ims_pro_k == (kplanes%nodes(1)/kmax)) io_subarray_xy%active = .true.
+            io_subarray_xy%communicator = ims_comm_x
+            io_subarray_xy%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax*kplanes%size, MPI_REAL4)
 #endif
         end if
 
         if (iplanes%n > 0) then ! Saving full vertical zOy planes; writing only info of PE containing the first plane
-            id = IO_SUBARRAY_PLANES_ZOY
-            io_aux(id)%offset = 0
-            io_aux(id)%precision = IO_TYPE_SINGLE
+            io_subarray_zy%offset = 0
+            io_subarray_zy%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
-            io_aux(id)%active = .false.  ! defaults
-            if (ims_pro_i == (iplanes%nodes(1)/imax)) io_aux(id)%active = .true.
-            io_aux(id)%communicator = ims_comm_z
-            io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*iplanes%size, kmax, MPI_REAL4)
+            io_subarray_zy%active = .false.  ! defaults
+            if (ims_pro_i == (iplanes%nodes(1)/imax)) io_subarray_zy%active = .true.
+            io_subarray_zy%communicator = ims_comm_z
+            io_subarray_zy%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*iplanes%size, kmax, MPI_REAL4)
 #endif
         end if
 
         if (jplanes%n > 0) then ! Saving full blocks xOz planes for prognostic variables
-            id = IO_SUBARRAY_PLANES_XOZ
-            io_aux(id)%offset = 0
-            io_aux(id)%precision = IO_TYPE_SINGLE
+            io_subarray_xz%offset = 0
+            io_subarray_xz%precision = IO_TYPE_SINGLE
 #ifdef USE_MPI
-            io_aux(id)%active = .true.
-            io_aux(id)%communicator = MPI_COMM_WORLD
-            io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, jplanes%size, kmax, MPI_REAL4)
+            io_subarray_xz%active = .true.
+            io_subarray_xz%communicator = MPI_COMM_WORLD
+            io_subarray_xz%subarray = IO_CREATE_SUBARRAY_XOZ(imax, jplanes%size, kmax, MPI_REAL4)
 #endif
 
         end if
@@ -289,7 +289,7 @@ contains
                 offset = offset + kplanes%n
             end do
             write (fname, *) itime; fname = 'planesK.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOY), fname, varname, data_k, kplanes%io)
+            call IO_WRITE_SUBARRAY(io_subarray_xy, fname, varname, data_k, kplanes%io)
 
         end if
 
@@ -315,7 +315,7 @@ contains
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_XOZ), fname, varname, data_j, jplanes%io)
+            call IO_WRITE_SUBARRAY(io_subarray_xz, fname, varname, data_j, jplanes%io)
 
         end if
 
@@ -337,7 +337,7 @@ contains
                 offset = offset + iplanes%n
             end do
             write (fname, *) itime; fname = 'planesI.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY(io_aux(IO_SUBARRAY_PLANES_ZOY), fname, varname, data_i, iplanes%io)
+            call IO_WRITE_SUBARRAY(io_subarray_zy, fname, varname, data_i, iplanes%io)
 
         end if
 

@@ -70,7 +70,10 @@ program VISUALS
     character*32 flow_file, scal_file, part_file, plot_file, time_str
     character*64 str
 
-    integer(wi) opt_format
+    integer :: opt_format                           ! visuals file format
+    integer, parameter :: FORMAT_GENERAL = 0
+    integer, parameter :: FORMAT_SINGLE = 2
+
     integer(wi) opt_cond, opt_cond_scal, opt_cond_relative
     integer(wi) ij, is, bcs(2, 2), ig
     integer(wi) iscal_offset, idummy, MaskSize, pdecomp
@@ -91,7 +94,10 @@ program VISUALS
 
     real(wp) params(MAX_PARS)
 
-    integer, parameter :: i1 = 1
+    integer, parameter :: IO_SUBARRAY_VISUALS_XOY = 1
+    integer, parameter :: IO_SUBARRAY_VISUALS_ZOY = 2
+    integer, parameter :: IO_SUBARRAY_VISUALS_XOZ = 3
+    type(io_subarray_dt) :: io_subarrays(3)
 
     !########################################################################
     !########################################################################
@@ -111,7 +117,7 @@ program VISUALS
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
@@ -153,8 +159,6 @@ call Rotation_Initialize(ifile)
     ! -------------------------------------------------------------------
     ! Read local options
     ! -------------------------------------------------------------------
-    opt_format = 2 ! default values
-
     if (imixture == MIXT_TYPE_NONE) then; iscal_offset = 9    ! define iscal_offset
     else; iscal_offset = 9 + NSP
     end if
@@ -167,7 +171,7 @@ call Rotation_Initialize(ifile)
 #ifdef USE_MPI
 #else
         write (*, '(A)') 'Option?'
-        write (*, '(A)') ' 0. Grid'
+        ! write (*, '(A)') ' 0. Grid'
         write (*, '(A)') ' 1. VelocityX'
         write (*, '(A)') ' 2. VelocityY'
         write (*, '(A)') ' 3. VelocityZ'
@@ -282,6 +286,8 @@ call Rotation_Initialize(ifile)
     end if
 
     ! -------------------------------------------------------------------
+    opt_format = FORMAT_SINGLE ! default values
+
     call ScanFile_Char(bakfile, ifile, 'PostProcessing', 'Format', '-1', sRes)
 
     if (sRes == '-1') then
@@ -289,21 +295,21 @@ call Rotation_Initialize(ifile)
 #else
         write (*, *) 'File Format ?'
         write (*, *) ' 0. General restart format'
-        write (*, *) ' 1. Ensight'
-        write (*, *) ' 2. Raw, single precision, no header'
+        ! write (*, *) ' 1. Ensight'
+        write (*, *) ' 2. Raw, single precision, no header (default)'
         read (*, '(A64)') sRes
 #endif
     end if
     if (len_trim(adjustl(sRes)) > 0) then
-        if (trim(adjustl(sRes)) == 'general') then; opt_format = 0
-        else if (trim(adjustl(sRes)) == 'ensight') then; opt_format = 1
-        else if (trim(adjustl(sRes)) == 'single') then; opt_format = 2
+        if (trim(adjustl(sRes)) == 'general') then; opt_format = FORMAT_GENERAL
+            ! else if (trim(adjustl(sRes)) == 'ensight') then; opt_format = 1
+        else if (trim(adjustl(sRes)) == 'single') then; opt_format = FORMAT_SINGLE
         else
             read (sRes, *) opt_format
         end if
     end if
 
-    if (opt_format < 0) opt_format = 2 ! default is single precission, no header
+    if (opt_format < 0) opt_format = FORMAT_SINGLE ! default is single precission, no header
 
     ! -------------------------------------------------------------------
     ! Read local options - IBM parameters and geometry
@@ -376,28 +382,28 @@ call Rotation_Initialize(ifile)
     end if
 
 #ifdef USE_MPI
-    call VISUALS_MPIO_AUX(opt_format, subdomain)
+    call VISUALS_MPio_subarrays()
 #else
-    io_aux(:)%offset = 0
-    io_aux(:)%precision = IO_TYPE_SINGLE
+    io_subarrays(:)%offset = 0
+    io_subarrays(:)%precision = IO_TYPE_SINGLE
 #endif
 
     MaskSize = 6
 
-    ! ###################################################################
-    ! Grid
-    ! ###################################################################
-#ifdef USE_MPI
-    if (ims_pro == 0) then
-#endif
-        do iv = 1, iopt_size
-            if (opt_vec(iv) == 0) then
-                call ENSIGHT_GRID('grid.ensight', g(1)%size, g(2)%size, g(3)%size, subdomain, g(1)%nodes, g(2)%nodes, g(3)%nodes)
-            end if
-        end do
-#ifdef USE_MPI
-    end if
-#endif
+!     ! ###################################################################
+!     ! Grid
+!     ! ###################################################################
+! #ifdef USE_MPI
+!     if (ims_pro == 0) then
+! #endif
+!         do iv = 1, iopt_size
+!             if (opt_vec(iv) == 0) then
+!                 call ENSIGHT_GRID('grid.ensight', g(1)%size, g(2)%size, g(3)%size, subdomain, g(1)%nodes, g(2)%nodes, g(3)%nodes)
+!             end if
+!         end do
+! #ifdef USE_MPI
+!     end if
+! #endif
 
     ! ###################################################################
     ! Postprocess given list of files
@@ -475,17 +481,17 @@ call Rotation_Initialize(ifile)
             if (opt_vec(iv) == 1) then
                 txc(1:isize_field, 1) = q(1:isize_field, 1)
                 plot_file = 'VelocityX'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             else if (opt_vec(iv) == 2) then
                 txc(1:isize_field, 1) = q(1:isize_field, 2)
                 plot_file = 'VelocityY'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             else if (opt_vec(iv) == 3) then
                 txc(1:isize_field, 1) = q(1:isize_field, 3)
                 plot_file = 'VelocityZ'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             else if (opt_vec(iv) == 4) then
                 txc(1:isize_field, 1:3) = q(1:isize_field, 1:3)
@@ -495,7 +501,7 @@ call Rotation_Initialize(ifile)
             else if (opt_vec(iv) == 5) then
                 txc(1:isize_field, 1) = sqrt(q(1:isize_field, 1)**2 + q(1:isize_field, 2)**2 + q(1:isize_field, 3)**2)
                 plot_file = 'VelocityMagnitude'//time_str(1:MaskSize)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             end if
 
@@ -513,19 +519,19 @@ call Rotation_Initialize(ifile)
                         dummy = 1.0_wp/froude
                         txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy + 1.0_wp
                     end if
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 else if (opt_vec(iv) == 7 .and. imixture == MIXT_TYPE_AIRWATER) then ! temperature
                     plot_file = 'Temperature'//time_str(1:MaskSize)
                     call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, txc(1, 1))
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     if (damkohler(1) > 0.0_wp) then ! Supersaturated liquid; this is wrong
                         plot_file = 'Supsat'//time_str(1:MaskSize)
                         txc(1:isize_field, 1:2) = s(1:isize_field, 1:2)
                         call THERMO_ANELASTIC_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1))
                         txc(1:isize_field, 3) = (s(1:isize_field, 3) - txc(1:isize_field, 3))/s(1, 3)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 3), wrk3d)
                     end if
 
                 else if (opt_vec(iv) == 8) then ! pressure
@@ -534,38 +540,38 @@ call Rotation_Initialize(ifile)
                         plot_file = 'PressureCoriolis'//time_str(1:MaskSize)
                         pdecomp = DCMP_CORIOLIS
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureBuoyancy'//time_str(1:MaskSize)
                         pdecomp = DCMP_BUOYANCY
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureDiffusion'//time_str(1:MaskSize)
                         pdecomp = DCMP_DIFFUSION
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
                         plot_file = 'PressureAdvection'//time_str(1:MaskSize)
 
                         pdecomp = DCMP_ADVECTION
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureAdvDiff'//time_str(1:MaskSize)
                         pdecomp = DCMP_ADVDIFF
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                         plot_file = 'PressureTotal'//time_str(1:MaskSize)
                         pdecomp = DCMP_TOTAL
                         call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), pdecomp)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     end if
 
                     plot_file = 'Pressure'//time_str(1:MaskSize)
                     call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     plot_file = 'PressureGradientPower'//time_str(1:MaskSize)
                     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 2))
@@ -574,7 +580,7 @@ call Rotation_Initialize(ifile)
                     txc(1:isize_field, 2) = -(txc(1:isize_field, 2)*q(1:isize_field, 1) &
                                               + txc(1:isize_field, 3)*q(1:isize_field, 2) &
                                               + txc(1:isize_field, 4)*q(1:isize_field, 3))
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                     call TLab_Write_ASCII(lfile, 'Computing pressure-strain correlation...')
                     txc(1:isize_field, 2) = txc(1:isize_field, 1); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(1, 2))
@@ -583,28 +589,28 @@ call Rotation_Initialize(ifile)
                     txc(1:isize_field, 3) = q(1:isize_field, 1); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
                     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc(1, 3), txc(1, 4))
                     txc(1:isize_field, 3) = txc(1:isize_field, 2)*txc(1:isize_field, 4)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 3), wrk3d)
 
                     plot_file = 'PressureStrainY'//time_str(1:MaskSize)
                     txc(1:isize_field, 3) = q(1:isize_field, 2); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
                     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 3), txc(1, 4))
                     txc(1:isize_field, 3) = txc(1:isize_field, 2)*txc(1:isize_field, 4)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 3), wrk3d)
 
                     plot_file = 'PressureStrainZ'//time_str(1:MaskSize)
                     txc(1:isize_field, 3) = q(1:isize_field, 3); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
                     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc(1, 3), txc(1, 4))
                     txc(1:isize_field, 3) = txc(1:isize_field, 2)*txc(1:isize_field, 4)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 3), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 3), wrk3d)
 
                     plot_file = 'PressureHydrostatic'//time_str(1:MaskSize)
                     q = 0.0_wp
                     call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), DCMP_TOTAL)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                     plot_file = 'PressureHydrodynamic'//time_str(1:MaskSize)
                     txc(1:isize_field, 1) = txc(1:isize_field, 1) - txc(1:isize_field, 2)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 end if
 
@@ -612,17 +618,17 @@ call Rotation_Initialize(ifile)
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
                     txc(1:isize_field, 1) = q(1:isize_field, 5)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 else if (opt_vec(iv) == 7) then ! temperature
                     plot_file = 'Temperature'//time_str(1:MaskSize)
                     txc(1:isize_field, 1) = q(1:isize_field, 7)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 else if (opt_vec(iv) == 8) then ! pressure
                     plot_file = 'Pressure'//time_str(1:MaskSize)
                     txc(1:isize_field, 1) = q(1:isize_field, 6)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 end if
 
@@ -635,7 +641,7 @@ call Rotation_Initialize(ifile)
                 do is = 1, inb_scal_array
                     write (str, *) is; plot_file = 'Scalar'//trim(adjustl(str))//time_str(1:MaskSize)
                     txc(1:isize_field, 1) = s(1:isize_field, is)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
                 end do
 
             else if (opt_vec(iv) > 9 .and. opt_vec(iv) <= iscal_offset) then ! Individual and diagnostic scalars
@@ -643,23 +649,23 @@ call Rotation_Initialize(ifile)
                     if (opt_vec(iv) == 10) then ! vapor water mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(1)))//time_str(1:MaskSize)
                         txc(1:isize_field, 1) = s(1:isize_field, inb_scal) - s(1:isize_field, inb_scal + 1)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     else if (opt_vec(iv) == 11) then ! air mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(2)))//time_str(1:MaskSize)
                         txc(1:isize_field, 1) = 1.0_wp - s(1:isize_field, inb_scal)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     else if (opt_vec(iv) == 12) then ! liquid mass fraction
                         plot_file = trim(adjustl(THERMO_SPNAME(3)))//time_str(1:MaskSize)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, s(1, inb_scal + 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, s(1, inb_scal + 1), wrk3d)
 
                     end if
 
                 else ! Plot the chosen species
                     is = opt_vec(iv) - 9; plot_file = trim(adjustl(THERMO_SPNAME(is)))//time_str(1:MaskSize)
                     txc(1:isize_field, 1) = s(1:isize_field, is)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 end if
 
@@ -687,7 +693,7 @@ call Rotation_Initialize(ifile)
                             plot_file = 'Log'//trim(adjustl(plot_file))
                             txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                         end if
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
                     end if
 
                     if (opt_vec(iv) == iscal_offset + 3 .and. is <= inb_scal) then ! Scalar gradient equation
@@ -699,14 +705,14 @@ call Rotation_Initialize(ifile)
                         plot_file = 'ScalarGradientProduction'//time_str(1:MaskSize)
                         call FI_GRADIENT_PRODUCTION(imax, jmax, kmax, s(1, is), q(1, 1), q(1, 2), q(1, 3), &
                                                     txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                         call TLab_Write_ASCII(lfile, 'Computing scalar gradient diffusion...')
                         plot_file = trim(adjustl(str))//'GradientDiffusion'//time_str(1:MaskSize)
                         call FI_GRADIENT_DIFFUSION(imax, jmax, kmax, s(1, is), &
                                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                         txc(1:isize_field, 1) = diff*txc(1:isize_field, 1)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     end if
 
@@ -730,7 +736,7 @@ call Rotation_Initialize(ifile)
                     plot_file = 'Log'//trim(adjustl(plot_file))
                     txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                 end if
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'LogPotentialEnstrophy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
@@ -749,7 +755,7 @@ call Rotation_Initialize(ifile)
                                         + txc(1:isize_field, 2)*txc(1:isize_field, 5) &
                                         + txc(1:isize_field, 3)*txc(1:isize_field, 6)
                 txc(1:isize_field, 1) = log10(txc(1:isize_field, 1)*txc(1:isize_field, 1) + small_wp)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
             if (opt_vec(iv) == iscal_offset + 6) then ! EnstrophyEquation
@@ -757,14 +763,14 @@ call Rotation_Initialize(ifile)
                 plot_file = 'EnstrophyProduction'//time_str(1:MaskSize)
                 call FI_VORTICITY_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                              txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 call TLab_Write_ASCII(lfile, 'Computing enstrophy diffusion...')
                 plot_file = 'EnstrophyDiffusion'//time_str(1:MaskSize)
                 call FI_VORTICITY_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                             txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = visc*txc(1:isize_field, 1)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             end if
 
@@ -783,7 +789,7 @@ call Rotation_Initialize(ifile)
                     plot_file = 'Log'//trim(adjustl(plot_file))
                     txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
                 end if
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
             if (opt_vec(iv) == iscal_offset + 9) then ! StrainEquation (I need the pressure)
@@ -798,21 +804,21 @@ call Rotation_Initialize(ifile)
                 call FI_STRAIN_PRESSURE(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 6), &
                                         txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 1)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 call TLab_Write_ASCII(lfile, 'Computing strain production...')
                 plot_file = 'StrainProduction'//time_str(1:MaskSize)
                 call FI_STRAIN_PRODUCTION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
                                           txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = 2.0_wp*txc(1:isize_field, 1)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 call TLab_Write_ASCII(lfile, 'Computing strain diffusion...')
                 plot_file = 'StrainDiffusion'//time_str(1:MaskSize)
                 call FI_STRAIN_DIFFUSION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), &
                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
                 txc(1:isize_field, 1) = 2.0_wp*visc*txc(1:isize_field, 1)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             end if
 
@@ -820,16 +826,16 @@ call Rotation_Initialize(ifile)
             if (opt_vec(iv) == iscal_offset + 10) then ! Invariants
                 plot_file = 'InvariantP'//time_str(1:MaskSize)
                 call FI_INVARIANT_P(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'InvariantQ'//time_str(1:MaskSize)
                 call FI_INVARIANT_Q(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'InvariantR'//time_str(1:MaskSize)
                 call FI_INVARIANT_R(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), &
                                     txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             end if
 
@@ -854,20 +860,20 @@ call Rotation_Initialize(ifile)
                 end if
                 dummy = 1.0_wp/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'Fvb'//time_str(1:MaskSize)     ! buoyancy flux along Oy
                 txc(1:isize_field, 2) = txc(1:isize_field, 1)*q(1:isize_field, 2)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                 plot_file = 'bPrime'//time_str(1:MaskSize)  ! buoyancy fluctuation
                 call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(1, 1))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'Cvb'//time_str(1:MaskSize)     ! Covariance between b and v
                 txc(1:isize_field, 2) = q(1:isize_field, 2); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 2))
                 txc(1:isize_field, 2) = txc(1:isize_field, 1)*txc(1:isize_field, 2)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                 plot_file = 'LogBuoyancySource'//time_str(1:MaskSize)
                 if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
@@ -882,7 +888,7 @@ call Rotation_Initialize(ifile)
                 dummy = visc/schmidt(1)/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 2)*dummy
                 txc(1:isize_field, 1) = log10(abs(txc(1:isize_field, 1)) + small_wp)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
             end if
 
@@ -892,7 +898,7 @@ call Rotation_Initialize(ifile)
                 call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(1, 1), txc(1, 2))
                 call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(1, 3), txc(1, 1))
                 txc(1:isize_field, 1) = txc(1:isize_field, 1) + txc(1:isize_field, 2)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
             ! ###################################################################
@@ -902,14 +908,14 @@ call Rotation_Initialize(ifile)
                                     txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
                 txc(1:isize_field, 1) = log10(txc(1:isize_field, 1) + small_wp)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'Tke'//time_str(1:MaskSize)
                 txc(1:isize_field, 1) = q(1:isize_field, 1); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 1))
                 txc(1:isize_field, 2) = q(1:isize_field, 2); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 2))
                 txc(1:isize_field, 3) = q(1:isize_field, 3); call FI_FLUCTUATION_INPLACE(imax, jmax, kmax, txc(:, 3))
                 txc(1:isize_field, 4) = 0.5_wp*(txc(1:isize_field, 1)**2 + txc(1:isize_field, 2)**2 + txc(1:isize_field, 3)**2)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 4), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 4), wrk3d)
 
                 plot_file = 'ReynoldsTensor'//time_str(1:MaskSize)
                 txc(1:isize_field, 4) = txc(1:isize_field, 1)*txc(1:isize_field, 2)
@@ -929,7 +935,7 @@ call Rotation_Initialize(ifile)
                     if (infraredProps%active(is)) then
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
                         call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
                     end if
 
                 end do
@@ -939,7 +945,7 @@ call Rotation_Initialize(ifile)
             if (opt_vec(iv) == iscal_offset + 17) then
                 plot_file = 'RelativeHumidity'//time_str(1:MaskSize)
                 call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, wrk3d, txc(1, 1))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
             ! ###################################################################
@@ -948,7 +954,7 @@ call Rotation_Initialize(ifile)
                 call IO_READ_PARTICLE(part_file, l_g, l_q)
                 l_txc = 1.0_wp; ! We want density
                 call PARTICLE_TO_FIELD(l_q, l_txc, txc(1, 1), wrk3d)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 if (part%type == PART_TYPE_BIL_CLOUD_3 .or. part%type == PART_TYPE_BIL_CLOUD_4) then
                     txc(:, 1) = txc(:, 1) + 0.00000001
@@ -956,7 +962,7 @@ call Rotation_Initialize(ifile)
                         plot_file = trim(adjustl(part_spname(is)))//time_str(1:MaskSize)
                         call PARTICLE_TO_FIELD(l_q, l_q(1, 3 + is), txc(1, 2), wrk3d)
                         txc(:, 2) = txc(:, 2)/txc(:, 1)
-                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                        call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
                     end do
                 end if
 
@@ -964,7 +970,7 @@ call Rotation_Initialize(ifile)
                     !inb_part_array is the last component -> residence times in bil_cloud_4
                     plot_file = trim(adjustl(part_spname(3)))//time_str(1:MaskSize)
                     call PARTICLE_TO_FIELD(l_q, l_q(1, inb_part_array - 1), txc(1, 2), wrk3d)
-                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                    call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
                 end if
 
             end if
@@ -976,7 +982,7 @@ call Rotation_Initialize(ifile)
                 call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(1, 2), txc(1, 3), txc(1, 5))
                 call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(1, 2), txc(1, 2), txc(1, 5))
                 txc(1:isize_field, 2) = txc(1:isize_field, 2) + txc(1:isize_field, 3) + txc(1:isize_field, 4)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
@@ -987,23 +993,23 @@ call Rotation_Initialize(ifile)
                 end if
                 dummy = 1.0_wp/froude
                 txc(1:isize_field, 1) = txc(1:isize_field, 1)*dummy
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'LaplacianB'//time_str(1:MaskSize)
                 call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), txc(1, 1), txc(1, 4), txc(1, 5))
                 call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 3), txc(1, 5))
                 call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), txc(1, 1), txc(1, 2), txc(1, 5))
                 txc(1:isize_field, 2) = txc(1:isize_field, 2) + txc(1:isize_field, 3) + txc(1:isize_field, 4)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                 plot_file = 'Pressure'//time_str(1:MaskSize)
                 bbackground = 0.0_wp
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 1), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'PressureGradientY'//time_str(1:MaskSize)
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 2))
-                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, i1, subdomain, txc(1, 2), wrk3d)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
             end if
 
             ! ###################################################################
@@ -1121,72 +1127,66 @@ contains
         end if
 
         ! ###################################################################
-        ! We need to rearrange the arrays here, because
-        ! IO_WRITE_FIELDS and ENSIGHT_FIELD expects field to be aligned by nx*ny*nz
-        ! (instead of isize_txc_field)
-        if (iformat < 2. .and. &
-            nfield > 1 .and. isize_txc_field > nx*ny*nz) then
-            do ifield = 2, nfield
-                do i = 1, nx*ny*nz
-                    field((ifield - 1)*nx*ny*nz + i, 1) = field(i, ifield)
+        select case (iformat)
+
+        case (FORMAT_GENERAL)
+            if (nfield > 1 .and. isize_txc_field > nx*ny*nz) then ! IO_WRITE_FIELDS expects field to be aligned by nx*ny*nz (instead of isize_txc_field)
+                do ifield = 2, nfield
+                    do i = 1, nx*ny*nz
+                        field((ifield - 1)*nx*ny*nz + i, 1) = field(i, ifield)
+                    end do
                 end do
-            end do
-        end if
-
-        ! ###################################################################
-
-        if (iformat == 0) then ! standard scalar format
-
+            end if
             call IO_WRITE_FIELDS(fname, nx, ny, nz, itime, nfield, field)
 
-            ! -------------------------------------------------------------------
-        else if (iformat == 1) then  ! ensight; to be removed
-            call ENSIGHT_FIELD(fname, i1, nx, ny, nz, nfield, subdomain, field, txc)
+            ! case (FORMAT_ENSIGHT)
+            !     call ENSIGHT_FIELD(fname, i1, nx, ny, nz, nfield, subdomain, field, txc)
 
-            ! -------------------------------------------------------------------
-        else if (iformat == 2 .and. iflag_mode > 0) then  ! single precision, using MPI_IO
-            if (ny_aux /= ny) then
-                do ifield = 1, nfield
-                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, i1, subdomain(3), i1, nx, ny_aux, nz, field(1, ifield), wrk1d)
-                end do
-            end if
-
-            varname = ''
-            if (nfield > 1) then
-                do ifield = 1, nfield; write (varname(ifield), *) ifield; varname(ifield) = trim(adjustl(varname(ifield)))
-                end do
-            end if
-            call IO_WRITE_SUBARRAY(io_aux(iflag_mode), fname, varname, field, sizes)
-
-            ! -------------------------------------------------------------------
-        else                                                     ! single precision, through PE0
-            do ifield = 1, nfield
-                if (nfield > 1) then
-                    write (name, *) ifield; name = trim(adjustl(fname))//'.'//trim(adjustl(name))
-                else
-                    name = fname
+        case (FORMAT_SINGLE)
+            if (iflag_mode > 0) then                            ! using subarrays
+                if (ny_aux /= ny) then
+                    do ifield = 1, nfield
+                        call REDUCE_BLOCK_INPLACE(nx, ny, nz, i1, subdomain(3), i1, nx, ny_aux, nz, field(1, ifield), wrk1d)
+                    end do
                 end if
 
+                varname = ''
+                if (nfield > 1) then
+                    do ifield = 1, nfield; write (varname(ifield), *) ifield; varname(ifield) = trim(adjustl(varname(ifield)))
+                    end do
+                end if
+                call IO_WRITE_SUBARRAY(io_subarrays(iflag_mode), fname, varname, field, sizes)
+
+            else                                                ! single precision, through PE0
+                do ifield = 1, nfield
+                    if (nfield > 1) then
+                        write (name, *) ifield; name = trim(adjustl(fname))//'.'//trim(adjustl(name))
+                    else
+                        name = fname
+                    end if
+
 #ifdef USE_MPI
-                if (ims_pro == 0) then
+                    if (ims_pro == 0) then
 #endif
 #include "dns_open_file.h"
 
 #ifdef USE_MPI
-                end if
-                call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
-                if (ims_pro == 0) then
+                    end if
+                    call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
+                    if (ims_pro == 0) then
 #else
-                    call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), wrk1d)
-                    write (LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux, ifield))
+                        call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), wrk1d)
+                        write (LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux, ifield))
 #endif
-                    close (LOC_UNIT_ID)
+                        close (LOC_UNIT_ID)
 #ifdef USE_MPI
-                end if
+                    end if
 #endif
-            end do
+                end do
 
-        end if
+            end if
+
+        end select
 
         return
     end subroutine IO_WRITE_VISUALS
@@ -1195,175 +1195,170 @@ contains
     ! ###################################################################
 #ifdef USE_MPI
 
-    subroutine VISUALS_MPIO_AUX(opt_format, subdomain)
-        integer(wi), intent(IN) :: opt_format, subdomain(6)
-
+    subroutine VISUALS_MPio_subarrays()
         ! -----------------------------------------------------------------------
-        integer(wi) id, ny_loc
+        integer(wi) ny_loc
 
         ! #######################################################################
-        io_aux(:)%active = .false.
-        io_aux(:)%offset = 0
-        io_aux(:)%precision = IO_TYPE_SINGLE
-        if (opt_format == 1) io_aux(:)%offset = 244 ! # bytes of ensight header
+        io_subarrays(:)%active = .false.
+        io_subarrays(:)%offset = 0
+        io_subarrays(:)%precision = IO_TYPE_SINGLE
+        ! if (opt_format == 1) io_subarrays(:)%offset = 244 ! # bytes of ensight header
 
         ny_loc = subdomain(4) - subdomain(3) + 1
 
         ! ###################################################################
         ! Saving full vertical xOy planes; using subdomain(5) to define the plane
-        id = IO_SUBARRAY_VISUALS_XOY
-        if (ims_pro_k == ((subdomain(5) - 1)/kmax)) io_aux(id)%active = .true.
-        io_aux(id)%communicator = ims_comm_x
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOY(imax, ny_loc, MPI_REAL4)
+        if (ims_pro_k == ((subdomain(5) - 1)/kmax)) io_subarrays(IO_SUBARRAY_VISUALS_XOY)%active = .true.
+        io_subarrays(IO_SUBARRAY_VISUALS_XOY)%communicator = ims_comm_x
+        io_subarrays(IO_SUBARRAY_VISUALS_XOY)%subarray = IO_CREATE_SUBARRAY_XOY(imax, ny_loc, MPI_REAL4)
 
         ! Saving full vertical zOy planes; using subiddomain(1) to define the plane
-        id = IO_SUBARRAY_VISUALS_ZOY
-        if (ims_pro_i == ((subdomain(1) - 1)/imax)) io_aux(id)%active = .true.
-        io_aux(id)%communicator = ims_comm_z
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_ZOY(ny_loc, kmax, MPI_REAL4)
+        if (ims_pro_i == ((subdomain(1) - 1)/imax)) io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%active = .true.
+        io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%communicator = ims_comm_z
+        io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%subarray = IO_CREATE_SUBARRAY_ZOY(ny_loc, kmax, MPI_REAL4)
 
         ! Saving full blocks xOz planes
-        id = IO_SUBARRAY_VISUALS_XOZ
-        io_aux(id)%active = .true.
-        io_aux(id)%communicator = MPI_COMM_WORLD
-        io_aux(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, ny_loc, kmax, MPI_REAL4)
+        io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%active = .true.
+        io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%communicator = MPI_COMM_WORLD
+        io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, ny_loc, kmax, MPI_REAL4)
 
         return
-    end subroutine VISUALS_MPIO_AUX
+    end subroutine VISUALS_MPio_subarrays
 
 #endif
 
-    !########################################################################
-    ! Writing data in Ensight Gold Variable File Format
-    !########################################################################
-    subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
-        use TLab_Constants, only: wp, wi
-#ifdef USE_MPI
-        use IO_FIELDS, only: TLabMPI_WRITE_PE0_SINGLE
-#endif
+!     !########################################################################
+!     ! Writing data in Ensight Gold Variable File Format
+!     !########################################################################
+!     subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
+!         use TLab_Constants, only: wp, wi
+! #ifdef USE_MPI
+!         use IO_FIELDS, only: TLabMPI_WRITE_PE0_SINGLE
+! #endif
 
-        character*(*) name
-        integer(wi), intent(IN) :: iheader ! 0 no header; 1 header
+!         character*(*) name
+!         integer(wi), intent(IN) :: iheader ! 0 no header; 1 header
 
-        integer(wi), intent(IN) :: nx, ny, nz, nfield, subdomain(6)
-        real(wp), dimension(nx, ny, nz, nfield) :: field
-        real(wp), dimension(nx*ny*nz, 2) :: tmp_mpi
+!         integer(wi), intent(IN) :: nx, ny, nz, nfield, subdomain(6)
+!         real(wp), dimension(nx, ny, nz, nfield) :: field
+!         real(wp), dimension(nx*ny*nz, 2) :: tmp_mpi
 
-        ! -------------------------------------------------------------------
-        character*80 line
-#ifdef USE_MPI
-        integer(wi) ifield
-#else
-        integer(wi) i, j, k, ifield
-#endif
+!         ! -------------------------------------------------------------------
+!         character*80 line
+! #ifdef USE_MPI
+!         integer(wi) ifield
+! #else
+!         integer(wi) i, j, k, ifield
+! #endif
 
-        ! ###################################################################
-        ! Header in Ensight Gold Variable File Format
-        ! ###################################################################
-#ifdef USE_MPI
-        if (ims_pro == 0) then
-#endif
-#include "dns_open_file.h"
+!         ! ###################################################################
+!         ! Header in Ensight Gold Variable File Format
+!         ! ###################################################################
+! #ifdef USE_MPI
+!         if (ims_pro == 0) then
+! #endif
+! #include "dns_open_file.h"
 
-            if (iheader == 1) then
-                line = 'description line              '
-                write (LOC_UNIT_ID) line
-                line = 'part                          '
-                write (LOC_UNIT_ID) line
-                write (LOC_UNIT_ID) 1_wi
-                line = 'block                         '
-                write (LOC_UNIT_ID) line
-            end if
+!             if (iheader == 1) then
+!                 line = 'description line              '
+!                 write (LOC_UNIT_ID) line
+!                 line = 'part                          '
+!                 write (LOC_UNIT_ID) line
+!                 write (LOC_UNIT_ID) 1_wi
+!                 line = 'block                         '
+!                 write (LOC_UNIT_ID) line
+!             end if
 
-#ifdef USE_MPI
-        end if
-#endif
+! #ifdef USE_MPI
+!         end if
+! #endif
 
-        ! ###################################################################
-        ! Body
-        ! ###################################################################
-        ! -------------------------------------------------------------------
-        ! parallel
-        ! -------------------------------------------------------------------
-#ifdef USE_MPI
-        do ifield = 1, nfield
-            call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field, tmp_mpi(1, 1), tmp_mpi(1, 2))
-        end do
+!         ! ###################################################################
+!         ! Body
+!         ! ###################################################################
+!         ! -------------------------------------------------------------------
+!         ! parallel
+!         ! -------------------------------------------------------------------
+! #ifdef USE_MPI
+!         do ifield = 1, nfield
+!             call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field, tmp_mpi(1, 1), tmp_mpi(1, 2))
+!         end do
 
-        ! -------------------------------------------------------------------
-        ! serial
-        ! -------------------------------------------------------------------
-#else
-        do ifield = 1, nfield
-            do k = subdomain(5), subdomain(6)
-                do j = subdomain(3), subdomain(4)
-                    write (LOC_UNIT_ID) (SNGL(field(i, j, k, ifield)), i=subdomain(1), subdomain(2))
-                end do
-            end do
-        end do
+!         ! -------------------------------------------------------------------
+!         ! serial
+!         ! -------------------------------------------------------------------
+! #else
+!         do ifield = 1, nfield
+!             do k = subdomain(5), subdomain(6)
+!                 do j = subdomain(3), subdomain(4)
+!                     write (LOC_UNIT_ID) (SNGL(field(i, j, k, ifield)), i=subdomain(1), subdomain(2))
+!                 end do
+!             end do
+!         end do
 
-#endif
+! #endif
 
-        ! ###################################################################
-        ! ###################################################################
-#ifdef USE_MPI
-        if (ims_pro == 0) then
-#endif
-            close (LOC_UNIT_ID)
-#ifdef USE_MPI
-        end if
-#endif
+!         ! ###################################################################
+!         ! ###################################################################
+! #ifdef USE_MPI
+!         if (ims_pro == 0) then
+! #endif
+!             close (LOC_UNIT_ID)
+! #ifdef USE_MPI
+!         end if
+! #endif
 
-        return
-    end subroutine ENSIGHT_FIELD
+!         return
+!     end subroutine ENSIGHT_FIELD
 
-    !########################################################################
-    ! Writing data in Ensight Gold Geometry File Format
-    ! Note that record-length information has to be avoided
-    !########################################################################
-    subroutine ENSIGHT_GRID(name, nx, ny, nz, subdomain, x, y, z)
-        use TLab_Constants, only: wp, wi
+!     !########################################################################
+!     ! Writing data in Ensight Gold Geometry File Format
+!     ! Note that record-length information has to be avoided
+!     !########################################################################
+!     subroutine ENSIGHT_GRID(name, nx, ny, nz, subdomain, x, y, z)
+!         use TLab_Constants, only: wp, wi
 
-        implicit none
+!         implicit none
 
-        integer(wi) nx, ny, nz, subdomain(6)
-        real(wp) x(nx), y(ny), z(nz)
-        character*(*) name
+!         integer(wi) nx, ny, nz, subdomain(6)
+!         real(wp) x(nx), y(ny), z(nz)
+!         character*(*) name
 
-        ! -------------------------------------------------------------------
-        character*80 line
-        integer(wi) ij
+!         ! -------------------------------------------------------------------
+!         character*80 line
+!         integer(wi) ij
 
-        ! ###################################################################
-#include "dns_open_file.h"
+!         ! ###################################################################
+! #include "dns_open_file.h"
 
-        line = 'Fortran Binary                '
-        write (LOC_UNIT_ID) line
+!         line = 'Fortran Binary                '
+!         write (LOC_UNIT_ID) line
 
-        line = 'description line 1            '
-        write (LOC_UNIT_ID) line
-        line = 'description line 2            '
-        write (LOC_UNIT_ID) line
-        line = 'node id off                   '
-        write (LOC_UNIT_ID) line
-        line = 'element id off                '
-        write (LOC_UNIT_ID) line
+!         line = 'description line 1            '
+!         write (LOC_UNIT_ID) line
+!         line = 'description line 2            '
+!         write (LOC_UNIT_ID) line
+!         line = 'node id off                   '
+!         write (LOC_UNIT_ID) line
+!         line = 'element id off                '
+!         write (LOC_UNIT_ID) line
 
-        line = 'part                          '
-        write (LOC_UNIT_ID) line
-        write (LOC_UNIT_ID) 1_wi
-        line = 'description line              '
-        write (LOC_UNIT_ID) line
-        line = 'block rectilinear             '
-        write (LOC_UNIT_ID) line
-        write (LOC_UNIT_ID) subdomain(2) - subdomain(1) + 1, subdomain(4) - subdomain(3) + 1, subdomain(6) - subdomain(5) + 1
-        write (LOC_UNIT_ID) (SNGL(x(ij)), ij=subdomain(1), subdomain(2))
-        write (LOC_UNIT_ID) (SNGL(y(ij)), ij=subdomain(3), subdomain(4))
-        write (LOC_UNIT_ID) (SNGL(z(ij)), ij=subdomain(5), subdomain(6))
+!         line = 'part                          '
+!         write (LOC_UNIT_ID) line
+!         write (LOC_UNIT_ID) 1_wi
+!         line = 'description line              '
+!         write (LOC_UNIT_ID) line
+!         line = 'block rectilinear             '
+!         write (LOC_UNIT_ID) line
+!         write (LOC_UNIT_ID) subdomain(2) - subdomain(1) + 1, subdomain(4) - subdomain(3) + 1, subdomain(6) - subdomain(5) + 1
+!         write (LOC_UNIT_ID) (SNGL(x(ij)), ij=subdomain(1), subdomain(2))
+!         write (LOC_UNIT_ID) (SNGL(y(ij)), ij=subdomain(3), subdomain(4))
+!         write (LOC_UNIT_ID) (SNGL(z(ij)), ij=subdomain(5), subdomain(6))
 
-        close (LOC_UNIT_ID)
+!         close (LOC_UNIT_ID)
 
-        return
-    end subroutine ENSIGHT_GRID
+!         return
+!     end subroutine ENSIGHT_GRID
 
 end program VISUALS

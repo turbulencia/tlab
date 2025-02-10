@@ -286,8 +286,8 @@ program SPECTRA
 #ifdef USE_MPI
     call SPECTRA_MPIO_AUX(opt_main, opt_block)
 #else
-    io_aux(:)%offset = 0
-    io_aux(:)%precision = IO_TYPE_SINGLE
+    io_subarrays(:)%offset = 0
+    io_subarrays(:)%precision = IO_TYPE_SINGLE
 #endif
 
 ! -------------------------------------------------------------------
@@ -735,12 +735,12 @@ program SPECTRA
                 end if
                 fname = 'x'//trim(adjustl(tag_file))//trim(adjustl(str))
                 sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                call IO_WRITE_SUBARRAY(io_aux(1), fname, varname, outx, sizes)
+                call IO_WRITE_SUBARRAY(io_subarrays(1), fname, varname, outx, sizes)
 
                 if (g(3)%size > 1) then
                     fname = 'z'//trim(adjustl(tag_file))//trim(adjustl(str))
                     sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                    call IO_WRITE_SUBARRAY(io_aux(2), fname, varname, outz, sizes)
+                    call IO_WRITE_SUBARRAY(io_subarrays(2), fname, varname, outz, sizes)
                 end if
 
                 if (icalc_radial == 1) then
@@ -753,16 +753,16 @@ program SPECTRA
                     if (flag_mode == 2) then ! correlations
                         fname = 'cor'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                        call IO_WRITE_SUBARRAY(io_aux(3), fname, varname, out2d, sizes)
+                        call IO_WRITE_SUBARRAY(io_subarrays(3), fname, varname, out2d, sizes)
 
                     else                         ! spectra
                         fname = 'pow'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1)/2; sizes(4) = 1; sizes(5) = nfield
-                        call IO_WRITE_SUBARRAY(io_aux(3), fname, varname, out2d, sizes)
+                        call IO_WRITE_SUBARRAY(io_subarrays(3), fname, varname, out2d, sizes)
 
                         fname = 'pha'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1 + sizes(1)/2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                        call IO_WRITE_SUBARRAY(io_aux(3), fname, varname, out2d, sizes)
+                        call IO_WRITE_SUBARRAY(io_subarrays(3), fname, varname, out2d, sizes)
 
                     end if
 

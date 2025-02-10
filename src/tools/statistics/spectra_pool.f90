@@ -17,6 +17,7 @@ module SpectraMod
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
     use TLabMPI_Transpose
 #endif
+    use IO_FIELDS, only: io_subarray_dt
     implicit none
     private
 
@@ -31,6 +32,12 @@ module SpectraMod
 #ifdef USE_MPI
     public :: SPECTRA_MPIO_AUX
 #endif
+
+    ! not yet used...
+    ! integer, parameter, public :: IO_SUBARRAY_SPECTRA_X = 1
+    ! integer, parameter, public :: IO_SUBARRAY_SPECTRA_Z = 2
+    ! integer, parameter, public :: IO_SUBARRAY_SPECTRA_XZ = 3
+    type(io_subarray_dt), public :: io_subarrays(3)
 
 contains
 !########################################################################
@@ -453,7 +460,6 @@ contains
     subroutine SPECTRA_MPIO_AUX(opt_main, nblock)
         use TLab_Constants, only: wp, wi
         use TLab_Memory, only: imax, jmax, kmax
-        use IO_FIELDS, only: io_aux
         use mpi_f08
         use TLabMPI_VARS
 
@@ -468,16 +474,16 @@ contains
         integer ims_color
 
 ! #######################################################################
-        io_aux(:)%active = .false.
-        io_aux(:)%offset = 0
-        io_aux(:)%precision = IO_TYPE_SINGLE
+        io_subarrays(:)%active = .false.
+        io_subarrays(:)%offset = 0
+        io_subarrays(:)%precision = IO_TYPE_SINGLE
 
 ! #######################################################################
         if (opt_main == 1 .or. opt_main == 2) then
 
 ! 1. Ox spectrum
-            if (ims_pro_k == 0) io_aux(1)%active = .true.
-            io_aux(1)%communicator = ims_comm_x
+            if (ims_pro_k == 0) io_subarrays(1)%active = .true.
+            io_subarrays(1)%communicator = ims_comm_x
 
             ndims = 2 ! Subarray for the output of the Ox spectrum
             sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock
@@ -485,14 +491,14 @@ contains
             offset(1) = ims_offset_i/2; offset(2) = ims_offset_j/nblock
 
             call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-            call MPI_Type_commit(io_aux(1)%subarray, ims_err)
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(1)%subarray, ims_err)
+            call MPI_Type_commit(io_subarrays(1)%subarray, ims_err)
 
-!     subarray(1) = io_aux(1)%subarray ! to be removed
+!     subarray(1) = io_subarrays(1)%subarray ! to be removed
 
 ! 2. Oz spectrum
-            if (ims_pro_i == 0) io_aux(2)%active = .true.
-            io_aux(2)%communicator = ims_comm_z
+            if (ims_pro_i == 0) io_subarrays(2)%active = .true.
+            io_subarrays(2)%communicator = ims_comm_z
 
             ndims = 2 ! Subarray for the output of the Oz spectrum
             sizes(1) = kmax*ims_npro_k/2; sizes(2) = jmax/nblock
@@ -500,14 +506,14 @@ contains
             offset(1) = ims_offset_k/2; offset(2) = ims_offset_j/nblock
 
             call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-            call MPI_Type_commit(io_aux(2)%subarray, ims_err)
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(2)%subarray, ims_err)
+            call MPI_Type_commit(io_subarrays(2)%subarray, ims_err)
 
-!     subarray(2) = io_aux(2)%subarray ! to be removed
+!     subarray(2) = io_subarrays(2)%subarray ! to be removed
 
 ! 3. Full 2D spectrum
-            io_aux(3)%active = .true.
-            io_aux(3)%communicator = MPI_COMM_WORLD
+            io_subarrays(3)%active = .true.
+            io_subarrays(3)%communicator = MPI_COMM_WORLD
 
             ndims = 3 ! Subarray for the output of the 2D data
             sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock; sizes(3) = kmax*ims_npro_k
@@ -515,10 +521,10 @@ contains
             offset(1) = ims_offset_i/2; offset(2) = ims_offset_j/nblock; offset(3) = ims_offset_k
 
             call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-            call MPI_Type_commit(io_aux(3)%subarray, ims_err)
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(3)%subarray, ims_err)
+            call MPI_Type_commit(io_subarrays(3)%subarray, ims_err)
 
-!     subarray(3) = io_aux(3)%subarray ! to be removed
+!     subarray(3) = io_subarrays(3)%subarray ! to be removed
 
 ! #######################################################################
         else if (opt_main == 3) then
@@ -533,8 +539,8 @@ contains
             call MPI_COMM_SPLIT(ims_comm_x, ims_color, ims_pro, ims_comm_x_aux, ims_err)
 
             if (ims_color == 0) then
-                if (ims_pro_k == 0) io_aux(1)%active = .true.
-                io_aux(1)%communicator = ims_comm_x_aux
+                if (ims_pro_k == 0) io_subarrays(1)%active = .true.
+                io_subarrays(1)%communicator = ims_comm_x_aux
 
                 ndims = 2 ! Subarray for the output of the Ox cross-correlation
                 sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock
@@ -542,10 +548,10 @@ contains
                 offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock
 
                 call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                              MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-                call MPI_Type_commit(io_aux(1)%subarray, ims_err)
+                                              MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(1)%subarray, ims_err)
+                call MPI_Type_commit(io_subarrays(1)%subarray, ims_err)
 
-!        subarray(1) = io_aux(1)%subarray ! to be removed
+!        subarray(1) = io_subarrays(1)%subarray ! to be removed
 
             end if
 
@@ -559,8 +565,8 @@ contains
             call MPI_COMM_SPLIT(ims_comm_z, ims_color, ims_pro, ims_comm_z_aux, ims_err)
 
             if (ims_color == 0) then
-                if (ims_pro_i == 0) io_aux(2)%active = .true.
-                io_aux(2)%communicator = ims_comm_z_aux
+                if (ims_pro_i == 0) io_subarrays(2)%active = .true.
+                io_subarrays(2)%communicator = ims_comm_z_aux
 
                 ndims = 2 ! Subarray for the output of the Oz cross-correlation
                 sizes(1) = kmax*ims_npro_k/2; sizes(2) = jmax/nblock
@@ -568,10 +574,10 @@ contains
                 offset(1) = ims_offset_k; offset(2) = ims_offset_j/nblock
 
                 call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                              MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-                call MPI_Type_commit(io_aux(2)%subarray, ims_err)
+                                              MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(2)%subarray, ims_err)
+                call MPI_Type_commit(io_subarrays(2)%subarray, ims_err)
 
-!        subarray(2) = io_aux(2)%subarray ! to be removed
+!        subarray(2) = io_subarrays(2)%subarray ! to be removed
 
             end if
 
@@ -585,8 +591,8 @@ contains
             call MPI_COMM_SPLIT(MPI_COMM_WORLD, ims_color, ims_pro, ims_comm_xz_aux, ims_err)
 
             if (ims_color == 0) then
-                io_aux(3)%active = .true.
-                io_aux(3)%communicator = ims_comm_xz_aux
+                io_subarrays(3)%active = .true.
+                io_subarrays(3)%communicator = ims_comm_xz_aux
 
                 ndims = 3 ! Subarray for the output of the 2D data
                 sizes(1) = imax*ims_npro_i/2; sizes(2) = jmax/nblock; sizes(3) = kmax*ims_npro_k/2
@@ -594,10 +600,10 @@ contains
                 offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock; offset(3) = ims_offset_k
 
                 call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                              MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-                call MPI_Type_commit(io_aux(3)%subarray, ims_err)
+                                              MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(3)%subarray, ims_err)
+                call MPI_Type_commit(io_subarrays(3)%subarray, ims_err)
 
-!        subarray(3) = io_aux(3)%subarray ! to be removed
+!        subarray(3) = io_subarrays(3)%subarray ! to be removed
 
             end if
 
@@ -605,8 +611,8 @@ contains
         else if (opt_main == 4) then
 
 ! 1. Ox cross-correlation
-            if (ims_pro_k == 0) io_aux(1)%active = .true.
-            io_aux(1)%communicator = ims_comm_x
+            if (ims_pro_k == 0) io_subarrays(1)%active = .true.
+            io_subarrays(1)%communicator = ims_comm_x
 
             ndims = 2 ! Subarray for the output of the Ox cross-correlation
             sizes(1) = imax*ims_npro_i; sizes(2) = jmax/nblock
@@ -614,14 +620,14 @@ contains
             offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock
 
             call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(1)%subarray, ims_err)
-            call MPI_Type_commit(io_aux(1)%subarray, ims_err)
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(1)%subarray, ims_err)
+            call MPI_Type_commit(io_subarrays(1)%subarray, ims_err)
 
-!     subarray(1) = io_aux(1)%subarray ! to be removed
+!     subarray(1) = io_subarrays(1)%subarray ! to be removed
 
 ! 2. Oz cross-correlation
-            if (ims_pro_i == 0) io_aux(2)%active = .true.
-            io_aux(2)%communicator = ims_comm_z
+            if (ims_pro_i == 0) io_subarrays(2)%active = .true.
+            io_subarrays(2)%communicator = ims_comm_z
 
             ndims = 2 ! Subarray for the output of the Oz cross-correlation
             sizes(1) = kmax*ims_npro_k; sizes(2) = jmax/nblock
@@ -629,14 +635,14 @@ contains
             offset(1) = ims_offset_k; offset(2) = ims_offset_j/nblock
 
             call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(2)%subarray, ims_err)
-            call MPI_Type_commit(io_aux(2)%subarray, ims_err)
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(2)%subarray, ims_err)
+            call MPI_Type_commit(io_subarrays(2)%subarray, ims_err)
 
-!     subarray(2) = io_aux(2)%subarray ! to be removed
+!     subarray(2) = io_subarrays(2)%subarray ! to be removed
 
 ! 3. Full 2D cross-correlation
-            io_aux(3)%active = .true.
-            io_aux(3)%communicator = MPI_COMM_WORLD
+            io_subarrays(3)%active = .true.
+            io_subarrays(3)%communicator = MPI_COMM_WORLD
 
             ndims = 3 ! Subarray for the output of the 2D data
             sizes(1) = imax*ims_npro_i; sizes(2) = jmax/nblock; sizes(3) = kmax*ims_npro_k
@@ -644,10 +650,10 @@ contains
             offset(1) = ims_offset_i; offset(2) = ims_offset_j/nblock; offset(3) = ims_offset_k
 
             call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_aux(3)%subarray, ims_err)
-            call MPI_Type_commit(io_aux(3)%subarray, ims_err)
+                                          MPI_ORDER_FORTRAN, MPI_REAL4, io_subarrays(3)%subarray, ims_err)
+            call MPI_Type_commit(io_subarrays(3)%subarray, ims_err)
 
-!     subarray(3) = io_aux(3)%subarray ! to be removed
+!     subarray(3) = io_subarrays(3)%subarray ! to be removed
 
         end if
 
