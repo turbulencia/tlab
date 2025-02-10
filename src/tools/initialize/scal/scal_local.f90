@@ -198,7 +198,7 @@ contains
 
         select case (flag_s)
         case (PERT_LAYER_BROADBAND)
-            call IO_READ_FIELDS('scal.rand', imax, jmax, kmax, itime, inb_scal, is, tmp, params)
+            call IO_Read_Fields('scal.rand', imax, jmax, kmax, itime, inb_scal, is, tmp, params)
 
             amplify = 0.0_wp
             do j = 1, jmax
@@ -260,7 +260,7 @@ contains
         disp(:, :) = 0.0_wp
         select case (flag_s)
         case (PERT_PLANE_BROADBAND, PERT_DELTA_BROADBAND, PERT_FLUX_BROADBAND)
-            call IO_READ_FIELDS('scal.rand', imax, 1, kmax, itime, 1, 1, disp(:, :), params)
+            call IO_Read_Fields('scal.rand', imax, 1, kmax, itime, 1, 1, disp(:, :), params)
             dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp(:, :))     ! remove mean
             disp(:, :) = disp(:, :) - dummy
 

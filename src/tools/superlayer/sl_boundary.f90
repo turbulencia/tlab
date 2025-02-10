@@ -221,13 +221,13 @@ call Rotation_Initialize(ifile)
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 3, 0, q, params)
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, 3, 0, q, params)
             rtime = params(1)
         end if
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, s, params)
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, s, params)
             rtime = params(1)
         end if
 
@@ -296,7 +296,7 @@ call Rotation_Initialize(ifile)
 
 ! save scalar dissipation as scalar field
             ! WRITE(fname,*) itime; fname = 'chi'//TRIM(ADJUSTL(fname))
-            ! CALL IO_WRITE_FIELDS(fname, IO_SCAL, imax,jmax,kmax, i1, field)
+            ! CALL IO_Write_Fields(fname, IO_SCAL, imax,jmax,kmax, i1, field)
 
 ! -------------------------------------------------------------------
 ! Surface PDFs

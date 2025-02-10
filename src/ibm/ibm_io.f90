@@ -26,7 +26,7 @@ subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
     use  TLab_Constants, only: wp, wi
     use  TLab_Memory, only: imax, jmax, kmax, isize_field
     use  IBM_VARS, only: epsp, eps, eps_name, epsp_name
-    use  IO_FIELDS, only: IO_READ_FIELD_INT1
+    use  IO_FIELDS, only: IO_Read_Field_INT1
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
     implicit none
@@ -52,7 +52,7 @@ subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
 
     ! header without params
     ! read eps field as int(1)
-    call IO_READ_FIELD_INT1(name, imax, jmax, kmax, 0, int_wrk, params)
+    call IO_Read_Field_INT1(name, imax, jmax, kmax, 0, int_wrk, params)
 
     ! type casting
     if (stag) then
@@ -73,7 +73,7 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
     use TLab_Constants, only: wp, wi
     use IBM_VARS,       only: epsp, eps, eps_name, epsp_name
     use TLab_Memory, only: isize_field, imax, jmax, kmax
-    use IO_FIELDS,      only: IO_WRITE_FIELD_INT1
+    use IO_FIELDS,      only: IO_Write_Field_INT1
 
     implicit none
 
@@ -95,7 +95,7 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
 
     ! header (offset, nx, ny, nz, nt == 20 byte)
     ! write eps field as int(1)
-    call IO_WRITE_FIELD_INT1(name, imax, jmax, kmax, 0, wrk3d)
+    call IO_Write_Field_INT1(name, imax, jmax, kmax, 0, wrk3d)
 
     return
 end subroutine IBM_IO_WRITE_INT_GEOMETRY
@@ -106,7 +106,7 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
     use TLab_Constants, only: wp, wi
     use IBM_VARS, only: epsp, eps, eps_name, epsp_name
     use TLab_Memory, only: isize_field, imax, jmax, kmax
-    use IO_FIELDS,      only: IO_WRITE_FIELD_INT1
+    use IO_FIELDS,      only: IO_Write_Field_INT1
 
     implicit none
 
@@ -138,7 +138,7 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
 
     ! header (offset, nx, ny, nz, nt == 20 byte)
     ! write bitwise eps_bit field as int(1)
-    call IO_WRITE_FIELD_INT1(name, imax_bit, jmax, kmax, 0, eps_bit)
+    call IO_Write_Field_INT1(name, imax_bit, jmax, kmax, 0, eps_bit)
 
     nullify (eps_bit)
 
@@ -151,7 +151,7 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
     use TLab_Constants, only: wp, wi
     use IBM_VARS, only: epsp, eps, eps_name, epsp_name
     use TLab_Memory, only: isize_field, imax, jmax, kmax
-    use IO_FIELDS, only: IO_READ_FIELD_INT1
+    use IO_FIELDS, only: IO_Read_Field_INT1
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
     implicit none
@@ -181,7 +181,7 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
 
     ! header without params
     ! read eps field as int(1)
-    call IO_READ_FIELD_INT1(name, imax_bit, jmax, kmax, 0, int_wrk, params)
+    call IO_Read_Field_INT1(name, imax_bit, jmax, kmax, 0, int_wrk, params)
 
     ! wp real to bitwise int1
     if (stag) then

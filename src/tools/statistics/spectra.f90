@@ -543,13 +543,13 @@ program SPECTRA
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
             rtime = params(1)
         end if
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
             rtime = params(1)
         end if
 
@@ -735,12 +735,12 @@ program SPECTRA
                 end if
                 fname = 'x'//trim(adjustl(tag_file))//trim(adjustl(str))
                 sizes(1) = kxmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                call IO_WRITE_SUBARRAY(io_subarrays(1), fname, varname, outx, sizes)
+                call IO_Write_Subarray(io_subarrays(1), fname, varname, outx, sizes)
 
                 if (g(3)%size > 1) then
                     fname = 'z'//trim(adjustl(tag_file))//trim(adjustl(str))
                     sizes(1) = kzmax*jmax_aux; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                    call IO_WRITE_SUBARRAY(io_subarrays(2), fname, varname, outz, sizes)
+                    call IO_Write_Subarray(io_subarrays(2), fname, varname, outz, sizes)
                 end if
 
                 if (icalc_radial == 1) then
@@ -753,16 +753,16 @@ program SPECTRA
                     if (flag_mode == 2) then ! correlations
                         fname = 'cor'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                        call IO_WRITE_SUBARRAY(io_subarrays(3), fname, varname, out2d, sizes)
+                        call IO_Write_Subarray(io_subarrays(3), fname, varname, out2d, sizes)
 
                     else                         ! spectra
                         fname = 'pow'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1; sizes(3) = sizes(1)/2; sizes(4) = 1; sizes(5) = nfield
-                        call IO_WRITE_SUBARRAY(io_subarrays(3), fname, varname, out2d, sizes)
+                        call IO_Write_Subarray(io_subarrays(3), fname, varname, out2d, sizes)
 
                         fname = 'pha'//trim(adjustl(str))
                         sizes(1) = isize_out2d; sizes(2) = 1 + sizes(1)/2; sizes(3) = sizes(1); sizes(4) = 1; sizes(5) = nfield
-                        call IO_WRITE_SUBARRAY(io_subarrays(3), fname, varname, out2d, sizes)
+                        call IO_Write_Subarray(io_subarrays(3), fname, varname, out2d, sizes)
 
                     end if
 

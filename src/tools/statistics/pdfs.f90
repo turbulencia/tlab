@@ -302,13 +302,13 @@ call Rotation_Initialize(ifile)
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
             rtime = params(1)
         end if
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
             rtime = params(1)
         end if
 
@@ -319,7 +319,7 @@ call Rotation_Initialize(ifile)
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! External file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
-            call IO_READ_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
+            call IO_Read_Field_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then

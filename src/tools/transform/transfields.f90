@@ -466,13 +466,13 @@ call Rotation_Initialize(ifile)
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params)
+            call IO_Read_Fields(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params)
             rtime = params(1)
         end if
 
         if (iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params)
+            call IO_Read_Fields(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params)
             rtime = params(1)
         end if
 
@@ -685,11 +685,11 @@ call Rotation_Initialize(ifile)
         if (opt_main /= 4 .and. opt_main /= 7) then
             if (flow_on) then
                 flow_file = trim(adjustl(flow_file))//'.trn'
-                call IO_WRITE_FIELDS(flow_file, imax_dst, jmax_dst, kmax_dst, itime, inb_flow, q_dst, io_header_q(1:1))
+                call IO_Write_Fields(flow_file, imax_dst, jmax_dst, kmax_dst, itime, inb_flow, q_dst, io_header_q(1:1))
             end if
             if (scal_on) then
                 scal_file = trim(adjustl(scal_file))//'.trn'
-                call IO_WRITE_FIELDS(scal_file, imax_dst, jmax_dst, kmax_dst, itime, inb_scal_dst, s_dst, io_header_s(1:inb_scal_dst))
+                call IO_Write_Fields(scal_file, imax_dst, jmax_dst, kmax_dst, itime, inb_scal_dst, s_dst, io_header_s(1:inb_scal_dst))
             end if
         end if
 
@@ -705,11 +705,11 @@ call Rotation_Initialize(ifile)
     if (opt_main == 4 .or. opt_main == 7) then
         if (flow_on) then
             flow_file = trim(adjustl(flow_file))//'.trn'
-            call IO_WRITE_FIELDS(flow_file, imax_dst, jmax_dst, kmax_dst, itime, inb_flow, q_dst, io_header_q(1:1))
+            call IO_Write_Fields(flow_file, imax_dst, jmax_dst, kmax_dst, itime, inb_flow, q_dst, io_header_q(1:1))
         end if
         if (scal_on) then
             scal_file = trim(adjustl(scal_file))//'.trn'
-            call IO_WRITE_FIELDS(scal_file, imax_dst, jmax_dst, kmax_dst, itime, inb_scal_dst, s_dst, io_header_s(1:inb_scal_dst))
+            call IO_Write_Fields(scal_file, imax_dst, jmax_dst, kmax_dst, itime, inb_scal_dst, s_dst, io_header_s(1:inb_scal_dst))
         end if
     end if
 

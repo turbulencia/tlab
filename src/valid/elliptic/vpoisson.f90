@@ -105,7 +105,7 @@ program VPOISSON
 ! ###################################################################
     case (1) ! The input field f is used as rhs in lap a = f and we solve for a
 
-        call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, f, params)
+        call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, f, params)
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
 
@@ -152,12 +152,12 @@ program VPOISSON
 
         ! -------------------------------------------------------------------
         b(:, 1, :) = f(:, 1, :); b(:, jmax, :) = f(:, jmax, :)  ! The boundary points do not satisfy the PDE
-        call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
+        call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
         call check(f, b, txc(:, 1), 'field.dif')
 
 ! ###################################################################
     case (2) ! The input field a is used to construct the forcing term as lap a = f
-        call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+        call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
         ! ! remove 2\Delta x wave
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
@@ -219,7 +219,7 @@ program VPOISSON
         end if
 
         ! -------------------------------------------------------------------
-        call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
+        call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
         call check(a, b, txc(:, 1), 'field.dif')
 
         call check(c, d, txc(:, 1))
@@ -251,7 +251,7 @@ contains
         end do
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         if (present(name)) then
-            call IO_WRITE_FIELDS(name, imax, jmax, kmax, itime, 1, dif, io_header_s(1:1))
+            call IO_Write_Fields(name, imax, jmax, kmax, itime, 1, dif, io_header_s(1:1))
         end if
 
         return

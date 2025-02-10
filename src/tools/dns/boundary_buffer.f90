@@ -237,7 +237,7 @@ contains
                 ! Buffer lives on exactly one PE in x; we can use ims_comm_z
                 if (item%size > 0) then
                     io_subarrays(id)%active = .true.
-                    io_subarrays(id)%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*item%total_size, kmax, MPI_REAL8)
+                    io_subarrays(id)%subarray = IO_Create_Subarray_ZOY(jmax*item%total_size, kmax, MPI_REAL8)
                     io_subarrays(id)%communicator = ims_comm_z
                 else
                     io_subarrays(id)%active = .false.
@@ -278,13 +278,13 @@ contains
 #ifdef USE_MPI
             io_subarrays(id)%active = .true.
             io_subarrays(id)%communicator = MPI_COMM_WORLD
-            io_subarrays(id)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, item%size, kmax, MPI_REAL8)
+            io_subarrays(id)%subarray = IO_Create_Subarray_XOZ(imax, item%size, kmax, MPI_REAL8)
 #endif
             idummy = imax*item%size*kmax; io_sizes = (/idummy, 1, idummy, 1, item%nfields/)
         end select
 
         if (BuffLoad) then
-            call IO_READ_SUBARRAY(io_subarrays(id), tag, varname, item%ref, io_sizes)
+            call IO_Read_Subarray(io_subarrays(id), tag, varname, item%ref, io_sizes)
 
         else
             select case (idir)
@@ -323,7 +323,7 @@ contains
             end select
 
             write (str, *) itime; str = trim(adjustl(tag))//'.'//trim(adjustl(str))
-            call IO_WRITE_SUBARRAY(io_subarrays(id), str, varname, item%ref, io_sizes)
+            call IO_Write_Subarray(io_subarrays(id), str, varname, item%ref, io_sizes)
 
         end if
 

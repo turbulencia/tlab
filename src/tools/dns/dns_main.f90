@@ -150,11 +150,11 @@ use Rotation, only: Rotation_Initialize
 
     if (scal_on) then
         write (fname, *) nitera_first; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+        call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
     end if
 
     write (fname, *) nitera_first; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-    call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:2))
+    call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:2))
     rtime = params(1); visc = params(2)
 
     call FI_DIAGNOSTIC(imax, jmax, kmax, q, s)  ! Initialize diagnostic thermodynamic quantities
@@ -319,12 +319,12 @@ use Rotation, only: Rotation_Initialize
 
             if (flow_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, q, io_header_q(1:1))
+                call IO_Write_Fields(fname, imax, jmax, kmax, itime, inb_flow, q, io_header_q(1:1))
             end if
 
             if (scal_on) then
                 write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, s, io_header_s(1:inb_scal))
+                call IO_Write_Fields(fname, imax, jmax, kmax, itime, inb_scal, s, io_header_s(1:inb_scal))
             end if
 
             if (use_tower) then

@@ -166,11 +166,11 @@ call Rotation_Initialize(ifile)
 
 ! read data
         write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 3, 0, q, params)
+        call IO_Read_Fields(fname, imax, jmax, kmax, itime, 3, 0, q, params)
         rtime = params(1)
 
         write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, z1, params)
+        call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_scal, inb_scal, z1, params)
 
 ! do correlations
         call SL_CORRELATION_1(ilog, y, dx, dy, dz, u, v, w, z1, profiles, &

@@ -151,8 +151,8 @@ contains
                 call TLab_Write_ASCII(lfile, line)
             end if
 
-            call IO_READ_FIELDS(fname, g_inf(1)%size, g_inf(2)%size, kmax, itime, inb_flow, 0, q_inf, params)
-            call IO_READ_FIELDS(sname, g_inf(1)%size, g_inf(2)%size, kmax, itime, inb_scal, 0, s_inf, params)
+            call IO_Read_Fields(fname, g_inf(1)%size, g_inf(2)%size, kmax, itime, inb_flow, 0, q_inf, params)
+            call IO_Read_Fields(sname, g_inf(1)%size, g_inf(2)%size, kmax, itime, inb_scal, 0, s_inf, params)
 
             ! array p contains the internal energy. Now we put in the pressure
             call THERMO_CALORIC_TEMPERATURE(g_inf(1)%size*g_inf(2)%size*kmax, s_inf, q_inf(1, 1, 1, 4), q_inf(1, 1, 1, 5), txc, wrk3d)

@@ -63,11 +63,11 @@ program VFFTW
 !        ENDDO
 !     ENDDO
 !  ENDDO
-    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+    call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
 !  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), a, c)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-    call IO_WRITE_FIELDS('field.ref', imax, jmax, kmax, itime, 1, c)
+    call IO_Write_Fields('field.ref', imax, jmax, kmax, itime, 1, c)
 
 ! ###################################################################
     call dfftw_plan_dft_r2c_1d &
@@ -152,7 +152,7 @@ program VFFTW
         end do
     end do
 
-    call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, b)
+    call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, b)
 
 ! ###################################################################
 ! Error

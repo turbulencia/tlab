@@ -315,7 +315,7 @@ call Rotation_Initialize(ifile)
 #ifdef USE_MPI
         io_envelopes%active = .true.
         io_envelopes%communicator = MPI_COMM_WORLD
-        io_envelopes%subarray = IO_CREATE_SUBARRAY_XOZ(imax, igate_size*2, kmax, MPI_REAL4)
+        io_envelopes%subarray = IO_Create_Subarray_XOZ(imax, igate_size*2, kmax, MPI_REAL4)
 #endif
 
         allocate (surface(imax, 2*igate_size, kmax))
@@ -396,13 +396,13 @@ call Rotation_Initialize(ifile)
 
         if (iread_scal) then
             write (fname, *) itime; fname = trim(adjustl(tag_scal))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
             rtime = params(1)
         end if
 
         if (iread_flow) then
             write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-            call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            call IO_Read_Fields(fname, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
             rtime = params(1)
         end if
 
@@ -418,7 +418,7 @@ call Rotation_Initialize(ifile)
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! External file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
-            call IO_READ_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
+            call IO_Read_Field_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
             igate_size = int(params(2))
 
             if (opt_main == 2) rtime = params(1)
@@ -530,7 +530,7 @@ call Rotation_Initialize(ifile)
             if (opt_cond > 1) then ! write only if the gate information has not been read
                 write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
                 params(1) = rtime; params(2) = real(igate_size, wp)
-                call IO_WRITE_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
+                call IO_Write_Field_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
 
                 do is = 1, igate_size
                     gate_level = int(is, KIND=1)
@@ -547,7 +547,7 @@ call Rotation_Initialize(ifile)
                 end do
                 varname = ''
                 write (fname, *) itime; fname = 'envelopesJ.'//trim(adjustl(fname))
-                call IO_WRITE_SUBARRAY(io_envelopes, fname, varname, surface, io_sizes)
+                call IO_Write_Subarray(io_envelopes, fname, varname, surface, io_sizes)
 
             end if
 

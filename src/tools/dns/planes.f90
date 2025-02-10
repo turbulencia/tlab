@@ -179,7 +179,7 @@ contains
             io_subarray_xy%active = .false.  ! defaults
             if (ims_pro_k == (kplanes%nodes(1)/kmax)) io_subarray_xy%active = .true.
             io_subarray_xy%communicator = ims_comm_x
-            io_subarray_xy%subarray = IO_CREATE_SUBARRAY_XOY(imax, jmax*kplanes%size, MPI_REAL4)
+            io_subarray_xy%subarray = IO_Create_Subarray_XOY(imax, jmax*kplanes%size, MPI_REAL4)
 #endif
         end if
 
@@ -190,7 +190,7 @@ contains
             io_subarray_zy%active = .false.  ! defaults
             if (ims_pro_i == (iplanes%nodes(1)/imax)) io_subarray_zy%active = .true.
             io_subarray_zy%communicator = ims_comm_z
-            io_subarray_zy%subarray = IO_CREATE_SUBARRAY_ZOY(jmax*iplanes%size, kmax, MPI_REAL4)
+            io_subarray_zy%subarray = IO_Create_Subarray_ZOY(jmax*iplanes%size, kmax, MPI_REAL4)
 #endif
         end if
 
@@ -200,7 +200,7 @@ contains
 #ifdef USE_MPI
             io_subarray_xz%active = .true.
             io_subarray_xz%communicator = MPI_COMM_WORLD
-            io_subarray_xz%subarray = IO_CREATE_SUBARRAY_XOZ(imax, jplanes%size, kmax, MPI_REAL4)
+            io_subarray_xz%subarray = IO_Create_Subarray_XOZ(imax, jplanes%size, kmax, MPI_REAL4)
 #endif
 
         end if
@@ -289,7 +289,7 @@ contains
                 offset = offset + kplanes%n
             end do
             write (fname, *) itime; fname = 'planesK.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY(io_subarray_xy, fname, varname, data_k, kplanes%io)
+            call IO_Write_Subarray(io_subarray_xy, fname, varname, data_k, kplanes%io)
 
         end if
 
@@ -315,7 +315,7 @@ contains
                 offset = offset + 1
             end if
             write (fname, *) itime; fname = 'planesJ.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY(io_subarray_xz, fname, varname, data_j, jplanes%io)
+            call IO_Write_Subarray(io_subarray_xz, fname, varname, data_j, jplanes%io)
 
         end if
 
@@ -337,7 +337,7 @@ contains
                 offset = offset + iplanes%n
             end do
             write (fname, *) itime; fname = 'planesI.'//trim(adjustl(fname))
-            call IO_WRITE_SUBARRAY(io_subarray_zy, fname, varname, data_i, iplanes%io)
+            call IO_Write_Subarray(io_subarray_zy, fname, varname, data_i, iplanes%io)
 
         end if
 

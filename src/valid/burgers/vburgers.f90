@@ -69,7 +69,7 @@ program VBURGERS
 ! ###################################################################
 ! Define forcing term
 ! ###################################################################
-    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+    call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
     visc = 1.0_wp/big_wp
 
@@ -83,10 +83,10 @@ program VBURGERS
             end do
         end do
     end do
-    call IO_WRITE_FIELDS('fieldXdirect.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
+    call IO_Write_Fields('fieldXdirect.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
 
     call OPR_Burgers_X(OPR_B_SELF, 0, imax, jmax, kmax, bcs, a, a, c, tmp1)
-    call IO_WRITE_FIELDS('fieldXburgers.out', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
+    call IO_Write_Fields('fieldXburgers.out', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -97,7 +97,7 @@ program VBURGERS
     if (ims_pro == 0) then
         write (*, *) 'Relative error X ...........: ', sqrt(error)/sqrt(dummy)
     end if
-    call IO_WRITE_FIELDS('fieldX.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
+    call IO_Write_Fields('fieldX.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
 ! ###################################################################
     call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c)
@@ -109,10 +109,10 @@ program VBURGERS
             end do
         end do
     end do
-    call IO_WRITE_FIELDS('fieldYdirect.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
+    call IO_Write_Fields('fieldYdirect.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
 
     call OPR_Burgers_Y(OPR_B_SELF, 0, imax, jmax, kmax, bcs, a, a, c, tmp1)
-    call IO_WRITE_FIELDS('fieldYburgers.out', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
+    call IO_Write_Fields('fieldYburgers.out', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
     c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -123,7 +123,7 @@ program VBURGERS
     if (ims_pro == 0) then
         write (*, *) 'Relative error Y ...........: ', sqrt(error)/sqrt(dummy)
     end if
-    call IO_WRITE_FIELDS('fieldY.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
+    call IO_Write_Fields('fieldY.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
 ! ###################################################################
     if (g(3)%size > 1) then
@@ -137,10 +137,10 @@ program VBURGERS
                 end do
             end do
         end do
-        call IO_WRITE_FIELDS('fieldZdirect.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
+        call IO_Write_Fields('fieldZdirect.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
 
         call OPR_Burgers_Z(OPR_B_SELF, 0, imax, jmax, kmax, bcs, a, a, c, tmp1)
-        call IO_WRITE_FIELDS('fieldZburgers.out', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
+        call IO_Write_Fields('fieldZburgers.out', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
         c = c - b; error = sum(c**2); dummy = sum(b**2)
 #ifdef USE_MPI
@@ -151,7 +151,7 @@ program VBURGERS
         if (ims_pro == 0) then
             write (*, *) 'Relative error Z ...........: ', sqrt(error)/sqrt(dummy)
         end if
-        call IO_WRITE_FIELDS('fieldZ.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
+        call IO_Write_Fields('fieldZ.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
     end if
 

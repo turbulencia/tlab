@@ -58,7 +58,7 @@ program VPARTIAL3D
     ! type_of_problem = 1     ! 1. order derivative
     type_of_problem = 2     ! 2. order derivative
 
-    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, f, params)
+    call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, f, params)
 
     select case (type_of_problem)
 ! ###################################################################
@@ -71,14 +71,14 @@ program VPARTIAL3D
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
-        call IO_WRITE_FIELDS('field.out1', imax, jmax, kmax, itime, 1, a)
+        call IO_Write_Fields('field.out1', imax, jmax, kmax, itime, 1, a)
 
         g(2)%mode_fdm1 = FDM_COM4_DIRECT
         call FDM_Initialize(y, g(2), wrk1d(:, 2), wrk1d(:, 4))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, b, d)
-        call IO_WRITE_FIELDS('field.out2', imax, jmax, kmax, itime, 1, b)
+        call IO_Write_Fields('field.out2', imax, jmax, kmax, itime, 1, b)
 
         ! -------------------------------------------------------------------
         call check(a, b, txc(:, 1), 'field.dif')
@@ -112,7 +112,7 @@ contains
         end do
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         if (present(name)) then
-            call IO_WRITE_FIELDS(name, imax, jmax, kmax, itime, 1, dif)
+            call IO_Write_Fields(name, imax, jmax, kmax, itime, 1, dif)
         end if
 
         return

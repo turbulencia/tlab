@@ -416,7 +416,7 @@ program VISUALS
 
         if (scal_on .and. iread_scal) then ! Scalar variables
             write (scal_file, *) itime; scal_file = trim(adjustl(tag_scal))//trim(adjustl(scal_file))
-            call IO_READ_FIELDS(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
+            call IO_Read_Fields(scal_file, imax, jmax, kmax, itime, inb_scal, 0, s, params(1:1))
             rtime = params(1)
         elseif (.not. scal_on) then
             s = 0.0_wp
@@ -424,7 +424,7 @@ program VISUALS
 
         if (iread_flow) then ! Flow variables
             write (flow_file, *) itime; flow_file = trim(adjustl(tag_flow))//trim(adjustl(flow_file))
-            call IO_READ_FIELDS(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
+            call IO_Read_Fields(flow_file, imax, jmax, kmax, itime, inb_flow, 0, q, params(1:1))
             rtime = params(1)
         end if
 
@@ -447,7 +447,7 @@ program VISUALS
         ! -------------------------------------------------------------------
         if (opt_cond == 1) then ! Read external file
             write (fname, *) itime; fname = 'gate.'//trim(adjustl(fname))
-            call IO_READ_FIELD_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
+            call IO_Read_Field_INT1(fname, imax, jmax, kmax, itime, gate, params(1:2))
             igate_size = int(params(2))
 
         else if (opt_cond > 1) then
@@ -1130,14 +1130,14 @@ contains
         select case (iformat)
 
         case (FORMAT_GENERAL)
-            if (nfield > 1 .and. isize_txc_field > nx*ny*nz) then ! IO_WRITE_FIELDS expects field to be aligned by nx*ny*nz (instead of isize_txc_field)
+            if (nfield > 1 .and. isize_txc_field > nx*ny*nz) then ! IO_Write_Fields expects field to be aligned by nx*ny*nz (instead of isize_txc_field)
                 do ifield = 2, nfield
                     do i = 1, nx*ny*nz
                         field((ifield - 1)*nx*ny*nz + i, 1) = field(i, ifield)
                     end do
                 end do
             end if
-            call IO_WRITE_FIELDS(fname, nx, ny, nz, itime, nfield, field)
+            call IO_Write_Fields(fname, nx, ny, nz, itime, nfield, field)
 
             ! case (FORMAT_ENSIGHT)
             !     call ENSIGHT_FIELD(fname, i1, nx, ny, nz, nfield, subdomain, field, txc)
@@ -1155,7 +1155,7 @@ contains
                     do ifield = 1, nfield; write (varname(ifield), *) ifield; varname(ifield) = trim(adjustl(varname(ifield)))
                     end do
                 end if
-                call IO_WRITE_SUBARRAY(io_subarrays(iflag_mode), fname, varname, field, sizes)
+                call IO_Write_Subarray(io_subarrays(iflag_mode), fname, varname, field, sizes)
 
             else                                                ! single precision, through PE0
                 do ifield = 1, nfield
@@ -1211,17 +1211,17 @@ contains
         ! Saving full vertical xOy planes; using subdomain(5) to define the plane
         if (ims_pro_k == ((subdomain(5) - 1)/kmax)) io_subarrays(IO_SUBARRAY_VISUALS_XOY)%active = .true.
         io_subarrays(IO_SUBARRAY_VISUALS_XOY)%communicator = ims_comm_x
-        io_subarrays(IO_SUBARRAY_VISUALS_XOY)%subarray = IO_CREATE_SUBARRAY_XOY(imax, ny_loc, MPI_REAL4)
+        io_subarrays(IO_SUBARRAY_VISUALS_XOY)%subarray = IO_Create_Subarray_XOY(imax, ny_loc, MPI_REAL4)
 
         ! Saving full vertical zOy planes; using subiddomain(1) to define the plane
         if (ims_pro_i == ((subdomain(1) - 1)/imax)) io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%active = .true.
         io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%communicator = ims_comm_z
-        io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%subarray = IO_CREATE_SUBARRAY_ZOY(ny_loc, kmax, MPI_REAL4)
+        io_subarrays(IO_SUBARRAY_VISUALS_ZOY)%subarray = IO_Create_Subarray_ZOY(ny_loc, kmax, MPI_REAL4)
 
         ! Saving full blocks xOz planes
         io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%active = .true.
         io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%communicator = MPI_COMM_WORLD
-        io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%subarray = IO_CREATE_SUBARRAY_XOZ(imax, ny_loc, kmax, MPI_REAL4)
+        io_subarrays(IO_SUBARRAY_VISUALS_XOZ)%subarray = IO_Create_Subarray_XOZ(imax, ny_loc, kmax, MPI_REAL4)
 
         return
     end subroutine VISUALS_MPio_subarrays

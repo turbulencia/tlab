@@ -55,11 +55,11 @@ program VTGVORTEX
         call FLOW_TAYLORGREEN(imax, jmax, kmax, rtime, visc, x, y, z, q(1, 1), q(1, 2), q(1, 3), q(1, 4))
         q(:, 1) = q(:, 1) + mean_u
         fname = 'pt0'
-        call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 3, q)
+        call IO_Write_Fields(fname, imax, jmax, kmax, itime, 3, q)
 
         q(:, 4) = C_0_R
         fname = 'sc0'
-        call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 1, q(1, 4))
+        call IO_Write_Fields(fname, imax, jmax, kmax, itime, 1, q(1, 4))
 
 ! ###################################################################
     else if (iopt == 2) then
@@ -67,13 +67,13 @@ program VTGVORTEX
         read (*, *) itime
 
         write (fname, *) itime; fname = trim(adjustl(tag_flow))//trim(adjustl(fname))
-        call IO_READ_FIELDS(fname, imax, jmax, kmax, itime, 3, 0, q, params)
+        call IO_Read_Fields(fname, imax, jmax, kmax, itime, 3, 0, q, params)
 
         txc(:, 1) = C_0_R; txc(:, 4) = C_0_R
 !  CALL Forcing_Sinusoidal_NoSlip(imax,jmax,kmax,  &
 !       rtime,visc, txc(1,1),txc(1,4), q(1,1),q(1,2),q(1,3),q(1,4))
 !  CALL Forcing_Sinusoidal(imax,jmax,kmax, rtime,visc, q(1,1),q(1,2), txc(1,1),txc(1,4))
-!  CALL IO_READ_FIELDS(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
+!  CALL IO_Read_Fields(fname, IO_FLOW, imax,jmax,kmax, i3,i0, q, wrk3d)
 
         call FI_PRESSURE_BOUSSINESQ(q(1, 1), q(1, 2), q(1, 3), txc(1, 4), q(1, 4), &
                                     txc(1, 1), txc(1, 2), txc(1, 3), DCMP_TOTAL)
@@ -99,7 +99,7 @@ program VTGVORTEX
                 write (*, *) 'L-2 error ..........: ', sqrt(error*g(1)%jac(1, 1)*g(2)%jac(1, 1))
                 write (*, *) 'Relative error .....: ', sqrt(error)/sqrt(dummy)
                 write (fname, *) iv; fname = 'error'//trim(adjustl(fname))
-                call IO_WRITE_FIELDS(fname, imax, jmax, kmax, itime, 1, txc(1, iv))
+                call IO_Write_Fields(fname, imax, jmax, kmax, itime, 1, txc(1, iv))
             end if
 
         end do

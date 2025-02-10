@@ -61,9 +61,9 @@ program vmpi_io_levante
     a = 0.0_wp
 
     ! single precission
-    subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL4)
+    subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_REAL4)
     ! double precission
-    ! subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL8)
+    ! subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_REAL8)
 
     !mpio_disp = 0
     mpio_disp = 1*sizeofint
@@ -99,7 +99,7 @@ program vmpi_io_levante
     stop
 
 contains
-    function IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, mpi_type) result(subarray)
+    function IO_Create_Subarray_XOZ(nx, ny, nz, mpi_type) result(subarray)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: mpi_type
 
@@ -115,6 +115,6 @@ contains
                                       MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
         call MPI_Type_commit(subarray, ims_err)
 
-    end function IO_CREATE_SUBARRAY_XOZ
+    end function IO_Create_Subarray_XOZ
 
 end program

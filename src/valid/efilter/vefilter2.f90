@@ -31,7 +31,7 @@ program VEFILTER2
     ! CALL FLT4E_INI(g(2)%scale, y, cy)
     ! CALL FLT4E_INI(g(3)%scale, z, cz)
 
-    call IO_READ_FIELDS('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+    call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
 !  CALL OPR_FILTER(i4, imax, jmax, kmax,  i1bc, j1bc, k1bc, i1, i1, i1, i1, a, &
 !       cx, cy, cz, wrk3d)
@@ -47,7 +47,7 @@ program VEFILTER2
     call OPR_FILTER(i3, imax, jmax, kmax, i1bc, j1bc, k1bc, i1, i1, i1, i1, wrk3d(1, 2), &
                     cx, cy, cz, a)
 
-    call IO_WRITE_FIELDS('field.out', imax, jmax, kmax, itime, 1, 1, a, io_header_s(1))
+    call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, 1, a, io_header_s(1))
 
     stop
 end program VEFILTER2

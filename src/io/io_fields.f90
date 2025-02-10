@@ -52,11 +52,11 @@ module IO_FIELDS
 #endif
     end type io_subarray_dt
 
-    public :: IO_READ_FIELDS, IO_WRITE_FIELDS
-    public :: IO_READ_FIELD_INT1, IO_WRITE_FIELD_INT1
-    public :: IO_WRITE_SUBARRAY, IO_READ_SUBARRAY
+    public :: IO_Read_Fields, IO_Write_Fields
+    public :: IO_Read_Field_INT1, IO_Write_Field_INT1
+    public :: IO_Read_Subarray, IO_Write_Subarray
 #ifdef USE_MPI
-    public :: IO_CREATE_SUBARRAY_XOY, IO_CREATE_SUBARRAY_XOZ, IO_CREATE_SUBARRAY_ZOY
+    public :: IO_Create_Subarray_XOY, IO_Create_Subarray_XOZ, IO_Create_Subarray_ZOY
     public :: TLabMPI_WRITE_PE0_SINGLE
 #endif
 
@@ -80,11 +80,11 @@ contains
 #ifdef USE_MPI
     !########################################################################
     !########################################################################
-    function IO_CREATE_SUBARRAY_XOY(nx, ny, mpi_type) result(subarray)
+    function IO_Create_Subarray_XOY(nx, ny, locType) result(locSubarray)
         integer(wi), intent(in) :: nx, ny
-        type(MPI_Datatype), intent(in) :: mpi_type
+        type(MPI_Datatype), intent(in) :: locType
 
-        type(MPI_Datatype) :: subarray
+        type(MPI_Datatype) :: locSubarray
         integer, parameter :: ndims = 2
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
@@ -92,17 +92,18 @@ contains
         locsize = [nx, ny]
         offset = [nx*ims_pro_i, 0]
 
-        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                      MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
-        call MPI_Type_commit(subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, MPI_ORDER_FORTRAN, locType, locSubarray, ims_err)
+        call MPI_Type_commit(locSubarray, ims_err)
 
-    end function IO_CREATE_SUBARRAY_XOY
+    end function IO_Create_Subarray_XOY
 
-    function IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, mpi_type) result(subarray)
+    !########################################################################
+    !########################################################################
+    function IO_Create_Subarray_XOZ(nx, ny, nz, locType) result(locSubarray)
         integer(wi), intent(in) :: nx, ny, nz
-        type(MPI_Datatype), intent(in) :: mpi_type
+        type(MPI_Datatype), intent(in) :: locType
 
-        type(MPI_Datatype) :: subarray
+        type(MPI_Datatype) :: locSubarray
         integer, parameter :: ndims = 3
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
@@ -110,17 +111,18 @@ contains
         locsize = [nx, ny, nz]
         offset = [nx*ims_pro_i, 0, nz*ims_pro_k]
 
-        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                      MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
-        call MPI_Type_commit(subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, MPI_ORDER_FORTRAN, locType, locSubarray, ims_err)
+        call MPI_Type_commit(locSubarray, ims_err)
 
-    end function IO_CREATE_SUBARRAY_XOZ
+    end function IO_Create_Subarray_XOZ
 
-    function IO_CREATE_SUBARRAY_ZOY(ny, nz, mpi_type) result(subarray)
+    !########################################################################
+    !########################################################################
+    function IO_Create_Subarray_ZOY(ny, nz, locType) result(locSubarray)
         integer(wi), intent(in) :: ny, nz
-        type(MPI_Datatype), intent(in) :: mpi_type
+        type(MPI_Datatype), intent(in) :: locType
 
-        type(MPI_Datatype) :: subarray
+        type(MPI_Datatype) :: locSubarray
         integer, parameter :: ndims = 2
         integer(wi) :: sizes(ndims), locsize(ndims), offset(ndims)
 
@@ -128,11 +130,10 @@ contains
         locsize = [ny, nz]
         offset = [0, nz*ims_pro_k]
 
-        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, &
-                                      MPI_ORDER_FORTRAN, mpi_type, subarray, ims_err)
-        call MPI_Type_commit(subarray, ims_err)
+        call MPI_Type_create_subarray(ndims, sizes, locsize, offset, MPI_ORDER_FORTRAN, locType, locSubarray, ims_err)
+        call MPI_Type_commit(locSubarray, ims_err)
 
-    end function IO_CREATE_SUBARRAY_ZOY
+    end function IO_Create_Subarray_ZOY
 #endif
 
     !########################################################################
@@ -140,7 +141,7 @@ contains
 #define LOC_UNIT_ID 54
 #define LOC_STATUS 'old'
 
-    subroutine IO_READ_FIELDS(fname, nx, ny, nz, nt, nfield, iread, a, params)
+    subroutine IO_Read_Fields(fname, nx, ny, nz, nt, nfield, iread, a, params)
         character(LEN=*) fname
         integer, intent(in) :: nfield, iread   ! iread=0 reads all nfields, otherwise iread field
         integer(wi), intent(in) :: nx, ny, nz, nt
@@ -185,9 +186,9 @@ contains
         case DEFAULT              ! One file with header per field
 #ifdef USE_MPI
             if (io_datatype == IO_TYPE_SINGLE) then
-                subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL4)
+                subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_REAL4)
             else
-                subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL8)
+                subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_REAL8)
             end if
 #endif
 
@@ -254,11 +255,11 @@ contains
         end select
 
         return
-    end subroutine IO_READ_FIELDS
+    end subroutine IO_Read_Fields
 
     !########################################################################
     !########################################################################
-    subroutine IO_READ_FIELD_INT1(name, nx, ny, nz, nt, a, params)
+    subroutine IO_Read_Field_INT1(name, nx, ny, nz, nt, a, params)
         character(len=*) name
         integer(wi), intent(in) :: nx, ny, nz, nt
         integer(1), intent(out) :: a(nx*ny*nz)
@@ -285,7 +286,7 @@ contains
         call TLab_Write_ASCII(lfile, line)
 
 #ifdef USE_MPI
-        subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_INTEGER1)
+        subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_INTEGER1)
 #endif
 
         ! -------------------------------------------------------------------
@@ -326,7 +327,7 @@ contains
 #endif
 
         return
-    end subroutine IO_READ_FIELD_INT1
+    end subroutine IO_Read_Field_INT1
 
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
@@ -336,7 +337,7 @@ contains
 #define LOC_UNIT_ID 55
 #define LOC_STATUS 'unknown'
 
-    subroutine IO_WRITE_FIELDS(fname, nx, ny, nz, nt, nfield, a, locHeader)
+    subroutine IO_Write_Fields(fname, nx, ny, nz, nt, nfield, a, locHeader)
         character(len=*), intent(in) :: fname
         integer, intent(in) :: nfield
         integer(wi), intent(in) :: nx, ny, nz, nt
@@ -380,9 +381,9 @@ contains
         case DEFAULT              ! One file with header per field
 #ifdef USE_MPI
             if (io_datatype == IO_TYPE_SINGLE) then
-                subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL4)
+                subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_REAL4)
             else
-                subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_REAL8)
+                subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_REAL8)
             end if
 #endif
 
@@ -446,11 +447,11 @@ contains
         end select
 
         return
-    end subroutine IO_WRITE_FIELDS
+    end subroutine IO_Write_Fields
 
     !########################################################################
     !########################################################################
-    subroutine IO_WRITE_FIELD_INT1(name, nx, ny, nz, nt, a, params)
+    subroutine IO_Write_Field_INT1(name, nx, ny, nz, nt, a, params)
         character(len=*) name
         integer(wi), intent(in) :: nx, ny, nz, nt
         integer(1), intent(in) :: a(nx*ny*nz)
@@ -477,7 +478,7 @@ contains
 
         ! ###################################################################
 #ifdef USE_MPI
-        subarray = IO_CREATE_SUBARRAY_XOZ(nx, ny, nz, MPI_INTEGER1)
+        subarray = IO_Create_Subarray_XOZ(nx, ny, nz, MPI_INTEGER1)
 #endif
 
         ! -------------------------------------------------------------------
@@ -517,7 +518,7 @@ contains
 #endif
 
         return
-    end subroutine IO_WRITE_FIELD_INT1
+    end subroutine IO_Write_Field_INT1
 
 #undef LOC_UNIT_ID
 #undef LOC_STATUS
@@ -590,8 +591,8 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine IO_WRITE_SUBARRAY(aux, fname, varname, data, sizes)
-        type(io_subarray_dt), intent(in) :: aux
+    subroutine IO_Write_Subarray(locSubarrayPlan, fname, varname, data, sizes)
+        type(io_subarray_dt), intent(in) :: locSubarrayPlan
         character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
         character*32, intent(in) :: varname(sizes(5))
@@ -611,7 +612,7 @@ contains
 
         isize = (sizes(3) - sizes(2))/sizes(4) + 1
 
-        if (aux%precision == IO_TYPE_SINGLE) then
+        if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
             line = 'Writing single precision field'
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[isize])
         else
@@ -619,7 +620,7 @@ contains
         end if
 
 #ifdef USE_MPI
-        if (aux%active) then
+        if (locSubarrayPlan%active) then
 #endif
 
             do iv = 1, sizes(5)
@@ -628,17 +629,17 @@ contains
                 call TLab_Write_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
-                call MPI_File_open(aux%communicator, trim(adjustl(name)), &
+                call MPI_File_open(locSubarrayPlan%communicator, trim(adjustl(name)), &
                                    ior(MPI_MODE_WRONLY, MPI_MODE_CREATE), MPI_INFO_NULL, mpio_fh, ims_err)
                 if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
-                if (aux%precision == IO_TYPE_SINGLE) then
-                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
+                    call MPI_File_set_view(mpio_fh, locSubarrayPlan%offset, MPI_REAL4, locSubarrayPlan%subarray, 'native', MPI_INFO_NULL, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     s_wrk(1:isize) = real(data(sizes(2):sizes(3):sizes(4), iv), sp)
                     call MPI_File_write_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 else
-                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    call MPI_File_set_view(mpio_fh, locSubarrayPlan%offset, MPI_REAL8, locSubarrayPlan%subarray, 'native', MPI_INFO_NULL, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     wrk3d(1:isize) = data(sizes(2):sizes(3):sizes(4), iv)
                     call MPI_File_write_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
@@ -649,8 +650,8 @@ contains
 
 #else
 #include "dns_open_file.h"
-                ioffset_local = aux%offset + 1
-                if (aux%precision == IO_TYPE_SINGLE) then
+                ioffset_local = locSubarrayPlan%offset + 1
+                if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
                     write (LOC_UNIT_ID, POS=ioffset_local) real(data(sizes(2):sizes(3):sizes(4), iv), sp)
                 else
                     write (LOC_UNIT_ID, POS=ioffset_local) data(sizes(2):sizes(3):sizes(4), iv)
@@ -665,12 +666,12 @@ contains
 #endif
 
         return
-    end subroutine IO_WRITE_SUBARRAY
+    end subroutine IO_Write_Subarray
 
 !########################################################################
 !########################################################################
-    subroutine IO_READ_SUBARRAY(aux, fname, varname, data, sizes)
-        type(io_subarray_dt), intent(in) :: aux
+    subroutine IO_Read_Subarray(locSubarrayPlan, fname, varname, data, sizes)
+        type(io_subarray_dt), intent(in) :: locSubarrayPlan
         character(len=*), intent(in) :: fname
         integer(wi), intent(in) :: sizes(5) ! total size, lower bound, upper bound, stride, # variables
         character*32, intent(in) :: varname(sizes(5))
@@ -690,7 +691,7 @@ contains
 
         isize = (sizes(3) - sizes(2))/sizes(4) + 1
 
-        if (aux%precision == IO_TYPE_SINGLE) then
+        if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
             line = 'Reading single precision field'
             call c_f_pointer(c_loc(wrk3d), s_wrk, shape=[isize])
         else
@@ -698,7 +699,7 @@ contains
         end if
 
 #ifdef USE_MPI
-        if (aux%active) then
+        if (locSubarrayPlan%active) then
 #endif
 
             do iv = 1, sizes(5)
@@ -707,16 +708,16 @@ contains
                 call TLab_Write_ASCII(lfile, trim(adjustl(line))//' '//trim(adjustl(name))//'...')
 
 #ifdef USE_MPI
-                call MPI_File_open(aux%communicator, trim(adjustl(name)), &
+                call MPI_File_open(locSubarrayPlan%communicator, trim(adjustl(name)), &
                                    MPI_MODE_RDONLY, MPI_INFO_NULL, mpio_fh, ims_err)
                 if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
-                if (aux%precision == IO_TYPE_SINGLE) then
-                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL4, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
+                    call MPI_File_set_view(mpio_fh, locSubarrayPlan%offset, MPI_REAL4, locSubarrayPlan%subarray, 'native', MPI_INFO_NULL, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     call MPI_File_read_all(mpio_fh, s_wrk, isize, MPI_REAL4, status, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                 else
-                    call MPI_File_set_view(mpio_fh, aux%offset, MPI_REAL8, aux%subarray, 'native', MPI_INFO_NULL, ims_err)
+                    call MPI_File_set_view(mpio_fh, locSubarrayPlan%offset, MPI_REAL8, locSubarrayPlan%subarray, 'native', MPI_INFO_NULL, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
                     call MPI_File_read_all(mpio_fh, wrk3d, isize, MPI_REAL8, status, ims_err)
                     if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
@@ -725,15 +726,15 @@ contains
                 if (ims_err /= MPI_SUCCESS) call TLabMPI_Panic(__FILE__, ims_err)
 #else
 #include "dns_open_file.h"
-                ioffset_local = aux%offset + 1
-                if (aux%precision == IO_TYPE_SINGLE) then
+                ioffset_local = locSubarrayPlan%offset + 1
+                if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
                     read (LOC_UNIT_ID, POS=ioffset_local) s_wrk(1:isize)
                 else
                     read (LOC_UNIT_ID, POS=ioffset_local) wrk3d(1:isize)
                 end if
                 close (LOC_UNIT_ID)
 #endif
-                if (aux%precision == IO_TYPE_SINGLE) then
+                if (locSubarrayPlan%precision == IO_TYPE_SINGLE) then
                     data(sizes(2):sizes(3):sizes(4), iv) = real(s_wrk(1:isize), wp)
                 else
                     data(sizes(2):sizes(3):sizes(4), iv) = wrk3d(1:isize)
@@ -746,7 +747,7 @@ contains
 #endif
 
         return
-    end subroutine IO_READ_SUBARRAY
+    end subroutine IO_Read_Subarray
 
     !########################################################################
     !########################################################################

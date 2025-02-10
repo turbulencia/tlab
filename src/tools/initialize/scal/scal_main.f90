@@ -131,7 +131,7 @@ program INISCAL
     end if
 
     ! ###################################################################
-    call IO_WRITE_FIELDS('scal.ics', imax, jmax, kmax, itime, inb_scal, s, io_header_s(1:inb_scal))
+    call IO_Write_Fields('scal.ics', imax, jmax, kmax, itime, inb_scal, s, io_header_s(1:inb_scal))
 
     call TLab_Stop(0)
 end program INISCAL

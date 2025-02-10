@@ -245,9 +245,9 @@ contains
         ! ###################################################################
         bcs = 0
 
-        call IO_READ_FIELDS('flow.rand', imax, jmax, kmax, itime, 3, 1, u, params)
-        call IO_READ_FIELDS('flow.rand', imax, jmax, kmax, itime, 3, 2, v, params)
-        call IO_READ_FIELDS('flow.rand', imax, jmax, kmax, itime, 3, 3, w, params)
+        call IO_Read_Fields('flow.rand', imax, jmax, kmax, itime, 3, 1, u, params)
+        call IO_Read_Fields('flow.rand', imax, jmax, kmax, itime, 3, 2, v, params)
+        call IO_Read_Fields('flow.rand', imax, jmax, kmax, itime, 3, 3, w, params)
 
         do j = 1, jmax   ! Remove mean
             dummy = AVG1V2D(imax, jmax, kmax, j, 1, u)
@@ -453,7 +453,7 @@ contains
 
         select case (flag_t)
         case (PERT_BROADBAND)
-            call IO_READ_FIELDS('scal.rand', imax, 1, kmax, itime, 1, 1, disp(:, :), params)
+            call IO_Read_Fields('scal.rand', imax, 1, kmax, itime, 1, 1, disp(:, :), params)
             dummy = AVG1V2D(imax, 1, kmax, 1, 1, disp(:, :))     ! remove mean
             disp(:, :) = disp(:, :) - dummy
 
