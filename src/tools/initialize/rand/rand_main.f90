@@ -14,7 +14,8 @@ program INIRAND
     use TLab_Memory, only: TLab_Initialize_Memory
     use FDM, only: g, FDM_Initialize
 #ifdef USE_MPI
-    use TLabMPI_PROCS, only: TLabMPI_Initialize, ims_pro
+    use TLabMPI_PROCS, only: TLabMPI_Initialize
+    use TLabMPI_VARS, only: ims_pro
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters

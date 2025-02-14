@@ -1,12 +1,12 @@
 #include "dns_error.h"
 
 module TLabMPI_PROCS
-    ! use mpi_f08
-    ! use mpi_f08
     use TLab_Constants, only: wp, dp, sp, wi, lfile, efile
     use TLab_Memory, only: imax, jmax, kmax
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLabMPI_VARS
+    implicit none
+    private
 
     public :: TLabMPI_Initialize
     public :: TLabMPI_Panic
@@ -92,7 +92,7 @@ contains
     end subroutine TLabMPI_Panic
 
     !########################################################################
-    !# Moving plane information between adjacent PEs, circulant version.
+    !# Moving plane information between adjacent PEs, circular version.
     !# npl is smaller than 2*kmax
     !# The number of plane to move is given by npl
     !########################################################################

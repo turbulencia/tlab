@@ -18,12 +18,12 @@ module TLabMPI_Transpose
 
     type, public :: tmpi_transpose_dt
         ! sequence
-        type(MPI_Datatype) :: type_s, type_r                               ! send/recv types
-        integer(wi) :: nlines                                   !
-        integer(wi) :: size3d                                   !
-        integer(wi), allocatable :: disp_s(:), disp_r(:)        ! send/recv displacements
+        type(MPI_Datatype) :: type_s, type_r                        ! send/recv types
+        integer(wi) :: nlines
+        integer(wi) :: size3d
+        integer(wi), allocatable :: disp_s(:), disp_r(:)            ! send/recv displacements
     end type tmpi_transpose_dt
-    type(tmpi_transpose_dt), public :: tmpi_plan_dx             ! general plans used in derivatives and other operators
+    type(tmpi_transpose_dt), public :: tmpi_plan_dx                 ! general plans used in derivatives and other operators
     type(tmpi_transpose_dt), public :: tmpi_plan_dz
 
     integer :: trp_mode_i, trp_mode_k                               ! Mode of transposition
@@ -38,7 +38,7 @@ module TLabMPI_Transpose
     type(MPI_Datatype), allocatable :: types_send(:), types_recv(:) ! alltoallw
     integer, allocatable :: counts(:)
 
-    type(MPI_Datatype) :: trp_datatype_i, trp_datatype_k               ! Transposition in double or single precision
+    type(MPI_Datatype) :: trp_datatype_i, trp_datatype_k            ! Transposition in double or single precision
 
     real(wp), allocatable, target :: wrk_mpi(:)             ! 3D work array for MPI; maybe in tlab_memory
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
