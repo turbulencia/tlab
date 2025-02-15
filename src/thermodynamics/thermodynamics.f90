@@ -74,7 +74,7 @@ module Thermodynamics
     real(wp), public :: dsmooth                         ! Smoothing factor for derivative discontinuity in inifinitely fast chemistry and saturation adjustment
 
     ! Derived parameters, for clarity in airwater formulation
-    real(wp), public :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, rd_ov_cd, PREF_1000
+    real(wp), public :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, PREF_1000
 
     ! Transport phenomena
     integer, public :: itransport                       ! variable viscosity
@@ -562,7 +562,6 @@ contains
             Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
             Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
             rd_ov_rv = Rd/Rv
-            rd_ov_cd = Rd/Cd*GRATIO
 
         end select
 

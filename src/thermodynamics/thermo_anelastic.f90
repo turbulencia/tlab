@@ -16,7 +16,7 @@ module THERMO_ANELASTIC
     use Thermodynamics, only: imixture
     use Thermodynamics, only: GRATIO, scaleheightinv   ! anelastic parameters
     use Thermodynamics, only: THERMO_PSAT, NPSAT
-    use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, rd_ov_cd, PREF_1000
+    use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, PREF_1000
     implicit none
     private
 
@@ -361,14 +361,16 @@ contains
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: theta(nx*ny*nz)
 
-        real(wp) PI_LOC
+        real(wp) PI_LOC, kappa
 
         ! ###################################################################
+        kappa = Rd/Cd*GRATIO
+
         if (imixture == MIXT_TYPE_AIR) then
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                PI_LOC = (PREF_1000/pbackground(is))**kappa
                 E_LOC = epbackground(is)
 
                 do i = 1, nx
@@ -383,7 +385,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                PI_LOC = (PREF_1000/pbackground(is))**kappa
                 E_LOC = epbackground(is)
 
                 do i = 1, nx
@@ -398,7 +400,7 @@ contains
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
+                PI_LOC = (PREF_1000/pbackground(is))**kappa
                 E_LOC = epbackground(is)
 
                 do i = 1, nx
@@ -421,54 +423,25 @@ contains
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: theta(nx*ny*nz)
 
-        real(wp) PI_LOC
+        real(wp) Rdv_ov_Rd, Rv_ov_Rd
 
         ! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd 
-                E_LOC = epbackground(is)
+        Rdv_ov_Rd = Rdv/Rd
+        Rv_ov_Rd = Rv/Rd
 
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC*PI_LOC 
-                end do
+        call THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta)
 
-            end do
+        select case (imixture)
 
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd
-                E_LOC = epbackground(is)
+        case (MIXT_TYPE_AIR)
 
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    theta(ij) = T_LOC*(Rd + s(ij, 2)*Rdv)/Rd*PI_LOC
-                end do
+        case (MIXT_TYPE_AIRVAPOR)
+            theta = theta*(1.0_wp + s(:, 2)*Rdv_ov_Rd)
 
-            end do
+        case (MIXT_TYPE_AIRWATER)
+            theta = theta*(1.0_wp + s(:, 2)*Rdv_ov_Rd - s(:, 3)*Rv_ov_Rd)
 
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**rd_ov_cd 
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    theta(ij) = T_LOC*(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)/Rd*PI_LOC 
-                end do
-
-            end do
-        end if
+        end select
 
         return
     end subroutine THERMO_ANELASTIC_THETA_V
@@ -485,6 +458,8 @@ contains
 
 ! ###################################################################
         if (imixture == MIXT_TYPE_AIR) then
+            kappa = Rd/Cd*GRATIO
+
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
@@ -494,7 +469,7 @@ contains
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC/P_LOC**kappa
                 end do
 
             end do
@@ -551,6 +526,8 @@ contains
 
 ! ###################################################################
         if (imixture == MIXT_TYPE_AIR) then
+            kappa = Rd/Cd*GRATIO
+
             ij = 0
             do jk = 0, ny*nz - 1
                 is = mod(jk, ny) + 1
@@ -560,7 +537,7 @@ contains
                 do i = 1, nx
                     ij = ij + 1
                     T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC/P_LOC**rd_ov_cd
+                    theta(ij) = T_LOC/P_LOC**kappa
                 end do
 
             end do
@@ -1156,7 +1133,7 @@ contains
 
                     if (dsmooth > 0.0_wp) then ! add correction
                         !              s(ij,2) = s(ij,2) +s(ij,1) -qvequ - (s(ij,1) -qsat) *dqldqt
-                      s(ij, 2) = s(ij, 2) + s(ij, 1) - rd_ov_rv/(P_LOC/psat - 1.0_wp)*(1.0_wp - s(ij, 1)) - (s(ij, 1) - qsat)*dqldqt
+                        s(ij, 2) = s(ij, 2) + s(ij, 1) - rd_ov_rv/(P_LOC/psat - 1.0_wp)*(1.0_wp - s(ij, 1)) - (s(ij, 1) - qsat)*dqldqt
                     else                           ! or calculate new
                         !              s(ij,2) =          s(ij,1) -qvequ
                         s(ij, 2) = s(ij, 1) - rd_ov_rv/(P_LOC/psat - 1.0_wp)*(1.0_wp - s(ij, 1))
