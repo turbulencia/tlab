@@ -4,7 +4,7 @@
 !########################################################################
 !# Dimensional and nondimensional formulations. In the latter case:
 !# - Compressible formulations use p nondimensionalized by reference dynamic pressure rho_0 U_0^2
-!# - Incompressible and anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
+!# - Anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
 !#
 !# Mixture:
 !# inb_scal          # of prognostic scalars (transported during the simulation and saved)
@@ -60,9 +60,9 @@ module Thermodynamics
     real(wp), public :: RRATIO                          ! 1/(gama0 mach^2) = R0/(U0^2/T0)
     real(wp), public :: CRATIO_INV                      ! (gamma0-1)*mach^2 = (U0^2/T0)/Cp0
     real(wp), public :: RRATIO_INV                      ! gama0 mach^2 = (U0^2/T0)/R0, inverse of RRATIO to save computational time in some routines
-    ! Anelastic and incompressible formulation
+    ! Anelastic formulation
     real(wp), public :: GRATIO                          ! (gama0-1)/gama0 = R0/Cp0
-    real(wp), public :: scaleheightinv                  ! Inverse of pressure scale height. Equivalent to 1/(Fr*RRATIO) in compressible formulation
+    real(wp), public :: scaleheightinv                  ! Normalized gravity, or inverse of pressure scale height. Equivalent to 1/(Fr*RRATIO) in compressible formulation
     ! nondimensional parameters; to be moved to navierstokes
     real(wp), public :: mach                                ! compressibility
 
@@ -71,7 +71,7 @@ module Thermodynamics
     !                                                   A dimensional formulation can be imposed by setting RRATIO=CRATIO_INV=1, or GRATIO=1
 
     real(wp), public :: thermo_param(MAX_PROF)          ! Additional data
-    real(wp), public :: dsmooth                         ! Smoothing factor for derivative discontinuity in inifinitely fast chemistry and saturation adjustment
+    real(wp), public :: dsmooth                         ! Smoothing factor for derivative discontinuity in infinitely fast chemistry and saturation adjustment
 
     ! Derived parameters, for clarity in airwater formulation
     real(wp), public :: Rv, Rd, Rdv, Cd, Cl, Cdv, Cvl, Cdl, Lv0, Ld, Lv, Ldv, Lvl, Ldl, rd_ov_rv, PREF_1000
@@ -257,7 +257,7 @@ contains
             ! -------------------------------------------------------------------
             ! Water vapor, air and liquid water; data from Iribarne and Godson, 1981
             ! Compressible:   Transport    q_t, and q_l from equilibrium; add space for q_l
-            ! Incompressible: Transport h, q_t, and q_l from equilibrium; add space for q_l
+            ! Anelastic: Transport h, q_t, and q_l from equilibrium; add space for q_l
             ! -------------------------------------------------------------------
         case (MIXT_TYPE_AIRWATER)
             NSP = NSP + 1; THERMO_SPNAME(NSP) = 'H2Ov'; WGHT(NSP) = 18.015_wp
@@ -492,7 +492,11 @@ contains
         ! -------------------------------------------------------------------
         ! Nondimensionalization
         !- Compressible formulations use p nondimensionalized by reference dynamic pressure rho_0 U_0^2
-        !- Incompressible and anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
+        !- Anelastic formulations use p nondimensionalized by reference thermodynamic pressure p_0
+        RRATIO = 1.0_wp                                 ! Compressible formulation uses RRATIO, CRATIO_INV
+        RRATIO_INV = 1.0_wp
+        CRATIO_INV = 1.0_wp
+        GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO
         if (nondimensional) then
             ! Thermal equation of state
             THERMO_R(:) = THERMO_R(:)/RREF              ! normalized gas constants (Inverse of molar masses)
@@ -517,33 +521,32 @@ contains
                 THERMO_PSAT(ipsat) = THERMO_PSAT(ipsat)*(TREF**(ipsat - 1))
             end do
 
+            ! Parameters in the evolution equations
+            if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
+                RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
+                CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
+
+                PREF_1000 = PREF_1000*RRATIO            ! scaling by dynamic reference pressure U0^2/T0 for compressible mode
+                THERMO_PSAT(:) = THERMO_PSAT(:)*RRATIO
+                THERMO_R(:) = THERMO_R(:)*RRATIO
+
+                RRATIO_INV = 1.0_wp/RRATIO
+
+            else if (imode_thermo == THERMO_TYPE_ANELASTIC) then
+                GRATIO = (gama0 - 1.0_wp)/gama0         ! R_0/C_{p,0}
+
+            end if
+
         else
             if (imixture == MIXT_TYPE_NONE) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Single species formulation must be nondimensional.')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
-        end if
 
-        ! Parameters in the evolution equations
-        RRATIO = 1.0_wp                                 ! Compressible formulation uses RRATIO, CRATIO_INV, but RRATIO also used below
-        CRATIO_INV = 1.0_wp
-        GRATIO = 1.0_wp                                 ! Anelastic formulation uses GRATIO, but GRATIO also used below
-        if (nondimensional) then
-            if (imode_thermo == THERMO_TYPE_COMPRESSIBLE) then
-                RRATIO = 1.0_wp/(gama0*mach*mach)       ! (R_0T_0)/U_0^2 = p_0/(rho_0U_0^2), a scaled reference pressure
-                CRATIO_INV = (gama0 - 1.0_wp)*mach*mach
-            end if
-            GRATIO = (gama0 - 1.0_wp)/gama0             ! R_0/C_{p,0}
         end if
-
-        ! Derived parameters to save operations
-        PREF_1000 = PREF_1000*RRATIO                    ! scaling by dynamic reference pressure U0^2/T0 for compressible mode
-        THERMO_PSAT(:) = THERMO_PSAT(:)*RRATIO          ! this assumes that RRATIO is 1 in anelastic, incompressible mode
-        THERMO_R(:) = THERMO_R(:)*RRATIO
-        RRATIO_INV = 1.0_wp/RRATIO
 
         ! -------------------------------------------------------------------
-        ! Definitions for clarity in the thermodynamics code
+        ! Definitions for clarity in the airwater thermodynamics code
         select case (imixture)
         case (MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR)
             Rv = THERMO_R(1)

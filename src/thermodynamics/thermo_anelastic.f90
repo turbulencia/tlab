@@ -792,7 +792,7 @@ contains
                     end do
 !           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
                     Td(ij) = T_LOC
-                    Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat
+                    Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat   ! assuming qt constant
 
                 end do
             end do
@@ -812,7 +812,7 @@ contains
                     T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
 
 ! We cannot use ql directly (s(:,3)) because the smoothing function imposes
-! and exponentially small value, but nonzero
+! an exponentially small value, but nonzero
                     psat = THERMO_PSAT(NPSAT)
                     do ipsat = NPSAT - 1, 1, -1
                         psat = psat*T_LOC + THERMO_PSAT(ipsat)
