@@ -98,11 +98,6 @@ subroutine TLab_Consistency_Check()
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    if (nse_eqns == DNS_EQNS_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
-        call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-
     select case (imixture)
         ! case (MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH)
         !     schmidt(inb_scal) = prandtl ! These cases force Sc_i=Sc_Z=Pr (Lewis unity)

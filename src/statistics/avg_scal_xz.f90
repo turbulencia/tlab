@@ -20,7 +20,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLab_Memory, only: imax, jmax, kmax, inb_flow_array, inb_scal_array, inb_scal
     use TLab_Time, only: itime, rtime
     use TLab_Arrays, only: wrk1d
-    use TLab_Pointers_3D, only: p_wrk3d
+    use TLab_Pointers_3D, only: p_wrk3d, u, v, w, rho, vis
     use THERMO_ANELASTIC, only: THERMO_ANELASTIC_WEIGHT_INPLACE, THERMO_ANELASTIC_BUOYANCY, ribackground
     use THERMO_AIRWATER
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1, scal_bcs
@@ -61,21 +61,16 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     character*250 line1, varname(MAX_VARS_GROUPS)
 
     ! Pointers to existing allocated space
-    real(wp), dimension(:, :, :), pointer :: u, v, w, p, rho, vis
+    real(wp), dimension(:, :, :), pointer :: p_loc
 
     ! ###################################################################
     bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
     ! Define pointers
-    u => q(:, :, :, 1)
-    v => q(:, :, :, 2)
-    w => q(:, :, :, 3)
     if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
-        rho => q(:, :, :, 5)
-        p => q(:, :, :, 6)
-        if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) vis => q(:, :, :, 8)
+        p_loc => q(:, :, :, 6)
     else
-        p => tmp3
+        p_loc => tmp3
     end if
 
     if (nse_diffusion == EQNS_NONE) then; diff = 0.0_wp
@@ -447,16 +442,16 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     ! -----------------------------------------------------------------------
     ! Pressure terms in transport equations
-    call AVG_IK_V(imax, jmax, kmax, jmax, p, rP(1), wrk1d)
+    call AVG_IK_V(imax, jmax, kmax, jmax, p_loc, rP(1), wrk1d)
 
     call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
     call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
     call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
     do j = 1, jmax
-        tmp1(:, j, :) = (p(:, j, :) - rP(j))*(s_local(:, j, :) - fS(j))
-        dsdx(:, j, :) = (p(:, j, :) - rP(j))*dsdx(:, j, :)
-        dsdy(:, j, :) = (p(:, j, :) - rP(j))*(dsdy(:, j, :) - fS_y(j))
-        dsdz(:, j, :) = (p(:, j, :) - rP(j))*dsdz(:, j, :)
+        tmp1(:, j, :) = (p_loc(:, j, :) - rP(j))*(s_local(:, j, :) - fS(j))
+        dsdx(:, j, :) = (p_loc(:, j, :) - rP(j))*dsdx(:, j, :)
+        dsdy(:, j, :) = (p_loc(:, j, :) - rP(j))*(dsdy(:, j, :) - fS_y(j))
+        dsdz(:, j, :) = (p_loc(:, j, :) - rP(j))*dsdz(:, j, :)
     end do
     call AVG_IK_V(imax, jmax, kmax, jmax, tmp1, Tsvy3(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdx, PIsu(1), wrk1d)

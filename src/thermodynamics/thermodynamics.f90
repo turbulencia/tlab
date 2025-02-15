@@ -66,7 +66,6 @@ module Thermodynamics
     ! nondimensional parameters; to be moved to navierstokes
     real(wp), public :: mach                                ! compressibility
 
-
     ! Nondimensional formulation
     logical, public :: nondimensional = .true.          ! consider nondimensional formulation
     !                                                   A dimensional formulation can be imposed by setting RRATIO=CRATIO_INV=1, or GRATIO=1
@@ -182,6 +181,11 @@ contains
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
+        end if
+
+        if (imode_thermo == THERMO_TYPE_ANELASTIC .and. all([MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER] /= imixture)) then
+            call TLab_Write_ASCII(efile, __FILE__//'. Incorrect mixture type.')
+            call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
         if (imode_thermo == THERMO_TYPE_NONE) return

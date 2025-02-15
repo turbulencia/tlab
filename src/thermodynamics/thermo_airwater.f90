@@ -9,8 +9,8 @@ module THERMO_AIRWATER
     use TLab_Constants, only: wp, wi, small_wp, big_wp
     use TLab_Memory, only: inb_scal
     use Thermodynamics, only: imixture, CRATIO_INV, NCP, THERMO_AI, THERMO_TLIM
-    use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial
-    use Thermodynamics, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv
+    use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial, PREF_1000
+    use Thermodynamics, only: Cd, Cdv, Cvl, Cdl, Ld, Lv, Ldv, Lvl, Ldl, Rd, Rdv, Rv, rd_ov_rv, Lv0
     use Thermodynamics, only: dsmooth, NEWTONRAPHSON_ERROR
     use Thermodynamics, only: thermo_param
     use THERMO_THERMAL
@@ -26,6 +26,9 @@ module THERMO_AIRWATER
     public :: THERMO_AIRWATER_RP
     public :: THERMO_AIRWATER_PH_RE
     public :: THERMO_AIRWATER_RE
+    public :: THERMO_AIRWATER_LAPSE_EQU
+    public :: THERMO_AIRWATER_THETA_EQ
+
     public :: THERMO_AIRWATER_LINEAR
     public :: THERMO_AIRWATER_LINEAR_SOURCE
 
@@ -421,6 +424,57 @@ contains
 
         return
     end subroutine THERMO_AIRWATER_RE
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_AIRWATER_LAPSE_EQU(s, T, p, dTdy, dqldy, lapse, frequency)
+        real(wp), intent(in) :: s(:, :, :, :), T(:, :, :), p(:, :, :), dTdy(:, :, :), dqldy(:, :, :)
+        real(wp), intent(out) :: lapse(:, :, :), frequency(:, :, :)
+
+! ###################################################################
+        ! to be done
+        lapse = 0.0_wp
+        frequency = 0.0_wp
+
+        ! dummy = Cvl + CRATIO_INV*Rv
+        ! L_RATIO = -(Lvl + dummy*T)/(CRATIO_INV*Rv*T)
+        ! Q_RATIO = 1.0_wp/(p/psat - 1.0_wp)
+        ! RMEAN = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, 1))*Rd
+
+        ! lapse = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
+        !         (gamma/(gamma - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)
+
+        ! frequecy = (dTdy - buoyancy%vector(2)/RRATIO*lapse)/T &
+        !            *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, 1)))
+        ! frequecy = frequecy - Rd/RMEAN*dqldy
+
+        return
+    end subroutine THERMO_AIRWATER_LAPSE_EQU
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_AIRWATER_THETA_EQ(s, T, p, theta, kappa, locCp)
+        real(wp), intent(in) :: s(:, :, :, :), T(:, :, :), p(:, :, :)
+        real(wp), intent(out) :: theta(:, :, :)
+        real(wp), intent(inout) :: kappa(:, :, :), locCp(:, :, :)
+
+! ###################################################################
+#define Cp_loc_inv locCp
+
+        Cp_loc_inv = 1.0_wp/(Cd + s(:, :, :, 1)*Cdl)
+        kappa = (1.0_wp - s(:, :, :, 1))*Rd*CRATIO_INV*Cp_loc_inv
+        theta = T/((p/PREF_1000)**kappa)*exp((s(:, :, :, 1) - s(:, :, :, 2))*(Lv0 - T*Cvl)*Cp_loc_inv/T)
+        ! the correction of order one is still missing
+
+        ! using qsat instead of qv to test
+        ! call Thermo_Psat_Polynomial(size(T), T, theta)
+        ! theta = 1.0_wp/(p/psat - (1.0_wp - rd_ov_rv))*rd_ov_rv    ! this is qsat
+        ! theta = T/((p/PREF_1000)**kappa)*exp(theta*(Lv0 - T*Cvl)*Cp_loc_inv/T)
+
+#undef Cp_loc_inv
+
+        return
+    end subroutine THERMO_AIRWATER_THETA_EQ
 
     !########################################################################
     !# Calculating the equilibrium liquid from the mixture fraction and the
