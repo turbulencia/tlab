@@ -432,7 +432,6 @@ contains
         call THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta)
 
         select case (imixture)
-
         case (MIXT_TYPE_AIR)
 
         case (MIXT_TYPE_AIRVAPOR)
@@ -594,55 +593,25 @@ contains
         real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
 
 ! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
+#define locT frequency
+
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, locT)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
             lapse(:) = GRATIO*scaleheightinv
 
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
+        case (MIXT_TYPE_AIRVAPOR)
             lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv)
 
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
+        case (MIXT_TYPE_AIRWATER)
             lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv + s(:, 3)*Cvl)
 
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
+        end select
 
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
-                end do
+        frequency(:) = (lapse(:) + dTdy(:))/locT(:)
 
-            end do
-
-        end if
+#undef locT
 
         return
     end subroutine THERMO_ANELASTIC_LAPSE_FR
@@ -656,42 +625,14 @@ contains
 
 ! -------------------------------------------------------------------
         real(wp) RT_INV, dpsat
-
         real(wp) Cp_loc, Lv, one_p_eps, qvequ, qsat, dummy
 
 ! ###################################################################
-
         if (imixture == MIXT_TYPE_AIR) then
-            lapse(:) = GRATIO*scaleheightinv
-
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
-                end do
-
-            end do
+            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
 
         else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv)
-
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
-                end do
-
-            end do
+            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
 
         else if (imixture == MIXT_TYPE_AIRWATER) then
             ij = 0
