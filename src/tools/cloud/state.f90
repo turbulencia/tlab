@@ -10,7 +10,7 @@ program STATE
 
     implicit none
 
-    real(wp) p(1), ps(1), t(1), qs(1), qv(1), qt(1), ql(1), r(1), e(1), h(1), z1(2), dummy(1), dqldqt(1), ep(1), theta_v(1), theta_l(1), theta_e(1), Td(1)
+    real(wp) p(1), ps(1), t(1), qs(1), qv(1), qt(1), ql(1), r(1), e(1), h(1), z1(2), dummy(1), dqldqt(1), ep(1), theta_v(1), theta_l(1), theta_e(1), Td(1), wrk(1)
     real(wp) heat1(1), heat2(1), cp1(1), cp2(1), alpha(1), as(1), bs(1)
     real(wp) r1(1), h1(1), s(3)
     integer(wi) iopt
@@ -79,10 +79,10 @@ program STATE
         call THERMO_THERMAL_DENSITY(1, z1, p, t, r)
 
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l)
-        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e)
-        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, Td, dummy)
+        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v, wrk)
+        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l, wrk)
+        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e, wrk)
+        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
 
     else if (iopt == 2) then
         z1(1) = qt(1)
@@ -97,10 +97,10 @@ program STATE
         call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
 
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l)
-        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e)
-        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, Td, dummy)
+        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v, wrk)
+        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l, wrk)
+        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e, wrk)
+        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
 
     else if (iopt == 3) then
         ! h = h/TREF/1.007
@@ -118,13 +118,13 @@ program STATE
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)
         call THERMO_CALORIC_ENERGY(1, z1, T, e)
 
-        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l)
-        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e)
-        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, Td, dummy)
+        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v, wrk)
+        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l, wrk)
+        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e, wrk)
+        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
 
 ! check
-        call THERMO_ANELASTIC_DENSITY(1, 1, 1, s, r1)
+        call THERMO_ANELASTIC_DENSITY(1, 1, 1, s, r1, wrk)
 !     r2 = p/(T*(1- qt +qv/rd_ov_rv ) )
         call THERMO_CALORIC_ENTHALPY(1, z1, T, h1)
 

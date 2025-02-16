@@ -330,9 +330,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     ! Add pressure gradient
     ! -----------------------------------------------------------------------
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:, 1))
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:, 2))
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:, 3))
+        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:, 1))
+        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:, 2))
+        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:, 3))
 
     else
 #ifdef USE_ESSL

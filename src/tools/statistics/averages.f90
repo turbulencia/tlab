@@ -24,7 +24,7 @@ program AVERAGES
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use THERMO_ANELASTIC
     use Radiation
     use Microphysics
@@ -117,7 +117,7 @@ use Rotation, only: Rotation_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
@@ -480,7 +480,8 @@ call Rotation_Initialize(ifile)
                 if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
-                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, txc(1, 7))
+                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, txc(:, 7), wrk3d)
+                        ! call THERMO_ANELASTIC_THETA_E(imax, jmax, kmax, s, txc(:, 7), wrk3d)
                         !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &

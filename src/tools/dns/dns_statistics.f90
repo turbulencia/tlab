@@ -179,7 +179,7 @@ contains
                 if (imode_thermo == THERMO_TYPE_ANELASTIC) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
-                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, hq(1, 1))
+                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, hq(:, 1), wrk3d)
 
                         hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
                         call AVG_SCAL_XZ(is, q, s, hq(1, 1), &

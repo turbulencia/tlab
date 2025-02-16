@@ -475,7 +475,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
 
     else if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, dwdx)
+        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, dwdx, p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, dwdx, rR(1), wrk1d)
 
         fU(:) = rU(:); fV(:) = rV(:); fW(:) = rW(:)
@@ -563,16 +563,16 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! Density
     if (.not. (nse_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, p_wrk3d)
+            call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, dudx, p_wrk3d)
             do j = 1, jmax
-                p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - rR(j)
+                dudx(:, j, :) = dudx(:, j, :) - rR(j)
             end do
         else
             do j = 1, jmax
-                p_wrk3d(:, j, :) = rho(:, j, :) - rR(j)
+                dudx(:, j, :) = rho(:, j, :) - rR(j)
             end do
         end if
-        dvdx = p_wrk3d*p_wrk3d
+        dvdx = dudx*dudx
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, rR2(1), wrk1d)
 
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rR2(1), rR2_y(1))
@@ -583,13 +583,13 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
             dvdy(:, j, :) = v(:, j, :) - rV(j)
             dvdz(:, j, :) = w(:, j, :) - rW(j)
         end do
-        dvdx = dvdx*p_wrk3d
-        dvdy = dvdy*p_wrk3d
-        dvdz = dvdz*p_wrk3d
+        dvdx = dvdx*dudx
+        dvdy = dvdy*dudx
+        dvdz = dvdz*dudx
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, rR2_flux_x(1), wrk1d)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, rR2_flux_y(1), wrk1d)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, rR2_flux_z(1), wrk1d)
-        dvdy = dvdy*p_wrk3d
+        dvdy = dvdy*dudx
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, rR2_trp(1), wrk1d)
 
     end if
@@ -732,13 +732,13 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call Thermo_Psat_Polynomial(imax*jmax*kmax, T_LOC(1, 1, 1), dvdz)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, psat(1), wrk1d)
 
-        call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, T_LOC(1, 1, 1), p_wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, relhum(1), wrk1d)
+        call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, dvdz, p_wrk3d)
+        call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, relhum(1), wrk1d)
 
-        call THERMO_ANELASTIC_THETA(imax, jmax, kmax, s, p_wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, potem_fr(1), wrk1d)
-        call THERMO_ANELASTIC_THETA_V(imax, jmax, kmax, s, p_wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, potem_eq(1), wrk1d)
+        call THERMO_ANELASTIC_THETA(imax, jmax, kmax, s, dvdz, p_wrk3d)
+        call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, potem_fr(1), wrk1d)
+        call THERMO_ANELASTIC_THETA_V(imax, jmax, kmax, s, dvdz, p_wrk3d)
+        call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, potem_eq(1), wrk1d)
 
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T_LOC(1, 1, 1), dudz)
         if (imixture == MIXT_TYPE_AIRWATER) &
@@ -754,8 +754,10 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, bfreq_fr(1), wrk1d)
         bfreq_fr(:) = bfreq_fr(:)*buoyancy%vector(2)
 
+        call THERMO_ANELASTIC_VAPOR_PRESSURE(imax, jmax, kmax, s, dudz)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dudz, dudy)
         ! dwdz should contains lapse_fr, since lapse_dew = lapse_fr when saturated
-        call THERMO_ANELASTIC_DEWPOINT(imax, jmax, kmax, s, p_wrk3d, dwdz)
+        call THERMO_ANELASTIC_DEWPOINT(imax, jmax, kmax, s, dudy, p_wrk3d, dwdz)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, dewpoint(1), wrk1d)
         call AVG_IK_V(imax, jmax, kmax, jmax, dwdz, lapse_dew(1), wrk1d)
 

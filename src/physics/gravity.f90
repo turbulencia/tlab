@@ -129,7 +129,7 @@ contains
         real(wp), dimension(g%size, inb_scal_array), intent(inout) :: s      ! We calculate equilibrium composition
         real(wp), dimension(g%size), intent(out) :: ep, T, p
         real(wp), intent(in) :: yref, pref
-        real(wp), dimension(g%size, 2), intent(inout) :: wrk1d
+        real(wp), dimension(g%size, 3), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
         integer(wi) iter, niter, j, jcenter
@@ -156,22 +156,23 @@ contains
         ! hydrstatic pressure
 #define p_aux(i)        wrk1d(i,1)
 #define r_aux(i)        wrk1d(i,2)
+#define wrk_aux(i)      wrk1d(i,3)
 
         ! Setting the pressure entry to 1 to get 1/RT
         p_aux(:) = 1.0_wp
 
         niter = 10
 
-        p(:) = pref                                                                 ! initialize iteration
-        s(:, inb_scal + 1:inb_scal_array) = 0.0_wp                                  ! initialize diagnostic
+        p(:) = pref                                                                     ! initialize iteration
+        s(:, inb_scal + 1:inb_scal_array) = 0.0_wp                                      ! initialize diagnostic
         do iter = 1, niter           ! iterate
             if (imode_thermo == THERMO_TYPE_ANELASTIC) then
                 pbackground(:) = p_aux(:)
-                call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:))            ! Get r_aux=1/RT
+                call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:), wrk_aux(:))    ! Get r_aux=1/RT
                 r_aux(:) = -scaleheightinv*r_aux(:)
             else
                 call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
-                call THERMO_THERMAL_DENSITY(g%size, s(:, 2), p_aux(:), T, r_aux(:)) ! Get r_aux=1/RT
+                call THERMO_THERMAL_DENSITY(g%size, s(:, 2), p_aux(:), T, r_aux(:))     ! Get r_aux=1/RT
                 r_aux(:) = buoyancy%vector(2)*r_aux(:)
             end if
 

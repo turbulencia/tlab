@@ -15,7 +15,7 @@ module THERMO_ANELASTIC
     use TLab_Constants, only: wp, wi
     use Thermodynamics, only: imixture
     use Thermodynamics, only: GRATIO, scaleheightinv   ! anelastic parameters
-    use Thermodynamics, only: THERMO_PSAT, NPSAT
+    use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, PREF_1000
     implicit none
     private
@@ -31,7 +31,7 @@ module THERMO_ANELASTIC
     public :: THERMO_ANELASTIC_LAPSE_EQU
     public :: THERMO_ANELASTIC_LAPSE_FR
     public :: THERMO_ANELASTIC_LWP
-    public :: THERMO_ANELASTIC_QVEQU
+    public :: THERMO_ANELASTIC_VAPOR_PRESSURE
     public :: THERMO_ANELASTIC_RELATIVEHUMIDITY
     public :: THERMO_ANELASTIC_STATIC_CONSTANTCP
     public :: THERMO_ANELASTIC_STATIC_L
@@ -43,7 +43,7 @@ module THERMO_ANELASTIC
     public :: THERMO_ANELASTIC_WEIGHT_ADD
     public :: THERMO_ANELASTIC_WEIGHT_INPLACE
     public :: THERMO_ANELASTIC_WEIGHT_OUTPLACE
-    public :: THERMO_ANELASTIC_WEIGHT_SUBSTRACT
+    public :: THERMO_ANELASTIC_WEIGHT_SUBTRACT
     public :: THERMO_ANELASTIC_PH               ! We could use THERMO_ANELASTIC_AIRWATER...
     ! public :: THERMO_ANELASTIC_PH_RE
 
@@ -55,899 +55,9 @@ module THERMO_ANELASTIC
 
 contains
 
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: T(nx*ny*nz)
-
-! ###################################################################
-        select case (imixture)
-        case (MIXT_TYPE_AIR)
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T(ij) = s(ij, 1) - E_LOC
-                end do
-
-            end do
-
-        case (MIXT_TYPE_AIRVAPOR)
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T(ij) = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                end do
-
-            end do
-
-        case (MIXT_TYPE_AIRWATER)
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T(ij) = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                end do
-
-            end do
-
-        end select
-
-        return
-    end subroutine THERMO_ANELASTIC_TEMPERATURE
-
-!########################################################################
-! Calculating h_l - h; very similar to the temperature routine
-!########################################################################
-    subroutine THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, result)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: result(nx*ny*nz)
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    result(ij) = s(ij, 1) - E_LOC
-                    result(ij) = Cl*result(ij) + E_LOC - Lv0 - s(ij, 1)
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    result(ij) = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    result(ij) = Cl*result(ij) + E_LOC - Lv0 - s(ij, 1)
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    result(ij) = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    result(ij) = Cl*result(ij) + E_LOC - Lv0 - s(ij, 1)
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_STATIC_L
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_DENSITY(nx, ny, nz, s, rho)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: rho(nx*ny*nz)
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    rho(ij) = P_LOC/T_LOC
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    RMEAN = Rd + s(ij, 2)*Rdv
-                    rho(ij) = P_LOC/(RMEAN*T_LOC)
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    RMEAN = Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv
-                    rho(ij) = P_LOC/(RMEAN*T_LOC)
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_DENSITY
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_BUOYANCY(nx, ny, nz, s, b)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: b(nx*ny*nz)
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
-                R_LOC_INV = 1.0_wp/R_LOC
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    b(ij) = R_LOC_INV*(R_LOC - P_LOC/T_LOC)
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
-                R_LOC_INV = 1.0_wp/R_LOC
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    RMEAN = Rd + s(ij, 2)*Rdv
-                    b(ij) = R_LOC_INV*(R_LOC - P_LOC/(RMEAN*T_LOC))
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
-                R_LOC_INV = 1.0_wp/R_LOC
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    RMEAN = Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv
-                    b(ij) = R_LOC_INV*(R_LOC - P_LOC/(RMEAN*T_LOC))
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_BUOYANCY
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_QVEQU(nx, ny, nz, s, T, qvequ)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: T(nx*ny*nz), qvequ(nx*ny*nz)
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T(ij) = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    psat = 0.0_wp
-                    do ipsat = NPSAT, 1, -1
-                        psat = psat*T(ij) + THERMO_PSAT(ipsat)
-                    end do
-                    qvequ(ij) = rd_ov_rv*(1.0_wp - s(ij, 2))/(P_LOC/psat - 1.0_wp)
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_QVEQU
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY(nx, ny, nz, s, T, rh)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: T(nx*ny*nz), rh(nx*ny*nz)
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    T(ij) = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-
-                    psat = 0.0_wp
-                    do ipsat = NPSAT, 1, -1
-                        psat = psat*T(ij) + THERMO_PSAT(ipsat)
-                    end do
-                    rh(ij) = (s(ij, 2) - s(ij, 3))*P_LOC/psat*Rv/(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)
-                    rh(ij) = rh(ij)*100.0_wp
-
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY
-
-!########################################################################
-! Dry potential temperature
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: theta(nx*ny*nz)
-
-        real(wp) PI_LOC, kappa
-
-        ! ###################################################################
-        kappa = Rd/Cd*GRATIO
-
-        if (imixture == MIXT_TYPE_AIR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**kappa
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC*PI_LOC
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**kappa
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    theta(ij) = T_LOC*PI_LOC
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                PI_LOC = (PREF_1000/pbackground(is))**kappa
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    theta(ij) = T_LOC*PI_LOC
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_THETA
-
-!########################################################################
-! Virtual Potential temperature
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA_V(nx, ny, nz, s, theta)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: theta(nx*ny*nz)
-
-        real(wp) Rdv_ov_Rd, Rv_ov_Rd
-
-        ! ###################################################################
-        Rdv_ov_Rd = Rdv/Rd
-        Rv_ov_Rd = Rv/Rd
-
-        call THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta)
-
-        select case (imixture)
-        case (MIXT_TYPE_AIR)
-
-        case (MIXT_TYPE_AIRVAPOR)
-            theta = theta*(1.0_wp + s(:, 2)*Rdv_ov_Rd)
-
-        case (MIXT_TYPE_AIRWATER)
-            theta = theta*(1.0_wp + s(:, 2)*Rdv_ov_Rd - s(:, 3)*Rv_ov_Rd)
-
-        end select
-
-        return
-    end subroutine THERMO_ANELASTIC_THETA_V
-
-!########################################################################
-! Liquid water potential temperature
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA_L(nx, ny, nz, s, theta)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: theta(nx*ny*nz)
-
-        real(wp) kappa, Cp_loc, Lv
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            kappa = Rd/Cd*GRATIO
-
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)/PREF_1000
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC/P_LOC**kappa
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)/PREF_1000
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    kappa = (Rd + s(ij, 2)*Rdv)/(Cd + s(ij, 2)*Cdv)*GRATIO
-                    theta(ij) = T_LOC/P_LOC**kappa
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)/PREF_1000
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    Cp_loc = 1.0_wp/(Cd + s(ij, 2)*Cdv)
-                    kappa = (Rd + s(ij, 2)*Rdv)*Cp_loc*GRATIO
-                    Lv = Lv0 - T_LOC*Cvl
-                    theta(ij) = T_LOC/P_LOC**kappa*exp(-Lv*s(ij, 3)*Cp_loc/T_LOC)
-
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_THETA_L
-
-!########################################################################
-! Equivalent potential temperature
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA_E(nx, ny, nz, s, theta)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: theta(nx*ny*nz)
-
-        real(wp) kappa, Cp_loc, Lv
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            kappa = Rd/Cd*GRATIO
-
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)/PREF_1000
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-                    T_LOC = s(ij, 1) - E_LOC
-                    theta(ij) = T_LOC/P_LOC**kappa
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)/PREF_1000
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv)
-                    Cp_loc = 1.0_wp/(Cd + s(ij, 2)*Cdl)
-                    kappa = Rd*(1.0_wp - s(ij, 2))*Cp_loc*GRATIO
-                    Lv = Lv0 - T_LOC*Cvl
-                    theta(ij) = T_LOC/P_LOC**kappa*exp(Lv*s(ij, 2)*Cp_loc/T_LOC)
-
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)/PREF_1000
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-                    Cp_loc = 1.0_wp/(Cd + s(ij, 2)*Cdl)
-                    kappa = Rd*(1.0_wp - s(ij, 2))*Cp_loc*GRATIO
-                    Lv = Lv0 - T_LOC*Cvl
-                    theta(ij) = T_LOC/P_LOC**kappa*exp(Lv*(s(ij, 2) - s(ij, 3))*Cp_loc/T_LOC)
-
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_THETA_E
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz)
-        real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
-
-! ###################################################################
-#define locT frequency
-
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, locT)
-
-        select case (imixture)
-        case (MIXT_TYPE_AIR)
-            lapse(:) = GRATIO*scaleheightinv
-
-        case (MIXT_TYPE_AIRVAPOR)
-            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv)
-
-        case (MIXT_TYPE_AIRWATER)
-            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv + s(:, 3)*Cvl)
-
-        end select
-
-        frequency(:) = (lapse(:) + dTdy(:))/locT(:)
-
-#undef locT
-
-        return
-    end subroutine THERMO_ANELASTIC_LAPSE_FR
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_LAPSE_EQU(nx, ny, nz, s, dTdy, dqldy, lapse, frequency)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz), dqldy(nx*ny*nz)
-        real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
-
-! -------------------------------------------------------------------
-        real(wp) RT_INV, dpsat
-        real(wp) Cp_loc, Lv, one_p_eps, qvequ, qsat, dummy
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
-
-                RT_INV = R_LOC/P_LOC*scaleheightinv
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    Cp_loc = Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl ! I need it below
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/Cp_loc
-
-                    psat = THERMO_PSAT(NPSAT); dpsat = 0.0_wp
-                    do ipsat = NPSAT - 1, 1, -1
-                        psat = psat*T_LOC + THERMO_PSAT(ipsat)
-                        dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
-                    end do
-                    dummy = rd_ov_rv/(P_LOC/psat - 1.0_wp)
-                    qsat = dummy/(1.0_wp + dummy)
-
-! We cannot use ql directly (s(:,3)) because the smoothing function imposes
-! an exponentially small value, but nonzero
-                    if (qsat >= s(ij, 2)) then
-                        lapse(ij) = GRATIO*scaleheightinv/(Cd + s(ij, 2)*Cdv)
-                        frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
-
-                    else
-                        qvequ = dummy*(1.0_wp - s(ij, 2))
-
-                        one_p_eps = 1.0_wp/(1.0_wp - psat/P_LOC)
-                        Lv = Lv0 - T_LOC*Cvl
-
-                        lapse(ij) = GRATIO*scaleheightinv + qvequ*one_p_eps*Lv*RT_INV
-                        lapse(ij) = lapse(ij)/(Cp_loc + qvequ*one_p_eps*Lv*dpsat/psat)
-
-                        frequency(ij) = qvequ*(lapse(ij)*dpsat/psat - RT_INV)*one_p_eps - dqldy(ij)
-                        frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC &
-                                        - frequency(ij)*Rv/(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)
-
-                    end if
-
-                end do
-
-            end do
-
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_LAPSE_EQU
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_DEWPOINT(nx, ny, nz, s, Td, Lapse)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: lapse(nx*ny*nz), Td(nx*ny*nz)
-
-        ! -------------------------------------------------------------------
-        integer(wi) inr, nrmax
-        real(wp) dpsat, dummy, qsat
-
-!  real(wp) NEWTONRAPHSON_ERROR
-
-! ###################################################################
-! maximum number of iterations in Newton-Raphson
-        nrmax = 5
-
-        if (imixture == MIXT_TYPE_AIR) then
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-! Using actual temperature as initial condition
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-
-! executing Newton-Raphson
-                    do inr = 1, nrmax
-                        psat = THERMO_PSAT(NPSAT); dpsat = 0.0_wp
-                        do ipsat = NPSAT - 1, 1, -1
-                            psat = psat*T_LOC + THERMO_PSAT(ipsat)
-                            dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
-                        end do
-! we seek root of function:    psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv )
-                        T_LOC = T_LOC - (psat - P_LOC*s(ij, 2)*Rv/(Rd + s(ij, 2)*Rdv))/dpsat
-                    end do
-!           NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
-                    Td(ij) = T_LOC
-                    Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat   ! assuming qt constant
-
-                end do
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-! Using actual temperature as initial condition
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-
-! We cannot use ql directly (s(:,3)) because the smoothing function imposes
-! an exponentially small value, but nonzero
-                    psat = THERMO_PSAT(NPSAT)
-                    do ipsat = NPSAT - 1, 1, -1
-                        psat = psat*T_LOC + THERMO_PSAT(ipsat)
-                    end do
-                    dummy = rd_ov_rv/(P_LOC/psat - 1.0_wp)
-                    qsat = dummy/(1.0_wp + dummy)
-
-                    if (qsat <= s(ij, 2)) then
-                        Td(ij) = T_LOC
-
-                    else
-! executing Newton-Raphson
-                        do inr = 1, nrmax
-                            psat = THERMO_PSAT(NPSAT); dpsat = 0.0_wp
-                            do ipsat = NPSAT - 1, 1, -1
-                                psat = psat*T_LOC + THERMO_PSAT(ipsat)
-                                dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
-                            end do
-!                                 psat -P_LOC *(s(ij,2)-s(ij,3)) *Rv /( Rd +s(ij,2) *Rdv -s(ij,3) *Rv )
-! we seek root of function:       psat -P_LOC *s(ij,2) *Rv /( Rd +s(ij,2) *Rdv )
-                            T_LOC = T_LOC - (psat - P_LOC*s(ij, 2)*Rv/(Rd + s(ij, 2)*Rdv))/dpsat
-                        end do
-                        ! NEWTONRAPHSON_ERROR = MAX(NEWTONRAPHSON_ERROR,ABS(psat/dpsat)/T_LOC)
-                        ! print*,NEWTONRAPHSON_ERROR
-                        Td(ij) = T_LOC
-                        Lapse(ij) = scaleheightinv*R_LOC/P_LOC*psat/dpsat
-
-                    end if
-
-                end do
-            end do
-
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_DEWPOINT
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, weight, a)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: weight(*)
-        real(wp), intent(inout) :: a(nx, ny*nz)
-
-! ###################################################################
-        do jk = 1, ny*nz
-            j = mod(jk - 1, ny) + 1
-
-            a(1:nx, jk) = a(1:nx, jk)*weight(j)
-
-        end do
-
-        return
-    end subroutine THERMO_ANELASTIC_WEIGHT_INPLACE
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, weight, a, b)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: weight(*)
-        real(wp), intent(in) :: a(nx, ny*nz)
-        real(wp), intent(out) :: b(nx, ny*nz)
-
-! ###################################################################
-        do jk = 1, ny*nz
-            j = mod(jk - 1, ny) + 1
-
-            b(1:nx, jk) = a(1:nx, jk)*weight(j)
-
-        end do
-
-        return
-    end subroutine THERMO_ANELASTIC_WEIGHT_OUTPLACE
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_ADD(nx, ny, nz, weight, a, b)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: weight(*)
-        real(wp), intent(in) :: a(nx, ny*nz)
-        real(wp), intent(inout) :: b(nx, ny*nz)
-
-! ###################################################################
-        do jk = 1, ny*nz
-            j = mod(jk - 1, ny) + 1
-
-            b(1:nx, jk) = b(1:nx, jk) + a(1:nx, jk)*weight(j)
-
-        end do
-
-        return
-    end subroutine THERMO_ANELASTIC_WEIGHT_ADD
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_SUBSTRACT(nx, ny, nz, weight, a, b)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: weight(*)
-        real(wp), intent(in) :: a(nx, ny*nz)
-        real(wp), intent(inout) :: b(nx, ny*nz)
-
-! ###################################################################
-        do jk = 1, ny*nz
-            j = mod(jk - 1, ny) + 1
-
-            b(1:nx, jk) = b(1:nx, jk) - a(1:nx, jk)*weight(j)
-
-        end do
-
-        return
-    end subroutine THERMO_ANELASTIC_WEIGHT_SUBSTRACT
-
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
-        use FDM, only: grid_dt
-        use Integration, only: Int_Simpson
-
-        integer(wi), intent(in) :: nx, ny, nz
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: ql(nx*nz, ny)
-        real(wp), intent(out) :: lwp(nx, nz)
-        real(wp), intent(INOUT) :: wrk1d(ny)
-        real(wp), intent(INOUT) :: wrk3d(nx, ny, nz)
-
-! -------------------------------------------------------------------
-        integer(wi) k
-
-! ###################################################################
-        call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
-
-        do k = 1, nz
-            do i = 1, nx
-                do j = 1, ny
-                    wrk1d(j) = wrk3d(i, j, k)
-                end do
-                lwp(i, k) = Int_Simpson(wrk1d(1:ny), g%nodes(1:ny))
-            end do
-        end do
-
-        return
-    end subroutine THERMO_ANELASTIC_LWP
-
-!########################################################################
-!########################################################################
-! Just to check what the effect of using a wrong cp would be
-    subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP(nx, ny, nz, s, result)
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *)
-        real(wp), intent(out) :: result(nx*ny*nz)
-
-        real(wp) Lv
-
-! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            result = s(:, 1)
-
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
-                    result(ij) = T_LOC*Cd + E_LOC
-
-                end do
-
-            end do
-
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                E_LOC = epbackground(is)
-
-                do i = 1, nx
-                    ij = ij + 1
-
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
-
-                    Lv = Lv0 - T_LOC*Cvl
-                    result(ij) = T_LOC*Cd + E_LOC - s(ij, 3)*Lv
-
-                end do
-
-            end do
-        end if
-
-        return
-    end subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP
+    !########################################################################
+    !########################################################################
+    ! Main routines. They need to be fast.
 
     !########################################################################
     !# Calculating the equilibrium T and q_l for given enthalpy and pressure.
@@ -1087,6 +197,719 @@ contains
 
         return
     end subroutine THERMO_ANELASTIC_PH
+
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: T(nx*ny*nz)
+
+! ###################################################################
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                E_LOC = epbackground(is)
+
+                do i = 1, nx
+                    ij = ij + 1
+                    T(ij) = s(ij, 1) - E_LOC
+                end do
+
+            end do
+
+        case (MIXT_TYPE_AIRVAPOR)
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                E_LOC = epbackground(is)
+
+                do i = 1, nx
+                    ij = ij + 1
+                    T(ij) = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
+                end do
+
+            end do
+
+        case (MIXT_TYPE_AIRWATER)
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                E_LOC = epbackground(is)
+
+                do i = 1, nx
+                    ij = ij + 1
+                    T(ij) = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
+                end do
+
+            end do
+
+        end select
+
+        return
+    end subroutine THERMO_ANELASTIC_TEMPERATURE
+
+!########################################################################
+! Calculating h_l - h; very similar to the temperature routine
+!########################################################################
+    subroutine THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, result)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: result(nx*ny*nz)
+
+! ###################################################################
+        if (imixture == MIXT_TYPE_AIR) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                E_LOC = epbackground(is)
+
+                do i = 1, nx
+                    ij = ij + 1
+                    result(ij) = s(ij, 1) - E_LOC
+                    result(ij) = Cl*result(ij) + E_LOC - Lv0 - s(ij, 1)
+                end do
+
+            end do
+
+        else if (imixture == MIXT_TYPE_AIRVAPOR) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                E_LOC = epbackground(is)
+
+                do i = 1, nx
+                    ij = ij + 1
+                    result(ij) = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
+                    result(ij) = Cl*result(ij) + E_LOC - Lv0 - s(ij, 1)
+                end do
+
+            end do
+
+        else if (imixture == MIXT_TYPE_AIRWATER) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                E_LOC = epbackground(is)
+
+                do i = 1, nx
+                    ij = ij + 1
+                    result(ij) = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
+                    result(ij) = Cl*result(ij) + E_LOC - Lv0 - s(ij, 1)
+                end do
+
+            end do
+        end if
+
+        return
+    end subroutine THERMO_ANELASTIC_STATIC_L
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_BUOYANCY(nx, ny, nz, s, b)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: b(nx*ny*nz)
+
+! ###################################################################
+        if (imixture == MIXT_TYPE_AIR) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
+                R_LOC_INV = 1.0_wp/R_LOC
+
+                do i = 1, nx
+                    ij = ij + 1
+                    T_LOC = s(ij, 1) - E_LOC
+                    b(ij) = R_LOC_INV*(R_LOC - P_LOC/T_LOC)
+                end do
+
+            end do
+
+        else if (imixture == MIXT_TYPE_AIRVAPOR) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
+                R_LOC_INV = 1.0_wp/R_LOC
+
+                do i = 1, nx
+                    ij = ij + 1
+                    T_LOC = (s(ij, 1) - E_LOC)/(Cd + s(ij, 2)*Cdv)
+                    RMEAN = Rd + s(ij, 2)*Rdv
+                    b(ij) = R_LOC_INV*(R_LOC - P_LOC/(RMEAN*T_LOC))
+                end do
+
+            end do
+
+        else if (imixture == MIXT_TYPE_AIRWATER) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
+                R_LOC_INV = 1.0_wp/R_LOC
+
+                do i = 1, nx
+                    ij = ij + 1
+                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/(Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl)
+                    RMEAN = Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv
+                    b(ij) = R_LOC_INV*(R_LOC - P_LOC/(RMEAN*T_LOC))
+                end do
+
+            end do
+        end if
+
+        return
+    end subroutine THERMO_ANELASTIC_BUOYANCY
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, weight, a)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: weight(*)
+        real(wp), intent(inout) :: a(nx, ny*nz)
+
+! ###################################################################
+        do jk = 1, ny*nz
+            j = mod(jk - 1, ny) + 1
+
+            a(1:nx, jk) = a(1:nx, jk)*weight(j)
+
+        end do
+
+        return
+    end subroutine THERMO_ANELASTIC_WEIGHT_INPLACE
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, weight, a, b)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: weight(*)
+        real(wp), intent(in) :: a(nx, ny*nz)
+        real(wp), intent(out) :: b(nx, ny*nz)
+
+! ###################################################################
+        do jk = 1, ny*nz
+            j = mod(jk - 1, ny) + 1
+
+            b(1:nx, jk) = a(1:nx, jk)*weight(j)
+
+        end do
+
+        return
+    end subroutine THERMO_ANELASTIC_WEIGHT_OUTPLACE
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_WEIGHT_ADD(nx, ny, nz, weight, a, b)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: weight(*)
+        real(wp), intent(in) :: a(nx, ny*nz)
+        real(wp), intent(inout) :: b(nx, ny*nz)
+
+! ###################################################################
+        do jk = 1, ny*nz
+            j = mod(jk - 1, ny) + 1
+
+            b(1:nx, jk) = b(1:nx, jk) + a(1:nx, jk)*weight(j)
+
+        end do
+
+        return
+    end subroutine THERMO_ANELASTIC_WEIGHT_ADD
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_WEIGHT_SUBTRACT(nx, ny, nz, weight, a, b)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: weight(*)
+        real(wp), intent(in) :: a(nx, ny*nz)
+        real(wp), intent(inout) :: b(nx, ny*nz)
+
+! ###################################################################
+        do jk = 1, ny*nz
+            j = mod(jk - 1, ny) + 1
+
+            b(1:nx, jk) = b(1:nx, jk) - a(1:nx, jk)*weight(j)
+
+        end do
+
+        return
+    end subroutine THERMO_ANELASTIC_WEIGHT_SUBTRACT
+
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(out) :: p(nx*ny*nz)
+
+        ! ###################################################################
+        ij = 0
+        do jk = 0, ny*nz - 1
+            is = mod(jk, ny) + 1
+
+            do i = 1, nx
+                ij = ij + 1
+                p(ij) = pbackground(is)
+            end do
+
+        end do
+
+        return
+    end subroutine THERMO_ANELASTIC_PRESSURE
+
+    !########################################################################
+    !########################################################################
+    ! Procedures for post-processing and initialization.
+    ! We could write them explicitly as above using loops and only 1 array.
+    ! But we favor clarity over speed.
+    ! We write them in terms of a few routines despite requiring more memory and time
+
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_ANELASTIC_DENSITY(nx, ny, nz, s, rho, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: rho(nx*ny*nz), T(nx*ny*nz)
+
+        ! ###################################################################
+#define p rho
+
+        call THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+            rho = p/(T*Rd)
+
+        case (MIXT_TYPE_AIRVAPOR)
+            rho = p/(T*(Rd + s(:, 2)*Rdv))
+
+        case (MIXT_TYPE_AIRWATER)
+            rho = p/(T*(Rd + s(:, 2)*Rdv - s(:, 3)*Rv))
+
+        end select
+
+#undef p
+
+        return
+    end subroutine THERMO_ANELASTIC_DENSITY
+
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, pi)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(out) :: pi(nx*ny*nz)
+
+        real(wp) kappa
+
+        ! ###################################################################
+        kappa = Rd/Cd*GRATIO
+
+#define p pi
+
+        call THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+
+        pi = (PREF_1000/p)**kappa
+
+#undef p
+
+        return
+    end subroutine THERMO_ANELASTIC_ONE_OV_EXNER
+
+!########################################################################
+! Dry potential temperature
+!########################################################################
+    subroutine THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
+
+        ! ###################################################################
+#define locPi theta
+
+        call THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, locPi)
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+
+        theta = T*locPi
+
+#undef locPi
+
+        return
+    end subroutine THERMO_ANELASTIC_THETA
+
+!########################################################################
+! Virtual Potential temperature
+!########################################################################
+    subroutine THERMO_ANELASTIC_THETA_V(nx, ny, nz, s, theta, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
+
+        real(wp) Rdv_ov_Rd, Rv_ov_Rd
+
+        ! ###################################################################
+        Rdv_ov_Rd = Rdv/Rd
+        Rv_ov_Rd = Rv/Rd
+
+        call  THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta, T)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+
+        case (MIXT_TYPE_AIRVAPOR)
+            theta = theta*(1.0_wp + s(:, 2)*Rdv_ov_Rd)
+
+        case (MIXT_TYPE_AIRWATER)
+            theta = theta*(1.0_wp + s(:, 2)*Rdv_ov_Rd - s(:, 3)*Rv_ov_Rd)
+
+        end select
+
+        return
+    end subroutine THERMO_ANELASTIC_THETA_V
+
+!########################################################################
+! Liquid water potential temperature
+! still missing the correction of order one
+!########################################################################
+    subroutine THERMO_ANELASTIC_THETA_L(nx, ny, nz, s, theta, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
+
+        real(wp) Rdv_ov_Rd, Cdv_ov_Cd
+
+        ! ###################################################################
+        Rdv_ov_Rd = Rdv/Rd
+        Cdv_ov_Cd = Cdv/Cd
+
+#define locPi theta
+
+        call THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, locPi)
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+
+        case (MIXT_TYPE_AIRVAPOR)
+            theta = T*locPi**((1.0_wp + s(:, 2)*Rdv_ov_Rd)/(1.0_wp + s(:, 2)*Cdv_ov_Cd))
+
+        case (MIXT_TYPE_AIRWATER)
+            theta = T*locPi**((1.0_wp + s(:, 2)*Rdv_ov_Rd)/(1.0_wp + s(:, 2)*Cdv_ov_Cd))
+            theta = theta*exp(-(Lv0 - T*Cvl)*s(:, 3)/T/(Cd + s(:, 2)*Cdv))
+
+        end select
+
+#undef locPi
+
+        return
+    end subroutine THERMO_ANELASTIC_THETA_L
+
+!########################################################################
+! Equivalent potential temperature
+! still missing the correction of order one
+!########################################################################
+    subroutine THERMO_ANELASTIC_THETA_E(nx, ny, nz, s, theta, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
+
+        real(wp) Cdl_ov_Cd
+
+        ! ###################################################################
+        Cdl_ov_Cd = Cdl/Cd
+
+#define locPi theta
+
+        call THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, locPi)
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+
+        case (MIXT_TYPE_AIRVAPOR)
+            theta = T*locPi**((1.0_wp - s(:, 2))/(1.0_wp + s(:, 2)*Cdl_ov_Cd))
+            theta = theta*exp((Lv0 - T*Cvl)*s(:, 2)/T/(Cd + s(:, 2)*Cdl))
+
+        case (MIXT_TYPE_AIRWATER)
+            theta = T*locPi**((1.0_wp - s(:, 2))/(1.0_wp + s(:, 2)*Cdl_ov_Cd))
+            theta = theta*exp((Lv0 - T*Cvl)*(s(:, 2) - s(:, 3))/T/(Cd + s(:, 2)*Cdl))
+
+        end select
+
+#undef locPi
+
+        return
+    end subroutine THERMO_ANELASTIC_THETA_E
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz)
+        real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
+
+! ###################################################################
+#define locT frequency
+
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, locT)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+            lapse(:) = GRATIO*scaleheightinv
+
+        case (MIXT_TYPE_AIRVAPOR)
+            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv)
+
+        case (MIXT_TYPE_AIRWATER)
+            lapse(:) = GRATIO*scaleheightinv/(Cd + s(:, 2)*Cdv + s(:, 3)*Cvl)
+
+        end select
+
+        frequency(:) = (lapse(:) + dTdy(:))/locT(:)
+
+#undef locT
+
+        return
+    end subroutine THERMO_ANELASTIC_LAPSE_FR
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_LAPSE_EQU(nx, ny, nz, s, dTdy, dqldy, lapse, frequency)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz), dqldy(nx*ny*nz)
+        real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
+
+! -------------------------------------------------------------------
+        real(wp) RT_INV, dpsat
+        real(wp) Cp_loc, Lv, one_p_eps, qvequ, qsat, dummy
+
+! ###################################################################
+        if (imixture == MIXT_TYPE_AIR) then
+            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
+
+        else if (imixture == MIXT_TYPE_AIRVAPOR) then
+            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
+
+        else if (imixture == MIXT_TYPE_AIRWATER) then
+            ij = 0
+            do jk = 0, ny*nz - 1
+                is = mod(jk, ny) + 1
+                P_LOC = pbackground(is)
+                E_LOC = epbackground(is)
+                R_LOC = rbackground(is)
+
+                RT_INV = R_LOC/P_LOC*scaleheightinv
+
+                do i = 1, nx
+                    ij = ij + 1
+
+                    Cp_loc = Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl ! I need it below
+                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/Cp_loc
+
+                    psat = THERMO_PSAT(NPSAT); dpsat = 0.0_wp
+                    do ipsat = NPSAT - 1, 1, -1
+                        psat = psat*T_LOC + THERMO_PSAT(ipsat)
+                        dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
+                    end do
+                    dummy = rd_ov_rv/(P_LOC/psat - 1.0_wp)
+                    qsat = dummy/(1.0_wp + dummy)
+
+! We cannot use ql directly (s(:,3)) because the smoothing function imposes
+! an exponentially small value, but nonzero
+                    if (qsat >= s(ij, 2)) then
+                        lapse(ij) = GRATIO*scaleheightinv/(Cd + s(ij, 2)*Cdv)
+                        frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
+
+                    else
+                        qvequ = dummy*(1.0_wp - s(ij, 2))
+
+                        one_p_eps = 1.0_wp/(1.0_wp - psat/P_LOC)
+                        Lv = Lv0 - T_LOC*Cvl
+
+                        lapse(ij) = GRATIO*scaleheightinv + qvequ*one_p_eps*Lv*RT_INV
+                        lapse(ij) = lapse(ij)/(Cp_loc + qvequ*one_p_eps*Lv*dpsat/psat)
+
+                        frequency(ij) = qvequ*(lapse(ij)*dpsat/psat - RT_INV)*one_p_eps - dqldy(ij)
+                        frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC &
+                                        - frequency(ij)*Rv/(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)
+
+                    end if
+
+                end do
+
+            end do
+
+        end if
+
+        return
+    end subroutine THERMO_ANELASTIC_LAPSE_EQU
+
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_ANELASTIC_VAPOR_PRESSURE(nx, ny, nz, s, pv)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: pv(nx*ny*nz)
+
+        ! ###################################################################
+#define p pv
+        call THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+            pv = 0.0_wp
+
+        case (MIXT_TYPE_AIRVAPOR)
+            pv = s(:, 2)*Rv/(Rd + s(:, 2)*Rdv)*p
+
+        case (MIXT_TYPE_AIRWATER)
+            pv = (s(:, 2) - s(:, 3))*Rv/(Rd + s(:, 2)*Rdv - s(:, 3)*Rv)*p
+
+        end select
+
+#undef p
+
+        return
+    end subroutine THERMO_ANELASTIC_VAPOR_PRESSURE
+
+    !########################################################################
+    !########################################################################
+    subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY(nx, ny, nz, s, rh, T)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: rh(nx*ny*nz)
+        real(wp), intent(inout) :: T(nx*ny*nz)
+
+        ! ###################################################################
+#define pv T
+#define psat rh
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Psat_Polynomial(nx*ny*nz, T, psat)
+
+        call THERMO_ANELASTIC_VAPOR_PRESSURE(nx, ny, nz, s, pv)
+
+        rh = pv/psat*100.0_wp
+
+#undef pv
+#undef psat
+
+        return
+    end subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_DEWPOINT(nx, ny, nz, s, dpvdy, Td, Lapse)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *), dpvdy(nx*ny*nz)
+        real(wp), intent(out) :: lapse(nx*ny*nz), Td(nx*ny*nz)
+
+        ! -------------------------------------------------------------------
+        integer(wi) inr, nrmax
+        real(wp) dpsat
+
+! ###################################################################
+        if (imixture == MIXT_TYPE_AIR) return
+
+! maximum number of iterations in Newton-Raphson
+        nrmax = 5
+
+#define pv Lapse
+
+        call THERMO_ANELASTIC_VAPOR_PRESSURE(nx, ny, nz, s, pv)
+
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, Td)    ! Using actual temperature as initial condition
+
+! If liquid, we should use qsat instead of ql (s(:,3)) because the smoothing function imposes
+! an exponentially small value, but nonzero (?)
+
+        do ij = 1, nx*ny*nz
+            do inr = 1, nrmax                                   ! executing Newton-Raphson
+                psat = THERMO_PSAT(NPSAT); dpsat = 0.0_wp
+                do ipsat = NPSAT - 1, 1, -1
+                    psat = psat*Td(ij) + THERMO_PSAT(ipsat)
+                    dpsat = dpsat*Td(ij) + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
+                end do
+                Td(ij) = Td(ij) - (psat - pv(ij))/dpsat
+            end do
+
+            Lapse(ij) = -dpvdy(ij)/dpsat
+
+        end do
+
+#undef pv
+
+        return
+    end subroutine THERMO_ANELASTIC_DEWPOINT
+
+!########################################################################
+!########################################################################
+    subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
+        use FDM, only: grid_dt
+        use Integration, only: Int_Simpson
+
+        integer(wi), intent(in) :: nx, ny, nz
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: ql(nx*nz, ny)
+        real(wp), intent(out) :: lwp(nx, nz)
+        real(wp), intent(INOUT) :: wrk1d(ny)
+        real(wp), intent(INOUT) :: wrk3d(nx, ny, nz)
+
+! -------------------------------------------------------------------
+        integer(wi) k
+
+! ###################################################################
+        call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
+
+        do k = 1, nz
+            do i = 1, nx
+                do j = 1, ny
+                    wrk1d(j) = wrk3d(i, j, k)
+                end do
+                lwp(i, k) = Int_Simpson(wrk1d(1:ny), g%nodes(1:ny))
+            end do
+        end do
+
+        return
+    end subroutine THERMO_ANELASTIC_LWP
+
+!########################################################################
+!########################################################################
+! Just to check what the effect of using a wrong cp would be
+    subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP(nx, ny, nz, s, result)
+        integer(wi), intent(in) :: nx, ny, nz
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: result(nx*ny*nz)
+
+! ###################################################################
+#define T result
+        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+            result = s(:, 1)
+
+        case (MIXT_TYPE_AIRVAPOR)
+            result = s(:, 1) + (Cd - (Cd + s(:, 2)*Cdv))*T
+
+        case (MIXT_TYPE_AIRWATER)
+            result = s(:, 1) + (Cd - (Cd + s(:, 2)*Cdv + s(:, 3)*Cvl))*T
+
+        end select
+
+#undef T
+
+        return
+    end subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP
 
 ! ! ###################################################################
 ! ! ###################################################################

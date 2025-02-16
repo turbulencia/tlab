@@ -621,9 +621,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
 
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp41, h1)
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp11, h2)
-        call THERMO_ANELASTIC_WEIGHT_SUBSTRACT(imax, jmax, kmax, ribackground, tmp42, h3)
+        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp41, h1)
+        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp11, h2)
+        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp42, h3)
 
     else
         h1 = h1 - tmp41

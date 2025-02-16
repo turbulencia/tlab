@@ -512,7 +512,7 @@ program VISUALS
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, txc(1, 1))
+                        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
@@ -944,7 +944,7 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 17) then
                 plot_file = 'RelativeHumidity'//time_str(1:MaskSize)
-                call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, wrk3d, txc(1, 1))
+                call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
