@@ -6,7 +6,7 @@ module FDM
     implicit none
     private
 
-    type grid_dt
+    type, public :: grid_dt
         sequence
         character*8 name
         integer(wi) size
@@ -37,12 +37,11 @@ module FDM
         real(wp), pointer :: lu2(:, :)      ! pointer to LU decomposition for 2. derivative
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
 
-        real(wp), pointer :: lu2d(:, :, :)     ! pointer to LU decomposition for 2. derivative inc. diffusion; to be moved to opr_burgers
     end type grid_dt
 
-    type(grid_dt), dimension(3) :: g                ! Grid information along 3 directions
+    type(grid_dt), public :: g(3)                ! Grid information along 3 directions
 
-    public :: grid_dt, g, FDM_Initialize
+    public :: FDM_Initialize
 
 contains
     subroutine FDM_Initialize(x, g, nodes, wrk1d)
@@ -90,7 +89,7 @@ contains
         if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
 
         if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-            call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+    call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
 
         if (g%size > 1) then
@@ -296,7 +295,7 @@ contains
                 case (3)
                     call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
                 case (5)
-                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                   call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
                 end select
 
                 ig = ig + 5
@@ -430,7 +429,7 @@ contains
         if (g%periodic) then
             g%mwn2 => x(:, ig)
 
-            g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
+  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
                         /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
 
             g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver

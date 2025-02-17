@@ -41,6 +41,12 @@ module OPR_Burgers
     end type rho_anelastic
     type(rho_anelastic) :: rhoinv(3)                    ! one for each direction
 
+    type :: fdm_diffusion_dt
+        sequence
+        real(wp), allocatable :: lu(:, :, :)
+    end type fdm_diffusion_dt
+    type(fdm_diffusion_dt) :: fdmDiffusion(3)
+
 contains
     !########################################################################
     !########################################################################
@@ -82,7 +88,7 @@ contains
             else
                 idummy = g(ig)%nb_diag_2(1)
             end if
-            allocate (g(ig)%lu2d(g(ig)%size, idummy, 0:inb_scal))
+            allocate (fdmDiffusion(ig)%lu(g(ig)%size, idummy, 0:inb_scal))
 
             ip = 0
             do is = 0, inb_scal ! case 0 for the reynolds number
@@ -93,16 +99,16 @@ contains
                 end if
 
                 if (g(ig)%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
-                    g(ig)%lu2d(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
-                    g(ig)%lu2d(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
-                    g(ig)%lu2d(:, 3, is) = g(ig)%lu2(:, 3)         ! matrix U is the same
-                    g(ig)%lu2d(:, 4, is) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
-                    g(ig)%lu2d(:, 5, is) = g(ig)%lu2(:, 5)         ! matrix U is the same
+                    fdmDiffusion(ig)%lu(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
+                    fdmDiffusion(ig)%lu(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
+                    fdmDiffusion(ig)%lu(:, 3, is) = g(ig)%lu2(:, 3)         ! matrix U is the same
+                    fdmDiffusion(ig)%lu(:, 4, is) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
+                    fdmDiffusion(ig)%lu(:, 5, is) = g(ig)%lu2(:, 5)         ! matrix U is the same
 
                 else                                            ! Check routines TRIDFS and TRIDSS
-                    g(ig)%lu2d(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L is the same
-                    g(ig)%lu2d(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
-                    g(ig)%lu2d(:, 3, is) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
+                    fdmDiffusion(ig)%lu(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L is the same
+                    fdmDiffusion(ig)%lu(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
+                    fdmDiffusion(ig)%lu(:, 3, is) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
 
                 end if
 
@@ -149,8 +155,8 @@ contains
             ! Density correction term in the burgers operator along Y; see FDM_Initialize
             ! we implement it directly in the tridiagonal system
             do is = 0, inb_scal ! case 0 for the velocity
-                g(2)%lu2d(:, 2, is) = g(2)%lu2d(:, 2, is)*ribackground(:)  ! matrix U; 1/diagonal
-                g(2)%lu2d(:g(2)%size - 1, 3, is) = g(2)%lu2d(:g(2)%size - 1, 3, is)*rbackground(2:) ! matrix U; 1. superdiagonal
+                fdmDiffusion(2)%lu(:, 2, is) = fdmDiffusion(2)%lu(:, 2, is)*ribackground(:)  ! matrix U; 1/diagonal
+                fdmDiffusion(2)%lu(:g(2)%size - 1, 3, is) = fdmDiffusion(2)%lu(:g(2)%size - 1, 3, is)*rbackground(2:) ! matrix U; 1. superdiagonal
             end do
 
             ! -----------------------------------------------------------------------
@@ -250,7 +256,7 @@ contains
 #endif
 
         ! ###################################################################
-        call OPR_Burgers_1D(is, nyz, bcs, g(1), Dealiasing(1), rhoinv(1), p_b, p_vel, p_d, p_c)
+        call OPR_Burgers_1D(is, nyz, bcs, g(1), fdmDiffusion(1)%lu(:, :, is), Dealiasing(1), rhoinv(1), p_b, p_vel, p_d, p_c)
 
         ! ###################################################################
         ! Put arrays back in the order in which they came in
@@ -330,7 +336,7 @@ contains
         end if
 
         ! ###################################################################
-        call OPR_Burgers_1D(is, nxz, bcs, g(2), Dealiasing(2), rhoinv(2), p_org, p_vel, p_dst2, p_dst1)
+        call OPR_Burgers_1D(is, nxz, bcs, g(2), fdmDiffusion(2)%lu(:, :, is), Dealiasing(2), rhoinv(2), p_org, p_vel, p_dst2, p_dst1)
 
         if (subsidenceProps%type == TYPE_SUB_CONSTANT_LOCAL) then
             do j = 1, ny
@@ -418,7 +424,7 @@ contains
         end if
 
         ! ###################################################################
-        call OPR_Burgers_1D(is, nxy, bcs, g(3), Dealiasing(3), rhoinv(3), p_a, p_vel, p_c, p_b)
+        call OPR_Burgers_1D(is, nxy, bcs, g(3), fdmDiffusion(3)%lu(:, :, is), Dealiasing(3), rhoinv(3), p_a, p_vel, p_c, p_b)
 
         ! ###################################################################
         ! Put arrays back in the order in which they came in
@@ -439,13 +445,14 @@ contains
     !#
     !# Second derivative uses LE decomposition including diffusivity coefficient
     !########################################################################
-    subroutine OPR_Burgers_1D(is, nlines, bcs, g, dealiasing, rhoinv, s, u, result, dsdx)
+    subroutine OPR_Burgers_1D(is, nlines, bcs, g, lu2d, dealiasing, rhoinv, s, u, result, dsdx)
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
         type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: lu2d(:, :)      ! LU decomposition including the diffusion parameter for corresponding field is
         type(filter_dt), intent(in) :: dealiasing
         type(rho_anelastic), intent(in) :: rhoinv
         real(wp), intent(in) :: s(nlines, g%size), u(nlines, g%size)  ! argument field and velocity field
@@ -464,10 +471,10 @@ contains
 
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity
         if (ibm_burgers) then
-            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, g%lu2d(:, :, is), s, result, dsdx)
+            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2d, s, result, dsdx)
         else
             call OPR_PARTIAL1(nlines, bcs(:, 1), g, s, dsdx)
-            call OPR_PARTIAL2(nlines, g, g%lu2d(:, :, is), s, result, dsdx)
+            call OPR_PARTIAL2(nlines, g, lu2d, s, result, dsdx)
         end if
 
         ! ###################################################################
