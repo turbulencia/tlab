@@ -5,7 +5,7 @@ program STATE
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use Thermodynamics
     use THERMO_THERMAL
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use THERMO_CALORIC
 
     implicit none
@@ -79,10 +79,10 @@ program STATE
         call THERMO_THERMAL_DENSITY(1, z1, p, t, r)
 
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v, wrk)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l, wrk)
-        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e, wrk)
-        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
+        call Thermo_Anelastic_THETA_V(1, 1, 1, s, theta_v, wrk)
+        call Thermo_Anelastic_THETA_L(1, 1, 1, s, theta_l, wrk)
+        call Thermo_Anelastic_THETA_E(1, 1, 1, s, theta_e, wrk)
+        call Thermo_Anelastic_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
 
     else if (iopt == 2) then
         z1(1) = qt(1)
@@ -97,17 +97,17 @@ program STATE
         call THERMO_CALORIC_ENTHALPY(1, z1, t, h)
 
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v, wrk)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l, wrk)
-        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e, wrk)
-        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
+        call Thermo_Anelastic_THETA_V(1, 1, 1, s, theta_v, wrk)
+        call Thermo_Anelastic_THETA_L(1, 1, 1, s, theta_l, wrk)
+        call Thermo_Anelastic_THETA_E(1, 1, 1, s, theta_e, wrk)
+        call Thermo_Anelastic_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
 
     else if (iopt == 3) then
         ! h = h/TREF/1.007
         z1(1) = qt(1)
-        call THERMO_ANELASTIC_PH(1, 1, 1, z1, h)
+        call Thermo_Anelastic_PH(1, 1, 1, z1, h)
         s(1) = h(1); s(2:3) = z1(1:2)
-        call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, T)
+        call Thermo_Anelastic_TEMPERATURE(1, 1, 1, s, T)
         ! CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
         ql(1) = z1(2)
         qv = qt - ql
@@ -118,13 +118,13 @@ program STATE
         call THERMO_THERMAL_DENSITY(1, z1, p, T, r)
         call THERMO_CALORIC_ENERGY(1, z1, T, e)
 
-        call THERMO_ANELASTIC_THETA_V(1, 1, 1, s, theta_v, wrk)
-        call THERMO_ANELASTIC_THETA_L(1, 1, 1, s, theta_l, wrk)
-        call THERMO_ANELASTIC_THETA_E(1, 1, 1, s, theta_e, wrk)
-        call THERMO_ANELASTIC_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
+        call Thermo_Anelastic_THETA_V(1, 1, 1, s, theta_v, wrk)
+        call Thermo_Anelastic_THETA_L(1, 1, 1, s, theta_l, wrk)
+        call Thermo_Anelastic_THETA_E(1, 1, 1, s, theta_e, wrk)
+        call Thermo_Anelastic_DEWPOINT(1, 1, 1, s, dummy, Td, wrk)
 
 ! check
-        call THERMO_ANELASTIC_DENSITY(1, 1, 1, s, r1, wrk)
+        call Thermo_Anelastic_DENSITY(1, 1, 1, s, r1, wrk)
 !     r2 = p/(T*(1- qt +qv/rd_ov_rv ) )
         call THERMO_CALORIC_ENTHALPY(1, z1, T, h1)
 

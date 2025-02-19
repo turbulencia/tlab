@@ -120,7 +120,7 @@ contains
         use TLab_Constants, only: BCS_MIN
         use FDM, only: grid_dt
         use Thermodynamics
-        use THERMO_ANELASTIC
+        use Thermo_Anelastic
         use THERMO_AIRWATER
         use THERMO_THERMAL
         use OPR_ODES
@@ -168,7 +168,7 @@ contains
         do iter = 1, niter           ! iterate
             if (imode_thermo == THERMO_TYPE_ANELASTIC) then
                 pbackground(:) = p_aux(:)
-                call THERMO_ANELASTIC_DENSITY(1, g%size, 1, s, r_aux(:), wrk_aux(:))    ! Get r_aux=1/RT
+                call Thermo_Anelastic_DENSITY(1, g%size, 1, s, r_aux(:), wrk_aux(:))    ! Get r_aux=1/RT
                 r_aux(:) = -scaleheightinv*r_aux(:)
             else
                 call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
@@ -195,8 +195,8 @@ contains
                 case (THERMO_TYPE_ANELASTIC)
                     pbackground(:) = p(:)
                     if (imixture == MIXT_TYPE_AIRWATER) then
-                        call THERMO_ANELASTIC_PH(1, g%size, 1, s(:, 2), s(:, 1))
-                        call THERMO_ANELASTIC_TEMPERATURE(1, g%size, 1, s, T)
+                        call Thermo_Anelastic_PH(1, g%size, 1, s(:, 2), s(:, 1))
+                        call Thermo_Anelastic_TEMPERATURE(1, g%size, 1, s, T)
                     end if
 
                 case (THERMO_TYPE_LINEAR)

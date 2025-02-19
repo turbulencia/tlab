@@ -27,7 +27,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLab_Time, only: itime
     use TLab_Arrays
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use TLab_OpenMP
     use DNS_ARRAYS
     use DNS_LOCAL, only: remove_divergence
@@ -209,9 +209,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call IBM_BCS_FIELD(tmp4)
         end if
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp2)
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp2)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
         end if
         if (stagger_on) then ! staggering on horizontal pressure nodes
             !  Oy derivative
@@ -237,9 +237,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
             call IBM_BCS_FIELD(hq(:, 3))
         end if
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 2), tmp2)
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 1), tmp3)
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 3), tmp4)
+            call Thermo_Anelastic_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 2), tmp2)
+            call Thermo_Anelastic_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 1), tmp3)
+            call Thermo_Anelastic_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, hq(:, 3), tmp4)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp1)
             call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp3, tmp2)
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
@@ -330,9 +330,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     ! Add pressure gradient
     ! -----------------------------------------------------------------------
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:, 1))
-        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:, 2))
-        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:, 3))
+        call Thermo_Anelastic_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp2, hq(:, 1))
+        call Thermo_Anelastic_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp3, hq(:, 2))
+        call Thermo_Anelastic_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp4, hq(:, 3))
 
     else
 #ifdef USE_ESSL

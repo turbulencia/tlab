@@ -21,7 +21,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLab_Time, only: itime, rtime
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk3d, u, v, w, rho, vis
-    use THERMO_ANELASTIC, only: THERMO_ANELASTIC_WEIGHT_INPLACE, THERMO_ANELASTIC_BUOYANCY, ribackground
+    use THERMO_ANELASTIC, only: Thermo_Anelastic_WEIGHT_INPLACE, Thermo_Anelastic_BUOYANCY, ribackground
     use THERMO_AIRWATER
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1, scal_bcs
     use Averages, only: AVG_IK_V
@@ -482,14 +482,14 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     if (infraredProps%active(is)) then       ! Radiation in tmp1 and dsdx
         call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, dsdy, dsdx)
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp1)
         end if
     end if
 
     if (sedimentationProps%active(is)) then      ! Transport in tmp3 and dsdz
         call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp3, dsdy, dsdz)
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, ribackground, tmp3)
         end if
     end if
 
@@ -768,7 +768,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
         if (buoyancy%type == EQNS_EXPLICIT) then
-            call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, p_wrk3d)
+            call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, p_wrk3d)
         else
             call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, p_wrk3d, bbackground)
         end if

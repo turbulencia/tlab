@@ -25,7 +25,7 @@ program INISCAL
     use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y, radterm_dt
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_AIRWATER
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use IO_FIELDS
     use SCAL_LOCAL
 
@@ -102,7 +102,7 @@ program INISCAL
         select case (imode_thermo)
         case (THERMO_TYPE_ANELASTIC)
             if (imixture == MIXT_TYPE_AIRWATER) then
-                call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
+                call Thermo_Anelastic_PH(imax, jmax, kmax, s(1, 2), s(1, 1))
             end if
 
         case (THERMO_TYPE_LINEAR)

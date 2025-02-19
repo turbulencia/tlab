@@ -14,7 +14,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use Rotation, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
     use TLab_Pointers_3D, only: p_wrk2d
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use IBM_VARS, only: imode_ibm, ibm_burgers
     use OPR_PARTIAL
     use OPR_Burgers
@@ -168,7 +168,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     if (decomposition == DCMP_BUOYANCY) then
         do iq = 1, 3
             if (buoyancy%type == EQNS_EXPLICIT) then
-                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
+                call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, tmp1)
             else
                 if (buoyancy%active(iq)) then
                     if (iq == 2) then
@@ -212,7 +212,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
 ! Calculate forcing term Ox
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
+        call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp3)
     end if
     if (stagger_on) then
         call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), tmp3, tmp2)
@@ -224,7 +224,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
 ! Calculate forcing term Oy
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
+        call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp4)
     end if
     if (stagger_on) then
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp2)
@@ -237,7 +237,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 
 ! Calculate forcing term Oz
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp5)
+        call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp5)
     end if
     if (stagger_on) then
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp5, tmp2)

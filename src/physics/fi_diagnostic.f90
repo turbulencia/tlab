@@ -15,7 +15,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use Averages, only: AVG1V2D_V
 
     implicit none
@@ -38,7 +38,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
         select case (imode_thermo)
         case (THERMO_TYPE_ANELASTIC)
             if (imixture == MIXT_TYPE_AIRWATER) then                            ! Calculate liquid content q_l
-                call THERMO_ANELASTIC_PH(nx, ny, nz, s(:, 2), s(1, 1))
+                call Thermo_Anelastic_PH(nx, ny, nz, s(:, 2), s(1, 1))
             end if
 
         case (THERMO_TYPE_LINEAR)

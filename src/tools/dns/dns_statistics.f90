@@ -67,7 +67,7 @@ contains
         use NavierStokes, only: froude, schmidt
         use TLab_Time, only: itime, rtime
         use TLab_Arrays
-        use THERMO_ANELASTIC
+        use Thermo_Anelastic
         use DNS_ARRAYS
         use PARTICLE_VARS
         use PARTICLE_ARRAYS
@@ -162,7 +162,7 @@ contains
                 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
                 if (stats_buoyancy) then
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, hq(1, 1))
+                        call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, hq(1, 1))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, hq(1, 1), wrk1d)
@@ -179,7 +179,7 @@ contains
                 if (imode_thermo == THERMO_TYPE_ANELASTIC) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
-                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, hq(:, 1), wrk3d)
+                        call Thermo_Anelastic_THETA_L(imax, jmax, kmax, s, hq(:, 1), wrk3d)
 
                         hq(1:isize_field, 3) = txc(1:isize_field, 3) ! Pass the pressure
                         call AVG_SCAL_XZ(is, q, s, hq(1, 1), &

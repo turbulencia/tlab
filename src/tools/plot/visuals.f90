@@ -31,7 +31,7 @@ program VISUALS
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Rotation, only: Rotation_Initialize
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use THERMO_AIRWATER
     use Radiation
     use Microphysics
@@ -512,7 +512,7 @@ program VISUALS
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_DENSITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
+                        call Thermo_Anelastic_DENSITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
@@ -523,13 +523,13 @@ program VISUALS
 
                 else if (opt_vec(iv) == 7 .and. imixture == MIXT_TYPE_AIRWATER) then ! temperature
                     plot_file = 'Temperature'//time_str(1:MaskSize)
-                    call THERMO_ANELASTIC_TEMPERATURE(imax, jmax, kmax, s, txc(1, 1))
+                    call Thermo_Anelastic_TEMPERATURE(imax, jmax, kmax, s, txc(1, 1))
                     call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                     if (damkohler(1) > 0.0_wp) then ! Supersaturated liquid; this is wrong
                         plot_file = 'Supsat'//time_str(1:MaskSize)
                         txc(1:isize_field, 1:2) = s(1:isize_field, 1:2)
-                        call THERMO_ANELASTIC_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1))
+                        call Thermo_Anelastic_PH(imax, jmax, kmax, txc(1, 2), txc(1, 1))
                         txc(1:isize_field, 3) = (s(1:isize_field, 3) - txc(1:isize_field, 3))/s(1, 3)
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 3), wrk3d)
                     end if
@@ -740,7 +740,7 @@ program VISUALS
 
                 plot_file = 'LogPotentialEnstrophy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 4))
+                    call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 4))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
                     call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 4), wrk1d)
@@ -853,7 +853,7 @@ program VISUALS
             if (opt_vec(iv) == iscal_offset + 12) then
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
+                    call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
                     call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)
@@ -944,7 +944,7 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 17) then
                 plot_file = 'RelativeHumidity'//time_str(1:MaskSize)
-                call THERMO_ANELASTIC_RELATIVEHUMIDITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
+                call Thermo_Anelastic_RELATIVEHUMIDITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
             end if
 
@@ -986,7 +986,7 @@ program VISUALS
 
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
+                    call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
                     call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)

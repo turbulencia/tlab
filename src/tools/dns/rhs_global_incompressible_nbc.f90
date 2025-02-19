@@ -25,7 +25,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use TLab_Memory, only: isize_field, isize_wrk1d, imax, jmax, kmax
     use TLab_Memory, only: rbackground, ribackground
     !
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use TIME, only: rkm_substep, rkm_endstep, dte
@@ -439,8 +439,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         tmp32 = h1 + u*tdummy
         tmp42 = h3 + w*tdummy
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp32)
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp42)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp32)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp42)
         end if
         t_ser = t_ser + (t_tmp + MPI_WTime())
 
@@ -532,7 +532,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         tdummy = 1.0_wp/dte
         tmp11 = h2 + v*tdummy
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp11)
+            call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp11)
         end if
         call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp11, tmp12)
         t_ser = t_ser + (t_tmp + MPI_WTime())
@@ -621,9 +621,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
 
 
     if (nse_eqns == DNS_EQNS_ANELASTIC) then
-        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp41, h1)
-        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp11, h2)
-        call THERMO_ANELASTIC_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp42, h3)
+        call Thermo_Anelastic_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp41, h1)
+        call Thermo_Anelastic_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp11, h2)
+        call Thermo_Anelastic_WEIGHT_SUBTRACT(imax, jmax, kmax, ribackground, tmp42, h3)
 
     else
         h1 = h1 - tmp41

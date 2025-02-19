@@ -9,7 +9,7 @@ module TLab_Sources
     use NavierStokes, only: nse_eqns
     use FDM, only: g
     use TLab_OpenMP
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
     use Rotation, only: coriolis, Rotation_Coriolis
     use Radiation
@@ -61,7 +61,7 @@ contains
             if (buoyancy%active(iq)) then
 
                 if (buoyancy%type == EQNS_EXPLICIT) then
-                    call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, tmp1)
+                    call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, tmp1)
 
                 else
                     call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, tmp1, bbackground)
@@ -152,7 +152,7 @@ contains
                 call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
 
                 if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
+                    call Thermo_Anelastic_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
 !$omp parallel default( shared ) &
 !$omp private( ij, srt,end,siz )
@@ -173,7 +173,7 @@ contains
                 call Microphysics_Sedimentation(sedimentationProps, imax, jmax, kmax, is, g(2), s, tmp1, tmp2)
 
                 if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
+                    call Thermo_Anelastic_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))
                 else
 !$omp parallel default( shared ) &forcingProps%vector
 !$omp private( ij, srt,end,siz )

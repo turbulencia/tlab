@@ -98,7 +98,7 @@ contains
         use TLab_Memory, only: imax, jmax, kmax
         use TLab_Arrays
         use TLab_WorkFlow, only: TLab_Write_ASCII
-        use THERMO_ANELASTIC
+        use Thermo_Anelastic
         use IBM_VARS, only: imode_ibm
 #ifdef USE_MPI
         use mpi_f08
@@ -157,9 +157,9 @@ contains
 
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 1), txc(1, 3))
-                call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 2), txc(1, 4))
-                call THERMO_ANELASTIC_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 3), txc(1, 5))
+                call Thermo_Anelastic_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 1), txc(1, 3))
+                call Thermo_Anelastic_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 2), txc(1, 4))
+                call Thermo_Anelastic_WEIGHT_OUTPLACE(imax, jmax, kmax, rbackground, q(1, 3), txc(1, 5))
                 if (stagger_on) then
                     call FI_INVARIANT_P_STAG(imax, jmax, kmax, txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 1), txc(1, 2), txc(1, 6))
                 else

@@ -7,7 +7,7 @@ program SMOOTH
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
 
     implicit none
 
@@ -81,9 +81,9 @@ program SMOOTH
             call THERMO_CALORIC_ENTHALPY(1, z1, T, h)
 
         else if (opt == 3) then
-            call THERMO_ANELASTIC_PH(1, 1, 1, z1, h)
+            call Thermo_Anelastic_PH(1, 1, 1, z1, h)
             s(1) = h(1); s(2:3) = z1(1:2)
-            call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, T)
+            call Thermo_Anelastic_TEMPERATURE(1, 1, 1, s, T)
 !        CALL THERMO_AIRWATER_PH_RE(1, z1, p, h, T)
             call Thermo_Psat_Polynomial(1, T, qs)
             qs = 1.0_wp/(p/qs - 1.0_wp)*rd_ov_rv

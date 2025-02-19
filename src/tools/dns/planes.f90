@@ -10,7 +10,7 @@ module PLANES
     use IBM_VARS, only: imode_ibm, ibm_partial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, scal_on
     use Thermodynamics, only: imixture
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use IO_FIELDS
     use FI_VORTICITY_EQN
     use FI_GRADIENT_EQN
@@ -307,10 +307,10 @@ contains
                 offset = offset + jplanes%n
             end do
             if (imixture == MIXT_TYPE_AIRWATER) then    ! Add LWP and integral of total water
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), s(:, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
+                call Thermo_Anelastic_LWP(imax, jmax, kmax, g(2), s(:, inb_scal_array), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
-                call THERMO_ANELASTIC_LWP(imax, jmax, kmax, g(2), s(:, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
+                call Thermo_Anelastic_LWP(imax, jmax, kmax, g(2), s(:, inb_scal_array - 1), p_wrk2d, wrk1d, wrk3d)
                 data_j(:, 1 + offset, :) = p_wrk2d(:, :, 1)
                 offset = offset + 1
             end if
@@ -343,5 +343,36 @@ contains
 
         return
     end subroutine PLANES_SAVE
+
+    !########################################################################
+    !########################################################################
+    subroutine Thermo_Anelastic_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
+        use FDM, only: grid_dt
+        use Integration, only: Int_Simpson
+
+        integer(wi), intent(in) :: nx, ny, nz
+        type(grid_dt), intent(in) :: g
+        real(wp), intent(in) :: ql(nx*nz, ny)
+        real(wp), intent(out) :: lwp(nx, nz)
+        real(wp), intent(INOUT) :: wrk1d(ny)
+        real(wp), intent(INOUT) :: wrk3d(nx, ny, nz)
+
+        ! -------------------------------------------------------------------
+        integer(wi) k
+
+        ! ###################################################################
+        call Thermo_Anelastic_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
+
+        do k = 1, nz
+            do i = 1, nx
+                do j = 1, ny
+                    wrk1d(j) = wrk3d(i, j, k)
+                end do
+                lwp(i, k) = Int_Simpson(wrk1d(1:ny), g%nodes(1:ny))
+            end do
+        end do
+
+        return
+    end subroutine Thermo_Anelastic_LWP
 
 end module PLANES

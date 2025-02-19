@@ -552,6 +552,7 @@ contains
             Rv = THERMO_R(1)
             Rd = THERMO_R(2)
             Rdv = THERMO_R(1) - THERMO_R(2)
+            rd_ov_rv = Rd/Rv
 
             Cd = THERMO_AI(1, 1, 2)
             Cl = THERMO_AI(1, 1, 3)
@@ -564,7 +565,6 @@ contains
             Ldv = THERMO_AI(6, 1, 1) - THERMO_AI(6, 1, 2)
             Lvl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 1)
             Ldl = THERMO_AI(6, 1, 3) - THERMO_AI(6, 1, 2)
-            rd_ov_rv = Rd/Rv
 
         end select
 

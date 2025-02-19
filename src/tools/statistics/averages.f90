@@ -25,7 +25,7 @@ program AVERAGES
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Rotation, only: Rotation_Initialize
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use Radiation
     use Microphysics
     use Chemistry
@@ -463,7 +463,7 @@ program AVERAGES
                 if (buoyancy%type == EQNS_BOD_QUADRATIC .or. buoyancy%type == EQNS_BOD_BILINEAR .or. &
                     imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 7))
+                        call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 7))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 7), wrk1d)
@@ -480,9 +480,9 @@ program AVERAGES
                 if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                     if (imixture == MIXT_TYPE_AIRWATER) then
                         is = is + 1
-                        call THERMO_ANELASTIC_THETA_L(imax, jmax, kmax, s, txc(:, 7), wrk3d)
-                        ! call THERMO_ANELASTIC_THETA_E(imax, jmax, kmax, s, txc(:, 7), wrk3d)
-                        !                 CALL THERMO_ANELASTIC_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
+                        call Thermo_Anelastic_THETA_L(imax, jmax, kmax, s, txc(:, 7), wrk3d)
+                        ! call Thermo_Anelastic_THETA_E(imax, jmax, kmax, s, txc(:, 7), wrk3d)
+                        !                 CALL Thermo_Anelastic_STATIC_CONSTANTCP(imax,jmax,kmax, s, txc(1,7))
                         txc(1:isize_field, 6) = txc(1:isize_field, 9) ! Pass the pressure in tmp6
                         call AVG_SCAL_XZ(is, q, s, txc(1, 7), &
                                          txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), txc(1, 6), mean)
@@ -637,7 +637,7 @@ program AVERAGES
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
+                        call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)

@@ -15,7 +15,7 @@ module FLOW_LOCAL
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use THERMO_THERMAL
     use THERMO_AIRWATER
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use IO_FIELDS
     use Averages, only: AVG1V2D
     use Profiles, only: profiles_dt, Profiles_ReadBlock, Profiles_Calculate

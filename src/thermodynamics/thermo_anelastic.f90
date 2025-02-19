@@ -11,7 +11,7 @@
 !#
 !########################################################################
 
-module THERMO_ANELASTIC
+module Thermo_Anelastic
     use TLab_Constants, only: wp, wi
     use Thermodynamics, only: imixture
     use Thermodynamics, only: GRATIO, scaleheightinv   ! anelastic parameters
@@ -25,27 +25,27 @@ module THERMO_ANELASTIC
 
     ! real(wp), public :: scaleheight, GRATIO
 
-    public :: THERMO_ANELASTIC_BUOYANCY
-    public :: THERMO_ANELASTIC_DENSITY
-    public :: THERMO_ANELASTIC_DEWPOINT
-    public :: THERMO_ANELASTIC_LAPSE_EQU
-    public :: THERMO_ANELASTIC_LAPSE_FR
-    public :: THERMO_ANELASTIC_LWP
-    public :: THERMO_ANELASTIC_VAPOR_PRESSURE
-    public :: THERMO_ANELASTIC_RELATIVEHUMIDITY
-    public :: THERMO_ANELASTIC_STATIC_CONSTANTCP
-    public :: THERMO_ANELASTIC_STATIC_L
-    public :: THERMO_ANELASTIC_TEMPERATURE
-    public :: THERMO_ANELASTIC_THETA
-    public :: THERMO_ANELASTIC_THETA_E
-    public :: THERMO_ANELASTIC_THETA_L
-    public :: THERMO_ANELASTIC_THETA_V
-    public :: THERMO_ANELASTIC_WEIGHT_ADD
-    public :: THERMO_ANELASTIC_WEIGHT_INPLACE
-    public :: THERMO_ANELASTIC_WEIGHT_OUTPLACE
-    public :: THERMO_ANELASTIC_WEIGHT_SUBTRACT
-    public :: THERMO_ANELASTIC_PH               ! We could use THERMO_ANELASTIC_AIRWATER...
-    ! public :: THERMO_ANELASTIC_PH_RE
+    public :: Thermo_Anelastic_PH
+    public :: Thermo_Anelastic_TEMPERATURE
+    public :: Thermo_Anelastic_STATIC_L
+    public :: Thermo_Anelastic_BUOYANCY
+    public :: Thermo_Anelastic_WEIGHT_ADD
+    public :: Thermo_Anelastic_WEIGHT_INPLACE
+    public :: Thermo_Anelastic_WEIGHT_OUTPLACE
+    public :: Thermo_Anelastic_WEIGHT_SUBTRACT
+
+    public :: Thermo_Anelastic_DENSITY
+    public :: Thermo_Anelastic_THETA
+    public :: Thermo_Anelastic_THETA_V
+    public :: Thermo_Anelastic_THETA_E
+    public :: Thermo_Anelastic_THETA_L
+    public :: Thermo_Anelastic_LAPSE_EQU
+    public :: Thermo_Anelastic_LAPSE_FR
+    public :: Thermo_Anelastic_VAPOR_PRESSURE
+    public :: Thermo_Anelastic_DEWPOINT
+    public :: Thermo_Anelastic_RELATIVEHUMIDITY
+    public :: Thermo_Anelastic_STATIC_CONSTANTCP
+    ! public :: Thermo_Anelastic_PH_RE
 
     ! background, reference profiles
     real(wp), allocatable, public :: epbackground(:)                    ! Potential energy
@@ -57,7 +57,7 @@ contains
 
     !########################################################################
     !########################################################################
-    ! Main routines. They need to be fast.
+    ! Kernel routines. They need to be fast.
 
     !########################################################################
     !# Calculating the equilibrium T and q_l for given enthalpy and pressure.
@@ -71,7 +71,7 @@ contains
     !# s2 is liquid water specific humidity
     !#
     !########################################################################
-    subroutine THERMO_ANELASTIC_PH(nx, ny, nz, s, h)
+    subroutine Thermo_Anelastic_PH(nx, ny, nz, s, h)
         use Thermodynamics, only: dsmooth, NEWTONRAPHSON_ERROR
 
         integer(wi), intent(in) :: nx, ny, nz
@@ -196,11 +196,11 @@ contains
         end do
 
         return
-    end subroutine THERMO_ANELASTIC_PH
+    end subroutine Thermo_Anelastic_PH
 
     !########################################################################
     !########################################################################
-    subroutine THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+    subroutine Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: T(nx*ny*nz)
@@ -249,12 +249,12 @@ contains
         end select
 
         return
-    end subroutine THERMO_ANELASTIC_TEMPERATURE
+    end subroutine Thermo_Anelastic_TEMPERATURE
 
 !########################################################################
 ! Calculating h_l - h; very similar to the temperature routine
 !########################################################################
-    subroutine THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, result)
+    subroutine Thermo_Anelastic_STATIC_L(nx, ny, nz, s, result)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: result(nx*ny*nz)
@@ -304,11 +304,11 @@ contains
         end if
 
         return
-    end subroutine THERMO_ANELASTIC_STATIC_L
+    end subroutine Thermo_Anelastic_STATIC_L
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_BUOYANCY(nx, ny, nz, s, b)
+    subroutine Thermo_Anelastic_BUOYANCY(nx, ny, nz, s, b)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: b(nx*ny*nz)
@@ -369,11 +369,11 @@ contains
         end if
 
         return
-    end subroutine THERMO_ANELASTIC_BUOYANCY
+    end subroutine Thermo_Anelastic_BUOYANCY
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, weight, a)
+    subroutine Thermo_Anelastic_WEIGHT_INPLACE(nx, ny, nz, weight, a)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: weight(*)
         real(wp), intent(inout) :: a(nx, ny*nz)
@@ -387,11 +387,11 @@ contains
         end do
 
         return
-    end subroutine THERMO_ANELASTIC_WEIGHT_INPLACE
+    end subroutine Thermo_Anelastic_WEIGHT_INPLACE
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, weight, a, b)
+    subroutine Thermo_Anelastic_WEIGHT_OUTPLACE(nx, ny, nz, weight, a, b)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: weight(*)
         real(wp), intent(in) :: a(nx, ny*nz)
@@ -406,11 +406,11 @@ contains
         end do
 
         return
-    end subroutine THERMO_ANELASTIC_WEIGHT_OUTPLACE
+    end subroutine Thermo_Anelastic_WEIGHT_OUTPLACE
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_ADD(nx, ny, nz, weight, a, b)
+    subroutine Thermo_Anelastic_WEIGHT_ADD(nx, ny, nz, weight, a, b)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: weight(*)
         real(wp), intent(in) :: a(nx, ny*nz)
@@ -425,11 +425,11 @@ contains
         end do
 
         return
-    end subroutine THERMO_ANELASTIC_WEIGHT_ADD
+    end subroutine Thermo_Anelastic_WEIGHT_ADD
 
 !########################################################################
 !########################################################################
-    subroutine THERMO_ANELASTIC_WEIGHT_SUBTRACT(nx, ny, nz, weight, a, b)
+    subroutine Thermo_Anelastic_WEIGHT_SUBTRACT(nx, ny, nz, weight, a, b)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: weight(*)
         real(wp), intent(in) :: a(nx, ny*nz)
@@ -444,11 +444,11 @@ contains
         end do
 
         return
-    end subroutine THERMO_ANELASTIC_WEIGHT_SUBTRACT
+    end subroutine Thermo_Anelastic_WEIGHT_SUBTRACT
 
     !########################################################################
     !########################################################################
-    subroutine THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+    subroutine Thermo_Anelastic_PRESSURE(nx, ny, nz, p)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(out) :: p(nx*ny*nz)
 
@@ -465,7 +465,7 @@ contains
         end do
 
         return
-    end subroutine THERMO_ANELASTIC_PRESSURE
+    end subroutine Thermo_Anelastic_PRESSURE
 
     !########################################################################
     !########################################################################
@@ -476,7 +476,7 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine THERMO_ANELASTIC_DENSITY(nx, ny, nz, s, rho, T)
+    subroutine Thermo_Anelastic_DENSITY(nx, ny, nz, s, rho, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: rho(nx*ny*nz), T(nx*ny*nz)
@@ -484,8 +484,8 @@ contains
         ! ###################################################################
 #define p rho
 
-        call THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Anelastic_PRESSURE(nx, ny, nz, p)
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
 
         select case (imixture)
         case (MIXT_TYPE_AIR)
@@ -502,11 +502,11 @@ contains
 #undef p
 
         return
-    end subroutine THERMO_ANELASTIC_DENSITY
+    end subroutine Thermo_Anelastic_DENSITY
 
     !########################################################################
     !########################################################################
-    subroutine THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, pi)
+    subroutine Thermo_Anelastic_ONE_OV_EXNER(nx, ny, nz, pi)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(out) :: pi(nx*ny*nz)
 
@@ -517,19 +517,19 @@ contains
 
 #define p pi
 
-        call THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+        call Thermo_Anelastic_PRESSURE(nx, ny, nz, p)
 
         pi = (PREF_1000/p)**kappa
 
 #undef p
 
         return
-    end subroutine THERMO_ANELASTIC_ONE_OV_EXNER
+    end subroutine Thermo_Anelastic_ONE_OV_EXNER
 
-!########################################################################
-! Dry potential temperature
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta, T)
+    !########################################################################
+    ! Dry potential temperature
+    !########################################################################
+    subroutine Thermo_Anelastic_THETA(nx, ny, nz, s, theta, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
@@ -537,20 +537,20 @@ contains
         ! ###################################################################
 #define locPi theta
 
-        call THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, locPi)
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Anelastic_ONE_OV_EXNER(nx, ny, nz, locPi)
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
 
         theta = T*locPi
 
 #undef locPi
 
         return
-    end subroutine THERMO_ANELASTIC_THETA
+    end subroutine Thermo_Anelastic_THETA
 
-!########################################################################
-! Virtual Potential temperature
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA_V(nx, ny, nz, s, theta, T)
+    !########################################################################
+    ! Virtual Potential temperature
+    !########################################################################
+    subroutine Thermo_Anelastic_THETA_V(nx, ny, nz, s, theta, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
@@ -561,7 +561,7 @@ contains
         Rdv_ov_Rd = Rdv/Rd
         Rv_ov_Rd = Rv/Rd
 
-        call  THERMO_ANELASTIC_THETA(nx, ny, nz, s, theta, T)
+        call Thermo_Anelastic_THETA(nx, ny, nz, s, theta, T)
 
         select case (imixture)
         case (MIXT_TYPE_AIR)
@@ -575,13 +575,13 @@ contains
         end select
 
         return
-    end subroutine THERMO_ANELASTIC_THETA_V
+    end subroutine Thermo_Anelastic_THETA_V
 
-!########################################################################
-! Liquid water potential temperature
-! still missing the correction of order one
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA_L(nx, ny, nz, s, theta, T)
+    !########################################################################
+    ! Liquid water potential temperature
+    ! still missing the correction of order one
+    !########################################################################
+    subroutine Thermo_Anelastic_THETA_L(nx, ny, nz, s, theta, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
@@ -594,8 +594,8 @@ contains
 
 #define locPi theta
 
-        call THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, locPi)
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Anelastic_ONE_OV_EXNER(nx, ny, nz, locPi)
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
 
         select case (imixture)
         case (MIXT_TYPE_AIR)
@@ -612,13 +612,13 @@ contains
 #undef locPi
 
         return
-    end subroutine THERMO_ANELASTIC_THETA_L
+    end subroutine Thermo_Anelastic_THETA_L
 
-!########################################################################
-! Equivalent potential temperature
-! still missing the correction of order one
-!########################################################################
-    subroutine THERMO_ANELASTIC_THETA_E(nx, ny, nz, s, theta, T)
+    !########################################################################
+    ! Equivalent potential temperature
+    ! still missing the correction of order one
+    !########################################################################
+    subroutine Thermo_Anelastic_THETA_E(nx, ny, nz, s, theta, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: theta(nx*ny*nz), T(nx*ny*nz)
@@ -630,8 +630,8 @@ contains
 
 #define locPi theta
 
-        call THERMO_ANELASTIC_ONE_OV_EXNER(nx, ny, nz, locPi)
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Anelastic_ONE_OV_EXNER(nx, ny, nz, locPi)
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
 
         select case (imixture)
         case (MIXT_TYPE_AIR)
@@ -649,20 +649,17 @@ contains
 #undef locPi
 
         return
-    end subroutine THERMO_ANELASTIC_THETA_E
+    end subroutine Thermo_Anelastic_THETA_E
 
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
+    !########################################################################
+    !########################################################################
+    ! Frozen lapse rate; in unsaturated conditions, this is the unsaturated lapse rate
+    subroutine Thermo_Anelastic_LAPSE_FR(nx, ny, nz, s, lapse)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz)
-        real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: lapse(nx*ny*nz)
 
-! ###################################################################
-#define locT frequency
-
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, locT)
-
+    ! ###################################################################
         select case (imixture)
         case (MIXT_TYPE_AIR)
             lapse(:) = GRATIO*scaleheightinv
@@ -675,95 +672,72 @@ contains
 
         end select
 
-        frequency(:) = (lapse(:) + dTdy(:))/locT(:)
-
-#undef locT
-
         return
-    end subroutine THERMO_ANELASTIC_LAPSE_FR
+    end subroutine Thermo_Anelastic_LAPSE_FR
 
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_LAPSE_EQU(nx, ny, nz, s, dTdy, dqldy, lapse, frequency)
+    !########################################################################
+    !########################################################################
+    ! Equilibrium lapse rate
+    subroutine Thermo_Anelastic_LAPSE_EQU(nx, ny, nz, s, lapse, T)
         integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: s(nx*ny*nz, *), dTdy(nx*ny*nz), dqldy(nx*ny*nz)
-        real(wp), intent(out) :: lapse(nx*ny*nz), frequency(nx*ny*nz)
+        real(wp), intent(in) :: s(nx*ny*nz, *)
+        real(wp), intent(out) :: lapse(nx*ny*nz)
+        real(wp), intent(inout) :: T(nx*ny*nz)
 
 ! -------------------------------------------------------------------
-        real(wp) RT_INV, dpsat
-        real(wp) Cp_loc, Lv, one_p_eps, qvequ, qsat, dummy
+        real(wp) one_ov_Rd, one_ov_Rv, Rv_ov_Rd
 
 ! ###################################################################
-        if (imixture == MIXT_TYPE_AIR) then
-            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
 
-        else if (imixture == MIXT_TYPE_AIRVAPOR) then
-            call THERMO_ANELASTIC_LAPSE_FR(nx, ny, nz, s, dTdy, lapse, frequency)
+        select case (imixture)
+        case (MIXT_TYPE_AIR)
+            call Thermo_Anelastic_LAPSE_FR(nx, ny, nz, s, lapse)
 
-        else if (imixture == MIXT_TYPE_AIRWATER) then
-            ij = 0
-            do jk = 0, ny*nz - 1
-                is = mod(jk, ny) + 1
-                P_LOC = pbackground(is)
-                E_LOC = epbackground(is)
-                R_LOC = rbackground(is)
+        case (MIXT_TYPE_AIRVAPOR)
+            call Thermo_Anelastic_LAPSE_FR(nx, ny, nz, s, lapse)
 
-                RT_INV = R_LOC/P_LOC*scaleheightinv
+        case (MIXT_TYPE_AIRWATER)
 
-                do i = 1, nx
-                    ij = ij + 1
+#define psat lapse
+#define p_ov_psat lapse
+#define qv_ov_qd lapse
 
-                    Cp_loc = Cd + s(ij, 2)*Cdv + s(ij, 3)*Cvl ! I need it below
-                    T_LOC = (s(ij, 1) - E_LOC + s(ij, 3)*Lv0)/Cp_loc
+            call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
 
-                    psat = THERMO_PSAT(NPSAT); dpsat = 0.0_wp
-                    do ipsat = NPSAT - 1, 1, -1
-                        psat = psat*T_LOC + THERMO_PSAT(ipsat)
-                        dpsat = dpsat*T_LOC + THERMO_PSAT(ipsat + 1)*real(ipsat, wp)
-                    end do
-                    dummy = rd_ov_rv/(P_LOC/psat - 1.0_wp)
-                    qsat = dummy/(1.0_wp + dummy)
+            call Thermo_Psat_Polynomial(nx*ny*nz, T, psat)
 
-! We cannot use ql directly (s(:,3)) because the smoothing function imposes
-! an exponentially small value, but nonzero
-                    if (qsat >= s(ij, 2)) then
-                        lapse(ij) = GRATIO*scaleheightinv/(Cd + s(ij, 2)*Cdv)
-                        frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC
+            p_ov_psat = 1.0_wp/psat
+            call Thermo_Anelastic_WEIGHT_INPLACE(nx, ny, nz, pbackground, p_ov_psat)
 
-                    else
-                        qvequ = dummy*(1.0_wp - s(ij, 2))
+            qv_ov_qd = rd_ov_rv/(p_ov_psat - 1.0_wp)
 
-                        one_p_eps = 1.0_wp/(1.0_wp - psat/P_LOC)
-                        Lv = Lv0 - T_LOC*Cvl
+            one_ov_Rd = 1.0_wp/(Rd*GRATIO)
+            one_ov_Rv = 1.0_wp/(Rv*GRATIO)
+            Rv_ov_Rd = Rv/Rd
+            lapse = (1.0_wp + qv_ov_qd*(Lv0 - T*Cvl)*one_ov_Rd/T) &
+                    /(Cd + s(:, 2)*Cdl - qv_ov_qd*(1.0 - s(:, 2))*Cvl &
+                      + qv_ov_qd*(1.0_wp - s(:, 2))*(1.0_wp + qv_ov_qd*Rv_ov_Rd)*(Lv0 - T*Cvl)**2.0_wp*one_ov_Rv/(T*T)) &
+                    *GRATIO*scaleheightinv
 
-                        lapse(ij) = GRATIO*scaleheightinv + qvequ*one_p_eps*Lv*RT_INV
-                        lapse(ij) = lapse(ij)/(Cp_loc + qvequ*one_p_eps*Lv*dpsat/psat)
+#undef psat
+#undef p_ov_psat
+#undef qv_ov_qd
 
-                        frequency(ij) = qvequ*(lapse(ij)*dpsat/psat - RT_INV)*one_p_eps - dqldy(ij)
-                        frequency(ij) = (lapse(ij) + dTdy(ij))/T_LOC &
-                                        - frequency(ij)*Rv/(Rd + s(ij, 2)*Rdv - s(ij, 3)*Rv)
-
-                    end if
-
-                end do
-
-            end do
-
-        end if
+        end select
 
         return
-    end subroutine THERMO_ANELASTIC_LAPSE_EQU
+    end subroutine Thermo_Anelastic_LAPSE_EQU
 
     !########################################################################
     !########################################################################
-    subroutine THERMO_ANELASTIC_VAPOR_PRESSURE(nx, ny, nz, s, pv)
+    subroutine Thermo_Anelastic_VAPOR_PRESSURE(nx, ny, nz, s, pv)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: pv(nx*ny*nz)
 
         ! ###################################################################
 #define p pv
-        call THERMO_ANELASTIC_PRESSURE(nx, ny, nz, p)
+        call Thermo_Anelastic_PRESSURE(nx, ny, nz, p)
 
         select case (imixture)
         case (MIXT_TYPE_AIR)
@@ -780,11 +754,11 @@ contains
 #undef p
 
         return
-    end subroutine THERMO_ANELASTIC_VAPOR_PRESSURE
+    end subroutine Thermo_Anelastic_VAPOR_PRESSURE
 
     !########################################################################
     !########################################################################
-    subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY(nx, ny, nz, s, rh, T)
+    subroutine Thermo_Anelastic_RELATIVEHUMIDITY(nx, ny, nz, s, rh, T)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: rh(nx*ny*nz)
@@ -793,10 +767,10 @@ contains
         ! ###################################################################
 #define pv T
 #define psat rh
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
         call Thermo_Psat_Polynomial(nx*ny*nz, T, psat)
 
-        call THERMO_ANELASTIC_VAPOR_PRESSURE(nx, ny, nz, s, pv)
+        call Thermo_Anelastic_VAPOR_PRESSURE(nx, ny, nz, s, pv)
 
         rh = pv/psat*100.0_wp
 
@@ -804,11 +778,11 @@ contains
 #undef psat
 
         return
-    end subroutine THERMO_ANELASTIC_RELATIVEHUMIDITY
+    end subroutine Thermo_Anelastic_RELATIVEHUMIDITY
 
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_DEWPOINT(nx, ny, nz, s, dpvdy, Td, Lapse)
+    !########################################################################
+    !########################################################################
+    subroutine Thermo_Anelastic_DEWPOINT(nx, ny, nz, s, dpvdy, Td, Lapse)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *), dpvdy(nx*ny*nz)
         real(wp), intent(out) :: lapse(nx*ny*nz), Td(nx*ny*nz)
@@ -817,20 +791,20 @@ contains
         integer(wi) inr, nrmax
         real(wp) dpsat
 
-! ###################################################################
+        ! ###################################################################
         if (imixture == MIXT_TYPE_AIR) return
 
-! maximum number of iterations in Newton-Raphson
+        ! maximum number of iterations in Newton-Raphson
         nrmax = 5
 
 #define pv Lapse
 
-        call THERMO_ANELASTIC_VAPOR_PRESSURE(nx, ny, nz, s, pv)
+        call Thermo_Anelastic_VAPOR_PRESSURE(nx, ny, nz, s, pv)
 
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, Td)    ! Using actual temperature as initial condition
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, Td)    ! Using actual temperature as initial condition
 
-! If liquid, we should use qsat instead of ql (s(:,3)) because the smoothing function imposes
-! an exponentially small value, but nonzero (?)
+        ! If liquid, we should use qsat instead of ql (s(:,3)) because the smoothing function imposes
+        ! an exponentially small value, but nonzero (?)
 
         do ij = 1, nx*ny*nz
             do inr = 1, nrmax                                   ! executing Newton-Raphson
@@ -849,50 +823,19 @@ contains
 #undef pv
 
         return
-    end subroutine THERMO_ANELASTIC_DEWPOINT
+    end subroutine Thermo_Anelastic_DEWPOINT
 
-!########################################################################
-!########################################################################
-    subroutine THERMO_ANELASTIC_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
-        use FDM, only: grid_dt
-        use Integration, only: Int_Simpson
-
-        integer(wi), intent(in) :: nx, ny, nz
-        type(grid_dt), intent(in) :: g
-        real(wp), intent(in) :: ql(nx*nz, ny)
-        real(wp), intent(out) :: lwp(nx, nz)
-        real(wp), intent(INOUT) :: wrk1d(ny)
-        real(wp), intent(INOUT) :: wrk3d(nx, ny, nz)
-
-! -------------------------------------------------------------------
-        integer(wi) k
-
-! ###################################################################
-        call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
-
-        do k = 1, nz
-            do i = 1, nx
-                do j = 1, ny
-                    wrk1d(j) = wrk3d(i, j, k)
-                end do
-                lwp(i, k) = Int_Simpson(wrk1d(1:ny), g%nodes(1:ny))
-            end do
-        end do
-
-        return
-    end subroutine THERMO_ANELASTIC_LWP
-
-!########################################################################
-!########################################################################
-! Just to check what the effect of using a wrong cp would be
-    subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP(nx, ny, nz, s, result)
+    !########################################################################
+    !########################################################################
+    ! Just to check what the effect of using a wrong cp would be
+    subroutine Thermo_Anelastic_STATIC_CONSTANTCP(nx, ny, nz, s, result)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: s(nx*ny*nz, *)
         real(wp), intent(out) :: result(nx*ny*nz)
 
-! ###################################################################
+    ! ###################################################################
 #define T result
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, T)
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, T)
 
         select case (imixture)
         case (MIXT_TYPE_AIR)
@@ -909,11 +852,11 @@ contains
 #undef T
 
         return
-    end subroutine THERMO_ANELASTIC_STATIC_CONSTANTCP
+    end subroutine Thermo_Anelastic_STATIC_CONSTANTCP
 
 ! ! ###################################################################
 ! ! ###################################################################
-!     subroutine THERMO_ANELASTIC_PH_RE(nx, ny, nz, s, e, p, wrk3d)
+!     subroutine Thermo_Anelastic_PH_RE(nx, ny, nz, s, e, p, wrk3d)
 !         use THERMO_AIRWATER
 
 !         integer(wi) nx, ny, nz
@@ -933,7 +876,7 @@ contains
 
 !         do iter = 1, niter ! iteration
 ! ! calculate density in wrk3d
-!             call THERMO_ANELASTIC_DENSITY(nx, ny, nz, s, e, p, wrk3d)
+!             call Thermo_Anelastic_DENSITY(nx, ny, nz, s, e, p, wrk3d)
 
 ! ! calculate energy
 !             ij = 0
@@ -960,6 +903,6 @@ contains
 !         end do
 
 !         return
-!     end subroutine THERMO_ANELASTIC_PH_RE
+!     end subroutine Thermo_Anelastic_PH_RE
 
-end module THERMO_ANELASTIC
+end module Thermo_Anelastic

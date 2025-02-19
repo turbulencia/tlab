@@ -6,7 +6,7 @@ program REVERSAL
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use Thermodynamics
     use THERMO_THERMAL
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use THERMO_CALORIC
 
     implicit none
@@ -124,9 +124,9 @@ program REVERSAL
             ep = 0.0_wp
 
             z1(1) = qt
-            call THERMO_ANELASTIC_PH(1, 1, 1, z1, h, ep, p)
+            call Thermo_Anelastic_PH(1, 1, 1, z1, h, ep, p)
             s(1) = h; s(2:3) = z1(1:2)
-            call THERMO_ANELASTIC_TEMPERATURE(1, 1, 1, s, ep, T)
+            call Thermo_Anelastic_TEMPERATURE(1, 1, 1, s, ep, T)
             call Thermo_Psat_Polynomial(1, T, qsat)
             qsat = 1.0_wp/(p/qsat - 1.0_wp)*rd_ov_rv
             qsat = qsat/(1.0_wp + qsat)

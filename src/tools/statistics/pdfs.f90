@@ -23,7 +23,7 @@ program PDFS
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy
 use Rotation, only: Rotation_Initialize
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use Radiation
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use Microphysics
@@ -403,7 +403,7 @@ call Rotation_Initialize(ifile)
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
                     if (buoyancy%type == EQNS_EXPLICIT) then
-                        call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, wrk3d)
+                        call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
                         call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, wrk3d, wrk1d)
@@ -700,7 +700,7 @@ call Rotation_Initialize(ifile)
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'b'; ibc(ifield) = 1
             if (buoyancy%type == EQNS_EXPLICIT) then
-                call THERMO_ANELASTIC_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
+                call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
             else
                 wrk1d(1:jmax, 1) = 0.0_wp
                 call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, txc(1, 1), wrk1d)

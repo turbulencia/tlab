@@ -27,7 +27,7 @@ module BOUNDARY_INFLOW
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
@@ -557,7 +557,7 @@ contains
             select case (imode_thermo)
             case (THERMO_TYPE_ANELASTIC)
                 if (imixture == MIXT_TYPE_AIRWATER) then                            ! Calculate liquid content q_l
-                    call THERMO_ANELASTIC_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1))
+                    call Thermo_Anelastic_PH(imax, jmax, kmax, s(1, 1, 1, 2), s(1, 1, 1, 1))
 
                 end if
 

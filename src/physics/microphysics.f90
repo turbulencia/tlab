@@ -108,7 +108,7 @@ contains
 !########################################################################
 !########################################################################
     subroutine Microphysics_Sedimentation(locProps, nx, ny, nz, is, g, s, source, tmp1, flux)
-        use THERMO_ANELASTIC
+        use Thermo_Anelastic
         type(term_dt), intent(in) :: locProps
         integer(wi), intent(in) :: nx, ny, nz, is
         type(grid_dt), intent(in) :: g
@@ -132,7 +132,7 @@ contains
         dummy = 1.0_wp + exponent
 
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
-            call THERMO_ANELASTIC_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, s(:, locProps%scalar(is)), source)
+            call Thermo_Anelastic_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, s(:, locProps%scalar(is)), source)
             s_active => source
         else
             s_active => s(:, locProps%scalar(is))
@@ -149,7 +149,7 @@ contains
                 end if
 
             case default        ! energy variables
-                call THERMO_ANELASTIC_STATIC_L(nx, ny, nz, s, tmp1)
+                call Thermo_Anelastic_STATIC_L(nx, ny, nz, s, tmp1)
                 if (exponent > 0.0_wp) then
                     tmp1 = locProps%parameters(is)*tmp1*(s_active**dummy)
                 else

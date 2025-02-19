@@ -33,7 +33,7 @@ contains
         use TLab_Memory, only: inb_scal, inb_scal_array
         use NavierStokes, only: froude, schmidt
         use Thermodynamics
-        use THERMO_ANELASTIC
+        use Thermo_Anelastic
         use Profiles, only: Profiles_ReadBlock
         use Profiles, only: PROFILE_NONE, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
         use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
@@ -207,7 +207,7 @@ contains
 
             call Gravity_Hydrostatic_Enthalpy(g(2), sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d(:, 1))
 
-            call THERMO_ANELASTIC_DENSITY(1, g(2)%size, 1, sbackground, rbackground, p_wrk1d)
+            call Thermo_Anelastic_DENSITY(1, g(2)%size, 1, sbackground, rbackground, p_wrk1d)
             ribackground = 1.0_wp/rbackground
 
         end if
@@ -242,8 +242,8 @@ contains
         if (imode_thermo == THERMO_TYPE_ANELASTIC) then
             if (imixture == MIXT_TYPE_AIRWATER) then
                 is = is + 1
-                call THERMO_ANELASTIC_THETA_L(1, g(2)%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
-                ! call THERMO_ANELASTIC_THETA_E(1, g(2)%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
+                call Thermo_Anelastic_THETA_L(1, g(2)%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
+                ! call Thermo_Anelastic_THETA_E(1, g(2)%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
                 sbg(is) = sbg(1)
                 sbg(is)%mean = (p_wrk1d(1, 1) + p_wrk1d(g(2)%size, 1))*0.5_wp
                 sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(g(2)%size, 1))

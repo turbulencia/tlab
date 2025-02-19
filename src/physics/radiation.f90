@@ -227,7 +227,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine Radiation_Infrared_Y(localProps, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
-        use THERMO_ANELASTIC
+        use Thermo_Anelastic
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nx, ny, nz
         type(grid_dt), intent(in) :: g
@@ -264,7 +264,7 @@ contains
         case (TYPE_IR_GRAY_LIQUID)
             wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1))          ! absorption coefficient in array source to save memory
             if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
+                call Thermo_Anelastic_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
             ! Local transposition: make x-direction the last one. Same in the similar blocks below
 #ifdef USE_ESSL
@@ -284,7 +284,7 @@ contains
             ! -----------------------------------------------------------------------
         case (TYPE_IR_GRAY)
             if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d)
+                call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, wrk3d)
             else
                 ! tbd
             end if
@@ -297,7 +297,7 @@ contains
 
             wrk3d(1:nx*ny*nz) = kappa(1, 1)*s(:, localProps%scalar(1)) + kappa(2, 1)*(s(:, 2) - s(:, localProps%scalar(1))) + kappa(3, 1) ! absorption coefficient
             if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
+                call Thermo_Anelastic_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)
             end if
 #ifdef USE_ESSL
             call DGETMO(wrk3d, nxy, nxy, nz, p_source, nz)
@@ -320,7 +320,7 @@ contains
             ! -----------------------------------------------------------------------
         case (TYPE_IR_BAND)
             if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, s, wrk3d) ! calculate temperature T into tmp_rad1
+                call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, s, wrk3d) ! calculate temperature T into tmp_rad1
             else
                 ! tbd
             end if
@@ -341,7 +341,7 @@ contains
 
                 wrk3d(1:nx*ny*nz) = kappa(1, iband)*s(:, localProps%scalar(1)) + kappa(2, iband)*tmp_rad(:, 2) + kappa(3, iband) ! calculate absorption coefficient into tmp_rad3
                 if (nse_eqns == DNS_EQNS_ANELASTIC) then
-                    call THERMO_ANELASTIC_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
+                    call Thermo_Anelastic_WEIGHT_INPLACE(nx, ny, nz, rbackground, wrk3d)        ! multiply by density
                 end if
 #ifdef USE_ESSL
                 call DGETMO(wrk3d, nxy, nxy, nz, tmp_rad(:, 3), nz)

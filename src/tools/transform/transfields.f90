@@ -27,7 +27,7 @@ program TRANSFIELDS
     use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
     use Gravity, only: Gravity_Initialize
 use Rotation, only: Rotation_Initialize
-    use THERMO_ANELASTIC
+    use Thermo_Anelastic
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_INTERPOLATORS
@@ -853,8 +853,8 @@ call Rotation_Initialize(ifile)
         txc(:, 4) = p                               ! pressure
 
         pbackground = p
-        call THERMO_ANELASTIC_PH(nx, ny, nz, txc(1, 2), txc(1, 1))        ! Calculate q_l
-        call THERMO_ANELASTIC_TEMPERATURE(nx, ny, nz, txc(1, 1), txc(1, 5))
+        call Thermo_Anelastic_PH(nx, ny, nz, txc(1, 2), txc(1, 1))        ! Calculate q_l
+        call Thermo_Anelastic_TEMPERATURE(nx, ny, nz, txc(1, 1), txc(1, 5))
 
         ! Calculate saturation specific humidity
         call Thermo_Psat_Polynomial(nx*ny*nz, txc(1, 5), txc(1, 1))
