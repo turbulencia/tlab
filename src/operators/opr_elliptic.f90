@@ -4,7 +4,7 @@
 module OPR_ELLIPTIC
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: efile
-    use FDM, only: fdm_dt
+    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
     use TLab_WorkFlow, only: stagger_on
     use TLab_Pointers_3D, only: p_wrk1d

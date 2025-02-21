@@ -2,7 +2,7 @@
 
 program VPARTIAL
     use TLab_Constants, only: wp, wi, pi_wp, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM, only: fdm_dt, FDM_Initialize, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER
     use TLab_Memory, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
@@ -17,8 +17,6 @@ program VPARTIAL
 
     implicit none
 
-    type(fdm_dt) :: g
-
     integer(wi) :: i, l, len
 
     real(wp), dimension(:, :), pointer :: u
@@ -32,6 +30,8 @@ program VPARTIAL
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(3)
     character(len=32) :: fdm_names(3)
+
+    type(fdm_dt) g
 
 ! ###################################################################
 ! Initialize

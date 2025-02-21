@@ -55,16 +55,6 @@
 
 #define EQNS_RAND_MULTIPLY              31 
 
-! Finite-differences method
-#define FDM_COM4_JACOBIAN           4
-#define FDM_COM6_JACOBIAN_PENTA     5
-#define FDM_COM6_JACOBIAN           6
-#define FDM_COM6_JACOBIAN_HYPER     7
-#define FDM_COM8_JACOBIAN           8
-
-#define FDM_COM6_DIRECT      16
-#define FDM_COM4_DIRECT      17
-
 ! Operators
 #define OPR_P1                1
 #define OPR_P2                2

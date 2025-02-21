@@ -1,4 +1,3 @@
-#include "dns_const.h"
 #include "dns_error.h"
 
 module FDM
@@ -46,6 +45,15 @@ module FDM
 
     public :: FDM_Initialize
 
+    integer, parameter, public :: FDM_COM4_JACOBIAN = 4
+    integer, parameter, public :: FDM_COM6_JACOBIAN_PENTA = 5
+    integer, parameter, public :: FDM_COM6_JACOBIAN = 6
+    integer, parameter, public :: FDM_COM6_JACOBIAN_HYPER = 7
+    integer, parameter, public :: FDM_COM8_JACOBIAN = 8
+
+    integer, parameter, public :: FDM_COM6_DIRECT = 16
+    integer, parameter, public :: FDM_COM4_DIRECT = 17
+
 contains
     subroutine FDM_Initialize(g, nodes, locScale)
         use TLab_Constants, only: pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
@@ -62,7 +70,7 @@ contains
         use FDM_Com2_Jacobian
         use FDM_Integrate
 
-        type(fdm_dt), intent(inout) :: g                   ! grid structure
+        type(fdm_dt), intent(inout) :: g                    ! grid structure
         real(wp), intent(in) :: nodes(:)                    ! positions of the grid nodes
         real(wp), intent(in), optional :: locScale          ! for consistency check
 
@@ -84,6 +92,7 @@ contains
         if (g%periodic .and. g%mode_fdm1 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm2 == FDM_COM4_DIRECT) g%mode_fdm2 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm2 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
+
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm1)) g%mode_fdm1 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
         if (any([FDM_COM6_JACOBIAN_PENTA] == g%mode_fdm2)) g%mode_fdm2 = FDM_COM6_JACOBIAN          ! undeveloped; I would need to read separately 1. and 2. order information
         if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default

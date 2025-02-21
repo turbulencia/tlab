@@ -3,6 +3,7 @@
 ! # Solvers for linear ordinary differential equations with constant coefficients
 module OPR_ODES
     use TLab_Constants, only: wp, wi
+    use FDM, only: fdm_dt, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
     implicit none
     private
 
@@ -38,7 +39,6 @@ contains
 !########################################################################
     subroutine OPR_Integral1(nlines, g, f, result, ibc)
         use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
-        use FDM, only: fdm_dt
         use TLab_Arrays, only: wrk2d
         use FDM_MatMul
         integer(wi), intent(in) :: nlines

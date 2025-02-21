@@ -9,7 +9,7 @@ subroutine TLab_Consistency_Check()
     use TLab_WorkFlow, only: stagger_on
     use TLab_Time, only: rtime
     use OPR_Filters, only: PressureFilter
-    use FDM, only: g
+    use FDM, only: g, FDM_COM6_JACOBIAN
     use IBM_VARS, only: imode_ibm
     use IO_FIELDS
     use NavierStokes

@@ -2,7 +2,7 @@
 
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM, only: fdm_dt, FDM_Initialize, FDM_COM6_JACOBIAN
     use NavierStokes, only: visc, schmidt
     use OPR_FILTERS
 
