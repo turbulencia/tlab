@@ -27,7 +27,7 @@ program INIFLOW
     use TLab_Background, only: TLab_Initialize_Background
     use THERMO_THERMAL
     use THERMO_CALORIC
-    use IO_Grid
+    use TLab_Grid
     use IO_FIELDS
     use OPR_FOURIER
     use OPR_Burgers, only: OPR_Burgers_Initialize
@@ -59,7 +59,7 @@ program INIFLOW
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

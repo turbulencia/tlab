@@ -24,7 +24,7 @@ program VPOISSON
     use FDM, only: g, FDM_Initialize
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Tlab_Background, only: TLab_Initialize_Background
-    use IO_Grid
+    use TLab_Grid
     use IO_FIELDS
     use OPR_PARTIAL
     use OPR_FOURIER
@@ -67,7 +67,7 @@ program VPOISSON
     e(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 7)
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

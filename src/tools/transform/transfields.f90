@@ -32,7 +32,7 @@ program TRANSFIELDS
     use OPR_FILTERS
     use OPR_INTERPOLATORS
     use OPR_FOURIER
-    use IO_Grid
+    use TLab_Grid
 
     implicit none
 
@@ -291,7 +291,7 @@ program TRANSFIELDS
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)
@@ -333,7 +333,7 @@ program TRANSFIELDS
     ! Initialize remeshing
     ! -------------------------------------------------------------------
     if (opt_main == 3) then
-        call IO_READ_GRID('grid.trn', x_dst, y_dst, z_dst, [g_dst(1)%size, g_dst(2)%size, g_dst(3)%size], scales)
+        call TLab_Grid_Read('grid.trn', x_dst, y_dst, z_dst, [g_dst(1)%size, g_dst(2)%size, g_dst(3)%size], scales)
         g_dst(1:3)%scale = scales(1:3)
 
         tolerance = 0.001_wp    ! percentage of grid spacing

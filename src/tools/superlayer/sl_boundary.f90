@@ -23,7 +23,7 @@ program SL_BOUNDARY
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
-    use IO_Grid
+    use TLab_Grid
 
     implicit none
 
@@ -197,7 +197,7 @@ call Rotation_Initialize(ifile)
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

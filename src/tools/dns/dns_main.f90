@@ -41,7 +41,7 @@ program DNS
     use DNS_STATISTICS, only: DNS_STATISTICS_INITIALIZE, DNS_STATISTICS_SPATIAL, DNS_STATISTICS_TEMPORAL, mean_flow, mean_scal
     use ParticleTrajectories
     use AVG_SCAL_ZT
-    use IO_Grid
+    use TLab_Grid
     use IO_FIELDS
     use OPR_FOURIER
     use OPR_FILTERS
@@ -94,7 +94,7 @@ program DNS
     ! #######################################################################
     call TLab_Initialize_Memory(__FILE__)
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

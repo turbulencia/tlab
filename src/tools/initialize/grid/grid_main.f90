@@ -7,7 +7,7 @@ program INIGRID
     use FDM, only: grid_dt
     use TLab_Constants, only: wp, gfile, ifile, lfile, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
-    use IO_Grid
+    use TLab_Grid
     use GRID_LOCAL
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro
@@ -150,7 +150,7 @@ program INIGRID
         ! Writing data
         ! #######################################################################
         call TLab_Write_ASCII(lfile, 'Writing grid.')
-        call IO_WRITE_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
+        call TLab_Grid_Write(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
 
 #ifdef USE_MPI
     end if

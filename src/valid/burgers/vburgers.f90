@@ -17,7 +17,7 @@ program VBURGERS
 #endif
     use FDM, only: g, FDM_Initialize
     use NavierStokes, only: NavierStokes_Initialize_Parameters, visc
-    use IO_Grid
+    use TLab_Grid
     use IO_FIELDS
     use OPR_PARTIAL
     use OPR_Burgers
@@ -56,7 +56,7 @@ program VBURGERS
 
     visc = 1.0_wp/big_wp    ! inviscid
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

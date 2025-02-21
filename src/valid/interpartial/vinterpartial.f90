@@ -32,7 +32,7 @@ program VINTERPARTIAL
     use FDM, only: g, FDM_Initialize
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use OPR_PARTIAL
-    use IO_Grid
+    use TLab_Grid
 
     implicit none
 
@@ -77,7 +77,7 @@ program VINTERPARTIAL
     allocate (b(imax, jmax, kmax), c(imax, jmax, kmax), d(imax*jmax*kmax))
     allocate (tmp1(isize_txc_field), wrk3d(isize_wrk3d))
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

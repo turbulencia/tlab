@@ -27,7 +27,7 @@ module BOUNDARY_INFLOW
     use THERMO_CALORIC
     use THERMO_AIRWATER
     use Thermo_Anelastic
-    use IO_Grid
+    use TLab_Grid
     use IO_FIELDS
     use OPR_FILTERS
 #ifdef USE_MPI
@@ -98,7 +98,7 @@ contains
             g_inf(1)%uniform = .true.
         end if
         if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
-            call IO_READ_GRID('grid.inf', x_inf, y_inf, z_inf, [g_inf(1)%size, g_inf(2)%size, g_inf(3)%size])
+            call TLab_Grid_Read('grid.inf', x_inf, y_inf, z_inf, [g_inf(1)%size, g_inf(2)%size, g_inf(3)%size])
             call FDM_Initialize(g_inf(1), x_inf)
             call FDM_Initialize(g_inf(2), y_inf)
             call FDM_Initialize(g_inf(3), z_inf)

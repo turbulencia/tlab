@@ -26,7 +26,7 @@ program INISCAL
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_AIRWATER
     use Thermo_Anelastic
-    use IO_Grid
+    use TLab_Grid
     use IO_FIELDS
     use SCAL_LOCAL
 
@@ -65,7 +65,7 @@ program INISCAL
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

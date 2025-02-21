@@ -1,7 +1,7 @@
 program TRANSGRID
     use TLab_Constants, only: wp, wi
     use FDM, only: grid_dt
-    use IO_Grid
+    use TLab_Grid
     implicit none
 
     type(grid_dt), dimension(3) :: g, g_ref
@@ -36,7 +36,7 @@ program TRANSGRID
     allocate (g(3)%nodes(2*g(3)%size))
     allocate (wrk1d(isize_wrk1d, 3))
 
-    call IO_READ_GRID(ifile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(ifile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     g(1)%nodes(1:g(1)%size) = x(1:g(1)%size)
     g(2)%nodes(1:g(2)%size) = y(1:g(2)%size)
     g(3)%nodes(1:g(3)%size) = z(1:g(3)%size)
@@ -104,7 +104,7 @@ program TRANSGRID
                     allocate (g_ref(n)%nodes(g_ref(n)%size))
                 end if
             end do
-            call IO_READ_GRID(ifile, x_ref, y_ref, z_ref, [g_ref(1)%size, g_ref(2)%size, g_ref(3)%size])
+            call TLab_Grid_Read(ifile, x_ref, y_ref, z_ref, [g_ref(1)%size, g_ref(2)%size, g_ref(3)%size])
 
             g(direction)%size = g_ref(direction)%size
             g(direction)%scale = g_ref(direction)%scale
@@ -139,7 +139,7 @@ program TRANSGRID
         do direction = 1, 3
             call TRANS_DATA(sfile, g(direction), wrk1d(:, 1), wrk1d(:, 2))
         end do
-        call IO_WRITE_GRID(ffile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
+        call TLab_Grid_Write(ffile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
     end if
 
     stop

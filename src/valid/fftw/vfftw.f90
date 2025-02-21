@@ -42,7 +42,7 @@ program VFFTW
     Img = (-1.0, 0.0)
     Img = sqrt(Img)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
+    call TLab_Grid_Read(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
     call FDM_Initialize(g(1), wrk1d(:,1), wrk1d(:,4))
     call FDM_Initialize(g(2), wrk1d(:,2), wrk1d(:,4))
     call FDM_Initialize(g(3), wrk1d(:,3), wrk1d(:,4))

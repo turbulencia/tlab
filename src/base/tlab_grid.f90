@@ -1,6 +1,6 @@
 #include "dns_error.h"
 
-module IO_Grid
+module TLab_Grid
     use TLab_Constants, only: efile, wp, wi
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
@@ -8,13 +8,13 @@ module IO_Grid
 
     real(wp), allocatable, public :: x(:), y(:), z(:)
 
-    public :: IO_READ_GRID
-    public :: IO_WRITE_GRID
+    public :: TLab_Grid_Read
+    public :: TLab_Grid_Write
 
 contains
 !########################################################################
 !########################################################################
-    subroutine IO_READ_GRID(name, x, y, z, sizes, scales)
+    subroutine TLab_Grid_Read(name, x, y, z, sizes, scales)
         character*(*) name
         real(wp), allocatable, intent(out) :: x(:), y(:), z(:)
         integer(wi), intent(in), optional :: sizes(3)
@@ -31,7 +31,6 @@ contains
 
         ! -----------------------------------------------------------------------
         read (50) locSizes(1:3)
-        read (50) locScaleS(1:3)
 
         ! -----------------------------------------------------------------------
         if (present(sizes) .and. any(sizes /= locSizes)) then
@@ -41,6 +40,9 @@ contains
             call TLab_Stop(DNS_ERROR_DIMGRID)
         end if
 
+        read (50) locScaleS(1:3)
+        if (present(scales)) scales = locScales
+        
         ! -----------------------------------------------------------------------
         allocate (x(locSizes(1)), y(locSizes(2)), z(locSizes(3)))
         read (50) x
@@ -52,11 +54,11 @@ contains
 
 100     format(I5, ',', I5, ',', I5)
 
-    end subroutine IO_READ_GRID
+    end subroutine TLab_Grid_Read
 
 !########################################################################
 !########################################################################
-    subroutine IO_WRITE_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
+    subroutine TLab_Grid_Write(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
         character*(*) name
         integer(wi) imax, jmax, kmax
         real(wp) scalex, scaley, scalez
@@ -82,6 +84,6 @@ contains
         close (51)
 
         return
-    end subroutine IO_WRITE_GRID
+    end subroutine TLab_Grid_Write
 
-end module IO_Grid
+end module TLab_Grid
