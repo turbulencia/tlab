@@ -10,7 +10,7 @@
 !# which calls in turn the routines from the library spline
 !########################################################################
 module OPR_INTERPOLATORS
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Constants, only: efile, wp, wi
     use TLab_Memory, only: isize_txc_field
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -35,7 +35,7 @@ contains
                                g, x_org, y_org, z_org, x_dst, y_dst, z_dst, u_org, u_dst, txc)
 
         integer(wi) nx, ny, nz, nx_dst, ny_dst, nz_dst
-        type(grid_dt), intent(IN) :: g(3)
+        type(fdm_dt), intent(IN) :: g(3)
         real(wp), dimension(nx + 1), intent(INOUT) :: x_org
         real(wp), dimension(ny + 1), intent(INOUT) :: y_org
         real(wp), dimension(nz + 1), intent(INOUT) :: z_org

@@ -7,7 +7,7 @@
 !#
 !########################################################################
 module BOUNDARY_INFLOW
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Constants, only: efile, lfile, wp, wi
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
@@ -41,7 +41,7 @@ module BOUNDARY_INFLOW
     implicit none
     private
 
-    type(grid_dt), public :: g_inf(3)
+    type(fdm_dt), public :: g_inf(3)
     real(wp), allocatable :: x_inf(:), y_inf(:), z_inf(:)
     real(wp), allocatable :: q_inf(:, :, :, :), s_inf(:, :, :, :)
 

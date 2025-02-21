@@ -129,12 +129,12 @@ subroutine IBM_VERIFY(g, nlines, isize_nob, isize_nob_be, nob, nob_b, nob_e)
 
     use IBM_VARS, only: nflu
     use TLab_Constants, only: efile, wp, wi
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
 
-    type(grid_dt), intent(in) :: g
+    type(fdm_dt), intent(in) :: g
     integer(wi), intent(in) :: nlines, isize_nob, isize_nob_be
     integer(wi), dimension(isize_nob), intent(in) :: nob
     integer(wi), dimension(isize_nob_be), intent(in) :: nob_b, nob_e

@@ -3,7 +3,7 @@
 
 module Microphysics
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_VARS, MAX_PARS
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use NavierStokes, only: nse_eqns
     use TLab_Memory, only: inb_scal_array
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -111,7 +111,7 @@ contains
         use Thermo_Anelastic
         type(term_dt), intent(in) :: locProps
         integer(wi), intent(in) :: nx, ny, nz, is
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
         real(wp), intent(out) :: source(nx*ny*nz)
         real(wp), intent(inout) :: tmp1(nx*ny*nz)

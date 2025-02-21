@@ -6,7 +6,7 @@
 
 module OPR_FILTERS
     use TLab_Constants, only: wp, wi, MAX_PARS, MAX_VARS
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Memory, only: isize_txc_field, isize_txc_dimz
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -200,7 +200,7 @@ contains
     !###################################################################
     !###################################################################
     subroutine OPR_FILTER_INITIALIZE(g, f)
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         type(filter_dt), intent(inout) :: f
 
         !###################################################################

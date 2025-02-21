@@ -2,7 +2,7 @@
 
 program VPARTIAL
     use TLab_Constants, only: wp, wi
-    use FDM, only:  grid_dt
+    use FDM, only:  fdm_dt
     use FDM, only: g
     use TLab_Memory, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use NavierStokes, only: visc, schmidt, area
@@ -20,7 +20,7 @@ program VPARTIAL
 
     implicit none
 
-    ! type(grid_dt) :: g
+    ! type(fdm_dt) :: g
 
     integer(wi) :: i, l, len, j
 

@@ -2,7 +2,7 @@
 
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: grid_dt, FDM_Initialize
+    use FDM, only: fdm_dt, FDM_Initialize
     use NavierStokes, only: visc, schmidt
     use OPR_FILTERS
 
@@ -14,7 +14,7 @@ program VEFILTER
     real(wp) u(imax), uf(imax)
     real(wp) wrk1d(imax, 18)! , wrk2d(imax), wrk3d(imax) YOU NEED TO USE NEW MEM MANAGEMENT
     type(filter_dt) filter
-    type(grid_dt) g
+    type(fdm_dt) g
 
 ! ###################################################################
     g%size = imax

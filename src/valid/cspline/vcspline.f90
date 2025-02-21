@@ -21,12 +21,12 @@
 
 program CSPLINE
     use TLab_Constants, only: wp, wi
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
 
     implicit none
 
     ! define spline parameters here
-    type(grid_dt) :: g, g_int                            ! original and refined grid
+    type(fdm_dt) :: g, g_int                            ! original and refined grid
     integer(wi), parameter :: imax = 11                       ! number of data points
     integer(wi), parameter :: mesh = 10                       ! mesh refinement factor (mesh=1 for x_int=x)
     integer(wi), parameter :: imax_int = (imax + (mesh - 1)*(imax - 1)) ! number of spline data points

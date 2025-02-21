@@ -3,7 +3,7 @@
 
 module SpecialForcing
     use TLab_Constants, only: wp, wi, pi_wp, efile, lfile, MAX_VARS, MAX_PARS
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d
@@ -263,12 +263,12 @@ contains
     ! Velocity field with no-slip
     !########################################################################
     subroutine Forcing_Sinusoidal_NoSlip(nx, ny, nz, time, visc, g, h1, h2, tmp1, tmp2, tmp3, tmp4)
-        use FDM, only: grid_dt
+        use FDM, only: fdm_dt
         use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
 
         integer(wi) nx, ny, nz
         real(wp) time, visc
-        type(grid_dt) :: g(:)
+        type(fdm_dt) :: g(:)
         real(wp), dimension(nx*ny*nz) :: h1, h2
         real(wp), dimension(nx*ny*nz) :: tmp1, tmp2, tmp3, tmp4
 

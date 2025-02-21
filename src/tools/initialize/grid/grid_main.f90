@@ -4,7 +4,7 @@
 #define C_FILE_LOC "INIGRID"
 
 program INIGRID
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Constants, only: wp, gfile, ifile, lfile, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Grid
@@ -15,7 +15,7 @@ program INIGRID
     implicit none
 
     character*32 sfile, bakfile
-    type(grid_dt) :: g(3)
+    type(fdm_dt) :: g(3)
     real(wp), allocatable :: wrk1d(:, :)
     integer(wi) idir, iseg, isize_wrk1d, n, nmax, iloc
     real(wp) scale_old, scale_new, ds

@@ -6,7 +6,7 @@
 
 module OPR_Burgers
     use TLab_Constants, only: wp, wi, efile, lfile
-    use FDM, only: grid_dt, g
+    use FDM, only: fdm_dt, g
     use IBM_VARS, only: ibm_burgers
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
@@ -451,7 +451,7 @@ contains
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: lu2d(:, :)      ! LU decomposition including the diffusion parameter for corresponding field is
         type(filter_dt), intent(in) :: dealiasing
         type(rho_anelastic), intent(in) :: rhoinv
@@ -535,7 +535,7 @@ contains
         integer(wi), intent(in) :: bcs(2, 2)     ! BCs at xmin (1,*) and xmax (2,*):
         !                                       0 biased, non-zero
         !                                       1 forced to zero
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: lu2(:, :)
         real(wp), intent(in) :: u(nlines*g%size)
         real(wp), intent(out) :: result(nlines*g%size)

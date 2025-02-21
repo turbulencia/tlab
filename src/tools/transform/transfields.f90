@@ -10,7 +10,7 @@ program TRANSFIELDS
 
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal, tag_part
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Time, only: itime, rtime
     use TLab_Memory, only: imax, jmax, kmax, inb_txc, isize_wrk3d, inb_flow, inb_scal, isize_txc_field, isize_wrk1d, inb_wrk1d
     use TLab_Arrays
@@ -60,7 +60,7 @@ program TRANSFIELDS
     character*512 sRes
     integer(wi) subdomain(6)
 
-    type(grid_dt), dimension(3) :: g_dst
+    type(fdm_dt), dimension(3) :: g_dst
     integer(wi) imax_dst, jmax_dst, kmax_dst
 
     logical :: flag_crop = .false., flag_extend = .false.

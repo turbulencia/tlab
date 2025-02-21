@@ -6,7 +6,7 @@
 
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm
@@ -41,7 +41,7 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(out) :: result(nlines, g%size)
 
@@ -103,7 +103,7 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1,*) and xmax (2,*):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nlines*g%size)
         real(wp), intent(out) :: result(nlines*g%size)
 
@@ -148,7 +148,7 @@ contains
     subroutine OPR_IBM(is, nlines, g, u, result)
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nlines*g%size)
         real(wp), intent(out) :: result(nlines*g%size)
 
@@ -173,7 +173,7 @@ contains
         use TLab_Arrays, only: wrk2d
 
         integer(wi), intent(in) :: nlines                  ! # of lines to be solved
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: lu2(:, :)
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(in) :: du(nlines, g%size)          ! 1. derivative for correction in case of Jacobian formulation
@@ -216,7 +216,7 @@ contains
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
         integer(wi), intent(in) :: nlines   ! number of lines to be solved
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(out) :: result(nlines, g%size)
 
@@ -258,7 +258,7 @@ contains
         !                                   0 'vp' --> vel. to pre. grid
         !                                   1 'pv' --> pre. to vel. grid
         integer(wi), intent(in) :: nlines   ! number of lines to be solved
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(out) :: result(nlines, g%size)
 
@@ -303,7 +303,7 @@ contains
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nx*ny*nz)
         real(wp), intent(out) :: result(nx*ny*nz)
         real(wp), intent(inout), optional :: tmp1(nx*ny*nz)
@@ -437,7 +437,7 @@ contains
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nx*ny*nz)
         real(wp), intent(out) :: result(nx*ny*nz)
         real(wp), intent(inout), optional :: tmp1(nx*ny*nz)
@@ -552,7 +552,7 @@ contains
         !                                   OPR_P1_INT_VP/PV 1.order int. derivative    (vel.<->pre.)
         integer(wi), intent(in) :: nx, ny, nz
         integer(wi), intent(in) :: bcs(:, :)       ! BCs at xmin (1,*) and xmax (2,*)
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nx*ny*nz)
         real(wp), intent(out) :: result(nx*ny*nz)
         real(wp), intent(inout), optional :: tmp1(nx*ny*nz)

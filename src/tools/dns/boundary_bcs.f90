@@ -386,13 +386,13 @@ contains
 !# Routine format extracted from OPR_PARTIAL_Y
 !########################################################################
     subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, tmp1)
-        use FDM, only: grid_dt
+        use FDM, only: fdm_dt
 
         integer(wi), intent(in) :: ibc     ! BCs at jmin/jmax: 1, for Neumann/-
         !                                                   2, for -      /Neumann
         !                                                   3, for Neumann/Neumann
         integer(wi) nx, ny, nz
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: u(nx*nz, ny)         ! they are transposed below
         real(wp), intent(inout) :: tmp1(nx*nz, ny)      ! they are transposed below
         real(wp), intent(out) :: bcs_hb(nx*nz), bcs_ht(nx*nz)

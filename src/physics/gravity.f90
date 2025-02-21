@@ -118,14 +118,14 @@ contains
     !########################################################################
     subroutine Gravity_Hydrostatic_Enthalpy(g, s, ep, T, p, yref, pref, wrk1d)
         use TLab_Constants, only: BCS_MIN
-        use FDM, only: grid_dt
+        use FDM, only: fdm_dt
         use Thermodynamics
         use Thermo_Anelastic
         use THERMO_AIRWATER
         use THERMO_THERMAL
         use OPR_ODES
 
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), dimension(g%size, inb_scal_array), intent(inout) :: s      ! We calculate equilibrium composition
         real(wp), dimension(g%size), intent(out) :: ep, T, p
         real(wp), intent(in) :: yref, pref

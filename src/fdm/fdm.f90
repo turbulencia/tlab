@@ -6,7 +6,7 @@ module FDM
     implicit none
     private
 
-    type, public :: grid_dt
+    type, public :: fdm_dt
         sequence
         character*8 name
         integer(wi) size
@@ -40,9 +40,9 @@ module FDM
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
         logical :: need_1der = .false.      ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
 
-    end type grid_dt
+    end type fdm_dt
 
-    type(grid_dt), public :: g(3)                ! Grid information along 3 directions
+    type(fdm_dt), public :: g(3)                ! Grid information along 3 directions
 
     public :: FDM_Initialize
 
@@ -62,7 +62,7 @@ contains
         use FDM_Com2_Jacobian
         use FDM_Integrate
 
-        type(grid_dt), intent(inout) :: g                   ! grid structure
+        type(fdm_dt), intent(inout) :: g                   ! grid structure
         real(wp), intent(in) :: nodes(:)                    ! positions of the grid nodes
         real(wp), intent(in), optional :: locScale          ! for consistency check
 

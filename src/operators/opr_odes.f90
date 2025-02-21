@@ -38,11 +38,11 @@ contains
 !########################################################################
     subroutine OPR_Integral1(nlines, g, f, result, ibc)
         use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
-        use FDM, only: grid_dt
+        use FDM, only: fdm_dt
         use TLab_Arrays, only: wrk2d
         use FDM_MatMul
         integer(wi), intent(in) :: nlines
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: f(nlines, g%size)
         real(wp), intent(inout) :: result(nlines, g%size)   ! contains bcs
         integer, intent(in), optional :: ibc
@@ -115,7 +115,7 @@ contains
 !#     u_1 or u_N given         1   eqn
 !#     Au' = Bu                 N   eqns
 !# 
-!#  Same as before, but passing information explicitly instead of using derived type grid_dt
+!#  Same as before, but passing information explicitly instead of using derived type fdm_dt
 !########################################################################
     ! subroutine OPR_ODE1(nlines, lu, rhs, rhs_b, rhs_t, f, result, ibc)
     !     return

@@ -1,11 +1,11 @@
 
 program VPARTIAL2
     use TLab_Constants, only: wp, wi
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use OPR_PARTIAL
     implicit none
 
-    type(grid_dt) :: g
+    type(fdm_dt) :: g
     integer(wi) imax, jmax, kmax, i, wk, idummy
     parameter(imax=128)
     real(wp) x(imax, 3 + 4*3 + 4*3), u(imax), du1(imax), du2(imax), due(imax)
@@ -25,7 +25,7 @@ program VPARTIAL2
     write (*, *) 'Wavenumber ?'
     read (*, *) wk
 
-! CHANGE TO UPDATE NEW GRID_DT
+! CHANGE TO UPDATE NEW fdm_dt
     if (g%periodic) then
         do i = 1, imax
             g%nodes(i) = M_REAL(i - 1)/M_REAL(imax)*g%scale

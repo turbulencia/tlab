@@ -347,11 +347,11 @@ contains
     !########################################################################
     !########################################################################
     subroutine Thermo_Anelastic_LWP(nx, ny, nz, g, ql, lwp, wrk1d, wrk3d)
-        use FDM, only: grid_dt
+        use FDM, only: fdm_dt
         use Integration, only: Int_Simpson
 
         integer(wi), intent(in) :: nx, ny, nz
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: ql(nx*nz, ny)
         real(wp), intent(out) :: lwp(nx, nz)
         real(wp), intent(INOUT) :: wrk1d(ny)

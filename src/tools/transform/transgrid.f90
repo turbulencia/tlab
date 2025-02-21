@@ -1,10 +1,10 @@
 program TRANSGRID
     use TLab_Constants, only: wp, wi
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Grid
     implicit none
 
-    type(grid_dt), dimension(3) :: g, g_ref
+    type(fdm_dt), dimension(3) :: g, g_ref
 
     integer(wi) option, direction, n, isize_wrk1d
     character*32 ifile, ffile, sfile, file_ref
@@ -396,7 +396,7 @@ contains
     subroutine TRANS_DATA(name, grid, work1, work2)
         implicit none
 
-        type(grid_dt) grid
+        type(fdm_dt) grid
 
         character*(*) name
         real(wp) work1(*), work2(*)

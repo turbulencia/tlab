@@ -32,7 +32,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
     use IBM_VARS, only: xa, xb, ya, yb, ibmscaljmin
     use TLab_Memory, only: isize_field
     use TLab_Arrays, only: wrk1d
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
     implicit none
@@ -40,7 +40,7 @@ subroutine IBM_SPLINE_XYZ(is, fld, fld_mod, g, isize_nob, isize_nob_be, nob, nob
     integer(wi), intent(in) :: is     ! scalar index; if 0, then velocity
     real(wp), dimension(isize_field), intent(in) :: fld
     real(wp), dimension(isize_field), intent(out) :: fld_mod
-    type(grid_dt), intent(in) :: g
+    type(fdm_dt), intent(in) :: g
     integer(wi), intent(in) :: isize_nob, isize_nob_be
     integer(wi), dimension(isize_nob), intent(in) :: nob
     integer(wi), dimension(isize_nob_be), intent(in) :: nob_b, nob_e
@@ -129,7 +129,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
 
     use IBM_VARS, only: nflu, isize_wrk1d_ibm, nspl, ibmscaljmin
     use TLab_Memory, only: isize_field
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use TLab_Constants, only: wp, wi, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 
@@ -138,7 +138,7 @@ subroutine IBM_SPLINE_VECTOR(is, case, fld, g, xa, ya, xb, ia, ib, ip_il, ip_ir,
     integer(wi), intent(in) :: is
     integer(wi), intent(in) :: case
     real(wp), dimension(isize_field), intent(in) :: fld
-    type(grid_dt), intent(in) :: g
+    type(fdm_dt), intent(in) :: g
     real(wp), dimension(nspl), intent(out) :: xa
     real(wp), dimension(nspl), intent(out) :: ya
     real(wp), dimension(isize_wrk1d_ibm), intent(out) :: xb

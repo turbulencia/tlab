@@ -3,7 +3,7 @@
 
 module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
-    use FDM, only: grid_dt
+    use FDM, only: fdm_dt
     use NavierStokes, only: nse_eqns
     use TLab_Memory, only: inb_scal_array
     use TLab_Memory, only: isize_field
@@ -230,7 +230,7 @@ contains
         use Thermo_Anelastic
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nx, ny, nz
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
         real(wp), intent(out) :: source(nx*ny*nz)           ! also used for absorption coefficient
         real(wp), intent(inout) :: b(nx*ny*nz)              ! emission function
@@ -400,7 +400,7 @@ contains
     subroutine IR_RTE1_OnlyLiquid(localProps, nlines, ny, g, a_source, flux_down, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)      ! input as bulk absorption coefficent, output as source
         real(wp), intent(out), optional :: flux_down(nlines, ny), flux_up(nlines, ny)
 
@@ -447,7 +447,7 @@ contains
     subroutine IR_RTE1_Incremental(localProps, nlines, ny, g, a_source, b, flux_down, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
         real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
         real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
@@ -544,7 +544,7 @@ contains
     subroutine IR_RTE1_Local(localProps, nlines, ny, g, a_source, b, flux_down, tmp2, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
         real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
         real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
@@ -658,7 +658,7 @@ contains
     subroutine IR_RTE1_Global(localProps, nlines, ny, g, a_source, b, flux_down, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(grid_dt), intent(in) :: g
+        type(fdm_dt), intent(in) :: g
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
         real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
         real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
