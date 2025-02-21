@@ -1,13 +1,10 @@
-#include "dns_error.h"
-
 !########################################################################
-! Building blocks to construct FDMs
-! Based on Lagrange polynomial for non-uniform grids
-! Calculation of RHS for different stencil lengths and bcs (periodic|biased)
+! Matrix multiplication of n-diagonal matrix with a vector with special boundary conditions.
+! The boundary conditions can extend over n/2+2 points
+! This allows use to handle systems A y = B x in which A amd B differ by up to 2 diagonals (see notes)
 !########################################################################
 module FDM_MatMul
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use TLab_Constants, only: efile
     implicit none
     private
 
@@ -32,12 +29,7 @@ module FDM_MatMul
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
 
 contains
-! #######################################################################
-! #######################################################################
-! Matrix multiplication of n-diagonal matrix with a vector with special boundary conditions.
-! The boundary conditions can extend over n/2+2 points
-! This allows use to handle systems A y = B x in which A amd B differ by up to 2 diagonals (see notes)
-
+    ! #######################################################################
     ! #######################################################################
     ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
     ! Special boundary conditions restricted to 3 points:

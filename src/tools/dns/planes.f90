@@ -358,7 +358,7 @@ contains
         real(wp), intent(INOUT) :: wrk3d(nx, ny, nz)
 
         ! -------------------------------------------------------------------
-        integer(wi) k
+        integer(wi) i, j, k
 
         ! ###################################################################
         call Thermo_Anelastic_WEIGHT_OUTPLACE(nx, ny, nz, rbackground, ql, wrk3d)
