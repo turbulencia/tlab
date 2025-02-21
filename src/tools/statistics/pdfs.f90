@@ -28,6 +28,7 @@ use Rotation, only: Rotation_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use Microphysics
     use Chemistry
+    use IO_Grid
     use IO_FIELDS
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
@@ -262,10 +263,10 @@ call Rotation_Initialize(ifile)
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-    call FDM_Initialize(x, g(1), wrk1d(:, 1))
-    call FDM_Initialize(y, g(2), wrk1d(:, 2))
-    call FDM_Initialize(z, g(3), wrk1d(:, 3))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call FDM_Initialize(g(1), x)
+    call FDM_Initialize(g(2), y)
+    call FDM_Initialize(g(3), z)
 
     call TLab_Initialize_Background(ifile)
 
@@ -286,7 +287,7 @@ call Rotation_Initialize(ifile)
     y_aux(:) = 0                        ! Reduced vertical grid
     do ij = 1, jmax_aux*opt_block
         is = (ij - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) + y(ij, 1)/real(opt_block, wp)
+        y_aux(is) = y_aux(is) +  g(2)%nodes(ij)/real(opt_block, wp)
     end do
 
     ibc(1:nfield) = 1

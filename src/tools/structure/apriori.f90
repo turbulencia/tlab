@@ -24,7 +24,8 @@ program APRIORI
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
+    use IO_Grid
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_FOURIER
@@ -82,7 +83,7 @@ use Rotation, only: Rotation_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
 
 ! -------------------------------------------------------------------
 ! Allocating memory space
@@ -182,10 +183,10 @@ call Rotation_Initialize(ifile)
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-    call FDM_Initialize(x, g(1), wrk1d(:, 1))
-    call FDM_Initialize(y, g(2), wrk1d(:, 2))
-    call FDM_Initialize(z, g(3), wrk1d(:, 3))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call FDM_Initialize(g(1), x)
+    call FDM_Initialize(g(2), y)
+    call FDM_Initialize(g(3), z)
 
 ! ------------------------------------------------------------------------
 ! Define size of blocks
@@ -193,7 +194,7 @@ call Rotation_Initialize(ifile)
     y_aux(:) = 0
     do ij = 1, jmax
         is = (ij - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) + y(ij, 1)/real(opt_block, wp)
+        y_aux(is) = y_aux(is) + g(2)%nodes(ij)/real(opt_block, wp)
     end do
 
 ! -------------------------------------------------------------------

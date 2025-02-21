@@ -12,6 +12,8 @@ module FDM
         integer(wi) size
         logical uniform, periodic
         real(wp) scale
+        real(wp), pointer :: memory(:, :)       ! memory space
+        !
         real(wp), pointer :: nodes(:)
         real(wp), pointer :: jac(:, :)          ! pointer to Jacobians
         !
@@ -45,7 +47,7 @@ module FDM
     public :: FDM_Initialize
 
 contains
-    subroutine FDM_Initialize(x, g, nodes)
+    subroutine FDM_Initialize(g, nodes)
         use TLab_Constants, only: pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -61,10 +63,7 @@ contains
         use FDM_Integrate
 
         type(grid_dt), intent(inout) :: g                   ! grid structure
-        real(wp), allocatable, intent(inout) :: x(:, :)     ! memory space
         real(wp), intent(in) :: nodes(g%size)               ! positions of the grid nodes
-
-        target x
 
 ! -------------------------------------------------------------------
         integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid
@@ -114,36 +113,40 @@ contains
 
         inb_grid = inb_grid &
                    + 5 &                        ! max # of diagonals in LHS for 1. order derivative
-                   + 7 &                        ! max # of diagonals in RHS for 1. order derivative
+                   + 7                          ! max # of diagonals in RHS for 1. order derivative
+        if (g%periodic) then
+            inb_grid = inb_grid &
+                       + 5 + 2 &                ! LU decomposition 1. order
+                       + 1                      ! modified wavenumbers for 1. order derivative
+        else
+            inb_grid = inb_grid &
+                       + 5*4                    ! LU decomposition 1. order, 4 bcs
+        end if
+
+        inb_grid = inb_grid &
                    + 5 &                        ! max # of diagonals in LHS for 2. order derivative
                    + 7 + 5                      ! max # of diagonals in RHS for 2. order + diagonals for Jacobian case
+        if (g%periodic) then
+            inb_grid = inb_grid &
+                       + 5 + 2 &                ! LU decomposition 2. order
+                       + 1                      ! modified wavenumbers for 2. order derivative
+        else
+            inb_grid = inb_grid &
+                       + 5                      ! LU decomposition 2. order, 1 bcs
+        end if
+
         inb_grid = inb_grid &
                    + 5*2 &                      ! max # of diagonals in LHS for 1. integral, 2 bcs
                    + 7*2                        ! max # of diagonals in RHS for 1. integral, 2 bcs
 
-        if (g%periodic) then
-            inb_grid = inb_grid &
-                       + 5 + 2 &                ! LU decomposition 1. order
-                       + 5 + 2                  ! LU decomposition 2. order
-        else
-            inb_grid = inb_grid &
-                       + 5*4 &                  ! LU decomposition 1. order, 4 bcs
-                       + 5                      ! LU decomposition 2. order, 1 bcs
-        end if
-
-        if (g%periodic) then
-            inb_grid = inb_grid &
-                       + 1 &                    ! modified wavenumbers for 1. order derivative
-                       + 1                      ! modified wavenumbers for 2. order derivative
-        end if
-
         if (stagger_on .and. g%periodic) then
             inb_grid = inb_grid &
                        + 5 &                    ! LU decomposition interpolation
-                       + 5                      ! LU decomposition 1. order interpolatory
+                       + 5                      ! LU decomposition 1. order with interpolation
         end if
 
-        call TLab_Allocate_Real(__FILE__, x, [g%size, inb_grid], g%name)
+        ! call TLab_Allocate_Real(__FILE__, g%memory, [g%size, inb_grid], g%name)
+        allocate (g%memory(g%size, inb_grid))
 
         ! ###################################################################
         ! Setting pointers and filling FDM data
@@ -155,7 +158,7 @@ contains
         ! ###################################################################
         ! Node positions
         ! ###################################################################
-        g%nodes => x(:, ig)             ! Define pointer inside x
+        g%nodes => g%memory(:, ig)             ! Define pointer inside x
 
         g%nodes(:) = nodes(1:nx)        ! Calculate data
 
@@ -164,7 +167,7 @@ contains
         ! ###################################################################
         ! Space for Jacobians: computational grid is uniform
         ! ###################################################################
-        g%jac => x(:, ig:)
+        g%jac => g%memory(:, ig:)
 
         if (nx == 1) then
             g%jac(:, :) = 1.0_wp
@@ -176,9 +179,9 @@ contains
         ! ###################################################################
         ! first-order derivative
         ! ###################################################################
-        g%lhs1 => x(:, ig:)
+        g%lhs1 => g%memory(:, ig:)
         ig = ig + 5
-        g%rhs1 => x(:, ig:)
+        g%rhs1 => g%memory(:, ig:)
         ig = ig + 7
 
         ! -------------------------------------------------------------------
@@ -237,7 +240,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! LU decomposition
-        g%lu1 => x(:, ig:)
+        g%lu1 => g%memory(:, ig:)
 
         g%lu1(:, 1:g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
         if (g%periodic) then
@@ -280,7 +283,7 @@ contains
         ! -------------------------------------------------------------------
         ! modified wavenumbers
         if (g%periodic) then
-            g%mwn1 => x(:, ig)
+            g%mwn1 => g%memory(:, ig)
 
 #define wn(i) g%mwn1(i)
 
@@ -321,9 +324,9 @@ contains
 ! ###################################################################
 ! first-order integrals (cases lambda = 0.0_wp)
 ! ###################################################################
-        g%lhsi => x(:, ig:)
+        g%lhsi => g%memory(:, ig:)
         ig = ig + 7*2
-        g%rhsi => x(:, ig:)
+        g%rhsi => g%memory(:, ig:)
         ig = ig + 5*2
 
         if (.not. g%periodic) then
@@ -352,9 +355,9 @@ contains
 ! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
-        g%lhs2 => x(:, ig:)
+        g%lhs2 => g%memory(:, ig:)
         ig = ig + 5
-        g%rhs2 => x(:, ig:)
+        g%rhs2 => g%memory(:, ig:)
         ig = ig + 7 + 5
 
         ! -------------------------------------------------------------------
@@ -411,7 +414,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! LU decomposition and wave numbers
-        g%lu2 => x(:, ig:)
+        g%lu2 => g%memory(:, ig:)
 
         g%lu2(:, 1:g%nb_diag_2(1)) = g%lhs2(:, 1:g%nb_diag_2(1))
         if (g%periodic) then
@@ -433,7 +436,7 @@ contains
         ! -------------------------------------------------------------------
         ! modified wavenumbers
         if (g%periodic) then
-            g%mwn2 => x(:, ig)
+            g%mwn2 => g%memory(:, ig)
 
 #define wn(i) g%mwn2(i)
 
@@ -463,7 +466,7 @@ contains
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
         if ((stagger_on) .and. g%periodic) then
-            g%lu0i => x(:, ig:)
+            g%lu0i => g%memory(:, ig:)
 
             select case (g%mode_fdm1)
             case DEFAULT
@@ -480,7 +483,7 @@ contains
 ! Periodic case; pentadiagonal
 ! -------------------------------------------------------------------
         if ((stagger_on) .and. g%periodic) then
-            g%lu1i => x(:, ig:)
+            g%lu1i => g%memory(:, ig:)
 
             select case (g%mode_fdm1)
             case DEFAULT

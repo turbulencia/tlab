@@ -115,7 +115,7 @@ program CSPLINE
     end if
 
 ! initialize grids for fdm calls
-    call FDM_Initialize(x, g, wrk1d(:,1), wrk1(:,4))
+    call FDM_Initialize(g, wrk1d(:,1), wrk1(:,4))
     call FDM_Initialize(x_int, g_int, wrk1d_int, wrk1(:,4))
 
 ! cubic spline function

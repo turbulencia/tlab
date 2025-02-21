@@ -8,7 +8,7 @@ program VINTEGRAL
     use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, txc, x
+    use TLab_Arrays, only: wrk1d, txc
     use FDM_ComX_Direct
     use FDM_Integrate
     use FDM_MatMul
@@ -95,7 +95,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(x, g, wrk1d)
+    call FDM_Initialize(g, wrk1d)
 
     bcs_aux = 0
 

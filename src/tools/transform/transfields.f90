@@ -26,12 +26,13 @@ program TRANSFIELDS
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
     use Gravity, only: Gravity_Initialize
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use Thermo_Anelastic
     use IO_FIELDS
     use OPR_FILTERS
     use OPR_INTERPOLATORS
     use OPR_FOURIER
+    use IO_Grid
 
     implicit none
 
@@ -73,7 +74,7 @@ use Rotation, only: Rotation_Initialize
     real(wp) opt_vec(iopt_size_max)
 
     real(wp) params(1)
-    
+
     ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
 
@@ -88,7 +89,7 @@ use Rotation, only: Rotation_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
 
     call TLab_Consistency_Check()
 
@@ -290,10 +291,10 @@ call Rotation_Initialize(ifile)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-    call FDM_Initialize(x, g(1), wrk1d(:, 1))
-    call FDM_Initialize(y, g(2), wrk1d(:, 2))
-    call FDM_Initialize(z, g(3), wrk1d(:, 3))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call FDM_Initialize(g(1), x)
+    call FDM_Initialize(g(2), y)
+    call FDM_Initialize(g(3), z)
 
     call TLab_Initialize_Background(ifile)
 
@@ -338,13 +339,13 @@ call Rotation_Initialize(ifile)
         tolerance = 0.001_wp    ! percentage of grid spacing
 
         ! Check grids; Ox and Oz directions are assumed to be periodic
-        dummy = (g_dst(1)%scale - g(1)%scale)/(x(g(1)%size, 1) - x(g(1)%size - 1, 1))
+        dummy = (g_dst(1)%scale - g(1)%scale)/(x(g(1)%size) - x(g(1)%size - 1))
         if (abs(dummy) > tolerance) then
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
             call TLab_Stop(DNS_ERROR_GRID_SCALE)
         end if
 
-        dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size, 1) - z(g(3)%size - 1, 1))
+        dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size) - z(g(3)%size - 1))
         if (abs(dummy) > tolerance) then
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
             call TLab_Stop(DNS_ERROR_GRID_SCALE)
@@ -353,7 +354,7 @@ call Rotation_Initialize(ifile)
         ! In the Oy direction, we allow to have a different box
         jmax_aux = g(2)%size; subdomain = 0
 
-        dummy = (y_dst(g_dst(2)%size) - y(g(2)%size, 1))/(y(g(2)%size, 1) - y(g(2)%size - 1, 1))
+        dummy = (y_dst(g_dst(2)%size) - y(g(2)%size))/(y(g(2)%size) - y(g(2)%size - 1))
         if (dummy > tolerance) then                 ! Extend
             flag_extend = .true.
             subdomain(4) = int(dummy) + 1           ! # planes to add at the top
@@ -368,7 +369,7 @@ call Rotation_Initialize(ifile)
             subdomain(3) = 1
         end if
 
-        dummy = (y_dst(1) - y(1, 1))/(y(2, 1) - y(1, 1))
+        dummy = (y_dst(1) - y(1))/(y(2) - y(1))
         if (dummy < -tolerance) then                ! Extend
             flag_extend = .true.
             subdomain(3) = int(abs(dummy)) + 1      ! # planes to add at the bottom
@@ -413,8 +414,8 @@ call Rotation_Initialize(ifile)
         allocate (z_aux(g(3)%size + 1))
         allocate (y_aux(jmax_aux + 1))
 
-        x_aux(1:g(1)%size) = x(1:g(1)%size, 1)  ! need extra space in cubic splines
-        z_aux(1:g(3)%size) = z(1:g(3)%size, 1)  ! need extra space in cubic splines
+        x_aux(1:g(1)%size) = x(1:g(1)%size)  ! need extra space in cubic splines
+        z_aux(1:g(3)%size) = z(1:g(3)%size)  ! need extra space in cubic splines
 
         ! Creating grid
         if (flag_crop) then
@@ -428,12 +429,12 @@ call Rotation_Initialize(ifile)
             y_aux(jmax_aux) = y_dst(g_dst(2)%size)
 
         else
-            y_aux(1 + subdomain(3):g(2)%size + subdomain(3)) = y(1:g(2)%size, 1) ! we need extra space
+            y_aux(1 + subdomain(3):g(2)%size + subdomain(3)) = y(1:g(2)%size) ! we need extra space
 
             if (subdomain(4) > 0) then
                 write (str, '(I3)') subdomain(4)
                 call TLab_Write_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the top for remeshing...')
-                dummy = (y_dst(g_dst(2)%size) - y(g(2)%size, 1))/real(subdomain(4)) ! distributing the points uniformly
+                dummy = (y_dst(g_dst(2)%size) - y(g(2)%size))/real(subdomain(4)) ! distributing the points uniformly
                 do ip = g(2)%size + subdomain(3) + 1, g(2)%size + subdomain(3) + subdomain(4)
                     y_aux(ip) = y_aux(ip - 1) + dummy
                 end do
@@ -442,7 +443,7 @@ call Rotation_Initialize(ifile)
             if (subdomain(3) > 0) then
                 write (str, '(I3)') subdomain(3)
                 call TLab_Write_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the bottom for remeshing...')
-                dummy = (y_dst(1) - y(1, 1))/real(subdomain(3))
+                dummy = (y_dst(1) - y(1))/real(subdomain(3))
                 do ip = subdomain(3), 1, -1
                     y_aux(ip) = y_aux(ip + 1) + dummy ! dummy is negative
                 end do
@@ -525,9 +526,9 @@ call Rotation_Initialize(ifile)
                         call TRANS_CROP(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                           + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                           + (y_aux(1) - y(subdomain(3)))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1) - y(subdomain(3)))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-              + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
+              + (y_aux(jmax_aux) - y(subdomain(4) - 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4)) - y(subdomain(4) - 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
@@ -545,9 +546,9 @@ call Rotation_Initialize(ifile)
                         call TRANS_CROP(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                           + (y_aux(1) - y(subdomain(3), 1))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1, 1) - y(subdomain(3), 1))
+                                           + (y_aux(1) - y(subdomain(3)))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1) - y(subdomain(3)))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-              + (y_aux(jmax_aux) - y(subdomain(4) - 1, 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4), 1) - y(subdomain(4) - 1, 1))
+              + (y_aux(jmax_aux) - y(subdomain(4) - 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4)) - y(subdomain(4) - 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
@@ -613,7 +614,7 @@ call Rotation_Initialize(ifile)
             ! Blend
             ! ###################################################################
         case (7)
-            if (it == 1) opt_vec(2) = y(1, 1) + opt_vec(2)*g(2)%scale
+            if (it == 1) opt_vec(2) = y(1) + opt_vec(2)*g(2)%scale
             write (sRes, *) opt_vec(2), opt_vec(3); sRes = 'Blending with '//trim(adjustl(sRes))
             call TLab_Write_ASCII(lfile, sRes)
 
@@ -840,7 +841,7 @@ contains
         imixture = MIXT_TYPE_AIRWATER
         call Thermodynamics_Initialize_Parameters(ifile)
         call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+        call Rotation_Initialize(ifile)
         inb_scal = 1
 
         qt_0 = 9.0d-3; qt_1 = 1.5d-3

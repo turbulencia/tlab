@@ -14,6 +14,7 @@ program VPARTIAL3D
 #endif
     use FDM, only: g, FDM_Initialize
     use NavierStokes, only: NavierStokes_Initialize_Parameters
+    use IO_Grid
     use IO_FIELDS
     use OPR_FOURIER
     use OPR_PARTIAL
@@ -48,10 +49,10 @@ program VPARTIAL3D
     e(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 7)
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-    call FDM_Initialize(x, g(1), wrk1d(:, 1))
-    call FDM_Initialize(y, g(2), wrk1d(:, 2))
-    call FDM_Initialize(z, g(3), wrk1d(:, 3))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call FDM_Initialize(g(1), x)
+    call FDM_Initialize(g(2), y)
+    call FDM_Initialize(g(3), z)
 
     bcs = 0
 
@@ -67,14 +68,14 @@ program VPARTIAL3D
 ! ###################################################################
     case (2)
         g(2)%mode_fdm1 = FDM_COM6_JACOBIAN
-        call FDM_Initialize(y, g(2), wrk1d(:, 2))
+        call FDM_Initialize(g(2), wrk1d(:, 2))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
         call IO_Write_Fields('field.out1', imax, jmax, kmax, itime, 1, a)
 
         g(2)%mode_fdm1 = FDM_COM4_DIRECT
-        call FDM_Initialize(y, g(2), wrk1d(:, 2))
+        call FDM_Initialize(g(2), wrk1d(:, 2))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, b, d)

@@ -3,6 +3,7 @@
 program VDIFFUSION
     use TLab_Constants, only: wp, wi
     use TLAB_VARS
+    use IO_Grid
     use IO_FIELDS
     use NavierStokes, only: NavierStokes_Initialize_Parameters
 
@@ -34,9 +35,9 @@ program VDIFFUSION
     allocate (s_r(isize_field, 1))
 
     call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(x, g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(y, g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(z, g(3), wrk1d(:,3), wrk1d(:,4))
+    call FDM_Initialize(g(1), wrk1d(:,1), wrk1d(:,4))
+    call FDM_Initialize(g(2), wrk1d(:,2), wrk1d(:,4))
+    call FDM_Initialize(g(3), wrk1d(:,3), wrk1d(:,4))
 
 ! ###################################################################
     wavenumber = C_1_R

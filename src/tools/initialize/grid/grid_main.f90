@@ -7,6 +7,7 @@ program INIGRID
     use FDM, only: grid_dt
     use TLab_Constants, only: wp, gfile, ifile, lfile, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use IO_Grid
     use GRID_LOCAL
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro

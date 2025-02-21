@@ -7,7 +7,7 @@ program VPARTIAL
     use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, wrk2d, txc, x
+    use TLab_Arrays, only: wrk1d, wrk2d, txc
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_MatMul
@@ -99,7 +99,7 @@ program VPARTIAL
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_Initialize(x, g, wrk1d)
+    call FDM_Initialize(g, wrk1d)
 
 ! Bcs
     bcs_aux = 0

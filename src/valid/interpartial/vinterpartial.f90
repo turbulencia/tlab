@@ -32,6 +32,7 @@ program VINTERPARTIAL
     use FDM, only: g, FDM_Initialize
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use OPR_PARTIAL
+    use IO_Grid
 
     implicit none
 
@@ -41,7 +42,7 @@ program VINTERPARTIAL
     integer(wi), parameter :: ims_pro = 0
 #endif
 
-    real(wp), dimension(:, :), allocatable, save, target :: x, y, z
+    real(wp), allocatable :: x(:), y(:), z(:)
     real(wp), dimension(:, :, :), allocatable :: a, a_int, a_dif
     real(wp), dimension(:, :, :), allocatable :: b, c
     real(wp), dimension(:, :), allocatable :: wrk1d, wrk2d
@@ -77,10 +78,10 @@ program VINTERPARTIAL
     allocate (b(imax, jmax, kmax), c(imax, jmax, kmax), d(imax*jmax*kmax))
     allocate (tmp1(isize_txc_field), wrk3d(isize_wrk3d))
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-    call FDM_Initialize(x, g(1), wrk1d(:, 1))
-    call FDM_Initialize(y, g(2), wrk1d(:, 2))
-    call FDM_Initialize(z, g(3), wrk1d(:, 3))
+    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call FDM_Initialize(g(1), x)
+    call FDM_Initialize(g(2), y)
+    call FDM_Initialize(g(3), z)
 
     bcs = 0
 ! ###################################################################
