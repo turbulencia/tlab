@@ -22,7 +22,7 @@ program INIFLOW
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use THERMO_THERMAL
@@ -38,7 +38,7 @@ use Rotation, only: Rotation_Initialize
     implicit none
 
     real(wp) params(0)
-    
+
     !########################################################################
     call TLab_Start()
 
@@ -50,7 +50,7 @@ use Rotation, only: Rotation_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
 
     call TLab_Consistency_Check()
@@ -59,7 +59,7 @@ call Rotation_Initialize(ifile)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

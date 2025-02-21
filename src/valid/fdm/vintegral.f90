@@ -78,7 +78,7 @@ program VINTEGRAL
     if (g%periodic) then
         do i = 1, imax
             ! x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
-            wrk1d(i,1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            wrk1d(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
         ! do i = 1, imax
@@ -86,7 +86,7 @@ program VINTEGRAL
         ! end do
         open (21, file='y.dat')
         do i = 1, imax
-            read (21, *) wrk1d(i,1) !x(i, 1)
+            read (21, *) wrk1d(i, 1) !x(i, 1)
         end do
         close (21)
         ! g%scale = x(imax, 1) - x(1, 1)
@@ -95,7 +95,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(g, wrk1d)
+    call FDM_Initialize(g, wrk1d(1:imax, 1))
 
     bcs_aux = 0
 

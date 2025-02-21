@@ -47,7 +47,7 @@ module FDM
     public :: FDM_Initialize
 
 contains
-    subroutine FDM_Initialize(g, nodes)
+    subroutine FDM_Initialize(g, nodes, locScale)
         use TLab_Constants, only: pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -63,12 +63,13 @@ contains
         use FDM_Integrate
 
         type(grid_dt), intent(inout) :: g                   ! grid structure
-        real(wp), intent(in) :: nodes(g%size)               ! positions of the grid nodes
+        real(wp), intent(in) :: nodes(:)                    ! positions of the grid nodes
+        real(wp), intent(in), optional :: locScale          ! for consistency check
 
 ! -------------------------------------------------------------------
         integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid
         integer(wi) nmin, nmax, nsize, bcs_cases(4)
-        real(wp) coef(5), scale_loc
+        real(wp) coef(5)
 
         integer, parameter :: i1 = 1
 
@@ -91,16 +92,24 @@ contains
             call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
 
-        if (g%size > 1) then
-            scale_loc = nodes(g%size) - nodes(1)
-            if (g%periodic) scale_loc = scale_loc*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
-        else
-            scale_loc = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
-        end if
-! print *, abs((scale_loc - g%scale)/scale_loc)
-        if (abs((scale_loc - g%scale)/scale_loc) > roundoff_wp) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Unmatched domain scale.')
+        if (size(nodes) /= g%size) then
+            call TLab_Write_ASCII(efile, __FILE__//'. Unmatched grid size.')
             call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        if (g%size > 1) then
+            g%scale = nodes(g%size) - nodes(1)
+            if (g%periodic) g%scale = g%scale*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
+        else
+            g%scale = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
+        end if
+
+        if (present(locScale)) then
+! print *, abs((scale_loc - g%scale)/scale_loc)
+            if (abs((locScale - g%scale)/g%scale) > roundoff_wp) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Unmatched domain scale.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
         end if
 
         ! ###################################################################

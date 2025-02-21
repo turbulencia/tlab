@@ -1,7 +1,6 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-
 !########################################################################
 !#
 !# Calculating RHS forcings at the inflow plane in spatially evolving cases
@@ -18,7 +17,7 @@ module BOUNDARY_INFLOW
     use NavierStokes, only: nse_eqns
     use FDM, only: g, FDM_Initialize
     use TLab_Time, only: rtime, itime
-    use NavierStokes, only: visc 
+    use NavierStokes, only: visc
     use TLab_Background, only: qbg
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -99,8 +98,7 @@ contains
             g_inf(1)%uniform = .true.
         end if
         if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
-            call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
-                              g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, x_inf, y_inf, z_inf)
+            call IO_READ_GRID('grid.inf', x_inf, y_inf, z_inf, [g_inf(1)%size, g_inf(2)%size, g_inf(3)%size])
             call FDM_Initialize(g_inf(1), x_inf)
             call FDM_Initialize(g_inf(2), y_inf)
             call FDM_Initialize(g_inf(3), z_inf)
@@ -585,7 +583,7 @@ contains
                 end if
 
                 if (itransport == EQNS_TRANS_SUTHERLAND .or. itransport == EQNS_TRANS_POWERLAW) call THERMO_VISCOSITY(imax*jmax*kmax, T, vis)
-                
+
             end select
 
         end if

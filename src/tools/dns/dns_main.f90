@@ -18,7 +18,7 @@ program DNS
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use Rotation, only: Rotation_Initialize
     use Radiation, only: Radiation_Initialize
     use Microphysics, only: Microphysics_Initialize
@@ -57,7 +57,7 @@ use Rotation, only: Rotation_Initialize
     integer ig
     integer, parameter :: i0 = 0, i1 = 1
     real(wp) params(2)
-    
+
     ! ###################################################################
     call system_clock(start_clock)
     call TLab_Start()
@@ -94,7 +94,7 @@ use Rotation, only: Rotation_Initialize
     ! #######################################################################
     call TLab_Initialize_Memory(__FILE__)
 
-    call IO_READ_GRID(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, x, y, z)
+    call IO_READ_GRID(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
     call FDM_Initialize(g(1), x)
     call FDM_Initialize(g(2), y)
     call FDM_Initialize(g(3), z)

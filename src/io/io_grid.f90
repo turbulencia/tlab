@@ -6,21 +6,23 @@ module IO_Grid
     implicit none
     private
 
+    real(wp), allocatable, public :: x(:), y(:), z(:)
+
     public :: IO_READ_GRID
     public :: IO_WRITE_GRID
 
 contains
 !########################################################################
 !########################################################################
-    subroutine IO_READ_GRID(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
+    subroutine IO_READ_GRID(name, x, y, z, sizes, scales)
         character*(*) name
-        integer(wi), intent(in) :: imax, jmax, kmax
-        real(wp) scalex, scaley, scalez
         real(wp), allocatable, intent(out) :: x(:), y(:), z(:)
+        integer(wi), intent(in), optional :: sizes(3)
+        real(wp), intent(out), optional :: scales(3)
 
         ! -----------------------------------------------------------------------
-        integer(wi) imax_loc, jmax_loc, kmax_loc
-        real(wp) scale(3)
+        integer(wi) locSizes(3)
+        real(wp) locScales(3)
         character*(32) line
 
         ! #######################################################################
@@ -28,22 +30,19 @@ contains
         rewind (50)
 
         ! -----------------------------------------------------------------------
-        read (50) imax_loc, jmax_loc, kmax_loc
-        read (50) scale
-        scalex = scale(1)
-        scaley = scale(2)
-        scalez = scale(3)
+        read (50) locSizes(1:3)
+        read (50) locScaleS(1:3)
 
         ! -----------------------------------------------------------------------
-        if (imax_loc /= imax .or. jmax_loc /= jmax .or. kmax_loc /= kmax) then
+        if (present(sizes) .and. any(sizes /= locSizes)) then
             close (50)
-            write (line, 100) imax_loc, jmax_loc, kmax_loc
-            call TLab_Write_ASCII(efile, 'IO_READ_GRID. Dimensions ('//trim(line)//') unmatched.')
+            write (line, 100) locSizes
+            call TLab_Write_ASCII(efile, __FILE__//'. Dimensions ('//trim(line)//') unmatched.')
             call TLab_Stop(DNS_ERROR_DIMGRID)
         end if
 
         ! -----------------------------------------------------------------------
-        allocate (x(imax), y(jmax), z(kmax))
+        allocate (x(locSizes(1)), y(locSizes(2)), z(locSizes(3)))
         read (50) x
         read (50) y
         read (50) z

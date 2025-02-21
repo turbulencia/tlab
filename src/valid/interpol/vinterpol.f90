@@ -32,9 +32,7 @@ program INTERPOL
     integer(wi), parameter :: imax = 32, len = 10
     integer(wi), parameter :: imaxp = imax - 1
 
-    real(wp), allocatable :: x(:,:), x_pre(:,:)
-    
-    real(wp), dimension(imax) :: x_int, x_aux
+    real(wp), dimension(imax) :: x_int, x_aux, x
     real(wp), dimension(len, imax) :: u, u_int, u_aux, u_a, u_b
     real(wp), dimension(len, imax) :: dudx, dudx_int, dudx_aux
     real(wp), dimension(imax, 18) :: wrk1d
@@ -82,18 +80,16 @@ program INTERPOL
 ! Initialize grid
     if (g%periodic) then
         do i = 1, imax
-            ! x(i, 1) = real(i - 1)/real(imax)*g%scale
-            wrk1d(i, 1) = real(i - 1)/real(imax)*g%scale
+            x(i) = real(i - 1)/real(imax)*g%scale
         end do
     else
         do i = 1, imax
-            ! x(i, 1) = real(i - 1)/real(imax - 1)*g%scale
-            wrk1d(i, 1) = real(i - 1)/real(imax - 1)*g%scale
+            x(i) = real(i - 1)/real(imax - 1)*g%scale
         end do
     end if
 
 ! Velocity grid
-    call FDM_Initialize(g, wrk1d)
+    call FDM_Initialize(g, x)
 
 ! Initialize grids (interpolation grid on midpoints)
     if (g%periodic) then
@@ -111,12 +107,12 @@ program INTERPOL
 ! Initialize pressure grid (only needed for non-periodic case)
 ! (here: periodic case implies the usage of uniform grids!)
     do i = 1, imaxp; 
-        ! x_pre(i, 1) = x_int(i); 
+        ! x_pre(i, 1) = x_int(i);
         wrk1d(i, 1) = x_int(i); 
     end do
     g_pre%size = imaxp; g_pre%scale = x_int(imaxp); g_pre%uniform = g%uniform
     g_pre%mode_fdm1 = g%mode_fdm1; g_pre%periodic = .false.
-    call FDM_Initialize(g_pre, wrk1d)
+    call FDM_Initialize(g_pre, wrk1d(1:imaxp, 1))
 
 ! Define the function + deriv. on both grids
     do i = 1, imax
@@ -137,8 +133,8 @@ program INTERPOL
 ! Switch grids and functions (according to interpolation direction [vp <--> pv])
     if (test_type == 2 .or. test_type == 4) then
         do i = 1, imax
-            x_int(i) = x(i, 1)
-            x(i, 1) = x_aux(i)
+            x_int(i) = x(i)
+            x(i) = x_aux(i)
             do l = 1, len
                 u_int(l, i) = u(l, i)
                 u(l, i) = u_aux(l, i)
@@ -244,7 +240,7 @@ program INTERPOL
     sol = 0.0_wp
     do i = 1, imax
         do l = 1, len
-            write (20, 1000) x(i, 1), x_int(i), u(l, i), u_int(l, i), u_a(l, i), u_a(l, i) - u_int(l, i)
+            write (20, 1000) x(i), x_int(i), u(l, i), u_int(l, i), u_a(l, i), u_a(l, i) - u_int(l, i)
             u_b(l, i) = abs(u_a(l, i) - u_int(l, i))
             error = error + u_b(l, i)*u_b(l, i)
             sol = sol + u_int(l, i)*u_int(l, i)
