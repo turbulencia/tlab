@@ -100,9 +100,9 @@ contains
         if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
             call IO_READ_GRID('grid.inf', g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, &
                               g_inf(1)%scale, g_inf(2)%scale, g_inf(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
-            call FDM_Initialize(x_inf, g_inf(1), wrk1d(:, 1), wrk1d(:, 4))
-            call FDM_Initialize(y_inf, g_inf(2), wrk1d(:, 2), wrk1d(:, 4))
-            call FDM_Initialize(z_inf, g_inf(3), wrk1d(:, 3), wrk1d(:, 4))
+            call FDM_Initialize(x_inf, g_inf(1), wrk1d(:, 1))
+            call FDM_Initialize(y_inf, g_inf(2), wrk1d(:, 2))
+            call FDM_Initialize(z_inf, g_inf(3), wrk1d(:, 3))
         end if
 
         if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))

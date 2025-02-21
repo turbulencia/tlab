@@ -4,13 +4,13 @@ program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
     use FDM, only: grid_dt, FDM_Initialize
     use NavierStokes, only: visc, schmidt
-    USE OPR_FILTERS
+    use OPR_FILTERS
 
     implicit none
 
     integer(wi) imax, i, ik, i1bc
     parameter(imax=257)
-    real(wp), allocatable :: x(:,:)
+    real(wp), allocatable :: x(:, :)
     real(wp) u(imax), uf(imax)
     real(wp) wrk1d(imax, 18)! , wrk2d(imax), wrk3d(imax) YOU NEED TO USE NEW MEM MANAGEMENT
     type(filter_dt) filter
@@ -41,7 +41,7 @@ program VEFILTER
         filter%bcsmin = DNS_FILTER_BCS_ZERO
         filter%bcsmax = DNS_FILTER_BCS_ZERO
         do i = 1, imax
-            wrk1d(i, 1) = real(i - 1)/real(imax-1)*g%scale
+            wrk1d(i, 1) = real(i - 1)/real(imax - 1)*g%scale
             ! x(i, 1) = real(i - 1)/real(imax-1)*g%scale
         end do
         ! open (21, file='y.dat')
@@ -52,7 +52,7 @@ program VEFILTER
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_Initialize(x, g, wrk1d, wrk1d(:,2))
+    call FDM_Initialize(x, g, wrk1d)
 
     ! ###################################################################
 
@@ -60,7 +60,7 @@ program VEFILTER
     ! if (i1bc == 0) then
     write (*, *) 'Wavenumber ?'
     read (*, *) ik
-    u(:) = SIN(2.0_wp*pi_wp/g%scale*real(ik)*x(:, 1))
+    u(:) = sin(2.0_wp*pi_wp/g%scale*real(ik)*x(:, 1))
     ! else
     !     open (21, file='f.dat')
     !     do i = 1, imax
@@ -86,14 +86,14 @@ program VEFILTER
 
     open (20, file='filter.dat')
     do i = 1, imax
-        write (20, *) x(i,1), u(i), uf(i)
+        write (20, *) x(i, 1), u(i), uf(i)
     end do
     close (20)
 
     open (20, file='transfer.dat')
     ! do ik = 1, imax/2
-    do ik = 1, (imax-1)/2
-            u = SIN(2.0_wp*pi_wp/g%scale*real(ik)*x(:,1))
+    do ik = 1, (imax - 1)/2
+        u = sin(2.0_wp*pi_wp/g%scale*real(ik)*x(:, 1))
         call OPR_FILTER_1D(1, filter, u, uf)
         ! call OPR_PARTIAL1(1, [0,0], g, u, uf, wrk2d)
         write (20, *) ik, maxval(uf)

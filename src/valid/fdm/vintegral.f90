@@ -95,7 +95,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(x, g, wrk1d, wrk1d(:,4))
+    call FDM_Initialize(x, g, wrk1d)
 
     bcs_aux = 0
 

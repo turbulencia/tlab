@@ -10,32 +10,33 @@ module FDM
         sequence
         character*8 name
         integer(wi) size
-        integer mode_fdm1                   ! finite-difference method for 1. order derivative
-        integer mode_fdm2                   ! finite-difference method for 2. order derivative
         logical uniform, periodic
-        logical :: need_1der = .false.      ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
-        integer nb_diag_1(2)                ! # of left and right diagonals 1. order derivative (max 5/7)
-        integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative (max 5/7)
         real(wp) scale
-        real(wp) :: rhs1_b(4, 7), rhs1_t(4, 7)          ! RHS data for Neumann boundary conditions, 1. order derivative max. # of diagonals is 7, # rows is 7/2+1
+        real(wp), pointer :: nodes(:)
+        real(wp), pointer :: jac(:, :)          ! pointer to Jacobians
+        !
+        integer mode_fdm1                       ! finite-difference method for 1. order derivative
+        integer nb_diag_1(2)                    ! # of left and right diagonals 1. order derivative (max 5/7)
+        real(wp) :: rhs1_b(4, 7), rhs1_t(4, 7)  ! RHS data for Neumann boundary conditions, 1. order derivative max. # of diagonals is 7, # rows is 7/2+1
+        real(wp), pointer :: lhs1(:, :)         ! pointer to LHS for 1. derivative
+        real(wp), pointer :: rhs1(:, :)         ! pointer to RHS for 1. derivative
+        real(wp), pointer :: lu1(:, :)          ! pointer to LU decomposition for 1. derivative
+        real(wp), pointer :: mwn1(:)            ! pointer to modified wavenumbers
+        !
         real(wp) :: rhsr_b(5, 0:7), rhsr_t(0:4, 8)      ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
         real(wp) :: rhsi_b(5*2, 0:7), rhsi_t(0:9, 8)    ! RHS data for integration, 2x bcs
-        real(wp), pointer :: nodes(:)
-        real(wp), pointer :: jac(:, :)      ! pointer to Jacobians
+        real(wp), pointer :: lu0i(:, :)                 ! pointer to LU decomposition for interpolation
+        real(wp), pointer :: lu1i(:, :)                 ! pointer to LU decomposition for 1. derivative inc. interp.
+        real(wp), pointer :: lhsi(:, :)                 ! pointer to LHS for 1. order integration
+        real(wp), pointer :: rhsi(:, :)                 ! pointer to RHS for 1. order integration
         !
-        real(wp), pointer :: lhs1(:, :)     ! pointer to LHS for 1. derivative
-        real(wp), pointer :: rhs1(:, :)     ! pointer to RHS for 1. derivative
-        real(wp), pointer :: lu1(:, :)      ! pointer to LU decomposition for 1. derivative
-        real(wp), pointer :: lu0i(:, :)     ! pointer to LU decomposition for interpolation
-        real(wp), pointer :: lu1i(:, :)     ! pointer to LU decomposition for 1. derivative inc. interp.
-        real(wp), pointer :: lhsi(:, :)     ! pointer to LHS for 1. order integration
-        real(wp), pointer :: rhsi(:, :)     ! pointer to RHS for 1. order integration
-        real(wp), pointer :: mwn1(:)        ! pointer to modified wavenumbers
-        !
+        integer mode_fdm2                   ! finite-difference method for 2. order derivative
+        integer nb_diag_2(2)                ! # of left and right diagonals 2. order derivative (max 5/7)
         real(wp), pointer :: lhs2(:, :)     ! pointer to LHS for 2. derivative
         real(wp), pointer :: rhs2(:, :)     ! pointer to RHS for 2. derivative
         real(wp), pointer :: lu2(:, :)      ! pointer to LU decomposition for 2. derivative
         real(wp), pointer :: mwn2(:)        ! pointer to modified wavenumbers
+        logical :: need_1der = .false.      ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
 
     end type grid_dt
 
@@ -44,7 +45,7 @@ module FDM
     public :: FDM_Initialize
 
 contains
-    subroutine FDM_Initialize(x, g, nodes, wrk1d)
+    subroutine FDM_Initialize(x, g, nodes)
         use TLab_Constants, only: pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -62,7 +63,6 @@ contains
         type(grid_dt), intent(inout) :: g                   ! grid structure
         real(wp), allocatable, intent(inout) :: x(:, :)     ! memory space
         real(wp), intent(in) :: nodes(g%size)               ! positions of the grid nodes
-        real(wp), intent(inout) :: wrk1d(g%size, 12)
 
         target x
 
@@ -89,7 +89,7 @@ contains
         if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
 
         if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-    call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+            call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
 
         if (g%size > 1) then
@@ -162,7 +162,7 @@ contains
         ig = ig + 1                     ! Advance counter
 
         ! ###################################################################
-        ! Jacobians: computational grid is uniform
+        ! Space for Jacobians: computational grid is uniform
         ! ###################################################################
         g%jac => x(:, ig:)
 
@@ -171,77 +171,50 @@ contains
             return
         end if
 
-        ! -------------------------------------------------------------------
-        ! first derivative
-        g%jac(:, 1) = 1.0_wp
-
-        select case (g%mode_fdm1)
-        case (FDM_COM4_JACOBIAN, FDM_COM4_DIRECT)
-            call FDM_C1N4_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
-            call MatMul_3d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), x, g%jac(:, 1), periodic=.false.)
-
-        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
-            call FDM_C1N6_Jacobian(nx, g%jac, wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_1, coef)
-            call MatMul_5d_antisym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 1), periodic=.false.)
-
-        case (FDM_COM6_JACOBIAN_PENTA)
-            call FDM_C1N6_Jacobian_Penta(nx, g%jac, wrk1d(:, 1), wrk1d(:, 6), g%nb_diag_1, coef)
-   call MatMul_7d_antisym(nx, 1, wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), wrk1d(:, 11), wrk1d(:, 12), x, g%jac(:, 1), periodic=.false.)
-
-        end select
-
-        select case (g%nb_diag_1(1))
-        case (3)
-            call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 1))
-        case (5)
-            call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-            call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 1))
-        end select
-
-        ! -------------------------------------------------------------------
-        ! second derivative
-        g%jac(:, 2) = 1.0_wp
-
-        select case (g%mode_fdm2)
-        case (FDM_COM4_JACOBIAN)
-            call FDM_C2N4_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
-            call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
-
-        case (FDM_COM6_JACOBIAN)
-            call FDM_C2N6_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
-            call MatMul_5d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), x, g%jac(:, 2), periodic=.false.)
-
-        case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
-            call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), wrk1d(:, 1), wrk1d(:, 4), g%nb_diag_2, coef)
-         call MatMul_7d_sym(nx, 1, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), wrk1d(:, 9), wrk1d(:, 10), x, g%jac(:, 2), periodic=.false.)
-
-        end select
-
-        select case (g%nb_diag_2(1))
-        case (3)
-            call TRIDFS(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-            call TRIDSS(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), g%jac(1, 2))
-        case (5)
-            call PENTADFS2(nx, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5))
-            call PENTADSS2(nx, i1, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), g%jac(1, 2))
-        end select
-
-        ! -------------------------------------------------------------------
-        ! Saving operations for the time-stability constraint
-        g%jac(:, 3) = 1.0_wp/g%jac(:, 1)
-        g%jac(:, 4) = g%jac(:, 3)*g%jac(:, 3)
-
         ig = ig + 4
 
-! ###################################################################
-! first-order derivative
-! ###################################################################
+        ! ###################################################################
+        ! first-order derivative
+        ! ###################################################################
         g%lhs1 => x(:, ig:)
         ig = ig + 5
         g%rhs1 => x(:, ig:)
         ig = ig + 7
 
+        ! -------------------------------------------------------------------
+        ! Jacobian; computational grid is uniform; used for the stencils below and also as grid spacing in the code
+        g%jac(:, 1) = 1.0_wp
+
+        select case (g%mode_fdm1)
+        case (FDM_COM4_JACOBIAN, FDM_COM4_DIRECT)
+            call FDM_C1N4_Jacobian(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef)
+            call MatMul_3d_antisym(nx, 1, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%nodes(:), g%jac(:, 1), periodic=.false.)
+
+        case (FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
+            call FDM_C1N6_Jacobian(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef)
+            call MatMul_5d_antisym(nx, 1, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%nodes(:), g%jac(:, 1), periodic=.false.)
+
+        case (FDM_COM6_JACOBIAN_PENTA)
+            call FDM_C1N6_Jacobian_Penta(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef)
+            call MatMul_7d_antisym(nx, 1, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), g%nodes(:), g%jac(:, 1), periodic=.false.)
+
+        end select
+
+        select case (g%nb_diag_1(1))
+        case (3)
+            call TRIDFS(nx, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3))
+            call TRIDSS(nx, i1, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%jac(1, 1))
+        case (5)
+            call PENTADFS2(nx, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%lhs1(:, 4), g%lhs1(:, 5))
+            call PENTADSS2(nx, i1, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%lhs1(:, 4), g%lhs1(:, 5), g%jac(1, 1))
+        end select
+
+        ! Saving operations for the time-stability constraint
+        g%jac(:, 3) = 1.0_wp/g%jac(:, 1)
+        g%jac(:, 4) = g%jac(:, 3)*g%jac(:, 3)
+
+        ! -------------------------------------------------------------------
+        ! Actual grid; possibly nonuniform
         select case (g%mode_fdm1)
         case (FDM_COM4_JACOBIAN)
             call FDM_C1N4_Jacobian(nx, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
@@ -295,7 +268,7 @@ contains
                 case (3)
                     call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
                 case (5)
-                   call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
                 end select
 
                 ig = ig + 5
@@ -307,20 +280,22 @@ contains
         ! -------------------------------------------------------------------
         ! modified wavenumbers
         if (g%periodic) then
+            g%mwn1 => x(:, ig)
+
+#define wn(i) g%mwn1(i)
+
             do i = 1, nx        ! wavenumbers, the independent variable to construct the modified ones
                 if (i <= nx/2 + 1) then
-                    wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
+                    wn(i) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
                 else
-                    wrk1d(i, 1) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
+                    wn(i) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
                 end if
             end do
 
-            g%mwn1 => x(:, ig)
-
             if (.not. stagger_on) then
 
-                g%mwn1(:) = 2.0_wp*(coef(3)*sin(wrk1d(:, 1)) + coef(4)*sin(2.0_wp*wrk1d(:, 1)) + coef(5)*sin(3.0_wp*wrk1d(:, 1))) &
-                            /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(wrk1d(:, 1)))
+                g%mwn1(:) = 2.0_wp*(coef(3)*sin(wn(:)) + coef(4)*sin(2.0_wp*wn(:)) + coef(5)*sin(3.0_wp*wn(:))) &
+                            /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
 
             else ! staggered case has different modified wavenumbers!
 
@@ -331,11 +306,12 @@ contains
 
                 end select
 
-                g%mwn1(:) = 2.0_wp*(coef(3)*sin(1.0_wp/2.0_wp*wrk1d(:, 1)) + coef(4)/3.0_wp*sin(3.0_wp/2.0_wp*wrk1d(:, 1))) &
-                            /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)))
+                g%mwn1(:) = 2.0_wp*(coef(3)*sin(1.0_wp/2.0_wp*wn(:)) + coef(4)/3.0_wp*sin(3.0_wp/2.0_wp*wn(:))) &
+                            /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)))
 
             end if
 
+#undef wn
             g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2      ! as used in Poisson solver
 
             ig = ig + 1
@@ -381,6 +357,36 @@ contains
         g%rhs2 => x(:, ig:)
         ig = ig + 7 + 5
 
+        ! -------------------------------------------------------------------
+        ! Jacobian; computational grid is uniform; only used to calculate the stencils in the section below
+        g%jac(:, 2) = 1.0_wp
+
+        select case (g%mode_fdm2)
+        case (FDM_COM4_JACOBIAN)
+            call FDM_C2N4_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)
+            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%nodes(:), g%jac(:, 2), periodic=.false.)
+
+        case (FDM_COM6_JACOBIAN)
+            call FDM_C2N6_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)
+            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%nodes(:), g%jac(:, 2), periodic=.false.)
+
+        case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
+            call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)
+         call MatMul_7d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), g%nodes(:), g%jac(:, 2), periodic=.false.)
+
+        end select
+
+        select case (g%nb_diag_2(1))
+        case (3)
+            call TRIDFS(nx, g%lhs2(:, 1), g%lhs2(:, 2), g%lhs2(:, 3))
+            call TRIDSS(nx, i1, g%lhs2(:, 1), g%lhs2(:, 2), g%lhs2(:, 3), g%jac(1, 2))
+        case (5)
+            call PENTADFS2(nx, g%lhs2(:, 1), g%lhs2(:, 2), g%lhs2(:, 3), g%lhs2(:, 4), g%lhs2(:, 5))
+            call PENTADSS2(nx, i1, g%lhs2(:, 1), g%lhs2(:, 2), g%lhs2(:, 3), g%lhs2(:, 4), g%lhs2(:, 5), g%jac(1, 2))
+        end select
+
+        ! -------------------------------------------------------------------
+        ! Actual grid; possibly nonuniform
         select case (g%mode_fdm2)
 
         case (FDM_COM4_JACOBIAN)
@@ -418,7 +424,7 @@ contains
         else
             select case (g%nb_diag_2(1))
             case (3)
-                call TRIDFS(nx, g%lu2(1, 1), g%lu2(1, 2), g%lu2(1, 3))
+                call TRIDFS(nx, g%lu2(:, 1), g%lu2(:, 2), g%lu2(:, 3))
             end select
             ig = ig + g%nb_diag_2(1)
 
@@ -429,8 +435,20 @@ contains
         if (g%periodic) then
             g%mwn2 => x(:, ig)
 
-  g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wrk1d(:, 1))) + coef(4)*(1.0_wp - cos(2.0_wp*wrk1d(:, 1))) + coef(5)*(1.0_wp - cos(3.0_wp*wrk1d(:, 1)))) &
-                        /(1.0_wp + 2.0_wp*coef(1)*cos(wrk1d(:, 1)) + 2.0_wp*coef(2)*cos(2.0_wp*wrk1d(:, 1)))
+#define wn(i) g%mwn2(i)
+
+            do i = 1, nx        ! wavenumbers, the independent variable to construct the modified ones
+                if (i <= nx/2 + 1) then
+                    wn(i) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
+                else
+                    wn(i) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
+                end if
+            end do
+
+            g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wn(:))) + coef(4)*(1.0_wp - cos(2.0_wp*wn(:))) + coef(5)*(1.0_wp - cos(3.0_wp*wn(:)))) &
+                        /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(2.0_wp*wn(:)))
+
+#undef wn
 
             g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)  ! as used in the Helmholtz solver
 

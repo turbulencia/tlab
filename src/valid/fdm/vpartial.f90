@@ -99,7 +99,7 @@ program VPARTIAL
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_Initialize(x, g, wrk1d, wrk1d(:,4))
+    call FDM_Initialize(x, g, wrk1d)
 
 ! Bcs
     bcs_aux = 0
@@ -244,7 +244,7 @@ program VPARTIAL
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 case (7)
-                    call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
+     call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 end select
 
@@ -252,7 +252,7 @@ program VPARTIAL
                 case (3)
                     call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
                 case (5)
-                    call PENTADSS2(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5), du1_n(:, nmin:nmax))
+        call PENTADSS2(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5), du1_n(:, nmin:nmax))
                 end select
 
                 if (any([BCS_MIN, BCS_BOTH] == ibc)) then
@@ -334,7 +334,7 @@ program VPARTIAL
                     call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
                 case (7)
-                    call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
+     call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
                 end select
 
@@ -342,7 +342,7 @@ program VPARTIAL
                 case (3)
                     call TRIDSS(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), du1_n(:, nmin:nmax))
                 case (5)
-                    call PENTADSS2(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5), du1_n(:, nmin:nmax))
+        call PENTADSS2(nsize, len, g%lu1(nmin:nmax, 1), g%lu1(nmin:nmax, 2), g%lu1(nmin:nmax, 3), g%lu1(nmin:nmax, 4), g%lu1(nmin:nmax, 5), du1_n(:, nmin:nmax))
                 end select
 
                 call check(u(:, nmin:nmax), du1_a(:, nmin:nmax), du1_n(:, nmin:nmax), 'partial.dat')
