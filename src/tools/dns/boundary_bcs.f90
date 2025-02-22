@@ -1,7 +1,6 @@
 #include "dns_error.h"
 #include "dns_const.h"
 
-
 module BOUNDARY_BCS
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH, MAX_VARS
     use TLab_Constants, only: efile
@@ -450,11 +449,11 @@ contains
 
             select case (g%nb_diag_1(2))
             case (3)
-  call MatMul_3d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t, p_bcs_hb, p_bcs_ht)
+                call MatMul_3d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t, p_bcs_hb, p_bcs_ht)
             case (5)
-                call MatMul_5d_antisym(g%size,  nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
+                call MatMul_5d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
             case (7)
-                call MatMul_7d_antisym(g%size,  nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
+                call MatMul_7d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
             end select
 
             select case (g%nb_diag_1(1))

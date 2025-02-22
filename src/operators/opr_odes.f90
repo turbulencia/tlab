@@ -14,7 +14,7 @@ module OPR_ODES
     integer, parameter :: i1 = 1, i2 = 2
 
     ! First-order ODEs
-    public :: OPR_Integral1             ! Using derived type grid_dp to pass information, typicall initialized for lambda = 0
+    public :: OPR_Integral1             ! Using derived type grid_dp to pass information, typically initialized for lambda = 0
     ! public :: OPR_ODE1                ! Passing lu and rhs directly, which could be initialized for lambda /= 0
 
     ! Second-order ODEs
@@ -35,7 +35,7 @@ contains
 !#
 !# See FDM_Int1_Initialize. Passing information through derived type g. Similar to OPR_PARTIAL1
 !# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
-!# I also wonder if wrk2d should be passed in argument list, to avoid mem overwritting...
+!# I also wonder if wrk2d should be passed in argument list, to avoid mem overwriting...
 !########################################################################
     subroutine OPR_Integral1(nlines, g, f, result, ibc)
         use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH

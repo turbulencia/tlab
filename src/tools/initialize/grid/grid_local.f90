@@ -16,7 +16,7 @@ module GRID_LOCAL
         integer(wi) nseg                            ! number of segments in this direction
         logical mirrored                            ! It true, mirror the grid
         real(wp) fixed_scale                        ! If positive, rescale grid to this value
-        integer(wi) SIZE(MAX_SEGMENT)               ! number of points in each segment
+        integer(wi) size(MAX_SEGMENT)               ! number of points in each segment
         real(wp) end(MAX_SEGMENT)                   ! physical end of each segment
         integer(wi) opts(MAX_OPTIONS, MAX_SEGMENT)  ! 0   uniform segment
         ! 1   Colonius, Lele and Moin stretching
@@ -57,8 +57,8 @@ contains
         ! create mapping from grid s to grid x
         work = 0.0_wp
         do im = 1, 3                           ! 3 modes at most
-            if (ABS(delta(im)) > 0.0_wp) then
-                work(:) = work(:) + (f(im) - 1.0_wp)*delta(im)*LOG(EXP((x(:) - st(im))/delta(im)) + 1.0_wp)
+            if (abs(delta(im)) > 0.0_wp) then
+                work(:) = work(:) + (f(im) - 1.0_wp)*delta(im)*log(exp((x(:) - st(im))/delta(im)) + 1.0_wp)
             end if
         end do
         work = work - work(1) ! Integration constant
@@ -78,43 +78,45 @@ contains
     !# Using compact schemes to integrate this equation
     !########################################################################
     subroutine BLD_EXP(idir, iseg, x, nmax, w)
-        implicit none
-
+        use TLab_Constants, only: BCS_MIN
+        use FDM, only: fdm_dt, FDM_Initialize, FDM_COM6_JACOBIAN
+        use OPR_ODES, only: OPR_Integral1
         integer(wi), intent(IN) :: idir, iseg, nmax
         real(wp), intent(INOUT) :: x(nmax), w(nmax, 8)
 
         ! -----------------------------------------------------------------------
+        type(fdm_dt) g
         real(wp) st(3), df(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
-        integer(wi) im, ibc, i1
+        integer(wi) im
         real(wp) ds
 
         ! #######################################################################
-        ds = (x(nmax) - x(1))/real(nmax - 1,wp)
+        ds = (x(nmax) - x(1))/real(nmax - 1, wp)
 
         ! define local variables for readability below; strides of 3
-        st = g_build(idir)%vals(1 :: 3, iseg)     ! transition point in uniform grid
-        df = g_build(idir)%vals(2 :: 3, iseg)/ds ! normalized maximum stretching factor
+        st = g_build(idir)%vals(1 :: 3, iseg)       ! transition point in uniform grid
+        df = g_build(idir)%vals(2 :: 3, iseg)/ds    ! normalized maximum stretching factor
         delta = g_build(idir)%vals(3 :: 3, iseg)
 
         ! create mapping from grid s to grid x
-#define jac(j)    w(j,6)
 #define rhs(j)    w(j,7)
 #define result(j) w(j,8)
         rhs(:) = 1.0_wp
         do im = 1, 3               ! 3 modes at most
-            if (ABS(delta(im)) > 0.0_wp) then
-                rhs(:) = rhs(:)*(EXP((x(:) - st(im))/delta(im)) + 1.0_wp)**(df(im)*delta(im))
+            if (abs(delta(im)) > 0.0_wp) then
+                rhs(:) = rhs(:)*(exp((x(:) - st(im))/delta(im)) + 1.0_wp)**(df(im)*delta(im))
             end if
         end do
-        jac(:) = ds
-        ibc = 1                           ! Boundary condition at the first node
-        i1 = 1                            ! One equation to be solved
-        call INT_C1N6_LHS(nmax, ibc, w(1, 1), w(1, 2), w(1, 3), w(1, 4), w(1, 5))
-        call INT_C1N6_RHS(nmax, i1, ibc, jac(1), rhs(1), result(1))
-        call PENTADFS(nmax, w(2, 1), w(2, 2), w(2, 3), w(2, 4), w(2, 5))
-        call PENTADSS(nmax, i1, w(2, 1), w(2, 2), w(2, 3), w(2, 4), w(2, 5), result(2))
-        x(2:nmax) = x(1) + result(2:nmax)  ! Boundary condition
-#undef jac
+        !
+        g%size = nmax
+        g%uniform = .true.
+        g%periodic = .false.
+        g%mode_fdm1 = FDM_COM6_JACOBIAN
+        g%mode_fdm2 = FDM_COM6_JACOBIAN
+        call FDM_Initialize(g, x)
+        ! x(1) is already set
+        call OPR_Integral1(1, g, rhs(:), result(:), BCS_MIN)
+        x(:) = result(:)
 #undef rhs
 #undef result
 
@@ -146,15 +148,15 @@ contains
         if (nmax == 1) then
             deta = 1.0_wp
         else; 
-            deta = 1.0_wp/real(nmax - 1,wp)
+            deta = 1.0_wp/real(nmax - 1, wp)
         end if
 
         do n = 2, nmax
-            eta = real(n - 1,wp)*deta
+            eta = real(n - 1, wp)*deta
 
             select case (g_build(idir)%opts(1, iseg))
             case (1)     ! Colonius, Lele and Moin
-                x(n) = e + a*eta + d*LOG(EXP(c*(a*eta - b)) + 1.0_wp - EXP(-b*c))
+                x(n) = e + a*eta + d*log(exp(c*(a*eta - b)) + 1.0_wp - exp(-b*c))
             case (2, 3)   ! 2nd- 3rd-Order Polynomial Stretching
                 x(n) = a + b*eta + c*eta*eta + d*eta*eta*eta
             case (4)     ! Geometric prograssion
@@ -196,7 +198,7 @@ contains
             a = FLOAT(imax - 1)*val_1
             b = (a*(1.0 + val_2/val_1) - x3)/(val_2/val_1)
             c = val_3/val_1 - 1.0
-            c = LOG(val_2/(c*val_1))/(b - x2)
+            c = log(val_2/(c*val_1))/(b - x2)
             d = val_2/(c*val_1)
             e = vbeg
 
@@ -204,7 +206,7 @@ contains
             ! Force Values to be Exact at Domain Edges (x=0 at Xi=0)
             ! ------------------------------------------------------
 
-            valmx = a + d*LOG(EXP(c*(a - b)) + 1.0 - EXP(-b*c))
+            valmx = a + d*log(exp(c*(a - b)) + 1.0 - exp(-b*c))
             a = a*(x3/valmx)
             b = b*(x3/valmx)
             c = c/(x3/valmx)
@@ -298,7 +300,7 @@ contains
                 x1 = vbeg
                 indx1 = 1
                 x2 = val_2 - val_1/2.0
-                indx2 = INT(val_3*FLOAT(imax))
+                indx2 = int(val_3*FLOAT(imax))
                 x3 = val_2 + val_1/2.0
                 indx3 = indx2 + 1
                 x4 = vend

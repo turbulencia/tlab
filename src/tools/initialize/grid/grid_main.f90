@@ -7,6 +7,7 @@ program INIGRID
     use FDM, only: fdm_dt
     use TLab_Constants, only: wp, gfile, ifile, lfile, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
+    use TLab_Arrays, only: wrk1d, wrk2d
     use TLab_Grid
     use GRID_LOCAL
 #ifdef USE_MPI
@@ -16,7 +17,7 @@ program INIGRID
 
     character*32 sfile, bakfile
     type(fdm_dt) :: g(3)
-    real(wp), allocatable :: wrk1d(:, :)
+    ! real(wp), allocatable :: wrk1d(:, :)
     integer(wi) idir, iseg, isize_wrk1d, n, nmax, iloc
     real(wp) scale_old, scale_new, ds
     character(len=16), parameter :: block(3) = ['IniGridOx', 'IniGridOy', 'IniGridOz']
@@ -48,6 +49,7 @@ program INIGRID
 
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
     allocate (wrk1d(isize_wrk1d, 8))
+    allocate (wrk2d(isize_wrk1d, 2))
 
     ! #######################################################################
     ! Construct grid
