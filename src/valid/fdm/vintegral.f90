@@ -8,9 +8,9 @@ program VINTEGRAL
     use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
-    use TLab_Arrays, only: wrk1d, txc
+    use TLab_Arrays, only: wrk1d, wrk2d, txc
     use FDM_ComX_Direct
-    use FDM_Integrate
+    use FDM_Integral
     use FDM_MatMul
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
@@ -190,7 +190,7 @@ program VINTEGRAL
                     w_n(:, imax) = u(:, imax)
                 end select
 
-                call OPR_Integral1(len, g, f, w_n, ibc)
+                call OPR_Integral1(len, g, f, w_n, wrk2d, ibc)
 
                 call check(u, w_n, 'integral.dat')
 

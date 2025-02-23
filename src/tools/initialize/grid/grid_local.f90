@@ -88,7 +88,7 @@ contains
         type(fdm_dt) g
         real(wp) st(3), df(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
         integer(wi) im
-        real(wp) ds
+        real(wp) ds, aux(2)
 
         ! #######################################################################
         ds = (x(nmax) - x(1))/real(nmax - 1, wp)
@@ -115,7 +115,7 @@ contains
         g%mode_fdm2 = FDM_COM6_JACOBIAN
         call FDM_Initialize(g, x)
         ! x(1) is already set
-        call OPR_Integral1(1, g, rhs(:), result(:), BCS_MIN)
+        call OPR_Integral1(1, g, rhs(:), result(:), aux, BCS_MIN)
         x(:) = result(:)
 #undef rhs
 #undef result

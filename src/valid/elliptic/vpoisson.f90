@@ -40,7 +40,7 @@ program VPOISSON
     real(wp) mean, lambda, params(0)
     ! real(wp) Int_Simpson, delta
 
-    integer(wi) i, j, k, bcs(2, 2)
+    integer(wi) i, j, k, ig, bcs(2, 2)
     integer(wi) type_of_operator, type_of_problem
     integer ibc
 
@@ -111,23 +111,29 @@ program VPOISSON
         ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
 
         a = f
-        bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
         ! For Neumann conditions, we need to satisfy the compatibility constraint dpdy_top-dpdy_bottom=int f
         ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb)
         ! call AVG_IK_V(imax, jmax, kmax, jmax, a, wrk1d(:, 1), wrk1d(:, 2))
         ! delta = mean + Int_Simpson(wrk1d(1:jmax,1), g(2)%nodes(1:jmax))
         ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht)
         ! bcs_ht = bcs_ht - mean + delta
+        ibc = BCS_NN
+        select case (ibc)
+        case (BCS_DD)
+            bcs_hb(:, :) = 0.0_wp; bcs_ht(:, :) = 0.0_wp
+        case (BCS_DN)
+            bcs_hb(:, :) = 0.0_wp; bcs_ht(:, :) = 0.0_wp
+        case (BCS_ND)
+            bcs_hb(:, :) = 0.0_wp; bcs_ht(:, :) = 0.0_wp
+        case (BCS_NN)
+            bcs_hb(:, :) = 0.0_wp; bcs_ht(:, :) = 0.0_wp
+        end select
 
         if (type_of_operator == 1) then
-            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            call OPR_Poisson(imax, jmax, kmax, g, 3, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, g, ibc, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            call OPR_Helmholtz(imax, jmax, kmax, g, 0, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
 
         end if
 
@@ -158,36 +164,42 @@ program VPOISSON
 
 ! ###################################################################
     case (2) ! The input field a is used to construct the forcing term as lap a = f
+        ! Reading field
         call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
 
-        ! ! remove 2\Delta x wave
-        ! call OPR_FILTER(imax, jmax, kmax, Dealiasing, f, txc)
-        lambda = 1.0
-        do j = 1, jmax
-            a(:, j, :) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
-            ! a(:,j,:) = exp(lambda*g(2)%nodes(j))
+        ! remove 2\Delta x wave
+        do ig = 1, 3
+            call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         end do
-        b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0*a
-        c = (2.0_wp*pi_wp/g(2)%scale*lambda)*cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+        call OPR_FILTER(imax, jmax, kmax, FilterDomain, a, txc)
+
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
+        b = b + d
+
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
+        b = b + d
+
+        ! ! Creating a field
+        ! lambda = 1.0
+        ! do j = 1, jmax
+        !     a(:, j, :) = sin(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
+        !     ! a(:,j,:) = exp(lambda*g(2)%nodes(j))
+        ! end do
+        ! b = -(2.0_wp*pi_wp/g(2)%scale*lambda)**2.0*a
+        ! c = (2.0_wp*pi_wp/g(2)%scale*lambda)*cos(2.0_wp*pi_wp/g(2)%scale*lambda*g(2)%nodes(j))
 
         ! -------------------------------------------------------------------
         ! DC level at lower boundary set to zero
         mean = AVG_IK(imax, jmax, kmax, 1, a)
         a = a - mean
-
-        ! ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
-        ! ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
-        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
-
-        ! ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-        ! ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
-        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
-        ! b = b + d
-
-        ! ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-        ! ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
-        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
-        ! b = b + d
 
         if (type_of_operator == 2) then
             b = b + lambda*a
@@ -196,31 +208,30 @@ program VPOISSON
         ibc = BCS_NN
         select case (ibc)
         case (BCS_DD)
+            print *, 'Dirichlet/Dirichlet'
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
         case (BCS_DN)
+            print *, 'Dirichlet/Neumann'
             bcs_hb(:, :) = a(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
         case (BCS_ND)
+            print *, 'Neumann/Dirichlet'
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = a(:, jmax, :)
         case (BCS_NN)
+            print *, 'Neumann/Neumann'
             bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
         end select
 
         if (type_of_operator == 1) then
-            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            ! call OPR_Poisson_FourierXZ_Direct_TRANSPOSE(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
-            ! call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
             call OPR_Poisson(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-            ! call OPR_Helmholtz_FourierXZ_Direct(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
             call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
 
         end if
 
         ! -------------------------------------------------------------------
-        call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, b, io_header_s(1:1))
+        call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, b)!, io_header_s(1:1))
         call check(a, b, txc(:, 1), 'field.dif')
 
         call check(c, d, txc(:, 1))
@@ -252,7 +263,7 @@ contains
         end do
         write (*, *) 'Relative error .............: ', sqrt(error)/sqrt(dummy)
         if (present(name)) then
-            call IO_Write_Fields(name, imax, jmax, kmax, itime, 1, dif, io_header_s(1:1))
+            call IO_Write_Fields(name, imax, jmax, kmax, itime, 1, dif) !, io_header_s(1:1))
         end if
 
         return

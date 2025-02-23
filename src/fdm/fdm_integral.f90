@@ -5,12 +5,19 @@
 ! based on the compact schemes of the classes Au' = Bu and Au'' = Bu
 !########################################################################
 
-module FDM_Integrate
+module FDM_Integral
     use TLab_Constants, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_PROCS
     implicit none
     private
+
+    type, public :: fdm_integral_dt
+        sequence
+        real(wp) :: rhs_b(5*2, 0:7), rhs_t(0:9, 8)  ! RHS data for integration, 2x bcs; max. # of diagonals is 7, # rows is 7/2+1
+        real(wp), allocatable :: lhs(:, :)          ! LHS for 1. order integration
+        real(wp), allocatable :: rhs(:, :)          ! RHS for 1. order integration
+    end type fdm_integral_dt
 
     public FDM_Int1_Initialize      ! Prepare to solve u' +\lambda u = f
     public FDM_Int2_Initialize      ! Prepare to solve u'' - \lamba^2 u = f
@@ -96,7 +103,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! new lhs diagonals (array C = B + h \lambda A), dependent on lambda
-        lhs_int(:,:) = 0.0_wp
+        lhs_int(:, :) = 0.0_wp
         lhs_int(:, 1:ndr) = rhs(:, 1:ndr)
 
         lhs_int(:, idr) = lhs_int(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
@@ -368,4 +375,4 @@ contains
 
     end subroutine FDM_Int2_Initialize
 
-end module FDM_Integrate
+end module FDM_Integral

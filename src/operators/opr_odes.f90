@@ -35,16 +35,15 @@ contains
 !#
 !# See FDM_Int1_Initialize. Passing information through derived type g. Similar to OPR_PARTIAL1
 !# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
-!# I also wonder if wrk2d should be passed in argument list, to avoid mem overwriting...
 !########################################################################
-    subroutine OPR_Integral1(nlines, g, f, result, ibc)
+    subroutine OPR_Integral1(nlines, g, f, result, wrk2d, ibc)
         use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
-        use TLab_Arrays, only: wrk2d
         use FDM_MatMul
         integer(wi), intent(in) :: nlines
         type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: f(nlines, g%size)
         real(wp), intent(inout) :: result(nlines, g%size)   ! contains bcs
+        real(wp), intent(inout) :: wrk2d(nlines, 2)
         integer, intent(in), optional :: ibc
 
         integer(wi) :: ibc_loc, idr, ndr, ic, ip
@@ -85,7 +84,7 @@ contains
         case (5)
             call PENTADSS(g%size - 2, nlines, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), lu_p(2:, 4), lu_p(2:, 5), result(:, 2:))
         case (7)
-           call HEPTADSS(g%size - 2, nlines, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), lu_p(2:, 4), lu_p(2:, 5), lu_p(2:, 6), lu_p(2:, 7), result(:, 2:))
+            call HEPTADSS(g%size - 2, nlines, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), lu_p(2:, 4), lu_p(2:, 5), lu_p(2:, 6), lu_p(2:, 7), result(:, 2:))
         end select
 
         idr = g%nb_diag_1(2)/2 + 1
@@ -114,7 +113,7 @@ contains
 !#     u'_i + \lamba u_i = f_i  N-1 eqns
 !#     u_1 or u_N given         1   eqn
 !#     Au' = Bu                 N   eqns
-!# 
+!#
 !#  Same as before, but passing information explicitly instead of using derived type fdm_dt
 !########################################################################
     ! subroutine OPR_ODE1(nlines, lu, rhs, rhs_b, rhs_t, f, result, ibc)
@@ -134,7 +133,7 @@ contains
 
 !########################################################################
 !#
-!#     (u')'_i - \lambda^2 u_i = f_i        N - 2 equtions (singular case when \lambda = 0) 
+!#     (u')'_i - \lambda^2 u_i = f_i        N - 2 equtions (singular case when \lambda = 0)
 !#     u_1, u'_1, u_N, or u'_N given        2   eqn
 !#     Au' = Bu                             N   eqns
 !#     A(u')' = Bu'                         N   eqns
