@@ -177,7 +177,7 @@ contains
             end if
 
             p(1) = 0.0_wp
-            call OPR_Integral1(1, g, r_aux(:), p, wrk_aux(:), BCS_MIN)
+            call OPR_Integral1(1, g%fdmi(BCS_MIN), r_aux(:), p, wrk_aux(:))
 
             ! Calculate pressure and normalize s.t. p=pref at y=yref
             p(:) = exp(p(:))

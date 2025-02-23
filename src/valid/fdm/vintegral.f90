@@ -3,7 +3,7 @@
 program VINTEGRAL
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: efile
-    use FDM, only: fdm_dt, FDM_Initialize, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA
+    use FDM, only: fdm_dt, FDM_Initialize, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use TLab_Memory, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use NavierStokes, only: visc, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII
@@ -27,15 +27,16 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5), wk, x_0!, dummy
-    integer(wi) :: test_type, ibc, ib, ip, im, idr, ndr, ndl!, ic
+    integer(wi) :: test_type, ibc, ib, im, idr, ndr, ndl!, ic
 
     integer, parameter :: i1 = 1
-    integer :: bcs_cases(4), fdm_cases(3)
-    character(len=32) :: fdm_names(3)
+    integer :: bcs_cases(4), fdm_cases(5)
+    character(len=32) :: fdm_names(5)
+    type(fdm_integral_dt) :: fdmi(2)
 
 ! ###################################################################
 ! Initialize
-    imax = 129
+    imax = 256
     jmax = 1
     kmax = 1
     len = jmax*kmax
@@ -89,7 +90,6 @@ program VINTEGRAL
             read (21, *) wrk1d(i, 1) !x(i, 1)
         end do
         close (21)
-        ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
     ! to calculate the Jacobians
@@ -134,8 +134,10 @@ program VINTEGRAL
 ! ###################################################################
     select case (test_type)
     case (1)
-        fdm_cases(1:3) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA]
-        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']; fdm_names(3) = '1. order, Jacobian 6 Penta'
+        fdm_cases(1:5) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
+        fdm_names(3) = '1. order, Jacobian 6 Penta'
+        fdm_names(4:5) = ['1. order, Direct 4', '1. order, Direct 6']
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
         ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
@@ -145,7 +147,7 @@ program VINTEGRAL
             ibc = bcs_cases(ib)
             print *, new_line('a'), 'Bcs case ', ibc
 
-            do im = 1, 3
+            do im = 1, 3 !size(fdm_cases)
                 g%mode_fdm1 = fdm_cases(im)
                 print *, fdm_names(im)
 
@@ -159,27 +161,33 @@ program VINTEGRAL
                 case (FDM_COM6_JACOBIAN_PENTA)
                     call FDM_C1N6_Jacobian_Penta(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
 
+                case (FDM_COM4_DIRECT)
+                    call FDM_C1N4_Direct(imax, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
+
+                case (FDM_COM6_DIRECT)
+                    call FDM_C1N6_Direct(imax, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
+
                 end select
+
                 ! idl = g%nb_diag_1(1)/2 + 1
                 idr = g%nb_diag_1(2)/2 + 1
                 ndr = g%nb_diag_1(2)
                 ndl = g%nb_diag_1(1)
+                ! print*, ndl, ndr
 
-                ip = (ib - 1)*g%nb_diag_1(2)
+                fdmi(ib)%bc = ibc
+                call FDM_Int1_Initialize(g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
 
-                call FDM_Int1_Initialize(ibc, g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, &
-                                         g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
-                                         g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
                 ! LU decomposition
-                select case (g%nb_diag_1(2))
+                select case (ndr)
                 case (3)
-                    call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
+                    call TRIDFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3))
                 case (5)
-                    call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                                  g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
+                    call PENTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
+                                  fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5))
                 case (7)
-                    call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                                  g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
+                    call HEPTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
+                                  fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5), fdmi(ib)%lhs(2:, 6), fdmi(ib)%lhs(2:, 7))
                 end select
 
                 ! bcs
@@ -190,7 +198,7 @@ program VINTEGRAL
                     w_n(:, imax) = u(:, imax)
                 end select
 
-                call OPR_Integral1(len, g, f, w_n, wrk2d, ibc)
+                call OPR_Integral1(len, fdmi(ib), f, w_n, wrk2d)
 
                 call check(u, w_n, 'integral.dat')
 

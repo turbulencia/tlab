@@ -14,9 +14,10 @@ module FDM_Integral
 
     type, public :: fdm_integral_dt
         sequence
-        real(wp) :: rhs_b(5*2, 0:7), rhs_t(0:9, 8)  ! RHS data for integration, 2x bcs; max. # of diagonals is 7, # rows is 7/2+1
-        real(wp), allocatable :: lhs(:, :)          ! LHS for 1. order integration
-        real(wp), allocatable :: rhs(:, :)          ! RHS for 1. order integration
+        integer :: bc                               ! boundary condition, [ BCS_MIN, BCS_MAX ]
+        real(wp) :: rhs_b(1:5, 0:7), rhs_t(0:4, 8)  ! # of diagonals is 7, # rows is 7/2+1
+        real(wp), pointer :: lhs(:, :)              ! Ofet overwritten to LU decomposition. Maybe add lu array and keep this as well.
+        real(wp), pointer :: rhs(:, :)
     end type fdm_integral_dt
 
     public FDM_Int1_Initialize      ! Prepare to solve u' +\lambda u = f
@@ -42,14 +43,11 @@ contains
 !# The system is normalized such that the central diagonal in the new rhs is 1
 !#
 !########################################################################
-    subroutine FDM_Int1_Initialize(ibc, lhs, rhs, lambda, lhs_int, rhs_int, rhsi_b, rhsi_t)
-        integer, intent(in) :: ibc              ! Boundary condition
+    subroutine FDM_Int1_Initialize(lhs, rhs, lambda, fdmi)
         real(wp), intent(in) :: lhs(:, :)       ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)       ! diagonals in rhs, or matrix B
         real(wp), intent(in) :: lambda          ! system constant
-        real(wp), intent(out) :: lhs_int(:, :)  ! diagonals in new lhs
-        real(wp), intent(out) :: rhs_int(:, :)  ! diagonals in new rhs
-        real(wp), intent(out) :: rhsi_b(:, 0:), rhsi_t(0:, :)
+        type(fdm_integral_dt), intent(out) :: fdmi
 
         ! -------------------------------------------------------------------
         integer(wi) i
@@ -69,89 +67,83 @@ contains
             call TLab_Write_ASCII(efile, __FILE__//'. lhs and rhs cannot differ by more than 2 diagonals.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-        if (size(lhs_int, 2) < ndr) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Wrong array lhs_int size.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
-        if (size(rhs_int, 2) < ndl) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Wrong array rhs_int size.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
+
+        allocate (fdmi%lhs(nx, ndr))
+        allocate (fdmi%rhs(nx, ndl))
 
         ! -------------------------------------------------------------------
         ! new rhs diagonals (array A), independent of lambda; this could be moved to FDM_Initialize
-        rhs_int(:, 1:ndl) = lhs(:, 1:ndl)
+        fdmi%rhs(:, :) = lhs(:, :)
 
-        call FDM_Bcs_Reduce(ibc, rhs_int(:, 1:ndl), rhs(:, 1:ndr), rhsr_b, rhsr_t)
+        call FDM_Bcs_Reduce(fdmi%bc, fdmi%rhs, rhs, rhsr_b, rhsr_t)
 
-        rhsi_b = 0.0_wp
-        rhsi_t = 0.0_wp
-        select case (ibc)
+        fdmi%rhs_b = 0.0_wp
+        fdmi%rhs_t = 0.0_wp
+        select case (fdmi%bc)
         case (BCS_MIN)
-            rhsi_b(1:idl + 1, 1:ndl) = rhs_int(1:idl + 1, 1:ndl)
+            fdmi%rhs_b(1:idl + 1, 1:ndl) = fdmi%rhs(1:idl + 1, 1:ndl)
             do ir = 1, idr - 1              ! change sign in b^R_{21} for nonzero bc
-                rhsi_b(1 + ir, idl - ir) = -rhsr_b(1 + ir, idr - ir)
+                fdmi%rhs_b(1 + ir, idl - ir) = -rhsr_b(1 + ir, idr - ir)
             end do
 
         case (BCS_MAX)
-            rhsi_t(0:idl, 1:ndl) = rhs_int(nx - idl:nx, 1:ndl)
+            fdmi%rhs_t(0:idl, 1:ndl) = fdmi%rhs(nx - idl:nx, 1:ndl)
             do ir = 1, idr - 1              ! change sign in b^R_{21} for nonzero bc
-                rhsi_t(idl - ir, idl + ir) = -rhsr_t(idr - ir, idr + ir)
+                fdmi%rhs_t(idl - ir, idl + ir) = -rhsr_t(idr - ir, idr + ir)
             end do
 
         end select
 
         ! -------------------------------------------------------------------
         ! new lhs diagonals (array C = B + h \lambda A), dependent on lambda
-        lhs_int(:, :) = 0.0_wp
-        lhs_int(:, 1:ndr) = rhs(:, 1:ndr)
+        fdmi%lhs(:, :) = rhs(:, :)
 
-        lhs_int(:, idr) = lhs_int(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
+        fdmi%lhs(:, idr) = fdmi%lhs(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
         do i = 1, idl - 1                                                       ! off-diagonals
-            lhs_int(1 + i:nx, idr - i) = lhs_int(1 + i:nx, idr - i) + lambda*lhs(1 + i:nx, idl - i)
-            lhs_int(1:nx - i, idr + i) = lhs_int(1:nx - i, idr + i) + lambda*lhs(1:nx - i, idl + i)
+            fdmi%lhs(1 + i:nx, idr - i) = fdmi%lhs(1 + i:nx, idr - i) + lambda*lhs(1 + i:nx, idl - i)
+            fdmi%lhs(1:nx - i, idr + i) = fdmi%lhs(1:nx - i, idr + i) + lambda*lhs(1:nx - i, idl + i)
         end do
 
-        select case (ibc)
+        select case (fdmi%bc)
         case (BCS_MIN)
-            lhs_int(2:idr, 1:ndr) = rhsr_b(2:idr, 1:ndr)
+            fdmi%lhs(2:idr, 1:ndr) = rhsr_b(2:idr, 1:ndr)
             do ir = 1, idr - 1
-                lhs_int(1 + ir, idr - idl + 1:idr + idl - 1) = lhs_int(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_b(1 + ir, 1:ndl)
+                fdmi%lhs(1 + ir, idr - idl + 1:idr + idl - 1) = fdmi%lhs(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*fdmi%rhs_b(1 + ir, 1:ndl)
             end do
         case (BCS_MAX)
-            lhs_int(nx - idr + 1:nx - 1, 1:ndr) = rhsr_t(1:idr - 1, 1:ndr)
+            fdmi%lhs(nx - idr + 1:nx - 1, 1:ndr) = rhsr_t(1:idr - 1, 1:ndr)
             do ir = 1, idr - 1
-                lhs_int(nx - ir, idr - idl + 1:idr + idl - 1) = lhs_int(nx - ir, idr - idl + 1:idr + idl - 1) + lambda*rhsi_t(idl - ir, 1:ndl)
+                fdmi%lhs(nx - ir, idr - idl + 1:idr + idl - 1) = fdmi%lhs(nx - ir, idr - idl + 1:idr + idl - 1) + lambda*fdmi%rhs_t(idl - ir, 1:ndl)
             end do
         end select
 
         ! -------------------------------------------------------------------
         ! normalization such that new central diagonal in rhs is 1
         do ir = 1, max(idr, idl + 1)
-            dummy = 1.0_wp/rhs_int(ir, idl)
-            rhsi_b(ir, 0:ndl) = rhsi_b(ir, 0:ndl)*dummy
+            dummy = 1.0_wp/fdmi%rhs(ir, idl)
+            fdmi%rhs_b(ir, 0:ndl) = fdmi%rhs_b(ir, 0:ndl)*dummy
 
-            dummy = 1.0_wp/rhs_int(nx - ir + 1, idl)
-            rhsi_t(idl - ir + 1, 1:ndl + 1) = rhsi_t(idl - ir + 1, 1:ndl + 1)*dummy
+            dummy = 1.0_wp/fdmi%rhs(nx - ir + 1, idl)
+            fdmi%rhs_t(idl - ir + 1, 1:ndl + 1) = fdmi%rhs_t(idl - ir + 1, 1:ndl + 1)*dummy
 
         end do
 
         do ir = 1, nx
-            dummy = 1.0_wp/rhs_int(ir, idl)
+            dummy = 1.0_wp/fdmi%rhs(ir, idl)
 
-            rhs_int(ir, 1:ndl) = rhs_int(ir, 1:ndl)*dummy
-            lhs_int(ir, 1:ndr) = lhs_int(ir, 1:ndr)*dummy
+            fdmi%rhs(ir, 1:ndl) = fdmi%rhs(ir, 1:ndl)*dummy
+            fdmi%lhs(ir, 1:ndr) = fdmi%lhs(ir, 1:ndr)*dummy
 
         end do
 
         ! -------------------------------------------------------------------
         ! reducing system in the opposite end to account for the case of extended stencils
         ! to move it up, you need to recalculate the expression for p_1 and p_n because they assume division by a_11
-        select case (ibc)
+        select case (fdmi%bc)
         case (BCS_MIN)
-            call FDM_Bcs_Reduce(BCS_MAX, lhs_int(:, 1:ndr), rhs_int(:, 1:ndl), rhs_t=rhsi_t)
+            call FDM_Bcs_Reduce(BCS_MAX, fdmi%lhs, fdmi%rhs, rhs_t=fdmi%rhs_t)
         case (BCS_MAX)
-            call FDM_Bcs_Reduce(BCS_MIN, lhs_int(:, 1:ndr), rhs_int(:, 1:ndl), rhs_b=rhsi_b)
+            call FDM_Bcs_Reduce(BCS_MIN, fdmi%lhs, fdmi%rhs, rhs_b=fdmi%rhs_b)
         end select
 
         return

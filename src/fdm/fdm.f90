@@ -27,10 +27,7 @@ module FDM
         !
         real(wp) :: rhsr_b(5, 0:7), rhsr_t(0:4, 8)      ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
         !
-        real(wp) :: rhsi_b(5*2, 0:7), rhsi_t(0:9, 8)    ! RHS data for integration, 2x bcs
-        real(wp), pointer :: lhsi(:, :)                 ! pointer to LHS for 1. order integration
-        real(wp), pointer :: rhsi(:, :)                 ! pointer to RHS for 1. order integration
-        ! type(fdm_integral_dt) :: int
+        type(fdm_integral_dt) :: fdmi(2)
         !
         real(wp), pointer :: lu0i(:, :)                 ! pointer to LU decomposition for interpolation
         real(wp), pointer :: lu1i(:, :)                 ! pointer to LU decomposition for 1. derivative inc. interp.
@@ -156,9 +153,9 @@ contains
                        + 5                      ! LU decomposition 2. order, 1 bcs
         end if
 
-        inb_grid = inb_grid &
-                   + 5*2 &                      ! max # of diagonals in LHS for 1. integral, 2 bcs
-                   + 7*2                        ! max # of diagonals in RHS for 1. integral, 2 bcs
+        ! inb_grid = inb_grid &
+        !            + 5*2 &                      ! max # of diagonals in LHS for 1. integral, 2 bcs
+        !            + 7*2                        ! max # of diagonals in RHS for 1. integral, 2 bcs
 
         if (stagger_on .and. g%periodic) then
             inb_grid = inb_grid &
@@ -345,60 +342,25 @@ contains
 ! ###################################################################
 ! first-order integrals (cases lambda = 0.0_wp)
 ! ###################################################################
-        g%lhsi => g%memory(:, ig:)
-        ig = ig + 7*2
-        g%rhsi => g%memory(:, ig:)
-        ig = ig + 5*2
-
         if (.not. g%periodic) then
             bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
             do ib = 1, 2
-                ip = (ib - 1)*g%nb_diag_1(2)
+                g%fdmi(ib)%bc = bcs_cases(ib)
+                call FDM_Int1_Initialize(g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, g%fdmi(ib))
 
-                call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
-                                         g%lhsi(:, ip + 1:ip + ndr), g%rhsi(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
-                                         g%rhsi_b((ib - 1)*5 + 1:, :), g%rhsi_t((ib - 1)*5:, :))
                 ! LU decomposition
-                select case (g%nb_diag_1(2))
+                select case (ndr)
                 case (3)
-                    call TRIDFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3))
+                    call TRIDFS(g%size - 2, g%fdmi(ib)%lhs(2:, 1), g%fdmi(ib)%lhs(2:, 2), g%fdmi(ib)%lhs(2:, 3))
                 case (5)
-                    call PENTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                                  g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5))
+                    call PENTADFS(g%size - 2, g%fdmi(ib)%lhs(2:, 1), g%fdmi(ib)%lhs(2:, 2), g%fdmi(ib)%lhs(2:, 3), &
+                                  g%fdmi(ib)%lhs(2:, 4), g%fdmi(ib)%lhs(2:, 5))
                 case (7)
-                    call HEPTADFS(g%size - 2, g%lhsi(2:, ip + 1), g%lhsi(2:, ip + 2), g%lhsi(2:, ip + 3), &
-                                  g%lhsi(2:, ip + 4), g%lhsi(2:, ip + 5), g%lhsi(2:, ip + 6), g%lhsi(2:, ip + 7))
+                    call HEPTADFS(g%size - 2, g%fdmi(ib)%lhs(2:, 1), g%fdmi(ib)%lhs(2:, 2), g%fdmi(ib)%lhs(2:, 3), &
+                                  g%fdmi(ib)%lhs(2:, 4), g%fdmi(ib)%lhs(2:, 5), g%fdmi(ib)%lhs(2:, 6), g%fdmi(ib)%lhs(2:, 7))
                 end select
-
             end do
         end if
-
-        ! to be moved to FDM_Integral
-        ! allocate (g%int%lhs(g%size, 7*2))
-        ! allocate (g%int%rhs(g%size, 5*2))
-
-        ! if (.not. g%periodic) then
-        !     bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
-        !     do ib = 1, 2
-        !         ip = (ib - 1)*g%nb_diag_1(2)
-
-        !         call FDM_Int1_Initialize(bcs_cases(ib), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, &
-        !                                  g%int%lhs(:, ip + 1:ip + ndr), g%int%rhs(:, (ib - 1)*ndl + 1:(ib - 1)*ndl + ndl), &
-        !                                  g%int%rhs_b((ib - 1)*5 + 1:, :), g%int%rhs_t((ib - 1)*5:, :))
-        !         ! LU decomposition
-        !         select case (g%nb_diag_1(2))
-        !         case (3)
-        !             call TRIDFS(g%size - 2, g%int%lhs(2:, ip + 1), g%int%lhs(2:, ip + 2), g%int%lhs(2:, ip + 3))
-        !         case (5)
-        !             call PENTADFS(g%size - 2, g%int%lhs(2:, ip + 1), g%int%lhs(2:, ip + 2), g%int%lhs(2:, ip + 3), &
-        !                           g%int%lhs(2:, ip + 4), g%int%lhs(2:, ip + 5))
-        !         case (7)
-        !             call HEPTADFS(g%size - 2, g%int%lhs(2:, ip + 1), g%int%lhs(2:, ip + 2), g%int%lhs(2:, ip + 3), &
-        !                           g%int%lhs(2:, ip + 4), g%int%lhs(2:, ip + 5), g%int%lhs(2:, ip + 6), g%int%lhs(2:, ip + 7))
-        !         end select
-
-        !     end do
-        ! end if
 
 ! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS

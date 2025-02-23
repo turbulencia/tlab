@@ -4,6 +4,7 @@
 module OPR_ODES
     use TLab_Constants, only: wp, wi
     use FDM, only: fdm_dt, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
+    use FDM_Integral, only: fdm_integral_dt
     implicit none
     private
 
@@ -33,82 +34,71 @@ contains
 !#     u_1 or u_N given         1   eqn
 !#     Au' = Bu                 N   eqns
 !#
-!# See FDM_Int1_Initialize. Passing information through derived type g. Similar to OPR_PARTIAL1
+!# See FDM_Int1_Initialize. Similar to OPR_PARTIAL1
 !# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
 !########################################################################
-    subroutine OPR_Integral1(nlines, g, f, result, wrk2d, ibc)
+    subroutine OPR_Integral1(nlines, fdmi, f, result, wrk2d)
         use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
         use FDM_MatMul
-        integer(wi), intent(in) :: nlines
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: f(nlines, g%size)
-        real(wp), intent(inout) :: result(nlines, g%size)   ! contains bcs
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi
+        real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
+        real(wp), intent(inout) :: result(nlines, size(fdmi%lhs, 1))   ! contains bcs
         real(wp), intent(inout) :: wrk2d(nlines, 2)
-        integer, intent(in), optional :: ibc
 
-        integer(wi) :: ibc_loc, idr, ndr, ic, ip
-        real(wp), pointer :: lu_p(:, :) => null(), rhs_p(:, :) => null()
+        integer(wi) :: nx
+        integer(wi) :: idl, ndl, ic!, ip
 
         ! ###################################################################
-        if (present(ibc)) then
-            ibc_loc = ibc
-        else
-            ibc_loc = BCS_MIN
-        end if
+        nx = size(f, 2)
 
-        select case (ibc_loc)
+        ndl = size(fdmi%lhs, 2)
+        idl = ndl/2 + 1
+
+        select case (fdmi%bc)
         case (BCS_MIN)
-            result(:, g%size) = f(:, g%size)
-            lu_p => g%lhsi(:, 1:)
-            rhs_p => g%rhsi(:, 1:)
-            ip = 0
+            result(:, nx) = f(:, nx)
         case (BCS_MAX)
             result(:, 1) = f(:, 1)
-            lu_p => g%lhsi(:, 1 + g%nb_diag_1(2):)
-            rhs_p => g%rhsi(:, 1 + g%nb_diag_1(1):)
-            ip = 5
         end select
 
-        select case (g%nb_diag_1(1))
+        select case (size(fdmi%rhs, 2))
         case (3)
-            call MatMul_3d(g%size, nlines, rhs_p(:, 1), rhs_p(:, 3), f, result, &
-                           BCS_BOTH, rhs_b=g%rhsi_b(ip + 1:ip + 3, 0:3), rhs_t=g%rhsi_t(ip:ip + 3 - 1, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
+            call MatMul_3d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 3), f, result, &
+                           BCS_BOTH, rhs_b=fdmi%rhs_b(1:3, 0:3), rhs_t=fdmi%rhs_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         case (5)
-            call MatMul_5d(g%size, nlines, rhs_p(:, 1), rhs_p(:, 2), rhs_p(:, 4), rhs_p(:, 5), f, result, &
-                           BCS_BOTH, rhs_b=g%rhsi_b(ip + 1:ip + 4, 0:5), rhs_t=g%rhsi_t(ip:ip + 4 - 1, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
+            call MatMul_5d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 2), fdmi%rhs(:, 4), fdmi%rhs(:, 5), f, result, &
+                           BCS_BOTH, rhs_b=fdmi%rhs_b(1:4, 0:5), rhs_t=fdmi%rhs_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         end select
 
-        select case (g%nb_diag_1(2))
+        select case (ndl)
         case (3)
-            call TRIDSS(g%size - 2, nlines, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), result(:, 2:))
+            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), result(:, 2:))
         case (5)
-            call PENTADSS(g%size - 2, nlines, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), lu_p(2:, 4), lu_p(2:, 5), result(:, 2:))
+            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), result(:, 2:))
         case (7)
-            call HEPTADSS(g%size - 2, nlines, lu_p(2:, 1), lu_p(2:, 2), lu_p(2:, 3), lu_p(2:, 4), lu_p(2:, 5), lu_p(2:, 6), lu_p(2:, 7), result(:, 2:))
+            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), result(:, 2:))
         end select
 
-        idr = g%nb_diag_1(2)/2 + 1
-        ndr = g%nb_diag_1(2)
-
-        if (any([BCS_MAX] == ibc_loc)) then
+        if (any([BCS_MAX] == fdmi%bc)) then
             result(:, 1) = wrk2d(:, 1)
-            do ic = 1, idr - 1
-                result(:, 1) = result(:, 1) + lu_p(1, idr + ic)*result(:, 1 + ic)
+            do ic = 1, idl - 1
+                result(:, 1) = result(:, 1) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
             end do
-            result(:, 1) = result(:, 1) + lu_p(1, 1)*result(:, 1 + ic)
+            result(:, 1) = result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic)
         end if
-        if (any([BCS_MIN] == ibc_loc)) then
-            result(:, g%size) = wrk2d(:, 2)
-            do ic = 1, idr - 1
-                result(:, g%size) = result(:, g%size) + lu_p(g%size, idr - ic)*result(:, g%size - ic)
+        if (any([BCS_MIN] == fdmi%bc)) then
+            result(:, nx) = wrk2d(:, 2)
+            do ic = 1, idl - 1
+                result(:, nx) = result(:, nx) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
             end do
-            result(:, g%size) = result(:, g%size) + lu_p(g%size, ndr)*result(:, g%size - ic)
+            result(:, nx) = result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
         end if
 
         return
     end subroutine OPR_Integral1
 
-!########################################################################
+    !########################################################################
 !#
 !#     u'_i + \lamba u_i = f_i  N-1 eqns
 !#     u_1 or u_N given         1   eqn

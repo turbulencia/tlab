@@ -115,7 +115,7 @@ contains
         g%mode_fdm2 = FDM_COM6_JACOBIAN
         call FDM_Initialize(g, x)
         ! x(1) is already set
-        call OPR_Integral1(1, g, rhs(:), result(:), aux, BCS_MIN)
+        call OPR_Integral1(1, g%fdmi(BCS_MIN), rhs(:), result(:), aux)
         x(:) = result(:)
 #undef rhs
 #undef result
