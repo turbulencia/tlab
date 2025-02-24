@@ -41,21 +41,24 @@ contains
 !# See FDM_Int1_Initialize. Similar to OPR_PARTIAL1
 !# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
 !########################################################################
-    subroutine OPR_Integral1(nlines, fdmi, f, result, wrk2d)
+    subroutine OPR_Integral1(nlines, fdmi, f, result, wrk2d, du_boundary)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi
         real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
         real(wp), intent(inout) :: result(nlines, size(fdmi%lhs, 1))   ! contains bcs
         real(wp), intent(inout) :: wrk2d(nlines, 2)
+        real(wp), intent(out), optional :: du_boundary(nlines)
 
         integer(wi) :: nx
-        integer(wi) :: idl, ndl, ic!, ip
+        integer(wi) :: idl, ndl, idr, ndr, ic
 
         ! ###################################################################
         nx = size(f, 2)
 
         ndl = size(fdmi%lhs, 2)
         idl = ndl/2 + 1
+        ndr = size(fdmi%rhs, 2)
+        idr = ndr/2 + 1
 
         select case (fdmi%bc)
         case (BCS_MIN)
@@ -88,13 +91,29 @@ contains
                 result(:, 1) = result(:, 1) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
             end do
             result(:, 1) = result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic)
+
+            if (present(du_boundary)) then      ! calculate u'n
+            end if
+
         end if
+
         if (any([BCS_MIN] == fdmi%bc)) then
             result(:, nx) = wrk2d(:, 2)
             do ic = 1, idl - 1
                 result(:, nx) = result(:, nx) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
             end do
             result(:, nx) = result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
+
+            if (present(du_boundary)) then      ! calculate u'1
+                du_boundary(:) = fdmi%lhs(1, idl)*result(:, 1)
+                do ic = 1, idl - 1
+                    du_boundary(:) = du_boundary(:) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
+                end do
+                do ic = 1, idr - 1
+                    du_boundary(:) = du_boundary(:) + fdmi%rhs(1, idr + ic)*f(:, 1 + ic)
+                end do
+            end if
+
         end if
 
         return

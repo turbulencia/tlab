@@ -25,7 +25,7 @@ module FDM
         real(wp), pointer :: lu1(:, :)          ! pointer to LU decomposition for 1. derivative
         real(wp), pointer :: mwn1(:)            ! pointer to modified wavenumbers
         !
-        real(wp) :: rhsr_b(5, 0:7), rhsr_t(0:4, 8)      ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
+        ! real(wp) :: rhsr_b(5, 0:7), rhsr_t(0:4, 8)      ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
         !
         type(fdm_integral_dt) :: fdmi(2)
         !

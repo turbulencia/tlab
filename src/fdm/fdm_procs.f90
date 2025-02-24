@@ -313,7 +313,7 @@ contains
         integer, intent(in) :: ibc
         real(wp), intent(inout) :: lhs(:, :)
         real(wp), intent(in), optional :: rhs(:, :)
-        real(wp), intent(inout), optional :: rhs_b(:, 0:), rhs_t(0:, :)
+        real(wp), intent(out), optional :: rhs_b(:, 0:), rhs_t(0:, :)
 
         integer(wi) idl, ndl, idr, ndr, ir, ic, nx, nx_t
         real(wp) dummy

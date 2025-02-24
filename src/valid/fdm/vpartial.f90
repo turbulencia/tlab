@@ -26,6 +26,7 @@ program VPARTIAL
     real(wp) :: wk, coef(5)!, dummy
     integer(wi) :: test_type, ibc, ip, ic, ndr, idr, ndl, idl, im
     integer(wi) :: nmin, nmax, nsize
+    real(wp) rhsr_b(5, 0:7), rhsr_t(0:4, 8)
 
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(3)
@@ -225,7 +226,7 @@ program VPARTIAL
 
                 ! g%rhsr_b = 0.0_wp
                 ! g%rhsr_t = 0.0_wp
-                call FDM_Bcs_Reduce(ibc, g%lu1(:, 1:ndl), g%rhs1(:, 1:ndr), g%rhsr_b, g%rhsr_t)
+                call FDM_Bcs_Reduce(ibc, g%lu1(:, 1:ndl), g%rhs1(:, 1:ndr), rhsr_b, rhsr_t)
 
                 select case (g%nb_diag_1(1))
                 case (3)
@@ -238,14 +239,17 @@ program VPARTIAL
                 du1_n(:, imax) = u(:, imax)
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
-                                           ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
+                    call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
+                                           u, du1_n, g%periodic, &
+                                           ibc, rhs_b=rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 case (5)
-                    call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
-                                           ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
+                    call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
+                                           u, du1_n, g%periodic, &
+                                           ibc, rhs_b=rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 case (7)
-     call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
-                                           ibc, rhs_b=g%rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=g%rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
+                 call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
+                                           u, du1_n, g%periodic, &
+                                           ibc, rhs_b=rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 end select
 
                 select case (g%nb_diag_1(1))
@@ -328,13 +332,16 @@ program VPARTIAL
 
                 select case (g%nb_diag_1(2))
                 case (3)
-                    call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, du1_n, g%periodic, &
+                    call MatMul_3d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
+                                           u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
                 case (5)
-                    call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, du1_n, g%periodic, &
+                    call MatMul_5d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
+                                           u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
                 case (7)
-     call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, du1_n, g%periodic, &
+                 call MatMul_7d_antisym(imax, len, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
+                                           u, du1_n, g%periodic, &
                                            ibc, rhs_b=g%rhs1_b, bcs_b=wrk2d(:, 1), rhs_t=g%rhs1_t, bcs_t=wrk2d(:, 2))
                 end select
 
@@ -401,7 +408,7 @@ program VPARTIAL
                 call MatMul_5d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, du2_n2, g%periodic)
 
             case (7)
-          call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
+call MatMul_7d_sym(imax, len, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, du2_n2, g%periodic)
 
             end select
 
