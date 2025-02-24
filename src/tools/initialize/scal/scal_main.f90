@@ -27,7 +27,7 @@ program INISCAL
     use THERMO_AIRWATER
     use Thermo_Anelastic
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use SCAL_LOCAL
 
     implicit none

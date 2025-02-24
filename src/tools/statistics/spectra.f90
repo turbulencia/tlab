@@ -61,7 +61,7 @@ program SPECTRA
     use Chemistry
     use IBM_VARS
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FOURIER
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize

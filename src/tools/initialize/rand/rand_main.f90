@@ -22,7 +22,7 @@ program INIRAND
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FOURIER
     use RAND_LOCAL
 

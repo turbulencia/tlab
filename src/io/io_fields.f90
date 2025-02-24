@@ -17,7 +17,7 @@
 !#
 !########################################################################
 
-module IO_FIELDS
+module IO_Fields
     use TLab_Constants, only: lfile, wfile, efile, wp, wi, sp, dp, sizeofint, sizeofreal, MAX_PARS, MAX_VARS
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use TLab_Arrays, only: wrk3d
@@ -30,7 +30,13 @@ module IO_FIELDS
     private
 
     integer, public :: io_fileformat                ! files format
+    integer, parameter, public :: IO_MPIIO = 1
+    integer, parameter, public :: IO_NETCDF = 2
+    integer, parameter, public :: IO_NOFILE = 3
+
     integer, public :: io_datatype                  ! single or double precision
+    integer, parameter, public :: IO_TYPE_SINGLE = 1
+    integer, parameter, public :: IO_TYPE_DOUBLE = 2
 
     type :: io_header                               ! header information
         sequence
@@ -841,4 +847,4 @@ contains
     end subroutine TLabMPI_WRITE_PE0_SINGLE
 
 #endif
-end module IO_FIELDS
+end module IO_Fields

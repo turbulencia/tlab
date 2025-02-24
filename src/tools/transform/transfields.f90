@@ -28,7 +28,7 @@ program TRANSFIELDS
     use Gravity, only: Gravity_Initialize
     use Rotation, only: Rotation_Initialize
     use Thermo_Anelastic
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FILTERS
     use OPR_INTERPOLATORS
     use OPR_FOURIER

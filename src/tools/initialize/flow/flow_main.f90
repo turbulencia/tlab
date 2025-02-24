@@ -28,7 +28,7 @@ program INIFLOW
     use THERMO_THERMAL
     use THERMO_CALORIC
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FOURIER
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_Elliptic, only: OPR_Elliptic_Initialize

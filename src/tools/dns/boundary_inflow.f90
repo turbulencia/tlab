@@ -28,7 +28,7 @@ module BOUNDARY_INFLOW
     use THERMO_AIRWATER
     use Thermo_Anelastic
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FILTERS
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k

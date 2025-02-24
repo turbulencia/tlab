@@ -18,7 +18,7 @@ program SL_CORRELATION
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use NavierStokes, only: NavierStokes_Initialize_Parameters
-    use IO_FIELDS
+    use IO_Fields
     use TLab_Grid
 
     implicit none

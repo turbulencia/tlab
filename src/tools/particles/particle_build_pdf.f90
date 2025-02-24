@@ -14,7 +14,7 @@ program PARTICLE_BUILD_PDF
     use TLAB_VARS
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII
-    use IO_FIELDS
+    use IO_Fields
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize

@@ -16,7 +16,7 @@ module FLOW_LOCAL
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use Thermo_Anelastic
-    use IO_FIELDS
+    use IO_Fields
     use Averages, only: AVG1V2D
     use Profiles, only: profiles_dt, Profiles_ReadBlock, Profiles_Calculate
     use Profiles, only: PROFILE_NONE, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_ANTISYM, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_SURFACE, PROFILE_PARABOLIC_SURFACE

@@ -11,7 +11,7 @@ program SL_NORMAL_ANALYSIS
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use NavierStokes, only: NavierStokes_Initialize_Parameters
-    use IO_FIELDS
+    use IO_Fields
 
     implicit none
 

@@ -15,7 +15,7 @@ program VPARTIAL
     use FDM_Com2_Jacobian
     use OPR_PARTIAL
     use IBM_VARS
-    use IO_FIELDS
+    use IO_Fields
     use OPR_PARTIAL
 
     implicit none

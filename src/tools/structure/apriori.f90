@@ -26,7 +26,7 @@ program APRIORI
     use Gravity, only: Gravity_Initialize
     use Rotation, only: Rotation_Initialize
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FILTERS
     use OPR_FOURIER
     use OPR_PARTIAL

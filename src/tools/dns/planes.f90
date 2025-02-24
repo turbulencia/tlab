@@ -11,7 +11,7 @@ module PLANES
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, scal_on
     use Thermodynamics, only: imixture
     use Thermo_Anelastic
-    use IO_FIELDS
+    use IO_Fields
     use FI_VORTICITY_EQN
     use FI_GRADIENT_EQN
 

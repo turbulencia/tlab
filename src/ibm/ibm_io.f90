@@ -26,7 +26,7 @@ subroutine IBM_IO_READ_INT_GEOMETRY(wrk3d, stag)
     use  TLab_Constants, only: wp, wi
     use  TLab_Memory, only: imax, jmax, kmax, isize_field
     use  IBM_VARS, only: epsp, eps, eps_name, epsp_name
-    use  IO_FIELDS, only: IO_Read_Field_INT1
+    use  IO_Fields, only: IO_Read_Field_INT1
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
     implicit none
@@ -73,7 +73,7 @@ subroutine IBM_IO_WRITE_INT_GEOMETRY(wrk3d, stag)
     use TLab_Constants, only: wp, wi
     use IBM_VARS,       only: epsp, eps, eps_name, epsp_name
     use TLab_Memory, only: isize_field, imax, jmax, kmax
-    use IO_FIELDS,      only: IO_Write_Field_INT1
+    use IO_Fields,      only: IO_Write_Field_INT1
 
     implicit none
 
@@ -106,7 +106,7 @@ subroutine IBM_IO_WRITE_BIT_GEOMETRY(wrk3d, stag)
     use TLab_Constants, only: wp, wi
     use IBM_VARS, only: epsp, eps, eps_name, epsp_name
     use TLab_Memory, only: isize_field, imax, jmax, kmax
-    use IO_FIELDS,      only: IO_Write_Field_INT1
+    use IO_Fields,      only: IO_Write_Field_INT1
 
     implicit none
 
@@ -151,7 +151,7 @@ subroutine IBM_IO_READ_BIT_GEOMETRY(wrk3d, stag)
     use TLab_Constants, only: wp, wi
     use IBM_VARS, only: epsp, eps, eps_name, epsp_name
     use TLab_Memory, only: isize_field, imax, jmax, kmax
-    use IO_FIELDS, only: IO_Read_Field_INT1
+    use IO_Fields, only: IO_Read_Field_INT1
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 
     implicit none

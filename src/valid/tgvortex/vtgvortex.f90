@@ -3,7 +3,7 @@
 program VTGVORTEX
     use TLab_Constants, only: wp, wi
     use TLAB_VARS
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FOURIER
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC

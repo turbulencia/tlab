@@ -15,7 +15,7 @@ program VPARTIAL3D
     use FDM, only: g, FDM_Initialize, FDM_COM4_DIRECT, FDM_COM6_JACOBIAN
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FOURIER
     use OPR_PARTIAL
     use OPR_ELLIPTIC

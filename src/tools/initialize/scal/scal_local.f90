@@ -11,7 +11,7 @@ module SCAL_LOCAL
     use TLab_Pointers_3D, only: p_wrk2d, p_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM, only: g
-    use IO_FIELDS
+    use IO_Fields
     use Averages, only: AVG1V2D
     use Profiles, only: profiles_dt, Profiles_ReadBlock, Profiles_Calculate
     use Profiles, only: PROFILE_NONE, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_ANTISYM, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_SURFACE, PROFILE_TANH_COS

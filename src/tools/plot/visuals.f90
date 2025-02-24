@@ -42,7 +42,7 @@ program VISUALS
     use PARTICLE_PROCS
     use IBM_VARS
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
@@ -1235,7 +1235,7 @@ contains
 !     subroutine ENSIGHT_FIELD(name, iheader, nx, ny, nz, nfield, subdomain, field, tmp_mpi)
 !         use TLab_Constants, only: wp, wi
 ! #ifdef USE_MPI
-!         use IO_FIELDS, only: TLabMPI_WRITE_PE0_SINGLE
+!         use IO_Fields, only: TLabMPI_WRITE_PE0_SINGLE
 ! #endif
 
 !         character*(*) name

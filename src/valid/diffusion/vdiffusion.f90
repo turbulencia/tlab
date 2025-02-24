@@ -4,7 +4,7 @@ program VDIFFUSION
     use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use NavierStokes, only: NavierStokes_Initialize_Parameters
 
     implicit none

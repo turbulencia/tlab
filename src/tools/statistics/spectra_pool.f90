@@ -17,7 +17,7 @@ module SpectraMod
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
     use TLabMPI_Transpose
 #endif
-    use IO_FIELDS, only: io_subarray_dt
+    use IO_Fields, only: io_subarray_dt, IO_TYPE_SINGLE
     implicit none
     private
 

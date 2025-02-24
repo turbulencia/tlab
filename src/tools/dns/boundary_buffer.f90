@@ -25,7 +25,7 @@ module BOUNDARY_BUFFER
     use TLab_Time, only: itime
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: CRATIO_INV
-    use IO_FIELDS
+    use IO_Fields
     use OPR_FILTERS
     use Averages, only: COV2V1D, COV2V2D
 #ifdef USE_MPI

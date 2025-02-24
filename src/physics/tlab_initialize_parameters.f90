@@ -18,7 +18,7 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLab_Memory, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLab_Memory, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
     use FDM
-    use IO_FIELDS, only: io_fileformat, io_datatype
+    use IO_Fields
     ! use Avg_Spatial
 #ifdef USE_MPI
     use TLabMPI_VARS

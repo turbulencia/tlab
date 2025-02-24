@@ -18,7 +18,7 @@ program VBURGERS
     use FDM, only: g, FDM_Initialize
     use NavierStokes, only: NavierStokes_Initialize_Parameters, visc
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use OPR_PARTIAL
     use OPR_Burgers
     use OPR_FILTERS

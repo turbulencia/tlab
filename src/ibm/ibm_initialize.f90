@@ -144,7 +144,7 @@ subroutine IBM_IO_READ(wrk3d, flag_epsp)
     use IBM_VARS
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Time, only: itime
-    use IO_FIELDS, only: io_fileformat, IO_Read_Fields
+    use IO_Fields, only: io_fileformat, IO_Read_Fields, IO_NOFILE, IO_NETCDF
     use TLab_Constants, only: wp, wi
 
     implicit none
@@ -192,7 +192,7 @@ subroutine IBM_IO_WRITE(wrk3d, flag_epsp)
     use IBM_VARS
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Time, only: itime
-    use IO_FIELDS
+    use IO_Fields
     use TLab_Constants, only: wp, wi
 
     implicit none

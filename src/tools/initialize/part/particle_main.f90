@@ -122,7 +122,7 @@ contains
         use PARTICLE_ARRAYS, only: ims_np_all
 #endif
         ! use PARTICLE_TINIA
-        use IO_FIELDS
+        use IO_Fields
         implicit none
 
         type(particle_dt), intent(inout) :: l_g

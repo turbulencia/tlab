@@ -2,7 +2,7 @@
 program VFFTW
     use TLab_Constants, only: wp, wi
     use TLAB_VARS
-    use IO_FIELDS
+    use IO_Fields
     use OPR_PARTIAL
 
     implicit none

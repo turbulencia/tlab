@@ -29,7 +29,7 @@ use Rotation, only: Rotation_Initialize
     use Microphysics
     use Chemistry
     use TLab_Grid
-    use IO_FIELDS
+    use IO_Fields
     use FI_VECTORCALCULUS
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
