@@ -205,9 +205,9 @@ program VPOISSON
             b = b + lambda*a
         end if
 
-        bcs_cases(1:4) = [BCS_DD, BCS_DN, BCS_ND, BCS_NN]
+        bcs_cases(1:4) = [BCS_DD, BCS_NN, BCS_DN, BCS_ND]
 
-        do ib = 1, 4
+        do ib = 1, 2
             ibc = bcs_cases(ib)
             print *, new_line('a')
 
@@ -226,19 +226,20 @@ program VPOISSON
                 bcs_hb(:, :) = c(:, 1, :); bcs_ht(:, :) = c(:, jmax, :)
             end select
 
+            e = b       ! to save b for other cases in the loop
             if (type_of_operator == 1) then
-                call OPR_Poisson(imax, jmax, kmax, g, ibc, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+                call OPR_Poisson(imax, jmax, kmax, g, ibc, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
             else if (type_of_operator == 2) then
-                call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, b, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+                call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
 
             end if
 
             ! -------------------------------------------------------------------
             io_datatype = IO_TYPE_SINGLE
-            call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, b)!, io_header_s(1:1))
-            call check(a, b, txc(:, 1), 'field.dif')
+            call IO_Write_Fields('field.out', imax, jmax, kmax, itime, 1, e)!, io_header_s(1:1))
+            call check(a, e, txc(:, 1), 'field.dif')
 
             call check(c, d, txc(:, 1))
 

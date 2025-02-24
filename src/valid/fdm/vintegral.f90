@@ -24,13 +24,14 @@ program VINTEGRAL
     integer(wi) :: i, l, len
 
     real(wp), dimension(:, :), pointer :: u, w_n, f
-    real(wp), dimension(:, :), pointer :: du1_a, dw1_n, du2_a
+    real(wp), dimension(:, :), pointer :: du1_a, du2_a, du1_n, du2_n, dw1_n, dw2_n
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, coef(5), wk, x_0!, dummy
-    integer(wi) :: test_type, ibc, ib, im, idr, ndr, ndl!, ic
+    integer(wi) :: test_type, ibc, ib, im, ndr, ndl
 
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(5)
+    real(wp), allocatable :: bcs(:, :)
     character(len=32) :: fdm_names(5)
     type(fdm_integral_dt) :: fdmi(2)
 
@@ -47,12 +48,13 @@ program VINTEGRAL
     g%size = imax
     g%scale = 1.0_wp
     g%uniform = .false.
+    g%periodic = .false.
 
     isize_field = imax*jmax*kmax
     isize_txc_field = isize_field
     isize_wrk3d = isize_txc_field
     isize_wrk1d = imax
-    isize_wrk2d = len
+    isize_wrk2d = imax*imax
     inb_wrk1d = 20
     inb_wrk2d = 2
     inb_txc = 9
@@ -64,16 +66,17 @@ program VINTEGRAL
     f(1:len, 1:imax) => txc(1:imax*jmax*kmax, 3)
 
     du1_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 4)
-    dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
-    du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
-
-    g%periodic = .false.
+    du2_a(1:len, 1:imax) => txc(1:imax*jmax*kmax, 5)
+    du1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 6)
+    du2_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 7)
+    dw1_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 8)
+    dw2_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 9)
 
     wk = 1.0_wp ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
     write (*, *) 'Eigenvalue ?'
     read (*, *) lambda
 
-    test_type = 1
+    test_type = 2
 
     ! ###################################################################
     if (g%periodic) then
@@ -129,9 +132,32 @@ program VINTEGRAL
         ! du1_a(i) = 0.0_wp
     end do
 
-! ###################################################################
-! First order equation
-! ###################################################################
+    ! ###################################################################
+    ! Initialize integral operator
+    ndr = g%nb_diag_1(2)
+    ndl = g%nb_diag_1(1)
+    bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+    do ib = 1, 2
+        fdmi(ib)%bc = ibc
+        call FDM_Int1_Initialize(g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
+
+        ! LU decomposition
+        select case (ndr)
+        case (3)
+            call TRIDFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3))
+        case (5)
+            call PENTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
+                          fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5))
+        case (7)
+            call HEPTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
+                          fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5), fdmi(ib)%lhs(2:, 6), fdmi(ib)%lhs(2:, 7))
+        end select
+    end do
+
+    ! ###################################################################
+    ! First order equation
+    ! We reinitialize for different FDM schemes, not only the default one
+    ! ###################################################################
     select case (test_type)
     case (1)
         fdm_cases(1:5) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT]
@@ -169,8 +195,6 @@ program VINTEGRAL
 
                 end select
 
-                ! idl = g%nb_diag_1(1)/2 + 1
-                idr = g%nb_diag_1(2)/2 + 1
                 ndr = g%nb_diag_1(2)
                 ndl = g%nb_diag_1(1)
                 ! print*, ndl, ndr
@@ -209,20 +233,49 @@ program VINTEGRAL
 ! ###################################################################
 ! Second order equation
 ! ###################################################################
-! to be rewritten in terms of INT_C2NX_
     case (2)
+        allocate (bcs(len, 2))
+        ! do i = imax, 1, -1     ! set the lower value to zero, which is assumed in BCS_NN
+        !     u(:, i) = u(:, i) - u(:, 1)
+        ! end do
 
-        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g, u, f, tmp)
-        ! dummy = lambda*lambda
-        ! f = du2_a - dummy*u
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
+        f = du2_n !- lambda*lambda*u
 
-        ! ! call INT_C2N6_LHS_E(imax, g%jac, ibc, dummy, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), wrk1d(1, 4), wrk1d(1, 5), wrk1d(1, 6), wrk1d(1, 7))
-        ! call PENTADFS(imax - 2, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5))
-        ! call PENTADSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 6))
-        ! call PENTADSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), wrk1d(2, 7))
-        ! ! call INT_C2N6_RHS(imax, i1, g%jac, f, w_n)
-        ! call PENTADSS(imax - 2, i1, wrk1d(2, 1), wrk1d(2, 2), wrk1d(2, 3), wrk1d(2, 4), wrk1d(2, 5), w_n(2))
-        ! w_n(:) = w_n(:) + u(1)*wrk1d(:, 6) + u(imax)*wrk1d(:, 7)
+        bcs_cases(1:4) = [BCS_DD, BCS_DN, BCS_ND, BCS_NN]
+
+        do ib = 1, 3
+            ibc = bcs_cases(ib)
+            print *, new_line('a')
+
+            select case (ibc)
+            case (BCS_DD)
+                print *, 'Dirichlet/Dirichlet'
+                bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, imax)
+                call OPR_ODE2_1_SINGULAR_DD(g%mode_fdm1, g%size, len, g%nodes, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+            case (BCS_DN)
+                print *, 'Dirichlet/Neumann'
+                bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, imax)
+                ! call OPR_ODE2_1_SINGULAR_DN(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_1_SINGULAR_DN_NEW(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d)
+            case (BCS_ND)
+                print *, 'Neumann/Dirichlet'
+                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, imax)
+                ! call OPR_ODE2_1_SINGULAR_ND(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_1_SINGULAR_ND_NEW(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d)
+            case (BCS_NN)
+                print *, 'Neumann/Neumann'
+                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, imax)
+                ! call OPR_ODE2_1_SINGULAR_NN(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_1_SINGULAR_NN_NEW(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d)
+            end select
+
+            call check(u, w_n, 'integral.dat')
+            call check(du1_n, dw1_n)
+
+        end do
 
     end select
 

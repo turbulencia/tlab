@@ -2,9 +2,10 @@
 
 ! # Solvers for linear ordinary differential equations with constant coefficients
 module OPR_ODES
-    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: wp, wi, BCS_MIN, BCS_MAX, BCS_BOTH
     use FDM, only: fdm_dt, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
     use FDM_Integral, only: fdm_integral_dt
+    use FDM_MatMul
     implicit none
     private
 
@@ -22,8 +23,11 @@ module OPR_ODES
     ! public :: OPR_ODE2
     public :: OPR_ODE2_1_SINGULAR_DD    ! Reducing problem to a system of 2 first-order equations
     public :: OPR_ODE2_1_SINGULAR_DN
+    public :: OPR_ODE2_1_SINGULAR_DN_New
     public :: OPR_ODE2_1_SINGULAR_ND
+    public :: OPR_ODE2_1_SINGULAR_ND_New
     public :: OPR_ODE2_1_SINGULAR_NN
+    public :: OPR_ODE2_1_SINGULAR_NN_New
     public :: OPR_ODE2_1_REGULAR_DD     ! Dirichlet/Dirichlet boundary conditions
     public :: OPR_ODE2_1_REGULAR_NN     ! Neumann/Neumann boundary conditions
 
@@ -38,8 +42,6 @@ contains
 !# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
 !########################################################################
     subroutine OPR_Integral1(nlines, fdmi, f, result, wrk2d)
-        use TLab_Constants, only: BCS_MIN, BCS_MAX, BCS_BOTH
-        use FDM_MatMul
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi
         real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
@@ -239,6 +241,35 @@ contains
         return
     end subroutine OPR_ODE2_1_SINGULAR_DN
 
+    subroutine OPR_ODE2_1_SINGULAR_DN_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: wrk2d(nlines, 2)
+
+        integer(wi) nx
+
+! #######################################################################
+        nx = size(fdmi(1)%lhs, 1)
+
+! -----------------------------------------------------------------------
+! solve for v in v' = f , v_n given
+! -----------------------------------------------------------------------
+        tmp1(:, nx) = bcs(:, 2)
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), f, tmp1, wrk2d)
+
+! -----------------------------------------------------------------------
+! solve for u in u' = v, u_1 given
+! -----------------------------------------------------------------------
+        u(:, 1) = bcs(:, 1)
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), tmp1, u, wrk2d)
+
+        return
+    end subroutine OPR_ODE2_1_SINGULAR_DN_NEW
+
 !########################################################################
 !Neumann/Dirichlet boundary conditions
 !########################################################################
@@ -346,6 +377,62 @@ contains
         return
     end subroutine OPR_ODE2_1_SINGULAR_ND
 
+    subroutine OPR_ODE2_1_SINGULAR_ND_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
+        ! real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs, 2))
+        real(wp), intent(inout) :: wrk2d(nlines, 2)
+
+        integer(wi) nx
+
+! #######################################################################
+        nx = size(fdmi(1)%lhs, 1)
+
+! #define f1(:) wrk1d(:,1)
+! #define v1(:) wrk1d(:,2)
+! #define u1(:) wrk1d(:,3)
+
+! -----------------------------------------------------------------------
+! solve for v in v' = f , v_1 given
+! -----------------------------------------------------------------------
+        ! f(:, nx) = 0.0_wp
+        tmp1(:, 1) = bcs(:, 1)
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, tmp1, wrk2d)
+!   solve for v1
+        ! f1(:) = 0.0_wp; f1(nx) = 1.0_wp
+        ! v1(1) = 0.0_wp
+        ! call OPR_Integral1(nlines, fdmi(BCS_MIN), f1, v1, wrk2d)
+
+! -----------------------------------------------------------------------
+! solve for u in u' = v, u_n given
+! -----------------------------------------------------------------------
+        u(:, nx) = bcs(:, 2)
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), tmp1, u, wrk2d)
+!   solve for u1
+        ! u1(:, nx) = 0.0_wp
+        ! call OPR_Integral1(nlines, fdmi(BCS_MAX), v1, u1, wrk2d)
+
+! ! Constraint
+!         dummy = 1.0_wp/(du1(nx) - v1(nx))
+!         bcs(:, 1) = (tmp1(:, nx) - du(:, 1))*dummy
+
+! ! Result
+!         do i = 1, nx
+!             u(:, i) = u(:, i) + bcs(:, 1)*u1(i)
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 1)*v1(i)
+!         end do
+
+! #undef f1
+! #undef v1
+! #undef u1
+
+        return
+    end subroutine OPR_ODE2_1_SINGULAR_ND_NEW
+
 !########################################################################
 !Dirichlet/Dirichlet boundary conditions
 !########################################################################
@@ -450,7 +537,36 @@ contains
         return
     end subroutine OPR_ODE2_1_SINGULAR_DD
 
-!########################################################################
+    subroutine OPR_ODE2_1_SINGULAR_DD_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 3)
+        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: wrk2d(nlines, 2)
+
+        integer(wi) nx
+
+! #######################################################################
+        nx = size(fdmi(1)%lhs, 1)
+
+! -----------------------------------------------------------------------
+! solve for v in v' = f , v_max = 0 given
+! -----------------------------------------------------------------------
+        tmp1(:, nx) = 0.0_wp
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), f, tmp1, wrk2d)
+
+! -----------------------------------------------------------------------
+! solve for u in u' = v, u_1 given
+! -----------------------------------------------------------------------
+        u(:, 1) = 0.0_wp
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), tmp1, u, wrk2d)
+
+        return
+    end subroutine OPR_ODE2_1_SINGULAR_DD_NEW
+
+    !########################################################################
 !Neumann/Neumann boundary conditions; must be compatible!
 !########################################################################
     subroutine OPR_ODE2_1_SINGULAR_NN(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
@@ -507,6 +623,31 @@ contains
 
         return
     end subroutine OPR_ODE2_1_SINGULAR_NN
+
+    subroutine OPR_ODE2_1_SINGULAR_NN_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: wrk2d(nlines, 2)
+
+! #######################################################################
+! -----------------------------------------------------------------------
+! solve for v in v' = f , v_1 given
+! -----------------------------------------------------------------------
+        tmp1(:, 1) = bcs(:, 1)   ! this step assumes compatible problem
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, tmp1, wrk2d)
+
+! -----------------------------------------------------------------------
+! solve for u in u' = v, u_1 given
+! -----------------------------------------------------------------------
+        u(:, 1) = 0.0_wp        ! this integration constant is free and set to zero
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), tmp1, u, wrk2d)
+
+        return
+    end subroutine OPR_ODE2_1_SINGULAR_NN_NEW
 
 !########################################################################
 !Neumann/Neumann boundary conditions
