@@ -44,14 +44,14 @@ contains
 !#
 !########################################################################
     subroutine FDM_Int1_Initialize(lhs, rhs, lambda, fdmi)
-        real(wp), intent(in) :: lhs(:, :)       ! diagonals in lhs, or matrix A
-        real(wp), intent(in) :: rhs(:, :)       ! diagonals in rhs, or matrix B
-        real(wp), intent(in) :: lambda          ! system constant
-        type(fdm_integral_dt), intent(out) :: fdmi
+        real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
+        real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
+        real(wp), intent(in) :: lambda                  ! system constant
+        type(fdm_integral_dt), intent(out) :: fdmi      ! int_plan to be created
 
         ! -------------------------------------------------------------------
         integer(wi) i
-        integer(wi) idl, ndl, idr, ndr, ir, nx!, nmin, nmax
+        integer(wi) idl, ndl, idr, ndr, ir, nx
         real(wp) dummy, rhsr_b(5, 0:7), rhsr_t(0:4, 8)
 
         ! -------------------------------------------------------------------
@@ -72,7 +72,7 @@ contains
         allocate (fdmi%rhs(nx, ndl))
 
         ! -------------------------------------------------------------------
-        ! new rhs diagonals (array A), independent of lambda; this could be moved to FDM_Initialize
+        ! new rhs diagonals (array A), independent of lambda
         fdmi%rhs(:, :) = lhs(:, :)
 
         call FDM_Bcs_Reduce(fdmi%bc, fdmi%rhs, rhs, rhsr_b, rhsr_t)
@@ -98,7 +98,7 @@ contains
         ! new lhs diagonals (array C = B + h \lambda A), dependent on lambda
         fdmi%lhs(:, :) = rhs(:, :)
 
-        fdmi%lhs(:, idr) = fdmi%lhs(:, idr) + lambda*lhs(:, idl)                      ! center diagonal
+        fdmi%lhs(:, idr) = fdmi%lhs(:, idr) + lambda*lhs(:, idl)                ! center diagonal
         do i = 1, idl - 1                                                       ! off-diagonals
             fdmi%lhs(1 + i:nx, idr - i) = fdmi%lhs(1 + i:nx, idr - i) + lambda*lhs(1 + i:nx, idl - i)
             fdmi%lhs(1:nx - i, idr + i) = fdmi%lhs(1:nx - i, idr + i) + lambda*lhs(1:nx - i, idl + i)
@@ -106,12 +106,14 @@ contains
 
         select case (fdmi%bc)
         case (BCS_MIN)
-            fdmi%lhs(2:idr, 1:ndr) = rhsr_b(2:idr, 1:ndr)
+            fdmi%lhs(1:idr, 1:ndr) = rhsr_b(1:idr, 1:ndr)
+            ! fdmi%lhs(2:idr, 1:ndr) = rhsr_b(2:idr, 1:ndr)
             do ir = 1, idr - 1
                 fdmi%lhs(1 + ir, idr - idl + 1:idr + idl - 1) = fdmi%lhs(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*fdmi%rhs_b(1 + ir, 1:ndl)
             end do
         case (BCS_MAX)
-            fdmi%lhs(nx - idr + 1:nx - 1, 1:ndr) = rhsr_t(1:idr - 1, 1:ndr)
+            fdmi%lhs(nx - idr + 1:nx, 1:ndr) = rhsr_t(1:idr, 1:ndr)
+            ! fdmi%lhs(nx - idr + 1:nx - 1, 1:ndr) = rhsr_t(1:idr - 1, 1:ndr)
             do ir = 1, idr - 1
                 fdmi%lhs(nx - ir, idr - idl + 1:idr + idl - 1) = fdmi%lhs(nx - ir, idr - idl + 1:idr + idl - 1) + lambda*fdmi%rhs_t(idl - ir, 1:ndl)
             end do
@@ -128,7 +130,8 @@ contains
 
         end do
 
-        do ir = 1, nx
+        ! do ir = 1, nx
+        do ir = 2, nx - 1
             dummy = 1.0_wp/fdmi%rhs(ir, idl)
 
             fdmi%rhs(ir, 1:ndl) = fdmi%rhs(ir, 1:ndl)*dummy

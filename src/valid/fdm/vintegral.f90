@@ -26,12 +26,12 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: u, w_n, f
     real(wp), dimension(:, :), pointer :: du1_a, du2_a, du1_n, du2_n, dw1_n, dw2_n
     integer(wi) bcs_aux(2, 2)
-    real(wp) :: lambda, coef(5), wk, x_0!, dummy
+    real(wp) :: lambda, wk, x_0!, dummy, coef(5)
     integer(wi) :: test_type, ibc, ib, im, ndr, ndl
 
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(5)
-    real(wp), allocatable :: bcs(:, :)
+    real(wp), allocatable :: bcs(:, :), x(:)
     character(len=32) :: fdm_names(5)
     type(fdm_integral_dt) :: fdmi(2)
 
@@ -60,6 +60,7 @@ program VINTEGRAL
     inb_txc = 9
 
     call TLab_Initialize_Memory(__FILE__)
+    allocate (x(imax))
 
     u(1:len, 1:imax) => txc(1:imax*jmax*kmax, 1)
     w_n(1:len, 1:imax) => txc(1:imax*jmax*kmax, 2)
@@ -76,21 +77,20 @@ program VINTEGRAL
     write (*, *) 'Eigenvalue ?'
     read (*, *) lambda
 
-    test_type = 2
+    test_type = 1
 
     ! ###################################################################
     if (g%periodic) then
         do i = 1, imax
-            ! x(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
-            wrk1d(i, 1) = real(i - 1, wp)/real(imax, wp)*g%scale
+            x(i) = real(i - 1, wp)/real(imax, wp)*g%scale
         end do
     else
         ! do i = 1, imax
-        !     x(i, 1) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
+        !     x(i) = real(i - 1, wp)/real(imax - 1, wp)*g%scale
         ! end do
         open (21, file='y.dat')
         do i = 1, imax
-            read (21, *) wrk1d(i, 1) !x(i, 1)
+            read (21, *) x(i)
         end do
         close (21)
     end if
@@ -98,7 +98,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(g, wrk1d(1:imax, 1))
+    call FDM_Initialize(g, x)
 
     bcs_aux = 0
 
@@ -156,7 +156,7 @@ program VINTEGRAL
 
     ! ###################################################################
     ! First order equation
-    ! We reinitialize for different FDM schemes, not only the default one
+    ! We reinitialize integral operator for different FDM schemes, not only the default one
     ! ###################################################################
     select case (test_type)
     case (1)
@@ -166,38 +166,23 @@ program VINTEGRAL
         fdm_names(4:5) = ['1. order, Direct 4', '1. order, Direct 6']
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
-        f = du1_a + lambda*u
+        do im = 1, 3 !size(fdm_cases)
+            print *, new_line('a'), fdm_names(im)
 
-        do ib = 1, 2
-            ibc = bcs_cases(ib)
-            print *, new_line('a'), 'Bcs case ', ibc
+            g%mode_fdm1 = fdm_cases(im)
+            g%mode_fdm2 = g%mode_fdm1
+            call FDM_Initialize(g, x)
 
-            do im = 1, 3 !size(fdm_cases)
-                g%mode_fdm1 = fdm_cases(im)
-                print *, fdm_names(im)
+            ! f = du1_a
+            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
+            ! f = f + lambda*u
 
-                select case (g%mode_fdm1)
-                case (FDM_COM4_JACOBIAN)
-                    call FDM_C1N4_Jacobian(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
+            ndr = g%nb_diag_1(2)
+            ndl = g%nb_diag_1(1)
 
-                case (FDM_COM6_JACOBIAN)
-                    call FDM_C1N6_Jacobian(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
-
-                case (FDM_COM6_JACOBIAN_PENTA)
-                    call FDM_C1N6_Jacobian_Penta(imax, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, g%periodic)
-
-                case (FDM_COM4_DIRECT)
-                    call FDM_C1N4_Direct(imax, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
-
-                case (FDM_COM6_DIRECT)
-                    call FDM_C1N6_Direct(imax, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
-
-                end select
-
-                ndr = g%nb_diag_1(2)
-                ndl = g%nb_diag_1(1)
-                ! print*, ndl, ndr
+            do ib = 1, 2
+                ibc = bcs_cases(ib)
+                print *, new_line('a'), 'Bcs case ', ibc
 
                 fdmi(ib)%bc = ibc
                 call FDM_Int1_Initialize(g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
@@ -222,9 +207,19 @@ program VINTEGRAL
                     w_n(:, imax) = u(:, imax)
                 end select
 
-                call OPR_Integral1(len, fdmi(ib), f, w_n, wrk2d)
+                call OPR_Integral1(len, fdmi(ib), f, w_n, wrk2d, dw1_n(:, 1))
 
                 call check(u, w_n, 'integral.dat')
+
+                ! check the calculation of the derivative at the boundary
+                print *, dw1_n(:, 1)
+                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_aux, g, w_n, dw1_n)
+                select case (ibc)
+                case (BCS_MIN)
+                    print *, dw1_n(:, 1)
+                case (BCS_MAX)
+                    print *, dw1_n(:, imax)
+                end select
 
             end do
 
