@@ -411,58 +411,59 @@ contains
         return
     end subroutine OPR_ODE2_1_SINGULAR_ND
 
-    subroutine OPR_ODE2_1_SINGULAR_ND_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+    subroutine OPR_ODE2_1_SINGULAR_ND_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
-        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
         real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(inout) :: bcs(nlines, 2)
         real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
-        ! real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs, 2))
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
         real(wp), intent(inout) :: wrk2d(nlines, 2)
 
         integer(wi) nx
+        real(wp) dun(1)
 
 ! #######################################################################
         nx = size(fdmi(1)%lhs, 1)
 
-! #define f1(:) wrk1d(:,1)
-! #define v1(:) wrk1d(:,2)
-! #define u1(:) wrk1d(:,3)
+#define f1(i) wrk1d(i,1)
+#define v1(i) wrk1d(i,2)
+#define u1(i) wrk1d(i,3)
 
 ! -----------------------------------------------------------------------
 ! solve for v in v' = f , v_1 given
 ! -----------------------------------------------------------------------
-        ! f(:, nx) = 0.0_wp
+        f(:, nx) = 0.0_wp
         tmp1(:, 1) = bcs(:, 1)
         call OPR_Integral1(nlines, fdmi(BCS_MIN), f, tmp1, wrk2d)
 !   solve for v1
-        ! f1(:) = 0.0_wp; f1(nx) = 1.0_wp
-        ! v1(1) = 0.0_wp
-        ! call OPR_Integral1(nlines, fdmi(BCS_MIN), f1, v1, wrk2d)
+        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
+        v1(1) = 0.0_wp
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
 
 ! -----------------------------------------------------------------------
 ! solve for u in u' = v, u_n given
 ! -----------------------------------------------------------------------
         u(:, nx) = bcs(:, 2)
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), tmp1, u, wrk2d)
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), tmp1, u, wrk2d, bcs)
 !   solve for u1
-        ! u1(:, nx) = 0.0_wp
-        ! call OPR_Integral1(nlines, fdmi(BCS_MAX), v1, u1, wrk2d)
+        u1(nx) = 0.0_wp
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, dun(1))
 
-! ! Constraint
-!         dummy = 1.0_wp/(du1(nx) - v1(nx))
-!         bcs(:, 1) = (tmp1(:, nx) - du(:, 1))*dummy
+! Constraint
+        dun(1) = 1.0_wp/(dun(1) - v1(nx))
+        bcs(:, 1) = (tmp1(:, nx) - bcs(:, 1))*dummy
 
-! ! Result
-!         do i = 1, nx
-!             u(:, i) = u(:, i) + bcs(:, 1)*u1(i)
-!             tmp1(:, i) = tmp1(:, i) + bcs(:, 1)*v1(i)
-!         end do
+! Result
+        do i = 1, nx
+            u(:, i) = u(:, i) + bcs(:, 1)*u1(i)
+            tmp1(:, i) = tmp1(:, i) + bcs(:, 1)*v1(i)
+        end do
 
-! #undef f1
-! #undef v1
-! #undef u1
+#undef f1
+#undef v1
+#undef u1
 
         return
     end subroutine OPR_ODE2_1_SINGULAR_ND_NEW

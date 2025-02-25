@@ -77,7 +77,7 @@ program VINTEGRAL
     write (*, *) 'Eigenvalue ?'
     read (*, *) lambda
 
-    test_type = 1
+    test_type = 2
 
     ! ###################################################################
     if (g%periodic) then
@@ -259,7 +259,7 @@ program VINTEGRAL
                 print *, 'Neumann/Dirichlet'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, imax)
                 ! call OPR_ODE2_1_SINGULAR_ND(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_1_SINGULAR_ND_NEW(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_1_SINGULAR_ND_NEW(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, imax)
