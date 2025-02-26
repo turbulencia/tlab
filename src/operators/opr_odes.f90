@@ -19,17 +19,20 @@ module OPR_ODES
     public :: OPR_Integral1             ! Using derived type grid_dp to pass information, typically initialized for lambda = 0
     ! public :: OPR_ODE1                ! Passing lu and rhs directly, which could be initialized for lambda /= 0
 
-    ! Second-order ODEs
+    ! Second-order ODEs. Reducing problem to a system of 2 first-order equations
     ! public :: OPR_ODE2
-    public :: OPR_ODE2_1_SINGULAR_DD    ! Reducing problem to a system of 2 first-order equations
-    public :: OPR_ODE2_1_SINGULAR_DN
-    public :: OPR_ODE2_1_SINGULAR_DN_New
-    public :: OPR_ODE2_1_SINGULAR_ND
-    public :: OPR_ODE2_1_SINGULAR_ND_New
-    public :: OPR_ODE2_1_SINGULAR_NN
-    public :: OPR_ODE2_1_SINGULAR_NN_New
+    public :: OPR_ODE2_SINGULAR_DD
+    public :: OPR_ODE2_SINGULAR_DN
+    public :: OPR_ODE2_SINGULAR_ND
+    public :: OPR_ODE2_SINGULAR_NN
+
     public :: OPR_ODE2_1_REGULAR_DD     ! Dirichlet/Dirichlet boundary conditions
     public :: OPR_ODE2_1_REGULAR_NN     ! Neumann/Neumann boundary conditions
+
+    ! public :: OPR_ODE2_1_SINGULAR_DD_OLD
+    ! public :: OPR_ODE2_1_SINGULAR_DN_OLD
+    ! public :: OPR_ODE2_1_SINGULAR_ND_OLD
+    public :: OPR_ODE2_1_SINGULAR_NN_OLD
 
 contains
 !########################################################################
@@ -136,293 +139,30 @@ contains
 
 !########################################################################
 !#
-!#     u'_i + \lamba u_i = f_i  N-1 eqns
-!#     u_1 or u_N given         1   eqn
-!#     Au' = Bu                 N   eqns
-!#
-!#  Same as before, but passing information explicitly instead of using derived type fdm_dt
-!########################################################################
-    ! subroutine OPR_ODE1(nlines, lu, rhs, rhs_b, rhs_t, f, result, ibc)
-    !     return
-    ! end subroutine OPR_ODE1
-
-!########################################################################
-!#
-!#     u''_i + \lamba u_i = f_i             N-2 eqns
-!#     u_1, u'_1, u_N, or u'_N given        2   eqn
-!#     Au'' = Bu                            N   eqns
-!#
-!########################################################################
-    ! subroutine OPR_ODE2(nlines, lu, rhs, rhs_b, rhs_t, f, result, ibc)
-    !     return
-    ! end subroutine OPR_ODE2
-
-!########################################################################
-!#
-!#     (u')'_i - \lambda^2 u_i = f_i        N - 2 equtions (singular case when \lambda = 0)
-!#     u_1, u'_1, u_N, or u'_N given        2   eqn
+!#     (u')'_i - \lambda^2 u_i = f_i        N - 2 eqns (singular case when \lambda = 0)
+!#     u_1, u'_1, u_N, or u'_N given        2   eqns
 !#     Au' = Bu                             N   eqns
 !#     A(u')' = Bu'                         N   eqns
 !#
+!# Mellado & Ansorge, 2012: Z. Angew. Math. Mech., 1-12, 10.1002/zamm.201100078
+!#
+!########################################################################
+
 !########################################################################
 !########################################################################
-!#     (u')' = f                            singular cases
-!Dirichlet/Neumann boundary conditions
-!########################################################################
-    subroutine OPR_ODE2_1_SINGULAR_DN(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi), intent(in) :: imode_fdm, nx, nlines
-        real(wp), intent(in) :: dx(nx)
-        real(wp), intent(out) :: u(nlines, nx)          ! solution
-        real(wp), intent(inout) :: f(nlines, nx)        ! forcing
-        real(wp), intent(inout) :: tmp1(nlines, nx)     ! first derivative
-        real(wp), intent(inout) :: bcs(nlines, 2)
-        real(wp), intent(inout), target :: wrk1d(nx, 9)
-
-! #######################################################################
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 8)
-        h => wrk1d(:, 9)
-
-! #######################################################################
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_nx given
-! -----------------------------------------------------------------------
-        f(:, 1) = 0.0_wp
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i2, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
-            call PENTADFS(nx - 1, a, b, c, d, e)
-
-!   obtain v^0, array tmp1
-            call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
-            tmp1(:, nx) = 0.0_wp
-            do i = 1, nx
-                tmp1(:, i) = tmp1(:, i) + bcs(:, 2) ! add v_N to free array bcs(:,2)
-            end do
-
-!   obtain v^1, array wrk1d(:,6)
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i2, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
-            call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
-
-!   obtain v^0, array tmp1
-            call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
-            tmp1(:, nx) = 0.0_wp
-            do i = 1, nx
-                tmp1(:, i) = tmp1(:, i) + bcs(:, 2) ! add v_N to free array bcs(:,2)
-            end do
-
-!   obtain v^1, array wrk1d(:,6)
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        end if
-
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
-
-!   obtain u^0
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
-            bcs(:, 2) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 2) = (bcs(:, 2) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
-
-!   obtain u^1, array wrk1d(:,7)
-            call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
-
-!   obtain u^0
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
-            bcs(:, 2) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 2) = (bcs(:, 2) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
-
-!   obtain u^1, array wrk1d(:,7)
-            call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        end if
-
-! Constraint
-        dummy = 1.0_wp/(dummy - wrk1d(1, 6))
-        bcs(:, 2) = (tmp1(:, 1) - bcs(:, 2))*dummy
-
-! Result
-        do i = 1, nx
-            u(:, i) = u(:, i) + bcs(:, 2)*wrk1d(i, 7) + bcs(:, 1)
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 2)*wrk1d(i, 6)
-        end do
-
-        return
-    end subroutine OPR_ODE2_1_SINGULAR_DN
-
-    subroutine OPR_ODE2_1_SINGULAR_DN_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
-        integer(wi) nlines
-        type(fdm_integral_dt), intent(in) :: fdmi(2)
-        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: wrk2d(nlines, 2)
-
-        integer(wi) nx
-
-! #######################################################################
-        nx = size(fdmi(1)%lhs, 1)
-
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_n given
-! -----------------------------------------------------------------------
-        tmp1(:, nx) = bcs(:, 2)
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), f, tmp1, wrk2d)
-
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
-        u(:, 1) = bcs(:, 1)
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), tmp1, u, wrk2d)
-
-        return
-    end subroutine OPR_ODE2_1_SINGULAR_DN_NEW
-
-!########################################################################
-!Neumann/Dirichlet boundary conditions
-!########################################################################
-    subroutine OPR_ODE2_1_SINGULAR_ND(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi) imode_fdm, nx, nlines
-        real(wp), dimension(nx) :: dx
-        real(wp), dimension(nx, 9), target :: wrk1d
-        real(wp), dimension(nlines, nx) :: u, f, tmp1
-        real(wp), dimension(nlines, 2) :: bcs
-
-! #######################################################################
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 8)
-        h => wrk1d(:, 9)
-
-! #######################################################################
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_1 given
-! -----------------------------------------------------------------------
-        f(:, nx) = 0.0_wp
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(nx, 6) = dx(nx); wrk1d(nx - 1, 6) = e(nx)*dx(nx) ! for v^1
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
-
-!   obtain v^0, array tmp1
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
-            tmp1(:, 1) = 0.0_wp
-            do i = 1, nx
-                tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! add v_1 to free array bcs(:,1)
-            end do
-
-!   obtain v^1, array wrk1d(:,6)
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 6))
-            wrk1d(1, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(nx, 6) = dx(nx); wrk1d(nx - 1, 6) = g(nx)*dx(nx) ! for v^1
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
-
-!   obtain v^0, array tmp1
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
-            tmp1(:, 1) = 0.0_wp
-            do i = 1, nx
-                tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! add v_1 to free array bcs(:,1)
-            end do
-
-!   obtain v^1, array wrk1d(:,6)
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 6))
-            wrk1d(1, 6) = 0.0_wp
-        end if
-
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_N given
-! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i2, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i2, dx, tmp1, u)
-            call PENTADFS(nx - 1, a, b, c, d, e)
-
-!   obtain u^0
-            call PENTADSS(nx - 1, nlines, a, b, c, d, e, u)
-            bcs(:, 1) = u(:, nx); u(:, nx) = 0.0_wp
-            bcs(:, 1) = (bcs(:, 1) + a(nx)*u(:, nx - 2) + b(nx)*u(:, nx - 1) + c(nx)*u(:, nx))/dx(nx) !u^(0)'_nx
-
-!   obtain u^1, array wrk1d(:,7)
-            call INT_C1N6_RHS(nx, i1, i2, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 7))
-            dummy = wrk1d(nx, 7); wrk1d(nx, 7) = 0.0_wp
-            dummy = (dummy + a(nx)*wrk1d(nx - 2, 7) + b(nx)*wrk1d(nx - 1, 7) + c(nx)*wrk1d(nx, 7))/dx(nx) ! u^(1)'_nx
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i2, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i2, dx, tmp1, u)
-            call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
-
-!   obtain u^0
-            call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, u)
-            bcs(:, 1) = u(:, nx); u(:, nx) = 0.0_wp
-            bcs(:, 1) = (bcs(:, 1) + b(nx)*u(:, nx - 2) + c(nx)*u(:, nx - 1) + d(nx)*u(:, nx))/dx(nx) !u^(0)'_nx
-
-!   obtain u^1, array wrk1d(:,7)
-            call INT_C1N6M_RHS(nx, i1, i2, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 7))
-            dummy = wrk1d(nx, 7); wrk1d(nx, 7) = 0.0_wp
-            dummy = (dummy + b(nx)*wrk1d(nx - 2, 7) + c(nx)*wrk1d(nx - 1, 7) + d(nx)*wrk1d(nx, 7))/dx(nx) ! u^(1)'_nx
-        end if
-
-! Constraint
-        dummy = 1.0_wp/(dummy - wrk1d(nx, 6))
-        bcs(:, 1) = (tmp1(:, nx) - bcs(:, 1))*dummy
-
-! Result
-        do i = 1, nx
-            u(:, i) = u(:, i) + bcs(:, 1)*wrk1d(i, 7) + bcs(:, 2)
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 1)*wrk1d(i, 6)
-        end do
-
-        return
-    end subroutine OPR_ODE2_1_SINGULAR_ND
-
-    subroutine OPR_ODE2_1_SINGULAR_ND_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk1d, wrk2d)
+! Dirichlet/Neumann boundary conditions
+    subroutine OPR_ODE2_SINGULAR_DN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: bcs(nlines, 2)
-        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
         real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
-        real(wp), intent(inout) :: wrk2d(nlines, 2)
+        real(wp), intent(inout) :: wrk2d(nlines, 3)
 
         integer(wi) nx
-        real(wp) dun(1)
+        real(wp) du1_n(1), f1
 
 ! #######################################################################
         nx = size(fdmi(1)%lhs, 1)
@@ -430,259 +170,199 @@ contains
 #define f1(i) wrk1d(i,1)
 #define v1(i) wrk1d(i,2)
 #define u1(i) wrk1d(i,3)
+#define du0_n(i) wrk2d(i,3)
 
 ! -----------------------------------------------------------------------
-! solve for v in v' = f , v_1 given
+! solve for v in v' = f , v_n given
 ! -----------------------------------------------------------------------
-        f(:, nx) = 0.0_wp
-        tmp1(:, 1) = bcs(:, 1)
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, tmp1, wrk2d)
+        f(:, 1) = 0.0_wp
+        v(:, nx) = bcs(:, 2)
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), f, v, wrk2d)
 !   solve for v1
-        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
-        v1(1) = 0.0_wp
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+        f1(:) = 0.0_wp; f1(1) = 1.0_wp
+        v1(nx) = 0.0_wp
+        call OPR_Integral1(1, fdmi(BCS_MAX), f1(:), v1(:), wrk2d)
 
 ! -----------------------------------------------------------------------
-! solve for u in u' = v, u_n given
+! solve for u in u' = v, u_1 given
 ! -----------------------------------------------------------------------
-        u(:, nx) = bcs(:, 2)
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), tmp1, u, wrk2d, bcs)
+        u(:, 1) = bcs(:, 1)
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), v, u, wrk2d, du0_n(:))
 !   solve for u1
-        u1(nx) = 0.0_wp
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, dun(1))
+        u1(1) = 0.0_wp
+        call OPR_Integral1(1, fdmi(BCS_MIN), v1(:), u1(:), wrk2d, du1_n(1))
 
 ! Constraint
-        dun(1) = 1.0_wp/(dun(1) - v1(nx))
-        bcs(:, 1) = (tmp1(:, nx) - bcs(:, 1))*dummy
+        f1 = 1.0_wp/(du1_n(1) - v1(1))
+        du0_n(:) = (v(:, 1) - du0_n(:))*f1
 
 ! Result
         do i = 1, nx
-            u(:, i) = u(:, i) + bcs(:, 1)*u1(i)
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 1)*v1(i)
+            u(:, i) = u(:, i) + du0_n(:)*u1(i)
+            v(:, i) = v(:, i) + du0_n(:)*v1(i)
         end do
 
+#undef du0_n
 #undef f1
 #undef v1
 #undef u1
 
         return
-    end subroutine OPR_ODE2_1_SINGULAR_ND_NEW
+    end subroutine OPR_ODE2_SINGULAR_DN
 
 !########################################################################
-!Dirichlet/Dirichlet boundary conditions
 !########################################################################
-    subroutine OPR_ODE2_1_SINGULAR_DD(imode_fdm, nx, nlines, x, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi) imode_fdm, nx, nlines
-        real(wp), dimension(nx) :: dx, x
-        real(wp), dimension(nx, 9), target :: wrk1d
-        real(wp), dimension(nlines, nx) :: u, f, tmp1
-        real(wp), dimension(nlines, 3) :: bcs
-
-! #######################################################################
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 8)
-        h => wrk1d(:, 9)
-
-! #######################################################################
-! -----------------------------------------------------------------------
-! solve for v = u' in (u')' = f , u'_nx given
-! -----------------------------------------------------------------------
-        f(:, 1) = 0.0_wp
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i2, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
-            call PENTADFS(nx - 1, a, b, c, d, e)
-
-!   obtain v^0, array tmp1
-            call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
-            tmp1(:, nx) = 0.0_wp
-
-!   obtain v^1, array wrk1d(:,6)
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i2, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
-            call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
-
-!     obtain v^0, array tmp1
-            call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
-            tmp1(:, nx) = 0.0_wp
-
-!     obtain v^1, array wrk1d(:,6)
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        end if
-! -----------------------------------------------------------------------
-! solve for u in u' v f, u_1 given
-! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
-
-!   obtain u^0
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
-            bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
-
-!   obtain u^1, array wrk1d(:,7)
-            call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
-
-!   obtain u^0
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
-            bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
-
-!   obtain u^1, array wrk1d(:,7)
-            call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + c(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        end if
-
-! Constraint
-        dummy = 1.0_wp/(dummy - wrk1d(1, 6))
-        bcs(:, 3) = (tmp1(:, 1) - bcs(:, 3))*dummy
-
-! BCs
-        dummy = 1.0_wp/(x(nx) - x(1))
-        bcs(:, 2) = (bcs(:, 2) - u(:, nx) - bcs(:, 3)*wrk1d(nx, 7) - bcs(:, 1))*dummy
-
-! Result
-        do i = 1, nx
-            u(:, i) = u(:, i) + bcs(:, 3)*wrk1d(i, 7) + bcs(:, 2)*(x(i) - x(1)) + bcs(:, 1)
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 3)*wrk1d(i, 6) + bcs(:, 2)
-        end do
-
-        return
-    end subroutine OPR_ODE2_1_SINGULAR_DD
-
-    subroutine OPR_ODE2_1_SINGULAR_DD_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+! Neumann/Dirichlet boundary conditions
+    subroutine OPR_ODE2_SINGULAR_ND(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
-        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(in) :: bcs(nlines, 3)
-        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: wrk2d(nlines, 2)
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
+        real(wp), intent(inout) :: wrk2d(nlines, 3)
 
         integer(wi) nx
+        real(wp) du1_n(1), fn
 
 ! #######################################################################
         nx = size(fdmi(1)%lhs, 1)
 
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_max = 0 given
-! -----------------------------------------------------------------------
-        tmp1(:, nx) = 0.0_wp
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), f, tmp1, wrk2d)
+#define f1(i) wrk1d(i,1)
+#define v1(i) wrk1d(i,2)
+#define u1(i) wrk1d(i,3)
+#define du0_n(i) wrk2d(i,3)
 
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
-        u(:, 1) = 0.0_wp
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), tmp1, u, wrk2d)
-
-        return
-    end subroutine OPR_ODE2_1_SINGULAR_DD_NEW
-
-    !########################################################################
-!Neumann/Neumann boundary conditions; must be compatible!
-!########################################################################
-    subroutine OPR_ODE2_1_SINGULAR_NN(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi) imode_fdm, nx, nlines
-        real(wp), dimension(nx) :: dx
-        real(wp), dimension(nx, 7), target :: wrk1d
-        real(wp), dimension(nlines, nx) :: u, f, tmp1
-        real(wp), dimension(nlines, 2) :: bcs
-
-! #######################################################################
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 6)
-        h => wrk1d(:, 7)
-
-! #######################################################################
 ! -----------------------------------------------------------------------
 ! solve for v in v' = f , v_1 given
 ! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, f, tmp1)
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, f, tmp1)
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
-        end if
-        tmp1(:, 1) = 0.0_wp
+        f(:, nx) = 0.0_wp
+        v(:, 1) = bcs(:, 1)
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+!   solve for v1
+        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
+        v1(1) = 0.0_wp
+        call OPR_Integral1(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+
+! -----------------------------------------------------------------------
+! solve for u in u' = v, u_n given
+! -----------------------------------------------------------------------
+        u(:, nx) = bcs(:, 2)
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
+!   solve for u1
+        u1(nx) = 0.0_wp
+        call OPR_Integral1(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+
+! Constraint
+        fn = 1.0_wp/(du1_n(1) - v1(nx))
+        du0_n(:) = (v(:, nx) - du0_n(:))*fn
+
+! Result
         do i = 1, nx
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! this step assumes compatible problem
+            u(:, i) = u(:, i) + du0_n(:)*u1(i)
+            v(:, i) = v(:, i) + du0_n(:)*v1(i)
         end do
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-!   same l.h.s. as before
-            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
-!   same l.h.s. as before
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-!   same l.h.s. as before
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
-!   same l.h.s. as before
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
-        end if
-        u(:, 1) = 0.0_wp ! this integration constant is free and set to zero
+
+#undef du0_n
+#undef f1
+#undef v1
+#undef u1
 
         return
-    end subroutine OPR_ODE2_1_SINGULAR_NN
+    end subroutine OPR_ODE2_SINGULAR_ND
 
-    subroutine OPR_ODE2_1_SINGULAR_NN_NEW(nlines, fdmi, u, f, bcs, tmp1, wrk2d)
+!########################################################################
+!########################################################################
+! Neumann/Neumann boundary conditions; must be compatible!
+    subroutine OPR_ODE2_SINGULAR_NN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
-        real(wp), intent(in) :: f(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: u(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(inout) :: tmp1(nlines, size(fdmi(1)%lhs, 1))
-        real(wp), intent(inout) :: wrk2d(nlines, 2)
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(inout) :: bcs(nlines, 2)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
+        real(wp), intent(inout) :: wrk2d(nlines, 3)
 
 ! #######################################################################
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_1 given
-! -----------------------------------------------------------------------
-        tmp1(:, 1) = bcs(:, 1)   ! this step assumes compatible problem
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, tmp1, wrk2d)
-
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
-        u(:, 1) = 0.0_wp        ! this integration constant is free and set to zero
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), tmp1, u, wrk2d)
+! Assumes compatible problem, i.e., bcs_n -bcs_1 = int f
+! We write it in terms of the Dirichlet/Neumann problem
+! (We could have written it in terms of the Neumann/Dirichlet problem as well)
+        bcs(:, 1) = 0.0_wp
+        call OPR_ODE2_SINGULAR_DN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
 
         return
-    end subroutine OPR_ODE2_1_SINGULAR_NN_NEW
+    end subroutine OPR_ODE2_SINGULAR_NN
+
+!########################################################################
+!########################################################################
+! Dirichlet/Dirichlet boundary conditions
+    subroutine OPR_ODE2_SINGULAR_DD(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
+        real(wp), intent(inout) :: wrk2d(nlines, 3)
+
+        integer(wi) nx
+        real(wp) du1_n(1), fn
+
+        ! #######################################################################
+        nx = size(fdmi(1)%lhs, 1)
+
+#define f1(i) wrk1d(i,1)
+#define v1(i) wrk1d(i,2)
+#define u1(i) wrk1d(i,3)
+#define du0_n(i) wrk2d(i,3)
+#define x(i)  fdmi(1)%nodes(i)
+
+        ! -----------------------------------------------------------------------
+        ! solve for v in v' = f , v_1 given (0 for now, to be found later on)
+        ! -----------------------------------------------------------------------
+        f(:, nx) = 0.0_wp
+        v(:, 1) = 0.0_wp
+        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+        !   solve for v1
+        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
+        v1(1) = 0.0_wp
+        call OPR_Integral1(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+
+        ! -----------------------------------------------------------------------
+        ! solve for u in u' = v, u_n given
+        ! -----------------------------------------------------------------------
+        u(:, nx) = bcs(:, 2)
+        call OPR_Integral1(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
+        !   solve for u1
+        u1(nx) = 0.0_wp
+        call OPR_Integral1(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+
+        ! Constraint
+        fn = 1.0_wp/(du1_n(1) - v1(nx))
+        du0_n(:) = (v(:, nx) - du0_n(:))*fn
+
+        ! Contribution from v_1 to satisfy bc at the bottom
+        dummy = 1.0_wp/(x(1) - x(nx))
+        v(:, 1) = (bcs(:, 1) - (u(:, 1) + du0_n(:)*u1(1)))*dummy
+        u(:, 1) = bcs(:, 1)
+
+        ! Result
+        do i = 2, nx
+            u(:, i) = u(:, i) + du0_n(:)*u1(i) + v(:, 1)*(x(i) - x(nx))
+            v(:, i) = v(:, i) + du0_n(:)*v1(i) + v(:, 1)
+        end do
+
+#undef du0_n
+#undef x
+#undef f1
+#undef v1
+#undef u1
+
+        return
+    end subroutine OPR_ODE2_SINGULAR_DD
 
 !########################################################################
 !Neumann/Neumann boundary conditions
@@ -996,5 +676,383 @@ contains
 
         return
     end subroutine OPR_ODE2_1_REGULAR_DD
+
+! !########################################################################
+! !Dirichlet/Neumann boundary conditions
+! !########################################################################
+!     subroutine OPR_ODE2_1_SINGULAR_DN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+!         integer(wi), intent(in) :: imode_fdm, nx, nlines
+!         real(wp), intent(in) :: dx(nx)
+!         real(wp), intent(out) :: u(nlines, nx)          ! solution
+!         real(wp), intent(inout) :: f(nlines, nx)        ! forcing
+!         real(wp), intent(inout) :: tmp1(nlines, nx)     ! first derivative
+!         real(wp), intent(inout) :: bcs(nlines, 2)
+!         real(wp), intent(inout), target :: wrk1d(nx, 9)
+
+! ! #######################################################################
+!         a => wrk1d(:, 1)
+!         b => wrk1d(:, 2)
+!         c => wrk1d(:, 3)
+!         d => wrk1d(:, 4)
+!         e => wrk1d(:, 5)
+! ! additional diagonals
+!         g => wrk1d(:, 8)
+!         h => wrk1d(:, 9)
+
+! ! #######################################################################
+! ! -----------------------------------------------------------------------
+! ! solve for v in v' = f , v_nx given
+! ! -----------------------------------------------------------------------
+!         f(:, 1) = 0.0_wp
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, i2, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
+!             call PENTADFS(nx - 1, a, b, c, d, e)
+
+! !   obtain v^0, array tmp1
+!             call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
+!             tmp1(:, nx) = 0.0_wp
+!             do i = 1, nx
+!                 tmp1(:, i) = tmp1(:, i) + bcs(:, 2) ! add v_N to free array bcs(:,2)
+!             end do
+
+! !   obtain v^1, array wrk1d(:,6)
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, i2, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
+!             call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
+
+! !   obtain v^0, array tmp1
+!             call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
+!             tmp1(:, nx) = 0.0_wp
+!             do i = 1, nx
+!                 tmp1(:, i) = tmp1(:, i) + bcs(:, 2) ! add v_N to free array bcs(:,2)
+!             end do
+
+! !   obtain v^1, array wrk1d(:,6)
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         end if
+
+! ! -----------------------------------------------------------------------
+! ! solve for u in u' = v, u_1 given
+! ! -----------------------------------------------------------------------
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+
+! !   obtain u^0
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
+!             bcs(:, 2) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 2) = (bcs(:, 2) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
+
+! !   obtain u^1, array wrk1d(:,7)
+!             call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+
+! !   obtain u^0
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
+!             bcs(:, 2) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 2) = (bcs(:, 2) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
+
+! !   obtain u^1, array wrk1d(:,7)
+!             call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         end if
+
+! ! Constraint
+!         dummy = 1.0_wp/(dummy - wrk1d(1, 6))
+!         bcs(:, 2) = (tmp1(:, 1) - bcs(:, 2))*dummy
+
+! ! Result
+!         do i = 1, nx
+!             u(:, i) = u(:, i) + bcs(:, 2)*wrk1d(i, 7) + bcs(:, 1)
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 2)*wrk1d(i, 6)
+!         end do
+
+!         return
+!     end subroutine OPR_ODE2_1_SINGULAR_DN_OLD
+
+! !########################################################################
+! ! Neumann/Dirichlet boundary conditions
+! !########################################################################
+!     subroutine OPR_ODE2_1_SINGULAR_ND_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+!         integer(wi) imode_fdm, nx, nlines
+!         real(wp), dimension(nx) :: dx
+!         real(wp), dimension(nx, 9), target :: wrk1d
+!         real(wp), dimension(nlines, nx) :: u, f, tmp1
+!         real(wp), dimension(nlines, 2) :: bcs
+
+! ! #######################################################################
+!         a => wrk1d(:, 1)
+!         b => wrk1d(:, 2)
+!         c => wrk1d(:, 3)
+!         d => wrk1d(:, 4)
+!         e => wrk1d(:, 5)
+! ! additional diagonals
+!         g => wrk1d(:, 8)
+!         h => wrk1d(:, 9)
+
+! ! #######################################################################
+! ! -----------------------------------------------------------------------
+! ! solve for v in v' = f , v_1 given
+! ! -----------------------------------------------------------------------
+!         f(:, nx) = 0.0_wp
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, i1, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(nx, 6) = dx(nx); wrk1d(nx - 1, 6) = e(nx)*dx(nx) ! for v^1
+!             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+
+! !   obtain v^0, array tmp1
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
+!             tmp1(:, 1) = 0.0_wp
+!             do i = 1, nx
+!                 tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! add v_1 to free array bcs(:,1)
+!             end do
+
+! !   obtain v^1, array wrk1d(:,6)
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 6))
+!             wrk1d(1, 6) = 0.0_wp
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, i1, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(nx, 6) = dx(nx); wrk1d(nx - 1, 6) = g(nx)*dx(nx) ! for v^1
+!             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+
+! !   obtain v^0, array tmp1
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
+!             tmp1(:, 1) = 0.0_wp
+!             do i = 1, nx
+!                 tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! add v_1 to free array bcs(:,1)
+!             end do
+
+! !   obtain v^1, array wrk1d(:,6)
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 6))
+!             wrk1d(1, 6) = 0.0_wp
+!         end if
+
+! ! -----------------------------------------------------------------------
+! ! solve for u in u' = v, u_N given
+! ! -----------------------------------------------------------------------
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, i2, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, i2, dx, tmp1, u)
+!             call PENTADFS(nx - 1, a, b, c, d, e)
+
+! !   obtain u^0
+!             call PENTADSS(nx - 1, nlines, a, b, c, d, e, u)
+!             bcs(:, 1) = u(:, nx); u(:, nx) = 0.0_wp
+!             bcs(:, 1) = (bcs(:, 1) + a(nx)*u(:, nx - 2) + b(nx)*u(:, nx - 1) + c(nx)*u(:, nx))/dx(nx) !u^(0)'_nx
+
+! !   obtain u^1, array wrk1d(:,7)
+!             call INT_C1N6_RHS(nx, i1, i2, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 7))
+!             dummy = wrk1d(nx, 7); wrk1d(nx, 7) = 0.0_wp
+!             dummy = (dummy + a(nx)*wrk1d(nx - 2, 7) + b(nx)*wrk1d(nx - 1, 7) + c(nx)*wrk1d(nx, 7))/dx(nx) ! u^(1)'_nx
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, i2, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, i2, dx, tmp1, u)
+!             call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
+
+! !   obtain u^0
+!             call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, u)
+!             bcs(:, 1) = u(:, nx); u(:, nx) = 0.0_wp
+!             bcs(:, 1) = (bcs(:, 1) + b(nx)*u(:, nx - 2) + c(nx)*u(:, nx - 1) + d(nx)*u(:, nx))/dx(nx) !u^(0)'_nx
+
+! !   obtain u^1, array wrk1d(:,7)
+!             call INT_C1N6M_RHS(nx, i1, i2, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 7))
+!             dummy = wrk1d(nx, 7); wrk1d(nx, 7) = 0.0_wp
+!             dummy = (dummy + b(nx)*wrk1d(nx - 2, 7) + c(nx)*wrk1d(nx - 1, 7) + d(nx)*wrk1d(nx, 7))/dx(nx) ! u^(1)'_nx
+!         end if
+
+! ! Constraint
+!         dummy = 1.0_wp/(dummy - wrk1d(nx, 6))
+!         bcs(:, 1) = (tmp1(:, nx) - bcs(:, 1))*dummy
+
+! ! Result
+!         do i = 1, nx
+!             u(:, i) = u(:, i) + bcs(:, 1)*wrk1d(i, 7) + bcs(:, 2)
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 1)*wrk1d(i, 6)
+!         end do
+
+!         return
+!     end subroutine OPR_ODE2_1_SINGULAR_ND_OLD
+
+! !########################################################################
+! !Dirichlet/Dirichlet boundary conditions
+! !########################################################################
+!     subroutine OPR_ODE2_1_SINGULAR_DD_OLD(imode_fdm, nx, nlines, x, dx, u, f, bcs, tmp1, wrk1d)
+!         integer(wi) imode_fdm, nx, nlines
+!         real(wp), dimension(nx) :: dx, x
+!         real(wp), dimension(nx, 9), target :: wrk1d
+!         real(wp), dimension(nlines, nx) :: u, f, tmp1
+!         real(wp), dimension(nlines, 3) :: bcs
+
+! ! #######################################################################
+!         a => wrk1d(:, 1)
+!         b => wrk1d(:, 2)
+!         c => wrk1d(:, 3)
+!         d => wrk1d(:, 4)
+!         e => wrk1d(:, 5)
+! ! additional diagonals
+!         g => wrk1d(:, 8)
+!         h => wrk1d(:, 9)
+
+! ! #######################################################################
+! ! -----------------------------------------------------------------------
+! ! solve for v = u' in (u')' = f , u'_nx given
+! ! -----------------------------------------------------------------------
+!         f(:, 1) = 0.0_wp
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, i2, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
+!             call PENTADFS(nx - 1, a, b, c, d, e)
+
+! !   obtain v^0, array tmp1
+!             call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
+!             tmp1(:, nx) = 0.0_wp
+
+! !   obtain v^1, array wrk1d(:,6)
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, i2, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
+!             call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
+
+! !     obtain v^0, array tmp1
+!             call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
+!             tmp1(:, nx) = 0.0_wp
+
+! !     obtain v^1, array wrk1d(:,6)
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         end if
+! ! -----------------------------------------------------------------------
+! ! solve for u in u' v f, u_1 given
+! ! -----------------------------------------------------------------------
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+
+! !   obtain u^0
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
+!             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
+
+! !   obtain u^1, array wrk1d(:,7)
+!             call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+
+! !   obtain u^0
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
+!             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
+
+! !   obtain u^1, array wrk1d(:,7)
+!             call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + c(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         end if
+
+! ! Constraint
+!         dummy = 1.0_wp/(dummy - wrk1d(1, 6))
+!         bcs(:, 3) = (tmp1(:, 1) - bcs(:, 3))*dummy
+
+! ! BCs
+!         dummy = 1.0_wp/(x(nx) - x(1))
+!         bcs(:, 2) = (bcs(:, 2) - u(:, nx) - bcs(:, 3)*wrk1d(nx, 7) - bcs(:, 1))*dummy
+
+! ! Result
+!         do i = 1, nx
+!             u(:, i) = u(:, i) + bcs(:, 3)*wrk1d(i, 7) + bcs(:, 2)*(x(i) - x(1)) + bcs(:, 1)
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 3)*wrk1d(i, 6) + bcs(:, 2)
+!         end do
+
+!         return
+!     end subroutine OPR_ODE2_1_SINGULAR_DD_OLD
+
+!########################################################################
+!Neumann/Neumann boundary conditions; must be compatible!
+!########################################################################
+    subroutine OPR_ODE2_1_SINGULAR_NN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+        integer(wi) imode_fdm, nx, nlines
+        real(wp), dimension(nx) :: dx
+        real(wp), dimension(nx, 7), target :: wrk1d
+        real(wp), dimension(nlines, nx) :: u, f, tmp1
+        real(wp), dimension(nlines, 2) :: bcs
+
+! #######################################################################
+        a => wrk1d(:, 1)
+        b => wrk1d(:, 2)
+        c => wrk1d(:, 3)
+        d => wrk1d(:, 4)
+        e => wrk1d(:, 5)
+! additional diagonals
+        g => wrk1d(:, 6)
+        h => wrk1d(:, 7)
+
+! #######################################################################
+! -----------------------------------------------------------------------
+! solve for v in v' = f , v_1 given
+! -----------------------------------------------------------------------
+        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+            call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
+            call INT_C1N6_RHS(nx, nlines, i1, dx, f, tmp1)
+            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+            call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
+            call INT_C1N6M_RHS(nx, nlines, i1, dx, f, tmp1)
+            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
+        end if
+        tmp1(:, 1) = 0.0_wp
+        do i = 1, nx
+            tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! this step assumes compatible problem
+        end do
+! -----------------------------------------------------------------------
+! solve for u in u' = v, u_1 given
+! -----------------------------------------------------------------------
+        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!   same l.h.s. as before
+            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
+!   same l.h.s. as before
+            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
+        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!   same l.h.s. as before
+            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
+!   same l.h.s. as before
+            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
+        end if
+        u(:, 1) = 0.0_wp ! this integration constant is free and set to zero
+
+        return
+    end subroutine OPR_ODE2_1_SINGULAR_NN_OLD
 
 end module OPR_ODES

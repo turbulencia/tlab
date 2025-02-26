@@ -238,7 +238,7 @@ contains
 ! scratch arrays
         inb_wrk1d = 18
 
-        inb_wrk2d = 2
+        inb_wrk2d = 3
         if (imode_sim == DNS_MODE_SPATIAL) inb_wrk2d = max(11, inb_wrk2d)
 
         return

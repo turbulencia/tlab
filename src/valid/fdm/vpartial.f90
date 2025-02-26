@@ -54,7 +54,7 @@ program VPARTIAL
     isize_wrk1d = imax
     isize_wrk2d = len
     inb_wrk1d = 20
-    inb_wrk2d = 2
+    inb_wrk2d = 3
     inb_txc = 9
 
     call TLab_Initialize_Memory(__FILE__)

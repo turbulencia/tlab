@@ -242,6 +242,8 @@ contains
         integer(wi) bcs(2, 2), bcs2(2, 2)
         real(wp) dummy, params(0)
 
+        real(wp), allocatable :: bcs_hb(:), bcs_ht(:)
+
         ! ###################################################################
         bcs = 0
 
@@ -293,6 +295,8 @@ contains
             end if
 
         case (PERT_BROADBAND_VORTICITY)                 ! Vorticity given, solve lap(u) = - rot(vort), vort = rot(u)
+            allocate (bcs_hb(imax*kmax), bcs_ht(imax*kmax))
+
             call FI_CURL(imax, jmax, kmax, u, v, w, ax, ay, az, tmp4)
             do j = 1, jmax
                 ax(:, j, :) = -ax(:, j, :)*p_wrk1d(j, 2)
@@ -303,23 +307,23 @@ contains
 
             ! Solve lap(u) = - (rot(vort))_x
             if (g(1)%periodic .and. g(3)%periodic) then
-                p_wrk2d(:, :, 1:2) = 0.0_wp             ! bcs
-                call OPR_Poisson(imax, jmax, kmax, g, flag_wall, u, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+                call OPR_Poisson(imax, jmax, kmax, g, flag_wall, u, tmp4, tmp5, bcs_hb, bcs_ht)
             else                                        ! General treatment; undevelop
             end if
 
             ! Solve lap(v) = - (rot(vort))_y with no penetration bcs
             if (g(1)%periodic .and. g(3)%periodic) then
-                p_wrk2d(:, :, 1:2) = 0.0_wp             ! bcs
-                call OPR_Poisson(imax, jmax, kmax, g, BCS_DD, v, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+                call OPR_Poisson(imax, jmax, kmax, g, BCS_DD, v, tmp4, tmp5, bcs_hb, bcs_ht)
             else                                        ! General treatment; undevelop
             end if
 
             ! Solve lap(w) = - (rot(vort))_z
             if (g(3)%size > 1) then
                 if (g(1)%periodic .and. g(3)%periodic) then
-                    p_wrk2d(:, :, 1:2) = 0.0_wp         ! bcs
-                    call OPR_Poisson(imax, jmax, kmax, g, flag_wall, w, tmp4, tmp5, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+                    bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+                    call OPR_Poisson(imax, jmax, kmax, g, flag_wall, w, tmp4, tmp5, bcs_hb, bcs_ht)
                 else                                    ! General treatment; undevelop
                 end if
             end if
@@ -549,6 +553,8 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) bcs(2, 2)
 
+        real(wp), allocatable :: bcs_hb(:), bcs_ht(:)
+
         ! ###################################################################
         ! Calculate RHS d/dx_i d/dx_j (u_i u_j), stored in txc4
 
@@ -579,10 +585,11 @@ contains
 
         ! Solve Poisson equation; pprime contains fluctuating p' (BCs are equal to zero!)
         if (g(1)%periodic .and. g(3)%periodic) then ! Doubly periodic in xOz
-            p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
             pprime = -txc4          ! change of forcing term sign
-            ! call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-            call OPR_Poisson(imax, jmax, kmax, g, 0, pprime, txc1, txc2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+
+            allocate (bcs_hb(imax*kmax), bcs_ht(imax*kmax))
+            bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+            call OPR_Poisson(imax, jmax, kmax, g, 0, pprime, txc1, txc2, bcs_hb, bcs_ht)
         else                                      ! General treatment
             ! Undevelop
         end if

@@ -426,12 +426,6 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     end do
 
 ! pressure in tmp1, Oy derivative in tmp3
-    ! select case (imode_elliptic)
-    ! case (FDM_COM6_JACOBIAN)
-    !     call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
-    ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-    !     call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
-    ! end select
     call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives

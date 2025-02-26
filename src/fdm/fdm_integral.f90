@@ -14,9 +14,13 @@ module FDM_Integral
 
     type, public :: fdm_integral_dt
         sequence
-        integer :: bc                               ! boundary condition, [ BCS_MIN, BCS_MAX ]
+        integer mode_fdm1                           ! original finite-difference method
+        real(wp), pointer :: nodes(:)               ! nodes position; this and the previous information is redundant but useful in ODEs
+        !                                             This info also allows to reproduce lhs and rhs, if needed
+        !
+        integer :: bc                               ! type of boundary condition, [ BCS_MIN, BCS_MAX ]
         real(wp) :: rhs_b(1:5, 0:7), rhs_t(0:4, 8)  ! # of diagonals is 7, # rows is 7/2+1
-        real(wp), pointer :: lhs(:, :)              ! Ofet overwritten to LU decomposition. Maybe add lu array and keep this as well.
+        real(wp), pointer :: lhs(:, :)              ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
         real(wp), pointer :: rhs(:, :)
     end type fdm_integral_dt
 
@@ -43,7 +47,8 @@ contains
 !# The system is normalized such that the central diagonal in the new rhs is 1
 !#
 !########################################################################
-    subroutine FDM_Int1_Initialize(lhs, rhs, lambda, fdmi)
+    subroutine FDM_Int1_Initialize(x, lhs, rhs, lambda, fdmi)
+        real(wp), intent(in) :: x(:)                    ! node positions
         real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
         real(wp), intent(in) :: lambda                  ! system constant
@@ -68,6 +73,12 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
+        ! if (.not. allocated(fdmi%nodes)) allocate (fdmi%nodes(nx))
+        allocate (fdmi%nodes(nx))
+        fdmi%nodes(1:nx) = x(1:nx)
+
+        ! if (.not. allocated(fdmi%lhs)) allocate (fdmi%lhs(nx, ndr))
+        ! if (.not. allocated(fdmi%rhs)) allocate (fdmi%rhs(nx, ndl))
         allocate (fdmi%lhs(nx, ndr))
         allocate (fdmi%rhs(nx, ndl))
 

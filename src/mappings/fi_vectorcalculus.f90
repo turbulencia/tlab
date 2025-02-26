@@ -70,7 +70,6 @@ contains
 !#
 !########################################################################
     subroutine FI_SOLENOIDAL(nx, ny, nz, u, v, w, tmp1, tmp2, tmp3)
-        use TLab_Pointers_3D, only: p_wrk2d
         use OPR_ELLIPTIC
 
         integer(wi), intent(IN) :: nx, ny, nz
@@ -79,6 +78,7 @@ contains
 
 ! -------------------------------------------------------------------
         integer(wi) bcs(2, 2)
+        real(wp), allocatable :: bcs_hb(:), bcs_ht(:)
 
 ! ###################################################################
         bcs = 0
@@ -88,8 +88,9 @@ contains
 ! -------------------------------------------------------------------
         call FI_INVARIANT_P(nx, ny, nz, u, v, w, tmp1, tmp2)
 
-        p_wrk2d(:, :, 1:2) = 0.0_wp  ! bcs
-        call OPR_Poisson(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+        allocate (bcs_hb(nx*nz), bcs_ht(nx*nz))
+        bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
+        call OPR_Poisson(nx, ny, nz, g, BCS_NN, tmp1, tmp2, tmp3, bcs_hb, bcs_ht)
 
 ! -------------------------------------------------------------------
 ! Eliminate solenoidal part of u by adding grad(phi)

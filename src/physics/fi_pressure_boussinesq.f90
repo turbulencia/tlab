@@ -13,7 +13,6 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLab_WorkFlow, only: stagger_on
     use Rotation, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
-    use TLab_Pointers_3D, only: p_wrk2d
     use Thermo_Anelastic
     use IBM_VARS, only: imode_ibm, ibm_burgers
     use OPR_PARTIAL
@@ -34,20 +33,19 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     integer(wi), intent(in) :: decomposition
 
     target q, tmp, s
-! -----------------------------------------------------------------------
+
+    ! -----------------------------------------------------------------------
     integer(wi) :: bcs(2, 2)
     integer(wi) :: iq
     integer(wi) :: i
 
-! -----------------------------------------------------------------------
+    real(wp), allocatable :: bcs_hb(:, :), bcs_ht(:, :)
     real(wp) dummy
 
-! -----------------------------------------------------------------------
 #ifdef USE_BLAS
     integer(wi) :: srt
     integer ILEN
 #endif
-! -----------------------------------------------------------------------
 
 ! Pointers to existing allocated space
     real(wp), dimension(:), pointer :: u, v, w
@@ -251,24 +249,19 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
 ! Solve Poisson equation
 ! #######################################################################
 ! Neumman BCs in d/dy(p) s.t. v=0 (no-penetration)
+    if (.not. allocated(bcs_hb)) allocate(bcs_hb(imax, kmax))
+    if (.not. allocated(bcs_ht)) allocate(bcs_ht(imax, kmax))
+
     if (stagger_on) then ! todo: only need to stagger upper/lower boundary plane, not full h2-array
         call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
         call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
         if (imode_ibm == 1) call IBM_BCS_FIELD_STAGGER(tmp4)
     end if
     p_bcs(1:imax, 1:jmax, 1:kmax) => tmp4(1:imax*jmax*kmax)
-    p_wrk2d(:, :, 1) = p_bcs(:, 1, :)
-    p_wrk2d(:, :, 2) = p_bcs(:, jmax, :)
+    bcs_hb(:, :) = p_bcs(:, 1, :)
+    bcs_ht(:, :) = p_bcs(:, jmax, :)
 
-! Pressure field in p
-    ! select case (imode_elliptic)
-    ! case (FDM_COM6_JACOBIAN)
-    !     call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-
-    ! case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-    !     call OPR_Poisson_FourierXZ_Direct(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
-    ! end select
-    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, p_wrk2d(:, :, 1), p_wrk2d(:, :, 2))
+    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, p, tmp1, tmp2, bcs_hb, bcs_ht)
 
     ! filter pressure p
     if (any(PressureFilter(:)%type /= DNS_FILTER_NONE)) then

@@ -7,7 +7,7 @@ module OPR_ELLIPTIC
     use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
     use TLab_WorkFlow, only: stagger_on
-    use TLab_Pointers_3D, only: p_wrk1d
+    use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
@@ -23,7 +23,7 @@ module OPR_ELLIPTIC
     implicit none
     private
 
-    procedure (OPR_Poisson_interface) :: OPR_Poisson_dt ! Implicit pointer (Procedure type)
+    procedure(OPR_Poisson_interface) :: OPR_Poisson_dt ! Implicit pointer (Procedure type)
     abstract interface
         subroutine OPR_Poisson_interface(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
             use TLab_Constants, only: wi, wp
@@ -40,7 +40,7 @@ module OPR_ELLIPTIC
         end subroutine
     end interface
 
-    procedure (OPR_Helmholtz_interface) :: OPR_Helmholtz_dt ! Implicit pointer (Procedure type)
+    procedure(OPR_Helmholtz_interface) :: OPR_Helmholtz_dt ! Implicit pointer (Procedure type)
     abstract interface
         subroutine OPR_Helmholtz_interface(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
             use TLab_Constants, only: wi, wp
@@ -138,7 +138,7 @@ contains
             OPR_Poisson => OPR_Poisson_FourierXZ_Direct
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
 
-        ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
+            ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
             isize_line = imax/2 + 1
 
             call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
@@ -288,8 +288,9 @@ contains
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_1_SINGULAR_NN(g(2)%mode_fdm1, ny, 2, &
-                                                    g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        ! call OPR_ODE2_1_SINGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, &
+                        !                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        call OPR_ODE2_SINGULAR_NN(2, g(2)%fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
                         call OPR_ODE2_1_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
                                                    g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
@@ -297,8 +298,9 @@ contains
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_1_SINGULAR_DD(g(2)%mode_fdm1, ny, 2, &
-                                                    g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        ! call OPR_ODE2_1_SINGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, &
+                        !                                 g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        call OPR_ODE2_SINGULAR_DD(2, g(2)%fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
                         call OPR_ODE2_1_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
                                                    g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))

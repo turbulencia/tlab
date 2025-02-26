@@ -345,8 +345,9 @@ contains
         if (.not. g%periodic) then
             bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
             do ib = 1, 2
+                g%fdmi(ib)%mode_fdm1 = g%mode_fdm1
                 g%fdmi(ib)%bc = bcs_cases(ib)
-                call FDM_Int1_Initialize(g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, g%fdmi(ib))
+                call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, g%fdmi(ib))
 
                 ! LU decomposition
                 select case (ndr)

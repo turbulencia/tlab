@@ -606,7 +606,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     end if
 
 ! pressure in tmp12, Oy derivative in tmp11
-    call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, i3, tmp12, tmp41, tmp42, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp11)
+    call OPR_Poisson_FourierXZ_Factorize(imax, jmax, kmax, g, 3, tmp12, tmp41, tmp42, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp11)
 
     if (rkm_substep == rkm_endstep) then
         if (use_tower) call DNS_TOWER_ACCUMULATE(tmp12, i4, wrk1d)
