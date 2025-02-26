@@ -1,6 +1,7 @@
 #include "dns_const.h"
 
-! # Solvers for linear ordinary differential equations with constant coefficients
+! # Solvers for boundary value problems of 
+! # linear ordinary differential equations with constant coefficients
 module OPR_ODES
     use TLab_Constants, only: wp, wi, BCS_MIN, BCS_MAX, BCS_BOTH
     use FDM, only: fdm_dt, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
@@ -16,8 +17,7 @@ module OPR_ODES
     integer, parameter :: i1 = 1, i2 = 2
 
     ! First-order ODEs
-    public :: OPR_Integral1             ! Using derived type grid_dp to pass information, typically initialized for lambda = 0
-    ! public :: OPR_ODE1                ! Passing lu and rhs directly, which could be initialized for lambda /= 0
+    public :: OPR_Integral1
 
     ! Second-order ODEs. Reducing problem to a system of 2 first-order equations
     ! public :: OPR_ODE2
@@ -37,11 +37,11 @@ module OPR_ODES
 contains
 !########################################################################
 !#
-!#     u'_i + \lamba u_i = f_i  N-1 eqns
-!#     u_1 or u_N given         1   eqn
-!#     Au' = Bu                 N   eqns
+!#     u'_i + \lambda u_i = f_i  N-1 eqns
+!#     u_1 or u_N given          1   eqn
+!#     Au' = Bu                  N   eqns
 !#
-!# See FDM_Int1_Initialize. Similar to OPR_PARTIAL1
+!# See FDM_Int1_Initialize. Similar to OPR_PARTIAL1. Should it be OPR_ODE1?
 !# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
 !########################################################################
     subroutine OPR_Integral1(nlines, fdmi, f, result, wrk2d, du_boundary)

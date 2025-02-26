@@ -138,7 +138,7 @@ program VINTEGRAL
     do ib = 1, 2
         fdmi(ib)%mode_fdm1 = g%mode_fdm1
         fdmi(ib)%bc = ibc
-        call FDM_Int1_Initialize(g%nodes, g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
+        call FDM_Int1_Initialize(g%nodes, g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
 
         ! LU decomposition
         select case (ndr)
@@ -174,7 +174,7 @@ program VINTEGRAL
 
             ! f = du1_a
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
-            ! f = f + lambda*u
+            f = f + lambda*u
 
             ndr = g%nb_diag_1(2)
             ndl = g%nb_diag_1(1)

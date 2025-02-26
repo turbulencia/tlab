@@ -118,12 +118,14 @@ contains
         select case (fdmi%bc)
         case (BCS_MIN)
             fdmi%lhs(1:idr, 1:ndr) = rhsr_b(1:idr, 1:ndr)
+            fdmi%lhs(1, idr + 1:idr + idl - 1) = fdmi%lhs(1, idr + 1:idr + idl - 1) - lambda*fdmi%rhs_b(1, idl + 1:ndl)
             ! fdmi%lhs(2:idr, 1:ndr) = rhsr_b(2:idr, 1:ndr)
             do ir = 1, idr - 1
                 fdmi%lhs(1 + ir, idr - idl + 1:idr + idl - 1) = fdmi%lhs(1 + ir, idr - idl + 1:idr + idl - 1) + lambda*fdmi%rhs_b(1 + ir, 1:ndl)
             end do
         case (BCS_MAX)
             fdmi%lhs(nx - idr + 1:nx, 1:ndr) = rhsr_t(1:idr, 1:ndr)
+            fdmi%lhs(nx, idr - idl + 1:idr - 1) = fdmi%lhs(nx, idr - idl + 1:idr - 1) - lambda*fdmi%rhs_t(idl, 1:idl - 1)
             ! fdmi%lhs(nx - idr + 1:nx - 1, 1:ndr) = rhsr_t(1:idr - 1, 1:ndr)
             do ir = 1, idr - 1
                 fdmi%lhs(nx - ir, idr - idl + 1:idr + idl - 1) = fdmi%lhs(nx - ir, idr - idl + 1:idr + idl - 1) + lambda*fdmi%rhs_t(idl - ir, 1:ndl)
@@ -189,17 +191,17 @@ contains
         integer, intent(in) :: ibc                  ! Boundary condition, BCS_DD, BCS_DN, BCS_ND, BCS_NN
         real(wp), intent(in) :: lhs(imax, 3)        ! matrix A, tridiagonal
         real(wp), intent(in) :: rhs(imax, 4)        ! matrix B, with unitary central diagonal
-        real(wp) lambda2                            ! system constatn
+        real(wp) lambda2                            ! system constant
         real(wp), intent(out) :: lu(imax, 5)        ! diagonals in new pentadiagonal lhs
         real(wp), intent(out) :: f(imax, 2)         ! forcing terms for the hyperbolic sine
-        real(wp), intent(out) :: bvp_rhs(imax, 2)   ! diagonals to calculate new tridiagonalrhs
+        real(wp), intent(out) :: bvp_rhs(imax, 2)   ! diagonals to calculate new tridiagonal rhs
 
 ! -------------------------------------------------------------------
         integer(wi) i
         real(wp) dummy1, dummy2, pprime, coef(5), l2_inv, l2_min, l2_max
 
 ! ###################################################################
-        ! new prentadiagonal lhs (array C22R)
+        ! new pentadiagonal lhs (array C22R)
         lu(:, 1) = rhs(:, 1)
         lu(:, 2) = rhs(:, 2) - lambda2*lhs(:, 1)
         lu(:, 3) = 1.0_wp - lambda2*lhs(:, 2)
