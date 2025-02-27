@@ -73,7 +73,7 @@ program VINTEGRAL
     write (*, *) 'Eigenvalue ?'
     read (*, *) lambda
 
-    test_type = 2
+    test_type = 3
 
     ! ###################################################################
     if (g%periodic) then
@@ -140,17 +140,6 @@ program VINTEGRAL
         fdmi(ib)%bc = ibc
         call FDM_Int1_Initialize(g%nodes, g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
 
-        ! LU decomposition
-        select case (ndr)
-        case (3)
-            call TRIDFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3))
-        case (5)
-            call PENTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
-                          fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5))
-        case (7)
-            call HEPTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
-                          fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5), fdmi(ib)%lhs(2:, 6), fdmi(ib)%lhs(2:, 7))
-        end select
     end do
 
     ! ###################################################################
@@ -187,18 +176,6 @@ program VINTEGRAL
                 fdmi(ib)%mode_fdm1 = g%mode_fdm1
                 call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
 
-                ! LU decomposition
-                select case (ndr)
-                case (3)
-                    call TRIDFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3))
-                case (5)
-                    call PENTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
-                                  fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5))
-                case (7)
-                    call HEPTADFS(g%size - 2, fdmi(ib)%lhs(2:, 1), fdmi(ib)%lhs(2:, 2), fdmi(ib)%lhs(2:, 3), &
-                                  fdmi(ib)%lhs(2:, 4), fdmi(ib)%lhs(2:, 5), fdmi(ib)%lhs(2:, 6), fdmi(ib)%lhs(2:, 7))
-                end select
-
                 ! bcs
                 select case (ibc)
                 case (BCS_MIN)
@@ -207,7 +184,7 @@ program VINTEGRAL
                     w_n(:, kmax) = u(:, kmax)
                 end select
 
-                call OPR_Integral1(len, fdmi(ib), f, w_n, wrk2d, dw1_n(:, 1))
+                call FDM_Int1_Solve(len, fdmi(ib), f, w_n, wrk2d, dw1_n(:, 1))
 
                 call check(u, w_n, 'integral.dat')
 
@@ -226,7 +203,7 @@ program VINTEGRAL
         end do
 
 ! ###################################################################
-! Second order equation
+! Second order equation; singular cases
 ! ###################################################################
     case (2)
         allocate (bcs(len, 2))
@@ -234,12 +211,12 @@ program VINTEGRAL
             u(:, i) = u(:, i) - u(:, 1)
         end do
 
-        ! f = du2_a !- lambda*lambda*u
+        ! f = du2_a
         ! du1_n = du1_a ! I need it for the boundary conditions
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
         ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
-        f = du2_n !- lambda*lambda*u
+        f = du2_n 
 
         bcs_cases(1:4) = [BCS_DD, BCS_DN, BCS_ND, BCS_NN]
 
@@ -268,6 +245,52 @@ program VINTEGRAL
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
                 ! call OPR_ODE2_1_SINGULAR_NN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_SINGULAR_NN(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+            end select
+
+            call check(u, w_n, 'integral.dat')
+            call check(du1_n, dw1_n)
+
+        end do
+
+! ###################################################################
+! Second order equation; regular cases
+! ###################################################################
+    case (3)
+        allocate (bcs(len, 2))
+        do i = kmax, 1, -1     ! set the lower value to zero, which is assumed in BCS_NN
+            u(:, i) = u(:, i) - u(:, 1)
+        end do
+
+        ! f = du2_a - lambda*lambda*u
+        ! du1_n = du1_a ! I need it for the boundary conditions
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
+        f = du2_n - lambda*lambda*u
+
+        bcs_cases(1:4) = [BCS_DD, BCS_NN, BCS_DN, BCS_ND]
+
+        do ib = 1, 2
+            ibc = bcs_cases(ib)
+            print *, new_line('a')
+
+            select case (ibc)
+            case (BCS_DD)
+                print *, 'Dirichlet/Dirichlet'
+                bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
+                ! call OPR_ODE2_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_DD(len, g, lambda, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+            case (BCS_DN)
+                print *, 'Dirichlet/Neumann'
+                bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
+            case (BCS_ND)
+                print *, 'Neumann/Dirichlet'
+                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
+            case (BCS_NN)
+                print *, 'Neumann/Neumann'
+                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
+                ! call OPR_ODE2_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_NN(len, g, lambda, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')

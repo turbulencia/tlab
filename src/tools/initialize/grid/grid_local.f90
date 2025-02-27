@@ -80,7 +80,7 @@ contains
     subroutine BLD_EXP(idir, iseg, x, nmax, w)
         use TLab_Constants, only: BCS_MIN
         use FDM, only: fdm_dt, FDM_Initialize, FDM_COM6_JACOBIAN
-        use OPR_ODES, only: OPR_Integral1
+        use FDM_Integral, only: FDM_Int1_Solve
         integer(wi), intent(IN) :: idir, iseg, nmax
         real(wp), intent(INOUT) :: x(nmax), w(nmax, 8)
 
@@ -115,7 +115,7 @@ contains
         g%mode_fdm2 = FDM_COM6_JACOBIAN
         call FDM_Initialize(g, x)
         ! x(1) is already set
-        call OPR_Integral1(1, g%fdmi(BCS_MIN), rhs(:), result(:), aux)
+        call FDM_Int1_Solve(1, g%fdmi(BCS_MIN), rhs(:), result(:), aux)
         x(:) = result(:)
 #undef rhs
 #undef result

@@ -1,23 +1,16 @@
 #include "dns_const.h"
 
-! # Solvers for boundary value problems of 
+! # Solvers for boundary value problems of
 ! # linear ordinary differential equations with constant coefficients
 module OPR_ODES
     use TLab_Constants, only: wp, wi, BCS_MIN, BCS_MAX, BCS_BOTH
     use FDM, only: fdm_dt, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
-    use FDM_Integral, only: fdm_integral_dt
+    use FDM_Integral, only: fdm_integral_dt, FDM_Int1_Solve, FDM_Int1_Initialize
     use FDM_MatMul
     implicit none
     private
 
-    integer(wi) i
-    real(wp) dummy, lambda
-    real(wp), dimension(:), pointer :: a, b, c, d, e, g, h, ep, em
-
-    integer, parameter :: i1 = 1, i2 = 2
-
     ! First-order ODEs
-    public :: OPR_Integral1
 
     ! Second-order ODEs. Reducing problem to a system of 2 first-order equations
     ! public :: OPR_ODE2
@@ -26,131 +19,41 @@ module OPR_ODES
     public :: OPR_ODE2_SINGULAR_ND
     public :: OPR_ODE2_SINGULAR_NN
 
-    public :: OPR_ODE2_1_REGULAR_DD     ! Dirichlet/Dirichlet boundary conditions
-    public :: OPR_ODE2_1_REGULAR_NN     ! Neumann/Neumann boundary conditions
+    public :: OPR_ODE2_NN     ! Neumann/Neumann boundary conditions
+    public :: OPR_ODE2_DD     ! Dirichlet/Dirichlet boundary conditions
+
+    public :: OPR_ODE2_1_REGULAR_DD_OLD     ! Dirichlet/Dirichlet boundary conditions
+    public :: OPR_ODE2_1_REGULAR_NN_OLD     ! Neumann/Neumann boundary conditions
 
     ! public :: OPR_ODE2_1_SINGULAR_DD_OLD
     ! public :: OPR_ODE2_1_SINGULAR_DN_OLD
     ! public :: OPR_ODE2_1_SINGULAR_ND_OLD
     public :: OPR_ODE2_1_SINGULAR_NN_OLD
 
+    ! -----------------------------------------------------------------------
+    integer(wi) i
+    real(wp) dummy, lambda
+    real(wp), dimension(:), pointer :: a, b, c, d, e, g, h, ep, em
+
+    integer, parameter :: i1 = 1, i2 = 2
+
+    type(fdm_integral_dt) :: fdmi_b, fdmi_t
+
 contains
-!########################################################################
-!#
-!#     u'_i + \lambda u_i = f_i  N-1 eqns
-!#     u_1 or u_N given          1   eqn
-!#     Au' = Bu                  N   eqns
-!#
-!# See FDM_Int1_Initialize. Similar to OPR_PARTIAL1. Should it be OPR_ODE1?
-!# I wonder if this one and OPR_PARTIAL1 should be in FDM module.
-!########################################################################
-    subroutine OPR_Integral1(nlines, fdmi, f, result, wrk2d, du_boundary)
-        integer(wi) nlines
-        type(fdm_integral_dt), intent(in) :: fdmi
-        real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
-        real(wp), intent(inout) :: result(nlines, size(fdmi%lhs, 1))   ! contains bcs
-        real(wp), intent(inout) :: wrk2d(nlines, 2)
-        real(wp), intent(out), optional :: du_boundary(nlines)
+    !########################################################################
+    !#
+    !#     (u')'_i - \lambda^2 u_i = f_i        N - 2 eqns (singular case when \lambda = 0)
+    !#     u_1, u'_1, u_N, or u'_N given        2   eqns
+    !#     Au' = Bu                             N   eqns
+    !#     A(u')' = Bu'                         N   eqns
+    !#
+    !# Mellado & Ansorge, 2012: Z. Angew. Math. Mech., 1-12, 10.1002/zamm.201100078
+    !#
+    !########################################################################
 
-        integer(wi) :: nx
-        integer(wi) :: idl, ndl, idr, ndr, ic
-
-        ! ###################################################################
-        nx = size(f, 2)
-
-        ndl = size(fdmi%lhs, 2)
-        idl = ndl/2 + 1
-        ndr = size(fdmi%rhs, 2)
-        idr = ndr/2 + 1
-
-        select case (fdmi%bc)
-        case (BCS_MIN)
-            result(:, nx) = f(:, nx)
-        case (BCS_MAX)
-            result(:, 1) = f(:, 1)
-        end select
-
-        select case (size(fdmi%rhs, 2))
-        case (3)
-            call MatMul_3d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 3), f, result, &
-                           BCS_BOTH, rhs_b=fdmi%rhs_b(1:3, 0:3), rhs_t=fdmi%rhs_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
-        case (5)
-            call MatMul_5d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 2), fdmi%rhs(:, 4), fdmi%rhs(:, 5), f, result, &
-                           BCS_BOTH, rhs_b=fdmi%rhs_b(1:4, 0:5), rhs_t=fdmi%rhs_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
-        end select
-
-        select case (ndl)
-        case (3)
-            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), result(:, 2:))
-        case (5)
-            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), result(:, 2:))
-        case (7)
-            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), result(:, 2:))
-        end select
-
-        if (any([BCS_MAX] == fdmi%bc)) then
-            result(:, 1) = wrk2d(:, 1)
-            do ic = 1, idl - 1
-                result(:, 1) = result(:, 1) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
-            end do
-            result(:, 1) = result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic)
-
-            if (present(du_boundary)) then      ! calculate u'n
-                du_boundary(:) = fdmi%lhs(nx, idl)*result(:, nx)
-                do ic = 1, idl - 1
-                    du_boundary(:) = du_boundary(:) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
-                end do
-                ic = idl                        ! longer stencil at the boundary
-                du_boundary(:) = du_boundary(:) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
-
-                do ic = 1, idr - 1
-                    du_boundary(:) = du_boundary(:) + fdmi%rhs(nx, idr - ic)*f(:, nx - ic)
-                end do
-
-            end if
-
-        end if
-
-        if (any([BCS_MIN] == fdmi%bc)) then
-            result(:, nx) = wrk2d(:, 2)
-            do ic = 1, idl - 1
-                result(:, nx) = result(:, nx) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
-            end do
-            result(:, nx) = result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
-
-            if (present(du_boundary)) then      ! calculate u'1
-                du_boundary(:) = fdmi%lhs(1, idl)*result(:, 1)
-                do ic = 1, idl - 1
-                    du_boundary(:) = du_boundary(:) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
-                end do
-                ic = idl                        ! longer stencil at the boundary
-                du_boundary(:) = du_boundary(:) + fdmi%lhs(1, 1)*result(:, 1 + ic)
-
-                do ic = 1, idr - 1
-                    du_boundary(:) = du_boundary(:) + fdmi%rhs(1, idr + ic)*f(:, 1 + ic)
-                end do
-
-            end if
-
-        end if
-
-        return
-    end subroutine OPR_Integral1
-
-!########################################################################
-!#
-!#     (u')'_i - \lambda^2 u_i = f_i        N - 2 eqns (singular case when \lambda = 0)
-!#     u_1, u'_1, u_N, or u'_N given        2   eqns
-!#     Au' = Bu                             N   eqns
-!#     A(u')' = Bu'                         N   eqns
-!#
-!# Mellado & Ansorge, 2012: Z. Angew. Math. Mech., 1-12, 10.1002/zamm.201100078
-!#
-!########################################################################
-
-!########################################################################
-!########################################################################
-! Dirichlet/Neumann boundary conditions
+    !########################################################################
+    !########################################################################
+    ! Dirichlet/Neumann boundary conditions
     subroutine OPR_ODE2_SINGULAR_DN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
@@ -164,7 +67,7 @@ contains
         integer(wi) nx
         real(wp) du1_n(1), f1
 
-! #######################################################################
+        ! #######################################################################
         nx = size(fdmi(1)%lhs, 1)
 
 #define f1(i) wrk1d(i,1)
@@ -172,31 +75,32 @@ contains
 #define u1(i) wrk1d(i,3)
 #define du0_n(i) wrk2d(i,3)
 
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_n given
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
+        ! solve for v^(0) in v' = f , v_n given
         f(:, 1) = 0.0_wp
         v(:, nx) = bcs(:, 2)
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), f, v, wrk2d)
-!   solve for v1
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), f, v, wrk2d)
+
+        ! solve for v^(1)
         f1(:) = 0.0_wp; f1(1) = 1.0_wp
         v1(nx) = 0.0_wp
-        call OPR_Integral1(1, fdmi(BCS_MAX), f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), f1(:), v1(:), wrk2d)
 
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
+        ! solve for u^(0) in u' = v, u_1 given
         u(:, 1) = bcs(:, 1)
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), v, u, wrk2d, du0_n(:))
-!   solve for u1
-        u1(1) = 0.0_wp
-        call OPR_Integral1(1, fdmi(BCS_MIN), v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), v, u, wrk2d, du0_n(:))
 
-! Constraint
+        ! solve for u^(1)
+        u1(1) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), v1(:), u1(:), wrk2d, du1_n(1))
+
+        ! -----------------------------------------------------------------------
+        ! Constraint
         f1 = 1.0_wp/(du1_n(1) - v1(1))
         du0_n(:) = (v(:, 1) - du0_n(:))*f1
 
-! Result
+        ! Result
         do i = 1, nx
             u(:, i) = u(:, i) + du0_n(:)*u1(i)
             v(:, i) = v(:, i) + du0_n(:)*v1(i)
@@ -210,9 +114,9 @@ contains
         return
     end subroutine OPR_ODE2_SINGULAR_DN
 
-!########################################################################
-!########################################################################
-! Neumann/Dirichlet boundary conditions
+    !########################################################################
+    !########################################################################
+    ! Neumann/Dirichlet boundary conditions
     subroutine OPR_ODE2_SINGULAR_ND(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
@@ -226,7 +130,7 @@ contains
         integer(wi) nx
         real(wp) du1_n(1), fn
 
-! #######################################################################
+        ! #######################################################################
         nx = size(fdmi(1)%lhs, 1)
 
 #define f1(i) wrk1d(i,1)
@@ -234,31 +138,32 @@ contains
 #define u1(i) wrk1d(i,3)
 #define du0_n(i) wrk2d(i,3)
 
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_1 given
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
+        ! solve for v^(0) in v' = f , v_1 given
         f(:, nx) = 0.0_wp
         v(:, 1) = bcs(:, 1)
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, v, wrk2d)
-!   solve for v1
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+
+        ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
-        call OPR_Integral1(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
 
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_n given
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
+        ! solve for u^(0) in u' = v, u_n given
         u(:, nx) = bcs(:, 2)
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
-!   solve for u1
-        u1(nx) = 0.0_wp
-        call OPR_Integral1(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
 
-! Constraint
+        ! solve for u^(1)
+        u1(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+
+        ! -----------------------------------------------------------------------
+        ! Constraint
         fn = 1.0_wp/(du1_n(1) - v1(nx))
         du0_n(:) = (v(:, nx) - du0_n(:))*fn
 
-! Result
+        ! Result
         do i = 1, nx
             u(:, i) = u(:, i) + du0_n(:)*u1(i)
             v(:, i) = v(:, i) + du0_n(:)*v1(i)
@@ -272,9 +177,9 @@ contains
         return
     end subroutine OPR_ODE2_SINGULAR_ND
 
-!########################################################################
-!########################################################################
-! Neumann/Neumann boundary conditions; must be compatible!
+    !########################################################################
+    !########################################################################
+    ! Neumann/Neumann boundary conditions; must be compatible!
     subroutine OPR_ODE2_SINGULAR_NN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
@@ -285,19 +190,19 @@ contains
         real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
-! #######################################################################
-! Assumes compatible problem, i.e., bcs_n -bcs_1 = int f
-! We write it in terms of the Dirichlet/Neumann problem
-! (We could have written it in terms of the Neumann/Dirichlet problem as well)
+        ! #######################################################################
+        ! Assumes compatible problem, i.e., bcs_n -bcs_1 = int f
+        ! We write it in terms of the Dirichlet/Neumann problem
+        ! (We could have written it in terms of the Neumann/Dirichlet problem as well)
         bcs(:, 1) = 0.0_wp
         call OPR_ODE2_SINGULAR_DN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
 
         return
     end subroutine OPR_ODE2_SINGULAR_NN
 
-!########################################################################
-!########################################################################
-! Dirichlet/Dirichlet boundary conditions
+    !########################################################################
+    !########################################################################
+    ! Dirichlet/Dirichlet boundary conditions
     subroutine OPR_ODE2_SINGULAR_DD(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
@@ -321,25 +226,26 @@ contains
 #define x(i)  fdmi(1)%nodes(i)
 
         ! -----------------------------------------------------------------------
-        ! solve for v in v' = f , v_1 given (0 for now, to be found later on)
-        ! -----------------------------------------------------------------------
+        ! solve for v^(0) in v' = f , v_1 given (0 for now, to be found later on)
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call OPR_Integral1(nlines, fdmi(BCS_MIN), f, v, wrk2d)
-        !   solve for v1
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+
+        ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
-        call OPR_Integral1(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
 
         ! -----------------------------------------------------------------------
-        ! solve for u in u' = v, u_n given
-        ! -----------------------------------------------------------------------
+        ! solve for u^(0) in u' = v, u_n given
         u(:, nx) = bcs(:, 2)
-        call OPR_Integral1(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
-        !   solve for u1
-        u1(nx) = 0.0_wp
-        call OPR_Integral1(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
 
+        ! solve for u^(1)
+        u1(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+
+        ! -----------------------------------------------------------------------
         ! Constraint
         fn = 1.0_wp/(du1_n(1) - v1(nx))
         du0_n(:) = (v(:, nx) - du0_n(:))*fn
@@ -364,10 +270,191 @@ contains
         return
     end subroutine OPR_ODE2_SINGULAR_DD
 
+    !########################################################################
+    !########################################################################
+    ! Neumann/Neumann boundary conditions; assumes u = 0 at the bottom
+    subroutine OPR_ODE2_NN(nlines, g, lambda, u, f, bcs, v, wrk1d, wrk2d)
+        integer(wi) nlines
+        type(fdm_dt), intent(in) :: g
+        real(wp), intent(in) :: lambda
+        real(wp), intent(inout) :: f(nlines, size(g%nodes))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(out) :: u(nlines, size(g%nodes)) ! solution
+        real(wp), intent(out) :: v(nlines, size(g%nodes)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(g%nodes), 4)
+        real(wp), intent(inout) :: wrk2d(nlines, 3)
+
+        integer(wi) nx, ndl, ndr
+        real(wp) du1_n(1), dep_n(1)
+
+        ! #######################################################################
+        nx = size(g%nodes)
+        ndr = g%nb_diag_1(2)
+        ndl = g%nb_diag_1(1)
+
+#define v1(i) wrk1d(i,1)
+#define f1(i) wrk1d(i,2)
+#define u1(i) wrk1d(i,3)
+#define ep(i) wrk1d(i,4)
+#define du0_n(i) wrk2d(i,3)
+#define fn(i) wrk2d(i,3)
+
+        ! -----------------------------------------------------------------------
+        ! solve for v^(0) in v' + lambda v= f , v_1 given: assume u = 0 at the bottom and v = du - lambda u = du
+        fdmi_b%bc = BCS_MIN
+        fdmi_b%mode_fdm1 = g%mode_fdm1
+        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_b)
+
+        f(:, nx) = 0.0_wp
+        v(:, 1) = bcs(:, 1)
+        call FDM_Int1_Solve(nlines, fdmi_b, f, v, wrk2d)
+
+        ! solve for v^(1)
+        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
+        v1(1) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi_b, f1(:), v1(:), wrk2d)
+
+        ! -----------------------------------------------------------------------
+        ! solve for u^(0) in u' - lambda u = v, u_n given (0 for now, to be found later on)
+        fdmi_t%bc = BCS_MAX
+        fdmi_t%mode_fdm1 = g%mode_fdm1
+        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi_t)
+
+        u(:, nx) = 0.0_wp
+        call FDM_Int1_Solve(nlines, fdmi_t, v, u, wrk2d, du0_n(:))
+
+        ! solve for u^(1)
+        u1(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi_t, v1(:), u1(:), wrk2d, du1_n(1))
+
+        ! solve for e^(+)
+        f1(:) = 0.0_wp
+        ep(nx) = 1.0_wp
+        call FDM_Int1_Solve(1, fdmi_t, f1(:), ep(:), wrk2d, dep_n(1))
+
+        ! -----------------------------------------------------------------------
+        ! Constraint and top boundary condition
+        dummy = 1.0_wp/(du1_n(1)*lambda - dep_n(1)*v1(nx))
+        u(:, nx) = (du1_n(1)*(bcs(:, 2) - v(:, nx)) - v1(nx)*(bcs(:, 2) - du0_n(:)))*dummy
+        fn(:) = (lambda*(bcs(:, 2) - du0_n(:)) - dep_n(1)*(bcs(:, 2) - v(:, nx)))*dummy
+
+        ! Result
+        do i = 1, nx - 1
+            u(:, i) = u(:, i) + fn(:)*u1(i) + u(:, nx)*ep(i)
+            v(:, i) = v(:, i) + fn(:)*v1(i) + lambda*u(:, i)
+        end do
+        i = nx
+        v(:, i) = v(:, i) + fn(:)*v1(i) + lambda*u(:, i)
+
+#undef fn
+#undef du0_n
+#undef f1
+#undef v1
+#undef u1
+#undef ep
+
+        return
+    end subroutine OPR_ODE2_NN
+
+    !########################################################################
+    !########################################################################
+    ! Dirichlet/Dirichlet boundary conditions
+    subroutine OPR_ODE2_DD(nlines, g, lambda, u, f, bcs, v, wrk1d, wrk2d)
+        integer(wi) nlines
+        type(fdm_dt), intent(in) :: g
+        real(wp), intent(in) :: lambda
+        real(wp), intent(inout) :: f(nlines, size(g%nodes))
+        real(wp), intent(in) :: bcs(nlines, 2)
+        real(wp), intent(out) :: u(nlines, size(g%nodes)) ! solution
+        real(wp), intent(out) :: v(nlines, size(g%nodes)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(g%nodes), 5)
+        real(wp), intent(inout) :: wrk2d(nlines, 3)
+
+        integer(wi) nx, ndl, ndr
+        real(wp) du1_n(1), dsp_n(1), aa, bb
+
+        ! #######################################################################
+        nx = size(g%nodes)
+        ndr = g%nb_diag_1(2)
+        ndl = g%nb_diag_1(1)
+
+#define f1(i) wrk1d(i,1)
+#define v1(i) wrk1d(i,2)
+#define u1(i) wrk1d(i,3)
+#define em(i) wrk1d(i,4)
+#define sp(i) wrk1d(i,5)
+#define du0_n(i) wrk2d(i,3)
+#define fn(i) wrk2d(i,3)
+
+        ! -----------------------------------------------------------------------
+        ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
+        fdmi_b%bc = BCS_MIN
+        fdmi_b%mode_fdm1 = g%mode_fdm1
+        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_b)
+
+        f(:, nx) = 0.0_wp
+        v(:, 1) = 0.0_wp
+        call FDM_Int1_Solve(nlines, fdmi_b, f, v, wrk2d)
+
+        ! solve for v^(1)
+        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
+        v1(1) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi_b, f1(:), v1(:), wrk2d)
+
+        ! solve for e^(-)
+        f1(:) = 0.0_wp
+        em(1) = 1.0_wp
+        call FDM_Int1_Solve(1, fdmi_b, f1(:), em(:), wrk2d)
+
+        ! -----------------------------------------------------------------------
+        ! solve for u^(0) in u' - lambda u = v, u_n given
+        fdmi_t%bc = BCS_MAX
+        fdmi_t%mode_fdm1 = g%mode_fdm1
+        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi_t)
+
+        u(:, nx) = bcs(:, 2)
+        call FDM_Int1_Solve(nlines, fdmi_t, v, u, wrk2d, du0_n(:))
+
+        ! solve for u^(1)
+        u1(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi_t, v1(:), u1(:), wrk2d, du1_n(1))
+
+        ! solve for s^(+)
+        sp(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi_t, em(:), sp(:), wrk2d, dsp_n(1))
+
+        ! -----------------------------------------------------------------------
+        ! Constraint and bottom boundary condition
+        aa = du1_n(1) - v1(nx)
+        bb = dsp_n(1) - em(nx)
+        dummy = 1.0_wp/(aa*sp(1) - bb*u1(1))
+        v(:, 1) = (aa*(bcs(:, 1) - u(:, 1)) - u1(1)*(lambda*bcs(:, 2) - du0_n(:) + v(:, nx)))*dummy   ! q1
+        fn(:) = (sp(1)*(lambda*bcs(:, 2) - du0_n(:) + v(:, nx)) - bb*(bcs(:, 1) - u(:, 1)))*dummy
+
+        ! Result
+        do i = nx, 2, -1
+            u(:, i) = u(:, i) + fn(:)*u1(i) + v(:, 1)*sp(i)
+            v(:, i) = v(:, i) + fn(:)*v1(i) + v(:, 1)*em(i) + lambda*u(:, i)
+        end do
+        i = 1
+        u(:, i) = bcs(:, 1)
+        v(:, i) = v(:, i) + lambda*u(:, i)
+
+#undef fn
+#undef du0_n
+#undef f1
+#undef v1
+#undef u1
+#undef em
+#undef sp
+
+        return
+    end subroutine OPR_ODE2_DD
+
 !########################################################################
 !Neumann/Neumann boundary conditions
 !########################################################################
-    subroutine OPR_ODE2_1_REGULAR_NN(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
+    subroutine OPR_ODE2_1_REGULAR_NN_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
         integer(wi) imode_fdm, nx, nlines
         real(wp) cst
         real(wp), dimension(nx) :: dx
@@ -526,12 +613,12 @@ contains
         end do
 
         return
-    end subroutine OPR_ODE2_1_REGULAR_NN
+    end subroutine OPR_ODE2_1_REGULAR_NN_OLD
 
 !########################################################################
 !Dirichlet/Dirichlet boundary conditions
 !########################################################################
-    subroutine OPR_ODE2_1_REGULAR_DD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
+    subroutine OPR_ODE2_1_REGULAR_DD_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
         integer(wi) imode_fdm, nx, nlines
         real(wp) cst
         real(wp), dimension(nx) :: dx
@@ -675,7 +762,7 @@ contains
         end do
 
         return
-    end subroutine OPR_ODE2_1_REGULAR_DD
+    end subroutine OPR_ODE2_1_REGULAR_DD_OLD
 
 ! !########################################################################
 ! !Dirichlet/Neumann boundary conditions

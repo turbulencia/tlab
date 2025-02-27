@@ -119,6 +119,7 @@ contains
     subroutine Gravity_Hydrostatic_Enthalpy(g, s, ep, T, p, yref, pref, wrk1d)
         use TLab_Constants, only: BCS_MIN
         use FDM, only: fdm_dt
+        use FDM_Integral, only: FDM_Int1_Solve
         use Thermodynamics
         use Thermo_Anelastic
         use THERMO_AIRWATER
@@ -177,7 +178,7 @@ contains
             end if
 
             p(1) = 0.0_wp
-            call OPR_Integral1(1, g%fdmi(BCS_MIN), r_aux(:), p, wrk_aux(:))
+            call FDM_Int1_Solve(1, g%fdmi(BCS_MIN), r_aux(:), p, wrk_aux(:))
 
             ! Calculate pressure and normalize s.t. p=pref at y=yref
             p(:) = exp(p(:))

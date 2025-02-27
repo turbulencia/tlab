@@ -341,6 +341,7 @@ contains
 
 ! ###################################################################
 ! first-order integrals (cases lambda = 0.0_wp)
+! to be moved to opr_ode_initiaalize...
 ! ###################################################################
         if (.not. g%periodic) then
             bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
@@ -348,18 +349,6 @@ contains
                 g%fdmi(ib)%mode_fdm1 = g%mode_fdm1
                 g%fdmi(ib)%bc = bcs_cases(ib)
                 call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, g%fdmi(ib))
-
-                ! LU decomposition
-                select case (ndr)
-                case (3)
-                    call TRIDFS(g%size - 2, g%fdmi(ib)%lhs(2:, 1), g%fdmi(ib)%lhs(2:, 2), g%fdmi(ib)%lhs(2:, 3))
-                case (5)
-                    call PENTADFS(g%size - 2, g%fdmi(ib)%lhs(2:, 1), g%fdmi(ib)%lhs(2:, 2), g%fdmi(ib)%lhs(2:, 3), &
-                                  g%fdmi(ib)%lhs(2:, 4), g%fdmi(ib)%lhs(2:, 5))
-                case (7)
-                    call HEPTADFS(g%size - 2, g%fdmi(ib)%lhs(2:, 1), g%fdmi(ib)%lhs(2:, 2), g%fdmi(ib)%lhs(2:, 3), &
-                                  g%fdmi(ib)%lhs(2:, 4), g%fdmi(ib)%lhs(2:, 5), g%fdmi(ib)%lhs(2:, 6), g%fdmi(ib)%lhs(2:, 7))
-                end select
                 
             end do
         end if

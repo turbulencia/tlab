@@ -3,11 +3,13 @@
 !########################################################################
 ! Initialize arrays to calculate boundary-value problems and integrals
 ! based on the compact schemes of the classes Au' = Bu and Au'' = Bu
+! This probably should be OPR_ODE in operators, but need to disentangle it from global fdm_dt...
 !########################################################################
 
 module FDM_Integral
-    use TLab_Constants, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
+    use TLab_Constants, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use FDM_MatMul
     use FDM_PROCS
     implicit none
     private
@@ -24,30 +26,64 @@ module FDM_Integral
         real(wp), pointer :: rhs(:, :)
     end type fdm_integral_dt
 
-    public FDM_Int1_Initialize      ! Prepare to solve u' +\lambda u = f
-    public FDM_Int2_Initialize      ! Prepare to solve u'' - \lamba^2 u = f
+    public FDM_Int1_Initialize          ! Prepare to solve u' +\lambda u = f
+    public FDM_Int1_CreateSystem
+    public FDM_Int1_Solve
+
+    public FDM_Int2_CreateSystem        ! Prepare to solve (u')' - \lamba^2 u = f
 
 contains
-!########################################################################
-!#
-!# Initialize the solver for the BVP
-!#
-!#     u'_i + \lamba u_i = f_i  N-1 eqns
-!#     u_1 or u_N given         1   eqn
-!#     Au' = Bu                 N   eqns
-!#
-!# starting from generic diagonal matrices A (lhs) and B (rhs).
-!#
-!# The system of N-1 eqns:
-!#
-!#                    (B + \lambda A)u = Af
-!#
-!# is established in this routine (see notes).
-!#
-!# The system is normalized such that the central diagonal in the new rhs is 1
-!#
-!########################################################################
+    !########################################################################
+    !#
+    !#     u'_i + \lamba u_i = f_i  N-1 eqns
+    !#     u_1 or u_N given         1   eqn
+    !#     Au' = Bu                 N   eqns
+    !#
+    !# starting from generic diagonal matrices A (lhs) and B (rhs).
+    !#
+    !# The system of N-1 eqns:
+    !#
+    !#                    (B + \lambda A)u = Af
+    !#
+    !# is established in this routine (see notes).
+    !#
+    !# The system is normalized such that the central diagonal in the new rhs is 1
+    !#
+    !########################################################################
     subroutine FDM_Int1_Initialize(x, lhs, rhs, lambda, fdmi)
+        real(wp), intent(in) :: x(:)                    ! node positions
+        real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
+        real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
+        real(wp), intent(in) :: lambda                  ! system constant
+        type(fdm_integral_dt), intent(out) :: fdmi      ! int_plan to be created
+
+        ! -------------------------------------------------------------------
+        integer(wi) nx, ndr
+
+        !########################################################################
+        call FDM_Int1_CreateSystem(x, lhs, rhs, lambda, fdmi)
+
+        ! LU decomposition
+        nx = size(fdmi%lhs, 1)              ! # of grid points
+        ndr = size(fdmi%lhs, 2)             ! # of diagonals
+
+        select case (ndr)
+        case (3)
+            call TRIDFS(nx - 2, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3))
+        case (5)
+            call PENTADFS(nx - 2, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+                          fdmi%lhs(2:, 4), fdmi%lhs(2:, 5))
+        case (7)
+            call HEPTADFS(nx - 2, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+                          fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7))
+        end select
+        return
+
+    end subroutine FDM_Int1_Initialize
+
+    !########################################################################
+    !########################################################################
+    subroutine FDM_Int1_CreateSystem(x, lhs, rhs, lambda, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
         real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
@@ -66,7 +102,7 @@ contains
         idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
         nx = size(lhs, 1)               ! # grid points
 
-! ###################################################################
+        ! ###################################################################
         ! check sizes
         if (abs(idl - idr) > 1) then
             call TLab_Write_ASCII(efile, __FILE__//'. lhs and rhs cannot differ by more than 2 diagonals.')
@@ -163,28 +199,121 @@ contains
         end select
 
         return
-    end subroutine FDM_Int1_Initialize
+    end subroutine FDM_Int1_CreateSystem
 
-!########################################################################
-!#
-!# Initialize the solver for the BVP
-!#
-!#     u''_i - \lamba^2 u_i = f_i  N-2 eqns
-!#     u_1 and u_N given           2   eqns
-!#     Au'' = Bu                   N   eqns
-!#
-!# starting from the matrices A (lhs, tridiagonal) and B (rhs, pentadiagonal, with unitary central diagonal).
-!#
-!# The system of N-2 eqns:
-!#
-!#                    (B - \lambda^2 A)u = Af = g
-!#
-!# is established in this routine, giving diagonals a-e and g (see notes).
-!#
-!# The system is normalized such that the central diagonal in the new rhs is 1
-!#
-!########################################################################
-    subroutine FDM_Int2_Initialize(imax, x, ibc, lhs, rhs, lambda2, lu, f, bvp_rhs)
+    !########################################################################
+    !########################################################################
+    subroutine FDM_Int1_Solve(nlines, fdmi, f, result, wrk2d, du_boundary)
+        integer(wi) nlines
+        type(fdm_integral_dt), intent(in) :: fdmi
+        real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
+        real(wp), intent(inout) :: result(nlines, size(fdmi%lhs, 1))   ! contains bcs
+        real(wp), intent(inout) :: wrk2d(nlines, 2)
+        real(wp), intent(out), optional :: du_boundary(nlines)
+
+        integer(wi) :: nx
+        integer(wi) :: idl, ndl, idr, ndr, ic
+
+        ! ###################################################################
+        nx = size(f, 2)
+
+        ndl = size(fdmi%lhs, 2)
+        idl = ndl/2 + 1
+        ndr = size(fdmi%rhs, 2)
+        idr = ndr/2 + 1
+
+        select case (fdmi%bc)
+        case (BCS_MIN)
+            result(:, nx) = f(:, nx)
+        case (BCS_MAX)
+            result(:, 1) = f(:, 1)
+        end select
+
+        select case (size(fdmi%rhs, 2))
+        case (3)
+            call MatMul_3d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 3), f, result, &
+                           BCS_BOTH, rhs_b=fdmi%rhs_b(1:3, 0:3), rhs_t=fdmi%rhs_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
+        case (5)
+            call MatMul_5d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 2), fdmi%rhs(:, 4), fdmi%rhs(:, 5), f, result, &
+                           BCS_BOTH, rhs_b=fdmi%rhs_b(1:4, 0:5), rhs_t=fdmi%rhs_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
+        end select
+
+        select case (ndl)
+        case (3)
+            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), result(:, 2:))
+        case (5)
+            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), result(:, 2:))
+        case (7)
+            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), result(:, 2:))
+        end select
+
+        if (any([BCS_MAX] == fdmi%bc)) then
+            result(:, 1) = wrk2d(:, 1)
+            do ic = 1, idl - 1
+                result(:, 1) = result(:, 1) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
+            end do
+            result(:, 1) = result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic)
+
+            if (present(du_boundary)) then      ! calculate u'n
+                du_boundary(:) = fdmi%lhs(nx, idl)*result(:, nx)
+                do ic = 1, idl - 1
+                    du_boundary(:) = du_boundary(:) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
+                end do
+                ic = idl                        ! longer stencil at the boundary
+                du_boundary(:) = du_boundary(:) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
+
+                do ic = 1, idr - 1
+                    du_boundary(:) = du_boundary(:) + fdmi%rhs(nx, idr - ic)*f(:, nx - ic)
+                end do
+
+            end if
+
+        end if
+
+        if (any([BCS_MIN] == fdmi%bc)) then
+            result(:, nx) = wrk2d(:, 2)
+            do ic = 1, idl - 1
+                result(:, nx) = result(:, nx) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
+            end do
+            result(:, nx) = result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
+
+            if (present(du_boundary)) then      ! calculate u'1
+                du_boundary(:) = fdmi%lhs(1, idl)*result(:, 1)
+                do ic = 1, idl - 1
+                    du_boundary(:) = du_boundary(:) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
+                end do
+                ic = idl                        ! longer stencil at the boundary
+                du_boundary(:) = du_boundary(:) + fdmi%lhs(1, 1)*result(:, 1 + ic)
+
+                do ic = 1, idr - 1
+                    du_boundary(:) = du_boundary(:) + fdmi%rhs(1, idr + ic)*f(:, 1 + ic)
+                end do
+
+            end if
+
+        end if
+
+        return
+    end subroutine FDM_Int1_Solve
+
+    !########################################################################
+    !#
+    !#     u''_i - \lamba^2 u_i = f_i  N-2 eqns
+    !#     u_1 and u_N given           2   eqns
+    !#     Au'' = Bu                   N   eqns
+    !#
+    !# starting from the matrices A (lhs, tridiagonal) and B (rhs, pentadiagonal, with unitary central diagonal).
+    !#
+    !# The system of N-2 eqns:
+    !#
+    !#                    (B - \lambda^2 A)u = Af = g
+    !#
+    !# is established in this routine, giving diagonals a-e and g (see notes).
+    !#
+    !# The system is normalized such that the central diagonal in the new rhs is 1
+    !#
+    !########################################################################
+    subroutine FDM_Int2_CreateSystem(imax, x, ibc, lhs, rhs, lambda2, lu, f, bvp_rhs)
 
         integer(wi), intent(in) :: imax             ! original size; here using only 2:imax-1
         real(wp), intent(in) :: x(imax)             ! grid nodes
@@ -196,11 +325,11 @@ contains
         real(wp), intent(out) :: f(imax, 2)         ! forcing terms for the hyperbolic sine
         real(wp), intent(out) :: bvp_rhs(imax, 2)   ! diagonals to calculate new tridiagonal rhs
 
-! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
         integer(wi) i
         real(wp) dummy1, dummy2, pprime, coef(5), l2_inv, l2_min, l2_max
 
-! ###################################################################
+        ! ###################################################################
         ! new pentadiagonal lhs (array C22R)
         lu(:, 1) = rhs(:, 1)
         lu(:, 2) = rhs(:, 2) - lambda2*lhs(:, 1)
@@ -381,6 +510,6 @@ contains
             return
         end function
 
-    end subroutine FDM_Int2_Initialize
+    end subroutine FDM_Int2_CreateSystem
 
 end module FDM_Integral

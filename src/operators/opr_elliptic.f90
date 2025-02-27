@@ -14,7 +14,7 @@ module OPR_ELLIPTIC
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
-    use FDM_Integral, only: FDM_Int2_Initialize
+    use FDM_Integral, only: FDM_Int2_CreateSystem
     use FDM_MatMul
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
@@ -172,8 +172,8 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call FDM_Int2_Initialize(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                             lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
+                    call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                                               lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
 
                     ! LU decomposizion
                     ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
@@ -292,8 +292,9 @@ contains
                         !                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_SINGULAR_NN(2, g(2)%fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
-                        call OPR_ODE2_1_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                                                       g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        ! call OPR_ODE2_NN(2, g(2), sqrt(lambda), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
@@ -302,8 +303,9 @@ contains
                         !                                 g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_SINGULAR_DD(2, g(2)%fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
-                        call OPR_ODE2_1_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                                                       g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        ! call OPR_ODE2_DD(2, g(2), sqrt(lambda), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 end select
@@ -430,8 +432,8 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call FDM_Int2_Initialize(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                             p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
+                    call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                                               p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
                     call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
@@ -604,12 +606,12 @@ contains
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
-                    call OPR_ODE2_1_REGULAR_NN(g(2)%mode_fdm1, ny, 2, lambda, &
-                                               g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                    call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                 case (0) ! Dirichlet & Dirichlet BCs
-                    call OPR_ODE2_1_REGULAR_DD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                               g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                    call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                 end select
 
@@ -715,8 +717,8 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
-                call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
-                                         p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
+                call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+                                           p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                 ! LU factorization
                 call PENTADFS(ny - 2, p_wrk1d(2, 1), p_wrk1d(2, 2), p_wrk1d(2, 3), p_wrk1d(2, 4), p_wrk1d(2, 5))
@@ -871,7 +873,7 @@ contains
 !                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 !                 ! if (ibc == 0) then ! Dirichlet BCs
 !                 p_wrk1d(:, 1:7) = 0.0_wp
-!                 call FDM_Int2_Initialize(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+!                 call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
 !                                     p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 !                 call INT_C2NX_RHS(ny, i2, lhs, p_wrk1d(1, 9), p_wrk1d(1, 11))
 
