@@ -216,7 +216,7 @@ program VINTEGRAL
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
         call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
         ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
-        f = du2_n 
+        f = du2_n
 
         bcs_cases(1:4) = [BCS_DD, BCS_DN, BCS_ND, BCS_NN]
 
@@ -257,9 +257,8 @@ program VINTEGRAL
 ! ###################################################################
     case (3)
         allocate (bcs(len, 2))
-        do i = kmax, 1, -1     ! set the lower value to zero, which is assumed in BCS_NN
-            u(:, i) = u(:, i) - u(:, 1)
-        end do
+        call random_seed()
+        call random_number(u)
 
         ! f = du2_a - lambda*lambda*u
         ! du1_n = du1_a ! I need it for the boundary conditions
@@ -268,7 +267,7 @@ program VINTEGRAL
         ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
         f = du2_n - lambda*lambda*u
 
-        bcs_cases(1:4) = [BCS_DD, BCS_NN, BCS_DN, BCS_ND]
+        bcs_cases(1:2) = [BCS_DD, BCS_NN]!, BCS_DN, BCS_ND]
 
         do ib = 1, 2
             ibc = bcs_cases(ib)
@@ -280,12 +279,12 @@ program VINTEGRAL
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_DD(len, g, lambda, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
-            case (BCS_DN)
-                print *, 'Dirichlet/Neumann'
-                bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
-            case (BCS_ND)
-                print *, 'Neumann/Dirichlet'
-                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
+                ! case (BCS_DN) ! not yet developed
+                !     print *, 'Dirichlet/Neumann'
+                !     bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
+                ! case (BCS_ND)
+                !     print *, 'Neumann/Dirichlet'
+                !     bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)

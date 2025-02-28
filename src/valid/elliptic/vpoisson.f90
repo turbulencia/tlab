@@ -165,7 +165,9 @@ program VPOISSON
 ! ###################################################################
     case (2) ! The input field a is used to construct the forcing term as lap a = f
         ! Reading field
-        call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+        ! call IO_Read_Fields('field.inp', imax, jmax, kmax, itime, 1, 0, a, params)
+        call random_seed()
+        call random_number(a)
 
         ! remove 2\Delta x wave
         do ig = 1, 3

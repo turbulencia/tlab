@@ -272,7 +272,7 @@ contains
 
     !########################################################################
     !########################################################################
-    ! Neumann/Neumann boundary conditions; assumes u = 0 at the bottom
+    ! Neumann/Neumann boundary conditions
     subroutine OPR_ODE2_NN(nlines, g, lambda, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_dt), intent(in) :: g
@@ -281,11 +281,11 @@ contains
         real(wp), intent(in) :: bcs(nlines, 2)
         real(wp), intent(out) :: u(nlines, size(g%nodes)) ! solution
         real(wp), intent(out) :: v(nlines, size(g%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(size(g%nodes), 4)
+        real(wp), intent(inout) :: wrk1d(size(g%nodes), 6)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
         integer(wi) nx, ndl, ndr
-        real(wp) du1_n(1), dep_n(1)
+        real(wp) du1_n(1), dep_n(1), dsp_n(1), a(3, 3)
 
         ! #######################################################################
         nx = size(g%nodes)
@@ -295,24 +295,31 @@ contains
 #define v1(i) wrk1d(i,1)
 #define f1(i) wrk1d(i,2)
 #define u1(i) wrk1d(i,3)
-#define ep(i) wrk1d(i,4)
+#define em(i) wrk1d(i,4)
+#define ep(i) wrk1d(i,5)
+#define sp(i) wrk1d(i,6)
 #define du0_n(i) wrk2d(i,3)
 #define fn(i) wrk2d(i,3)
 
         ! -----------------------------------------------------------------------
-        ! solve for v^(0) in v' + lambda v= f , v_1 given: assume u = 0 at the bottom and v = du - lambda u = du
+        ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
         fdmi_b%bc = BCS_MIN
         fdmi_b%mode_fdm1 = g%mode_fdm1
         call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_b)
 
         f(:, nx) = 0.0_wp
-        v(:, 1) = bcs(:, 1)
+        v(:, 1) = 0.0_wp
         call FDM_Int1_Solve(nlines, fdmi_b, f, v, wrk2d)
 
         ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
         call FDM_Int1_Solve(1, fdmi_b, f1(:), v1(:), wrk2d)
+
+        ! solve for e^(-)
+        f1(:) = 0.0_wp
+        em(1) = 1.0_wp
+        call FDM_Int1_Solve(1, fdmi_b, f1(:), em(:), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given (0 for now, to be found later on)
@@ -332,26 +339,61 @@ contains
         ep(nx) = 1.0_wp
         call FDM_Int1_Solve(1, fdmi_t, f1(:), ep(:), wrk2d, dep_n(1))
 
+        ! solve for s^(+)
+        sp(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi_t, em(:), sp(:), wrk2d, dsp_n(1))
+
         ! -----------------------------------------------------------------------
-        ! Constraint and top boundary condition
-        dummy = 1.0_wp/(du1_n(1)*lambda - dep_n(1)*v1(nx))
-        u(:, nx) = (du1_n(1)*(bcs(:, 2) - v(:, nx)) - v1(nx)*(bcs(:, 2) - du0_n(:)))*dummy
-        fn(:) = (lambda*(bcs(:, 2) - du0_n(:)) - dep_n(1)*(bcs(:, 2) - v(:, nx)))*dummy
+        ! Constraint and boundary conditions
+        ! System
+        a(1, 1) = 1.0_wp + lambda*sp(1)
+        a(2, 1) = em(nx)
+        a(3, 1) = dsp_n(1)
+
+        a(1, 2) = lambda*ep(1)
+        a(2, 2) = lambda
+        a(3, 2) = dep_n(1)
+
+        a(1, 3) = lambda*u1(1)
+        a(2, 3) = v1(nx)
+        a(3, 3) = du1_n(1)
+
+        ! LU decomposition
+        a(1, 2) = a(1, 2)/a(1, 1)
+        a(2, 2) = a(2, 2) - a(2, 1)*a(1, 2)
+        a(3, 2) = a(3, 2) - a(3, 1)*a(1, 2)
+
+        a(1, 3) = a(1, 3)/a(1, 1)
+        a(2, 3) = (a(2, 3) - a(2, 1)*a(1, 3))/a(2, 2)
+        a(3, 3) = a(3, 3) - a(3, 1)*a(1, 3) - a(3, 2)*a(2, 3)
+
+        ! Solution
+        v(:, 1) = (bcs(:, 1) - lambda*u(:, 1))/a(1, 1)
+        u(:, nx) = (bcs(:, 2) - v(:, nx) - a(2, 1)*v(:, 1))/a(2, 2)
+        fn(:) = (bcs(:, 2) - du0_n(:) - a(3, 1)*v(:, 1) - a(3, 2)*u(:, nx))/a(3, 3)
+
+        u(:, nx) = u(:, nx) - a(2, 3)*fn(:)
+        v(:, 1) = v(:, 1) - a(1, 2)*u(:, nx) - a(1, 3)*fn(:)
 
         ! Result
-        do i = 1, nx - 1
-            u(:, i) = u(:, i) + fn(:)*u1(i) + u(:, nx)*ep(i)
-            v(:, i) = v(:, i) + fn(:)*v1(i) + lambda*u(:, i)
-        end do
         i = nx
-        v(:, i) = v(:, i) + fn(:)*v1(i) + lambda*u(:, i)
+        v(:, i) = v(:, i) + fn(:)*v1(i) + v(:, 1)*em(i) + lambda*u(:, i)
+        do i = nx - 1, 2, -1
+            u(:, i) = u(:, i) + fn(:)*u1(i) + v(:, 1)*sp(i) + u(:, nx)*ep(i)
+            v(:, i) = v(:, i) + fn(:)*v1(i) + v(:, 1)*em(i) + lambda*u(:, i)
+        end do
+        i = 1
+        u(:, i) = u(:, i) + fn(:)*u1(i) + v(:, 1)*sp(i) + u(:, nx)*ep(i)
+        v(:, i) = v(:, i) + lambda*u(:, i)      ! Final correction to get u' instead of v = u'- lambda u.
 
 #undef fn
 #undef du0_n
 #undef f1
 #undef v1
 #undef u1
+#undef em
 #undef ep
+#undef sp
 
         return
     end subroutine OPR_ODE2_NN
