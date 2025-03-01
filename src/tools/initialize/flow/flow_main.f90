@@ -121,6 +121,7 @@ program INIFLOW
     end if
 
     ! ###################################################################
+    io_header_q(1)%params(1) = rtime
     call IO_Write_Fields(trim(adjustl(tag_flow))//'ics', imax, jmax, kmax, itime, inb_flow, q, io_header_q)
 
     call TLab_Stop(0)

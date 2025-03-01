@@ -133,6 +133,7 @@ program INISCAL
     end if
 
     ! ###################################################################
+    io_header_s(:)%params(1) = rtime
     call IO_Write_Fields('scal.ics', imax, jmax, kmax, itime, inb_scal, s, io_header_s(1:inb_scal))
 
     call TLab_Stop(0)

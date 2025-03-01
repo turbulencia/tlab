@@ -144,10 +144,6 @@ contains
                        + 5                      ! LU decomposition 2. order, 1 bcs
         end if
 
-        ! inb_grid = inb_grid &
-        !            + 5*2 &                      ! max # of diagonals in LHS for 1. integral, 2 bcs
-        !            + 7*2                        ! max # of diagonals in RHS for 1. integral, 2 bcs
-
         if (stagger_on .and. g%periodic) then
             inb_grid = inb_grid &
                        + 5 &                    ! LU decomposition interpolation
