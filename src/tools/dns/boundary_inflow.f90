@@ -99,9 +99,9 @@ contains
         end if
         if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
             call TLab_Grid_Read('grid.inf', x_inf, y_inf, z_inf, [g_inf(1)%size, g_inf(2)%size, g_inf(3)%size])
-            call FDM_Initialize(g_inf(1), x_inf)
-            call FDM_Initialize(g_inf(2), y_inf)
-            call FDM_Initialize(g_inf(3), z_inf)
+            call FDM_Initialize(x_inf, g_inf(1))
+            call FDM_Initialize(y_inf, g_inf(2))
+            call FDM_Initialize(z_inf, g_inf(3))
         end if
 
         if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))

@@ -62,9 +62,9 @@ See directory [`examples`](./examples/README.md).
   * [`src/physics`](./src/physics): phenomena considered in the evolution equations.
   * [`src/mappings`](./src/mappings): mappings from 3D fields to 3D, 2D and 1D data
   * [`src/operators`](./src/operators): operators that depend only on fdm routines
-  * [`src/fdm`](./src/fdm): modules with finite difference schemes
-  * [`src/utils`](./src/utils): modules with basic generic operators
-  * [`src/basic`](./src/basic): constants, variables, arrays and basic procedures
+  * [`src/fdm`](./src/fdm): finite difference schemes
+  * [`src/utils`](./src/utils): basic generic operators
+  * [`src/base`](./src/basic): constants, variables, arrays and workflow procedures
   * ...
 
 ## Data structure

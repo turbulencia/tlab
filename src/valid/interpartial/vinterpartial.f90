@@ -30,6 +30,7 @@ program VINTERPARTIAL
     use TLabMPI_VARS
 #endif
     use FDM, only: g, FDM_Initialize
+    use FDM_Integral, only: fdm_Int0
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use OPR_PARTIAL
     use TLab_Grid
@@ -78,9 +79,9 @@ program VINTERPARTIAL
     allocate (tmp1(isize_txc_field), wrk3d(isize_wrk3d))
 
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(g(1), x)
-    call FDM_Initialize(g(2), y)
-    call FDM_Initialize(g(3), z)
+    call FDM_Initialize(x, g(1))
+    call FDM_Initialize(y, g(2), fdm_Int0)
+    call FDM_Initialize(z, g(3))
 
     bcs = 0
 ! ###################################################################

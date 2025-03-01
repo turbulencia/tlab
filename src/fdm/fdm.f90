@@ -10,7 +10,8 @@ module FDM
         sequence
         character*8 name
         integer(wi) size
-        logical uniform, periodic
+        logical :: uniform = .false.
+        logical :: periodic = .false.
         real(wp) scale
         real(wp), pointer :: memory(:, :)       ! memory space
         !
@@ -27,7 +28,7 @@ module FDM
         !
         ! real(wp) :: rhsr_b(5, 0:7), rhsr_t(0:4, 8)      ! RHS data for reduced boundary conditions; max. # of diagonals is 7, # rows is 7/2+1
         !
-        type(fdm_integral_dt) :: fdmi(2)
+        ! type(fdm_integral_dt) :: fdmi(2)
         !
         real(wp), pointer :: lu0i(:, :)                 ! pointer to LU decomposition for interpolation
         real(wp), pointer :: lu1i(:, :)                 ! pointer to LU decomposition for 1. derivative inc. interp.
@@ -56,7 +57,7 @@ module FDM
     integer, parameter, public :: FDM_COM4_DIRECT = 17
 
 contains
-    subroutine FDM_Initialize(g, nodes, locScale)
+    subroutine FDM_Initialize(nodes, g, fdmi, locScale)
         use TLab_Constants, only: pi_wp, efile, wfile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, roundoff_wp
 #ifdef TRACE_ON
         use TLab_Constants, only: tfile
@@ -70,9 +71,10 @@ contains
         use FDM_Com1_Jacobian
         use FDM_Com2_Jacobian
 
-        type(fdm_dt), intent(inout) :: g                    ! grid structure
-        real(wp), intent(in) :: nodes(:)                    ! positions of the grid nodes
-        real(wp), intent(in), optional :: locScale          ! for consistency check
+        real(wp), intent(in) :: nodes(:)                            ! positions of the grid nodes
+        type(fdm_dt), intent(inout) :: g                            ! fdm plan for derivatives
+        type(fdm_integral_dt), intent(out), optional :: fdmi(2)     ! fdm plan for integrals
+        real(wp), intent(in), optional :: locScale                  ! for consistency check
 
 ! -------------------------------------------------------------------
         integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid
@@ -91,20 +93,9 @@ contains
         if (g%periodic .and. g%mode_fdm1 == FDM_COM4_DIRECT) g%mode_fdm1 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm1 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm2 == FDM_COM4_DIRECT) g%mode_fdm2 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
-        if (g%periodic .and. g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm2 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
+        if (g%periodic .and. g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER        ! they are the same for uniform grids.
 
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm1)) g%mode_fdm1 = FDM_COM6_JACOBIAN ! undeveloped; I would need to read separately 1. and 2. order information
-        if (any([FDM_COM6_JACOBIAN_PENTA] == g%mode_fdm2)) g%mode_fdm2 = FDM_COM6_JACOBIAN          ! undeveloped; I would need to read separately 1. and 2. order information
-        if (g%mode_fdm2 == FDM_COM6_JACOBIAN) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER                 ! default
-
-        if (g%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then                                            ! CFL_max depends on max[g%mwn1(:)]
-            call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
-        end if
-
-        if (size(nodes) /= g%size) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Unmatched grid size.')
-            call TLab_Stop(DNS_ERROR_OPTION)
-        end if
+        g%size = size(nodes)
 
         if (g%size > 1) then
             g%scale = nodes(g%size) - nodes(1)
@@ -340,20 +331,6 @@ contains
         end if
 
 ! ###################################################################
-! first-order integrals (cases lambda = 0.0_wp)
-! to be moved to opr_ode_initiaalize...
-! ###################################################################
-        if (.not. g%periodic) then
-            bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
-            do ib = 1, 2
-                g%fdmi(ib)%mode_fdm1 = g%mode_fdm1
-                g%fdmi(ib)%bc = bcs_cases(ib)
-                call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, g%fdmi(ib))
-                
-            end do
-        end if
-
-! ###################################################################
 ! second-order derivative: LU factorization done in routine TRID*FS
 ! ###################################################################
         g%lhs2 => g%memory(:, ig:)
@@ -500,6 +477,23 @@ contains
         if (ig >= inb_grid) then
             call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
             call TLab_Stop(DNS_ERROR_DIMGRID)
+        end if
+
+! ###################################################################
+! first-order integrals (cases lambda = 0.0_wp)
+! ###################################################################
+        if (present(fdmi)) then
+            if (g%periodic) then
+                call TLab_Write_ASCII(wfile, __FILE__//'. Integral algorithms not available for periodic cases.')
+            else
+                bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+                do ib = 1, 2
+                    fdmi(ib)%mode_fdm1 = g%mode_fdm1
+                    fdmi(ib)%bc = bcs_cases(ib)
+                    call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
+
+                end do
+            end if
         end if
 
 #ifdef TRACE_ON

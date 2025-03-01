@@ -8,6 +8,7 @@ subroutine RHS_PART_1()
     use TLab_Pointers_3D, only: pointers3d_dt
     use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
+    use FDM_Integral, only: fdm_Int0
     use NavierStokes, only: visc, settling, stokes
     use TLab_Arrays
     use DNS_ARRAYS
@@ -78,7 +79,7 @@ subroutine RHS_PART_1()
         call FI_GRADIENT(imax, jmax, kmax, txc(1, 2), txc(1, 3), txc(1, 4)) ! square of chi gradient in txc(1,3)
         txc(:, 3) = visc*txc(:, 3)
 
-        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 4), txc(:, 5), txc(:, 6), txc(:, 7))
+        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, fdm_Int0, s, txc(:, 4), txc(:, 5), txc(:, 6), txc(:, 7))
         ! Radiation *** ATTENTION RADIATION IS MINUS
         txc(:, 1) = txc(:, 1) + dummy2*txc(:, 4)
 

@@ -4,6 +4,7 @@
 module FLOW_MEAN
     use TLab_Constants, only: wp, wi, efile
     use FDM, only: g
+    use FDM_Integral, only: fdm_Int0
     use TLab_WorkFlow, only: imode_sim
     use TLab_Memory, only: imax, jmax, kmax, inb_scal
     use Tlab_Background, only: qbg, pbg, rbg, tbg, hbg, sbg
@@ -125,7 +126,7 @@ contains
                         z1_loc(j) = Profiles_Calculate(hbg, g(2)%nodes(j))
                         z2_loc(j) = Profiles_Calculate(sbg(1), g(2)%nodes(j))
                     end do
-                    call Gravity_Hydrostatic_Enthalpy(g(2), z1_loc(:), ep_loc(:), t_loc(:), p_loc(:), pbg%ymean, pbg%mean, wrk1d_loc(:))
+                    call Gravity_Hydrostatic_Enthalpy(fdm_Int0, z1_loc(:), ep_loc(:), t_loc(:), p_loc(:), pbg%ymean, pbg%mean, wrk1d_loc(:))
                     do j = 1, jmax
                         s(:, j, :, 1) = z2_loc(j)
                         s(:, j, :, 2) = z3_loc(j)

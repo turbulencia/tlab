@@ -29,6 +29,7 @@ contains
     subroutine TLab_Initialize_Background(inifile)
         use TLab_Pointers_3D, only: p_wrk1d
         use FDM, only: g
+        use FDM_Integral, only: fdm_Int0
         use TLab_WorkFlow, only: imode_sim
         use TLab_Memory, only: inb_scal, inb_scal_array
         use NavierStokes, only: froude, schmidt
@@ -205,7 +206,7 @@ contains
             allocate (rbackground(g(2)%size))
             allocate (ribackground(g(2)%size))
 
-            call Gravity_Hydrostatic_Enthalpy(g(2), sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d(:, 1))
+            call Gravity_Hydrostatic_Enthalpy(fdm_Int0, sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d(:, 1))
 
             call Thermo_Anelastic_DENSITY(1, g(2)%size, 1, sbackground, rbackground, p_wrk1d)
             ribackground = 1.0_wp/rbackground

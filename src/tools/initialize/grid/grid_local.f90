@@ -80,12 +80,13 @@ contains
     subroutine BLD_EXP(idir, iseg, x, nmax, w)
         use TLab_Constants, only: BCS_MIN
         use FDM, only: fdm_dt, FDM_Initialize, FDM_COM6_JACOBIAN
-        use FDM_Integral, only: FDM_Int1_Solve
+        use FDM_Integral, only: FDM_Int1_Solve, fdm_integral_dt
         integer(wi), intent(IN) :: idir, iseg, nmax
         real(wp), intent(INOUT) :: x(nmax), w(nmax, 8)
 
         ! -----------------------------------------------------------------------
         type(fdm_dt) g
+        type(fdm_integral_dt) fdmi(2)
         real(wp) st(3), df(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
         integer(wi) im
         real(wp) ds, aux(2)
@@ -113,9 +114,9 @@ contains
         g%periodic = .false.
         g%mode_fdm1 = FDM_COM6_JACOBIAN
         g%mode_fdm2 = FDM_COM6_JACOBIAN
-        call FDM_Initialize(g, x)
+        call FDM_Initialize(x, g, fdmi)
         ! x(1) is already set
-        call FDM_Int1_Solve(1, g%fdmi(BCS_MIN), rhs(:), result(:), aux)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), rhs(:), result(:), aux)
         x(:) = result(:)
 #undef rhs
 #undef result

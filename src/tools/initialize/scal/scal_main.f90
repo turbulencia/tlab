@@ -17,6 +17,7 @@ program INISCAL
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
+    use FDM_Integral, only: fdm_Int0
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
@@ -66,9 +67,9 @@ program INISCAL
     call TLab_Initialize_Memory(C_FILE_LOC)
 
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(g(1), x)
-    call FDM_Initialize(g(2), y)
-    call FDM_Initialize(g(3), z)
+    call FDM_Initialize(x, g(1))
+    call FDM_Initialize(y, g(2), fdm_Int0)
+    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
     do is = 1, size(IniS)
@@ -124,7 +125,7 @@ program INISCAL
 
         do is = 1, inb_scal
             if (localInfraredProps%active(is)) then
-                call Radiation_Infrared_Y(localInfraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+                call Radiation_Infrared_Y(localInfraredProps, imax, jmax, kmax, fdm_Int0, s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                 s(1:isize_field, is) = s(1:isize_field, is) + txc(1:isize_field, 1)
             end if
         end do

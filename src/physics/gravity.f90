@@ -116,31 +116,32 @@ contains
     ! Compute hydrostatic equilibrium from profiles s=(h,q_t) where h is the enthalpy
     ! Evaluate the integral \int_yref^y dx/H(x), where H(x) is the scale height in the system
     !########################################################################
-    subroutine Gravity_Hydrostatic_Enthalpy(g, s, ep, T, p, yref, pref, wrk1d)
+    subroutine Gravity_Hydrostatic_Enthalpy(fdmi, s, ep, T, p, yref, pref, wrk1d)
         use TLab_Constants, only: BCS_MIN
-        use FDM, only: fdm_dt
-        use FDM_Integral, only: FDM_Int1_Solve
+        use FDM_Integral, only: FDM_Int1_Solve, fdm_integral_dt
         use Thermodynamics
         use Thermo_Anelastic
         use THERMO_AIRWATER
         use THERMO_THERMAL
         use OPR_ODES
 
-        type(fdm_dt), intent(in) :: g
-        real(wp), dimension(g%size, inb_scal_array), intent(inout) :: s      ! We calculate equilibrium composition
-        real(wp), dimension(g%size), intent(out) :: ep, T, p
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), dimension(size(fdmi(1)%nodes), inb_scal_array), intent(inout) :: s      ! We calculate equilibrium composition
+        real(wp), dimension(size(fdmi(1)%nodes)), intent(out) :: ep, T, p
         real(wp), intent(in) :: yref, pref
-        real(wp), dimension(g%size, 3), intent(inout) :: wrk1d
+        real(wp), dimension(size(fdmi(1)%nodes), 3), intent(inout) :: wrk1d
 
         ! -------------------------------------------------------------------
-        integer(wi) iter, niter, j, jcenter
+        integer(wi) iter, niter, j, jcenter, nx
         real(wp) dummy
 
         ! ###################################################################
+        nx = size(fdmi(1)%nodes)
+
         ! Get the center
-        do j = 1, g%size
-            if (g%nodes(j) <= yref .and. &
-                g%nodes(j + 1) > yref) then
+        do j = 1, nx
+            if (fdmi(1)%nodes(j) <= yref .and. &
+                fdmi(1)%nodes(j + 1) > yref) then
                 jcenter = j
                 exit
             end if
@@ -148,10 +149,10 @@ contains
 
         ! specific potential energy
         if (imode_thermo == THERMO_TYPE_ANELASTIC) then
-            ep(:) = (g%nodes - yref)*GRATIO*scaleheightinv
+            ep(:) = (fdmi(1)%nodes - yref)*GRATIO*scaleheightinv
             epbackground(:) = ep(:)
         else
-            ep(:) = -(g%nodes - yref)*buoyancy%vector(2)
+            ep(:) = -(fdmi(1)%nodes - yref)*buoyancy%vector(2)
         end if
 
         ! hydrstatic pressure
@@ -169,24 +170,24 @@ contains
         do iter = 1, niter           ! iterate
             if (imode_thermo == THERMO_TYPE_ANELASTIC) then
                 pbackground(:) = p_aux(:)
-                call Thermo_Anelastic_DENSITY(1, g%size, 1, s, r_aux(:), wrk_aux(:))    ! Get r_aux=1/RT
+                call Thermo_Anelastic_DENSITY(1, nx, 1, s, r_aux(:), wrk_aux(:))    ! Get r_aux=1/RT
                 r_aux(:) = -scaleheightinv*r_aux(:)
             else
-                call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
-                call THERMO_THERMAL_DENSITY(g%size, s(:, 2), p_aux(:), T, r_aux(:))     ! Get r_aux=1/RT
+                call THERMO_AIRWATER_PH_RE(nx, s(1, 2), p, s(1, 1), T)
+                call THERMO_THERMAL_DENSITY(nx, s(:, 2), p_aux(:), T, r_aux(:))     ! Get r_aux=1/RT
                 r_aux(:) = buoyancy%vector(2)*r_aux(:)
             end if
 
             p(1) = 0.0_wp
-            call FDM_Int1_Solve(1, g%fdmi(BCS_MIN), r_aux(:), p, wrk_aux(:))
+            call FDM_Int1_Solve(1, fdmi(BCS_MIN), r_aux(:), p, wrk_aux(:))
 
             ! Calculate pressure and normalize s.t. p=pref at y=yref
             p(:) = exp(p(:))
-            if (abs(yref - g%nodes(jcenter)) == 0.0_wp) then
+            if (abs(yref - fdmi(1)%nodes(jcenter)) == 0.0_wp) then
                 dummy = p(jcenter)
             else
                 dummy = p(jcenter) + (p(jcenter + 1) - p(jcenter)) &
-                        /(g%nodes(jcenter + 1) - g%nodes(jcenter))*(yref - g%nodes(jcenter))
+                        /(fdmi(1)%nodes(jcenter + 1) - fdmi(1)%nodes(jcenter))*(yref - fdmi(1)%nodes(jcenter))
             end if
             dummy = pref/dummy
             p(:) = dummy*p(:)
@@ -196,22 +197,22 @@ contains
                 case (THERMO_TYPE_ANELASTIC)
                     pbackground(:) = p(:)
                     if (imixture == MIXT_TYPE_AIRWATER) then
-                        call Thermo_Anelastic_PH(1, g%size, 1, s(:, 2), s(:, 1))
-                        call Thermo_Anelastic_TEMPERATURE(1, g%size, 1, s, T)
+                        call Thermo_Anelastic_PH(1, nx, 1, s(:, 2), s(:, 1))
+                        call Thermo_Anelastic_TEMPERATURE(1, nx, 1, s, T)
                     end if
 
                 case (THERMO_TYPE_LINEAR)
                     if (imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                        call THERMO_AIRWATER_LINEAR(g%size, s, s(:, inb_scal_array))
+                        call THERMO_AIRWATER_LINEAR(nx, s, s(:, inb_scal_array))
 
                     end if
 
                 case (THERMO_TYPE_COMPRESSIBLE)
                     if (imixture == MIXT_TYPE_AIRWATER) then
-                        call THERMO_AIRWATER_PH_RE(g%size, s(1, 2), p, s(1, 1), T)
+                        call THERMO_AIRWATER_PH_RE(nx, s(1, 2), p, s(1, 1), T)
                     end if
                 end select
-                
+
             end if
 
         end do

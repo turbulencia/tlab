@@ -14,7 +14,7 @@ module OPR_ELLIPTIC
     use OPR_FOURIER
     use OPR_ODES
     use OPR_PARTIAL
-    use FDM_Integral, only: FDM_Int2_CreateSystem
+    use FDM_Integral, only: FDM_Int2_CreateSystem, fdm_Int0
     use FDM_MatMul
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
@@ -290,7 +290,7 @@ contains
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         ! call OPR_ODE2_1_SINGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, &
                         !                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        call OPR_ODE2_SINGULAR_NN(2, g(2)%fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
                         call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
                                                        g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
@@ -301,7 +301,7 @@ contains
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         ! call OPR_ODE2_1_SINGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, &
                         !                                 g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        call OPR_ODE2_SINGULAR_DD(2, g(2)%fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
                         call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
                                                        g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))

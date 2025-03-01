@@ -26,6 +26,7 @@ program VISUALS
     use TLab_Memory, only: isize_wrk3d
 #endif
     use FDM, only: g, FDM_Initialize
+    use FDM_Integral, only: fdm_Int0
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
@@ -358,9 +359,9 @@ program VISUALS
     ! Initialize
     ! -------------------------------------------------------------------
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(g(1), x)
-    call FDM_Initialize(g(2), y)
-    call FDM_Initialize(g(3), z)
+    call FDM_Initialize(x, g(1))
+    call FDM_Initialize(y, g(2), fdm_Int0)
+    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
 
@@ -935,7 +936,7 @@ program VISUALS
 
                     if (infraredProps%active(is)) then
                         write (str, *) is; plot_file = 'Radiation'//trim(adjustl(str))//time_str(1:MaskSize)
-                        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
+                        call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, fdm_Int0, s, txc(:, 1), txc(:, 2), txc(:, 3), txc(:, 4))
                         call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
                     end if
 

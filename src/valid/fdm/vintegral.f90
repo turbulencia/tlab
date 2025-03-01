@@ -94,7 +94,7 @@ program VINTEGRAL
     ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(g, x)
+    call FDM_Initialize(x, g)
 
     bcs_aux = 0
 
@@ -159,7 +159,7 @@ program VINTEGRAL
 
             g%mode_fdm1 = fdm_cases(im)
             g%mode_fdm2 = g%mode_fdm1
-            call FDM_Initialize(g, x)
+            call FDM_Initialize(x, g)
 
             ! f = du1_a
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
@@ -229,22 +229,22 @@ program VINTEGRAL
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
                 ! call OPR_ODE2_1_SINGULAR_DD_OLD(g%mode_fdm1, g%size, len, g%nodes, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_DD(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_SINGULAR_DD(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN)
                 print *, 'Dirichlet/Neumann'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
                 ! call OPR_ODE2_1_SINGULAR_DN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_DN(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_SINGULAR_DN(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_ND)
                 print *, 'Neumann/Dirichlet'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
                 ! call OPR_ODE2_1_SINGULAR_ND_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_ND(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_SINGULAR_ND(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
                 ! call OPR_ODE2_1_SINGULAR_NN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_NN(len, g%fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_SINGULAR_NN(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')

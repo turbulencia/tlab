@@ -18,11 +18,12 @@ program PDFS
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
+    use FDM_Integral, only: fdm_Int0
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use Thermo_Anelastic
     use Radiation
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
@@ -102,7 +103,7 @@ use Rotation, only: Rotation_Initialize
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
     call Radiation_Initialize(ifile)
     call Microphysics_Initialize(ifile)
     call LargeScaleForcing_Initialize(ifile)
@@ -264,9 +265,9 @@ call Rotation_Initialize(ifile)
     ! Initialize
     ! -------------------------------------------------------------------
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(g(1), x)
-    call FDM_Initialize(g(2), y)
-    call FDM_Initialize(g(3), z)
+    call FDM_Initialize(x, g(1))
+    call FDM_Initialize(y, g(2), fdm_Int0)
+    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
 
@@ -287,7 +288,7 @@ call Rotation_Initialize(ifile)
     y_aux(:) = 0                        ! Reduced vertical grid
     do ij = 1, jmax_aux*opt_block
         is = (ij - 1)/opt_block + 1
-        y_aux(is) = y_aux(is) +  g(2)%nodes(ij)/real(opt_block, wp)
+        y_aux(is) = y_aux(is) + g(2)%nodes(ij)/real(opt_block, wp)
     end do
 
     ibc(1:nfield) = 1

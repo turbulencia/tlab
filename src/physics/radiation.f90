@@ -3,8 +3,8 @@
 
 module Radiation
     use TLab_Constants, only: wp, wi, pi_wp, BCS_MAX, BCS_MIN, efile, MAX_PARS, MAX_VARS
-    use FDM, only: fdm_dt
-    use FDM_Integral, only: FDM_Int1_Solve
+    use TLab_Grid, only: y
+    use FDM_Integral, only: FDM_Int1_Solve, fdm_integral_dt, fdm_Int0
     use NavierStokes, only: nse_eqns
     use TLab_Memory, only: inb_scal_array
     use TLab_Memory, only: isize_field
@@ -227,11 +227,11 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine Radiation_Infrared_Y(localProps, nx, ny, nz, g, s, source, b, tmp1, tmp2, flux)
+    subroutine Radiation_Infrared_Y(localProps, nx, ny, nz, fdmi, s, source, b, tmp1, tmp2, flux)
         use Thermo_Anelastic
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nx, ny, nz
-        type(fdm_dt), intent(in) :: g
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(in) :: s(nx*ny*nz, inb_scal_array)
         real(wp), intent(out) :: source(nx*ny*nz)           ! also used for absorption coefficient
         real(wp), intent(inout) :: b(nx*ny*nz)              ! emission function
@@ -277,9 +277,9 @@ contains
             bcs_ht = localProps%auxiliar(1)                     ! downward flux at domain top
             bcs_hb = localProps%auxiliar(2)                     ! upward flux at domain bottom
             if (present(flux)) then                             ! solve radiative transfer equation along y
-                call IR_RTE1_OnlyLiquid(localProps, nxz, ny, g, p_source, p_flux_down, p_flux_up)
+                call IR_RTE1_OnlyLiquid(localProps, nxz, ny, fdmi, p_source, p_flux_down, p_flux_up)
             else
-                call IR_RTE1_OnlyLiquid(localProps, nxz, ny, g, p_source)
+                call IR_RTE1_OnlyLiquid(localProps, nxz, ny, fdmi, p_source)
             end if
 
             ! -----------------------------------------------------------------------
@@ -309,13 +309,13 @@ contains
             bcs_ht = localProps%auxiliar(1)                     ! downward flux at domain top
 
             if (present(flux)) then                             ! solve radiative transfer equation along y
-                call IR_RTE1_Global(localProps, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
-                ! call IR_RTE1_Local(localProps, nxz, ny, g, p_source, p_b, p_flux_down, tmp2, p_flux_up)
-                ! call IR_RTE1_Incremental(localProps, nxz, ny, g, p_source, p_b, p_flux_down, p_flux_up)
+                call IR_RTE1_Global(localProps, nxz, ny, fdmi, p_source, p_b, p_flux_down, p_flux_up)
+                ! call IR_RTE1_Local(localProps, nxz, ny, fdmi, p_source, p_b, p_flux_down, tmp2, p_flux_up)
+                ! call IR_RTE1_Incremental(localProps, nxz, ny, fdmi, p_source, p_b, p_flux_down, p_flux_up)
             else
-                call IR_RTE1_Global(localProps, nxz, ny, g, p_source, p_b, p_flux_down, tmp2)
-                ! call IR_RTE1_Local(localProps, nxz, ny, g, p_source, p_b, p_flux_down, tmp2)
-                ! call IR_RTE1_Incremental(localProps, nxz, ny, g, p_source, p_b, p_flux_down)
+                call IR_RTE1_Global(localProps, nxz, ny, fdmi, p_source, p_b, p_flux_down, tmp2)
+                ! call IR_RTE1_Local(localProps, nxz, ny, fdmi, p_source, p_b, p_flux_down, tmp2)
+                ! call IR_RTE1_Incremental(localProps, nxz, ny, fdmi, p_source, p_b, p_flux_down)
             end if
 
             ! -----------------------------------------------------------------------
@@ -353,15 +353,15 @@ contains
                 bcs_ht(1:nxz) = localProps%auxiliar(iband)
 
                 if (present(flux)) then             ! solve radiative transfer equation along y
-                    call IR_RTE1_Global(localProps, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
-                    ! call IR_RTE1_Local(localProps, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2, p_b)
-                    ! call IR_RTE1_Incremental(localProps, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
+                    call IR_RTE1_Global(localProps, nxz, ny, fdmi, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
+                    ! call IR_RTE1_Local(localProps, nxz, ny, fdmi, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2, p_b)
+                    ! call IR_RTE1_Incremental(localProps, nxz, ny, fdmi, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), p_b)
                     p_flux_down = p_flux_down + tmp_rad(:, 4)
                     p_flux_up = p_flux_up + p_b
                 else
-                    call IR_RTE1_Global(localProps, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2)
-                    ! call IR_RTE1_Local(localProps, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2)
-                    ! call IR_RTE1_Incremental(localProps, nxz, ny, g, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4))
+                    call IR_RTE1_Global(localProps, nxz, ny, fdmi, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2)
+                    ! call IR_RTE1_Local(localProps, nxz, ny, fdmi, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4), tmp2)
+                    ! call IR_RTE1_Incremental(localProps, nxz, ny, fdmi, tmp_rad(:, 3), tmp_rad(:, 5), tmp_rad(:, 4))
                 end if
 
                 p_source = p_source + tmp_rad(:, 3)
@@ -398,10 +398,10 @@ contains
     ! Solve radiative transfer equation along 1 direction
     ! We do not treat separately 2d and 3d cases for the transposition because it was a bit messy...
     !########################################################################
-    subroutine IR_RTE1_OnlyLiquid(localProps, nlines, ny, g, a_source, flux_down, flux_up)
+    subroutine IR_RTE1_OnlyLiquid(localProps, nlines, ny, fdmi, a_source, flux_down, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(fdm_dt), intent(in) :: g
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: a_source(nlines, ny)      ! input as bulk absorption coefficent, output as source
         real(wp), intent(out), optional :: flux_down(nlines, ny), flux_up(nlines, ny)
 
@@ -411,9 +411,9 @@ contains
         ! #######################################################################
         ! calculate f_j = exp(-tau(z, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        call FDM_Int1_Solve(nlines, g%fdmi(BCS_MAX), a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
-        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MAX)
-        ! call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MAX)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
+        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
+        ! call Int_Simpson_Biased_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
         end do
@@ -445,10 +445,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine IR_RTE1_Incremental(localProps, nlines, ny, g, a_source, b, flux_down, flux_up)
+    subroutine IR_RTE1_Incremental(localProps, nlines, ny, fdmi, a_source, b, flux_down, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(fdm_dt), intent(in) :: g
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
         real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
         real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
@@ -475,9 +475,9 @@ contains
 
         ! transmission function I_{j-1,j}  = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call FDM_Int1_Solve(nxz, g%fdmi(BCS_MIN), a_source, p_tau, wrk2d)
-        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MIN)
+        ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), a_source, p_tau, wrk2d)
+        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
@@ -492,7 +492,7 @@ contains
             ! Integral contribution from emission function using a trapezoidal rule
             p_wrk2d_2 = b(:, j + 1)
             p_wrk2d_1 = b(:, j)/p_tau(:, j + 1)
-            p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j + 1) - g%nodes(j))
+            p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(fdmi(BCS_MIN)%nodes(j + 1) - fdmi(BCS_MIN)%nodes(j))
 
             flux_down(:, j) = p_tau(:, j + 1)*(flux_down(:, j + 1) + p_wrk2d_1)
         end do
@@ -513,7 +513,7 @@ contains
                 ! Integral contribution from emission function using a trapezoidal rule
                 p_wrk2d_1 = b(:, j - 1)
                 p_wrk2d_2 = b(:, j)/p_tau(:, j)
-                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
+                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(fdmi(BCS_MIN)%nodes(j) - fdmi(BCS_MIN)%nodes(j - 1))
 
                 bcs_hb = p_tau(:, j)*(bcs_hb(1:nlines) + p_wrk2d_1)
                 a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
@@ -526,7 +526,7 @@ contains
                 ! Integral contribution from emission function using a trapezoidal rule
                 p_wrk2d_1 = b(:, j - 1)
                 p_wrk2d_2 = b(:, j)/p_tau(:, j)
-                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(g%nodes(j) - g%nodes(j - 1))
+                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(fdmi(BCS_MIN)%nodes(j) - fdmi(BCS_MIN)%nodes(j - 1))
 
                 bcs_hb(1:nlines) = p_tau(:, j)*(bcs_hb(1:nlines) + p_wrk2d_1(1:nlines))
                 a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
@@ -542,10 +542,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine IR_RTE1_Local(localProps, nlines, ny, g, a_source, b, flux_down, tmp2, flux_up)
+    subroutine IR_RTE1_Local(localProps, nlines, ny, fdmi, a_source, b, flux_down, tmp2, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(fdm_dt), intent(in) :: g
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
         real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
         real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
@@ -573,9 +573,9 @@ contains
 
         ! transmission function I_{j-1,j} = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call FDM_Int1_Solve(nxz, g%fdmi(BCS_MIN), a_source, p_tau, wrk2d)
-        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MIN)
+        ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), a_source, p_tau, wrk2d)
+        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
@@ -596,7 +596,7 @@ contains
                 p_flux_2 = p_flux_2*p_tau(:, k)
                 tmp2(:, k) = b(:, k)*p_flux_2
             end do
-            call Int_Simpson_v(tmp2(:, j:ny), g%nodes(j:ny), flux_down(:, j))
+            call Int_Simpson_v(tmp2(:, j:ny), fdmi(BCS_MIN)%nodes(j:ny), flux_down(:, j))
             ! call Int_Trapezoidal_v(tmp2(:, j:ny), g%nodes(j:ny), flux_down(:, j))
             flux_down(:, j) = flux_down(:, j) + p_flux_1
         end do
@@ -623,8 +623,8 @@ contains
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
                     tmp2(:, k) = b(:, k)*p_flux_2
                 end do
-                call Int_Simpson_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
-                ! call Int_Trapezoidal_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
+                call Int_Simpson_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
+                ! call Int_Trapezoidal_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
                 a_source(:, j) = a_source(:, j)*(p_flux_2 + p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
                 flux_up(:, j) = p_flux_2 + p_flux_1                 ! upward flux
@@ -640,8 +640,8 @@ contains
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
                     tmp2(:, k) = b(:, k)*p_flux_2
                 end do
-                call Int_Simpson_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
-                ! call Int_Trapezoidal_v(tmp2(:, 1:j), g%nodes(1:j), p_flux_2)
+                call Int_Simpson_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
+                ! call Int_Trapezoidal_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
                 a_source(:, j) = a_source(:, j)*(p_flux_2 + p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
             end do
@@ -656,10 +656,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine IR_RTE1_Global(localProps, nlines, ny, g, a_source, b, flux_down, flux_up)
+    subroutine IR_RTE1_Global(localProps, nlines, ny, fdmi, a_source, b, flux_down, flux_up)
         type(radterm_dt), intent(in) :: localProps
         integer(wi), intent(in) :: nlines, ny
-        type(fdm_dt), intent(in) :: g
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: a_source(nlines, ny)         ! input as bulk absorption coefficent, output as source
         real(wp), intent(inout) :: b(nlines, ny)                ! input as emission function, output as upward flux, if flux is to be return
         real(wp), intent(inout) :: flux_down(nlines, ny)             ! flux_down for intermediate calculations and net flux as output
@@ -683,17 +683,17 @@ contains
 
         ! transmission function I_j = exp(-tau(z_j, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        ! call FDM_Int1_Solve(nlines, g%fdmi(BCS_MAX), a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
-        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MAX)
-        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MAX)
+        ! call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
+        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
+        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
         flux_down = b/p_tau
-        ! call Int_Trapezoidal_Increments_InPlace(flux_down, g%nodes, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
-        call Int_Simpson_Biased_Increments_InPlace(flux_down, g%nodes, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        ! call Int_Trapezoidal_Increments_InPlace(flux_down, fdmi(BCS_MAX)%nodes, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        call Int_Simpson_Biased_Increments_InPlace(flux_down, fdmi(BCS_MAX)%nodes, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
         j = ny
         wrk2d(1:nlines, 1) = 0.0_wp                                         ! accumulate emission; using wrk2d as aux array
         flux_down(:, j) = p_tau(:, j)*(bcs_ht(1:nlines) + wrk2d(1:nlines, 1))
@@ -711,16 +711,16 @@ contains
 
         ! transmission function I_j = exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                                ! boundary condition
-        ! call FDM_Int1_Solve(nlines, g%fdmi(BCS_MIN), a_source, p_tau, wrk2d)
-        ! call Int_Trapezoidal_f(a_source, g%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(a_source, g%nodes, p_tau, BCS_MIN)
+        ! call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), a_source, p_tau, wrk2d)
+        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         do j = 1, ny
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
 
         flux_up = b/p_tau
-        ! call Int_Trapezoidal_Increments_InPlace(flux_up, g%nodes, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
-        call Int_Simpson_Biased_Increments_InPlace(flux_up, g%nodes, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        ! call Int_Trapezoidal_Increments_InPlace(flux_up, fdmi(BCS_MIN)%nodes, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        call Int_Simpson_Biased_Increments_InPlace(flux_up, fdmi(BCS_MIN)%nodes, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
         j = 1
         wrk2d(1:nlines, 1) = 0.0_wp                                         ! accumulate emission; using wrk2d as aux array
         flux_up(:, j) = p_tau(:, j)*(bcs_hb(1:nlines) + wrk2d(1:nlines, 1))

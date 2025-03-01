@@ -8,6 +8,7 @@ module TLab_Sources
     use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
     use NavierStokes, only: nse_eqns
     use FDM, only: g
+    use FDM_Integral, only: fdm_Int0
     use TLab_OpenMP
     use Thermo_Anelastic
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
@@ -149,7 +150,7 @@ contains
             ! Radiation
             ! -----------------------------------------------------------------------
             if (infraredProps%active(is)) then
-                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, g(2), s, tmp1, tmp2, tmp3, tmp4)
+                call Radiation_Infrared_Y(infraredProps, imax, jmax, kmax, fdm_Int0, s, tmp1, tmp2, tmp3, tmp4)
 
                 if (nse_eqns == DNS_EQNS_ANELASTIC) then
                     call Thermo_Anelastic_WEIGHT_ADD(imax, jmax, kmax, ribackground, tmp1, hs(:, is))

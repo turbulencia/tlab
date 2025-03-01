@@ -52,7 +52,7 @@ program VEFILTER
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_Initialize(g, wrk1d(1:imax, 1))
+    call FDM_Initialize(wrk1d(1:imax, 1), g)
 
     ! ###################################################################
 

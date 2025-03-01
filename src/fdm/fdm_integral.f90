@@ -25,6 +25,7 @@ module FDM_Integral
         real(wp), pointer :: lhs(:, :)              ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
         real(wp), pointer :: rhs(:, :)
     end type fdm_integral_dt
+    type(fdm_integral_dt), public :: fdm_Int0(2)    ! Integral plan for lambda = 0
 
     public FDM_Int1_Initialize          ! Prepare to solve u' +\lambda u = f
     public FDM_Int1_CreateSystem

@@ -12,12 +12,13 @@ program INIRAND
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on
     use TLab_Memory, only: TLab_Initialize_Memory
-    use FDM, only: g, FDM_Initialize
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_VARS, only: ims_pro
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
+    use FDM, only: g, FDM_Initialize
+    use FDM_Integral, only: fdm_Int0
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
@@ -52,9 +53,9 @@ program INIRAND
     call TLab_Initialize_Memory(C_FILE_LOC)
 
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(g(1), x)
-    call FDM_Initialize(g(2), y)
-    call FDM_Initialize(g(3), z)
+    call FDM_Initialize(x, g(1))
+    call FDM_Initialize(y, g(2), fdm_Int0)
+    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
 

@@ -35,7 +35,7 @@ contains
     ! ###################################################################
     subroutine TLab_Start()
         use TLab_OpenMP
-        
+
         character*10 clock(2)
 
         !#####################################################################
@@ -158,7 +158,10 @@ contains
         else
             call MPI_Abort(MPI_COMM_WORLD, error_code, ims_err)
         end if
+#else
+        stop
 #endif
+
         return
     end subroutine TLab_Stop
 

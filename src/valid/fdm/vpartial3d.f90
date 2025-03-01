@@ -50,9 +50,9 @@ program VPARTIAL3D
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(g(1), x)
-    call FDM_Initialize(g(2), y)
-    call FDM_Initialize(g(3), z)
+    call FDM_Initialize(x, g(1))
+    call FDM_Initialize(y, g(2))
+    call FDM_Initialize(z, g(3))
 
     bcs = 0
 
@@ -68,14 +68,14 @@ program VPARTIAL3D
 ! ###################################################################
     case (2)
         g(2)%mode_fdm1 = FDM_COM6_JACOBIAN
-        call FDM_Initialize(g(2), wrk1d(:, 2))
+        call FDM_Initialize(wrk1d(:, 2), g(2))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
         call IO_Write_Fields('field.out1', imax, jmax, kmax, itime, 1, a)
 
         g(2)%mode_fdm1 = FDM_COM4_DIRECT
-        call FDM_Initialize(g(2), wrk1d(:, 2))
+        call FDM_Initialize(wrk1d(:, 2), g(2))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, b, d)

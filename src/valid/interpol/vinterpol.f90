@@ -89,7 +89,7 @@ program INTERPOL
     end if
 
 ! Velocity grid
-    call FDM_Initialize(g, x)
+    call FDM_Initialize(x, g)
 
 ! Initialize grids (interpolation grid on midpoints)
     if (g%periodic) then
@@ -112,7 +112,7 @@ program INTERPOL
     end do
     g_pre%size = imaxp; g_pre%scale = x_int(imaxp); g_pre%uniform = g%uniform
     g_pre%mode_fdm1 = g%mode_fdm1; g_pre%periodic = .false.
-    call FDM_Initialize(g_pre, wrk1d(1:imaxp, 1))
+    call FDM_Initialize(wrk1d(1:imaxp, 1), g_pre)
 
 ! Define the function + deriv. on both grids
     do i = 1, imax

@@ -35,7 +35,7 @@ program CSPLINE
     real(wp) :: res_2, res_inf
     logical :: periodic, random, uniform
     ! data arrays
-    real(wp) :: x(:,:), x_int(:,:)
+    real(wp) :: x(:, :), x_int(:, :)
     real(wp), dimension(imax) :: y
     real(wp), dimension(imax_int) :: y_sp, y_int, delta
     real(wp), dimension(imax_int) :: dydx, ddydx
@@ -115,8 +115,8 @@ program CSPLINE
     end if
 
 ! initialize grids for fdm calls
-    call FDM_Initialize(g, wrk1d(:,1), wrk1(:,4))
-    call FDM_Initialize(x_int, g_int, wrk1d_int, wrk1(:,4))
+    call FDM_Initialize(wrk1d_int(:, 1), g)
+    call FDM_Initialize(x_int, g_int)
 
 ! cubic spline function
     call CUBIC_SPLINE(bc, bcval, imax, imax_int, g%nodes, y, g_int%nodes, y_sp, wrk)
@@ -133,7 +133,7 @@ program CSPLINE
             if ((abs(y(i) - y_sp(1 + (i - 1)*mesh))) <= 1e-10) then
                 write (*, 40) i, g%nodes(i), y(i), (1 + (i - 1)*mesh), abs(y(i) - y_sp(1 + (i - 1)*mesh))
             else
-        write(*,50) i, g%nodes(i), y(i), (1 + (i-1)*mesh), g_int%nodes(1 + (i-1)*mesh), y_sp(1 + (i-1)*mesh), abs(y(i) - y_sp(1 + (i-1)*mesh))
+                write (*, 50) i, g%nodes(i), y(i), (1 + (i - 1)*mesh), g_int%nodes(1 + (i - 1)*mesh), y_sp(1 + (i - 1)*mesh), abs(y(i) - y_sp(1 + (i - 1)*mesh))
             end if
         end do
     else
@@ -141,12 +141,12 @@ program CSPLINE
             if ((abs(y(i) - y_sp(1 + (i - 1)*mesh))) <= 1e-10) then
                 write (*, 40) i, g%nodes(i), y(i), (1 + (i - 1)*mesh), abs(y(i) - y_sp(1 + (i - 1)*mesh))
             else
-        write(*,50) i, g%nodes(i), y(i), (1 + (i-1)*mesh), g_int%nodes(1 + (i-1)*mesh), y_sp(1 + (i-1)*mesh), abs(y(i) - y_sp(1 + (i-1)*mesh))
+                write (*, 50) i, g%nodes(i), y(i), (1 + (i - 1)*mesh), g_int%nodes(1 + (i - 1)*mesh), y_sp(1 + (i - 1)*mesh), abs(y(i) - y_sp(1 + (i - 1)*mesh))
             end if
         end do
     end if
 40  format(1x, 'Data point ', I3, ' with ', '(', F5.2, ',', F5.2, ')', ' is on spline point ', I3, ', residua = ', ES9.2)
-50  format(1X,'Data point ', I3, ' with ', '(', F5.2, ',', F5.2,')', ' is not on spline point ', I3, ' with ', '(', F4.2, ',', F4.2,')',', residua = ' ,ES9.2)
+50 format(1x, 'Data point ', I3, ' with ', '(', F5.2, ',', F5.2, ')', ' is not on spline point ', I3, ' with ', '(', F4.2, ',', F4.2, ')', ', residua = ', ES9.2)
 
 ! 2. Validation
 ! compute first and second derivative at boundary points
@@ -159,7 +159,7 @@ program CSPLINE
         ! second derivative
         ! call FDM_C2N6H_LHS(imax_int, i0, i0, g_int%jac, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
         ! call FDM_C2N6H_RHS(imax_int, i1, i0, i0, y_sp, ddydx)
-        print*,'to be rewritten using new FDM routines'
+        print *, 'to be rewritten using new FDM routines'
         call TRIDFS(imax_int, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3))
         call TRIDSS(imax_int, i1, wrk1d_int(1, 1), wrk1d_int(1, 2), wrk1d_int(1, 3), ddydx)
         write (*, *) '================================================================================'
