@@ -337,15 +337,18 @@ contains
         select case (g%mode_fdm2)
         case (FDM_COM4_JACOBIAN)
             call FDM_C2N4_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)
-            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%nodes(:), g%jac(:, 2), periodic=.false.)
+            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), &
+                               g%nodes(:), g%jac(:, 2), periodic=.false.)
 
         case (FDM_COM6_JACOBIAN)
             call FDM_C2N6_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)
-            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%nodes(:), g%jac(:, 2), periodic=.false.)
+            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), &
+                               g%nodes(:), g%jac(:, 2), periodic=.false.)
 
-        case (FDM_COM6_JACOBIAN_HYPER, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA)
+        case (FDM_COM6_JACOBIAN_HYPER)
             call FDM_C2N6_Hyper_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)
-         call MatMul_7d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), g%nodes(:), g%jac(:, 2), periodic=.false.)
+            call MatMul_7d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), &
+                               g%nodes(:), g%jac(:, 2), periodic=.false.)
 
         end select
 

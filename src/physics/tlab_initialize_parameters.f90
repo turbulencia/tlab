@@ -135,24 +135,23 @@ subroutine TLab_Initialize_Parameters(inifile)
         ! elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%mode_fdm1 = FDM_COM4_DIRECT; ! undevelop?
         ! elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm1 = FDM_COM6_DIRECT;
     else
-        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder option.')
+        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder1 option.')
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    ! default 2. order
-    if (any([FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA] == g(1)%mode_fdm1)) g(1:3)%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER
-    if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g(1)%mode_fdm1)) g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
-
-    call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder2', 'void', sRes)
+    call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder2', 'CompactJacobian6Hyper', sRes)
     if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm2 = FDM_COM4_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm2 = FDM_COM6_JACOBIAN; 
     elseif (trim(adjustl(sRes)) == 'compactjacobian6hyper') then; g(1:3)%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER; 
     elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%mode_fdm2 = FDM_COM4_DIRECT; 
     elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm2 = FDM_COM6_DIRECT; 
+    else
+        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder2 option.')
+        call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
     if (g(1)%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then     ! CFL_max depends on max[g(ig)%mwn1(:)]
-        call TLab_Write_ASCII(wfile, __FILE__//'. Main.SpaceOrder.CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+        call TLab_Write_ASCII(wfile, __FILE__//'. CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
 ! ###################################################################
