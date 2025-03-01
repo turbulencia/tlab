@@ -81,10 +81,10 @@ call Rotation_Initialize(ifile)
     ! Valid settings
     test_type = 1
 
-    call TLab_Grid_Read(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:,1), wrk1d(:,2), wrk1d(:,3))
-    call FDM_Initialize(g(1), wrk1d(:,1), wrk1d(:,4))
-    call FDM_Initialize(g(2), wrk1d(:,2), wrk1d(:,4))
-    call FDM_Initialize(g(3), wrk1d(:,3), wrk1d(:,4))
+    call TLab_Grid_Read(gfile,  wrk1d(:,1), wrk1d(:,2), wrk1d(:,3), [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(wrk1d(:,1), g(1))
+    call FDM_Initialize(wrk1d(:,2), g(2))
+    call FDM_Initialize(wrk1d(:,3), g(3))
 
     lambda = 1 ! WRITE(*,*) 'Eigenvalue ?'; READ(*,*) lambda
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA

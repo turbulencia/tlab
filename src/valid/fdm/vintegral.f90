@@ -43,8 +43,6 @@ program VINTEGRAL
 
     g%size = kmax
     g%scale = 1.0_wp
-    g%uniform = .false.
-    g%periodic = .false.
 
     isize_field = imax*jmax*kmax
     isize_txc_field = isize_field
@@ -91,10 +89,9 @@ program VINTEGRAL
         close (21)
     end if
 
-    ! to calculate the Jacobians
     g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
     g%mode_fdm2 = g%mode_fdm1
-    call FDM_Initialize(x, g)
+    call FDM_Initialize(x, g, fdmi)
 
     bcs_aux = 0
 
@@ -128,18 +125,6 @@ program VINTEGRAL
 ! zero
         ! u(i) = 0.0_wp
         ! du1_a(i) = 0.0_wp
-    end do
-
-    ! ###################################################################
-    ! Initialize integral operator
-    ndr = g%nb_diag_1(2)
-    ndl = g%nb_diag_1(1)
-    bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
-    do ib = 1, 2
-        fdmi(ib)%mode_fdm1 = g%mode_fdm1
-        fdmi(ib)%bc = ibc
-        call FDM_Int1_Initialize(g%nodes, g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
-
     end do
 
     ! ###################################################################
@@ -257,8 +242,8 @@ program VINTEGRAL
 ! ###################################################################
     case (3)
         allocate (bcs(len, 2))
-        call random_seed()
-        call random_number(u)
+        ! call random_seed()
+        ! call random_number(u)
 
         ! f = du2_a - lambda*lambda*u
         ! du1_n = du1_a ! I need it for the boundary conditions

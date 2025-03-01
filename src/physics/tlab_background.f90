@@ -252,8 +252,6 @@ contains
             end if
         end if
 
-        ! end if
-
         return
     end subroutine TLab_Initialize_Background
 

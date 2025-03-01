@@ -139,7 +139,7 @@ subroutine TLab_Initialize_Parameters(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    ! default
+    ! default 2. order
     if (any([FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA] == g(1)%mode_fdm1)) g(1:3)%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER
     if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g(1)%mode_fdm1)) g(1:3)%mode_fdm2 = g(1:3)%mode_fdm1
 

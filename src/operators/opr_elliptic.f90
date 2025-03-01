@@ -57,26 +57,21 @@ module OPR_ELLIPTIC
         end subroutine
     end interface
 
-    complex(wp), target :: bcs(3)
-    real(wp), pointer :: r_bcs(:) => null()
-    complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
-    integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
-    real(wp) lambda, norm
-    real(wp), allocatable :: lhs(:, :), rhs(:, :)
-    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
-
     procedure(OPR_Poisson_dt), pointer :: OPR_Poisson
     procedure(OPR_Helmholtz_dt), pointer :: OPR_Helmholtz
 
     public :: OPR_Elliptic_Initialize
     public :: OPR_Poisson
     public :: OPR_Helmholtz
-    ! public :: OPR_Poisson_FourierXZ_Factorize
-    ! public :: imode_elliptic
-    ! public :: OPR_Poisson_FourierXZ_Direct         ! Using direct formulation of FDM schemes
-    ! public :: OPR_Helmholtz_FourierXZ_Factorize
-    ! public :: OPR_Helmholtz_FourierXZ_Direct       ! Using direct formulation of FDM schemes
-    ! public :: OPR_HELMHOLTZ_FXZ_D_N     ! For N fields; no need if we use am initilization
+
+    ! -----------------------------------------------------------------------
+    complex(wp), target :: bcs(3)
+    real(wp), pointer :: r_bcs(:) => null()
+    complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
+    integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
+    real(wp) lambda, norm
+    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
+    type(fdm_dt) fdm_loc
 
 #define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
 #define p_b(icpp,jcpp,kcpp)   lu_poisson(icpp,2,jcpp,kcpp)
@@ -93,14 +88,14 @@ contains
 ! #######################################################################
 ! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
     subroutine OPR_Elliptic_Initialize(inifile)
-        use FDM, only: g
+        use FDM, only: g, FDM_Initialize
         use FDM_ComX_Direct
 
         character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
         integer imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
-        integer ibc_loc, nb_diag(2)
+        integer ibc_loc
         integer, parameter :: i1 = 1
         character*512 sRes
         character*32 bakfile
@@ -118,18 +113,6 @@ contains
         end if
 
         select case (imode_elliptic)
-        case (FDM_COM4_DIRECT)
-            allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N4_Direct(g(2)%size, g(2)%nodes, lhs, rhs, nb_diag)
-
-        case default !(FDM_COM6_DIRECT) ! I need it for helmholtz
-            allocate (lhs(g(2)%size, 3), rhs(g(2)%size, 4))
-            call FDM_C2N6_Direct(g(2)%size, g(2)%nodes, lhs, rhs, nb_diag)
-
-        end select
-
-        ! -----------------------------------------------------------------------
-        select case (imode_elliptic)
         case (FDM_COM6_JACOBIAN)
             OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
@@ -137,56 +120,61 @@ contains
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
             OPR_Poisson => OPR_Poisson_FourierXZ_Direct
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
-
-            ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
-            isize_line = imax/2 + 1
-
-            call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
-
-            do k = 1, kmax
-#ifdef USE_MPI
-                kglobal = k + ims_offset_k
-#else
-                kglobal = k
-#endif
-
-                do i = 1, isize_line
-#ifdef USE_MPI
-                    iglobal = i + ims_offset_i/2
-#else
-                    iglobal = i
-#endif
-
-                    ! Define \lambda based on modified wavenumbers (real)
-                    if (g(3)%size > 1) then
-                        lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
-                    else
-                        lambda = g(1)%mwn2(iglobal)
-                    end if
-
-                    ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
-                    if (iglobal == 1 .and. kglobal == 1) then
-                        ibc_loc = BCS_DN
-                    else
-                        ibc_loc = BCS_NN
-                    end if
-
-                    ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
-                                               lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
-
-                    ! LU decomposizion
-                    ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
-                    call PENTADFS(g(2)%size - 2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k))
-
-                    ! Particular solutions
-                    call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f1(2, i, k))
-                    call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f2(2, i, k))
-
-                end do
-            end do
-
         end select
+
+        if (any([FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN] == imode_elliptic)) return   ! not yet developed
+
+        fdm_loc%mode_fdm1 = imode_elliptic
+        fdm_loc%mode_fdm2 = imode_elliptic
+        call FDM_Initialize(g(2)%nodes, fdm_loc)
+
+        ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
+        isize_line = imax/2 + 1
+
+        call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
+
+        do k = 1, kmax
+#ifdef USE_MPI
+            kglobal = k + ims_offset_k
+#else
+            kglobal = k
+#endif
+
+            do i = 1, isize_line
+#ifdef USE_MPI
+                iglobal = i + ims_offset_i/2
+#else
+                iglobal = i
+#endif
+
+                ! Define \lambda based on modified wavenumbers (real)
+                if (g(3)%size > 1) then
+                    lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
+                else
+                    lambda = g(1)%mwn2(iglobal)
+                end if
+
+                ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
+                if (iglobal == 1 .and. kglobal == 1) then
+                    ibc_loc = BCS_DN
+                else
+                    ibc_loc = BCS_NN
+                end if
+
+                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
+                                           lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
+
+                ! LU decomposizion
+                ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
+                call PENTADFS(g(2)%size - 2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k))
+
+                ! Particular solutions
+                call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f1(2, i, k))
+                call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f2(2, i, k))
+
+            end do
+        end do
 
         return
     end subroutine OPR_Elliptic_Initialize
@@ -432,7 +420,7 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc_loc, lhs, rhs, lambda, &
+                    call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
                                                p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
@@ -717,7 +705,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
-                call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc, lhs, rhs, lambda, &
+                call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
                                            p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                 ! LU factorization
