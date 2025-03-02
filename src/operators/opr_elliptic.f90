@@ -282,7 +282,8 @@ contains
                     else
                         call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
                                                        g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        ! call OPR_ODE2_NN(2, g(2), sqrt(lambda), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        ! Need to initialize fdmi(2) with sqrt(lambda); see vintegral
+                        ! call OPR_ODE2_NN(2, fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
@@ -293,7 +294,8 @@ contains
                     else
                         call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
                                                        g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        ! call OPR_ODE2_DD(2, g(2), sqrt(lambda), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        ! Need to initialize fdmi(2) with sqrt(lambda)
+                        ! call OPR_ODE2_DD(2, fdmi(2), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 end select

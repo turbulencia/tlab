@@ -20,6 +20,7 @@ module FDM_Integral
         real(wp), pointer :: nodes(:)               ! nodes position; this and the previous information is redundant but useful in ODEs
         !                                             This info also allows to reproduce lhs and rhs, if needed
         !
+        real(wp) :: lambda
         integer :: bc                               ! type of boundary condition, [ BCS_MIN, BCS_MAX ]
         real(wp) :: rhs_b(1:5, 0:7), rhs_t(0:4, 8)  ! # of diagonals is 7, # rows is 7/2+1
         real(wp), pointer :: lhs(:, :)              ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
@@ -110,6 +111,8 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
+        fdmi%lambda = lambda
+        
         ! if (.not. allocated(fdmi%nodes)) allocate (fdmi%nodes(nx))
         allocate (fdmi%nodes(nx))
         fdmi%nodes(1:nx) = x(1:nx)

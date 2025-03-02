@@ -334,6 +334,7 @@ contains
         ! Jacobian; computational grid is uniform; only used to calculate the stencils in the section below
         g%jac(:, 2) = 1.0_wp
 
+        g%nb_diag_2(1) = 0              ! so that linear system below is solved only for these cases
         select case (g%mode_fdm2)
         case (FDM_COM4_JACOBIAN)
             call FDM_C2N4_Jacobian(nx, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef)

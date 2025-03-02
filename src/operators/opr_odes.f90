@@ -37,8 +37,6 @@ module OPR_ODES
 
     integer, parameter :: i1 = 1, i2 = 2
 
-    type(fdm_integral_dt) :: fdmi_b, fdmi_t
-
 contains
     !########################################################################
     !#
@@ -273,24 +271,23 @@ contains
     !########################################################################
     !########################################################################
     ! Neumann/Neumann boundary conditions
-    subroutine OPR_ODE2_NN(nlines, g, lambda, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_NN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: lambda
-        real(wp), intent(inout) :: f(nlines, size(g%nodes))
+        type(fdm_integral_dt), intent(inout) :: fdmi(2)
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%nodes))
         real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(out) :: u(nlines, size(g%nodes)) ! solution
-        real(wp), intent(out) :: v(nlines, size(g%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(size(g%nodes), 6)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%nodes)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%nodes), 6)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
-        integer(wi) nx, ndl, ndr
-        real(wp) du1_n(1), dep_n(1), dsp_n(1), a(3, 3)
+        integer(wi) nx
+        real(wp) lambda, du1_n(1), dep_n(1), dsp_n(1), a(3, 3)
 
         ! #######################################################################
-        nx = size(g%nodes)
-        ndr = g%nb_diag_1(2)
-        ndl = g%nb_diag_1(1)
+        lambda = fdmi(BCS_MIN)%lambda
+        
+        nx = size(fdmi(1)%nodes)
 
 #define v1(i) wrk1d(i,1)
 #define f1(i) wrk1d(i,2)
@@ -303,45 +300,37 @@ contains
 
         ! -----------------------------------------------------------------------
         ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
-        fdmi_b%bc = BCS_MIN
-        fdmi_b%mode_fdm1 = g%mode_fdm1
-        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_b)
-
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi_b, f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
 
         ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi_b, f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
 
         ! solve for e^(-)
         f1(:) = 0.0_wp
         em(1) = 1.0_wp
-        call FDM_Int1_Solve(1, fdmi_b, f1(:), em(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), em(:), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given (0 for now, to be found later on)
-        fdmi_t%bc = BCS_MAX
-        fdmi_t%mode_fdm1 = g%mode_fdm1
-        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi_t)
-
         u(:, nx) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi_t, v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1)
         u1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi_t, v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
 
         ! solve for e^(+)
         f1(:) = 0.0_wp
         ep(nx) = 1.0_wp
-        call FDM_Int1_Solve(1, fdmi_t, f1(:), ep(:), wrk2d, dep_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), f1(:), ep(:), wrk2d, dep_n(1))
 
         ! solve for s^(+)
         sp(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi_t, em(:), sp(:), wrk2d, dsp_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), em(:), sp(:), wrk2d, dsp_n(1))
 
         ! -----------------------------------------------------------------------
         ! Constraint and boundary conditions
@@ -401,24 +390,23 @@ contains
     !########################################################################
     !########################################################################
     ! Dirichlet/Dirichlet boundary conditions
-    subroutine OPR_ODE2_DD(nlines, g, lambda, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_DD(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: lambda
-        real(wp), intent(inout) :: f(nlines, size(g%nodes))
+        type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%nodes))
         real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(out) :: u(nlines, size(g%nodes)) ! solution
-        real(wp), intent(out) :: v(nlines, size(g%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(size(g%nodes), 5)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%nodes)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%nodes), 5)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
-        integer(wi) nx, ndl, ndr
-        real(wp) du1_n(1), dsp_n(1), aa, bb
+        integer(wi) nx
+        real(wp) lambda, du1_n(1), dsp_n(1), aa, bb
 
         ! #######################################################################
-        nx = size(g%nodes)
-        ndr = g%nb_diag_1(2)
-        ndl = g%nb_diag_1(1)
+        lambda = fdmi(BCS_MIN)%lambda
+
+        nx = size(fdmi(1)%nodes)
 
 #define f1(i) wrk1d(i,1)
 #define v1(i) wrk1d(i,2)
@@ -430,40 +418,32 @@ contains
 
         ! -----------------------------------------------------------------------
         ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
-        fdmi_b%bc = BCS_MIN
-        fdmi_b%mode_fdm1 = g%mode_fdm1
-        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_b)
-
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi_b, f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
 
         ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi_b, f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
 
         ! solve for e^(-)
         f1(:) = 0.0_wp
         em(1) = 1.0_wp
-        call FDM_Int1_Solve(1, fdmi_b, f1(:), em(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), em(:), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given
-        fdmi_t%bc = BCS_MAX
-        fdmi_t%mode_fdm1 = g%mode_fdm1
-        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi_t)
-
         u(:, nx) = bcs(:, 2)
-        call FDM_Int1_Solve(nlines, fdmi_t, v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1)
         u1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi_t, v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
 
         ! solve for s^(+)
         sp(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi_t, em(:), sp(:), wrk2d, dsp_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), em(:), sp(:), wrk2d, dsp_n(1))
 
         ! -----------------------------------------------------------------------
         ! Constraint and bottom boundary condition

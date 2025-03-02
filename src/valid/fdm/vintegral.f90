@@ -32,7 +32,7 @@ program VINTEGRAL
     character(len=32) :: fdm_names(5)
 
     type(fdm_dt) :: g
-    type(fdm_integral_dt) :: fdmi(2)
+    type(fdm_integral_dt) :: fdmi(2), fdmi_test(2), fdmi_test_lambda(2)
 
 ! ###################################################################
 ! Initialize
@@ -67,10 +67,6 @@ program VINTEGRAL
     dw1_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 8)
     dw2_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 9)
 
-    wk = 1.0_wp ! WRITE(*,*) 'Wavenumber ?'; READ(*,*) wk
-    write (*, *) 'Eigenvalue ?'
-    read (*, *) lambda
-
     test_type = 3
 
     ! ###################################################################
@@ -89,15 +85,18 @@ program VINTEGRAL
         close (21)
     end if
 
-    g%mode_fdm1 = FDM_COM6_JACOBIAN ! FDM_COM6_JACOBIAN_PENTA
+    g%mode_fdm1 = FDM_COM6_JACOBIAN
     g%mode_fdm2 = g%mode_fdm1
     call FDM_Initialize(x, g, fdmi)
+    ndr = g%nb_diag_1(2)
+    ndl = g%nb_diag_1(1)
 
     bcs_aux = 0
 
 ! ###################################################################
 ! Define the function f and analytic derivatives
     x_0 = 0.75_wp
+    wk = 1.0_wp
 
     do i = 1, kmax
 ! single-mode
@@ -133,25 +132,27 @@ program VINTEGRAL
     ! ###################################################################
     select case (test_type)
     case (1)
+        write (*, *) 'Eigenvalue ?'
+        read (*, *) lambda
+
         fdm_cases(1:5) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT]
         fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
         fdm_names(3) = '1. order, Jacobian 6 Penta'
         fdm_names(4:5) = ['1. order, Direct 4', '1. order, Direct 6']
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
-        do im = 1, 3 !size(fdm_cases)
+        do im = 1, 5 !size(fdm_cases)
             print *, new_line('a'), fdm_names(im)
 
             g%mode_fdm1 = fdm_cases(im)
-            g%mode_fdm2 = g%mode_fdm1
+            g%mode_fdm2 = FDM_COM4_JACOBIAN     ! not used
             call FDM_Initialize(x, g)
+            ndr = g%nb_diag_1(2)
+            ndl = g%nb_diag_1(1)
 
             ! f = du1_a
             call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
             f = f + lambda*u
-
-            ndr = g%nb_diag_1(2)
-            ndl = g%nb_diag_1(1)
 
             do ib = 1, 2
                 ibc = bcs_cases(ib)
@@ -241,6 +242,17 @@ program VINTEGRAL
 ! Second order equation; regular cases
 ! ###################################################################
     case (3)
+        write (*, *) 'Eigenvalue ?'
+        read (*, *) lambda
+
+        fdmi(BCS_MIN)%bc = BCS_MIN
+        fdmi(BCS_MIN)%mode_fdm1 = g%mode_fdm1
+        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(BCS_MIN))
+
+        fdmi(BCS_MAX)%bc = BCS_MAX
+        fdmi(BCS_MAX)%mode_fdm1 = g%mode_fdm1
+        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi(BCS_MAX))
+
         allocate (bcs(len, 2))
         ! call random_seed()
         ! call random_number(u)
@@ -263,22 +275,74 @@ program VINTEGRAL
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_DD(len, g, lambda, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
-                ! case (BCS_DN) ! not yet developed
-                !     print *, 'Dirichlet/Neumann'
-                !     bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! case (BCS_ND)
-                !     print *, 'Neumann/Dirichlet'
-                !     bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
+                call OPR_ODE2_DD(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+            case (BCS_DN) ! not yet developed
+                print *, 'Dirichlet/Neumann'
+                bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
+            case (BCS_ND)
+                print *, 'Neumann/Dirichlet'
+                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_NN(len, g, lambda, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_NN(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')
             call check(du1_n, dw1_n)
+
+        end do
+
+! ###################################################################
+! Test properties of integral matrices
+! ###################################################################
+    case (4)
+        write (*, *) 'Eigenvalue ?'
+        read (*, *) lambda
+
+        fdm_cases(1:5) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT]
+        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
+        fdm_names(3) = '1. order, Jacobian 6 Penta'
+        fdm_names(4:5) = ['1. order, Direct 4', '1. order, Direct 6']
+        bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
+
+        do im = 1, 5 !size(fdm_cases)
+            print *, new_line('a'), fdm_names(im)
+
+            g%mode_fdm1 = fdm_cases(im)
+            g%mode_fdm2 = FDM_COM4_JACOBIAN ! not used
+            call FDM_Initialize(x, g)
+            ndr = g%nb_diag_1(2)
+            ndl = g%nb_diag_1(1)
+
+            do ib = 1, 2
+                ibc = bcs_cases(ib)
+                print *, new_line('a'), 'Bcs case ', ibc
+
+                fdmi(ib)%bc = ibc
+                fdmi(ib)%mode_fdm1 = g%mode_fdm1
+                call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
+
+                fdmi_test(ib)%bc = fdmi(ib)%bc
+                fdmi_test(ib)%mode_fdm1 = fdmi(ib)%mode_fdm1
+                call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 1.0_wp, fdmi_test(ib))
+
+                call check(fdmi(ib)%rhs, fdmi_test(ib)%rhs, 'integral.dat')
+                ! print*,fdmi(ib)%rhs_b
+                ! print*,fdmi_test(ib)%rhs_b
+                ! print*,fdmi(ib)%rhs_t
+                ! print*,fdmi_test(ib)%rhs_t
+
+                ! checking linearity in lhs
+                fdmi_test_lambda(ib)%bc = fdmi(ib)%bc
+                fdmi_test_lambda(ib)%mode_fdm1 = fdmi(ib)%mode_fdm1
+                call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_test_lambda(ib))
+
+                call check(fdmi(ib)%lhs + lambda*(fdmi_test(ib)%lhs - fdmi(ib)%lhs), &
+                           fdmi_test_lambda(ib)%lhs, 'integral.dat')
+
+            end do
 
         end do
 
