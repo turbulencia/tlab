@@ -17,14 +17,14 @@ module FDM_Integral
     type, public :: fdm_integral_dt
         sequence
         integer mode_fdm1                           ! original finite-difference method
-        real(wp), pointer :: nodes(:)               ! nodes position; this and the previous information is redundant but useful in ODEs
+        real(wp), allocatable :: nodes(:)           ! nodes position; this and the previous information is redundant but useful in ODEs
         !                                             This info also allows to reproduce lhs and rhs, if needed
         !
         real(wp) :: lambda
         integer :: bc                               ! type of boundary condition, [ BCS_MIN, BCS_MAX ]
         real(wp) :: rhs_b(1:5, 0:7), rhs_t(0:4, 8)  ! # of diagonals is 7, # rows is 7/2+1
-        real(wp), pointer :: lhs(:, :)              ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
-        real(wp), pointer :: rhs(:, :)
+        real(wp), allocatable :: lhs(:, :)          ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
+        real(wp), allocatable :: rhs(:, :)
     end type fdm_integral_dt
     type(fdm_integral_dt), public :: fdm_Int0(2)    ! Integral plan for lambda = 0
 
@@ -57,7 +57,7 @@ contains
         real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
         real(wp), intent(in) :: lambda                  ! system constant
-        type(fdm_integral_dt), intent(out) :: fdmi      ! int_plan to be created
+        type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
         integer(wi) nx, ndr
@@ -90,7 +90,7 @@ contains
         real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
         real(wp), intent(in) :: lambda                  ! system constant
-        type(fdm_integral_dt), intent(out) :: fdmi      ! int_plan to be created
+        type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
         integer(wi) i
@@ -113,12 +113,12 @@ contains
 
         fdmi%lambda = lambda
         
-        ! if (.not. allocated(fdmi%nodes)) allocate (fdmi%nodes(nx))
+        if (allocated(fdmi%nodes)) deallocate(fdmi%nodes)
         allocate (fdmi%nodes(nx))
         fdmi%nodes(1:nx) = x(1:nx)
 
-        ! if (.not. allocated(fdmi%lhs)) allocate (fdmi%lhs(nx, ndr))
-        ! if (.not. allocated(fdmi%rhs)) allocate (fdmi%rhs(nx, ndl))
+        if (allocated(fdmi%lhs)) deallocate(fdmi%lhs)
+        if (allocated(fdmi%rhs)) deallocate(fdmi%rhs)
         allocate (fdmi%lhs(nx, ndr))
         allocate (fdmi%rhs(nx, ndl))
 
