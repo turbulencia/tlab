@@ -13,14 +13,13 @@ module OPR_ODES
     ! First-order ODEs
 
     ! Second-order ODEs. Reducing problem to a system of 2 first-order equations
-    ! public :: OPR_ODE2
+    public :: OPR_ODE2_NN                   ! Neumann/Neumann boundary conditions
+    public :: OPR_ODE2_DD                   ! Dirichlet/Dirichlet boundary conditions
+
     public :: OPR_ODE2_SINGULAR_DD
     public :: OPR_ODE2_SINGULAR_DN
     public :: OPR_ODE2_SINGULAR_ND
     public :: OPR_ODE2_SINGULAR_NN
-
-    public :: OPR_ODE2_NN     ! Neumann/Neumann boundary conditions
-    public :: OPR_ODE2_DD     ! Dirichlet/Dirichlet boundary conditions
 
     public :: OPR_ODE2_1_REGULAR_DD_OLD     ! Dirichlet/Dirichlet boundary conditions
     public :: OPR_ODE2_1_REGULAR_NN_OLD     ! Neumann/Neumann boundary conditions
@@ -28,7 +27,7 @@ module OPR_ODES
     ! public :: OPR_ODE2_1_SINGULAR_DD_OLD
     ! public :: OPR_ODE2_1_SINGULAR_DN_OLD
     ! public :: OPR_ODE2_1_SINGULAR_ND_OLD
-    public :: OPR_ODE2_1_SINGULAR_NN_OLD
+    ! public :: OPR_ODE2_1_SINGULAR_NN_OLD
 
     ! -----------------------------------------------------------------------
     integer(wi) i
@@ -278,23 +277,30 @@ contains
         real(wp), intent(in) :: bcs(nlines, 2)
         real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
         real(wp), intent(out) :: v(nlines, size(fdmi(1)%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%nodes), 6)
-        real(wp), intent(inout) :: wrk2d(nlines, 3)
+        real(wp), intent(inout) :: wrk1d(3, size(fdmi(1)%nodes), 2)
+        real(wp), intent(inout) :: wrk2d(max(nlines, 3), 3)
 
         integer(wi) nx
-        real(wp) lambda, du1_n(1), dep_n(1), dsp_n(1), a(3, 3)
+        real(wp) lambda, a(3, 3), der_bcs(3) !du1_n(1), dep_n(1), dsp_n(1)
 
         ! #######################################################################
         lambda = fdmi(BCS_MIN)%lambda
-        
         nx = size(fdmi(1)%nodes)
 
-#define v1(i) wrk1d(i,1)
-#define f1(i) wrk1d(i,2)
-#define u1(i) wrk1d(i,3)
-#define em(i) wrk1d(i,4)
-#define ep(i) wrk1d(i,5)
-#define sp(i) wrk1d(i,6)
+#define f1(j,i) wrk1d(j,i,1)
+
+#define v1(i) wrk1d(1,i,2)
+#define em(i) wrk1d(2,i,2)
+#define dd(i) wrk1d(3,i,2)
+
+#define u1(i) wrk1d(1,i,1)
+#define sp(i) wrk1d(2,i,1)
+#define ep(i) wrk1d(3,i,1)
+
+#define du1_n der_bcs(1)
+#define dsp_n der_bcs(2)
+#define dep_n der_bcs(3)
+
 #define du0_n(i) wrk2d(i,3)
 #define fn(i) wrk2d(i,3)
 
@@ -304,48 +310,38 @@ contains
         v(:, 1) = 0.0_wp
         call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
 
-        ! solve for v^(1)
-        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
-        v1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
-
-        ! solve for e^(-)
-        f1(:) = 0.0_wp
+        ! solve for v^(1) and e^(-); 1 line is not used but we need a 3 x nx array
+        f1(:, :) = 0.0_wp
+        f1(1, nx) = 1.0_wp; v1(1) = 0.0_wp
         em(1) = 1.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), em(:), wrk2d)
+        dd(1) = 0.0_wp
+        call FDM_Int1_Solve(3, fdmi(BCS_MIN), f1(1, 1), v1(1), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given (0 for now, to be found later on)
         u(:, nx) = 0.0_wp
         call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
 
-        ! solve for u^(1)
+        ! solve for u^(1) and s^(+) and e^(+)
         u1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
-
-        ! solve for e^(+)
-        f1(:) = 0.0_wp
-        ep(nx) = 1.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), f1(:), ep(:), wrk2d, dep_n(1))
-
-        ! solve for s^(+)
         sp(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), em(:), sp(:), wrk2d, dsp_n(1))
+        dd(:) = 0.0_wp; ep(nx) = 1.0_wp
+        call FDM_Int1_Solve(3, fdmi(BCS_MAX), v1(1), u1(1), wrk2d, der_bcs)
 
         ! -----------------------------------------------------------------------
         ! Constraint and boundary conditions
         ! System
         a(1, 1) = 1.0_wp + lambda*sp(1)
         a(2, 1) = em(nx)
-        a(3, 1) = dsp_n(1)
+        a(3, 1) = dsp_n
 
         a(1, 2) = lambda*ep(1)
         a(2, 2) = lambda
-        a(3, 2) = dep_n(1)
+        a(3, 2) = dep_n
 
         a(1, 3) = lambda*u1(1)
         a(2, 3) = v1(nx)
-        a(3, 3) = du1_n(1)
+        a(3, 3) = du1_n
 
         ! LU decomposition
         a(1, 2) = a(1, 2)/a(1, 1)
@@ -377,12 +373,19 @@ contains
 
 #undef fn
 #undef du0_n
+
 #undef f1
 #undef v1
-#undef u1
 #undef em
+#undef dd
+
+#undef u1
 #undef ep
 #undef sp
+
+#undef du1_n
+#undef dsp_n
+#undef dep_n
 
         return
     end subroutine OPR_ODE2_NN
