@@ -281,10 +281,11 @@ contains
         real(wp), intent(inout) :: wrk2d(max(nlines, 3), 3)
 
         integer(wi) nx
-        real(wp) lambda, a(3, 3), der_bcs(3) !du1_n(1), dep_n(1), dsp_n(1)
+        real(wp) lambda, a(3, 3), der_bcs(3)
 
         ! #######################################################################
         lambda = fdmi(BCS_MIN)%lambda
+
         nx = size(fdmi(1)%nodes)
 
 #define f1(j,i) wrk1d(j,i,1)
@@ -400,22 +401,28 @@ contains
         real(wp), intent(in) :: bcs(nlines, 2)
         real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
         real(wp), intent(out) :: v(nlines, size(fdmi(1)%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%nodes), 5)
-        real(wp), intent(inout) :: wrk2d(nlines, 3)
+        real(wp), intent(inout) :: wrk1d(2, size(fdmi(1)%nodes), 2)
+        real(wp), intent(inout) :: wrk2d(max(nlines, 2), 3)
 
         integer(wi) nx
-        real(wp) lambda, du1_n(1), dsp_n(1), aa, bb
+        real(wp) lambda, aa, bb, der_bcs(2)
 
         ! #######################################################################
         lambda = fdmi(BCS_MIN)%lambda
 
         nx = size(fdmi(1)%nodes)
 
-#define f1(i) wrk1d(i,1)
-#define v1(i) wrk1d(i,2)
-#define u1(i) wrk1d(i,3)
-#define em(i) wrk1d(i,4)
-#define sp(i) wrk1d(i,5)
+#define f1(j,i) wrk1d(j,i,1)
+
+#define v1(i) wrk1d(1,i,2)
+#define em(i) wrk1d(2,i,2)
+
+#define u1(i) wrk1d(1,i,1)
+#define sp(i) wrk1d(2,i,1)
+
+#define du1_n der_bcs(1)
+#define dsp_n der_bcs(2)
+
 #define du0_n(i) wrk2d(i,3)
 #define fn(i) wrk2d(i,3)
 
@@ -425,33 +432,26 @@ contains
         v(:, 1) = 0.0_wp
         call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
 
-        ! solve for v^(1)
-        f1(:) = 0.0_wp; f1(nx) = 1.0_wp
-        v1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
-
-        ! solve for e^(-)
-        f1(:) = 0.0_wp
+        ! solve for v^(1) and e^(-); 1 line is not used but we need a 2 x nx array
+        f1(:, :) = 0.0_wp
+        f1(1, nx) = 1.0_wp; v1(1) = 0.0_wp
         em(1) = 1.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), em(:), wrk2d)
+        call FDM_Int1_Solve(2, fdmi(BCS_MIN), f1(1, 1), v1(1), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given
         u(:, nx) = bcs(:, 2)
         call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
 
-        ! solve for u^(1)
+        ! solve for u^(1) and s^(+)
         u1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
-
-        ! solve for s^(+)
         sp(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), em(:), sp(:), wrk2d, dsp_n(1))
+        call FDM_Int1_Solve(2, fdmi(BCS_MAX), v1(1), u1(1), wrk2d, der_bcs)
 
         ! -----------------------------------------------------------------------
         ! Constraint and bottom boundary condition
-        aa = du1_n(1) - v1(nx)
-        bb = dsp_n(1) - em(nx)
+        aa = du1_n - v1(nx)
+        bb = dsp_n - em(nx)
         dummy = 1.0_wp/(aa*sp(1) - bb*u1(1))
         v(:, 1) = (aa*(bcs(:, 1) - u(:, 1)) - u1(1)*(lambda*bcs(:, 2) - du0_n(:) + v(:, nx)))*dummy   ! q1
         fn(:) = (sp(1)*(lambda*bcs(:, 2) - du0_n(:) + v(:, nx)) - bb*(bcs(:, 1) - u(:, 1)))*dummy
@@ -467,11 +467,16 @@ contains
 
 #undef fn
 #undef du0_n
+
 #undef f1
 #undef v1
-#undef u1
 #undef em
+
+#undef u1
 #undef sp
+
+#undef du1_n
+#undef dsp_n
 
         return
     end subroutine OPR_ODE2_DD
