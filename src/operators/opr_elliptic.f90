@@ -4,21 +4,20 @@
 module OPR_ELLIPTIC
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: efile
-    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT
-    use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
-    use TLab_WorkFlow, only: stagger_on
-    use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
-    use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use TLab_Memory, only: TLab_Allocate_Real
-    use OPR_FOURIER
-    use OPR_ODES
-    use OPR_PARTIAL
-    use FDM_Integral, only: FDM_Int2_CreateSystem, fdm_Int0
-    use FDM_MatMul
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
+    use TLab_Memory, only: TLab_Allocate_Real
+    use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
+    use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
+    use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
+    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM_Integral
+    use FDM_MatMul
+    use OPR_FOURIER
+    use OPR_ODES
+    use OPR_PARTIAL
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
@@ -70,8 +69,9 @@ module OPR_ELLIPTIC
     complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) lambda, norm
-    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
     type(fdm_dt) fdm_loc
+    type(fdm_integral_dt), allocatable :: fdm_int_loc(:, :, :)
+    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
 
 #define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
 #define p_b(icpp,jcpp,kcpp)   lu_poisson(icpp,2,jcpp,kcpp)
@@ -96,6 +96,7 @@ contains
         ! -----------------------------------------------------------------------
         integer imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
         integer ibc_loc
+        integer(wi) :: ndl, ndr, nd
         integer, parameter :: i1 = 1
         character*512 sRes
         character*32 bakfile
@@ -122,7 +123,7 @@ contains
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
         end select
 
-        if (any([FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN] == imode_elliptic)) return   ! not yet developed
+        ! if (any([FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN] == imode_elliptic)) return   ! not yet developed
 
         fdm_loc%mode_fdm1 = imode_elliptic
         fdm_loc%mode_fdm2 = imode_elliptic
@@ -131,7 +132,19 @@ contains
         ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
         isize_line = imax/2 + 1
 
-        call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, 9, isize_line, kmax], 'lu_poisson')
+        select case (imode_elliptic)
+        case (FDM_COM6_JACOBIAN)
+            ndl = fdm_loc%nb_diag_1(1)
+            ndr = fdm_loc%nb_diag_2(2)
+            allocate (fdm_int_loc(2, isize_line, kmax))
+
+        case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+            ndl = fdm_loc%nb_diag_2(1)
+            ndr = fdm_loc%nb_diag_2(2)
+            nd = ndr + ndl - 1 + 2     ! The rhs diagonal is 1 and not need to store; we add 2 independent terms
+            call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, nd, isize_line, kmax], 'lu_poisson')
+
+        end select
 
         do k = 1, kmax
 #ifdef USE_MPI
@@ -147,31 +160,53 @@ contains
                 iglobal = i
 #endif
 
-                ! Define \lambda based on modified wavenumbers (real)
-                if (g(3)%size > 1) then
-                    lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
-                else
-                    lambda = g(1)%mwn2(iglobal)
-                end if
+                select case (imode_elliptic)
+                case (FDM_COM6_JACOBIAN)
+                    ! Define \lambda based on modified wavenumbers (real)
+                    if (g(3)%size > 1) then
+                        lambda = g(1)%mwn1(iglobal) + g(3)%mwn1(kglobal)
+                    else
+                        lambda = g(1)%mwn1(iglobal)
+                    end if
 
-                ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
-                if (iglobal == 1 .and. kglobal == 1) then
-                    ibc_loc = BCS_DN
-                else
-                    ibc_loc = BCS_NN
-                end if
+                    fdm_int_loc(BCS_MIN, i, k)%bc = BCS_MIN
+                    fdm_int_loc(BCS_MIN, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
+                    call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
+                                             sqrt(lambda), fdm_int_loc(BCS_MIN, i, k))
 
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
-                                           lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
+                    fdm_int_loc(BCS_MAX, i, k)%bc = BCS_MAX
+                    fdm_int_loc(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
+                    call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
+                                             -sqrt(lambda), fdm_int_loc(BCS_MAX, i, k))
 
-                ! LU decomposizion
-                ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
-                call PENTADFS(g(2)%size - 2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k))
+                case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+                    ! Define \lambda based on modified wavenumbers (real)
+                    if (g(3)%size > 1) then
+                        lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
+                    else
+                        lambda = g(1)%mwn2(iglobal)
+                    end if
 
-                ! Particular solutions
-                call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f1(2, i, k))
-                call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f2(2, i, k))
+                    ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
+                    if (iglobal == 1 .and. kglobal == 1) then
+                        ibc_loc = BCS_DN
+                    else
+                        ibc_loc = BCS_NN
+                    end if
+
+                    ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                    call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
+                                               lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
+
+                    ! LU decomposizion
+                    ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
+                    call PENTADFS(g(2)%size - 2, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k))
+
+                    ! Particular solutions
+                    call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f1(2, i, k))
+                    call PENTADSS(g(2)%size - 2, i1, p_a(2, i, k), p_b(2, i, k), p_c(2, i, k), p_d(2, i, k), p_e(2, i, k), p_f2(2, i, k))
+
+                end select
 
             end do
         end do
@@ -280,10 +315,9 @@ contains
                         !                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
-                        call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                       g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        ! Need to initialize fdmi(2) with sqrt(lambda); see vintegral
-                        ! call OPR_ODE2_NN(2, fdmi, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                        !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
@@ -292,10 +326,9 @@ contains
                         !                                 g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
-                        call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                       g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        ! Need to initialize fdmi(2) with sqrt(lambda)
-                        ! call OPR_ODE2_DD(2, fdmi(2), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                        !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 end select

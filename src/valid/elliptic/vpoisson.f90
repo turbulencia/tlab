@@ -75,8 +75,6 @@ program VPOISSON
 
     call TLab_Initialize_Background(ifile)
 
-    ! call OPR_Burgers_Initialize(ifile)
-
     call OPR_Elliptic_Initialize(ifile)
 
 ! Staggering of the pressure grid not implemented here

@@ -67,7 +67,7 @@ program VINTEGRAL
     dw1_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 8)
     dw2_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 9)
 
-    test_type = 1
+    test_type = 3
 
     ! ###################################################################
     if (g%periodic) then
