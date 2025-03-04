@@ -486,7 +486,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 !
                 t_tmp = -MPI_WTime()
                 call TLab_Transpose(bt3, g(1)%size, nyz_trans, g(1)%size, tmp31, nyz_trans)
-                call OPR_PARTIAL1(nyz_trans, bcs, g(1), tmp31, tmp32, wrk2d)
+                call FDM_Der1_Solve(nyz_trans, bcs, g(1), g(1)%lu1, tmp31, tmp32, wrk2d)
                 call TLab_Transpose(tmp32, nyz_trans, g(1)%size, nyz_trans, bt3, g(1)%size)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
@@ -497,7 +497,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
                 t_test = t_test + t_tmp
                 call NB3DFFT_R2R_ZUNPACK(tmp41, bt4, info(FPYZ), t_tmp); t_comp = t_comp + t_tmp; 
                 t_tmp = -MPI_WTime()
-                call OPR_PARTIAL1(nxy_trans, bcs, g(3), tmp41, bt4, wrk2d)
+                call FDM_Der1_Solve(nxy_trans, bcs, g(3), g(3)%lu1, tmp41, bt4, wrk2d)
                 t_ser = t_ser + (t_tmp + MPI_WTime())
                 !
                 call NB3DFFT_R2R_ZYCOMM(bt4, bt4, tmp42, tmp41, info(BPZY), t_tmp); t_comp = t_comp + t_tmp; 

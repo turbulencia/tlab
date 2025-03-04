@@ -50,6 +50,7 @@ module FDM
     type(fdm_dt), public :: g(3)                ! Grid information along 3 directions
 
     public :: FDM_Initialize
+    public :: FDM_Der1_Solve
     public :: FDM_Der2_Solve
 
     integer, parameter, public :: FDM_COM4_JACOBIAN = 4
@@ -197,24 +198,10 @@ contains
         end select
 
         ! Calculating derivative dxds into g%jac(:, 1)
-        select case (g%nb_diag_1(2))
-        case (3)
-            call MatMul_3d_antisym(g%size, 1, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
-                                   nodes(:), g%jac(:, 1), periodic=.false.)
-        case (5)
-            call MatMul_5d_antisym(g%size, 1, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
-                                   nodes(:), g%jac(:, 1), periodic=.false.)
-        case (7)
-            call MatMul_7d_antisym(g%size, 1, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
-                                   nodes(:), g%jac(:, 1), periodic=.false.)
-        end select
-
-        select case (g%nb_diag_1(1))
-        case (3)
-            call TRIDSS(nx, i1, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%jac(1, 1))
-        case (5)
-            call PENTADSS2(nx, i1, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%lhs1(:, 4), g%lhs1(:, 5), g%jac(1, 1))
-        end select
+        periodic_aux = g%periodic
+        g%periodic = .false.
+        call FDM_Der1_Solve(1, [0, 0], g, g%lhs1, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
+        g%periodic = periodic_aux
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform
@@ -297,6 +284,7 @@ contains
 
         ! Calculating derivative d2xds2 into g%jac(:, 3)
         periodic_aux = g%periodic
+        g%periodic = .false.
         call FDM_Der2_Solve(1, g, g%lhs2, nodes, g%jac(:, 3), g%jac(:, 2), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
         g%periodic = periodic_aux
 
@@ -469,6 +457,69 @@ contains
 
         return
     end subroutine FDM_Der1_CreateSystem
+
+! ###################################################################
+! ###################################################################
+    subroutine FDM_Der1_Solve(nlines, bcs, g, lu1, u, result, wrk2d)
+        integer(wi), intent(in) :: nlines   ! # of lines to be solved
+        integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
+        !                                   0 biased, non-zero
+        !                                   1 forced to zero
+        type(fdm_dt), intent(in) :: g
+        real(wp), intent(in) :: lu1(:, :)
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
+        real(wp), intent(inout) :: wrk2d(*)
+
+        integer(wi) nmin, nmax, nsize, ip, ibc
+
+! ###################################################################
+        ibc = bcs(1) + bcs(2)*2
+        ip = ibc*5
+
+        nmin = 1; nmax = g%size
+        if (any([BCS_ND, BCS_NN] == ibc)) then
+            result(:, 1) = 0.0_wp      ! homogeneous bcs
+            nmin = nmin + 1
+        end if
+        if (any([BCS_DN, BCS_NN] == ibc)) then
+            result(:, g%size) = 0.0_wp
+            nmax = nmax - 1
+        end if
+        nsize = nmax - nmin + 1
+
+        select case (g%nb_diag_1(2))
+        case (3)
+            call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
+                                   u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+        case (5)
+            call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
+                                   u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+        case (7)
+            call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
+                                   u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+        end select
+
+        if (g%periodic) then
+            select case (g%nb_diag_1(1))
+            case (3)
+                call TRIDPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), result, wrk2d)
+            case (5)
+                call PENTADPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), lu1(1, 6), lu1(1, 7), result)
+            end select
+
+        else
+            select case (g%nb_diag_1(1))
+            case (3)
+                call TRIDSS(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), result(:, nmin:))
+            case (5)
+   call PENTADSS2(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), lu1(nmin:, ip + 4), lu1(nmin:, ip + 5), result(:, nmin:))
+            end select
+
+        end if
+
+        return
+    end subroutine FDM_Der1_Solve
 
     ! ###################################################################
     ! ###################################################################

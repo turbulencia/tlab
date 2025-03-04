@@ -7,7 +7,7 @@
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
     use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
-    use FDM, only: FDM_Der2_Solve
+    use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm
@@ -23,83 +23,17 @@ module OPR_PARTIAL
     use TLabMPI_Transpose
 #endif
     use TLab_Arrays, only: wrk2d
-    use FDM_MatMul
     implicit none
     private
-
-    integer(wi) ip, ibc
 
     public :: OPR_PARTIAL_X
     public :: OPR_PARTIAL_Y
     public :: OPR_PARTIAL_Z
-    public :: OPR_PARTIAL1 !, OPR_PARTIAL2
 
 contains
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL1(nlines, bcs, g, u, result)
-        integer(wi), intent(in) :: nlines   ! # of lines to be solved
-        integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
-        !                                   0 biased, non-zero
-        !                                   1 forced to zero
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: u(nlines, g%size)
-        real(wp), intent(out) :: result(nlines, g%size)
-
-        integer(wi) nmin, nmax, nsize
-
-! ###################################################################
-        ibc = bcs(1) + bcs(2)*2
-        ip = ibc*5
-
-        nmin = 1; nmax = g%size
-        if (any([BCS_ND, BCS_NN] == ibc)) then
-            result(:, 1) = 0.0_wp      ! homogeneous bcs
-            nmin = nmin + 1
-        end if
-        if (any([BCS_DN, BCS_NN] == ibc)) then
-            result(:, g%size) = 0.0_wp
-            nmax = nmax - 1
-        end if
-        nsize = nmax - nmin + 1
-
-        select case (g%nb_diag_1(2))
-        case (3)
-            call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), u, result, &
-                                   g%periodic, ibc, g%rhs1_b, g%rhs1_t)
-        case (5)
-            call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), u, result, &
-                                   g%periodic, ibc, g%rhs1_b, g%rhs1_t)
-        case (7)
-           call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), u, result, &
-                                   g%periodic, ibc, g%rhs1_b, g%rhs1_t)
-        end select
-
-        if (g%periodic) then
-            select case (g%nb_diag_1(1))
-            case (3)
-                call TRIDPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), result, wrk2d)
-            case (5)
-                call PENTADPSS(g%size, nlines, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7), result)
-            end select
-
-        else
-            select case (g%nb_diag_1(1))
-            case (3)
-                call TRIDSS(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), result(:, nmin:))
-            case (5)
-   call PENTADSS2(nsize, nlines, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5), result(:, nmin:))
-            end select
-
-        end if
-
-        return
-    end subroutine OPR_PARTIAL1
-
-! ###################################################################
-! ###################################################################
     subroutine OPR_PARTIAL1_IBM(nlines, bcs, g, u, result)
-        implicit none
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1,*) and xmax (2,*):
         !                                   0 biased, non-zero
@@ -118,25 +52,25 @@ contains
         case ('x')
             if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
                 call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
-                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
+                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, fld_ibm, result, wrk2d)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
+                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, u, result, wrk2d)  ! no splines needed
             end if
 
         case ('y')
             if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
                 call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
-                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
+                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, fld_ibm, result, wrk2d)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
+                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, u, result, wrk2d)  ! no splines needed
             end if
 
         case ('z')
             if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
                 call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
-                call OPR_PARTIAL1(nlines, bcs, g, fld_ibm, result)  ! now with modified u fields
+                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, fld_ibm, result, wrk2d)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call OPR_PARTIAL1(nlines, bcs, g, u, result)  ! no splines needed
+                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, u, result, wrk2d)  ! no splines needed
             end if
 
         end select
@@ -322,18 +256,18 @@ contains
         select case (type)
 
         case (OPR_P2)
-            if (g%need_1der) call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
+            if (g%need_1der) call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
             call FDM_Der2_Solve(nyz, g, g%lu2, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P2_P1)
-            call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
+            call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
             call FDM_Der2_Solve(nyz, g, g%lu2, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P1)
             if (ibm_partial) then
                 call OPR_PARTIAL1_IBM(nyz, bcs(:, 1), g, p_b, p_c)
             else
-                call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_c)
+                call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_c, wrk2d)
             end if
 
         case (OPR_P0_INT_VP)
@@ -451,18 +385,18 @@ contains
             select case (type)
 
             case (OPR_P2)
-                if (g%need_1der) call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
+                if (g%need_1der) call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxy, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
-                call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
+                call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxy, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then
                     call OPR_PARTIAL1_IBM(nxy, bcs(:, 1), g, p_a, p_b)
                 else
-                    call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_b)
+                    call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_b, wrk2d)
                 end if
 
             case (OPR_P0_INT_VP)
@@ -563,18 +497,18 @@ contains
             select case (type)
 
             case (OPR_P2)
-                if (g%need_1der) call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
+                if (g%need_1der) call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxz, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
-                call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
+                call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxz, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then
                     call OPR_PARTIAL1_IBM(nxz, bcs(:, 1), g, p_a, p_b)
                 else
-                    call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_b)
+                    call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_b, wrk2d)
                 end if
 
             case (OPR_P0_INT_VP)

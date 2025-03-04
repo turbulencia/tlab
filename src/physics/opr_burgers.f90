@@ -203,9 +203,6 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) nyz
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d, p_vel
-        ! #ifdef USE_MPI
-        !         integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
-        ! #endif
 
         ! ###################################################################
         if (g(1)%size == 1) then ! Set to zero in 2D case
@@ -224,7 +221,6 @@ contains
             p_b => tmp1
             p_c => wrk3d
             p_d => result
-            ! nyz = ims_size_i(id)
             nyz = tmpi_plan_dx%nlines
         else
 #endif
@@ -376,9 +372,6 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) nxy
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_vel
-        ! #ifdef USE_MPI
-        !         integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
-        ! #endif
 
         ! ###################################################################
         if (g(3)%size == 1) then ! Set to zero in 2D case
@@ -396,7 +389,6 @@ contains
             p_a => tmp1
             p_b => result
             p_c => wrk3d
-            ! nxy = ims_size_k(id)
             nxy = tmpi_plan_dz%nlines
         else
 #endif
@@ -446,7 +438,7 @@ contains
     !# Second derivative uses LE decomposition including diffusivity coefficient
     !########################################################################
     subroutine OPR_Burgers_1D(is, nlines, bcs, g, lu2d, dealiasing, rhoinv, s, u, result, dsdx)
-        use FDM, only: FDM_Der2_Solve
+        use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -474,7 +466,7 @@ contains
         if (ibm_burgers) then
             call OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2d, s, result, dsdx)
         else
-            call OPR_PARTIAL1(nlines, bcs(:, 1), g, s, dsdx)
+            call FDM_Der1_Solve(nlines, bcs(:, 1), g, g%lu1, s, dsdx, wrk2d)
             call FDM_Der2_Solve(nlines, g, lu2d, s, result, dsdx, wrk2d)
         end if
 
@@ -495,13 +487,13 @@ contains
                 end do
 
             else
-                !$omp parallel default( shared ) private( ij )
-                !$omp do
+!$omp parallel default( shared ) private( ij )
+!$omp do
                 do ij = 1, nlines*g%size
                     result(ij, 1) = result(ij, 1) - uf(ij, 1)*dsf(ij, 1)
                 end do
-                !$omp end do
-                !$omp end parallel
+!$omp end do
+!$omp end parallel
             end if
 
             nullify (uf, dsf)
@@ -513,13 +505,13 @@ contains
                 end do
 
             else
-                !$omp parallel default( shared ) private( ij )
-                !$omp do
+!$omp parallel default( shared ) private( ij )
+!$omp do
                 do ij = 1, nlines*g%size
                     result(ij, 1) = result(ij, 1) - u(ij, 1)*dsdx(ij, 1)
                 end do
-                !$omp end do
-                !$omp end parallel
+!$omp end do
+!$omp end parallel
             end if
         end if
 
@@ -530,7 +522,7 @@ contains
 ! ###################################################################
     ! modify incoming fields (fill solids with spline functions, depending on direction)
     subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2, u, result, du)
-        use FDM, only: FDM_Der2_Solve
+        use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
         use IBM_VARS
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
@@ -576,7 +568,7 @@ contains
 
         end select
 
-        call OPR_PARTIAL1(nlines, bcs(:, 1), g, p_fld, du)
+        call FDM_Der1_Solve(nlines, bcs(:, 1), g, g%lu1, p_fld, du, wrk2d)
         call FDM_Der2_Solve(nlines, g, lu2, p_fld, result, du, wrk2d)  ! no splines needed
 
         nullify (p_fld)
