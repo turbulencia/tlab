@@ -50,6 +50,7 @@ module FDM
     type(fdm_dt), public :: g(3)                ! Grid information along 3 directions
 
     public :: FDM_Initialize
+    public :: FDM_Der2_Solve
 
     integer, parameter, public :: FDM_COM4_JACOBIAN = 4
     integer, parameter, public :: FDM_COM6_JACOBIAN_PENTA = 5
@@ -72,9 +73,9 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid
         integer(wi) nmin, nmax, nsize, bcs_cases(4)
-        real(wp) coef(5)
 
         integer, parameter :: i1 = 1
+        logical :: periodic_aux
 
         ! ###################################################################
         ! Consistency check
@@ -226,7 +227,7 @@ contains
 
         call FDM_Der1_CreateSystem(g, g%periodic)
 
-        if (g%periodic) g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2      ! modified wavenumber as used in Poisson solver
+        if (g%periodic) g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2      ! modified wavenumber as used in elliptic solver
 
         ! -------------------------------------------------------------------
         ! LU decomposition
@@ -279,7 +280,7 @@ contains
         ig = ig + 7 + 5
 
         ! -------------------------------------------------------------------
-        ! uniform grid to calculate Jacobian (used for the stencils below and also as grid spacing in the code).
+        ! uniform grid to calculate Jacobian (needed to set up the Jacobian formulations).
         g%nodes(:) = [(real(i - 1, wp), i=1, g%size)]
         g%jac(:, 2) = 1.0_wp
         g%jac(:, 3) = 0.0_wp
@@ -295,21 +296,9 @@ contains
         end select
 
         ! Calculating derivative d2xds2 into g%jac(:, 3)
-        select case (g%nb_diag_2(2))
-        case (5)
-            call MatMul_5d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), &
-                               nodes(:), g%jac(:, 3), periodic=.false.)
-        case (7)
-            call MatMul_7d_sym(nx, 1, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), &
-                               nodes(:), g%jac(:, 3), periodic=.false.)
-        end select
-
-        select case (g%nb_diag_2(1))
-        case (3)
-            call TRIDSS(nx, i1, g%lhs2(:, 1), g%lhs2(:, 2), g%lhs2(:, 3), g%jac(1, 3))
-        case (5)
-            call PENTADSS2(nx, i1, g%lhs2(:, 1), g%lhs2(:, 2), g%lhs2(:, 3), g%lhs2(:, 4), g%lhs2(:, 5), g%jac(1, 3))
-        end select
+        periodic_aux = g%periodic
+        call FDM_Der2_Solve(1, g, g%lhs2, nodes, g%jac(:, 3), g%jac(:, 2), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
+        g%periodic = periodic_aux
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform
@@ -323,7 +312,7 @@ contains
 
         call FDM_Der2_CreateSystem(g, g%periodic)
 
-        if (g%periodic) g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)      ! modified wavenumbers as used in the Helmholtz solver
+        if (g%periodic) g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)      ! modified wavenumbers as used in elliptic solver
 
         ! -------------------------------------------------------------------
         ! LU decomposition
@@ -538,5 +527,49 @@ contains
 
         return
     end subroutine FDM_Der2_CreateSystem
+
+    ! ###################################################################################
+    ! ###################################################################################
+    subroutine FDM_Der2_Solve(nlines, g, lu2, u, result, du, wrk2d)
+        integer(wi), intent(in) :: nlines                  ! # of lines to be solved
+        type(fdm_dt), intent(in) :: g
+        real(wp), intent(in) :: lu2(:, :)
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(in) :: du(nlines, g%size)          ! 1. derivative for correction in case of Jacobian formulation
+        real(wp), intent(out) :: result(nlines, g%size)
+        real(wp), intent(out) :: wrk2d(*)
+
+        integer(wi) ip
+
+        ! ###################################################################
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
+            ! so far, only pentadiagonal cases
+            call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), u, result)
+        else
+            select case (g%nb_diag_2(2))
+            case (5)
+                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), &
+                                   u, result, g%periodic)
+            case (7)
+                call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), &
+                                   u, result, g%periodic)
+            end select
+            if (g%need_1der) then
+                ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du
+                ! so far, only tridiagonal systems
+                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
+            end if
+        end if
+
+        if (g%periodic) then    ! so far, tridiagonal
+            call TRIDPSS(g%size, nlines, lu2(1, 1), lu2(1, 2), lu2(1, 3), lu2(1, 4), lu2(1, 5), result, wrk2d)
+
+        else
+            call TRIDSS(g%size, nlines, lu2(:, 1), lu2(:, 2), lu2(:, 3), result)
+
+        end if
+
+        return
+    end subroutine FDM_Der2_Solve
 
 end module FDM

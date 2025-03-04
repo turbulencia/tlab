@@ -7,6 +7,7 @@
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
     use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
+    use FDM, only: FDM_Der2_Solve
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm
@@ -21,6 +22,7 @@ module OPR_PARTIAL
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_Transpose
 #endif
+    use TLab_Arrays, only: wrk2d
     use FDM_MatMul
     implicit none
     private
@@ -30,13 +32,12 @@ module OPR_PARTIAL
     public :: OPR_PARTIAL_X
     public :: OPR_PARTIAL_Y
     public :: OPR_PARTIAL_Z
-    public :: OPR_PARTIAL1, OPR_PARTIAL2
+    public :: OPR_PARTIAL1 !, OPR_PARTIAL2
 
 contains
 ! ###################################################################
 ! ###################################################################
     subroutine OPR_PARTIAL1(nlines, bcs, g, u, result)
-        use TLab_Arrays, only: wrk2d
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
@@ -166,47 +167,6 @@ contains
 
         return
     end subroutine OPR_IBM
-
-! ###################################################################################
-! ###################################################################################
-    subroutine OPR_PARTIAL2(nlines, g, lu2, u, result, du)
-        use TLab_Arrays, only: wrk2d
-
-        integer(wi), intent(in) :: nlines                  ! # of lines to be solved
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: lu2(:, :)
-        real(wp), intent(in) :: u(nlines, g%size)
-        real(wp), intent(in) :: du(nlines, g%size)          ! 1. derivative for correction in case of Jacobian formulation
-        real(wp), intent(out) :: result(nlines, g%size)
-
-        ! ###################################################################
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
-            ! so far, only pentadiagonal cases
-            call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), u, result)
-        else
-            select case (g%nb_diag_2(2))
-            case (5)
-                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), u, result, g%periodic)
-            case (7)
-     call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), u, result, g%periodic)
-            end select
-            if (g%need_1der) then
-                ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du
-                ! so far, only tridiagonal systems
-                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
-            end if
-        end if
-
-        if (g%periodic) then    ! so far, tridiagonal
-            call TRIDPSS(g%size, nlines, lu2(1, 1), lu2(1, 2), lu2(1, 3), lu2(1, 4), lu2(1, 5), result, wrk2d)
-
-        else
-            call TRIDSS(g%size, nlines, lu2(:, 1), lu2(:, 2), lu2(:, 3), result)
-
-        end if
-
-        return
-    end subroutine OPR_PARTIAL2
 
 ! ###################################################################
 ! ###################################################################
@@ -363,11 +323,11 @@ contains
 
         case (OPR_P2)
             if (g%need_1der) call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
-            call OPR_PARTIAL2(nyz, g, g%lu2, p_b, p_c, p_d)
+            call FDM_Der2_Solve(nyz, g, g%lu2, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P2_P1)
             call OPR_PARTIAL1(nyz, bcs(:, 1), g, p_b, p_d)
-            call OPR_PARTIAL2(nyz, g, g%lu2, p_b, p_c, p_d)
+            call FDM_Der2_Solve(nyz, g, g%lu2, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P1)
             if (ibm_partial) then
@@ -492,11 +452,11 @@ contains
 
             case (OPR_P2)
                 if (g%need_1der) call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
-                call OPR_PARTIAL2(nxy, g, g%lu2, p_a, p_b, p_c)
+                call FDM_Der2_Solve(nxy, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
                 call OPR_PARTIAL1(nxy, bcs(:, 1), g, p_a, p_c)
-                call OPR_PARTIAL2(nxy, g, g%lu2, p_a, p_b, p_c)
+                call FDM_Der2_Solve(nxy, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then
@@ -604,11 +564,11 @@ contains
 
             case (OPR_P2)
                 if (g%need_1der) call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
-                call OPR_PARTIAL2(nxz, g, g%lu2, p_a, p_b, p_c)
+                call FDM_Der2_Solve(nxz, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
                 call OPR_PARTIAL1(nxz, bcs(:, 1), g, p_a, p_c)
-                call OPR_PARTIAL2(nxz, g, g%lu2, p_a, p_b, p_c)
+                call FDM_Der2_Solve(nxz, g, g%lu2, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then

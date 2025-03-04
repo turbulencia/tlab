@@ -30,7 +30,6 @@ program VPOISSON
     use OPR_PARTIAL
     use OPR_FOURIER
     use OPR_FILTERS
-    use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
     use Averages
 

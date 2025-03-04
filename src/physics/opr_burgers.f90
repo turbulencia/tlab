@@ -446,6 +446,7 @@ contains
     !# Second derivative uses LE decomposition including diffusivity coefficient
     !########################################################################
     subroutine OPR_Burgers_1D(is, nlines, bcs, g, lu2d, dealiasing, rhoinv, s, u, result, dsdx)
+        use FDM, only: FDM_Der2_Solve
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -474,7 +475,7 @@ contains
             call OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2d, s, result, dsdx)
         else
             call OPR_PARTIAL1(nlines, bcs(:, 1), g, s, dsdx)
-            call OPR_PARTIAL2(nlines, g, lu2d, s, result, dsdx)
+            call FDM_Der2_Solve(nlines, g, lu2d, s, result, dsdx, wrk2d)
         end if
 
         ! ###################################################################
@@ -529,6 +530,7 @@ contains
 ! ###################################################################
     ! modify incoming fields (fill solids with spline functions, depending on direction)
     subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2, u, result, du)
+        use FDM, only: FDM_Der2_Solve
         use IBM_VARS
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
@@ -575,7 +577,7 @@ contains
         end select
 
         call OPR_PARTIAL1(nlines, bcs(:, 1), g, p_fld, du)
-        call OPR_PARTIAL2(nlines, g, lu2, p_fld, result, du)  ! no splines needed
+        call FDM_Der2_Solve(nlines, g, lu2, p_fld, result, du, wrk2d)  ! no splines needed
 
         nullify (p_fld)
 
