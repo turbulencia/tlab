@@ -10,6 +10,7 @@ module FDM
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
+    use FDM_Com0_Jacobian
     use FDM_Integral
     implicit none
     private
@@ -52,6 +53,7 @@ module FDM
     public :: FDM_Initialize
     public :: FDM_Der1_Solve
     public :: FDM_Der2_Solve
+    public :: FDM_Interpol, FDM_Interpol_Der1
 
     integer, parameter, public :: FDM_COM4_JACOBIAN = 4
     integer, parameter, public :: FDM_COM6_JACOBIAN_PENTA = 5
@@ -258,9 +260,9 @@ contains
 
         end if
 
-! ###################################################################
-! second-order derivative: LU factorization done in routine TRID*FS
-! ###################################################################
+        ! ###################################################################
+        ! second-order derivative: LU factorization done in routine TRID*FS
+        ! ###################################################################
         g%lhs2 => g%memory(:, ig:)
         ig = ig + 5
         g%rhs2 => g%memory(:, ig:)
@@ -323,38 +325,42 @@ contains
 
         end if
 
-! ###################################################################
-! LU factorization interpolation, done in routine TRID*FS
-! ###################################################################
-! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
-! -------------------------------------------------------------------
-        if ((stagger_on) .and. g%periodic) then
-            g%lu0i => g%memory(:, ig:)
+        ! ###################################################################
+        ! interpolation for staggered cases
+        ! ###################################################################
+        if (stagger_on) then
+            if (g%periodic) then
 
-            select case (g%mode_fdm1)
-            case DEFAULT
-                call FDM_C0INT6P_LHS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3))
-            end select
-            call TRIDPFS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5))
-            ig = ig + 5
-        end if
+                ! interpolation
+                g%lu0i => g%memory(:, ig:)
+                ig = ig + 5
 
-! ###################################################################
-! LU factorization first interp. derivative, done in routine TRID*FS
-! ###################################################################
-! -------------------------------------------------------------------
-! Periodic case; pentadiagonal
-! -------------------------------------------------------------------
-        if ((stagger_on) .and. g%periodic) then
-            g%lu1i => g%memory(:, ig:)
+                select case (g%mode_fdm1)
+                case DEFAULT
+                    call FDM_C0INT6P_LHS(nx, g%lu0i(:, 1), g%lu0i(:, 2), g%lu0i(:, 3))
+                end select
 
-            select case (g%mode_fdm1)
-            case DEFAULT
-                call FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3))
-            end select
-            call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
-            ig = ig + 5
+                ! LU decomposition
+                call TRIDPFS(nx, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5))
+
+                ! first interp. derivative
+                g%lu1i => g%memory(:, ig:)
+                ig = ig + 5
+
+                select case (g%mode_fdm1)
+                case DEFAULT
+                    call FDM_C1INT6P_LHS(nx, g%jac, g%lu1i(:, 1), g%lu1i(:, 2), g%lu1i(:, 3))
+                end select
+
+                ! LU decomposition
+                call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
+
+            ! else
+            !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')
+            !     call TLab_Stop(DNS_ERROR_UNDEVELOP)
+
+            end if
+
         end if
 
 ! ###################################################################
@@ -513,7 +519,7 @@ contains
             case (3)
                 call TRIDSS(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), result(:, nmin:))
             case (5)
-   call PENTADSS2(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), lu1(nmin:, ip + 4), lu1(nmin:, ip + 5), result(:, nmin:))
+             call PENTADSS2(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), lu1(nmin:, ip + 4), lu1(nmin:, ip + 5), result(:, nmin:))
             end select
 
         end if
@@ -622,5 +628,89 @@ contains
 
         return
     end subroutine FDM_Der2_Solve
+
+    ! ###################################################################
+    ! ###################################################################
+    subroutine FDM_Interpol(dir, nlines, g, u, result, wrk2d)
+        integer(wi), intent(in) :: dir      ! scalar direction flag
+        !                                   0 'vp' --> vel. to pre. grid
+        !                                   1 'pv' --> pre. to vel. grid
+        integer(wi), intent(in) :: nlines   ! number of lines to be solved
+        type(fdm_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
+        real(wp), intent(inout) :: wrk2d(*)
+
+        ! ###################################################################
+        ! Interpolation, direction 'vp': vel. --> pre. grid
+        if (dir == 0) then
+            if (g%periodic) then
+                select case (g%mode_fdm1)
+                case DEFAULT
+                    call FDM_C0INTVP6P_RHS(g%size, nlines, u, result)
+                end select
+                call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
+            else
+                call TLab_Write_ASCII(efile, 'FDM_Interpol. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
+            end if
+        ! Interpolation, direction 'pv': pre. --> vel. grid
+        else if (dir == 1) then
+            if (g%periodic) then
+                select case (g%mode_fdm1)
+                case DEFAULT
+                    call FDM_C0INTPV6P_RHS(g%size, nlines, u, result)
+                end select
+                call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
+            else
+                call TLab_Write_ASCII(efile, 'FDM_Interpol. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
+            end if
+        end if
+
+        return
+    end subroutine FDM_Interpol
+
+    ! ###################################################################
+    ! ###################################################################
+    subroutine FDM_Interpol_Der1(dir, nlines, g, u, result, wrk2d)
+        integer(wi), intent(in) :: dir      ! scalar direction flag
+        !                                   0 'vp' --> vel. to pre. grid
+        !                                   1 'pv' --> pre. to vel. grid
+        integer(wi), intent(in) :: nlines   ! number of lines to be solved
+        type(fdm_dt), intent(in) :: g
+        real(wp), intent(in) :: u(nlines, g%size)
+        real(wp), intent(out) :: result(nlines, g%size)
+        real(wp), intent(inout) :: wrk2d(*)
+
+        ! ###################################################################
+        ! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
+        if (dir == 0) then
+            if (g%periodic) then
+                select case (g%mode_fdm1)
+                case default
+                    call FDM_C1INTVP6P_RHS(g%size, nlines, u, result)
+                end select
+                call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
+            else
+                call TLab_Write_ASCII(efile, 'FDM_Interpol_Der1. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
+            end if
+            ! 1st interpolatory derivative, direction 'pv': pre. --> vel. grid
+        else if (dir == 1) then
+            if (g%periodic) then
+                select case (g%mode_fdm1)
+                case default
+                    call FDM_C1INTPV6P_RHS(g%size, nlines, u, result)
+                end select
+                call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
+            else
+                call TLab_Write_ASCII(efile, 'FDM_Interpol_Der1. Non-periodic case not implemented.')
+                call TLab_Stop(DNS_ERROR_NOTIMPL)
+            end if
+        end if
+
+        return
+    end subroutine FDM_Interpol_Der1
 
 end module FDM

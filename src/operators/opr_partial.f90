@@ -6,8 +6,9 @@
 
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
-    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
+    use FDM, only: fdm_dt
     use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
+    use FDM, only: FDM_Interpol, FDM_Interpol_Der1
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm
@@ -104,90 +105,6 @@ contains
 
 ! ###################################################################
 ! ###################################################################
-    subroutine OPR_PARTIAL0_INT(dir, nlines, g, u, result)
-        use TLab_Arrays, only: wrk2d
-        integer(wi), intent(in) :: dir      ! scalar direction flag
-        !                                   0 'vp' --> vel. to pre. grid
-        !                                   1 'pv' --> pre. to vel. grid
-        integer(wi), intent(in) :: nlines   ! number of lines to be solved
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: u(nlines, g%size)
-        real(wp), intent(out) :: result(nlines, g%size)
-
-! ###################################################################
-! Interpolation, direction 'vp': vel. --> pre. grid
-        if (dir == 0) then
-            if (g%periodic) then
-                select case (g%mode_fdm1)
-                case DEFAULT
-                    call FDM_C0INTVP6P_RHS(g%size, nlines, u, result)
-                end select
-                call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
-            else
-                call TLab_Write_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
-                call TLab_Stop(DNS_ERROR_NOTIMPL)
-            end if
-! Interpolation, direction 'pv': pre. --> vel. grid
-        else if (dir == 1) then
-            if (g%periodic) then
-                select case (g%mode_fdm1)
-                case DEFAULT
-                    call FDM_C0INTPV6P_RHS(g%size, nlines, u, result)
-                end select
-                call TRIDPSS(g%size, nlines, g%lu0i(1, 1), g%lu0i(1, 2), g%lu0i(1, 3), g%lu0i(1, 4), g%lu0i(1, 5), result, wrk2d)
-            else
-                call TLab_Write_ASCII(efile, 'OPR_PARTIAL0_INT. Non-periodic case not implemented.')
-                call TLab_Stop(DNS_ERROR_NOTIMPL)
-            end if
-        end if
-
-        return
-    end subroutine OPR_PARTIAL0_INT
-
-! ###################################################################
-! ###################################################################
-    subroutine OPR_PARTIAL1_INT(dir, nlines, g, u, result)
-        use TLab_Arrays, only: wrk2d
-        integer(wi), intent(in) :: dir      ! scalar direction flag
-        !                                   0 'vp' --> vel. to pre. grid
-        !                                   1 'pv' --> pre. to vel. grid
-        integer(wi), intent(in) :: nlines   ! number of lines to be solved
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: u(nlines, g%size)
-        real(wp), intent(out) :: result(nlines, g%size)
-
-! ###################################################################
-! 1st interpolatory derivative, direction 'vp': vel. --> pre. grid
-        if (dir == 0) then
-            if (g%periodic) then
-                select case (g%mode_fdm1)
-                case (FDM_COM6_JACOBIAN)
-                    call FDM_C1INTVP6P_RHS(g%size, nlines, u, result)
-                end select
-                call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
-            else
-                call TLab_Write_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
-                call TLab_Stop(DNS_ERROR_NOTIMPL)
-            end if
-! 1st interpolatory derivative, direction 'pv': pre. --> vel. grid
-        else if (dir == 1) then
-            if (g%periodic) then
-                select case (g%mode_fdm1)
-                case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT)
-                    call FDM_C1INTPV6P_RHS(g%size, nlines, u, result)
-                end select
-                call TRIDPSS(g%size, nlines, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5), result, wrk2d)
-            else
-                call TLab_Write_ASCII(efile, 'OPR_PARTIAL1_INT. Non-periodic case not implemented.')
-                call TLab_Stop(DNS_ERROR_NOTIMPL)
-            end if
-        end if
-
-        return
-    end subroutine OPR_PARTIAL1_INT
-
-! ###################################################################
-! ###################################################################
     subroutine OPR_PARTIAL_X(type, nx, ny, nz, bcs, g, u, result, tmp1)
         use TLab_Arrays, only: wrk3d
         integer(wi), intent(in) :: type     ! OPR_P1         1.order derivative
@@ -209,10 +126,6 @@ contains
 
         real(wp), dimension(:), pointer :: p_a, p_b, p_c, p_d
 
-! #ifdef USE_MPI
-!         integer(wi), parameter :: id = TLAB_MPI_TRP_I_PARTIAL
-! #endif
-
 ! ###################################################################
 ! -------------------------------------------------------------------
 ! MPI transposition
@@ -226,7 +139,6 @@ contains
             if (any([OPR_P2, OPR_P2_P1] == type)) then
                 p_d => tmp1
             end if
-            ! nyz = ims_size_i(id)
             nyz = tmpi_plan_dx%nlines
         else
 #endif
@@ -271,16 +183,16 @@ contains
             end if
 
         case (OPR_P0_INT_VP)
-            call OPR_PARTIAL0_INT(0, nyz, g, p_b, p_c)
+            call FDM_Interpol(0, nyz, g, p_b, p_c, wrk2d)
 
         case (OPR_P0_INT_PV)
-            call OPR_PARTIAL0_INT(1, nyz, g, p_b, p_c)
+            call FDM_Interpol(1, nyz, g, p_b, p_c, wrk2d)
 
         case (OPR_P1_INT_VP)
-            call OPR_PARTIAL1_INT(0, nyz, g, p_b, p_c)
+            call FDM_Interpol_Der1(0, nyz, g, p_b, p_c, wrk2d)
 
         case (OPR_P1_INT_PV)
-            call OPR_PARTIAL1_INT(1, nyz, g, p_b, p_c)
+            call FDM_Interpol_Der1(1, nyz, g, p_b, p_c, wrk2d)
 
         case (OPR_P0_IBM)
             call OPR_IBM(0, nyz, g, p_b, p_c)
@@ -343,10 +255,6 @@ contains
 
         real(wp), dimension(:), pointer :: p_a, p_b, p_c
 
-! #ifdef USE_MPI
-!         integer(wi), parameter :: id = TLAB_MPI_TRP_K_PARTIAL
-! #endif
-
 ! ###################################################################
         if (g%size == 1) then ! Set to zero in 2D case
             result = 0.0_wp
@@ -400,16 +308,16 @@ contains
                 end if
 
             case (OPR_P0_INT_VP)
-                call OPR_PARTIAL0_INT(0, nxy, g, p_a, p_b)
+                call FDM_Interpol(0, nxy, g, p_a, p_b, wrk2d)
 
             case (OPR_P0_INT_PV)
-                call OPR_PARTIAL0_INT(1, nxy, g, p_a, p_b)
+                call FDM_Interpol(1, nxy, g, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_VP)
-                call OPR_PARTIAL1_INT(0, nxy, g, p_a, p_b)
+                call FDM_Interpol_Der1(0, nxy, g, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_PV)
-                call OPR_PARTIAL1_INT(1, nxy, g, p_a, p_b)
+                call FDM_Interpol_Der1(1, nxy, g, p_a, p_b, wrk2d)
 
             case (OPR_P0_IBM)
                 call OPR_IBM(0, nxy, g, p_a, p_b)
@@ -512,16 +420,16 @@ contains
                 end if
 
             case (OPR_P0_INT_VP)
-                call OPR_PARTIAL0_INT(0, nxz, g, p_a, p_b)
+                call FDM_Interpol(0, nxz, g, p_a, p_b, wrk2d)
 
             case (OPR_P0_INT_PV)
-                call OPR_PARTIAL0_INT(1, nxz, g, p_a, p_b)
+                call FDM_Interpol(1, nxz, g, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_VP)
-                call OPR_PARTIAL1_INT(0, nxz, g, p_a, p_b)
+                call FDM_Interpol_Der1(0, nxz, g, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_PV)
-                call OPR_PARTIAL1_INT(1, nxz, g, p_a, p_b)
+                call FDM_Interpol_Der1(1, nxz, g, p_a, p_b, wrk2d)
 
             case (OPR_P0_IBM)
                 call OPR_IBM(0, nxz, g, p_a, p_b)
