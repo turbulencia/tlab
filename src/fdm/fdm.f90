@@ -113,8 +113,7 @@ contains
         ! ###################################################################
         inb_grid = 1                            ! Nodes
         inb_grid = inb_grid &
-                   + 2 &                        ! Jacobians of first- and second-order derivatives
-                   + 2                          ! 1/dx and 1/dx**2 used in time-step stability constraint
+                   + 2                          ! Jacobians of first- and second-order derivatives
 
         inb_grid = inb_grid &
                    + 5 &                        ! max # of diagonals in LHS for 1. order derivative
@@ -175,7 +174,7 @@ contains
             return
         end if
 
-        ig = ig + 4
+        ig = ig + 2
 
         ! ###################################################################
         ! first-order derivative
@@ -212,10 +211,6 @@ contains
             call PENTADFS2(nx, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%lhs1(:, 4), g%lhs1(:, 5))
             call PENTADSS2(nx, i1, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%lhs1(:, 4), g%lhs1(:, 5), g%jac(1, 1))
         end select
-
-        ! Saving operations for the time-stability constraint
-        g%jac(:, 3) = 1.0_wp/g%jac(:, 1)
-        g%jac(:, 4) = g%jac(:, 3)*g%jac(:, 3)
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform

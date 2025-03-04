@@ -41,24 +41,34 @@ module TIME
     real(wp), public :: cfla, cfld, cflr        ! CFL numbers
     real(wp), public :: dtime                   ! time step
     real(wp), public :: dte                     ! time step of each substep
+
+    public :: TIME_INITIALIZE
+    public :: TIME_RUNGEKUTTA
+    public :: TIME_COURANT
+
+    ! -------------------------------------------------------------------
     real(wp) etime                              ! time at each substep
 
     real(wp) kdt(5), kco(4), ktime(5)           ! explicit scheme coefficients
     real(wp) kex(3), kim(3)                     ! implicit scheme coefficients
 
     real(wp) schmidtfactor, dx2i
-    integer(wi) i, j, k, kdsp, idsp, is
+    integer(wi) i, j, k, kdsp, jdsp, idsp, is
     real(wp) dummy
 
-    public :: TIME_INITIALIZE
-    public :: TIME_RUNGEKUTTA
-    public :: TIME_COURANT
+    type :: ds_dt
+        real(wp), allocatable :: one_ov_ds1(:)
+        real(wp), allocatable :: one_ov_ds2(:)
+    end type
+    type(ds_dt) :: ds(3)
 
 contains
 
 ! ###################################################################
 ! ###################################################################
     subroutine TIME_INITIALIZE()
+
+        integer ig
 
         ! ###################################################################
         ! RK coefficients
@@ -122,28 +132,39 @@ contains
         schmidtfactor = max(schmidtfactor, dummy)
         schmidtfactor = schmidtfactor*visc
 
-        ! -------------------------------------------------------------------
+        ! ###################################################################
+        do ig = 1, 3
+            allocate (ds(ig)%one_ov_ds1(g(ig)%size))
+            ds(ig)%one_ov_ds1(:) = 1.0_wp/g(ig)%jac(:, 1)
+
+            allocate (ds(ig)%one_ov_ds2(g(ig)%size))
+            ds(ig)%one_ov_ds2(:) = ds(ig)%one_ov_ds1(:)*ds(ig)%one_ov_ds1(:)
+
+        end do
+
         ! Maximum of (1/dx^2 + 1/dy^2 + 1/dz^2) for TIME_COURANT
 #ifdef USE_MPI
         idsp = ims_offset_i
+        jdsp = ims_offset_j
         kdsp = ims_offset_k
 #else
         idsp = 0
+        jdsp = 0
         kdsp = 0
 #endif
 
         dx2i = 0.0_wp
-        if (g(3)%size > 1) then
-            do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                    dummy = g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k + kdsp, 4)
+        do k = 1, kmax
+            do j = 1, jmax
+                do i = 1, imax
+                    dummy = 0.0_wp
+                    if (g(1)%size > 1) dummy = dummy + ds(1)%one_ov_ds2(i + idsp)
+                    if (g(2)%size > 1) dummy = dummy + ds(2)%one_ov_ds2(j + jdsp)
+                    if (g(3)%size > 1) dummy = dummy + ds(3)%one_ov_ds2(k + kdsp)
                     dx2i = max(dx2i, dummy)
-                end do; end do; end do
-        else
-            do k = 1, kmax; do j = 1, jmax; do i = 1, imax
-                    dummy = g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4)
-                    dx2i = max(dx2i, dummy)
-                end do; end do; end do
-        end if
+                end do
+            end do
+        end do
 
         return
     end subroutine TIME_INITIALIZE
@@ -373,9 +394,9 @@ contains
                     k_glo = k + kdsp
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = abs(u(i, j, k))*g(1)%jac(i + idsp, 3) &
-                                               + abs(v(i, j, k))*g(2)%jac(j, 3) &
-                                               + abs(w(i, j, k))*g(3)%jac(k_glo, 3)
+                            p_wrk3d(i, j, k) = abs(u(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                                               + abs(v(i, j, k))*ds(2)%one_ov_ds1(j) &
+                                               + abs(w(i, j, k))*ds(3)%one_ov_ds1(k_glo)
                         end do
                     end do
                 end do
@@ -383,8 +404,8 @@ contains
                 do k = 1, kmax
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = abs(u(i, j, k))*g(1)%jac(i + idsp, 3) &
-                                               + abs(v(i, j, k))*g(2)%jac(j, 3)
+                            p_wrk3d(i, j, k) = abs(u(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                                               + abs(v(i, j, k))*ds(2)%one_ov_ds1(j)
                         end do
                     end do
                 end do
@@ -400,9 +421,9 @@ contains
                     k_glo = k + kdsp
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*g(1)%jac(i + idsp, 3) &
-                                               + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*g(2)%jac(j, 3) &
-                                               + (abs(w(i, j, k)) + p_wrk3d(i, j, k))*g(3)%jac(k_glo, 3)
+                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                                               + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*ds(2)%one_ov_ds1(j) &
+                                               + (abs(w(i, j, k)) + p_wrk3d(i, j, k))*ds(3)%one_ov_ds1(k_glo)
                         end do
                     end do
                 end do
@@ -410,8 +431,8 @@ contains
                 do k = 1, kmax
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*g(1)%jac(i + idsp, 3) &
-                                               + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*g(2)%jac(j, 3)
+                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                                               + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*ds(2)%one_ov_ds1(j)
                         end do
                     end do
                 end do
@@ -443,7 +464,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))*vis(i, j, k)/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j) + ds(3)%one_ov_ds2(k_glo))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -451,7 +472,7 @@ contains
                     do k = 1, kmax
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4))*vis(i, j, k)/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -463,7 +484,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4) + g(3)%jac(k_glo, 4))/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j) + ds(3)%one_ov_ds2(k_glo))/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -471,7 +492,7 @@ contains
                     do k = 1, kmax
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (g(1)%jac(i + idsp, 4) + g(2)%jac(j, 4))/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j))/rho(i, j, k)
                             end do
                         end do
                     end do
