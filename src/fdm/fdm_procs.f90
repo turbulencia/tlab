@@ -25,15 +25,6 @@ module FDM_PROCS
     public FDM_Bcs_Neumann      ! Initialize arrays to impose Neumann Bcs
     public FDM_Bcs_Reduce
 
-! ###################################################################
-! Compact parameters (1st derivative of 6th-order pentadiagonal); to be removed
-! ###################################################################
-    real(wp), public :: C1N6M_ALPHA, C1N6M_BETA
-    real(wp), public :: C1N6M_ALPHA2, C1N6M_BETA2
-    real(wp), public :: C1N6M_A, C1N6M_B, C1N6M_C
-    real(wp), public :: C1N6M_AD2, C1N6M_BD4, C1N6M_CD6
-    real(wp), public :: C1N6M_BD2, C1N6M_CD3
-
 contains
     !########################################################################
     !########################################################################

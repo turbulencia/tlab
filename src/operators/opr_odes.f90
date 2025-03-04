@@ -27,7 +27,7 @@ module OPR_ODES
     ! public :: OPR_ODE2_1_SINGULAR_DD_OLD
     ! public :: OPR_ODE2_1_SINGULAR_DN_OLD
     ! public :: OPR_ODE2_1_SINGULAR_ND_OLD
-    public :: OPR_ODE2_1_SINGULAR_NN_OLD
+    ! public :: OPR_ODE2_1_SINGULAR_NN_OLD
 
     ! -----------------------------------------------------------------------
     ! integer(wi) i
@@ -1119,65 +1119,65 @@ contains
 !         return
 !     end subroutine OPR_ODE2_1_SINGULAR_DD_OLD
 
-!########################################################################
-!Neumann/Neumann boundary conditions; must be compatible!
-!########################################################################
-    subroutine OPR_ODE2_1_SINGULAR_NN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi) imode_fdm, nx, nlines
-        real(wp), dimension(nx) :: dx
-        real(wp), dimension(nx, 7), target :: wrk1d
-        real(wp), dimension(nlines, nx) :: u, f, tmp1
-        real(wp), dimension(nlines, 2) :: bcs
+! !########################################################################
+! !Neumann/Neumann boundary conditions; must be compatible!
+! !########################################################################
+!     subroutine OPR_ODE2_1_SINGULAR_NN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+!         integer(wi) imode_fdm, nx, nlines
+!         real(wp), dimension(nx) :: dx
+!         real(wp), dimension(nx, 7), target :: wrk1d
+!         real(wp), dimension(nlines, nx) :: u, f, tmp1
+!         real(wp), dimension(nlines, 2) :: bcs
 
-! #######################################################################
-        real(wp), dimension(:), pointer :: a, b, c, d, e, g, h
-        integer(wi) i
+! ! #######################################################################
+!         real(wp), dimension(:), pointer :: a, b, c, d, e, g, h
+!         integer(wi) i
 
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 6)
-        h => wrk1d(:, 7)
+!         a => wrk1d(:, 1)
+!         b => wrk1d(:, 2)
+!         c => wrk1d(:, 3)
+!         d => wrk1d(:, 4)
+!         e => wrk1d(:, 5)
+! ! additional diagonals
+!         g => wrk1d(:, 6)
+!         h => wrk1d(:, 7)
 
-! #######################################################################
-! -----------------------------------------------------------------------
-! solve for v in v' = f , v_1 given
-! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, 1, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, 1, dx, f, tmp1)
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, 1, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, 1, dx, f, tmp1)
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
-        end if
-        tmp1(:, 1) = 0.0_wp
-        do i = 1, nx
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! this step assumes compatible problem
-        end do
-! -----------------------------------------------------------------------
-! solve for u in u' = v, u_1 given
-! -----------------------------------------------------------------------
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-!   same l.h.s. as before
-            call INT_C1N6_RHS(nx, nlines, 1, dx, tmp1, u)
-!   same l.h.s. as before
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-!   same l.h.s. as before
-            call INT_C1N6M_RHS(nx, nlines, 1, dx, tmp1, u)
-!   same l.h.s. as before
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
-        end if
-        u(:, 1) = 0.0_wp ! this integration constant is free and set to zero
+! ! #######################################################################
+! ! -----------------------------------------------------------------------
+! ! solve for v in v' = f , v_1 given
+! ! -----------------------------------------------------------------------
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS(nx, 1, a, b, c, d, e)
+!             call INT_C1N6_RHS(nx, nlines, 1, dx, f, tmp1)
+!             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS(nx, 1, a, b, c, d, e, g, h)
+!             call INT_C1N6M_RHS(nx, nlines, 1, dx, f, tmp1)
+!             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
+!         end if
+!         tmp1(:, 1) = 0.0_wp
+!         do i = 1, nx
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 1) ! this step assumes compatible problem
+!         end do
+! ! -----------------------------------------------------------------------
+! ! solve for u in u' = v, u_1 given
+! ! -----------------------------------------------------------------------
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+! !   same l.h.s. as before
+!             call INT_C1N6_RHS(nx, nlines, 1, dx, tmp1, u)
+! !   same l.h.s. as before
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+! !   same l.h.s. as before
+!             call INT_C1N6M_RHS(nx, nlines, 1, dx, tmp1, u)
+! !   same l.h.s. as before
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
+!         end if
+!         u(:, 1) = 0.0_wp ! this integration constant is free and set to zero
 
-        return
-    end subroutine OPR_ODE2_1_SINGULAR_NN_OLD
+!         return
+!     end subroutine OPR_ODE2_1_SINGULAR_NN_OLD
 
 end module OPR_ODES
