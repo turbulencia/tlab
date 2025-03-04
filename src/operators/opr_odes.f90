@@ -21,20 +21,20 @@ module OPR_ODES
     public :: OPR_ODE2_SINGULAR_ND
     public :: OPR_ODE2_SINGULAR_NN
 
-    public :: OPR_ODE2_1_REGULAR_DD_OLD     ! Dirichlet/Dirichlet boundary conditions
-    public :: OPR_ODE2_1_REGULAR_NN_OLD     ! Neumann/Neumann boundary conditions
+    ! public :: OPR_ODE2_1_REGULAR_DD_OLD     ! Dirichlet/Dirichlet boundary conditions
+    ! public :: OPR_ODE2_1_REGULAR_NN_OLD     ! Neumann/Neumann boundary conditions
 
     ! public :: OPR_ODE2_1_SINGULAR_DD_OLD
     ! public :: OPR_ODE2_1_SINGULAR_DN_OLD
     ! public :: OPR_ODE2_1_SINGULAR_ND_OLD
-    ! public :: OPR_ODE2_1_SINGULAR_NN_OLD
+    public :: OPR_ODE2_1_SINGULAR_NN_OLD
 
     ! -----------------------------------------------------------------------
-    integer(wi) i
-    real(wp) dummy, lambda
-    real(wp), dimension(:), pointer :: a, b, c, d, e, g, h, ep, em
+    ! integer(wi) i
+    ! real(wp) dummy, lambda
+    ! real(wp), dimension(:), pointer :: a, b, c, d, e, g, h, ep, em
 
-    integer, parameter :: i1 = 1, i2 = 2
+    ! integer, parameter :: i1 = 1, i2 = 2
 
 contains
     !########################################################################
@@ -61,7 +61,8 @@ contains
         real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
-        integer(wi) nx
+        ! -----------------------------------------------------------------------
+        integer(wi) nx, i
         real(wp) du1_n(1), f1
 
         ! #######################################################################
@@ -124,7 +125,8 @@ contains
         real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
-        integer(wi) nx
+        ! -----------------------------------------------------------------------
+        integer(wi) nx, i
         real(wp) du1_n(1), fn
 
         ! #######################################################################
@@ -210,8 +212,9 @@ contains
         real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
-        integer(wi) nx
-        real(wp) du1_n(1), fn
+        ! -----------------------------------------------------------------------
+        integer(wi) nx, i
+        real(wp) dummy, du1_n(1), fn
 
         ! #######################################################################
         nx = size(fdmi(1)%lhs, 1)
@@ -280,7 +283,8 @@ contains
         real(wp), intent(inout) :: wrk1d(3, size(fdmi(1)%nodes), 2)
         real(wp), intent(inout) :: wrk2d(max(nlines, 3), 3)
 
-        integer(wi) nx
+        ! -----------------------------------------------------------------------
+        integer(wi) nx, i
         real(wp) lambda, a(3, 3), der_bcs(3)
 
         ! #######################################################################
@@ -404,8 +408,9 @@ contains
         real(wp), intent(inout) :: wrk1d(2, size(fdmi(1)%nodes), 2)
         real(wp), intent(inout) :: wrk2d(max(nlines, 2), 3)
 
-        integer(wi) nx
-        real(wp) lambda, aa, bb, der_bcs(2)
+        ! -----------------------------------------------------------------------
+        integer(wi) nx, i
+        real(wp) lambda, dummy, aa, bb, der_bcs(2)
 
         ! #######################################################################
         lambda = fdmi(BCS_MIN)%lambda
@@ -481,318 +486,318 @@ contains
         return
     end subroutine OPR_ODE2_DD
 
-!########################################################################
-!Neumann/Neumann boundary conditions
-!########################################################################
-    subroutine OPR_ODE2_1_REGULAR_NN_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi) imode_fdm, nx, nlines
-        real(wp) cst
-        real(wp), dimension(nx) :: dx
-        real(wp), dimension(nx, 12), target :: wrk1d
-        real(wp), dimension(nlines, nx) :: u, f, tmp1
-        real(wp), dimension(nlines, 3) :: bcs
+! !########################################################################
+! !Neumann/Neumann boundary conditions
+! !########################################################################
+!     subroutine OPR_ODE2_1_REGULAR_NN_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
+!         integer(wi) imode_fdm, nx, nlines
+!         real(wp) cst
+!         real(wp), dimension(nx) :: dx
+!         real(wp), dimension(nx, 12), target :: wrk1d
+!         real(wp), dimension(nlines, nx) :: u, f, tmp1
+!         real(wp), dimension(nlines, 3) :: bcs
 
-! -----------------------------------------------------------------------
-        real(wp) g_1, g_2, a_1, b_1, deti
+! ! -----------------------------------------------------------------------
+!         real(wp) g_1, g_2, a_1, b_1, deti
 
-! #######################################################################
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 11)
-        h => wrk1d(:, 12)
+! ! #######################################################################
+!         a => wrk1d(:, 1)
+!         b => wrk1d(:, 2)
+!         c => wrk1d(:, 3)
+!         d => wrk1d(:, 4)
+!         e => wrk1d(:, 5)
+! ! additional diagonals
+!         g => wrk1d(:, 11)
+!         h => wrk1d(:, 12)
 
-        ep => wrk1d(:, 9)
-        em => wrk1d(:, 10)
+!         ep => wrk1d(:, 9)
+!         em => wrk1d(:, 10)
 
-        lambda = sqrt(cst)
+!         lambda = sqrt(cst)
 
-! #######################################################################
-! -----------------------------------------------------------------------
-! 1st step; solve for v^(0) and v^(1)
-! -----------------------------------------------------------------------
-        dummy = -lambda
-        f(:, 1) = 0.0_wp
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, ep)
-            call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
-            call PENTADFS(nx - 1, a, b, c, d, e)
+! ! #######################################################################
+! ! -----------------------------------------------------------------------
+! ! 1st step; solve for v^(0) and v^(1)
+! ! -----------------------------------------------------------------------
+!         dummy = -lambda
+!         f(:, 1) = 0.0_wp
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, ep)
+!             call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
+!             call PENTADFS(nx - 1, a, b, c, d, e)
 
-!   obtain e^(+), array ep
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, ep)
+! !   obtain e^(+), array ep
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, ep)
 
-!   obtain v^(0), array tmp1
-            call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
-            tmp1(:, nx) = 0.0_wp
+! !   obtain v^(0), array tmp1
+!             call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
+!             tmp1(:, nx) = 0.0_wp
 
-!   obtain v^(1), array wrk1d(:,6)
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, g, h, ep)
-            call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
-            call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
+! !   obtain v^(1), array wrk1d(:,6)
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, g, h, ep)
+!             call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
+!             call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
 
-!   obtain e^(+), array ep
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, ep)
+! !   obtain e^(+), array ep
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, ep)
 
-!   obtain v^(0), array tmp1
-            call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
-            tmp1(:, nx) = 0.0_wp
+! !   obtain v^(0), array tmp1
+!             call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
+!             tmp1(:, nx) = 0.0_wp
 
-!   obtain v^(1), array wrk1d(:,6)
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        end if
-! -----------------------------------------------------------------------
-! 2nd step; solve for u^(0) and u^(1) and u^(2:)
-! -----------------------------------------------------------------------
-        dummy = lambda
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, em)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+! !   obtain v^(1), array wrk1d(:,6)
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         end if
+! ! -----------------------------------------------------------------------
+! ! 2nd step; solve for u^(0) and u^(1) and u^(2:)
+! ! -----------------------------------------------------------------------
+!         dummy = lambda
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, em)
+!             call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
-!   obtain e^(m), array em
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), em(2:))
-            g_1 = (c(1)*em(1) + d(1)*em(2) + e(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
+! !   obtain e^(m), array em
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), em(2:))
+!             g_1 = (c(1)*em(1) + d(1)*em(2) + e(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
-!   obtain u^(2), array wrk1d(:,8)
-            call INT_C1N6_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 8))
-            g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
-            g_2 = (g_2 + c(1)*wrk1d(1, 8) + d(1)*wrk1d(2, 8) + e(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
+! !   obtain u^(2), array wrk1d(:,8)
+!             call INT_C1N6_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 8))
+!             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
+!             g_2 = (g_2 + c(1)*wrk1d(1, 8) + d(1)*wrk1d(2, 8) + e(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
-!   obtain u^(0), array u
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
+! !   obtain u^(0), array u
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
 
-!   BCs; intermediate step to save memory space
-            dummy = 1.0_wp - wrk1d(nx, 8)*lambda
-            bcs(:, 3) = tmp1(:, 1) - bcs(:, 1)
-            bcs(:, 2) = u(:, nx)*lambda + bcs(:, 2)
-            bcs(:, 1) = bcs(:, 2) + bcs(:, 3)*em(nx)! a_0 *det
-            bcs(:, 2) = bcs(:, 2)*ep(1) + bcs(:, 3)*dummy   ! b_0 *det
+! !   BCs; intermediate step to save memory space
+!             dummy = 1.0_wp - wrk1d(nx, 8)*lambda
+!             bcs(:, 3) = tmp1(:, 1) - bcs(:, 1)
+!             bcs(:, 2) = u(:, nx)*lambda + bcs(:, 2)
+!             bcs(:, 1) = bcs(:, 2) + bcs(:, 3)*em(nx)! a_0 *det
+!             bcs(:, 2) = bcs(:, 2)*ep(1) + bcs(:, 3)*dummy   ! b_0 *det
 
-            bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
+!             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
 
-!   obtain u^(1), array wrk1d(:,7)
-            call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, g, h, em)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+! !   obtain u^(1), array wrk1d(:,7)
+!             call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, g, h, em)
+!             call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
-!   obtain e^(m), array em
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), em(2:))
-            g_1 = (d(1)*em(1) + e(1)*em(2) + g(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
+! !   obtain e^(m), array em
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), em(2:))
+!             g_1 = (d(1)*em(1) + e(1)*em(2) + g(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
-!   obtain u^(2), array wrk1d(:,8)
-            call INT_C1N6M_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 8))
-            g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
-            g_2 = (g_2 + d(1)*wrk1d(1, 8) + e(1)*wrk1d(2, 8) + g(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
+! !   obtain u^(2), array wrk1d(:,8)
+!             call INT_C1N6M_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 8))
+!             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
+!             g_2 = (g_2 + d(1)*wrk1d(1, 8) + e(1)*wrk1d(2, 8) + g(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
-!   obtain u^(0), array u
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
+! !   obtain u^(0), array u
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
 
-!   BCs; intermediate step to save memory space
-            dummy = 1.0_wp - wrk1d(nx, 8)*lambda
-            bcs(:, 3) = tmp1(:, 1) - bcs(:, 1)
-            bcs(:, 2) = u(:, nx)*lambda + bcs(:, 2)
-            bcs(:, 1) = bcs(:, 2) + bcs(:, 3)*em(nx)! a_0 *det
-            bcs(:, 2) = bcs(:, 2)*ep(1) + bcs(:, 3)*dummy   ! b_0 *det
+! !   BCs; intermediate step to save memory space
+!             dummy = 1.0_wp - wrk1d(nx, 8)*lambda
+!             bcs(:, 3) = tmp1(:, 1) - bcs(:, 1)
+!             bcs(:, 2) = u(:, nx)*lambda + bcs(:, 2)
+!             bcs(:, 1) = bcs(:, 2) + bcs(:, 3)*em(nx)! a_0 *det
+!             bcs(:, 2) = bcs(:, 2)*ep(1) + bcs(:, 3)*dummy   ! b_0 *det
 
-            bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
+!             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
 
-!   obtain u^(1), array wrk1d(:,7)
-            call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        end if
+! !   obtain u^(1), array wrk1d(:,7)
+!             call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         end if
 
-! BCs; final step
-        deti = 1.0_wp/(1.0_wp - ep(1)*em(nx) - wrk1d(nx, 8)*lambda) ! inverse of determinant
-        bcs(:, 1) = bcs(:, 1)*deti ! a_0
-        bcs(:, 2) = bcs(:, 2)*deti ! b_0
-        a_1 = (lambda*wrk1d(nx, 7) + wrk1d(1, 6)*em(nx))*deti
-        b_1 = (lambda*wrk1d(nx, 7)*ep(1) + wrk1d(1, 6)*(1.0_wp - wrk1d(nx, 8)*lambda))*deti
+! ! BCs; final step
+!         deti = 1.0_wp/(1.0_wp - ep(1)*em(nx) - wrk1d(nx, 8)*lambda) ! inverse of determinant
+!         bcs(:, 1) = bcs(:, 1)*deti ! a_0
+!         bcs(:, 2) = bcs(:, 2)*deti ! b_0
+!         a_1 = (lambda*wrk1d(nx, 7) + wrk1d(1, 6)*em(nx))*deti
+!         b_1 = (lambda*wrk1d(nx, 7)*ep(1) + wrk1d(1, 6)*(1.0_wp - wrk1d(nx, 8)*lambda))*deti
 
-! Constraint
-        dummy = 1.0_wp/(dummy + b_1*g_1 - wrk1d(1, 6) + a_1*g_2)
-        bcs(:, 3) = (tmp1(:, 1) - bcs(:, 3) - bcs(:, 2)*g_1 - bcs(:, 1)*g_2)*dummy
+! ! Constraint
+!         dummy = 1.0_wp/(dummy + b_1*g_1 - wrk1d(1, 6) + a_1*g_2)
+!         bcs(:, 3) = (tmp1(:, 1) - bcs(:, 3) - bcs(:, 2)*g_1 - bcs(:, 1)*g_2)*dummy
 
-        dummy = 1.0_wp/lambda
-        bcs(:, 1) = bcs(:, 1) + bcs(:, 3)*a_1
-        bcs(:, 2) = (bcs(:, 2) + bcs(:, 3)*b_1)*dummy
+!         dummy = 1.0_wp/lambda
+!         bcs(:, 1) = bcs(:, 1) + bcs(:, 3)*a_1
+!         bcs(:, 2) = (bcs(:, 2) + bcs(:, 3)*b_1)*dummy
 
-! Result
-        do i = 1, nx
-            u(:, i) = u(:, i) + bcs(:, 3)*wrk1d(i, 7) + bcs(:, 1)*wrk1d(i, 8) + bcs(:, 2)*em(i)
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 3)*wrk1d(i, 6) + bcs(:, 1)*ep(i) - lambda*u(:, i)
-        end do
+! ! Result
+!         do i = 1, nx
+!             u(:, i) = u(:, i) + bcs(:, 3)*wrk1d(i, 7) + bcs(:, 1)*wrk1d(i, 8) + bcs(:, 2)*em(i)
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 3)*wrk1d(i, 6) + bcs(:, 1)*ep(i) - lambda*u(:, i)
+!         end do
 
-        return
-    end subroutine OPR_ODE2_1_REGULAR_NN_OLD
+!         return
+!     end subroutine OPR_ODE2_1_REGULAR_NN_OLD
 
-!########################################################################
-!Dirichlet/Dirichlet boundary conditions
-!########################################################################
-    subroutine OPR_ODE2_1_REGULAR_DD_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
-        integer(wi) imode_fdm, nx, nlines
-        real(wp) cst
-        real(wp), dimension(nx) :: dx
-        real(wp), dimension(nx, 12), target :: wrk1d
-        real(wp), dimension(nlines, nx) :: u, f, tmp1
-        real(wp), dimension(nlines, 3) :: bcs
+! !########################################################################
+! !Dirichlet/Dirichlet boundary conditions
+! !########################################################################
+!     subroutine OPR_ODE2_1_REGULAR_DD_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
+!         integer(wi) imode_fdm, nx, nlines
+!         real(wp) cst
+!         real(wp), dimension(nx) :: dx
+!         real(wp), dimension(nx, 12), target :: wrk1d
+!         real(wp), dimension(nlines, nx) :: u, f, tmp1
+!         real(wp), dimension(nlines, 3) :: bcs
 
-! -----------------------------------------------------------------------
-        real(wp) g_1, g_2, a_1, deti
+! ! -----------------------------------------------------------------------
+!         real(wp) g_1, g_2, a_1, deti
 
-! #######################################################################
-        a => wrk1d(:, 1)
-        b => wrk1d(:, 2)
-        c => wrk1d(:, 3)
-        d => wrk1d(:, 4)
-        e => wrk1d(:, 5)
-! additional diagonals
-        g => wrk1d(:, 11)
-        h => wrk1d(:, 12)
+! ! #######################################################################
+!         a => wrk1d(:, 1)
+!         b => wrk1d(:, 2)
+!         c => wrk1d(:, 3)
+!         d => wrk1d(:, 4)
+!         e => wrk1d(:, 5)
+! ! additional diagonals
+!         g => wrk1d(:, 11)
+!         h => wrk1d(:, 12)
 
-        ep => wrk1d(:, 9)
-        em => wrk1d(:, 10)
+!         ep => wrk1d(:, 9)
+!         em => wrk1d(:, 10)
 
-        lambda = sqrt(cst)
+!         lambda = sqrt(cst)
 
-! #######################################################################
-! -----------------------------------------------------------------------
-! 1st step; solve for v^(0) and v^(1)
-! -----------------------------------------------------------------------
-        dummy = -lambda
-        f(:, 1) = 0.0_wp
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, ep)
-            call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
-            call PENTADFS(nx - 1, a, b, c, d, e)
+! ! #######################################################################
+! ! -----------------------------------------------------------------------
+! ! 1st step; solve for v^(0) and v^(1)
+! ! -----------------------------------------------------------------------
+!         dummy = -lambda
+!         f(:, 1) = 0.0_wp
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, ep)
+!             call INT_C1N6_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = a(1)*dx(1) ! for v^1
+!             call PENTADFS(nx - 1, a, b, c, d, e)
 
-!   obtain e^(+), array ep
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, ep)
+! !   obtain e^(+), array ep
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, ep)
 
-!   obtain v^(0), array tmp1
-            call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
-            tmp1(:, nx) = 0.0_wp
+! !   obtain v^(0), array tmp1
+!             call PENTADSS(nx - 1, nlines, a, b, c, d, e, tmp1)
+!             tmp1(:, nx) = 0.0_wp
 
-!   obtain v^(1), array wrk1d(:,6)
-            call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, g, h, ep)
-            call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
-            wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
-            call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
+! !   obtain v^(1), array wrk1d(:,6)
+!             call PENTADSS(nx - 1, i1, a, b, c, d, e, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS_E(nx, i2, dx, dummy, a, b, c, d, e, g, h, ep)
+!             call INT_C1N6M_RHS(nx, nlines, i2, dx, f, tmp1)
+!             wrk1d(:, 6) = 0.0_wp; wrk1d(1, 6) = dx(1); wrk1d(2, 6) = b(1)*dx(1) ! for v^1
+!             call HEPTADFS(nx - 1, a, b, c, d, e, g, h)
 
-!   obtain e^(+), array ep
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, ep)
+! !   obtain e^(+), array ep
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, ep)
 
-!   obtain v^(0), array tmp1
-            call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
-            tmp1(:, nx) = 0.0_wp
+! !   obtain v^(0), array tmp1
+!             call HEPTADSS(nx - 1, nlines, a, b, c, d, e, g, h, tmp1)
+!             tmp1(:, nx) = 0.0_wp
 
-!   obtain v^(1), array wrk1d(:,6)
-            call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
-            wrk1d(nx, 6) = 0.0_wp
-        end if
+! !   obtain v^(1), array wrk1d(:,6)
+!             call HEPTADSS(nx - 1, i1, a, b, c, d, e, g, h, wrk1d(1, 6))
+!             wrk1d(nx, 6) = 0.0_wp
+!         end if
 
-! -----------------------------------------------------------------------
-! 2nd step; solve for u^(0) and u^(1) and u^(2)
-! -----------------------------------------------------------------------
-        dummy = lambda
-        if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, em)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
-            call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
+! ! -----------------------------------------------------------------------
+! ! 2nd step; solve for u^(0) and u^(1) and u^(2)
+! ! -----------------------------------------------------------------------
+!         dummy = lambda
+!         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
+!             call INT_C1N6_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, em)
+!             call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
 
-!   obtain e^(m), array em
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), em(2:))
-            g_1 = (c(1)*em(1) + d(1)*em(2) + e(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
+! !   obtain e^(m), array em
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), em(2:))
+!             g_1 = (c(1)*em(1) + d(1)*em(2) + e(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
-!   obtain u^(2), array wrk1d(:,8)
-            call INT_C1N6_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 8))
-            g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
-            g_2 = (g_2 + c(1)*wrk1d(1, 8) + d(1)*wrk1d(2, 8) + e(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
+! !   obtain u^(2), array wrk1d(:,8)
+!             call INT_C1N6_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 8))
+!             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
+!             g_2 = (g_2 + c(1)*wrk1d(1, 8) + d(1)*wrk1d(2, 8) + e(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
-!   obtain u^(0), array u
-            call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
-            bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
+! !   obtain u^(0), array u
+!             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
+!             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 3) = (bcs(:, 3) + c(1)*u(:, 1) + d(1)*u(:, 2) + e(1)*u(:, 3))/dx(1) !u^(0)'_1
 
-!   obtain u^(1), array wrk1d(:,7)
-            call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, g, h, em)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
-            call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
+! !   obtain u^(1), array wrk1d(:,7)
+!             call INT_C1N6_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call PENTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + c(1)*wrk1d(1, 7) + d(1)*wrk1d(2, 7) + e(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
+!             call INT_C1N6M_LHS_E(nx, i1, dx, dummy, a, b, c, d, e, g, h, em)
+!             call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
+!             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
 
-!   obtain e^(m), array em
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), em(2:))
-            g_1 = (d(1)*em(1) + e(1)*em(2) + g(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
+! !   obtain e^(m), array em
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), em(2:))
+!             g_1 = (d(1)*em(1) + e(1)*em(2) + g(1)*em(3))/dx(1)/lambda + 1.0_wp ! e^(-)'_1/\lambda + 1
 
-!   obtain u^(2), array wrk1d(:,8)
-            call INT_C1N6M_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 8))
-            g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
-            g_2 = (g_2 + d(1)*wrk1d(1, 8) + e(1)*wrk1d(2, 8) + g(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
+! !   obtain u^(2), array wrk1d(:,8)
+!             call INT_C1N6M_RHS(nx, i1, i1, dx, ep, wrk1d(1, 8))
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 8))
+!             g_2 = wrk1d(1, 8); wrk1d(1, 8) = 0.0_wp
+!             g_2 = (g_2 + d(1)*wrk1d(1, 8) + e(1)*wrk1d(2, 8) + g(1)*wrk1d(3, 8))/dx(1) - ep(1)! u^(2)'_1 - e^(+)|_1
 
-!   obtain u^(0), array u
-            call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
-            bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
-            bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
+! !   obtain u^(0), array u
+!             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
+!             bcs(:, 3) = u(:, 1); u(:, 1) = 0.0_wp
+!             bcs(:, 3) = (bcs(:, 3) + d(1)*u(:, 1) + e(1)*u(:, 2) + g(1)*u(:, 3))/dx(1) !u^(0)'_1
 
-!   obtain u^(1), array wrk1d(:,7)
-            call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
-            call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
-            dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
-            dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
-        end if
+! !   obtain u^(1), array wrk1d(:,7)
+!             call INT_C1N6M_RHS(nx, i1, i1, dx, wrk1d(1, 6), wrk1d(1, 7))
+!             call HEPTADSS(nx - 1, i1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), wrk1d(2, 7))
+!             dummy = wrk1d(1, 7); wrk1d(1, 7) = 0.0_wp
+!             dummy = (dummy + d(1)*wrk1d(1, 7) + e(1)*wrk1d(2, 7) + g(1)*wrk1d(3, 7))/dx(1) ! u^(1)'_1
+!         end if
 
-! BCs; final step
-        deti = 1.0_wp/wrk1d(nx, 8) ! inverse of determinant
-        bcs(:, 2) = (bcs(:, 2) - u(:, nx) - bcs(:, 1)*em(nx))*deti ! a_0
-! bcs(:,1) = bcs(:,1)                                       ! b_0/lambda
-        a_1 = -wrk1d(nx, 7)*deti
-! b_1 = 0.0_wp
+! ! BCs; final step
+!         deti = 1.0_wp/wrk1d(nx, 8) ! inverse of determinant
+!         bcs(:, 2) = (bcs(:, 2) - u(:, nx) - bcs(:, 1)*em(nx))*deti ! a_0
+! ! bcs(:,1) = bcs(:,1)                                       ! b_0/lambda
+!         a_1 = -wrk1d(nx, 7)*deti
+! ! b_1 = 0.0_wp
 
-! Constraint
-        g_1 = g_1*lambda
-        dummy = 1.0_wp/(dummy - wrk1d(1, 6) + a_1*g_2)
-        bcs(:, 3) = (tmp1(:, 1) - bcs(:, 3) - bcs(:, 1)*g_1 - bcs(:, 2)*g_2)*dummy
+! ! Constraint
+!         g_1 = g_1*lambda
+!         dummy = 1.0_wp/(dummy - wrk1d(1, 6) + a_1*g_2)
+!         bcs(:, 3) = (tmp1(:, 1) - bcs(:, 3) - bcs(:, 1)*g_1 - bcs(:, 2)*g_2)*dummy
 
-        bcs(:, 2) = bcs(:, 2) + bcs(:, 3)*a_1 ! a = v_N
-! bcs(:,1) = bcs(:,1)                ! b = u_1
+!         bcs(:, 2) = bcs(:, 2) + bcs(:, 3)*a_1 ! a = v_N
+! ! bcs(:,1) = bcs(:,1)                ! b = u_1
 
-! Result
-        do i = 1, nx
-            u(:, i) = u(:, i) + bcs(:, 3)*wrk1d(i, 7) + bcs(:, 2)*wrk1d(i, 8) + bcs(:, 1)*em(i)
-            tmp1(:, i) = tmp1(:, i) + bcs(:, 3)*wrk1d(i, 6) + bcs(:, 2)*ep(i) - lambda*u(:, i)
-        end do
+! ! Result
+!         do i = 1, nx
+!             u(:, i) = u(:, i) + bcs(:, 3)*wrk1d(i, 7) + bcs(:, 2)*wrk1d(i, 8) + bcs(:, 1)*em(i)
+!             tmp1(:, i) = tmp1(:, i) + bcs(:, 3)*wrk1d(i, 6) + bcs(:, 2)*ep(i) - lambda*u(:, i)
+!         end do
 
-        return
-    end subroutine OPR_ODE2_1_REGULAR_DD_OLD
+!         return
+!     end subroutine OPR_ODE2_1_REGULAR_DD_OLD
 
 ! !########################################################################
 ! !Dirichlet/Neumann boundary conditions
@@ -1125,6 +1130,9 @@ contains
         real(wp), dimension(nlines, 2) :: bcs
 
 ! #######################################################################
+        real(wp), dimension(:), pointer :: a, b, c, d, e, g, h
+        integer(wi) i
+
         a => wrk1d(:, 1)
         b => wrk1d(:, 2)
         c => wrk1d(:, 3)
@@ -1139,13 +1147,13 @@ contains
 ! solve for v in v' = f , v_1 given
 ! -----------------------------------------------------------------------
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
-            call INT_C1N6_LHS(nx, i1, a, b, c, d, e)
-            call INT_C1N6_RHS(nx, nlines, i1, dx, f, tmp1)
+            call INT_C1N6_LHS(nx, 1, a, b, c, d, e)
+            call INT_C1N6_RHS(nx, nlines, 1, dx, f, tmp1)
             call PENTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:))
             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), tmp1(1, 2))
         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
-            call INT_C1N6M_LHS(nx, i1, a, b, c, d, e, g, h)
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, f, tmp1)
+            call INT_C1N6M_LHS(nx, 1, a, b, c, d, e, g, h)
+            call INT_C1N6M_RHS(nx, nlines, 1, dx, f, tmp1)
             call HEPTADFS(nx - 1, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:))
             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), tmp1(1, 2))
         end if
@@ -1158,12 +1166,12 @@ contains
 ! -----------------------------------------------------------------------
         if (imode_fdm == FDM_COM6_JACOBIAN .or. imode_fdm == FDM_COM6_DIRECT) then
 !   same l.h.s. as before
-            call INT_C1N6_RHS(nx, nlines, i1, dx, tmp1, u)
+            call INT_C1N6_RHS(nx, nlines, 1, dx, tmp1, u)
 !   same l.h.s. as before
             call PENTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), u(1, 2))
         elseif (imode_fdm == FDM_COM6_JACOBIAN_PENTA) then
 !   same l.h.s. as before
-            call INT_C1N6M_RHS(nx, nlines, i1, dx, tmp1, u)
+            call INT_C1N6M_RHS(nx, nlines, 1, dx, tmp1, u)
 !   same l.h.s. as before
             call HEPTADSS(nx - 1, nlines, a(2:), b(2:), c(2:), d(2:), e(2:), g(2:), h(2:), u(1, 2))
         end if

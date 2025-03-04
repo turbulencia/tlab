@@ -71,6 +71,7 @@ module OPR_ELLIPTIC
     real(wp) lambda, norm
     type(fdm_dt) fdm_loc
     type(fdm_integral_dt), allocatable :: fdm_int_loc(:, :, :)
+    type(fdm_integral_dt) :: fdm_int_helmholtz(2)
     real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
 
 #define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
@@ -572,6 +573,9 @@ contains
 
         target tmp1, tmp2
 
+        ! -----------------------------------------------------------------------
+        integer(wi) ndl, ndr
+
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
@@ -627,15 +631,30 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                ndl = fdm_loc%nb_diag_1(1)
+                ndr = fdm_loc%nb_diag_2(2)
+
+                fdm_int_helmholtz(BCS_MIN)%bc = BCS_MIN
+                fdm_int_helmholtz(BCS_MIN)%mode_fdm1 = fdm_loc%mode_fdm1
+                call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
+                                         sqrt(lambda), fdm_int_helmholtz(BCS_MIN))
+
+                fdm_int_helmholtz(BCS_MAX)%bc = BCS_MAX
+                fdm_int_helmholtz(BCS_MAX)%mode_fdm1 = fdm_loc%mode_fdm1
+                call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
+                                         -sqrt(lambda), fdm_int_helmholtz(BCS_MAX))
+
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
-                    call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                    ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                    !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                    call OPR_ODE2_NN(2, fdm_int_helmholtz, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
-                    call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
-                                                   g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
+                    ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                    !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
+                    call OPR_ODE2_DD(2, fdm_int_helmholtz, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                 end select
 
                 ! Rearrange in memory and normalize

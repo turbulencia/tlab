@@ -91,11 +91,15 @@ program VPOISSON
     call OPR_FOURIER_INITIALIZE()
     call OPR_CHECK()
 
-    type_of_operator = 1   ! Poisson routines
-    ! type_of_operator = 2   ! Helmholtz routines
+    ! type_of_operator = 1   ! Poisson routines
+    type_of_operator = 2   ! Helmholtz routines
     if (type_of_operator == 2) then
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
+        if (lambda > 0.0_wp) then
+            print *, 'Eigenvalue for Helmholtz operator needs to be negative'
+            stop
+        end if
     end if
 
     ! type_of_problem = 1     ! the forcing in the rhs is given
@@ -233,7 +237,7 @@ program VPOISSON
 
             else if (type_of_operator == 2) then
                 call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), b, d)
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), e, d)
 
             end if
 
