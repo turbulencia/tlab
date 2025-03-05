@@ -12,7 +12,7 @@ module OPR_ELLIPTIC
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
-    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
     use FDM_MatMul
     use OPR_FOURIER
@@ -68,7 +68,8 @@ module OPR_ELLIPTIC
     real(wp), pointer :: r_bcs(:) => null()
     complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
-    real(wp) lambda, norm
+    real(wp) norm
+    real(wp), allocatable :: lambda(:, :)
     type(fdm_dt) fdm_loc
     type(fdm_integral_dt), allocatable :: fdm_int_loc(:, :, :)
     type(fdm_integral_dt) :: fdm_int_helmholtz(2)
@@ -106,7 +107,9 @@ contains
         bakfile = trim(adjustl(inifile))//'.bak'
 
         call ScanFile_Char(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
-        if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
+        if (trim(adjustl(sRes)) == 'compactjacobian4') then; imode_elliptic = FDM_COM4_JACOBIAN
+        else if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
+        else if (trim(adjustl(sRes)) == 'compactjacobian6penta') then; imode_elliptic = FDM_COM6_JACOBIAN_PENTA
         else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
         else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
         else
@@ -114,32 +117,28 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        select case (imode_elliptic)
-        case (FDM_COM6_JACOBIAN)
-            OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
-            OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
-
-        case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
-            OPR_Poisson => OPR_Poisson_FourierXZ_Direct
-            OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
-        end select
-
-        ! if (any([FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN] == imode_elliptic)) return   ! not yet developed
-
+        ! It should probably be better to say factorize or not factorize and use the global fdm plan
         fdm_loc%mode_fdm1 = imode_elliptic
         fdm_loc%mode_fdm2 = imode_elliptic
         call FDM_Initialize(g(2)%nodes, fdm_loc)
 
-        ! LU factorization for direct cases in case BCS_NN, the one for the pressure equation; needs 5 3D arrays
         isize_line = imax/2 + 1
 
+        allocate (lambda(isize_line, kmax))
+
         select case (imode_elliptic)
-        case (FDM_COM6_JACOBIAN)
+        case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
+            OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
+            OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
+
             ndl = fdm_loc%nb_diag_1(1)
             ndr = fdm_loc%nb_diag_2(2)
             allocate (fdm_int_loc(2, isize_line, kmax))
 
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+            OPR_Poisson => OPR_Poisson_FourierXZ_Direct
+            OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
+
             ndl = fdm_loc%nb_diag_2(1)
             ndr = fdm_loc%nb_diag_2(2)
             nd = ndr + ndl - 1 + 2     ! The rhs diagonal is 1 and not need to store; we add 2 independent terms
@@ -162,30 +161,30 @@ contains
 #endif
 
                 select case (imode_elliptic)
-                case (FDM_COM6_JACOBIAN)
+                case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda = g(1)%mwn1(iglobal) + g(3)%mwn1(kglobal)
+                        lambda(i, k) = g(1)%mwn1(iglobal)**2.0 + g(3)%mwn1(kglobal)**2.0
                     else
-                        lambda = g(1)%mwn1(iglobal)
+                        lambda(i, k) = g(1)%mwn1(iglobal)**2.0
                     end if
 
                     fdm_int_loc(BCS_MIN, i, k)%bc = BCS_MIN
                     fdm_int_loc(BCS_MIN, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                             sqrt(lambda), fdm_int_loc(BCS_MIN, i, k))
+                                             sqrt(lambda(i, k)), fdm_int_loc(BCS_MIN, i, k))
 
                     fdm_int_loc(BCS_MAX, i, k)%bc = BCS_MAX
                     fdm_int_loc(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                             -sqrt(lambda), fdm_int_loc(BCS_MAX, i, k))
+                                             -sqrt(lambda(i, k)), fdm_int_loc(BCS_MAX, i, k))
 
-                case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+                case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
+                        lambda(i, k) = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
                     else
-                        lambda = g(1)%mwn2(iglobal)
+                        lambda(i, k) = g(1)%mwn2(iglobal)
                     end if
 
                     ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
@@ -196,7 +195,7 @@ contains
                     end if
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
+                    call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda(i, k), &
                                                lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
 
                     ! LU decomposizion
@@ -292,13 +291,6 @@ contains
                 iglobal = i
 #endif
 
-                ! Define \lambda based on modified wavenumbers (real)
-                if (g(3)%size > 1) then
-                    lambda = g(1)%mwn1(iglobal) + g(3)%mwn1(kglobal)
-                else
-                    lambda = g(1)%mwn1(iglobal)
-                end if
-
                 ! forcing term
                 do j = 1, ny
                     ip = (j - 1)*isize_line + i; c_wrk1d(j, 1) = c_tmp1(ip, k)
@@ -316,7 +308,7 @@ contains
                         !                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
-                        ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                        ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
@@ -327,7 +319,7 @@ contains
                         !                                 g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     else
-                        ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                        ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                         call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
@@ -448,15 +440,8 @@ contains
 
                 ! -----------------------------------------------------------------------
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
-                    ! Define \lambda based on modified wavenumbers (real)
-                    if (g(3)%size > 1) then
-                        lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
-                    else
-                        lambda = g(1)%mwn2(iglobal)
-                    end if
-
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
+                    call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda(i, k), &
                                                p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                     ! LU factorization
@@ -612,15 +597,6 @@ contains
                 iglobal = i
 #endif
 
-                ! Define \lambda based on modified wavenumbers (real)
-                if (g(3)%size > 1) then
-                    lambda = g(1)%mwn1(iglobal) + g(3)%mwn1(kglobal)
-                else
-                    lambda = g(1)%mwn1(iglobal)
-                end if
-
-                lambda = lambda - alpha
-
                 ! forcing term
                 do j = 1, ny
                     ip = (j - 1)*isize_line + i; c_wrk1d(j, 1) = c_tmp1(ip, k)
@@ -637,21 +613,21 @@ contains
                 fdm_int_helmholtz(BCS_MIN)%bc = BCS_MIN
                 fdm_int_helmholtz(BCS_MIN)%mode_fdm1 = fdm_loc%mode_fdm1
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                         sqrt(lambda), fdm_int_helmholtz(BCS_MIN))
+                                         sqrt(lambda(i, k) - alpha), fdm_int_helmholtz(BCS_MIN))
 
                 fdm_int_helmholtz(BCS_MAX)%bc = BCS_MAX
                 fdm_int_helmholtz(BCS_MAX)%mode_fdm1 = fdm_loc%mode_fdm1
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                         -sqrt(lambda), fdm_int_helmholtz(BCS_MAX))
+                                         -sqrt(lambda(i, k) - alpha), fdm_int_helmholtz(BCS_MAX))
 
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
-                    ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                    ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     call OPR_ODE2_NN(2, fdm_int_helmholtz, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
-                    ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda, &
+                    ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                     call OPR_ODE2_DD(2, fdm_int_helmholtz, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
@@ -748,18 +724,9 @@ contains
                 j = ny + 1; ip = (j - 1)*isize_line + i; bcs(1) = c_tmp1(ip, k) ! Dirichlet or Neumann
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
-                ! Define \lambda based on modified wavenumbers (real)
-                if (g(3)%size > 1) then
-                    lambda = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
-                else
-                    lambda = g(1)%mwn2(iglobal)
-                end if
-
-                lambda = lambda - alpha
-
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 p_wrk1d(:, 1:7) = 0.0_wp
-                call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc, fdm_loc%lhs2, fdm_loc%rhs2, lambda, &
+                call FDM_Int2_CreateSystem(ny, g(2)%nodes, ibc, fdm_loc%lhs2, fdm_loc%rhs2, lambda(i, k) - alpha, &
                                            p_wrk1d(:, 1:5), p_wrk1d(:, 6:7), p_wrk1d(:, 13:14))
 
                 ! LU factorization

@@ -216,7 +216,7 @@ contains
 
         call FDM_Der1_CreateSystem(g, g%periodic)
 
-        if (g%periodic) g%mwn1(:) = (g%mwn1(:)/g%jac(1, 1))**2      ! modified wavenumber as used in elliptic solver
+        if (g%periodic) g%mwn1(:) = g%mwn1(:)/g%jac(1, 1)           ! normalized by dx
 
         ! -------------------------------------------------------------------
         ! LU decomposition
@@ -302,7 +302,7 @@ contains
 
         call FDM_Der2_CreateSystem(g, g%periodic)
 
-        if (g%periodic) g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)      ! modified wavenumbers as used in elliptic solver
+        if (g%periodic) g%mwn2(:) = g%mwn2(:)/(g%jac(1, 1)**2)      ! normalized by dx
 
         ! -------------------------------------------------------------------
         ! LU decomposition
