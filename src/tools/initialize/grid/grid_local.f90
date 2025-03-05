@@ -116,7 +116,7 @@ contains
         g%mode_fdm2 = FDM_COM6_JACOBIAN
         call FDM_Initialize(x, g, fdmi)
         ! x(1) is already set
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), rhs(:), result(:), aux)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, rhs(:), result(:), aux)
         x(:) = result(:)
 #undef rhs
 #undef result

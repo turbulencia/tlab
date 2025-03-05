@@ -77,21 +77,21 @@ contains
         ! solve for v^(0) in v' = f , v_n given
         f(:, 1) = 0.0_wp
         v(:, nx) = bcs(:, 2)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, f, v, wrk2d)
 
         ! solve for v^(1)
         f1(:) = 0.0_wp; f1(1) = 1.0_wp
         v1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, f1(:), v1(:), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' = v, u_1 given
         u(:, 1) = bcs(:, 1)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1)
         u1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, v1(:), u1(:), wrk2d, du1_n(1))
 
         ! -----------------------------------------------------------------------
         ! Constraint
@@ -141,21 +141,21 @@ contains
         ! solve for v^(0) in v' = f , v_1 given
         f(:, nx) = 0.0_wp
         v(:, 1) = bcs(:, 1)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f, v, wrk2d)
 
         ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f1(:), v1(:), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' = v, u_n given
         u(:, nx) = bcs(:, 2)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1)
         u1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v1(:), u1(:), wrk2d, du1_n(1))
 
         ! -----------------------------------------------------------------------
         ! Constraint
@@ -229,21 +229,21 @@ contains
         ! solve for v^(0) in v' = f , v_1 given (0 for now, to be found later on)
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f, v, wrk2d)
 
         ! solve for v^(1)
         f1(:) = 0.0_wp; f1(nx) = 1.0_wp
         v1(1) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MIN), f1(:), v1(:), wrk2d)
+        call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f1(:), v1(:), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' = v, u_n given
         u(:, nx) = bcs(:, 2)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1)
         u1(nx) = 0.0_wp
-        call FDM_Int1_Solve(1, fdmi(BCS_MAX), v1(:), u1(:), wrk2d, du1_n(1))
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v1(:), u1(:), wrk2d, du1_n(1))
 
         ! -----------------------------------------------------------------------
         ! Constraint
@@ -313,25 +313,25 @@ contains
         ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f, v, wrk2d)
 
         ! solve for v^(1) and e^(-); 1 line is not used but we need a 3 x nx array
         f1(:, :) = 0.0_wp
         f1(1, nx) = 1.0_wp; v1(1) = 0.0_wp
         em(1) = 1.0_wp
         dd(1) = 0.0_wp
-        call FDM_Int1_Solve(3, fdmi(BCS_MIN), f1(1, 1), v1(1), wrk2d)
+        call FDM_Int1_Solve(3, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f1(1, 1), v1(1), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given (0 for now, to be found later on)
         u(:, nx) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1) and s^(+) and e^(+)
         u1(nx) = 0.0_wp
         sp(nx) = 0.0_wp
         dd(:) = 0.0_wp; ep(nx) = 1.0_wp
-        call FDM_Int1_Solve(3, fdmi(BCS_MAX), v1(1), u1(1), wrk2d, der_bcs)
+        call FDM_Int1_Solve(3, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v1(1), u1(1), wrk2d, der_bcs)
 
         ! -----------------------------------------------------------------------
         ! Constraint and boundary conditions
@@ -435,23 +435,23 @@ contains
         ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f, v, wrk2d)
 
         ! solve for v^(1) and e^(-); 1 line is not used but we need a 2 x nx array
         f1(:, :) = 0.0_wp
         f1(1, nx) = 1.0_wp; v1(1) = 0.0_wp
         em(1) = 1.0_wp
-        call FDM_Int1_Solve(2, fdmi(BCS_MIN), f1(1, 1), v1(1), wrk2d)
+        call FDM_Int1_Solve(2, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f1(1, 1), v1(1), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given
         u(:, nx) = bcs(:, 2)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1) and s^(+)
         u1(nx) = 0.0_wp
         sp(nx) = 0.0_wp
-        call FDM_Int1_Solve(2, fdmi(BCS_MAX), v1(1), u1(1), wrk2d, der_bcs)
+        call FDM_Int1_Solve(2, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v1(1), u1(1), wrk2d, der_bcs)
 
         ! -----------------------------------------------------------------------
         ! Constraint and bottom boundary condition

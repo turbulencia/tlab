@@ -170,7 +170,7 @@ program VINTEGRAL
                     w_n(:, kmax) = u(:, kmax)
                 end select
 
-                call FDM_Int1_Solve(len, fdmi(ib), f, w_n, wrk2d, dw1_n(:, 1))
+                call FDM_Int1_Solve(len, fdmi(ib), fdmi(ib)%lhs, f, w_n, wrk2d, dw1_n(:, 1))
 
                 call check(u, w_n, 'integral.dat')
 
