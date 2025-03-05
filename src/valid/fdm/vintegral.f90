@@ -170,7 +170,7 @@ program VINTEGRAL
                     w_n(:, kmax) = u(:, kmax)
                 end select
 
-                call FDM_Int1_Solve(len, fdmi(ib), fdmi(ib)%lhs, f, w_n, wrk2d, dw1_n(:, 1))
+                call FDM_Int1_Solve(len, fdmi(ib), fdmi(ib)%rhs, f, w_n, wrk2d, dw1_n(:, 1))
 
                 call check(u, w_n, 'integral.dat')
 
@@ -275,7 +275,7 @@ program VINTEGRAL
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_DD(len, fdmi, fdmi(BCS_MIN)%lhs, fdmi(BCS_MAX)%lhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_DD(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN) ! not yet developed
                 print *, 'Dirichlet/Neumann'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
@@ -286,7 +286,7 @@ program VINTEGRAL
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_NN(len, fdmi, fdmi(BCS_MIN)%lhs, fdmi(BCS_MAX)%lhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_NN(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')

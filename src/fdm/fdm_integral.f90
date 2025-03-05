@@ -207,12 +207,13 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine FDM_Int1_Solve(nlines, fdmi, lui, f, result, wrk2d, du_boundary)
+    ! Allow to pass separate rhs because this part does not depend on lambda
+    subroutine FDM_Int1_Solve(nlines, fdmi, rhsi, f, result, wrk2d, du_boundary)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi
-        real(wp), intent(in) :: lui(:, :)
-        real(wp), intent(in) :: f(nlines, size(fdmi%rhs, 1))
-        real(wp), intent(inout) :: result(nlines, size(fdmi%rhs, 1))   ! contains bcs
+        real(wp), intent(in) :: rhsi(:, :)
+        real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
+        real(wp), intent(inout) :: result(nlines, size(fdmi%lhs, 1))   ! contains bcs
         real(wp), intent(inout) :: wrk2d(nlines, 2)
         real(wp), intent(out), optional :: du_boundary(nlines)
 
@@ -220,11 +221,11 @@ contains
         integer(wi) :: idl, ndl, idr, ndr, ic
 
         ! ###################################################################
-        nx = size(fdmi%rhs, 1)
+        nx = size(fdmi%lhs, 1)
 
-        ndl = size(lui, 2)
+        ndl = size(fdmi%lhs, 2)
         idl = ndl/2 + 1
-        ndr = size(fdmi%rhs, 2)
+        ndr = size(rhsi, 2)
         idr = ndr/2 + 1
 
         select case (fdmi%bc)
@@ -234,41 +235,41 @@ contains
             result(:, 1) = f(:, 1)
         end select
 
-        select case (size(fdmi%rhs, 2))
+        select case (size(rhsi, 2))
         case (3)
-            call MatMul_3d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 3), f, result, &
+            call MatMul_3d(nx, nlines, rhsi(:, 1), rhsi(:, 3), f, result, &
                            BCS_BOTH, rhs_b=fdmi%rhs_b(1:3, 0:3), rhs_t=fdmi%rhs_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         case (5)
-            call MatMul_5d(nx, nlines, fdmi%rhs(:, 1), fdmi%rhs(:, 2), fdmi%rhs(:, 4), fdmi%rhs(:, 5), f, result, &
+            call MatMul_5d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 4), rhsi(:, 5), f, result, &
                            BCS_BOTH, rhs_b=fdmi%rhs_b(1:4, 0:5), rhs_t=fdmi%rhs_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         end select
 
         select case (ndl)
         case (3)
-            call TRIDSS(nx - 2, nlines, lui(2:, 1), lui(2:, 2), lui(2:, 3), result(:, 2:))
+            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), result(:, 2:))
         case (5)
-            call PENTADSS(nx - 2, nlines, lui(2:, 1), lui(2:, 2), lui(2:, 3), lui(2:, 4), lui(2:, 5), result(:, 2:))
+            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), result(:, 2:))
         case (7)
-            call HEPTADSS(nx - 2, nlines, lui(2:, 1), lui(2:, 2), lui(2:, 3), lui(2:, 4), lui(2:, 5), lui(2:, 6), lui(2:, 7), result(:, 2:))
+            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), result(:, 2:))
         end select
 
         if (any([BCS_MAX] == fdmi%bc)) then
             result(:, 1) = wrk2d(:, 1)
             do ic = 1, idl - 1
-                result(:, 1) = result(:, 1) + lui(1, idl + ic)*result(:, 1 + ic)
+                result(:, 1) = result(:, 1) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
             end do
-            result(:, 1) = result(:, 1) + lui(1, 1)*result(:, 1 + ic)
+            result(:, 1) = result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic)
 
             if (present(du_boundary)) then      ! calculate u'n
-                du_boundary(:) = lui(nx, idl)*result(:, nx)
+                du_boundary(:) = fdmi%lhs(nx, idl)*result(:, nx)
                 do ic = 1, idl - 1
-                    du_boundary(:) = du_boundary(:) + lui(nx, idl - ic)*result(:, nx - ic)
+                    du_boundary(:) = du_boundary(:) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
                 end do
                 ic = idl                        ! longer stencil at the boundary
-                du_boundary(:) = du_boundary(:) + lui(nx, ndl)*result(:, nx - ic)
+                du_boundary(:) = du_boundary(:) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
 
                 do ic = 1, idr - 1
-                    du_boundary(:) = du_boundary(:) + fdmi%rhs(nx, idr - ic)*f(:, nx - ic)
+                    du_boundary(:) = du_boundary(:) + rhsi(nx, idr - ic)*f(:, nx - ic)
                 end do
 
             end if
@@ -278,20 +279,20 @@ contains
         if (any([BCS_MIN] == fdmi%bc)) then
             result(:, nx) = wrk2d(:, 2)
             do ic = 1, idl - 1
-                result(:, nx) = result(:, nx) + lui(nx, idl - ic)*result(:, nx - ic)
+                result(:, nx) = result(:, nx) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
             end do
-            result(:, nx) = result(:, nx) + lui(nx, ndl)*result(:, nx - ic)
+            result(:, nx) = result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
 
             if (present(du_boundary)) then      ! calculate u'1
-                du_boundary(:) = lui(1, idl)*result(:, 1)
+                du_boundary(:) = fdmi%lhs(1, idl)*result(:, 1)
                 do ic = 1, idl - 1
-                    du_boundary(:) = du_boundary(:) + lui(1, idl + ic)*result(:, 1 + ic)
+                    du_boundary(:) = du_boundary(:) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
                 end do
                 ic = idl                        ! longer stencil at the boundary
-                du_boundary(:) = du_boundary(:) + lui(1, 1)*result(:, 1 + ic)
+                du_boundary(:) = du_boundary(:) + fdmi%lhs(1, 1)*result(:, 1 + ic)
 
                 do ic = 1, idr - 1
-                    du_boundary(:) = du_boundary(:) + fdmi%rhs(1, idr + ic)*f(:, 1 + ic)
+                    du_boundary(:) = du_boundary(:) + rhsi(1, idr + ic)*f(:, 1 + ic)
                 end do
 
             end if

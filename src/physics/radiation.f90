@@ -411,7 +411,7 @@ contains
         ! #######################################################################
         ! calculate f_j = exp(-tau(z, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%rhs, a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
         ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
         ! call Int_Simpson_Biased_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
@@ -475,7 +475,7 @@ contains
 
         ! transmission function I_{j-1,j}  = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, a_source, p_tau, wrk2d)
+        ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)
         ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
@@ -573,7 +573,7 @@ contains
 
         ! transmission function I_{j-1,j} = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
-        ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, a_source, p_tau, wrk2d)
+        ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)
         ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         do j = ny, 2, -1
@@ -683,7 +683,7 @@ contains
 
         ! transmission function I_j = exp(-tau(z_j, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
-        ! call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MIN)%lhs, a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
+        ! call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
         ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
         call Int_Simpson_Biased_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
         do j = ny, 1, -1
@@ -711,7 +711,7 @@ contains
 
         ! transmission function I_j = exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                                ! boundary condition
-        ! call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, a_source, p_tau, wrk2d)
+        ! call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)
         ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
         do j = 1, ny

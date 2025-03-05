@@ -179,7 +179,7 @@ contains
             end if
 
             p(1) = 0.0_wp
-            call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, r_aux(:), p, wrk_aux(:))
+            call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, r_aux(:), p, wrk_aux(:))
 
             ! Calculate pressure and normalize s.t. p=pref at y=yref
             p(:) = exp(p(:))
