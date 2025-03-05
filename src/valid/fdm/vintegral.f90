@@ -67,7 +67,7 @@ program VINTEGRAL
     dw1_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 8)
     dw2_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 9)
 
-    test_type = 1
+    test_type = 3
 
     ! ###################################################################
     if (g%periodic) then
@@ -275,7 +275,7 @@ program VINTEGRAL
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_DD(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_DD(len, fdmi, fdmi(BCS_MIN)%lhs, fdmi(BCS_MAX)%lhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN) ! not yet developed
                 print *, 'Dirichlet/Neumann'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
@@ -286,8 +286,7 @@ program VINTEGRAL
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
                 ! call OPR_ODE2_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_NN(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
-                ! call OPR_ODE2_NN_New(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                call OPR_ODE2_NN(len, fdmi, fdmi(BCS_MIN)%lhs, fdmi(BCS_MAX)%lhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')

@@ -310,7 +310,8 @@ contains
                     else
                         ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), fdm_int_loc(BCS_MIN, i, k)%lhs, fdm_int_loc(BCS_MAX, i, k)%lhs, &
+                                         p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
@@ -321,7 +322,8 @@ contains
                     else
                         ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), fdm_int_loc(BCS_MIN, i, k)%lhs, fdm_int_loc(BCS_MAX, i, k)%lhs, &
+                                         p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
                 end select
@@ -624,13 +626,15 @@ contains
                 case (3) ! Neumann   & Neumann   BCs
                     ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                    call OPR_ODE2_NN(2, fdm_int_helmholtz, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                    call OPR_ODE2_NN(2, fdm_int_helmholtz, fdm_int_helmholtz(BCS_MIN)%lhs, fdm_int_helmholtz(BCS_MAX)%lhs, &
+                                     p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
                     ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
-                    call OPR_ODE2_DD(2, fdm_int_helmholtz, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                    call OPR_ODE2_DD(2, fdm_int_helmholtz, fdm_int_helmholtz(BCS_MIN)%lhs, fdm_int_helmholtz(BCS_MAX)%lhs, &
+                                     p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                 end select
 
                 ! Rearrange in memory and normalize

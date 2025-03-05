@@ -273,9 +273,10 @@ contains
     !########################################################################
     !########################################################################
     ! Neumann/Neumann boundary conditions
-    subroutine OPR_ODE2_NN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_NN(nlines, fdmi, lui_b, lui_t, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(inout) :: fdmi(2)
+        real(wp), intent(in) :: lui_b(:, :), lui_t(:, :)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%nodes))
         real(wp), intent(in) :: bcs(nlines, 2)
         real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
@@ -313,25 +314,25 @@ contains
         ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), lui_b, f, v, wrk2d)
 
         ! solve for v^(1) and e^(-); 1 line is not used but we need a 3 x nx array
         f1(:, :) = 0.0_wp
         f1(1, nx) = 1.0_wp; v1(1) = 0.0_wp
         em(1) = 1.0_wp
         dd(1) = 0.0_wp
-        call FDM_Int1_Solve(3, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f1(1, 1), v1(1), wrk2d)
+        call FDM_Int1_Solve(3, fdmi(BCS_MIN), lui_b, f1(1, 1), v1(1), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given (0 for now, to be found later on)
         u(:, nx) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), lui_t, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1) and s^(+) and e^(+)
         u1(nx) = 0.0_wp
         sp(nx) = 0.0_wp
         dd(:) = 0.0_wp; ep(nx) = 1.0_wp
-        call FDM_Int1_Solve(3, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v1(1), u1(1), wrk2d, der_bcs)
+        call FDM_Int1_Solve(3, fdmi(BCS_MAX), lui_t, v1(1), u1(1), wrk2d, der_bcs)
 
         ! -----------------------------------------------------------------------
         ! Constraint and boundary conditions
@@ -398,9 +399,10 @@ contains
     !########################################################################
     !########################################################################
     ! Dirichlet/Dirichlet boundary conditions
-    subroutine OPR_ODE2_DD(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_DD(nlines, fdmi, lui_b, lui_t, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
+        real(wp), intent(in) :: lui_b(:, :), lui_t(:, :)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%nodes))
         real(wp), intent(in) :: bcs(nlines, 2)
         real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
@@ -435,23 +437,23 @@ contains
         ! solve for v^(0) in v' + lambda v= f , v_1 given (0 for now, to be found later on)
         f(:, nx) = 0.0_wp
         v(:, 1) = 0.0_wp
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f, v, wrk2d)
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), lui_b, f, v, wrk2d)
 
         ! solve for v^(1) and e^(-); 1 line is not used but we need a 2 x nx array
         f1(:, :) = 0.0_wp
         f1(1, nx) = 1.0_wp; v1(1) = 0.0_wp
         em(1) = 1.0_wp
-        call FDM_Int1_Solve(2, fdmi(BCS_MIN), fdmi(BCS_MIN)%lhs, f1(1, 1), v1(1), wrk2d)
+        call FDM_Int1_Solve(2, fdmi(BCS_MIN), lui_b, f1(1, 1), v1(1), wrk2d)
 
         ! -----------------------------------------------------------------------
         ! solve for u^(0) in u' - lambda u = v, u_n given
         u(:, nx) = bcs(:, 2)
-        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v, u, wrk2d, du0_n(:))
+        call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), lui_t, v, u, wrk2d, du0_n(:))
 
         ! solve for u^(1) and s^(+)
         u1(nx) = 0.0_wp
         sp(nx) = 0.0_wp
-        call FDM_Int1_Solve(2, fdmi(BCS_MAX), fdmi(BCS_MAX)%lhs, v1(1), u1(1), wrk2d, der_bcs)
+        call FDM_Int1_Solve(2, fdmi(BCS_MAX), lui_t, v1(1), u1(1), wrk2d, der_bcs)
 
         ! -----------------------------------------------------------------------
         ! Constraint and bottom boundary condition
