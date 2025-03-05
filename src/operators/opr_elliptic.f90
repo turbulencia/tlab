@@ -2,7 +2,8 @@
 #include "dns_error.h"
 
 module OPR_ELLIPTIC
-    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: efile
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
@@ -10,6 +11,7 @@ module OPR_ELLIPTIC
     use TLab_Memory, only: TLab_Allocate_Real
     use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
+    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
     use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
@@ -129,7 +131,8 @@ contains
 
         select case (imode_elliptic)
         case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
-            OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
+            ! OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
+            OPR_Poisson => OPR_Poisson_FourierXZ_Factorize_T
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
 
             ndl = fdm_loc%nb_diag_1(1)
@@ -372,6 +375,127 @@ contains
 
         return
     end subroutine OPR_Poisson_FourierXZ_Factorize
+
+    subroutine OPR_Poisson_FourierXZ_Factorize_T(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+        integer(wi), intent(in) :: nx, ny, nz
+        integer, intent(in) :: ibc
+        type(fdm_dt), intent(in) :: g(3)
+        real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
+        real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
+        real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
+        real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)          ! Boundary-condition fields
+        real(wp), intent(out), optional :: dpdy(nx, ny, nz)             ! Vertical derivative of solution
+
+        target tmp1, tmp2
+
+        ! -----------------------------------------------------------------------
+        integer(wi) i_sing(2), k_sing(2)    ! singular global modes
+        real(wp), pointer :: u(:, :) => null(), v(:, :) => null(), f(:, :) => null()
+
+        ! #######################################################################
+        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+
+        norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
+
+        isize_line = nx/2 + 1
+
+        if (.not. stagger_on) then
+            i_sing = [1, g(1)%size/2 + 1]
+            k_sing = [1, g(3)%size/2 + 1]
+        else                    ! In case of staggering only one singular mode + different modified wavenumbers
+            i_sing = [1, 1]
+            k_sing = [1, 1]
+        end if
+
+        ! #######################################################################
+        ! Fourier transform of forcing term; output of this section in array tmp1
+        ! #######################################################################
+        if (g(3)%size > 1) then
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2)
+            call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
+        else
+            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp1)
+        end if
+
+        tmp1 = tmp1*norm
+
+        ! ###################################################################
+        ! Solve FDE \hat{p}''-\lambda \hat{p} = \hat{f}
+        ! ###################################################################
+        do k = 1, nz
+#ifdef USE_MPI
+            kglobal = k + ims_offset_k
+#else
+            kglobal = k
+#endif
+
+            ! Make x direction last one and leave y direction first
+            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+
+            f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            v(1:2*ny, 1:isize_line) => tmp1(1:2*ny*isize_line, k)
+            u(1:2*ny, 1:isize_line) => wrk3d(1:2*ny*isize_line)
+
+            do i = 1, isize_line
+#ifdef USE_MPI
+                iglobal = i + ims_offset_i/2
+#else
+                iglobal = i
+#endif
+
+                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+                select case (ibc)
+                case (BCS_NN) ! Neumann   & Neumann   BCs
+                    if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
+                        call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                    else
+                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
+                                         u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                    end if
+
+                case (BCS_DD) ! Dirichlet & Dirichlet BCs
+                    if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
+                        call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                    else
+                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
+                                         u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                    end if
+
+                end select
+
+            end do
+
+            if (present(dpdy)) call TLab_Transpose_COMPLEX(c_tmp1(:, k), ny, isize_line, ny, c_tmp2(:, k), isize_line)
+            call TLab_Transpose_COMPLEX(c_wrk3d, ny, isize_line, ny, c_tmp1(:, k), isize_line)
+
+        end do
+
+        ! ###################################################################
+        ! Fourier field p (based on array tmp1)
+        ! ###################################################################
+        if (g(3)%size > 1) then
+            call OPR_FOURIER_B_Z_EXEC(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
+        else
+            call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, p)    ! tmp2 might be overwritten
+        end if
+
+        ! Fourier derivatives (based on array tmp2)
+        if (present(dpdy)) then
+            if (g(3)%size > 1) then
+                call OPR_FOURIER_B_Z_EXEC(c_tmp2, c_wrk3d)              ! tmp2 might be overwritten
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, dpdy)    ! wrk3d might be overwritten
+            else
+                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp2, dpdy)     ! tmp2 might be overwritten
+            end if
+        end if
+
+        nullify (u, v, f)
+        nullify (c_tmp1, c_tmp2)
+
+        return
+    end subroutine OPR_Poisson_FourierXZ_Factorize_T
 
 !########################################################################
 !########################################################################
