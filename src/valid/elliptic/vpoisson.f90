@@ -90,8 +90,8 @@ program VPOISSON
     call OPR_FOURIER_INITIALIZE()
     call OPR_CHECK()
 
-    ! type_of_operator = 1   ! Poisson routines
-    type_of_operator = 2   ! Helmholtz routines
+    type_of_operator = 1   ! Poisson routines
+    ! type_of_operator = 2   ! Helmholtz routines
     if (type_of_operator == 2) then
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda

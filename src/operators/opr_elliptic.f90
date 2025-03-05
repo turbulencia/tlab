@@ -69,21 +69,22 @@ module OPR_ELLIPTIC
     complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
     integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) norm
-    real(wp), allocatable :: lambda(:, :)
     type(fdm_dt) fdm_loc
-    type(fdm_integral_dt), allocatable :: fdm_int_loc(:, :, :)
+    type(fdm_integral_dt), allocatable :: fdm_int_loc(:, :, :)      ! factorized method
+    real(wp), allocatable, target :: rhs_b(:, :), rhs_t(:, :)
+    real(wp), allocatable, target :: lu_d(:, :, :, :)               ! direct method
     type(fdm_integral_dt) :: fdm_int_helmholtz(2)
-    real(wp), allocatable, target :: lu_poisson(:, :, :, :)       ! 3D array; here or in TLab_Arrays?
+    real(wp), allocatable :: lambda(:, :)
 
-#define p_a(icpp,jcpp,kcpp)   lu_poisson(icpp,1,jcpp,kcpp)
-#define p_b(icpp,jcpp,kcpp)   lu_poisson(icpp,2,jcpp,kcpp)
-#define p_c(icpp,jcpp,kcpp)   lu_poisson(icpp,3,jcpp,kcpp)
-#define p_d(icpp,jcpp,kcpp)   lu_poisson(icpp,4,jcpp,kcpp)
-#define p_e(icpp,jcpp,kcpp)   lu_poisson(icpp,5,jcpp,kcpp)
-#define p_f1(icpp,jcpp,kcpp)  lu_poisson(icpp,6,jcpp,kcpp)
-#define p_f2(icpp,jcpp,kcpp)  lu_poisson(icpp,7,jcpp,kcpp)
-#define p_rhs1(icpp,jcpp,kcpp)  lu_poisson(icpp,8,jcpp,kcpp)
-#define p_rhs2(icpp,jcpp,kcpp)  lu_poisson(icpp,9,jcpp,kcpp)
+#define p_a(icpp,jcpp,kcpp)   lu_d(icpp,1,jcpp,kcpp)
+#define p_b(icpp,jcpp,kcpp)   lu_d(icpp,2,jcpp,kcpp)
+#define p_c(icpp,jcpp,kcpp)   lu_d(icpp,3,jcpp,kcpp)
+#define p_d(icpp,jcpp,kcpp)   lu_d(icpp,4,jcpp,kcpp)
+#define p_e(icpp,jcpp,kcpp)   lu_d(icpp,5,jcpp,kcpp)
+#define p_f1(icpp,jcpp,kcpp)  lu_d(icpp,6,jcpp,kcpp)
+#define p_f2(icpp,jcpp,kcpp)  lu_d(icpp,7,jcpp,kcpp)
+#define p_rhs1(icpp,jcpp,kcpp)  lu_d(icpp,8,jcpp,kcpp)
+#define p_rhs2(icpp,jcpp,kcpp)  lu_d(icpp,9,jcpp,kcpp)
 
 contains
 ! #######################################################################
@@ -132,8 +133,11 @@ contains
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
 
             ndl = fdm_loc%nb_diag_1(1)
-            ndr = fdm_loc%nb_diag_2(2)
+            ndr = fdm_loc%nb_diag_1(2)
+            nd = ndl
             allocate (fdm_int_loc(2, isize_line, kmax))
+            call TLab_Allocate_Real(__FILE__, rhs_b, [g(2)%size, nd, isize_line, kmax], 'rhs_b')
+            call TLab_Allocate_Real(__FILE__, rhs_t, [g(2)%size, nd, isize_line, kmax], 'rhs_t')
 
         case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
             OPR_Poisson => OPR_Poisson_FourierXZ_Direct
@@ -142,7 +146,7 @@ contains
             ndl = fdm_loc%nb_diag_2(1)
             ndr = fdm_loc%nb_diag_2(2)
             nd = ndr + ndl - 1 + 2     ! The rhs diagonal is 1 and not need to store; we add 2 independent terms
-            call TLab_Allocate_Real(__FILE__, lu_poisson, [g(2)%size, nd, isize_line, kmax], 'lu_poisson')
+            call TLab_Allocate_Real(__FILE__, lu_d, [g(2)%size, nd, isize_line, kmax], 'lu_d')
 
         end select
 
@@ -174,10 +178,16 @@ contains
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                              sqrt(lambda(i, k)), fdm_int_loc(BCS_MIN, i, k))
 
+                    rhs_b(:, :) = fdm_int_loc(BCS_MIN, i, k)%rhs(:, :)          ! free memory that is independent of lambda
+                    if (allocated(fdm_int_loc(BCS_MIN, i, k)%rhs)) deallocate (fdm_int_loc(BCS_MIN, i, k)%rhs)
+
                     fdm_int_loc(BCS_MAX, i, k)%bc = BCS_MAX
                     fdm_int_loc(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                              -sqrt(lambda(i, k)), fdm_int_loc(BCS_MAX, i, k))
+
+                    rhs_t(:, :) = fdm_int_loc(BCS_MAX, i, k)%rhs(:, :)          ! free memory that is independent of lambda
+                    if (allocated(fdm_int_loc(BCS_MAX, i, k)%rhs)) deallocate (fdm_int_loc(BCS_MAX, i, k)%rhs)
 
                 case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
@@ -196,7 +206,7 @@ contains
 
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                     call FDM_Int2_CreateSystem(g(2)%size, g(2)%nodes, ibc_loc, fdm_loc%lhs2, fdm_loc%rhs2, lambda(i, k), &
-                                               lu_poisson(:, 1:5, i, k), lu_poisson(:, 6:7, i, k), lu_poisson(:, 8:9, i, k))
+                                               lu_d(:, 1:5, i, k), lu_d(:, 6:7, i, k), lu_d(:, 8:9, i, k))
 
                     ! LU decomposizion
                     ! We rely on this routines not changing a(2:3), b(2), e(ny-2:ny-1), d(ny-1)
@@ -310,7 +320,7 @@ contains
                     else
                         ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), fdm_int_loc(BCS_MIN, i, k)%rhs, fdm_int_loc(BCS_MAX, i, k)%rhs, &
+                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
                                          p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
@@ -322,7 +332,7 @@ contains
                     else
                         ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), fdm_int_loc(BCS_MIN, i, k)%rhs, fdm_int_loc(BCS_MAX, i, k)%rhs, &
+                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
                                          p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                     end if
 
