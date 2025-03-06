@@ -26,7 +26,7 @@ module THERMO_AIRWATER
     public :: THERMO_AIRWATER_RP
     public :: THERMO_AIRWATER_PH_RE
     public :: THERMO_AIRWATER_RE
-    public :: THERMO_AIRWATER_LAPSE_EQU
+    ! public :: THERMO_AIRWATER_LAPSE_EQU   ! To be done
     public :: THERMO_AIRWATER_THETA_EQ
 
     public :: THERMO_AIRWATER_LINEAR
@@ -425,31 +425,31 @@ contains
         return
     end subroutine THERMO_AIRWATER_RE
 
-!########################################################################
-!########################################################################
-    subroutine THERMO_AIRWATER_LAPSE_EQU(s, T, p, dTdy, dqldy, lapse, frequency)
-        real(wp), intent(in) :: s(:, :, :, :), T(:, :, :), p(:, :, :), dTdy(:, :, :), dqldy(:, :, :)
-        real(wp), intent(out) :: lapse(:, :, :), frequency(:, :, :)
+! !########################################################################
+! !########################################################################
+!     subroutine THERMO_AIRWATER_LAPSE_EQU(s, T, p, dTdy, dqldy, lapse, frequency)
+!         real(wp), intent(in) :: s(:, :, :, :), T(:, :, :), p(:, :, :), dTdy(:, :, :), dqldy(:, :, :)
+!         real(wp), intent(out) :: lapse(:, :, :), frequency(:, :, :)
 
-! ###################################################################
-        ! to be done
-        lapse = 0.0_wp
-        frequency = 0.0_wp
+! ! ###################################################################
+!         ! to be done
+!         lapse = 0.0_wp
+!         frequency = 0.0_wp
 
-        ! dummy = Cvl + CRATIO_INV*Rv
-        ! L_RATIO = -(Lvl + dummy*T)/(CRATIO_INV*Rv*T)
-        ! Q_RATIO = 1.0_wp/(p/psat - 1.0_wp)
-        ! RMEAN = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, 1))*Rd
+!         ! dummy = Cvl + CRATIO_INV*Rv
+!         ! L_RATIO = -(Lvl + dummy*T)/(CRATIO_INV*Rv*T)
+!         ! Q_RATIO = 1.0_wp/(p/psat - 1.0_wp)
+!         ! RMEAN = (Q_RATIO + 1.0_wp)*(1.0_wp - s(:, 1))*Rd
 
-        ! lapse = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
-        !         (gamma/(gamma - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)
+!         ! lapse = (1.0_wp + Q_RATIO*L_RATIO)/RMEAN/ &
+!         !         (gamma/(gamma - 1.0_wp) + Q_RATIO*L_RATIO*L_RATIO)
 
-        ! frequecy = (dTdy - buoyancy%vector(2)/RRATIO*lapse)/T &
-        !            *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, 1)))
-        ! frequecy = frequecy - Rd/RMEAN*dqldy
+!         ! frequecy = (dTdy - buoyancy%vector(2)/RRATIO*lapse)/T &
+!         !            *(1.0_wp + L_RATIO/rd_ov_rv/(1.0_wp - s(:, 1)))
+!         ! frequecy = frequecy - Rd/RMEAN*dqldy
 
-        return
-    end subroutine THERMO_AIRWATER_LAPSE_EQU
+!         return
+!     end subroutine THERMO_AIRWATER_LAPSE_EQU
 
 !########################################################################
 !########################################################################

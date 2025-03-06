@@ -880,11 +880,12 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T, dudz)
             call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 2), dudy)
 
-            call THERMO_AIRWATER_LAPSE_EQU(s, T, p_loc, dudz, dudy, dvdx, dvdy)!, dwdy, dwdz, p_wrk3d)
-            call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, bfreq_eq(1), wrk1d)
-            call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, lapse_eq(1), wrk1d)
-            bfreq_eq(:) = -bfreq_eq(:)*buoyancy%vector(2)
-            lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)*CRATIO_INV
+            ! To be done
+            ! call THERMO_AIRWATER_LAPSE_EQU(s, T, p_loc, dudz, dudy, dvdx, dvdy)!, dwdy, dwdz, p_wrk3d)
+            ! call AVG_IK_V(imax, jmax, kmax, jmax, dvdy, bfreq_eq(1), wrk1d)
+            ! call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, lapse_eq(1), wrk1d)
+            ! bfreq_eq(:) = -bfreq_eq(:)*buoyancy%vector(2)
+            ! lapse_eq(:) = -lapse_eq(:)*buoyancy%vector(2)*CRATIO_INV
 
             call THERMO_AIRWATER_THETA_EQ(s, T, p_loc, dvdx, dvdy, dwdy)
             call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, potem_eq(1), wrk1d)
