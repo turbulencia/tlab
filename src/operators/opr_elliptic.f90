@@ -4,7 +4,7 @@
 module OPR_ELLIPTIC
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use TLab_Constants, only: efile
+    use TLab_Constants, only: lfile
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
@@ -66,13 +66,10 @@ module OPR_ELLIPTIC
     public :: OPR_Helmholtz
 
     ! -----------------------------------------------------------------------
-    complex(wp), target :: bcs(3)
-    real(wp), pointer :: r_bcs(:) => null()
-    complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
-    integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
     real(wp) norm
-    integer(wi) i_sing(2), k_sing(2)    ! singular global modes
-    type(fdm_dt) fdm_loc
+    integer(wi) i_sing(2), k_sing(2)                                ! singular global modes
+
+    type(fdm_dt) fdm_loc                                            ! scheme used for the elliptic solvers
 
     type(fdm_integral_dt), allocatable :: fdm_int1(:, :, :)         ! factorized method
     real(wp), allocatable, target :: rhs_b(:, :), rhs_t(:, :)       ! rhs to free memory space
@@ -84,38 +81,49 @@ module OPR_ELLIPTIC
 
     real(wp), allocatable :: lambda(:, :)
 
+    complex(wp), target :: bcs(3)
+    real(wp), pointer :: r_bcs(:) => null()
+    complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
+    integer(wi) i, j, k, iglobal, kglobal, ip, isize_line
+
 contains
-! #######################################################################
-! #######################################################################
-! We precalculate the LU factorization for the case BCS_NN, which is the one used in the pressure-Poisson equation
+    ! #######################################################################
+    ! #######################################################################
     subroutine OPR_Elliptic_Initialize(inifile)
         use FDM, only: g, FDM_Initialize
 
         character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
-        integer imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
+        integer imode_elliptic
+        integer, parameter :: TYPE_FACTORIZE = 1
+        integer, parameter :: TYPE_DIRECT = 2
+
         integer(wi) :: ndl, ndr, nd
         character*512 sRes
         character*32 bakfile
 
-! ###################################################################
+        ! ###################################################################
+        ! Reading
         bakfile = trim(adjustl(inifile))//'.bak'
 
-        call ScanFile_Char(bakfile, inifile, 'Main', 'EllipticOrder', 'compactjacobian6', sRes)
-        if (trim(adjustl(sRes)) == 'compactjacobian4') then; imode_elliptic = FDM_COM4_JACOBIAN
-        else if (trim(adjustl(sRes)) == 'compactjacobian6') then; imode_elliptic = FDM_COM6_JACOBIAN
-        else if (trim(adjustl(sRes)) == 'compactjacobian6penta') then; imode_elliptic = FDM_COM6_JACOBIAN_PENTA
-        else if (trim(adjustl(sRes)) == 'compactdirect4') then; imode_elliptic = FDM_COM4_DIRECT
-        else if (trim(adjustl(sRes)) == 'compactdirect6') then; imode_elliptic = FDM_COM6_DIRECT
-        else
-            call TLab_Write_ASCII(efile, __FILE__//'. Wrong Main.EllipticOrder option.')
-            call TLab_Stop(DNS_ERROR_OPTION)
+        imode_elliptic = TYPE_FACTORIZE         ! default is the finite-difference method used for the derivatives
+        fdm_loc%mode_fdm1 = g(2)%mode_fdm1      ! to impose zero divergence down to round-off error in the interior points
+        fdm_loc%mode_fdm2 = g(2)%mode_fdm2
+
+        call ScanFile_Char(bakfile, inifile, 'Main', 'EllipticOrder', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'compactdirect4') then
+            imode_elliptic = TYPE_DIRECT
+            fdm_loc%mode_fdm1 = FDM_COM4_DIRECT
+            fdm_loc%mode_fdm2 = FDM_COM4_DIRECT
+        else if (trim(adjustl(sRes)) == 'compactdirect6') then
+            imode_elliptic = TYPE_DIRECT
+            fdm_loc%mode_fdm1 = FDM_COM6_DIRECT
+            fdm_loc%mode_fdm2 = FDM_COM6_DIRECT
         end if
 
-        ! It should probably be better to say factorize or not factorize and use the global fdm plan
-        fdm_loc%mode_fdm1 = imode_elliptic
-        fdm_loc%mode_fdm2 = imode_elliptic
+        ! ###################################################################
+        ! Initializing
         call FDM_Initialize(g(2)%nodes, fdm_loc)
 
         isize_line = imax/2 + 1
@@ -124,7 +132,7 @@ contains
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
         select case (imode_elliptic)
-        case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
+        case (TYPE_FACTORIZE)
             OPR_Poisson => OPR_Poisson_FourierXZ_Factorize
             ! OPR_Poisson => OPR_Poisson_FourierXZ_Factorize_Old
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Factorize
@@ -144,7 +152,7 @@ contains
                 k_sing = [1, 1]
             end if
 
-        case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)
+        case (TYPE_DIRECT)
             OPR_Poisson => OPR_Poisson_FourierXZ_Direct
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
 
@@ -170,7 +178,7 @@ contains
 #endif
 
                 select case (imode_elliptic)
-                case (FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
+                case (TYPE_FACTORIZE)
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
                         lambda(i, k) = g(1)%mwn1(iglobal)**2.0 + g(3)%mwn1(kglobal)**2.0
@@ -183,18 +191,22 @@ contains
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                              sqrt(lambda(i, k)), fdm_int1(BCS_MIN, i, k))
 
-                    rhs_b(:, :) = fdm_int1(BCS_MIN, i, k)%rhs(:, :)          ! free memory that is independent of lambda
-                    if (allocated(fdm_int1(BCS_MIN, i, k)%rhs)) deallocate (fdm_int1(BCS_MIN, i, k)%rhs)
-
                     fdm_int1(BCS_MAX, i, k)%bc = BCS_MAX
                     fdm_int1(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                              -sqrt(lambda(i, k)), fdm_int1(BCS_MAX, i, k))
 
-                    rhs_t(:, :) = fdm_int1(BCS_MAX, i, k)%rhs(:, :)          ! free memory that is independent of lambda
-                    if (allocated(fdm_int1(BCS_MAX, i, k)%rhs)) deallocate (fdm_int1(BCS_MAX, i, k)%rhs)
+                    if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
+                    else                                        ! free memory that is independent of lambda
+                        rhs_b(:, :) = fdm_int1(BCS_MIN, i, k)%rhs(:, :)
+                        if (allocated(fdm_int1(BCS_MIN, i, k)%rhs)) deallocate (fdm_int1(BCS_MIN, i, k)%rhs)
 
-                case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)     ! only for case BCS_NN
+                        rhs_t(:, :) = fdm_int1(BCS_MAX, i, k)%rhs(:, :)
+                        if (allocated(fdm_int1(BCS_MAX, i, k)%rhs)) deallocate (fdm_int1(BCS_MAX, i, k)%rhs)
+
+                    end if
+
+                case (TYPE_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
                         lambda(i, k) = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
@@ -292,7 +304,7 @@ contains
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_SINGULAR_NN(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
                                          u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
@@ -300,7 +312,7 @@ contains
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_SINGULAR_DD(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
                                          u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
