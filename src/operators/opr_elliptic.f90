@@ -73,11 +73,15 @@ module OPR_ELLIPTIC
     real(wp) norm
     integer(wi) i_sing(2), k_sing(2)    ! singular global modes
     type(fdm_dt) fdm_loc
-    type(fdm_integral_dt), allocatable :: fdm_int_loc(:, :, :)      ! factorized method
-    real(wp), allocatable, target :: rhs_b(:, :), rhs_t(:, :)
-    type(fdm_integral_dt) :: fdm_int2_loc                           ! direct method
-    real(wp), allocatable, target :: lu_d(:, :, :, :)
-    type(fdm_integral_dt) :: fdm_int_helmholtz(2)
+
+    type(fdm_integral_dt), allocatable :: fdm_int1(:, :, :)         ! factorized method
+    real(wp), allocatable, target :: rhs_b(:, :), rhs_t(:, :)       ! rhs to free memory space
+    type(fdm_integral_dt) :: fdm_int1_loc(2)
+
+    type(fdm_integral_dt), allocatable :: fdm_int2(:, :)            ! direct method
+    real(wp), allocatable, target :: si_d(:, :, :, :)               ! particular solutions
+    type(fdm_integral_dt) :: fdm_int2_loc
+
     real(wp), allocatable :: lambda(:, :)
 
 contains
@@ -91,9 +95,7 @@ contains
 
         ! -----------------------------------------------------------------------
         integer imode_elliptic           ! finite-difference method for pressure-Poisson and Helmholtz equations
-        integer ibc_loc
         integer(wi) :: ndl, ndr, nd
-        integer, parameter :: i1 = 1
         character*512 sRes
         character*32 bakfile
 
@@ -130,7 +132,7 @@ contains
             ndl = fdm_loc%nb_diag_1(1)
             ndr = fdm_loc%nb_diag_1(2)
             nd = ndl
-            allocate (fdm_int_loc(2, isize_line, kmax))
+            allocate (fdm_int1(2, isize_line, kmax))
             call TLab_Allocate_Real(__FILE__, rhs_b, [g(2)%size, nd, isize_line, kmax], 'rhs_b')
             call TLab_Allocate_Real(__FILE__, rhs_t, [g(2)%size, nd, isize_line, kmax], 'rhs_t')
 
@@ -148,8 +150,8 @@ contains
 
             ndl = fdm_loc%nb_diag_2(1)
             ndr = fdm_loc%nb_diag_2(2)
-            nd = ndr + ndl - 1 + 2     ! The rhs diagonal is 1 and not need to store; we add 2 independent terms
-            call TLab_Allocate_Real(__FILE__, lu_d, [g(2)%size, nd, isize_line, kmax], 'lu_d')
+            allocate (fdm_int2(isize_line, kmax))
+            call TLab_Allocate_Real(__FILE__, si_d, [g(2)%size, 2, isize_line, kmax], 'si_d')
 
         end select
 
@@ -176,21 +178,21 @@ contains
                         lambda(i, k) = g(1)%mwn1(iglobal)**2.0
                     end if
 
-                    fdm_int_loc(BCS_MIN, i, k)%bc = BCS_MIN
-                    fdm_int_loc(BCS_MIN, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
+                    fdm_int1(BCS_MIN, i, k)%bc = BCS_MIN
+                    fdm_int1(BCS_MIN, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                             sqrt(lambda(i, k)), fdm_int_loc(BCS_MIN, i, k))
+                                             sqrt(lambda(i, k)), fdm_int1(BCS_MIN, i, k))
 
-                    rhs_b(:, :) = fdm_int_loc(BCS_MIN, i, k)%rhs(:, :)          ! free memory that is independent of lambda
-                    if (allocated(fdm_int_loc(BCS_MIN, i, k)%rhs)) deallocate (fdm_int_loc(BCS_MIN, i, k)%rhs)
+                    rhs_b(:, :) = fdm_int1(BCS_MIN, i, k)%rhs(:, :)          ! free memory that is independent of lambda
+                    if (allocated(fdm_int1(BCS_MIN, i, k)%rhs)) deallocate (fdm_int1(BCS_MIN, i, k)%rhs)
 
-                    fdm_int_loc(BCS_MAX, i, k)%bc = BCS_MAX
-                    fdm_int_loc(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
+                    fdm_int1(BCS_MAX, i, k)%bc = BCS_MAX
+                    fdm_int1(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                             -sqrt(lambda(i, k)), fdm_int_loc(BCS_MAX, i, k))
+                                             -sqrt(lambda(i, k)), fdm_int1(BCS_MAX, i, k))
 
-                    rhs_t(:, :) = fdm_int_loc(BCS_MAX, i, k)%rhs(:, :)          ! free memory that is independent of lambda
-                    if (allocated(fdm_int_loc(BCS_MAX, i, k)%rhs)) deallocate (fdm_int_loc(BCS_MAX, i, k)%rhs)
+                    rhs_t(:, :) = fdm_int1(BCS_MAX, i, k)%rhs(:, :)          ! free memory that is independent of lambda
+                    if (allocated(fdm_int1(BCS_MAX, i, k)%rhs)) deallocate (fdm_int1(BCS_MAX, i, k)%rhs)
 
                 case (FDM_COM4_DIRECT, FDM_COM6_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
@@ -200,18 +202,15 @@ contains
                         lambda(i, k) = g(1)%mwn2(iglobal)
                     end if
 
-                    ! Compatibility constraint. The reference value of p at the lower boundary is set to zero
+                    ! Compatibility constraint. The reference value of p at the lower boundary will be set to zero
                     if (iglobal == 1 .and. kglobal == 1) then
-                        fdm_int2_loc%bc = BCS_DN
+                        fdm_int2(i, k)%bc = BCS_DN
                     else
-                        fdm_int2_loc%bc = BCS_NN
+                        fdm_int2(i, k)%bc = BCS_NN
                     end if
 
                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), &
-                                             fdm_int2_loc, lu_d(:, 6:7, i, k))
-                    lu_d(:, 1:5, i, k) = fdm_int2_loc%lhs(:, 1:5)
-                    lu_d(:, 8, i, k) = fdm_int2_loc%rhs(:, 1)
-                    lu_d(:, 9, i, k) = fdm_int2_loc%rhs(:, 3)
+                                             fdm_int2(i, k), si_d(:, :, i, k))
 
                 end select
 
@@ -295,7 +294,7 @@ contains
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
-                        call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
+                        call OPR_ODE2_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
                                          u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     end if
 
@@ -303,7 +302,7 @@ contains
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                         call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
-                        call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
+                        call OPR_ODE2_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
                                          u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     end if
 
@@ -358,7 +357,6 @@ contains
 
         ! -----------------------------------------------------------------------
         integer(wi) ibc_loc, bcs_p(2, 2), ndl, ndr
-        integer, parameter :: i1 = 1, i2 = 2
 
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
@@ -419,15 +417,13 @@ contains
                 ! -----------------------------------------------------------------------
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                    fdm_int2_loc%bc = ibc
+                    fdm_int2_loc%bc = ibc_loc
                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), &
                                              fdm_int2_loc, p_wrk1d(:, 6:7))
-                    call FDM_Int2_Solve(2, ibc, fdm_int2_loc%lhs(:, 1:5), &
-                                        fdm_int2_loc%rhs(:, [1, 3]), p_wrk1d(:, 6:7), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
-    
+                    call FDM_Int2_Solve(2, fdm_int2_loc, p_wrk1d(:, 6:7), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
 
                 else                        ! use precalculated LU factorization
-                    call FDM_Int2_Solve(2, ibc_loc, lu_d(:, 1:5, i, k), lu_d(:, 8:9, i, k), lu_d(:, 6:7, i, k), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
+                    call FDM_Int2_Solve(2, fdm_int2(i, k), si_d(:, :, i, k), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
 
                 end if
 
@@ -542,7 +538,7 @@ contains
 !                     else
 !                         ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
 !                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-!                         call OPR_ODE2_NN(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
+!                         call OPR_ODE2_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
 !                                          p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 !                     end if
 
@@ -554,7 +550,7 @@ contains
 !                     else
 !                         ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
 !                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-!                         call OPR_ODE2_DD(2, fdm_int_loc(:, i, k), rhs_b, rhs_t, &
+!                         call OPR_ODE2_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
 !                                          p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 !                     end if
 
@@ -610,10 +606,7 @@ contains
 !########################################################################
     subroutine OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
-        integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
-        !                                                   1, for Neumann   & Dirichlet
-        !                                                   2, for Dirichlet & Neumann
-        !                                                   3, for Neumann   & Neumann
+        integer, intent(in) :: ibc
         type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(in) :: alpha
         real(wp), intent(inout) :: a(nx, ny, nz)                       ! Forcing term, and solution field p
@@ -675,28 +668,28 @@ contains
                 ndl = fdm_loc%nb_diag_1(1)
                 ndr = fdm_loc%nb_diag_2(2)
 
-                fdm_int_helmholtz(BCS_MIN)%bc = BCS_MIN
-                fdm_int_helmholtz(BCS_MIN)%mode_fdm1 = fdm_loc%mode_fdm1
+                fdm_int1_loc(BCS_MIN)%bc = BCS_MIN
+                fdm_int1_loc(BCS_MIN)%mode_fdm1 = fdm_loc%mode_fdm1
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                         sqrt(lambda(i, k) - alpha), fdm_int_helmholtz(BCS_MIN))
+                                         sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MIN))
 
-                fdm_int_helmholtz(BCS_MAX)%bc = BCS_MAX
-                fdm_int_helmholtz(BCS_MAX)%mode_fdm1 = fdm_loc%mode_fdm1
+                fdm_int1_loc(BCS_MAX)%bc = BCS_MAX
+                fdm_int1_loc(BCS_MAX)%mode_fdm1 = fdm_loc%mode_fdm1
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
-                                         -sqrt(lambda(i, k) - alpha), fdm_int_helmholtz(BCS_MAX))
+                                         -sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MAX))
 
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
                     ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                    call OPR_ODE2_NN(2, fdm_int_helmholtz, fdm_int_helmholtz(BCS_MIN)%rhs, fdm_int_helmholtz(BCS_MAX)%rhs, &
+                    call OPR_ODE2_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
                                      p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
                     ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
-                    call OPR_ODE2_DD(2, fdm_int_helmholtz, fdm_int_helmholtz(BCS_MIN)%rhs, fdm_int_helmholtz(BCS_MAX)%rhs, &
+                    call OPR_ODE2_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
                                      p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                 end select
 
@@ -731,10 +724,7 @@ contains
 ! and the last ones for the forcing and solution. The reason is the routine after this one.
     subroutine OPR_Helmholtz_FourierXZ_Direct(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
-        integer, intent(in) :: ibc   ! BCs at j1/jmax:  0, for Dirichlet & Dirichlet
-        !                                                   1, for Neumann   & Dirichlet
-        !                                                   2, for Dirichlet & Neumann
-        !                                                   3, for Neumann   & Neumann
+        integer, intent(in) :: ibc
         type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(in) :: alpha
         real(wp), intent(inout) :: a(nx, ny, nz)                       ! Forcing term, and solution field p
@@ -798,8 +788,7 @@ contains
                 fdm_int2_loc%bc = ibc
                 call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k) - alpha, &
                                          fdm_int2_loc, p_wrk1d(:, 6:7))
-                call FDM_Int2_Solve(2, ibc, fdm_int2_loc%lhs(:, 1:5), &
-                                    fdm_int2_loc%rhs(:, [1, 3]), p_wrk1d(:, 6:7), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
+                call FDM_Int2_Solve(2, fdm_int2_loc, p_wrk1d(:, 6:7), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
 
                 ! Rearrange in memory and normalize
                 do j = 1, ny

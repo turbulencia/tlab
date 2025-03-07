@@ -26,13 +26,13 @@ module FDM_Integral
         real(wp), allocatable :: lhs(:, :)          ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
         real(wp), allocatable :: rhs(:, :)
     end type fdm_integral_dt
-    type(fdm_integral_dt), public :: fdm_Int0(2)    ! Integral plan for lambda = 0
+    type(fdm_integral_dt), public :: fdm_Int0(2)    ! Global integral plan for lambda = 0
 
-    public FDM_Int1_Initialize          ! Prepare to solve u' +\lambda u = f
+    public FDM_Int1_Initialize                      ! Prepare to solve u' +\lambda u = f
     public FDM_Int1_CreateSystem
     public FDM_Int1_Solve
 
-    public FDM_Int2_Initialize        ! Prepare to solve (u')' - \lamba^2 u = f
+    public FDM_Int2_Initialize                      ! Prepare to solve (u')' - \lamba^2 u = f
     public FDM_Int2_CreateSystem
     public FDM_Int2_Solve
 
@@ -62,16 +62,16 @@ contains
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
-        integer(wi) nx, ndr
+        integer(wi) nx, nd
 
         !########################################################################
         call FDM_Int1_CreateSystem(x, lhs, rhs, lambda, fdmi)
 
         ! LU decomposition
         nx = size(fdmi%lhs, 1)              ! # of grid points
-        ndr = size(fdmi%lhs, 2)             ! # of diagonals
+        nd = size(fdmi%lhs, 2)              ! # of diagonals
 
-        select case (ndr)
+        select case (nd)
         case (3)
             call TRIDFS(nx - 2, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3))
         case (5)
@@ -330,17 +330,17 @@ contains
         real(wp), intent(out) :: f(:, :)                ! forcing terms for the hyperbolic sine
 
         ! -------------------------------------------------------------------
-        integer(wi) nx, ndr
-        integer :: i1 = 1
+        integer(wi) nx, nd
+        integer :: nlines = 1
 
         !########################################################################
         call FDM_Int2_CreateSystem(x, lhs, rhs, lambda2, fdmi, f)
 
         ! LU decomposition
         nx = size(fdmi%lhs, 1)              ! # of grid points
-        ndr = size(fdmi%lhs, 2)             ! # of diagonals
+        nd = size(fdmi%lhs, 2)              ! # of diagonals
 
-        select case (ndr)
+        select case (nd)
         case (3)
             call TRIDFS(nx - 2, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3))
         case (5)
@@ -353,45 +353,47 @@ contains
         end select
 
         ! Solve for particular solutions; to be rewritten in terms of _Int2_Solve
-        select case (ndr)
+        select case (nd)
         case (3)
-            call TRIDSS(nx - 2, i1, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), f(2:, 1))
-            call TRIDSS(nx - 2, i1, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), f(2:, 2))
+            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), f(2:, 1))
+            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), f(2:, 2))
         case (5)
-            call PENTADSS(nx - 2, i1, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
                           fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), f(2:, 1))
-            call PENTADSS(nx - 2, i1, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
                           fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), f(2:, 2))
         case (7)
-            call HEPTADSS(nx - 2, i1, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
                           fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), f(2:, 1))
-            call HEPTADSS(nx - 2, i1, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
                           fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), f(2:, 2))
         end select
 
         return
     end subroutine FDM_Int2_Initialize
 
-    subroutine FDM_Int2_CreateSystem(x, lhs, rhs, lambda2, fdmi, f)
+    !########################################################################
+    !########################################################################
+    subroutine FDM_Int2_CreateSystem(x, lhs, rhs, lambda2, fdmi, si)
         real(wp), intent(in) :: x(:)                    ! node positions
         real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
-        real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
-        real(wp), intent(in) :: lambda2                  ! system constant
+        real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B; center diagonal is not saved because it is 1
+        real(wp), intent(in) :: lambda2                 ! system constant
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
-        real(wp), intent(out) :: f(:, :)                ! forcing terms for the hyperbolic sine
+        real(wp), intent(out) :: si(:, :)               ! forcing terms for the hyperbolic sine
 
         ! -------------------------------------------------------------------
         integer(wi) i
-        integer(wi) idl, ndl, idr, ndr, ir, nx
+        integer(wi) idl, ndl, idr, ndr, nx
 
         real(wp) dummy1, dummy2, pprime, coef(5), l2_inv, l2_min, l2_max
 
         ! ###################################################################
         ndl = size(lhs, 2)
-        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
+        idl = ndl/2 + 1             ! center diagonal in lhs
         ndr = size(rhs, 2)
-        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
-        nx = size(lhs, 1)               ! # grid points
+        idr = ndr/2 + 1             ! center diagonal in rhs; which is not saved because it is 1
+        nx = size(lhs, 1)           ! # grid points
 
         ! check sizes
         if (ndr /= 5) then
@@ -412,19 +414,24 @@ contains
         if (allocated(fdmi%lhs)) deallocate (fdmi%lhs)
         if (allocated(fdmi%rhs)) deallocate (fdmi%rhs)
         allocate (fdmi%lhs(nx, ndr))
-        allocate (fdmi%rhs(nx, ndl))
+        allocate (fdmi%rhs(nx, ndl - 1))        ! Newcenter diagonal is also not saved because it is set to 1
 
         ! -------------------------------------------------------------------
-        ! new pentadiagonal lhs (array C22R)
-        fdmi%lhs(:, 1) = rhs(:, 1)
-        fdmi%lhs(:, 2) = rhs(:, 2) - lambda2*lhs(:, 1)
-        fdmi%lhs(:, 3) = 1.0_wp - lambda2*lhs(:, 2)
-        fdmi%lhs(:, 4) = rhs(:, 3) - lambda2*lhs(:, 3)
-        fdmi%lhs(:, 5) = rhs(:, 4)
+        ! new lhs (array C22R); remember rhs center diagonal is not saved because it was 1
+        fdmi%lhs(:, 1:idr - 1) = rhs(:, 1:idr - 1)
+        fdmi%lhs(:, idr) = 1.0_wp
+        fdmi%lhs(:, idr + 1:ndr) = rhs(:, idr:ndr - 1)
+
+        fdmi%lhs(:, idr) = fdmi%lhs(:, idr) - lambda2*lhs(:, idl)               ! center diagonal
+        do i = 1, idl - 1                                                       ! off-diagonals
+            fdmi%lhs(:, idr - i) = fdmi%lhs(:, idr - i) - lambda2*lhs(:, idl - i)
+            fdmi%lhs(:, idr + i) = fdmi%lhs(:, idr + i) - lambda2*lhs(:, idl + i)
+        end do
 
         ! -------------------------------------------------------------------
         ! new tridiagonal rhs (array A22R); new central diagonal is 1 and I only need subdiagonal and superdiagonal
-        fdmi%rhs(:, :) = lhs(:, :)
+        fdmi%rhs(:, 1:idl - 1) = lhs(:, 1:idl - 1)
+        fdmi%rhs(:, idl:ndl - 1) = lhs(:, idl + 1:ndl)
 
         ! Boundary corrections
         i = 2
@@ -437,18 +444,18 @@ contains
         dummy2 = lhs(nx - 1, 3)/lhs(nx, 2)
         fdmi%lhs(i, 1:3) = fdmi%lhs(i, 1:3) - dummy2*fdmi%lhs(i + 1, [5, 1, 2])
         l2_max = lhs(i, 2) - dummy2*lhs(nx, 1)    ! central diagonal in reduced lhs
-        fdmi%rhs(i, ndl) = 0.0_wp                      ! See MatMul_3d
+        fdmi%rhs(i, ndl - 1) = 0.0_wp                      ! See MatMul_3d
 
         ! Setting the RHS for the hyperbolic sine; the minus sign in included here to save ops
-        f(:, :) = 0.0_wp
+        si(:, :) = 0.0_wp
 
-        f(1, 1) = 1.0_wp            ! b21R; this element is simply the solution at imin of s(-)
-        f(2, 1) = -(rhs(2, 2) - dummy1)
-        f(3, 1) = -rhs(3, 1)
+        si(1, 1) = 1.0_wp            ! b21R; this element is simply the solution at imin of s(-)
+        si(2, 1) = -(rhs(2, 2) - dummy1)
+        si(3, 1) = -rhs(3, 1)
 
-        f(nx, 2) = 1.0_wp         ! b2nR; this element is simply the solution at nx of s(+)
-        f(nx - 1, 2) = -(rhs(nx - 1, 3) - dummy2)
-        f(nx - 2, 2) = -rhs(nx - 2, 4)
+        si(nx, 2) = 1.0_wp         ! b2nR; this element is simply the solution at nx of s(+)
+        si(nx - 1, 2) = -(rhs(nx - 1, 3) - dummy2)
+        si(nx - 2, 2) = -rhs(nx - 2, 4)
 
         ! -------------------------------------------------------------------
         ! Corrections to the BCS_DD to account for Neumann using third-order fdm for derivative at the boundary
@@ -465,13 +472,13 @@ contains
             pprime = 1.0_wp/coef(1)
 
             ! Derived coefficients; see notes
-            fdmi%lhs(2, 3:5) = fdmi%lhs(2, 3:5) - f(2, 1)*fdmi%lhs(1, 3:5)          ! in reduced C matrix; the minus sign comes from def of f1
-            fdmi%lhs(3, 2:4) = fdmi%lhs(3, 2:4) - f(3, 1)*fdmi%lhs(1, 3:5)
+            fdmi%lhs(2, 3:5) = fdmi%lhs(2, 3:5) - si(2, 1)*fdmi%lhs(1, 3:5)          ! in reduced C matrix; the minus sign comes from def of f1
+            fdmi%lhs(3, 2:4) = fdmi%lhs(3, 2:4) - si(3, 1)*fdmi%lhs(1, 3:5)
 
-            l2_min = l2_min + fdmi%lhs(1, 2)*f(2, 1)                     ! in reduced A matrix; the plus sign comes from def of f1
-            fdmi%rhs(3, 1) = fdmi%rhs(3, 1) + fdmi%lhs(1, 2)*f(3, 1)
+            l2_min = l2_min + fdmi%lhs(1, 2)*si(2, 1)                     ! in reduced A matrix; the plus sign comes from def of f1
+            fdmi%rhs(3, 1) = fdmi%rhs(3, 1) + fdmi%lhs(1, 2)*si(3, 1)
 
-            f(:, 1) = pprime*f(:, 1)                              ! for particular solutions
+            si(:, 1) = pprime*si(:, 1)                              ! for particular solutions
 
         end if
         if (any([BCS_DN, BCS_NN] == fdmi%bc)) then
@@ -487,13 +494,13 @@ contains
             pprime = 1.0_wp/coef(1)
 
             ! Derived coefficients; see notes
-            fdmi%lhs(nx - 1, 1:3) = fdmi%lhs(nx - 1, 1:3) - f(nx - 1, 2)*fdmi%lhs(nx, 1:3)      ! in reduced C matrix; the minus sign comes from def of f2
-            fdmi%lhs(nx - 2, 2:4) = fdmi%lhs(nx - 2, 2:4) - f(nx - 2, 2)*fdmi%lhs(nx, 1:3)
+            fdmi%lhs(nx - 1, 1:3) = fdmi%lhs(nx - 1, 1:3) - si(nx - 1, 2)*fdmi%lhs(nx, 1:3)      ! in reduced C matrix; the minus sign comes from def of f2
+            fdmi%lhs(nx - 2, 2:4) = fdmi%lhs(nx - 2, 2:4) - si(nx - 2, 2)*fdmi%lhs(nx, 1:3)
 
-            l2_max = l2_max + fdmi%lhs(nx, 5)*f(nx - 1, 2)                              ! in reduced A matrix; the plus sign comes from def of f2
-            fdmi%rhs(nx - 2, ndl) = fdmi%rhs(nx - 2, ndl) + fdmi%lhs(nx, 5)*f(nx - 2, 2)
+            l2_max = l2_max + fdmi%lhs(nx, 5)*si(nx - 1, 2)                              ! in reduced A matrix; the plus sign comes from def of f2
+            fdmi%rhs(nx - 2, ndl - 1) = fdmi%rhs(nx - 2, ndl - 1) + fdmi%lhs(nx, 5)*si(nx - 2, 2)
 
-            f(:, 2) = pprime*f(:, 2)                                                    ! for particular solutions
+            si(:, 2) = pprime*si(:, 2)                                                    ! for particular solutions
 
         end if
 
@@ -504,14 +511,14 @@ contains
 
         fdmi%rhs(i, :) = fdmi%rhs(i, :)*l2_inv
         fdmi%lhs(i, :) = fdmi%lhs(i, :)*l2_inv
-        f(i, :) = f(i, :)*l2_inv
+        si(i, :) = si(i, :)*l2_inv
 
         do i = 3, nx - 2
             l2_inv = 1.0_wp/lhs(i, 2)
 
             fdmi%rhs(i, :) = fdmi%rhs(i, :)*l2_inv
             fdmi%lhs(i, :) = fdmi%lhs(i, :)*l2_inv
-            f(i, :) = f(i, :)*l2_inv
+            si(i, :) = si(i, :)*l2_inv
 
         end do
 
@@ -520,7 +527,7 @@ contains
 
         fdmi%rhs(i, :) = fdmi%rhs(i, :)*l2_inv
         fdmi%lhs(i, :) = fdmi%lhs(i, :)*l2_inv
-        f(i, :) = f(i, :)*l2_inv
+        si(i, :) = si(i, :)*l2_inv
 
         return
     contains
@@ -600,42 +607,40 @@ contains
     !########################################################################
     !########################################################################
     ! Allow to pass separate rhs because this part does not depend on lambda
-    subroutine FDM_Int2_Solve(nlines, ibc, lhsi, rhsi, si, f, bcs, result)
+    subroutine FDM_Int2_Solve(nlines, fdmi, si, f, bcs, result)
         integer(wi) nlines
-        integer ibc
-        real(wp), intent(in) :: lhsi(:, :)
-        real(wp), intent(in) :: rhsi(:, :)
+        type(fdm_integral_dt), intent(in) :: fdmi
         real(wp), intent(in) :: si(:, :)                            ! particular solutions
-        real(wp), intent(in) :: f(nlines, size(lhsi, 1))
+        real(wp), intent(in) :: f(nlines, size(fdmi%lhs, 1))
         real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(inout) :: result(nlines, size(lhsi, 1))
+        real(wp), intent(inout) :: result(nlines, size(fdmi%lhs, 1))
 
         ! -------------------------------------------------------------------
         integer(wi) :: nx, i
         integer(wi) :: ndl
 
         ! ###################################################################
-        nx = size(lhsi, 1)
+        nx = size(fdmi%lhs, 1)
 
-        ndl = size(lhsi, 2)
+        ndl = size(fdmi%lhs, 2)
 
         ! Construct rhs
-        ! note that current version does not retain the unitary diagonal, 
-        ! i.e. rhsi(:,2) is first upper diagonal in tridiagonal systems.
+        ! note that current version does not retain the unitary diagonal,
+        ! i.e. fdmi%rhs(:,2) is first upper diagonal in tridiagonal systems.
         result(:, 1) = 0.0_wp       ! This element is the solution at imin of p(0)
         result(:, nx) = 0.0_wp      ! This element is the solution at imax of p(0)
-        call MatMul_3d(nx - 2, nlines, rhsi(2:, 1), rhsi(2:, 2), f(:, 2:), result(:, 2:))
+        call MatMul_3d(nx - 2, nlines, fdmi%rhs(2:, 1), fdmi%rhs(2:, 2), f(:, 2:), result(:, 2:))
 
         ! Solve pentadiagonal linear system
         select case (ndl)
         case (3)
-            call TRIDSS(nx - 2, nlines, lhsi(2:, 1), lhsi(2:, 2), lhsi(2:, 3), result(:, 2:))
+            call TRIDSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), result(:, 2:))
         case (5)
-            call PENTADSS(nx - 2, nlines, lhsi(2:, 1), lhsi(2:, 2), lhsi(2:, 3), &
-                          lhsi(2:, 4), lhsi(2:, 5), result(:, 2:))
+            call PENTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+                          fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), result(:, 2:))
         case (7)
-            call HEPTADSS(nx - 2, nlines, lhsi(2:, 1), lhsi(2:, 2), lhsi(2:, 3), &
-                          lhsi(2:, 4), lhsi(2:, 5), lhsi(2:, 6), lhsi(2:, 7), result(:, 2:))
+            call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
+                          fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), result(:, 2:))
         end select
 
         do i = 1, nx
@@ -643,16 +648,16 @@ contains
         end do
 
         !   Corrections to the BCS_DD to account for Neumann
-        if (any([BCS_ND, BCS_NN] == ibc)) then
-            result(:, 1) = result(:, 1) + lhsi(1, 3)*result(:, 2) &
-                           + lhsi(1, 4)*result(:, 3) + lhsi(1, 5)*result(:, 4) &
-                           + lhsi(1, 2)*f(:, 2)
+        if (any([BCS_ND, BCS_NN] == fdmi%bc)) then
+            result(:, 1) = result(:, 1) + fdmi%lhs(1, 3)*result(:, 2) &
+                           + fdmi%lhs(1, 4)*result(:, 3) + fdmi%lhs(1, 5)*result(:, 4) &
+                           + fdmi%lhs(1, 2)*f(:, 2)
         end if
 
-        if (any([BCS_DN, BCS_NN] == ibc)) then
-            result(:, nx) = result(:, nx) + lhsi(nx, 3)*result(:, nx - 1) &
-                            + lhsi(nx, 2)*result(:, nx - 2) + lhsi(nx, 1)*result(:, nx - 3) &
-                            + lhsi(nx, 5)*f(:, nx - 1)
+        if (any([BCS_DN, BCS_NN] == fdmi%bc)) then
+            result(:, nx) = result(:, nx) + fdmi%lhs(nx, 3)*result(:, nx - 1) &
+                            + fdmi%lhs(nx, 2)*result(:, nx - 2) + fdmi%lhs(nx, 1)*result(:, nx - 3) &
+                            + fdmi%lhs(nx, 5)*f(:, nx - 1)
         end if
 
         return
