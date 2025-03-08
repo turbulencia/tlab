@@ -256,11 +256,12 @@ contains
         end select
 
         if (any([BCS_MAX] == fdmi%bc)) then
-            result(:, 1) = wrk2d(:, 1)
+            result(:, 1) = wrk2d(:, 1) !*fdmi%lhs(1, idl)
             do ic = 1, idl - 1
                 result(:, 1) = result(:, 1) + fdmi%lhs(1, idl + ic)*result(:, 1 + ic)
             end do
             result(:, 1) = result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic)
+            ! result(:, 1) = (result(:, 1) + fdmi%lhs(1, 1)*result(:, 1 + ic))*fdmi%lhs(1, idl)
 
             if (present(du_boundary)) then      ! calculate u'n
                 du_boundary(:) = fdmi%lhs(nx, idl)*result(:, nx)
@@ -279,11 +280,12 @@ contains
         end if
 
         if (any([BCS_MIN] == fdmi%bc)) then
-            result(:, nx) = wrk2d(:, 2)
+            result(:, nx) = wrk2d(:, 2) !*fdmi%lhs(nx, idl)
             do ic = 1, idl - 1
                 result(:, nx) = result(:, nx) + fdmi%lhs(nx, idl - ic)*result(:, nx - ic)
             end do
             result(:, nx) = result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic)
+            ! result(:, nx) = (result(:, nx) + fdmi%lhs(nx, ndl)*result(:, nx - ic))*fdmi%lhs(nx, idl)
 
             if (present(du_boundary)) then      ! calculate u'1
                 du_boundary(:) = fdmi%lhs(1, idl)*result(:, 1)
@@ -332,7 +334,7 @@ contains
         ! -------------------------------------------------------------------
         integer(wi) nx, nd
         integer :: nlines = 1
-
+        ! real(wp) bcs(2, 2)
         !########################################################################
         call FDM_Int2_CreateSystem(x, lhs, rhs, lambda2, fdmi, f)
 
@@ -368,6 +370,12 @@ contains
             call HEPTADSS(nx - 2, nlines, fdmi%lhs(2:, 1), fdmi%lhs(2:, 2), fdmi%lhs(2:, 3), &
                           fdmi%lhs(2:, 4), fdmi%lhs(2:, 5), fdmi%lhs(2:, 6), fdmi%lhs(2:, 7), f(2:, 2))
         end select
+
+        ! ! Setting the RHS for the hyperbolic sine; the minus sign in included here to save ops
+        ! f(:, :) = 0.0_wp; f(1, :) = 1.0_wp; f(nx, :) = 1.0_wp
+        ! bcs(1, 1) = 1.0_wp; bcs(nx, 1) = 0.0_wp   ! s(-)
+        ! bcs(1, 2) = 0.0_wp; bcs(nx, 2) = 1.0_wp   ! s(+)
+        ! call FDM_Int2_Solve(2, fdmi, f, f, bcs, f)
 
         return
     end subroutine FDM_Int2_Initialize
@@ -606,7 +614,6 @@ contains
 
     !########################################################################
     !########################################################################
-    ! Allow to pass separate rhs because this part does not depend on lambda
     subroutine FDM_Int2_Solve(nlines, fdmi, si, f, bcs, result)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi

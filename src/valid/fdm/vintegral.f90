@@ -26,9 +26,8 @@ program VINTEGRAL
     real(wp) :: lambda, wk, x_0
     integer(wi) :: test_type, ibc, ib, im, ndr, ndl
 
-    integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(5)
-    real(wp), allocatable :: bcs(:, :), x(:)
+    real(wp), allocatable :: bcs(:, :), x(:), si(:, :)
     character(len=32) :: fdm_names(5)
 
     type(fdm_dt) :: g
@@ -67,7 +66,12 @@ program VINTEGRAL
     dw1_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 8)
     dw2_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 9)
 
-    test_type = 3
+    print *, '1. First order equation.'
+    print *, '2. Second order equation; factorized, singular.'
+    print *, '3. Second order equation; factorized, regular.'
+    print *, '4. Second order equation; direct.'
+    print *, '5. Array properties.'
+    read (*, *) test_type
 
     ! ###################################################################
     if (g%periodic) then
@@ -214,23 +218,23 @@ program VINTEGRAL
             case (BCS_DD)
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
-                ! call OPR_ODE2_1_SINGULAR_DD_OLD(g%mode_fdm1, g%size, len, g%nodes, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_DD(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_DD_OLD(g%mode_fdm1, g%size, len, g%nodes, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_Factorize_DD_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN)
                 print *, 'Dirichlet/Neumann'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! call OPR_ODE2_1_SINGULAR_DN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_DN(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_DN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_Factorize_DN_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_ND)
                 print *, 'Neumann/Dirichlet'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
-                ! call OPR_ODE2_1_SINGULAR_ND_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_ND(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_ND_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_Factorize_ND_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! call OPR_ODE2_1_SINGULAR_NN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_SINGULAR_NN(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_NN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_Factorize_NN_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')
@@ -274,8 +278,8 @@ program VINTEGRAL
             case (BCS_DD)
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
-                ! call OPR_ODE2_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_DD(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_Factorize_DD(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN) ! not yet developed
                 print *, 'Dirichlet/Neumann'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
@@ -285,8 +289,8 @@ program VINTEGRAL
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! call OPR_ODE2_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
-                call OPR_ODE2_NN(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
+                ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                call OPR_ODE2_Factorize_NN(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
             call check(u, w_n, 'integral.dat')
@@ -295,9 +299,59 @@ program VINTEGRAL
         end do
 
 ! ###################################################################
-! Test properties of integral matrices
+! Second order equation; direct
 ! ###################################################################
     case (4)
+        write (*, *) 'Eigenvalue ?'
+        read (*, *) lambda
+
+        allocate (si(g%size, 2))
+        allocate (bcs(len, 2))
+
+        g%mode_fdm1 = FDM_COM6_JACOBIAN
+        g%mode_fdm2 = FDM_COM6_DIRECT
+        call FDM_Initialize(x, g)
+        ndr = g%nb_diag_2(2)
+        ndl = g%nb_diag_2(1)
+
+        ! call random_seed()
+        ! call random_number(u)
+
+        ! f = du2_a - lambda*u
+        ! du1_n = du1_a ! I need it for the boundary conditions
+        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
+        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
+        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
+        f = du2_n - lambda*u
+
+        bcs_cases(1:2) = [BCS_DD, BCS_NN]!, BCS_DN, BCS_ND]
+
+        do ib = 1, 2
+            ibc = bcs_cases(ib)
+            print *, new_line('a')
+
+            fdmi(1)%bc = ibc
+            call FDM_Int2_Initialize(g%nodes(:), g%lhs2(:, 1:ndl), g%rhs2(:, 1:ndr), lambda, fdmi(1), si)
+
+            select case (ibc)
+            case (BCS_DD)
+                print *, 'Dirichlet/Dirichlet'
+                bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
+            case (BCS_NN)
+                print *, 'Neumann/Neumann'
+                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
+            end select
+
+            call FDM_Int2_Solve(len, fdmi(1), si, f, bcs, w_n)
+
+            call check(u, w_n, 'integral.dat')
+
+        end do
+
+! ###################################################################
+! Test properties of integral matrices
+! ###################################################################
+    case (5)
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
 

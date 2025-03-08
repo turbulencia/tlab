@@ -2,32 +2,35 @@
 
 ! # Solvers for boundary value problems of
 ! # linear ordinary differential equations with constant coefficients
+! #
+! # Mellado & Ansorge, 2012: Z. Angew. Math. Mech., 1-12, 10.1002/zamm.201100078
+! #
+! # Shall I move here FDM_Integral module?
 module OPR_ODES
-    use TLab_Constants, only: wp, wi, BCS_MIN, BCS_MAX, BCS_BOTH
-    use FDM, only: fdm_dt, FDM_COM6_JACOBIAN, FDM_COM6_DIRECT, FDM_COM6_JACOBIAN_PENTA
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: BCS_MIN, BCS_MAX
     use FDM_Integral, only: fdm_integral_dt, FDM_Int1_Solve, FDM_Int1_Initialize
-    use FDM_MatMul
     implicit none
     private
 
     ! First-order ODEs
 
     ! Second-order ODEs. Reducing problem to a system of 2 first-order equations
-    public :: OPR_ODE2_NN                   ! Neumann/Neumann boundary conditions
-    public :: OPR_ODE2_DD                   ! Dirichlet/Dirichlet boundary conditions
+    public :: OPR_ODE2_Factorize_DD                   ! Dirichlet/Dirichlet boundary conditions
+    public :: OPR_ODE2_Factorize_NN                   ! Neumann/Neumann boundary conditions
 
-    public :: OPR_ODE2_SINGULAR_DD
-    public :: OPR_ODE2_SINGULAR_DN
-    public :: OPR_ODE2_SINGULAR_ND
-    public :: OPR_ODE2_SINGULAR_NN
+    public :: OPR_ODE2_Factorize_DD_Sing
+    public :: OPR_ODE2_Factorize_DN_Sing
+    public :: OPR_ODE2_Factorize_ND_Sing
+    public :: OPR_ODE2_Factorize_NN_Sing
 
-    ! public :: OPR_ODE2_1_REGULAR_DD_OLD     ! Dirichlet/Dirichlet boundary conditions
-    ! public :: OPR_ODE2_1_REGULAR_NN_OLD     ! Neumann/Neumann boundary conditions
+    ! public :: OPR_ODE2_Factorize_1_REGULAR_DD_OLD     ! Dirichlet/Dirichlet boundary conditions
+    ! public :: OPR_ODE2_Factorize_1_REGULAR_NN_OLD     ! Neumann/Neumann boundary conditions
 
-    ! public :: OPR_ODE2_1_SINGULAR_DD_OLD
-    ! public :: OPR_ODE2_1_SINGULAR_DN_OLD
-    ! public :: OPR_ODE2_1_SINGULAR_ND_OLD
-    ! public :: OPR_ODE2_1_SINGULAR_NN_OLD
+    ! public :: OPR_ODE2_Factorize_1_SINGULAR_DD_OLD
+    ! public :: OPR_ODE2_Factorize_1_SINGULAR_DN_OLD
+    ! public :: OPR_ODE2_Factorize_1_SINGULAR_ND_OLD
+    ! public :: OPR_ODE2_Factorize_1_SINGULAR_NN_OLD
 
     ! -----------------------------------------------------------------------
     ! integer(wi) i
@@ -44,14 +47,12 @@ contains
     !#     Au' = Bu                             N   eqns
     !#     A(u')' = Bu'                         N   eqns
     !#
-    !# Mellado & Ansorge, 2012: Z. Angew. Math. Mech., 1-12, 10.1002/zamm.201100078
-    !#
     !########################################################################
 
     !########################################################################
     !########################################################################
     ! Dirichlet/Neumann boundary conditions
-    subroutine OPR_ODE2_SINGULAR_DN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_Factorize_DN_Sing(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
@@ -110,12 +111,12 @@ contains
 #undef u1
 
         return
-    end subroutine OPR_ODE2_SINGULAR_DN
+    end subroutine OPR_ODE2_Factorize_DN_Sing
 
     !########################################################################
     !########################################################################
     ! Neumann/Dirichlet boundary conditions
-    subroutine OPR_ODE2_SINGULAR_ND(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_Factorize_ND_Sing(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
@@ -174,12 +175,12 @@ contains
 #undef u1
 
         return
-    end subroutine OPR_ODE2_SINGULAR_ND
+    end subroutine OPR_ODE2_Factorize_ND_Sing
 
     !########################################################################
     !########################################################################
     ! Neumann/Neumann boundary conditions; must be compatible!
-    subroutine OPR_ODE2_SINGULAR_NN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_Factorize_NN_Sing(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
@@ -194,15 +195,15 @@ contains
         ! We write it in terms of the Dirichlet/Neumann problem
         ! (We could have written it in terms of the Neumann/Dirichlet problem as well)
         bcs(:, 1) = 0.0_wp
-        call OPR_ODE2_SINGULAR_DN(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+        call OPR_ODE2_Factorize_DN_Sing(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
 
         return
-    end subroutine OPR_ODE2_SINGULAR_NN
+    end subroutine OPR_ODE2_Factorize_NN_Sing
 
     !########################################################################
     !########################################################################
     ! Dirichlet/Dirichlet boundary conditions
-    subroutine OPR_ODE2_SINGULAR_DD(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_Factorize_DD_Sing(nlines, fdmi, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
@@ -268,12 +269,12 @@ contains
 #undef u1
 
         return
-    end subroutine OPR_ODE2_SINGULAR_DD
+    end subroutine OPR_ODE2_Factorize_DD_Sing
 
     !########################################################################
     !########################################################################
     ! Neumann/Neumann boundary conditions
-    subroutine OPR_ODE2_NN(nlines, fdmi, rhsi_b, rhsi_t, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_Factorize_NN(nlines, fdmi, rhsi_b, rhsi_t, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(inout) :: fdmi(2)
         real(wp), intent(in) :: rhsi_b(:, :), rhsi_t(:, :)
@@ -394,12 +395,12 @@ contains
 #undef dep_n
 
         return
-    end subroutine OPR_ODE2_NN
+    end subroutine OPR_ODE2_Factorize_NN
 
     !########################################################################
     !########################################################################
     ! Dirichlet/Dirichlet boundary conditions
-    subroutine OPR_ODE2_DD(nlines, fdmi, rhsi_b, rhsi_t, u, f, bcs, v, wrk1d, wrk2d)
+    subroutine OPR_ODE2_Factorize_DD(nlines, fdmi, rhsi_b, rhsi_t, u, f, bcs, v, wrk1d, wrk2d)
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(in) :: rhsi_b(:, :), rhsi_t(:, :)
@@ -486,12 +487,12 @@ contains
 #undef dsp_n
 
         return
-    end subroutine OPR_ODE2_DD
+    end subroutine OPR_ODE2_Factorize_DD
 
 ! !########################################################################
 ! !Neumann/Neumann boundary conditions
 ! !########################################################################
-!     subroutine OPR_ODE2_1_REGULAR_NN_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
+!     subroutine OPR_ODE2_Factorize_1_REGULAR_NN_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
 !         integer(wi) imode_fdm, nx, nlines
 !         real(wp) cst
 !         real(wp), dimension(nx) :: dx
@@ -650,12 +651,12 @@ contains
 !         end do
 
 !         return
-!     end subroutine OPR_ODE2_1_REGULAR_NN_OLD
+!     end subroutine OPR_ODE2_Factorize_1_REGULAR_NN_OLD
 
 ! !########################################################################
 ! !Dirichlet/Dirichlet boundary conditions
 ! !########################################################################
-!     subroutine OPR_ODE2_1_REGULAR_DD_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
+!     subroutine OPR_ODE2_Factorize_1_REGULAR_DD_OLD(imode_fdm, nx, nlines, cst, dx, u, f, bcs, tmp1, wrk1d)
 !         integer(wi) imode_fdm, nx, nlines
 !         real(wp) cst
 !         real(wp), dimension(nx) :: dx
@@ -799,12 +800,12 @@ contains
 !         end do
 
 !         return
-!     end subroutine OPR_ODE2_1_REGULAR_DD_OLD
+!     end subroutine OPR_ODE2_Factorize_1_REGULAR_DD_OLD
 
 ! !########################################################################
 ! !Dirichlet/Neumann boundary conditions
 ! !########################################################################
-!     subroutine OPR_ODE2_1_SINGULAR_DN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+!     subroutine OPR_ODE2_Factorize_1_SINGULAR_DN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
 !         integer(wi), intent(in) :: imode_fdm, nx, nlines
 !         real(wp), intent(in) :: dx(nx)
 !         real(wp), intent(out) :: u(nlines, nx)          ! solution
@@ -908,12 +909,12 @@ contains
 !         end do
 
 !         return
-!     end subroutine OPR_ODE2_1_SINGULAR_DN_OLD
+!     end subroutine OPR_ODE2_Factorize_1_SINGULAR_DN_OLD
 
 ! !########################################################################
 ! ! Neumann/Dirichlet boundary conditions
 ! !########################################################################
-!     subroutine OPR_ODE2_1_SINGULAR_ND_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+!     subroutine OPR_ODE2_Factorize_1_SINGULAR_ND_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
 !         integer(wi) imode_fdm, nx, nlines
 !         real(wp), dimension(nx) :: dx
 !         real(wp), dimension(nx, 9), target :: wrk1d
@@ -1015,12 +1016,12 @@ contains
 !         end do
 
 !         return
-!     end subroutine OPR_ODE2_1_SINGULAR_ND_OLD
+!     end subroutine OPR_ODE2_Factorize_1_SINGULAR_ND_OLD
 
 ! !########################################################################
 ! !Dirichlet/Dirichlet boundary conditions
 ! !########################################################################
-!     subroutine OPR_ODE2_1_SINGULAR_DD_OLD(imode_fdm, nx, nlines, x, dx, u, f, bcs, tmp1, wrk1d)
+!     subroutine OPR_ODE2_Factorize_1_SINGULAR_DD_OLD(imode_fdm, nx, nlines, x, dx, u, f, bcs, tmp1, wrk1d)
 !         integer(wi) imode_fdm, nx, nlines
 !         real(wp), dimension(nx) :: dx, x
 !         real(wp), dimension(nx, 9), target :: wrk1d
@@ -1119,12 +1120,12 @@ contains
 !         end do
 
 !         return
-!     end subroutine OPR_ODE2_1_SINGULAR_DD_OLD
+!     end subroutine OPR_ODE2_Factorize_1_SINGULAR_DD_OLD
 
 ! !########################################################################
 ! !Neumann/Neumann boundary conditions; must be compatible!
 ! !########################################################################
-!     subroutine OPR_ODE2_1_SINGULAR_NN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
+!     subroutine OPR_ODE2_Factorize_1_SINGULAR_NN_OLD(imode_fdm, nx, nlines, dx, u, f, bcs, tmp1, wrk1d)
 !         integer(wi) imode_fdm, nx, nlines
 !         real(wp), dimension(nx) :: dx
 !         real(wp), dimension(nx, 7), target :: wrk1d
@@ -1180,6 +1181,6 @@ contains
 !         u(:, 1) = 0.0_wp ! this integration constant is free and set to zero
 
 !         return
-!     end subroutine OPR_ODE2_1_SINGULAR_NN_OLD
+!     end subroutine OPR_ODE2_Factorize_1_SINGULAR_NN_OLD
 
 end module OPR_ODES

@@ -206,6 +206,10 @@ contains
 
                     end if
 
+                    ! idr = ndr/2 + 1
+                    ! fdm_int1(:, i, k)%lhs(:, idr) = fdm_int1(:, i, k)%lhs(:, idr)*norm
+                    ! fdm_int1(:, i, k)%lhs(:, idr + 1:ndr) = fdm_int1(:, i, k)%lhs(:, idr + 1:ndr)/norm
+
                 case (TYPE_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
@@ -304,17 +308,17 @@ contains
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_SINGULAR_NN(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
-                        call OPR_ODE2_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
+                        call OPR_ODE2_Factorize_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
                                          u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_SINGULAR_DD(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
-                        call OPR_ODE2_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
+                        call OPR_ODE2_Factorize_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
                                          u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     end if
 
@@ -544,25 +548,25 @@ contains
 !                 select case (ibc)
 !                 case (BCS_NN) ! Neumann   & Neumann   BCs
 !                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-!                         ! call OPR_ODE2_1_SINGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, &
+!                         ! call OPR_ODE2_Factorize_1_SINGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, &
 !                         !                             g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-!                         call OPR_ODE2_SINGULAR_NN(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+!                         call OPR_ODE2_Factorize_NN_Sing(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 !                     else
-!                         ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
+!                         ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
 !                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-!                         call OPR_ODE2_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
+!                         call OPR_ODE2_Factorize_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
 !                                          p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 !                     end if
 
 !                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
 !                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-!                         ! call OPR_ODE2_1_SINGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, &
+!                         ! call OPR_ODE2_Factorize_1_SINGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, &
 !                         !                                 g(2)%nodes, g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-!                         call OPR_ODE2_SINGULAR_DD(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+!                         call OPR_ODE2_Factorize_DD_Sing(2, fdm_Int0, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 !                     else
-!                         ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
+!                         ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k), &
 !                         !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-!                         call OPR_ODE2_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
+!                         call OPR_ODE2_Factorize_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
 !                                          p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 !                     end if
 
@@ -692,16 +696,16 @@ contains
 
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
-                    ! call OPR_ODE2_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
+                    ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
-                    call OPR_ODE2_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
+                    call OPR_ODE2_Factorize_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
                                      p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
-                    ! call OPR_ODE2_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
+                    ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
-                    call OPR_ODE2_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
+                    call OPR_ODE2_Factorize_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
                                      p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                 end select
 

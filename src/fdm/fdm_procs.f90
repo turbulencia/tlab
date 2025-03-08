@@ -322,7 +322,7 @@ contains
             dummy = 1.0_wp/lhs(1, idl)      ! normalize by l11
 
             ! reduced array A^R_{22}
-            lhs(1, 1:ndl) = -lhs(1, 1:ndl)*dummy
+            lhs(1, 1:ndl) = -lhs(1, 1:ndl)*dummy; lhs(1, idl) = 1.0_wp
             do ir = 1, idl - 1              ! rows
                 do ic = idl + 1, ndl        ! columns
                     lhs(1 + ir, ic - ir) = lhs(1 + ir, ic - ir) + lhs(1 + ir, idl - ir)*lhs(1, ic)
@@ -356,7 +356,7 @@ contains
             dummy = 1.0_wp/lhs(nx, idl)     ! normalize by lnn
 
             ! reduced array A^R_{11}
-            lhs(nx, 1:ndl) = -lhs(nx, 1:ndl)*dummy
+            lhs(nx, 1:ndl) = -lhs(nx, 1:ndl)*dummy; lhs(nx, idl) = 1.0_wp
             do ir = 1, idl - 1              ! rows
                 ic = 0                      ! longer stencil at the boundary
                 lhs(nx - ir, ic + ir) = lhs(nx - ir, ic + ir) + lhs(nx - ir, idl + ir)*lhs(nx, ndl)
