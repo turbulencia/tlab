@@ -76,7 +76,7 @@ module OPR_ELLIPTIC
     type(fdm_integral_dt) :: fdm_int1_loc(2)
 
     type(fdm_integral_dt), allocatable :: fdm_int2(:, :)            ! direct method
-    real(wp), allocatable, target :: si_d(:, :, :, :)               ! particular solutions
+    real(wp), allocatable, target :: rhs_d(:, :)                    ! rhs to free memory space
     type(fdm_integral_dt) :: fdm_int2_loc
 
     real(wp), allocatable :: lambda(:, :)
@@ -158,8 +158,9 @@ contains
 
             ndl = fdm_loc%nb_diag_2(1)
             ndr = fdm_loc%nb_diag_2(2)
+            nd = ndl
             allocate (fdm_int2(isize_line, kmax))
-            call TLab_Allocate_Real(__FILE__, si_d, [g(2)%size, 2, isize_line, kmax], 'si_d')
+            call TLab_Allocate_Real(__FILE__, rhs_d, [g(2)%size, nd, isize_line, kmax], 'rhs_d')
 
         end select
 
@@ -225,8 +226,7 @@ contains
                         fdm_int2(i, k)%bc = BCS_NN
                     end if
 
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), &
-                                             fdm_int2(i, k), si_d(:, :, i, k))
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), fdm_int2(i, k))
 
                 end select
 
@@ -311,7 +311,7 @@ contains
                         call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
-                                         u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                                                   u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
@@ -319,7 +319,7 @@ contains
                         call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
-                                         u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                                                   u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
                     end if
 
                 end select
@@ -434,12 +434,15 @@ contains
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                     fdm_int2_loc%bc = ibc_loc
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), &
-                                             fdm_int2_loc, p_wrk1d(:, 6:7))
-                    call FDM_Int2_Solve(2, fdm_int2_loc, p_wrk1d(:, 6:7), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), fdm_int2_loc)
+                    p_wrk1d(1:2, 11) = r_bcs(1:2)
+                    p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
+                    call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
                 else                        ! use precalculated LU factorization
-                    call FDM_Int2_Solve(2, fdm_int2(i, k), si_d(:, :, i, k), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
+                    p_wrk1d(1:2, 11) = r_bcs(1:2)
+                    p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
+                    call FDM_Int2_Solve(2, fdm_int2(i, k), fdm_int2(i, k)%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
                 end if
 
@@ -699,14 +702,14 @@ contains
                     ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     call OPR_ODE2_Factorize_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
-                                     p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                                               p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
                     ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                     call OPR_ODE2_Factorize_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
-                                     p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                                               p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
                 end select
 
                 ! Rearrange in memory and normalize
@@ -802,9 +805,10 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 fdm_int2_loc%bc = ibc
-                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k) - alpha, &
-                                         fdm_int2_loc, p_wrk1d(:, 6:7))
-                call FDM_Int2_Solve(2, fdm_int2_loc, p_wrk1d(:, 6:7), p_wrk1d(:, 9), r_bcs, p_wrk1d(:, 11))
+                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k) - alpha, fdm_int2_loc)
+                p_wrk1d(1:2, 11) = r_bcs(1:2)
+                p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
+                call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
                 ! Rearrange in memory and normalize
                 do j = 1, ny

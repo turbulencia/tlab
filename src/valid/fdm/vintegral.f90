@@ -324,26 +324,31 @@ program VINTEGRAL
         call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
         f = du2_n - lambda*u
 
-        bcs_cases(1:2) = [BCS_DD, BCS_NN]!, BCS_DN, BCS_ND]
+        bcs_cases(1:4) = [BCS_DD, BCS_NN, BCS_DN, BCS_ND]
 
-        do ib = 1, 2
+        do ib = 1, 4
             ibc = bcs_cases(ib)
             print *, new_line('a')
-
-            fdmi(1)%bc = ibc
-            call FDM_Int2_Initialize(g%nodes(:), g%lhs2(:, 1:ndl), g%rhs2(:, 1:ndr), lambda, fdmi(1), si)
 
             select case (ibc)
             case (BCS_DD)
                 print *, 'Dirichlet/Dirichlet'
-                bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
+                w_n(:, 1) = u(:, 1); w_n(:, kmax) = u(:, kmax)
+            case (BCS_DN)
+                print *, 'Dirichlet/Neumann'
+                w_n(:, 1) = u(:, 1); w_n(:, kmax) = du1_n(:, kmax)
+            case (BCS_ND)
+                print *, 'Neumann/Dirichlet'
+                w_n(:, 1) = du1_n(:, 1); w_n(:, kmax) = u(:, kmax)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
-                bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
+                w_n(:, 1) = du1_n(:, 1); w_n(:, kmax) = du1_n(:, kmax)
             end select
 
-            call FDM_Int2_Solve(len, fdmi(1), si, f, bcs, w_n)
+            fdmi(2)%bc = ibc
+            call FDM_Int2_Initialize(g%nodes(:), g%lhs2(:, 1:ndl), g%rhs2(:, 1:ndr), lambda, fdmi(2))
 
+            call FDM_Int2_Solve(len, fdmi(2), fdmi(2)%rhs, f, w_n, wrk2d)
             call check(u, w_n, 'integral.dat')
 
         end do
