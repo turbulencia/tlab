@@ -1,6 +1,7 @@
 #include "dns_const.h"
 #include "dns_error.h"
 ! You need to split the routines into the ones that are initialized and the ones that not.
+! If not initialized, you can enter with any jmax, but the periodic directions need to be the global ones because of OPR_Fourier.
 module OPR_ELLIPTIC
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
@@ -12,14 +13,13 @@ module OPR_ELLIPTIC
     use TLab_Memory, only: isize_txc_dimz, imax, jmax, kmax
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
-    use TLab_Pointers_3D, only: p_wrk1d, p_wrk2d
+    use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
-    use FDM, only: fdm_dt, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM, only: fdm_dt, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
-    use FDM_MatMul
     use OPR_FOURIER
     use OPR_ODES
-    use OPR_PARTIAL
+    use OPR_PARTIAL, only: OPR_PARTIAL_Y
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
@@ -141,8 +141,8 @@ contains
             ndr = fdm_loc%nb_diag_1(2)
             nd = ndl
             allocate (fdm_int1(2, isize_line, kmax))
-            call TLab_Allocate_Real(__FILE__, rhs_b, [g(2)%size, nd, isize_line, kmax], 'rhs_b')
-            call TLab_Allocate_Real(__FILE__, rhs_t, [g(2)%size, nd, isize_line, kmax], 'rhs_t')
+            call TLab_Allocate_Real(__FILE__, rhs_b, [g(2)%size, nd], 'rhs_b')
+            call TLab_Allocate_Real(__FILE__, rhs_t, [g(2)%size, nd], 'rhs_t')
 
             if (.not. stagger_on) then
                 i_sing = [1, g(1)%size/2 + 1]
@@ -160,7 +160,7 @@ contains
             ndr = fdm_loc%nb_diag_2(2)
             nd = ndl
             allocate (fdm_int2(isize_line, kmax))
-            call TLab_Allocate_Real(__FILE__, rhs_d, [g(2)%size, nd, isize_line, kmax], 'rhs_d')
+            call TLab_Allocate_Real(__FILE__, rhs_d, [g(2)%size, nd], 'rhs_d')
 
         end select
 
@@ -226,7 +226,10 @@ contains
                         fdm_int2(i, k)%bc = BCS_NN
                     end if
 
+                    ! free memory that is independent of lambda
                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), fdm_int2(i, k))
+                    rhs_d(:, :) = fdm_int2(i, k)%rhs(:, :)
+                    if (allocated(fdm_int2(i, k)%rhs)) deallocate (fdm_int2(i, k)%rhs)
 
                 end select
 
@@ -442,7 +445,7 @@ contains
                 else                        ! use precalculated LU factorization
                     p_wrk1d(1:2, 11) = r_bcs(1:2)
                     p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
-                    call FDM_Int2_Solve(2, fdm_int2(i, k), fdm_int2(i, k)%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
+                    call FDM_Int2_Solve(2, fdm_int2(i, k), rhs_d, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
                 end if
 
@@ -702,14 +705,14 @@ contains
                     ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
                     call OPR_ODE2_Factorize_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
-                                               p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                                               p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), wrk2d)
 
                 case (0) ! Dirichlet & Dirichlet BCs
                     ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g(2)%mode_fdm1, ny, 2, lambda(i,k)-alpha, &
                     !                                g(2)%jac, p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7))
 
                     call OPR_ODE2_Factorize_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
-                                               p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), p_wrk2d)
+                                               p_wrk1d(:, 3), p_wrk1d(:, 1), r_bcs, p_wrk1d(:, 5), p_wrk1d(:, 7), wrk2d)
                 end select
 
                 ! Rearrange in memory and normalize
