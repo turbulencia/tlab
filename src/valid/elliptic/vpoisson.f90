@@ -90,10 +90,12 @@ program VPOISSON
     call OPR_FOURIER_INITIALIZE()
     call OPR_CHECK()
 
-    type_of_operator = 1   ! Poisson routines
-    ! type_of_operator = 2   ! Helmholtz routines
+    print*, '1. Poisson routines'
+    print*, '2. Helmholtz routines'
+    read(*,*)  type_of_operator
+
     if (type_of_operator == 2) then
-        write (*, *) 'Eigenvalue ?'
+        write (*, *) 'Eigenvalue (negative)?'
         read (*, *) lambda
         if (lambda > 0.0_wp) then
             print *, 'Eigenvalue for Helmholtz operator needs to be negative'
@@ -177,18 +179,18 @@ program VPOISSON
         end do
         call OPR_FILTER(imax, jmax, kmax, FilterDomain, a, txc)
 
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        ! call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
 
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
+        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
         b = b + d
 
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
+        ! call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
         b = b + d
 
         ! ! Creating a field

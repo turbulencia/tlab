@@ -210,7 +210,7 @@ contains
         real(wp), intent(in) :: bcs(nlines, 2)
         real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
         real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs), 3)
+        real(wp), intent(inout) :: wrk1d(size(fdmi(1)%lhs, 1), 4)
         real(wp), intent(inout) :: wrk2d(nlines, 3)
 
         ! -----------------------------------------------------------------------
@@ -223,8 +223,8 @@ contains
 #define f1(i) wrk1d(i,1)
 #define v1(i) wrk1d(i,2)
 #define u1(i) wrk1d(i,3)
+#define sp(i) wrk1d(i,4)
 #define du0_n(i) wrk2d(i,3)
-#define x(i)  fdmi(1)%nodes(i)
 
         ! -----------------------------------------------------------------------
         ! solve for v^(0) in v' = f , v_1 given (0 for now, to be found later on)
@@ -246,27 +246,33 @@ contains
         u1(nx) = 0.0_wp
         call FDM_Int1_Solve(1, fdmi(BCS_MAX), fdmi(BCS_MAX)%rhs, v1(:), u1(:), wrk2d, du1_n(1))
 
+        ! solve for s^(+); this is the grid node displacements x(:) - x_n,
+        ! but we calculate it here to avoid having to pass the array with node positions
+        f1(:) = 1.0_wp
+        sp(nx) = 0.0_wp
+        call FDM_Int1_Solve(1, fdmi(BCS_MAX), fdmi(BCS_MAX)%rhs, f1(:), sp(:), wrk2d)
+
         ! -----------------------------------------------------------------------
         ! Constraint
         fn = 1.0_wp/(du1_n(1) - v1(nx))
         du0_n(:) = (v(:, nx) - du0_n(:))*fn
 
         ! Contribution from v_1 to satisfy bc at the bottom
-        dummy = 1.0_wp/(x(1) - x(nx))
+        dummy = 1.0_wp/sp(1)
         v(:, 1) = (bcs(:, 1) - (u(:, 1) + du0_n(:)*u1(1)))*dummy
         u(:, 1) = bcs(:, 1)
 
         ! Result
         do i = 2, nx
-            u(:, i) = u(:, i) + du0_n(:)*u1(i) + v(:, 1)*(x(i) - x(nx))
+            u(:, i) = u(:, i) + du0_n(:)*u1(i) + v(:, 1)*sp(i)
             v(:, i) = v(:, i) + du0_n(:)*v1(i) + v(:, 1)
         end do
 
 #undef du0_n
-#undef x
 #undef f1
 #undef v1
 #undef u1
+#undef sp
 
         return
     end subroutine OPR_ODE2_Factorize_DD_Sing
@@ -278,11 +284,11 @@ contains
         integer(wi) nlines
         type(fdm_integral_dt), intent(inout) :: fdmi(2)
         real(wp), intent(in) :: rhsi_b(:, :), rhsi_t(:, :)
-        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%nodes))
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
         real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
-        real(wp), intent(out) :: v(nlines, size(fdmi(1)%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(3, size(fdmi(1)%nodes), 2)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(3, size(fdmi(1)%lhs, 1), 2)
         real(wp), intent(inout) :: wrk2d(max(nlines, 3), 3)
 
         ! -----------------------------------------------------------------------
@@ -292,7 +298,7 @@ contains
         ! #######################################################################
         lambda = fdmi(BCS_MIN)%lambda
 
-        nx = size(fdmi(1)%nodes)
+        nx = size(fdmi(1)%lhs, 1)
 
 #define f1(j,i) wrk1d(j,i,1)
 
@@ -404,11 +410,11 @@ contains
         integer(wi) nlines
         type(fdm_integral_dt), intent(in) :: fdmi(2)
         real(wp), intent(in) :: rhsi_b(:, :), rhsi_t(:, :)
-        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%nodes))
+        real(wp), intent(inout) :: f(nlines, size(fdmi(1)%lhs, 1))
         real(wp), intent(in) :: bcs(nlines, 2)
-        real(wp), intent(out) :: u(nlines, size(fdmi(1)%nodes)) ! solution
-        real(wp), intent(out) :: v(nlines, size(fdmi(1)%nodes)) ! derivative of solution
-        real(wp), intent(inout) :: wrk1d(2, size(fdmi(1)%nodes), 2)
+        real(wp), intent(out) :: u(nlines, size(fdmi(1)%lhs, 1)) ! solution
+        real(wp), intent(out) :: v(nlines, size(fdmi(1)%lhs, 1)) ! derivative of solution
+        real(wp), intent(inout) :: wrk1d(2, size(fdmi(1)%lhs, 1), 2)
         real(wp), intent(inout) :: wrk2d(max(nlines, 2), 3)
 
         ! -----------------------------------------------------------------------
@@ -418,7 +424,7 @@ contains
         ! #######################################################################
         lambda = fdmi(BCS_MIN)%lambda
 
-        nx = size(fdmi(1)%nodes)
+        nx = size(fdmi(1)%lhs, 1)
 
 #define f1(j,i) wrk1d(j,i,1)
 
