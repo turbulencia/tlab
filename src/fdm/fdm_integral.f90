@@ -1,8 +1,7 @@
 #include "dns_error.h"
 
 !########################################################################
-! Initialize arrays to calculate boundary-value problems and integrals
-! based on the compact schemes of the classes Au' = Bu and Au'' = Bu
+! Initialize arrays to calculate boundary-value problems and integrals based on the compact schemes
 ! This probably should be OPR_ODE in operators, but need to disentangle it from global fdm_dt...
 !########################################################################
 
@@ -17,15 +16,16 @@ module FDM_Integral
     type, public :: fdm_integral_dt
         sequence
         integer mode_fdm1                           ! original finite-difference method
-        real(wp), allocatable :: nodes(:)           ! nodes position; this and the previous information is redundant but useful in ODEs
-        !                                             This info also allows to reproduce lhs and rhs, if needed
-        !
-        real(wp) :: lambda
+        real(wp) :: lambda                          ! constant of the equation
         integer :: bc                               ! type of boundary condition, [ BCS_MIN, BCS_MAX ]
         real(wp) :: rhs_b(1:5, 0:7), rhs_t(0:4, 8)  ! # of diagonals is 7, # rows is 7/2+1
-        real(wp), allocatable :: lhs(:, :)          ! Often overwritten to LU decomposition. Maybe add lu array and keep this as well.
+        real(wp), allocatable :: lhs(:, :)          ! Often overwritten to LU decomposition.
         real(wp), allocatable :: rhs(:, :)
     end type fdm_integral_dt
+    ! This type used in elliptic operators for difference eigenvalues. This can lead to fragmented memory.
+    ! One could use pointers instead of allocatable for lhs and rhs, and point the pointers to the 
+    ! corresponding memory space.
+
     type(fdm_integral_dt), public :: fdm_Int0(2)    ! Global integral plan for lambda = 0
 
     public FDM_Int1_Initialize                      ! Prepare to solve u' +\lambda u = f
@@ -113,10 +113,6 @@ contains
         end if
 
         fdmi%lambda = lambda
-
-        if (allocated(fdmi%nodes)) deallocate (fdmi%nodes)
-        allocate (fdmi%nodes(nx))
-        fdmi%nodes(1:nx) = x(1:nx)
 
         if (allocated(fdmi%lhs)) deallocate (fdmi%lhs)
         if (allocated(fdmi%rhs)) deallocate (fdmi%rhs)
@@ -380,10 +376,6 @@ contains
         nx = size(lhs, 1)           ! # grid points
 
         fdmi%lambda = lambda2
-
-        if (allocated(fdmi%nodes)) deallocate (fdmi%nodes)
-        allocate (fdmi%nodes(nx))
-        fdmi%nodes(1:nx) = x(1:nx)
 
         if (allocated(fdmi%lhs)) deallocate (fdmi%lhs)
         if (allocated(fdmi%rhs)) deallocate (fdmi%rhs)

@@ -412,8 +412,8 @@ contains
         ! calculate f_j = exp(-tau(z, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
         call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MAX)%rhs, a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
-        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
-        ! call Int_Simpson_Biased_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
+        ! call Int_Trapezoidal_f(a_source, y, p_tau, BCS_MAX)
+        ! call Int_Simpson_Biased_f(a_source, y, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(p_tau(:, j))
         end do
@@ -476,8 +476,8 @@ contains
         ! transmission function I_{j-1,j}  = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
         ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)
-        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(a_source, y, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, y, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
@@ -492,7 +492,7 @@ contains
             ! Integral contribution from emission function using a trapezoidal rule
             p_wrk2d_2 = b(:, j + 1)
             p_wrk2d_1 = b(:, j)/p_tau(:, j + 1)
-            p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(fdmi(BCS_MIN)%nodes(j + 1) - fdmi(BCS_MIN)%nodes(j))
+            p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(y(j + 1) - y(j))
 
             flux_down(:, j) = p_tau(:, j + 1)*(flux_down(:, j + 1) + p_wrk2d_1)
         end do
@@ -513,7 +513,7 @@ contains
                 ! Integral contribution from emission function using a trapezoidal rule
                 p_wrk2d_1 = b(:, j - 1)
                 p_wrk2d_2 = b(:, j)/p_tau(:, j)
-                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(fdmi(BCS_MIN)%nodes(j) - fdmi(BCS_MIN)%nodes(j - 1))
+                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(y(j) - y(j - 1))
 
                 bcs_hb = p_tau(:, j)*(bcs_hb(1:nlines) + p_wrk2d_1)
                 a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
@@ -526,7 +526,7 @@ contains
                 ! Integral contribution from emission function using a trapezoidal rule
                 p_wrk2d_1 = b(:, j - 1)
                 p_wrk2d_2 = b(:, j)/p_tau(:, j)
-                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(fdmi(BCS_MIN)%nodes(j) - fdmi(BCS_MIN)%nodes(j - 1))
+                p_wrk2d_1 = 0.5_wp*(p_wrk2d_1 + p_wrk2d_2)*(y(j) - y(j - 1))
 
                 bcs_hb(1:nlines) = p_tau(:, j)*(bcs_hb(1:nlines) + p_wrk2d_1(1:nlines))
                 a_source(:, j) = a_source(:, j)*(bcs_hb(1:nlines) + flux_down(:, j)) - 2.0_wp*b(:, j)
@@ -574,8 +574,8 @@ contains
         ! transmission function I_{j-1,j} = exp(-tau(z_{j-1}, z_j)/\mu)
         p_tau(:, 1) = 0.0_wp                                    ! boundary condition
         ! call FDM_Int1_Solve(nxz, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)
-        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(a_source, y, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, y, p_tau, BCS_MIN)
         do j = ny, 2, -1
             p_tau(:, j) = exp(p_tau(:, j - 1) - p_tau(:, j))
         end do
@@ -596,7 +596,7 @@ contains
                 p_flux_2 = p_flux_2*p_tau(:, k)
                 tmp2(:, k) = b(:, k)*p_flux_2
             end do
-            call Int_Simpson_v(tmp2(:, j:ny), fdmi(BCS_MIN)%nodes(j:ny), flux_down(:, j))
+            call Int_Simpson_v(tmp2(:, j:ny), y(j:ny), flux_down(:, j))
             ! call Int_Trapezoidal_v(tmp2(:, j:ny), g%nodes(j:ny), flux_down(:, j))
             flux_down(:, j) = flux_down(:, j) + p_flux_1
         end do
@@ -623,8 +623,8 @@ contains
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
                     tmp2(:, k) = b(:, k)*p_flux_2
                 end do
-                call Int_Simpson_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
-                ! call Int_Trapezoidal_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
+                call Int_Simpson_v(tmp2(:, 1:j), y(1:j), p_flux_2)
+                ! call Int_Trapezoidal_v(tmp2(:, 1:j), y(1:j), p_flux_2)
                 a_source(:, j) = a_source(:, j)*(p_flux_2 + p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
                 flux_up(:, j) = p_flux_2 + p_flux_1                 ! upward flux
@@ -640,8 +640,8 @@ contains
                     p_flux_2 = p_flux_2*p_tau(:, k + 1)
                     tmp2(:, k) = b(:, k)*p_flux_2
                 end do
-                call Int_Simpson_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
-                ! call Int_Trapezoidal_v(tmp2(:, 1:j), fdmi(BCS_MIN)%nodes(1:j), p_flux_2)
+                call Int_Simpson_v(tmp2(:, 1:j), y(1:j), p_flux_2)
+                ! call Int_Trapezoidal_v(tmp2(:, 1:j), y(1:j), p_flux_2)
                 a_source(:, j) = a_source(:, j)*(p_flux_2 + p_flux_1 + flux_down(:, j)) - 2.0_wp*b(:, j)
 
             end do
@@ -684,16 +684,16 @@ contains
         ! transmission function I_j = exp(-tau(z_j, zmax)/\mu)
         p_tau(:, ny) = 0.0_wp                                   ! boundary condition
         ! call FDM_Int1_Solve(nlines, fdmi(BCS_MAX), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)         ! recall this gives the negative of the integral
-        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
-        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MAX)%nodes, p_tau, BCS_MAX)
+        ! call Int_Trapezoidal_f(a_source, y, p_tau, BCS_MAX)
+        call Int_Simpson_Biased_f(a_source, y, p_tau, BCS_MAX)
         do j = ny, 1, -1
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
         !  p_tau = dexp(p_tau)         seg-fault; need ulimit -u unlimited
 
         flux_down = b/p_tau
-        ! call Int_Trapezoidal_Increments_InPlace(flux_down, fdmi(BCS_MAX)%nodes, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
-        call Int_Simpson_Biased_Increments_InPlace(flux_down, fdmi(BCS_MAX)%nodes, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        ! call Int_Trapezoidal_Increments_InPlace(flux_down, y, BCS_MAX)                   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
+        call Int_Simpson_Biased_Increments_InPlace(flux_down, y, wrk2d(:, 1), BCS_MAX)   ! Calculate I_j = int_{x_{j}}^{x_{j+1}}
         j = ny
         wrk2d(1:nlines, 1) = 0.0_wp                                         ! accumulate emission; using wrk2d as aux array
         flux_down(:, j) = p_tau(:, j)*(bcs_ht(1:nlines) + wrk2d(1:nlines, 1))
@@ -712,15 +712,15 @@ contains
         ! transmission function I_j = exp(-tau(zmin, z)/\mu)
         p_tau(:, 1) = 0.0_wp                                                ! boundary condition
         ! call FDM_Int1_Solve(nlines, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, a_source, p_tau, wrk2d)
-        ! call Int_Trapezoidal_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
-        call Int_Simpson_Biased_f(a_source, fdmi(BCS_MIN)%nodes, p_tau, BCS_MIN)
+        ! call Int_Trapezoidal_f(a_source, y, p_tau, BCS_MIN)
+        call Int_Simpson_Biased_f(a_source, y, p_tau, BCS_MIN)
         do j = 1, ny
             p_tau(:, j) = exp(-p_tau(:, j))
         end do
 
         flux_up = b/p_tau
-        ! call Int_Trapezoidal_Increments_InPlace(flux_up, fdmi(BCS_MIN)%nodes, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
-        call Int_Simpson_Biased_Increments_InPlace(flux_up, fdmi(BCS_MIN)%nodes, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        ! call Int_Trapezoidal_Increments_InPlace(flux_up, y, BCS_MIN)                     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
+        call Int_Simpson_Biased_Increments_InPlace(flux_up, y, wrk2d(:, 1), BCS_MIN)     ! Calculate I_j = int_{x_{j-1}}^{x_{j}}
         j = 1
         wrk2d(1:nlines, 1) = 0.0_wp                                         ! accumulate emission; using wrk2d as aux array
         flux_up(:, j) = p_tau(:, j)*(bcs_hb(1:nlines) + wrk2d(1:nlines, 1))
