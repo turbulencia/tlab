@@ -206,7 +206,7 @@ contains
             allocate (rbackground(g(2)%size))
             allocate (ribackground(g(2)%size))
 
-            call Gravity_Hydrostatic_Enthalpy(fdm_Int0, sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d(:, 1))
+            call Gravity_Hydrostatic_Enthalpy(fdm_Int0, g(2)%nodes, sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d)
 
             call Thermo_Anelastic_DENSITY(1, g(2)%size, 1, sbackground, rbackground, p_wrk1d)
             ribackground = 1.0_wp/rbackground

@@ -109,27 +109,26 @@ contains
         real(wp) pmin, pmax
 
         if (buoyancy%active(2)) then ! hydrostatic equilibrium
-#define p_loc(i)       p_wrk1d(i,1)
-#define r_loc(i)       p_wrk1d(i,2)
-#define t_loc(i)       p_wrk1d(i,3)
-#define ep_loc(i)      p_wrk1d(i,4)
-#define h_loc(i)       p_wrk1d(i,5)
-#define z1_loc(i)      p_wrk1d(i,6)
-#define z2_loc(i)      p_wrk1d(i,7)
-#define z3_loc(i)      p_wrk1d(i,8)
+
+#define s_loc(i,j)     p_wrk1d(i,j)
+#define p_loc(i)       p_wrk1d(i,4)
+#define r_loc(i)       p_wrk1d(i,5)
+#define t_loc(i)       p_wrk1d(i,6)
+#define ep_loc(i)      p_wrk1d(i,7)
+#define h_loc(i)       p_wrk1d(i,8)
 #define wrk1d_loc(i)   p_wrk1d(i,9)
 
             if (hbg%type /= PROFILE_NONE) then
                 select case (imixture)
                 case (MIXT_TYPE_AIRWATER)
                     do j = 1, jmax
-                        z1_loc(j) = Profiles_Calculate(hbg, g(2)%nodes(j))
-                        z2_loc(j) = Profiles_Calculate(sbg(1), g(2)%nodes(j))
+                        s_loc(j, 1) = Profiles_Calculate(hbg, g(2)%nodes(j))
+                        s_loc(j, 2) = Profiles_Calculate(sbg(1), g(2)%nodes(j))
                     end do
-                    call Gravity_Hydrostatic_Enthalpy(fdm_Int0, z1_loc(:), ep_loc(:), t_loc(:), p_loc(:), pbg%ymean, pbg%mean, wrk1d_loc(:))
+                    call Gravity_Hydrostatic_Enthalpy(fdm_Int0, g(2)%nodes, s_loc(:, 1:3), ep_loc(:), t_loc(:), p_loc(:), pbg%ymean, pbg%mean, wrk1d_loc(:))
                     do j = 1, jmax
-                        s(:, j, :, 1) = z2_loc(j)
-                        s(:, j, :, 2) = z3_loc(j)
+                        s(:, j, :, 1) = s_loc(j, 2)
+                        s(:, j, :, 2) = s_loc(j, 3)
                         T(:, j, :) = t_loc(j)
                         p(:, j, :) = p_loc(j)
                     end do
