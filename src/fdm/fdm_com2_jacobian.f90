@@ -1,5 +1,5 @@
 !########################################################################
-!# Compact FDMs for non-uniform grids from Lele, JCP, 1992, usign Jacobian
+!# Compact FDMs for non-uniform grids from Lele, JCP, 1992, using Jacobian
 !#
 !# Maximum stencil size according to the form
 !#
@@ -76,7 +76,7 @@ contains
         return
     end subroutine FDM_C2N4_Jacobian
 
-!########################################################################
+    !########################################################################
     subroutine FDM_C2N6_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx, 2)
@@ -121,7 +121,7 @@ contains
         return
     end subroutine FDM_C2N6_Jacobian
 
-!########################################################################
+    !########################################################################
     subroutine FDM_C2N6_Hyper_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx, 2)
@@ -175,7 +175,7 @@ contains
         return
     end subroutine FDM_C2N6_Hyper_Jacobian
 
-!########################################################################
+    !########################################################################
     subroutine Create_System_2der(dx, lhs, rhs, rhs_d1, coef_int, coef_bc1, coef_bc2, coef_bc3)
         real(wp), intent(in) :: dx(:, :)        ! 1. and 2. order Jacobians
         real(wp), intent(out) :: lhs(:, :)      ! LHS diagonals

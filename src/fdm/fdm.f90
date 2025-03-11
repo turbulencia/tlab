@@ -86,7 +86,7 @@ contains
         if (g%periodic .and. g%mode_fdm1 == FDM_COM4_DIRECT) g%mode_fdm1 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm1 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%mode_fdm2 == FDM_COM4_DIRECT) g%mode_fdm2 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
-        if (g%periodic .and. g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER        ! they are the same for uniform grids.
+        if (g%periodic .and. g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm2 = FDM_COM6_JACOBIAN_HYPER  ! they are the same for uniform grids.
 
         g%size = size(nodes)
 
@@ -355,9 +355,9 @@ contains
                 ! LU decomposition
                 call TRIDPFS(nx, g%lu1i(1, 1), g%lu1i(1, 2), g%lu1i(1, 3), g%lu1i(1, 4), g%lu1i(1, 5))
 
-            ! else
-            !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')
-            !     call TLab_Stop(DNS_ERROR_UNDEVELOP)
+                ! else
+                !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')
+                !     call TLab_Stop(DNS_ERROR_UNDEVELOP)
 
             end if
 
@@ -409,7 +409,7 @@ contains
         case (FDM_COM4_JACOBIAN)
             call FDM_C1N4_Jacobian(g%size, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, periodic)
 
-        case (FDM_COM6_JACOBIAN)
+        case (FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_HYPER)
             call FDM_C1N6_Jacobian(g%size, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, periodic)
 
         case (FDM_COM6_JACOBIAN_PENTA)
@@ -509,17 +509,21 @@ contains
         if (g%periodic) then
             select case (g%nb_diag_1(1))
             case (3)
-                call TRIDPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), result, wrk2d)
+                call TRIDPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), &
+                             result, wrk2d)
             case (5)
-                call PENTADPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), lu1(1, 6), lu1(1, 7), result)
+                call PENTADPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), lu1(1, 6), lu1(1, 7), &
+                               result)
             end select
 
         else
             select case (g%nb_diag_1(1))
             case (3)
-                call TRIDSS(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), result(:, nmin:))
+                call TRIDSS(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), &
+                            result(:, nmin:))
             case (5)
-             call PENTADSS2(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), lu1(nmin:, ip + 4), lu1(nmin:, ip + 5), result(:, nmin:))
+                call PENTADSS2(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), lu1(nmin:, ip + 4), lu1(nmin:, ip + 5), &
+                               result(:, nmin:))
             end select
 
         end if
@@ -539,12 +543,11 @@ contains
 
         ! ###################################################################
         select case (g%mode_fdm2)
-
         case (FDM_COM4_JACOBIAN)
             call FDM_C2N4_Jacobian(g%size, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef, periodic)
             if (.not. g%uniform) g%need_1der = .true.
 
-        case (FDM_COM6_JACOBIAN)
+        case (FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
             call FDM_C2N6_Jacobian(g%size, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef, periodic)
             if (.not. g%uniform) g%need_1der = .true.
 
@@ -600,8 +603,11 @@ contains
 
         ! ###################################################################
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
-            ! so far, only pentadiagonal cases
-            call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), u, result)
+            select case (g%nb_diag_2(2))
+            case (5)
+                call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), &
+                               u, result)
+            end select
         else
             select case (g%nb_diag_2(2))
             case (5)
@@ -618,12 +624,18 @@ contains
             end if
         end if
 
-        if (g%periodic) then    ! so far, tridiagonal
-            call TRIDPSS(g%size, nlines, lu2(1, 1), lu2(1, 2), lu2(1, 3), lu2(1, 4), lu2(1, 5), result, wrk2d)
-
+        if (g%periodic) then
+            select case (g%nb_diag_2(1))
+            case (3)
+                call TRIDPSS(g%size, nlines, lu2(1, 1), lu2(1, 2), lu2(1, 3), lu2(1, 4), lu2(1, 5), &
+                             result, wrk2d)
+            end select
         else
-            call TRIDSS(g%size, nlines, lu2(:, 1), lu2(:, 2), lu2(:, 3), result)
-
+            select case (g%nb_diag_2(1))
+            case (3)
+                call TRIDSS(g%size, nlines, lu2(:, 1), lu2(:, 2), lu2(:, 3), &
+                            result)
+            end select
         end if
 
         return
@@ -654,7 +666,7 @@ contains
                 call TLab_Write_ASCII(efile, 'FDM_Interpol. Non-periodic case not implemented.')
                 call TLab_Stop(DNS_ERROR_NOTIMPL)
             end if
-        ! Interpolation, direction 'pv': pre. --> vel. grid
+            ! Interpolation, direction 'pv': pre. --> vel. grid
         else if (dir == 1) then
             if (g%periodic) then
                 select case (g%mode_fdm1)

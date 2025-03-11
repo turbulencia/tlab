@@ -27,8 +27,8 @@ contains
     subroutine FDM_C1N4_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals (#=3)
-        real(wp), intent(out) :: rhs(nmax, 3)   ! RHS diagonals (#=3-1 because of normalization)
+        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals
+        real(wp), intent(out) :: rhs(nmax, 3)   ! RHS diagonals
         integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
 
         real(wp) dummy

@@ -1,18 +1,15 @@
 #include "dns_const.h"
 
 program VINTEGRAL
-    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
-    use TLab_Constants, only: efile
-    use FDM, only: fdm_dt, FDM_Initialize, FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Memory, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d, wrk2d, txc
-    use FDM_ComX_Direct
+    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
-    use FDM_MatMul
-    use FDM_Com1_Jacobian
-    use FDM_Com2_Jacobian
     use OPR_PARTIAL
     use OPR_ODES
 
@@ -89,7 +86,7 @@ program VINTEGRAL
         close (21)
     end if
 
-    g%mode_fdm1 = FDM_COM6_JACOBIAN
+    g%mode_fdm1 = FDM_COM6_JACOBIAN     ! default
     g%mode_fdm2 = g%mode_fdm1
     call FDM_Initialize(x, g, fdmi)
     ndr = g%nb_diag_1(2)
@@ -140,9 +137,12 @@ program VINTEGRAL
         read (*, *) lambda
 
         fdm_cases(1:5) = [FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT]
-        fdm_names(1:2) = ['1. order, Jacobian 4', '1. order, Jacobian 6']
-        fdm_names(3) = '1. order, Jacobian 6 Penta'
-        fdm_names(4:5) = ['1. order, Direct 4', '1. order, Direct 6']
+        im = 0
+        im = im + 1; fdm_names(im) = 'Jacobian 4'
+        im = im + 1; fdm_names(im) = 'Jacobian 6'
+        im = im + 1; fdm_names(im) = 'Jacobian 6, penta-diagonal'
+        im = im + 1; fdm_names(im) = 'Direct 4'
+        im = im + 1; fdm_names(im) = 'Direct 6'
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
         do im = 1, 5 !size(fdm_cases)

@@ -76,7 +76,7 @@ contains
         return
     end subroutine FDM_C1N4_Jacobian
 
-!########################################################################
+    !########################################################################
     subroutine FDM_C1N6_Jacobian(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx)
@@ -125,7 +125,8 @@ contains
         return
     end subroutine FDM_C1N6_Jacobian
 
-!########################################################################
+    !########################################################################
+    ! From J. Kostelecky
     subroutine FDM_C1N6_Jacobian_Penta(nx, dx, lhs, rhs, nb_diag, coef, periodic)
         integer(wi), intent(in) :: nx
         real(wp), intent(in) :: dx(nx)
@@ -184,7 +185,7 @@ contains
         return
     end subroutine FDM_C1N6_Jacobian_Penta
 
-!########################################################################
+    !########################################################################
     subroutine Create_System_1der(dx, lhs, rhs, coef_int, coef_bc1, coef_bc2, coef_bc3)
         real(wp), intent(in) :: dx(:)
         real(wp), intent(out) :: lhs(:, :)   ! LHS diagonals
