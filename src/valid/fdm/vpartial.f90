@@ -146,7 +146,7 @@ program VPARTIAL
         im = im + 1; fdm_names(im) = 'Direct 4'     ! undeveloped
         im = im + 1; fdm_names(im) = 'Direct 6'     ! undeveloped
 
-        do im = 1, 4 !size(fdm_cases)
+        do im = 1, 5 !size(fdm_cases)
             print *, new_line('a'), fdm_names(im)
 
             g%mode_fdm1 = fdm_cases(im)

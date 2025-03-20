@@ -501,7 +501,8 @@ contains
                 call MatMul_3d_add(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
                                    u, result)
             case (5)
-                call MatMul_5d(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 4), g%rhs1(:, 5), &
+                result = 0.0_wp     ! I need a new matmul
+                call MatMul_5d_add(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
                                u, result)
             end select
         else

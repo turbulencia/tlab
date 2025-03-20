@@ -136,7 +136,7 @@ contains
 
         dummy = 1.0_wp/coef(3)
         lhs(n, 2:3) = coef(1:2)*dummy               ! a, ap1
-        rhs(n, [2, 3, 1]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(1)
+        rhs(n, 3:5) = coef(3:5)*dummy               ! b, bp1, bp2
 
         n = nmax
         coef(1:5) = coef_c1n3_biased(x, n, backwards=.true.)
@@ -145,7 +145,7 @@ contains
 
         dummy = 1.0_wp/coef(3)
         lhs(n, [2, 1]) = coef(1:2)*dummy            ! am1, a
-        rhs(n, [2, 1, 3]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(3)
+        rhs(n, [3, 2, 1]) = coef(3:5)*dummy         ! b, bp1, bp2
 
         ! do n = 1, nmax
         !     print *, n, lhs(n, :)
