@@ -127,7 +127,8 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         n = 1
-        f(:, n) = f(:, n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n)
+        ! f(:, n) = f(:, n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n)
+        f(:, n) = f(:, n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n) + u(:, n + 2)*r1(n)   ! r1(1) contains extended stencil
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
@@ -138,7 +139,8 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         n = nx
-        f(:, n) = f(:, n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n)
+        ! f(:, n) = f(:, n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n)
+        f(:, n) = f(:, n) + u(:, n - 2)*r3(n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n)   ! r3(nx) contains extended stencil
 
         return
     end subroutine MatMul_3d_add
@@ -328,9 +330,9 @@ contains
         if (any([BCS_MIN, BCS_BOTH] == ibc_loc)) then
             ! f(1) contains the boundary condition
             if (present(bcs_b)) bcs_b(:) = f(:, 1)*r3_b(1) + u(:, 2)*r4_b(1) + u(:, 3)*r5_b(1) + u(:, 4)*r1_b(1) ! r1(1) contains extended stencil
-            f(:, 2) =                      f(:, 1)*r2_b(2) + u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2)
-            f(:, 3) =                      f(:, 1)*r1_b(3) + u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3)
-            f(:, 4) =                      f(:, 1)*r0_b(4) + u(:, 2)*r1_b(4) + u(:, 3)*r2_b(4) + u(:, 4)*r3_b(4) + u(:, 5)*r4_b(4) + u(:, 6)*r5_b(4)
+            f(:, 2) = f(:, 1)*r2_b(2) + u(:, 2)*r3_b(2) + u(:, 3)*r4_b(2) + u(:, 4)*r5_b(2)
+            f(:, 3) = f(:, 1)*r1_b(3) + u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3)
+            f(:, 4) = f(:, 1)*r0_b(4) + u(:, 2)*r1_b(4) + u(:, 3)*r2_b(4) + u(:, 4)*r3_b(4) + u(:, 5)*r4_b(4) + u(:, 6)*r5_b(4)
         else
             f(:, 1) = u(:, 1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)   ! r1(1) contains extended stencil
             f(:, 2) = u(:, 1)*r2(2) + u(:, 2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
@@ -349,9 +351,9 @@ contains
         if (any([BCS_MAX, BCS_BOTH] == ibc_loc)) then
             ! f(nx) contains the boundary condition
             f(:, nx - 3) = u(:, nx - 5)*r1_t(0) + u(:, nx - 4)*r2_t(0) + u(:, nx - 3)*r3_t(0) + u(:, nx - 2)*r4_t(0) + u(:, nx - 1)*r5_t(0) + f(:, nx)*r6_t(0)
-            f(:, nx - 2) =                        u(:, nx - 4)*r1_t(1) + u(:, nx - 3)*r2_t(1) + u(:, nx - 2)*r3_t(1) + u(:, nx - 1)*r4_t(1) + f(:, nx)*r5_t(1)
-            f(:, nx - 1) =                                               u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + f(:, nx)*r4_t(2)
-            if (present(bcs_t)) bcs_t(:) =                               u(:, nx - 3)*r5_t(3) + u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + f(:, nx)*r3_t(3) ! r5(nx) contains extended stencil
+            f(:, nx - 2) = u(:, nx - 4)*r1_t(1) + u(:, nx - 3)*r2_t(1) + u(:, nx - 2)*r3_t(1) + u(:, nx - 1)*r4_t(1) + f(:, nx)*r5_t(1)
+            f(:, nx - 1) = u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + f(:, nx)*r4_t(2)
+            if (present(bcs_t)) bcs_t(:) = u(:, nx - 3)*r5_t(3) + u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + f(:, nx)*r3_t(3) ! r5(nx) contains extended stencil
         else
             f(:, nx - 3) = u(:, nx - 5)*r1(nx - 3) + u(:, nx - 4)*r2(nx - 3) + u(:, nx - 3) + u(:, nx - 2)*r4(nx - 3) + u(:, nx - 1)*r5(nx - 3)
             f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r4(nx - 2) + u(:, nx)*r5(nx - 2)

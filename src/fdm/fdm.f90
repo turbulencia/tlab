@@ -261,7 +261,7 @@ contains
         end if
 
         ! ###################################################################
-        ! second-order derivative: LU factorization done in routine TRID*FS
+        ! second-order derivative
         ! ###################################################################
         g%lhs2 => g%memory(:, ig:)
         ig = ig + 5
@@ -494,17 +494,29 @@ contains
         end if
         nsize = nmax - nmin + 1
 
-        select case (g%nb_diag_1(2))
-        case (3)
-            call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
-                                   u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
-        case (5)
-            call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
-                                   u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
-        case (7)
-            call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
-                                   u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
-        end select
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm1)) then
+            select case (g%nb_diag_1(2))
+            case (3)
+                result = 0.0_wp     ! I need a new matmul
+                call MatMul_3d_add(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
+                                   u, result)
+            case (5)
+                call MatMul_5d(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 4), g%rhs1(:, 5), &
+                               u, result)
+            end select
+        else
+            select case (g%nb_diag_1(2))
+            case (3)
+                call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
+                                       u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+            case (5)
+                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
+                                       u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+            case (7)
+                call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
+                                       u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+            end select
+        end if
 
         if (g%periodic) then
             select case (g%nb_diag_1(1))
