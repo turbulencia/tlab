@@ -1,5 +1,5 @@
 !########################################################################
-!# Compact FDMs for non-uniform grids from Lele, JCP, 1992, usign Jacobian
+!# Compact FDMs for non-uniform grids from Lele, JCP, 1992, using Jacobian
 !#
 !# Maximum stencil size according to the form
 !#

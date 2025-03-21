@@ -69,7 +69,7 @@ program VPARTIAL
     print *, '1. First-order derivative.'
     print *, '2. Second-order derivative.'
     print *, '3. Reduction routines.'
-    print *, '4. Boundary Conditions.'
+    print *, '4. Boundary conditions.'
     read (*, *) test_type
 
 !  ###################################################################
@@ -175,8 +175,6 @@ program VPARTIAL
 
             g%mode_fdm1 = fdm_cases(im)
             g%mode_fdm2 = fdm_cases(im)
-            if (g%mode_fdm2 == FDM_COM4_DIRECT) g%mode_fdm1 = FDM_COM4_JACOBIAN     ! 1. order are undeveloped
-            if (g%mode_fdm2 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN
             call FDM_Initialize(x, g)
 
             call FDM_Der1_Solve(len, bcs_aux(:, 1), g, g%lu1, u, du1_n, wrk2d)  ! I need du1_n in Jacobian formulation

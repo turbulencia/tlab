@@ -618,7 +618,7 @@ contains
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
             select case (g%nb_diag_2(2))
             case (5)
-                call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), &
+                call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 4), g%rhs2(:, 5), &
                                u, result)
             end select
         else

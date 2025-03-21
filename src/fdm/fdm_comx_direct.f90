@@ -5,7 +5,7 @@
 !#                         A up = B u
 !# in this routine. The matrix A is tridiagonal, and B is at most pentadiagonal.
 !#
-!# We normalize system s.t.RHS diagonals are then O(1), the LHS diagonal O(h^2) (see below)
+!# System normalized s.t. RHS diagonals are O(1), LHS diagonals O(h^2)
 !#
 !########################################################################
 module FDM_ComX_Direct
@@ -220,7 +220,7 @@ contains
         integer(wi) j
 
         if (present(backwards)) then
-            ! same as fowards, but changing the signs of the increments w.r.t. i
+            ! same as forwards, but changing the signs of the increments w.r.t. i
             ! To understand it, e.g., define a new variable k = -j, where k is the
             ! discrete variable moving around i
             set_n = [i - 1]
@@ -295,8 +295,9 @@ contains
     end function
 
     !########################################################################
-    !# 6th-order approximation to 2nd-order derivative:
-    !# System normalized s.t. diagonal in B is 1
+    !# 6th-order approximation to 2nd-order derivative
+    !# System normalized s.t. center diagonal in B is 1
+    !#
     !# For a uniform grid, this reduces to JCP Lele 1992, nonperiodic:
     !# Interior points 6th-order according to Eq. 2.1.7.
     !# The second point from Eq. 2.1.6 forth-order (b=0).
@@ -305,15 +306,15 @@ contains
     subroutine FDM_C2N6_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals (#=3)
-        real(wp), intent(out) :: rhs(nmax, 4)   ! RHS diagonals (#=5-1 because of normalization)
-        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
+        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals
+        real(wp), intent(out) :: rhs(nmax, 5)       ! RHS diagonals
+        integer(wi), intent(out) :: nb_diag(2)      ! # diagonals in LHS and RHS
 
         ! -------------------------------------------------------------------
-        real(wp) am1, a, ap1                ! Left-hand side; for clarity below
-        real(wp) bm2, bm1, b, bp1, bp2      ! Right-hand side
-        real(wp) dx, dxp, dxm               ! basic increments
-        real(wp) D                          ! discriminant of linear systems
+        real(wp) am1, a, ap1                        ! Left-hand side; for clarity below
+        real(wp) bm2, bm1, b, bp1, bp2              ! Right-hand side
+        real(wp) dx, dxp, dxm                       ! basic increments
+        real(wp) D                                  ! discriminant of linear systems
         real(wp) dummy
         real(wp) coef(6)
         integer(wi) n, idx(2)
@@ -330,15 +331,15 @@ contains
         ! #######################################################################
         n = 1
 
-        coef = coef_c2n3_biased(x, n)               ! if uniform, we should have ( 0 1 11 ) and ( 13 -27 15 -1 )/h^2
+        coef = coef_c2n3_biased(x, n)                   ! if uniform, we should have ( 0 1 11 ) and ( 13 -27 15 -1 )/h^2
 
-        dummy = 1.0_wp/coef(3)                      ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
+        dummy = 1.0_wp/coef(3)                          ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
 
-        lhs(n, 1) = 0.0_wp                          ! not used
-        lhs(n, 2:3) = coef(1:2)*dummy               ! a, ap1
+        lhs(n, 1) = 0.0_wp                              ! not used
+        lhs(n, 2:3) = coef(1:2)*dummy                   ! a, ap1
 
-        rhs(n, 2) = 0.0_wp                          ! not used
-        rhs(n, [3, 4, 1]) = coef([4, 5, 6])*dummy   ! bp2, bp3, bp4; bp4 is saved into rhs(1)
+        rhs(n, 2) = 0.0_wp                              ! not used
+        rhs(n, [3, 4, 5, 1]) = coef(3:6)*dummy          ! bp2, bp3, bp4; bp4 is saved into rhs(1)
 
         ! -------------------------------------------------------------------
         n = nmax
@@ -350,8 +351,8 @@ contains
         lhs(n, 3) = 0.0_wp                              ! not used
         lhs(n, [2, 1]) = coef(1:2)*dummy                ! am1, a
 
-        rhs(n, 3) = 0.0_wp                              ! not used
-        rhs(n, [2, 1, 4]) = coef([4, 5, 6])*dummy       ! bm2, bm3, bm4; bm4 is saved into rhs(4)
+        rhs(n, 4) = 0.0_wp                              ! not used
+        rhs(n, [3, 2, 1, 5]) = coef(3:6)*dummy          ! bm2, bm3, bm4; bm4 is saved into rhs(4)
 
         ! #######################################################################
         ! Table B.2 for the second/second-to-last points.
@@ -370,8 +371,8 @@ contains
 
             lhs(idx(n), 1:3) = coef(1:3)*dummy          ! am1, a, ap1
 
-            rhs(idx(n), [1, 4]) = 0.0_wp                ! not used
-            rhs(idx(n), 2:3) = coef([4, 6])*dummy       ! bm1, b, bp1
+            rhs(idx(n), [1, 5]) = 0.0_wp                ! not used
+            rhs(idx(n), 2:4) = coef(4:6)*dummy          ! bm1, b, bp1
 
         end do
 
@@ -413,7 +414,7 @@ contains
             ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
             dummy = 1.0_wp/b
             lhs(n, 1:3) = [am1, a, ap1]*dummy
-            rhs(n, 1:4) = [bm2, bm1, bp1, bp2]*dummy
+            rhs(n, 1:5) = [bm2, bm1, b, bp1, bp2]*dummy
 
         end do
 
@@ -427,9 +428,9 @@ contains
     subroutine FDM_C2N4_Direct(nmax, x, lhs, rhs, nb_diag)
         integer(wi), intent(in) :: nmax
         real(wp), intent(in) :: x(nmax)
-        real(wp), intent(out) :: lhs(nmax, 3)   ! LHS diagonals (#=3)
-        real(wp), intent(out) :: rhs(nmax, 4)   ! RHS diagonals (#=5-1 because of normalization)
-        integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
+        real(wp), intent(out) :: lhs(nmax, 3)       ! LHS diagonals
+        real(wp), intent(out) :: rhs(nmax, 5)       ! RHS diagonals
+        integer(wi), intent(out) :: nb_diag(2)      ! # diagonals in LHS and RHS
 
         real(wp) dummy
         real(wp) coef(6)
@@ -439,18 +440,23 @@ contains
 
         ! #######################################################################
         ! Equations (16) for the first/last points.
+        ! Notation in paper for the interpolation:
+        !
+        !       +                    I_n: set of points where the function and derivatives are given
+        !   +---+---+---+---...
+        !   +       +   +            I_m: set of points where only the function is given.
         ! #######################################################################
         n = 1
 
-        coef = coef_c2n3_biased(x, n)               ! if uniform, we should have ( 0 1 11 ) and ( 13 -27 15 -1 )/h^2
+        coef = coef_c2n3_biased(x, n)                   ! if uniform, we should have ( 0 1 11 ) and ( 13 -27 15 -1 )/h^2
 
-        dummy = 1.0_wp/coef(3)                      ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
+        dummy = 1.0_wp/coef(3)                          ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
 
-        lhs(n, 1) = 0.0_wp                          ! not used
-        lhs(n, 2:3) = coef(1:2)*dummy               ! a, ap1
+        lhs(n, 1) = 0.0_wp                              ! not used
+        lhs(n, 2:3) = coef(1:2)*dummy                   ! a, ap1
 
-        rhs(n, 2) = 0.0_wp                          ! not used
-        rhs(n, [3, 4, 1]) = coef([4, 5, 6])*dummy   ! bp1, bp2, bp3; bp3 is saved into rhs(1)
+        rhs(n, 2) = 0.0_wp                              ! not used
+        rhs(n, [3, 4, 5, 1]) = coef(3:6)*dummy          ! bp2, bp3, bp4; bp4 is saved into rhs(1)
 
         ! -------------------------------------------------------------------
         n = nmax
@@ -462,21 +468,21 @@ contains
         lhs(n, 3) = 0.0_wp                              ! not used
         lhs(n, [2, 1]) = coef(1:2)*dummy                ! am1, a
 
-        rhs(n, 3) = 0.0_wp                              ! not used
-        rhs(n, [2, 1, 4]) = coef([4, 5, 6])*dummy       ! am1, am2, am3; am3 is saved into rhs(4)
+        rhs(n, 4) = 0.0_wp                              ! not used
+        rhs(n, [3, 2, 1, 5]) = coef(3:6)*dummy          ! bm2, bm3, bm4; bm4 is saved into rhs(4)
 
         ! #######################################################################
         ! Table B.2 for the interior points.
         ! #######################################################################
         do n = 2, nmax - 1
-            coef = coef_c2n4(x, n)                 ! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
+            coef = coef_c2n4(x, n)                      ! if uniform, we should have ( 1/10 1 1/10 ) and ( 0 12/10 -12/5 12/10 0 )/h^2
 
-            dummy = 1.0_wp/coef(5)                 ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
+            dummy = 1.0_wp/coef(5)                      ! normalize s.t. b = 1 and we only need to store 4 RHS diagonals
 
-            lhs(n, 1:3) = coef(1:3)*dummy          ! am1, a, ap1
+            lhs(n, 1:3) = coef(1:3)*dummy               ! am1, a, ap1
 
-            rhs(n, [1, 4]) = 0.0_wp                ! not used
-            rhs(n, 2:3) = coef([4, 6])*dummy       ! bm1, b, bp1
+            rhs(n, [1, 5]) = 0.0_wp                     ! not used
+            rhs(n, 2:4) = coef(4:6)*dummy               ! bm1, b, bp1
 
         end do
 

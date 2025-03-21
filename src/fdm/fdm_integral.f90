@@ -366,14 +366,18 @@ contains
         real(wp) dummy, rhsr_b(5, 0:7), rhsr_t(0:4, 8)
         real(wp) coef(5)
 
-        ! real(wp) dummy1, dummy2, pprime, coef(5), l2_inv, l2_min, l2_max
-
         ! ###################################################################
         ndl = size(lhs, 2)
         idl = ndl/2 + 1             ! center diagonal in lhs
         ndr = size(rhs, 2)
         idr = ndr/2 + 1             ! center diagonal in rhs; which is not saved because it is 1
         nx = size(lhs, 1)           ! # grid points
+
+        ! check sizes
+        if (abs(idl - idr) > 1) then
+            call TLab_Write_ASCII(efile, __FILE__//'. lhs and rhs cannot differ by more than 2 diagonals.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
+        end if
 
         fdmi%lambda = lambda2
 
@@ -382,16 +386,11 @@ contains
         allocate (fdmi%lhs(nx, ndr))
         allocate (fdmi%rhs(nx, ndl))
 
-        ! Need to add the central diagonal, which is not in array rhs and is needed in FDM_Bcs_Reduce...
-        fdmi%lhs(:, 1:idr - 1) = rhs(:, 1:idr - 1)
-        fdmi%lhs(:, idr) = 1.0_wp
-        fdmi%lhs(:, idr + 1:ndr) = rhs(:, idr:ndr - 1)
-
         ! -------------------------------------------------------------------
         ! new rhs diagonals (array A22R), independent of lambda
         fdmi%rhs(:, :) = lhs(:, :)
 
-        call FDM_Bcs_Reduce(BCS_BOTH, fdmi%rhs, fdmi%lhs, rhsr_b, rhsr_t)
+        call FDM_Bcs_Reduce(BCS_BOTH, fdmi%rhs, rhs, rhsr_b, rhsr_t)
 
         fdmi%rhs_b = 0.0_wp
         fdmi%rhs_t = 0.0_wp
@@ -408,9 +407,7 @@ contains
 
         ! -------------------------------------------------------------------
         ! new lhs diagonals (array C22R); remember rhs center diagonal is not saved because it was 1
-        ! fdmi%lhs(:, 1:idr - 1) = rhs(:, 1:idr - 1)
-        ! fdmi%lhs(:, idr) = 1.0_wp
-        ! fdmi%lhs(:, idr + 1:ndr) = rhs(:, idr:ndr - 1)
+        fdmi%lhs(:, :) = rhs(:, :)
 
         fdmi%lhs(:, idr) = fdmi%lhs(:, idr) - lambda2*lhs(:, idl)               ! center diagonal
         do i = 1, idl - 1                                                       ! off-diagonals
