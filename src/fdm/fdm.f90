@@ -497,11 +497,9 @@ contains
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm1)) then
             select case (g%nb_diag_1(2))
             case (3)
-                call MatMul_3d(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
-                               u, result)
+                call MatMul_3d(g%rhs1(:, 1:3), u, result)
             case (5)
-                call MatMul_5d(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
-                               u, result)
+                call MatMul_5d(g%rhs1(:, 1:5), u, result)
             end select
         else
             select case (g%nb_diag_1(2))
@@ -616,8 +614,7 @@ contains
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
             select case (g%nb_diag_2(2))
             case (5)
-                call MatMul_5d(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), &
-                               u, result)
+                call MatMul_5d(g%rhs2(:, 1:5), u, result)
             end select
         else
             select case (g%nb_diag_2(2))

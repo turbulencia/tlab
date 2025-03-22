@@ -47,14 +47,14 @@ module FDM_MatMul
 #define r6_t(j) rhs_t(j,6)
 #define r7_t(j) rhs_t(j,7)
 
-! to be implemented and check
-! #define r1_i(j) rhs(j,1)
-! #define r2_i(j) rhs(j,2)
-! #define r3_i(j) rhs(j,3)
-! #define r4_i(j) rhs(j,4)
-! #define r5_i(j) rhs(j,5)
-! #define r6_i(j) rhs(j,6)
-! #define r7_i(j) rhs(j,7)
+! to be implemented and checked
+#define r1_i(j) rhs(j,1)
+#define r2_i(j) rhs(j,2)
+#define r3_i(j) rhs(j,3)
+#define r4_i(j) rhs(j,4)
+#define r5_i(j) rhs(j,5)
+#define r6_i(j) rhs(j,6)
+#define r7_i(j) rhs(j,7)
 
 contains
     ! #######################################################################
@@ -66,20 +66,24 @@ contains
     !      r_30 r_31 r_32 r_33
     !                r_41  1.  r_43         <- interior points start here
     !                     ...  ...  ...
-    subroutine MatMul_3d(nx, nlines, r1, r2, r3, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, nlines                   ! nlines linear systems or size nx
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)          ! RHS diagonals
-        real(wp), intent(in) :: u(nlines, nx)                   ! function u
-        real(wp), intent(out) :: f(nlines, nx)                  ! RHS, f = B u
+    subroutine MatMul_3d(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                     ! vector u
+        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
         integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(1:3, 0:3), rhs_t(0:2, 1:4)  ! Special bcs at bottom and top
-        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
+        real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
-        integer(wi) n
+        integer(wi) n, nx
         integer ibc_loc
 
-        ! -------------------------------------------------------------------
+        ! #######################################################################
+        nx = size(rhs, 1)
+        ! print *, nd = size(rhs, 2)    ! # diagonals, should be 3
+        ! size(u,2) and size(f,2) should be nx
+        ! size(u,1) and size(f,1) and size(bcs_b) and size(bcs_t) should be the same (number of equations to solve)
+
         if (present(ibc)) then
             ibc_loc = ibc
         else
@@ -94,15 +98,15 @@ contains
             f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
             f(:, 3) = f(:, 1)*r0_b(3) + u(:, 2)*r1_b(3) + u(:, 3)*r2_b(3) + u(:, 4)*r3_b(3)
         else
-            f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) + u(:, 3)*r1(1)   ! r1(1) contains extended stencil
-            f(:, 2) = u(:, 1)*r1(2) + u(:, 2)*r2(2) + u(:, 3)*r3(2)
-            f(:, 3) = u(:, 2)*r1(3) + u(:, 3)*r2(3) + u(:, 4)*r3(3)
+            f(:, 1) = u(:, 1)*r2_i(1) + u(:, 2)*r3_i(1) + u(:, 3)*r1_i(1)   ! r1(1) contains extended stencil
+            f(:, 2) = u(:, 1)*r1_i(2) + u(:, 2)*r2_i(2) + u(:, 3)*r3_i(2)
+            f(:, 3) = u(:, 2)*r1_i(3) + u(:, 3)*r2_i(3) + u(:, 4)*r3_i(3)
         end if
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
         do n = 4, nx - 3
-            f(:, n) = u(:, n - 1)*r1(n) + u(:, n)*r2(n) + u(:, n + 1)
+            f(:, n) = u(:, n - 1)*r1_i(n) + u(:, n)*r2_i(n) + u(:, n + 1)
         end do
 
         ! -------------------------------------------------------------------
@@ -113,9 +117,9 @@ contains
             f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
             if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) + u(:, nx - 1)*r1_t(2) + f(:, nx)*r2_t(2) ! r3(nx) contains extended stencil
         else
-            f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2)*r2(nx - 2) + u(:, nx - 1)*r3(nx - 2)
-            f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1)*r2(nx - 1) + u(:, nx)*r3(nx - 1)
-            f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx) ! r3(nx) contains extended stencil
+            f(:, nx - 2) = u(:, nx - 3)*r1_i(nx - 2) + u(:, nx - 2)*r2_i(nx - 2) + u(:, nx - 1)*r3_i(nx - 2)
+            f(:, nx - 1) = u(:, nx - 2)*r1_i(nx - 1) + u(:, nx - 1)*r2_i(nx - 1) + u(:, nx)*r3_i(nx - 1)
+            f(:, nx) = u(:, nx - 2)*r3_i(nx) + u(:, nx - 1)*r1_i(nx) + u(:, nx)*r2_i(nx) ! r3(nx) contains extended stencil
         end if
 
         return
@@ -280,22 +284,26 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    ! Calculate f = B u, assuming B is penta-diagonal1. upper-diagonal in interior points is equal to 1
-    subroutine MatMul_5d(nx, nlines, r1, r2, r3, r4, r5, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, nlines                               ! nlines linear systems or size nx
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)      ! RHS diagonals
-        real(wp), intent(in) :: u(nlines, nx)                               ! function u
-        real(wp), intent(out) :: f(nlines, nx)                              ! RHS, f = B u
+    ! Calculate f = B u, assuming B is penta-diagonal and 1. upper-diagonal in interior points is equal to 1
+    subroutine MatMul_5d(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                     ! vector u
+        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
         integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(1:4, 0:5), rhs_t(0:3, 1:6)  ! Special bcs at bottom and top
-        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
+        real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
-        integer(wi) n
+        integer(wi) n, nx
 
         integer ibc_loc
 
-        ! -------------------------------------------------------------------
+        ! #######################################################################
+        nx = size(rhs, 1)
+        ! print *, nd = size(rhs, 2)    ! # diagonals, should be 5
+        ! size(u,2) and size(f,2) should be nx
+        ! size(u,1) and size(f,1) and size(bcs_b) and size(bcs_t) should be the same (number of equations to solve)
+
         if (present(ibc)) then
             ibc_loc = ibc
         else
@@ -311,16 +319,16 @@ contains
             f(:, 3) = f(:, 1)*r1_b(3) + u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3)
             f(:, 4) = f(:, 1)*r0_b(4) + u(:, 2)*r1_b(4) + u(:, 3)*r2_b(4) + u(:, 4)*r3_b(4) + u(:, 5)*r4_b(4) + u(:, 6)*r5_b(4)
         else
-            f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)   ! r1(1) contains extended stencil
-            f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
-            f(:, 3) = u(:, 1)*r1(3) + u(:, 2)*r2(3) + u(:, 3)*r3(3) + u(:, 4)*r4(3) + u(:, 5)*r5(3)
-            f(:, 4) = u(:, 2)*r1(4) + u(:, 3)*r2(4) + u(:, 4)*r3(4) + u(:, 5)*r4(4) + u(:, 6)*r5(4)
+            f(:, 1) = u(:, 1)*r3_i(1) + u(:, 2)*r4_i(1) + u(:, 3)*r5_i(1) + u(:, 4)*r1_i(1)   ! r1(1) contains extended stencil
+            f(:, 2) = u(:, 1)*r2_i(2) + u(:, 2)*r3_i(2) + u(:, 3)*r4_i(2) + u(:, 4)*r5_i(2)
+            f(:, 3) = u(:, 1)*r1_i(3) + u(:, 2)*r2_i(3) + u(:, 3)*r3_i(3) + u(:, 4)*r4_i(3) + u(:, 5)*r5_i(3)
+            f(:, 4) = u(:, 2)*r1_i(4) + u(:, 3)*r2_i(4) + u(:, 4)*r3_i(4) + u(:, 5)*r4_i(4) + u(:, 6)*r5_i(4)
         end if
 
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
         do n = 5, nx - 4
-            f(:, n) = u(:, n - 2)*r1(n) + u(:, n - 1)*r2(n) + u(:, n)*r3(n) + u(:, n + 1) + u(:, n + 2)*r5(n)
+            f(:, n) = u(:, n - 2)*r1_i(n) + u(:, n - 1)*r2_i(n) + u(:, n)*r3_i(n) + u(:, n + 1) + u(:, n + 2)*r5_i(n)
         end do
 
         ! -------------------------------------------------------------------
@@ -332,10 +340,10 @@ contains
             f(:, nx - 1) = u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + f(:, nx)*r4_t(2)
             if (present(bcs_t)) bcs_t(:) = u(:, nx - 3)*r5_t(3) + u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + f(:, nx)*r3_t(3) ! r5(nx) contains extended stencil
         else
-            f(:, nx - 3) = u(:, nx - 5)*r1(nx - 3) + u(:, nx - 4)*r2(nx - 3) + u(:, nx - 3)*r3(nx - 3) + u(:, nx - 2)*r4(nx - 3) + u(:, nx - 1)*r5(nx - 3)
-            f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2)*r3(nx - 2) + u(:, nx - 1)*r4(nx - 2) + u(:, nx)*r5(nx - 2)
-            f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) + u(:, nx)*r4(nx - 1)
-            f(:, nx) = u(:, nx - 3)*r5(nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx) ! r5(nx) contains extended stencil
+        f(:, nx - 3) = u(:, nx - 5)*r1_i(nx - 3) + u(:, nx - 4)*r2_i(nx - 3) + u(:, nx - 3)*r3_i(nx - 3) + u(:, nx - 2)*r4_i(nx - 3) + u(:, nx - 1)*r5_i(nx - 3)
+            f(:, nx - 2) = u(:, nx - 4)*r1_i(nx - 2) + u(:, nx - 3)*r2_i(nx - 2) + u(:, nx - 2)*r3_i(nx - 2) + u(:, nx - 1)*r4_i(nx - 2) + u(:, nx)*r5_i(nx - 2)
+            f(:, nx - 1) = u(:, nx - 3)*r1_i(nx - 1) + u(:, nx - 2)*r2_i(nx - 1) + u(:, nx - 1)*r3_i(nx - 1) + u(:, nx)*r4_i(nx - 1)
+            f(:, nx) = u(:, nx - 3)*r5_i(nx) + u(:, nx - 2)*r1_i(nx) + u(:, nx - 1)*r2_i(nx) + u(:, nx)*r3_i(nx) ! r5(nx) contains extended stencil
         end if
 
         return
@@ -700,22 +708,5 @@ contains
 
         return
     end subroutine MatMul_7d_sym
-
-#undef r0_b
-#undef r1_b
-#undef r2_b
-#undef r3_b
-#undef r4_b
-#undef r5_b
-#undef r6_b
-#undef r7_b
-
-#undef r1_t
-#undef r2_t
-#undef r3_t
-#undef r4_t
-#undef r5_t
-#undef r6_t
-#undef r7_t
 
 end module FDM_MatMul
