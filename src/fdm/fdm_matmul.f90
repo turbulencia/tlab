@@ -4,7 +4,8 @@
 ! This allows use to handle systems A y = B x in which A amd B differ by up to 2 diagonals (see notes)
 !########################################################################
 module FDM_MatMul
-    use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
+    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     implicit none
     private
 
@@ -12,21 +13,21 @@ module FDM_MatMul
     public MatMul_3d            ! Calculate f = B u, assuming B is tridiagonal with center diagonal equal to 1
     public MatMul_3d_add        ! Calculate f = f + B u, assuming B is tridiagonal
     ! special cases, coefficients are constant in the interior points
-    public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric with 1. off-diagonal equal to 1
-    public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric with 1. off-diagonal equal to 1
+    public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric with 1. upper-diagonal equal to 1
+    public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric with 1. upper-diagonal equal to 1
 
     ! generic cases
     public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
     public MatMul_5d_add        ! Calculate f = f + B u, assuming B is pentadiagonal
     ! special cases, coefficients are constant in the interior points
-    public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric with 1. off-diagonal equal to 1
-    public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. off-diagonal equal to 1
+    public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric with 1. upper-diagonal equal to 1
+    public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. upper-diagonal equal to 1
 
     ! generic cases
     ! tbd when needed
     ! special cases, coefficients are constant in the interior points
-    public MatMul_7d_antisym    ! Calculate f = B u, assuming B is heptadiagonal, antisymmetric with 1. off-diagonal equal to 1
-    public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. off-diagonal equal to 1
+    public MatMul_7d_antisym    ! Calculate f = B u, assuming B is heptadiagonal, antisymmetric with 1. upper-diagonal equal to 1
+    public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. upper-diagonal equal to 1
 
 contains
     ! #######################################################################
@@ -38,14 +39,14 @@ contains
     !      r_30 r_31 r_32 r_33
     !                r_41  1.  r_43         <- interior points start here
     !                     ...  ...  ...
-    subroutine MatMul_3d(nx, len, r1, r3, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
-        real(wp), intent(in) :: r1(nx), r3(nx)   ! RHS diagonals (#=3-1 because center diagonal is 1)
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
-        integer, optional :: ibc
+    subroutine MatMul_3d(nx, nlines, r1, r2, r3, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nx, nlines                   ! nlines linear systems or size nx
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)          ! RHS diagonals
+        real(wp), intent(in) :: u(nlines, nx)                   ! function u
+        real(wp), intent(out) :: f(nlines, nx)                  ! RHS, f = B u
+        integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(1:3, 0:3), rhs_t(0:2, 1:4)  ! Special bcs at bottom and top
-        real(wp), optional :: bcs_b(len), bcs_t(len)
+        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -76,9 +77,9 @@ contains
             f(:, 2) = f(:, 1)*r1_b(2) + u(:, 2)*r2_b(2) + u(:, 3)*r3_b(2)
             f(:, 3) = f(:, 1)*r0_b(3) + u(:, 2)*r1_b(3) + u(:, 3)*r2_b(3) + u(:, 4)*r3_b(3)
         else
-            f(:, 1) = u(:, 1) + u(:, 2)*r3(1) + u(:, 3)*r1(1)   ! r1(1) contains extended stencil
-            f(:, 2) = u(:, 1)*r1(2) + u(:, 2) + u(:, 3)*r3(2)
-            f(:, 3) = u(:, 2)*r1(3) + u(:, 3) + u(:, 4)*r3(3)
+            f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) + u(:, 3)*r1(1)   ! r1(1) contains extended stencil
+            f(:, 2) = u(:, 1)*r1(2) + u(:, 2)*r2(2) + u(:, 3)*r3(2)
+            f(:, 3) = u(:, 2)*r1(3) + u(:, 3)*r2(3) + u(:, 4)*r3(3)
         end if
 
         ! -------------------------------------------------------------------
@@ -95,9 +96,9 @@ contains
             f(:, nx - 1) = u(:, nx - 2)*r1_t(1) + u(:, nx - 1)*r2_t(1) + f(:, nx)*r3_t(1)
             if (present(bcs_t)) bcs_t(:) = u(:, nx - 2)*r3_t(2) + u(:, nx - 1)*r1_t(2) + f(:, nx)*r2_t(2) ! r3(nx) contains extended stencil
         else
-            f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r3(nx - 2)
-            f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1) + u(:, nx)*r3(nx - 1)
-            f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx) ! r3(nx) contains extended stencil
+            f(:, nx - 2) = u(:, nx - 3)*r1(nx - 2) + u(:, nx - 2)*r2(nx - 2) + u(:, nx - 1)*r3(nx - 2)
+            f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1)*r2(nx - 1) + u(:, nx)*r3(nx - 1)
+            f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx) ! r3(nx) contains extended stencil
         end if
 
 #undef r0_b
@@ -115,11 +116,11 @@ contains
 
     ! #######################################################################
     ! Calculate f = f + B u, assuming B is tri-diagonal
-    subroutine MatMul_3d_add(nx, len, r1, r2, r3, u, f)
-        integer(wi), intent(in) :: nx, len       ! m linear systems or size n
+    subroutine MatMul_3d_add(nx, nlines, r1, r2, r3, u, f)
+        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(inout) :: f(len, nx)    ! RHS, f = B u
+        real(wp), intent(in) :: u(nlines, nx)       ! function u
+        real(wp), intent(inout) :: f(nlines, nx)    ! RHS, f = B u
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -127,7 +128,6 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         n = 1
-        ! f(:, n) = f(:, n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n)
         f(:, n) = f(:, n) + u(:, n)*r2(n) + u(:, n + 1)*r3(n) + u(:, n + 2)*r1(n)   ! r1(1) contains extended stencil
 
         ! -------------------------------------------------------------------
@@ -139,22 +139,21 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         n = nx
-        ! f(:, n) = f(:, n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n)
         f(:, n) = f(:, n) + u(:, n - 2)*r3(n) + u(:, n - 1)*r1(n) + u(:, n)*r2(n)   ! r3(nx) contains extended stencil
 
         return
     end subroutine MatMul_3d_add
 
     ! #######################################################################
-    subroutine MatMul_3d_antisym(nx, len, r1, r2, r3, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len                      ! m linear systems or size n
+    subroutine MatMul_3d_antisym(nx, nlines, r1, r2, r3, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nx, nlines                      ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)          ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)                      ! function u
-        real(wp), intent(inout) :: f(len, nx)                   ! RHS, f = B u
+        real(wp), intent(in) :: u(nlines, nx)                      ! function u
+        real(wp), intent(inout) :: f(nlines, nx)                   ! RHS, f = B u
         logical, intent(in) :: periodic
-        integer, optional :: ibc
+        integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
-        real(wp), intent(inout), optional :: bcs_b(len), bcs_t(len)
+        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -233,14 +232,14 @@ contains
     end subroutine MatMul_3d_antisym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is symmetric tri-diagonal with 1. off-diagonal equal to 1
-    subroutine MatMul_3d_sym(nx, len, r1, r2, r3, u, f, periodic, ibc)
-        integer(wi), intent(in) :: nx, len                   ! m linear systems or size n
+    ! Calculate f = B u, assuming B is symmetric tri-diagonal with 1. upper-diagonal equal to 1
+    subroutine MatMul_3d_sym(nx, nlines, r1, r2, r3, u, f, periodic, ibc)
+        integer(wi), intent(in) :: nx, nlines                   ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)    ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)                   ! function u
-        real(wp), intent(out) :: f(len, nx)                  ! RHS, f = B u
+        real(wp), intent(in) :: u(nlines, nx)                   ! function u
+        real(wp), intent(out) :: f(nlines, nx)                  ! RHS, f = B u
         logical, intent(in) :: periodic
-        integer, optional :: ibc
+        integer, intent(in), optional :: ibc
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -259,8 +258,7 @@ contains
             f(:, 1) = u(:, 2) + u(:, nx) + u(:, 1)*r2(1)
 
         else
-            f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) &
-                      + u(:, 3)*r1(1)   ! r1(1) contains 2. superdiagonal to allow for longer stencil at boundary
+            f(:, 1) = u(:, 1)*r2(1) + u(:, 2)*r3(1) + u(:, 3)*r1(1) ! r1(1) contains extended stencil
 
             if (any([BCS_ND, BCS_NN] == ibc_loc)) f(:, 1) = 0.0_wp
 
@@ -278,8 +276,7 @@ contains
             f(:, nx) = u(:, 1) + u(:, nx - 1) + u(:, nx)*r2(nx)
 
         else
-            f(:, nx) = u(:, nx - 2)*r3(nx) & ! r3(nx) contains 2. subdiagonal to allow for longer stencil at boundary
-                       + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx)
+            f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx) ! r3(nx) contains extended stencil
 
             if (any([BCS_DN, BCS_NN] == ibc_loc)) f(:, nx) = 0.0_wp
 
@@ -290,14 +287,14 @@ contains
 
     ! #######################################################################
     ! Calculate f = B u, assuming B is penta-diagonal with center diagonal is 1
-    subroutine MatMul_5d(nx, len, r1, r2, r4, r5, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len       ! len linear systems or size nx
-        real(wp), intent(in) :: r1(nx), r2(nx), r4(nx), r5(nx)    ! RHS diagonals (#=3-1 because center diagonal is 1)
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
-        integer, optional :: ibc
+    subroutine MatMul_5d(nx, nlines, r1, r2, r3, r4, r5, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nx, nlines       ! nlines linear systems or size nx
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)    ! RHS diagonals
+        real(wp), intent(in) :: u(nlines, nx)       ! function u
+        real(wp), intent(out) :: f(nlines, nx)      ! RHS, f = B u
+        integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(1:4, 0:5), rhs_t(0:3, 1:6)  ! Special bcs at bottom and top
-        real(wp), optional :: bcs_b(len), bcs_t(len)
+        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -334,10 +331,10 @@ contains
             f(:, 3) = f(:, 1)*r1_b(3) + u(:, 2)*r2_b(3) + u(:, 3)*r3_b(3) + u(:, 4)*r4_b(3) + u(:, 5)*r5_b(3)
             f(:, 4) = f(:, 1)*r0_b(4) + u(:, 2)*r1_b(4) + u(:, 3)*r2_b(4) + u(:, 4)*r3_b(4) + u(:, 5)*r4_b(4) + u(:, 6)*r5_b(4)
         else
-            f(:, 1) = u(:, 1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)   ! r1(1) contains extended stencil
-            f(:, 2) = u(:, 1)*r2(2) + u(:, 2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
-            f(:, 3) = u(:, 1)*r1(3) + u(:, 2)*r2(3) + u(:, 3) + u(:, 4)*r4(3) + u(:, 5)*r5(3)
-            f(:, 4) = u(:, 2)*r1(4) + u(:, 3)*r2(4) + u(:, 4) + u(:, 5)*r4(4) + u(:, 6)*r5(4)
+            f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)   ! r1(1) contains extended stencil
+            f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
+            f(:, 3) = u(:, 1)*r1(3) + u(:, 2)*r2(3) + u(:, 3)*r3(3) + u(:, 4)*r4(3) + u(:, 5)*r5(3)
+            f(:, 4) = u(:, 2)*r1(4) + u(:, 3)*r2(4) + u(:, 4)*r3(4) + u(:, 5)*r4(4) + u(:, 6)*r5(4)
         end if
 
         ! -------------------------------------------------------------------
@@ -355,10 +352,10 @@ contains
             f(:, nx - 1) = u(:, nx - 3)*r1_t(2) + u(:, nx - 2)*r2_t(2) + u(:, nx - 1)*r3_t(2) + f(:, nx)*r4_t(2)
             if (present(bcs_t)) bcs_t(:) = u(:, nx - 3)*r5_t(3) + u(:, nx - 2)*r1_t(3) + u(:, nx - 1)*r2_t(3) + f(:, nx)*r3_t(3) ! r5(nx) contains extended stencil
         else
-            f(:, nx - 3) = u(:, nx - 5)*r1(nx - 3) + u(:, nx - 4)*r2(nx - 3) + u(:, nx - 3) + u(:, nx - 2)*r4(nx - 3) + u(:, nx - 1)*r5(nx - 3)
-            f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2) + u(:, nx - 1)*r4(nx - 2) + u(:, nx)*r5(nx - 2)
-            f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1) + u(:, nx)*r4(nx - 1)
-            f(:, nx) = u(:, nx - 3)*r5(nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx) ! r5(nx) contains extended stencil
+            f(:, nx - 3) = u(:, nx - 5)*r1(nx - 3) + u(:, nx - 4)*r2(nx - 3) + u(:, nx - 3)*r3(nx - 3) + u(:, nx - 2)*r4(nx - 3) + u(:, nx - 1)*r5(nx - 3)
+            f(:, nx - 2) = u(:, nx - 4)*r1(nx - 2) + u(:, nx - 3)*r2(nx - 2) + u(:, nx - 2)*r3(nx - 2) + u(:, nx - 1)*r4(nx - 2) + u(:, nx)*r5(nx - 2)
+            f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) + u(:, nx)*r4(nx - 1)
+            f(:, nx) = u(:, nx - 3)*r5(nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx) ! r5(nx) contains extended stencil
         end if
 
 #undef r0_b
@@ -380,18 +377,18 @@ contains
 
     ! #######################################################################
     ! Calculate f = f + B u, assuming B is pentadiagonal
-    subroutine MatMul_5d_add(nx, len, r1, r2, r3, r4, r5, u, f)
-        integer(wi), intent(in) :: nx, len       ! m linear systems or size n
+    subroutine MatMul_5d_add(nx, nlines, r1, r2, r3, r4, r5, u, f)
+        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(inout) :: f(len, nx)    ! RHS, f = B u
+        real(wp), intent(in) :: u(nlines, nx)       ! function u
+        real(wp), intent(inout) :: f(nlines, nx)    ! RHS, f = B u
 
         ! -------------------------------------------------------------------
         integer(wi) n
 
         ! -------------------------------------------------------------------
         ! Boundary
-        f(:, 1) = f(:, 1) + u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1)
+        f(:, 1) = f(:, 1) + u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) + u(:, 4)*r1(1)   ! r1(1) contains extended stencil
         f(:, 2) = f(:, 2) + u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
 
         ! -------------------------------------------------------------------
@@ -403,27 +400,27 @@ contains
         ! -------------------------------------------------------------------
         ! Boundary
         f(:, nx - 1) = f(:, nx - 1) + u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) + u(:, nx)*r4(nx - 1)
-        f(:, nx) = f(:, nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx)
+        f(:, nx) = f(:, nx) + u(:, nx - 3)*r5(nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx) ! r5(nx) contains extended stencil
 
         return
     end subroutine MatMul_5d_add
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. off-diagonal equal to 1
-    ! It also assumes equal coefficients in the 2. off-diagonal for the interior points
-    subroutine MatMul_5d_antisym(nx, len, r1, r2, r3, r4, r5, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len          ! m linear systems or size n
+    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. upper-diagonal equal to 1
+    ! It also assumes equal coefficients in the 2. upper-diagonal for the interior points
+    subroutine MatMul_5d_antisym(nx, nlines, r1, r2, r3, r4, r5, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nx, nlines          ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)          ! function u
-        real(wp), intent(inout) :: f(len, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
+        real(wp), intent(in) :: u(nlines, nx)          ! function u
+        real(wp), intent(inout) :: f(nlines, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
         logical, intent(in) :: periodic
-        integer, optional :: ibc
-        real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
-        real(wp), optional :: bcs_b(len), bcs_t(len)
+        integer, intent(in), optional :: ibc
+        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
 
         ! -------------------------------------------------------------------
         integer(wi) n
-        real(wp) r5_loc     ! 2. off-diagonal
+        real(wp) r5_loc     ! 2. upper-diagonal
         integer ibc_loc
 
         ! -------------------------------------------------------------------
@@ -512,19 +509,19 @@ contains
     end subroutine MatMul_5d_antisym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. off-diagonal equal to 1
-    subroutine MatMul_5d_sym(nx, len, r1, r2, r3, r4, r5, u, f, periodic, ibc)
-        integer(wi), intent(in) :: nx, len       ! m linear systems or size n
+    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. upper-diagonal equal to 1
+    subroutine MatMul_5d_sym(nx, nlines, r1, r2, r3, r4, r5, u, f, periodic, ibc)
+        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
+        real(wp), intent(in) :: u(nlines, nx)       ! function u
+        real(wp), intent(out) :: f(nlines, nx)      ! RHS, f = B u
         logical, intent(in) :: periodic
-        integer, optional :: ibc
+        integer, intent(in), optional :: ibc
 
         ! -------------------------------------------------------------------
         integer(wi) n
         real(wp) r3_loc     ! center diagonal
-        real(wp) r5_loc     ! 2. off-diagonal
+        real(wp) r5_loc     ! 2. upper-diagonal
         integer ibc_loc
 
         ! -------------------------------------------------------------------
@@ -547,7 +544,7 @@ contains
 
         else
             f(:, 1) = u(:, 1)*r3(1) + u(:, 2)*r4(1) + u(:, 3)*r5(1) &
-                      + u(:, 4)*r1(1)   ! r1(1) contains 3. superdiagonal to allow for longer stencil at boundary
+                      + u(:, 4)*r1(1)   ! r1(1) contains 3. upper-diagonal to allow for longer stencil at boundary
 
             f(:, 2) = u(:, 1)*r2(2) + u(:, 2)*r3(2) + u(:, 3)*r4(2) + u(:, 4)*r5(2)
 
@@ -584,21 +581,21 @@ contains
     end subroutine MatMul_5d_sym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. off-diagonal equal to 1
-    ! It also assumes equal coefficients in the 2. and 3. off-diagonals for the interior points
-    subroutine MatMul_7d_antisym(nx, len, r1, r2, r3, r4, r5, r6, r7, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, len          ! m linear systems or size n
+    ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. upper-diagonal equal to 1
+    ! It also assumes equal coefficients in the 2. and 3. upper-diagonals for the interior points
+    subroutine MatMul_7d_antisym(nx, nlines, r1, r2, r3, r4, r5, r6, r7, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        integer(wi), intent(in) :: nx, nlines          ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx), r6(nx), r7(nx)  ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)          ! function u
-        real(wp), intent(inout) :: f(len, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
+        real(wp), intent(in) :: u(nlines, nx)          ! function u
+        real(wp), intent(inout) :: f(nlines, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
         logical, intent(in) :: periodic
-        integer, optional :: ibc
-        real(wp), optional :: rhs_b(:, :), rhs_t(:, :)
-        real(wp), optional :: bcs_b(len), bcs_t(len)
+        integer, intent(in), optional :: ibc
+        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
 
         ! -------------------------------------------------------------------
         integer(wi) n
-        real(wp) r6_loc, r7_loc     ! 2. and 3. off-diagonal
+        real(wp) r6_loc, r7_loc     ! 2. and 3. upper-diagonal
         integer ibc_loc
 
         ! -------------------------------------------------------------------
@@ -702,20 +699,20 @@ contains
     end subroutine MatMul_7d_antisym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. superdiagonal equal to 1
-    subroutine MatMul_7d_sym(nx, len, r1, r2, r3, r4, r5, r6, r7, u, f, periodic, ibc)
-        integer(wi), intent(in) :: nx, len       ! m linear systems or size n
+    ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. upper-diagonal equal to 1
+    subroutine MatMul_7d_sym(nx, nlines, r1, r2, r3, r4, r5, r6, r7, u, f, periodic, ibc)
+        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx), r6(nx), r7(nx)  ! RHS diagonals
-        real(wp), intent(in) :: u(len, nx)       ! function u
-        real(wp), intent(out) :: f(len, nx)      ! RHS, f = B u
+        real(wp), intent(in) :: u(nlines, nx)       ! function u
+        real(wp), intent(out) :: f(nlines, nx)      ! RHS, f = B u
         logical, intent(in) :: periodic
-        integer, optional :: ibc
+        integer, intent(in), optional :: ibc
 
         ! -------------------------------------------------------------------
         integer(wi) n
         real(wp) r4_loc     ! center diagonal
-        real(wp) r6_loc     ! 2. off-diagonal
-        real(wp) r7_loc     ! 3. off-diagonal
+        real(wp) r6_loc     ! 2. upper-diagonal
+        real(wp) r7_loc     ! 3. upper-diagonal
         integer ibc_loc
 
         ! -------------------------------------------------------------------
@@ -744,7 +741,7 @@ contains
                       + r7_loc*(u(:, 6) + u(:, nx))
         else
             f(:, 1) = u(:, 1)*r4(1) + u(:, 2)*r5(1) + u(:, 3)*r6(1) + u(:, 4)*r7(1) &
-                      + u(:, 5)*r1(1)   ! r1(1) contains 4. superdiagonal to allow for longer stencil at boundary
+                      + u(:, 5)*r1(1)   ! r1(1) contains 4. upper-diagonal to allow for longer stencil at boundary
 
             f(:, 2) = u(:, 1)*r3(2) + u(:, 2)*r4(2) + u(:, 3)*r5(2) + u(:, 4)*r6(2) + u(:, 5)*r7(2)
 

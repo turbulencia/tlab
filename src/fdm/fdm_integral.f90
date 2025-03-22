@@ -235,10 +235,10 @@ contains
 
         select case (size(rhsi, 2))
         case (3)
-            call MatMul_3d(nx, nlines, rhsi(:, 1), rhsi(:, 3), f, result, &
+            call MatMul_3d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 3), f, result, &
                            BCS_BOTH, rhs_b=fdmi%rhs_b(1:3, 0:3), rhs_t=fdmi%rhs_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         case (5)
-            call MatMul_5d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 4), rhsi(:, 5), f, result, &
+            call MatMul_5d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 3), rhsi(:, 4), rhsi(:, 5), f, result, &
                            BCS_BOTH, rhs_b=fdmi%rhs_b(1:4, 0:5), rhs_t=fdmi%rhs_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         end select
 
@@ -619,10 +619,10 @@ contains
 
         select case (ndr)
         case (3)
-            call MatMul_3d(nx, nlines, rhsi(:, 1), rhsi(:, 3), f, result, &
+            call MatMul_3d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 3), f, result, &
                            BCS_BOTH, rhs_b=fdmi%rhs_b(1:3, 0:3), rhs_t=fdmi%rhs_t(0:2, 1:4), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         case (5)
-            call MatMul_5d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 4), rhsi(:, 5), f, result, &
+            call MatMul_5d(nx, nlines, rhsi(:, 1), rhsi(:, 2), rhsi(:, 3), rhsi(:, 4), rhsi(:, 5), f, result, &
                            BCS_BOTH, rhs_b=fdmi%rhs_b(1:4, 0:5), rhs_t=fdmi%rhs_t(0:3, 1:6), bcs_b=wrk2d(:, 1), bcs_t=wrk2d(:, 2))
         end select
 

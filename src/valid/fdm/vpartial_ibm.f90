@@ -247,14 +247,14 @@ call Rotation_Initialize(ifile)
         print *, '2. order, Direct 4'
         call FDM_C2N4_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4))
         call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-        call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 7), wrk1d(:, 8), u, du2_n2)
+        call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), u, du2_n2)
         call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
         print *, '2. order, Direct 6'
         call FDM_C2N6_Direct(imax, x, wrk1d(:, 1), wrk1d(:, 4))
         call TRIDFS(imax, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3))
-        call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 7), wrk1d(:, 8), u, du2_n2)
+        call MatMul_5d(imax, len, wrk1d(:, 4), wrk1d(:, 5), wrk1d(:, 6), wrk1d(:, 7), wrk1d(:, 8), u, du2_n2)
         call TRIDSS(imax, len, wrk1d(1, 1), wrk1d(1, 2), wrk1d(1, 3), du2_n2)
         call check(u, du2_a, du2_n2, 'partial.dat')
 
