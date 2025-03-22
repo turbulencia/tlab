@@ -30,6 +30,32 @@ module FDM_MatMul
     public MatMul_7d_antisym    ! Calculate f = B u, assuming B is heptadiagonal, antisymmetric
     public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric
 
+#define r0_b(j) rhs_b(j,0)
+#define r1_b(j) rhs_b(j,1)
+#define r2_b(j) rhs_b(j,2)
+#define r3_b(j) rhs_b(j,3)
+#define r4_b(j) rhs_b(j,4)
+#define r5_b(j) rhs_b(j,5)
+#define r6_b(j) rhs_b(j,6)
+#define r7_b(j) rhs_b(j,7)
+
+#define r1_t(j) rhs_t(j,1)
+#define r2_t(j) rhs_t(j,2)
+#define r3_t(j) rhs_t(j,3)
+#define r4_t(j) rhs_t(j,4)
+#define r5_t(j) rhs_t(j,5)
+#define r6_t(j) rhs_t(j,6)
+#define r7_t(j) rhs_t(j,7)
+
+! to be implemented and check
+! #define r1_i(j) rhs(j,1)
+! #define r2_i(j) rhs(j,2)
+! #define r3_i(j) rhs(j,3)
+! #define r4_i(j) rhs(j,4)
+! #define r5_i(j) rhs(j,5)
+! #define r6_i(j) rhs(j,6)
+! #define r7_i(j) rhs(j,7)
+
 contains
     ! #######################################################################
     ! #######################################################################
@@ -59,16 +85,6 @@ contains
         else
             ibc_loc = BCS_NONE
         end if
-
-#define r0_b(j) rhs_b(j,0)
-#define r1_b(j) rhs_b(j,1)
-#define r2_b(j) rhs_b(j,2)
-#define r3_b(j) rhs_b(j,3)
-
-#define r1_t(j) rhs_t(j,1)
-#define r2_t(j) rhs_t(j,2)
-#define r3_t(j) rhs_t(j,3)
-#define r4_t(j) rhs_t(j,4)
 
         ! -------------------------------------------------------------------
         ! Boundary; the first 3/2+1+1=3 rows might be different
@@ -101,16 +117,6 @@ contains
             f(:, nx - 1) = u(:, nx - 2)*r1(nx - 1) + u(:, nx - 1)*r2(nx - 1) + u(:, nx)*r3(nx - 1)
             f(:, nx) = u(:, nx - 2)*r3(nx) + u(:, nx - 1)*r1(nx) + u(:, nx)*r2(nx) ! r3(nx) contains extended stencil
         end if
-
-#undef r0_b
-#undef r1_b
-#undef r2_b
-#undef r3_b
-
-#undef r1_t
-#undef r2_t
-#undef r3_t
-#undef r4_t
 
         return
     end subroutine MatMul_3d
@@ -169,14 +175,6 @@ contains
             ibc_loc = BCS_DD
         end if
 
-#define r1_b(j) rhs_b(j,1)
-#define r2_b(j) rhs_b(j,2)
-#define r3_b(j) rhs_b(j,3)
-
-#define r1_t(j) rhs_t(j,1)
-#define r2_t(j) rhs_t(j,2)
-#define r3_t(j) rhs_t(j,3)
-
         ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
@@ -222,14 +220,6 @@ contains
             end if
 
         end if
-
-#undef r1_b
-#undef r2_b
-#undef r3_b
-
-#undef r1_t
-#undef r2_t
-#undef r3_t
 
         return
     end subroutine MatMul_3d_antisym
@@ -312,20 +302,6 @@ contains
             ibc_loc = BCS_NONE
         end if
 
-#define r0_b(j) rhs_b(j,0)
-#define r1_b(j) rhs_b(j,1)
-#define r2_b(j) rhs_b(j,2)
-#define r3_b(j) rhs_b(j,3)
-#define r4_b(j) rhs_b(j,4)
-#define r5_b(j) rhs_b(j,5)
-
-#define r1_t(j) rhs_t(j,1)
-#define r2_t(j) rhs_t(j,2)
-#define r3_t(j) rhs_t(j,3)
-#define r4_t(j) rhs_t(j,4)
-#define r5_t(j) rhs_t(j,5)
-#define r6_t(j) rhs_t(j,6)
-
         ! -------------------------------------------------------------------
         ! Boundary; the first 5/2+1+1=4 rows might be different
         if (any([BCS_MIN, BCS_BOTH] == ibc_loc)) then
@@ -361,20 +337,6 @@ contains
             f(:, nx - 1) = u(:, nx - 3)*r1(nx - 1) + u(:, nx - 2)*r2(nx - 1) + u(:, nx - 1)*r3(nx - 1) + u(:, nx)*r4(nx - 1)
             f(:, nx) = u(:, nx - 3)*r5(nx) + u(:, nx - 2)*r1(nx) + u(:, nx - 1)*r2(nx) + u(:, nx)*r3(nx) ! r5(nx) contains extended stencil
         end if
-
-#undef r0_b
-#undef r1_b
-#undef r2_b
-#undef r3_b
-#undef r4_b
-#undef r5_b
-
-#undef r1_t
-#undef r2_t
-#undef r3_t
-#undef r4_t
-#undef r5_t
-#undef r6_t
 
         return
     end subroutine MatMul_5d
@@ -438,18 +400,6 @@ contains
             ibc_loc = BCS_DD
         end if
 
-#define r1_b(j) rhs_b(j,1)
-#define r2_b(j) rhs_b(j,2)
-#define r3_b(j) rhs_b(j,3)
-#define r4_b(j) rhs_b(j,4)
-#define r5_b(j) rhs_b(j,5)
-
-#define r1_t(j) rhs_t(j,1)
-#define r2_t(j) rhs_t(j,2)
-#define r3_t(j) rhs_t(j,3)
-#define r4_t(j) rhs_t(j,4)
-#define r5_t(j) rhs_t(j,5)
-
         ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
@@ -498,18 +448,6 @@ contains
             end if
 
         end if
-
-#undef r1_b
-#undef r2_b
-#undef r3_b
-#undef r4_b
-#undef r5_b
-
-#undef r1_t
-#undef r2_t
-#undef r3_t
-#undef r4_t
-#undef r5_t
 
         return
     end subroutine MatMul_5d_antisym
@@ -615,22 +553,6 @@ contains
             ibc_loc = BCS_DD
         end if
 
-#define r1_b(j) rhs_b(j,1)
-#define r2_b(j) rhs_b(j,2)
-#define r3_b(j) rhs_b(j,3)
-#define r4_b(j) rhs_b(j,4)
-#define r5_b(j) rhs_b(j,5)
-#define r6_b(j) rhs_b(j,6)
-#define r7_b(j) rhs_b(j,7)
-
-#define r1_t(j) rhs_t(j,1)
-#define r2_t(j) rhs_t(j,2)
-#define r3_t(j) rhs_t(j,3)
-#define r4_t(j) rhs_t(j,4)
-#define r5_t(j) rhs_t(j,5)
-#define r6_t(j) rhs_t(j,6)
-#define r7_t(j) rhs_t(j,7)
-
         ! -------------------------------------------------------------------
         ! Boundary
         if (periodic) then
@@ -685,22 +607,6 @@ contains
             end if
 
         end if
-
-#undef r1_b
-#undef r2_b
-#undef r3_b
-#undef r4_b
-#undef r5_b
-#undef r6_b
-#undef r7_b
-
-#undef r1_t
-#undef r2_t
-#undef r3_t
-#undef r4_t
-#undef r5_t
-#undef r6_t
-#undef r7_t
 
         return
     end subroutine MatMul_7d_antisym
@@ -794,5 +700,22 @@ contains
 
         return
     end subroutine MatMul_7d_sym
+
+#undef r0_b
+#undef r1_b
+#undef r2_b
+#undef r3_b
+#undef r4_b
+#undef r5_b
+#undef r6_b
+#undef r7_b
+
+#undef r1_t
+#undef r2_t
+#undef r3_t
+#undef r4_t
+#undef r5_t
+#undef r6_t
+#undef r7_t
 
 end module FDM_MatMul
