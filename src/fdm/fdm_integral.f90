@@ -23,7 +23,7 @@ module FDM_Integral
         real(wp), allocatable :: rhs(:, :)
     end type fdm_integral_dt
     ! This type used in elliptic operators for difference eigenvalues. This can lead to fragmented memory.
-    ! One could use pointers instead of allocatable for lhs and rhs, and point the pointers to the 
+    ! One could use pointers instead of allocatable for lhs and rhs, and point the pointers to the
     ! corresponding memory space.
 
     type(fdm_integral_dt), public :: fdm_Int0(2)    ! Global integral plan for lambda = 0
@@ -51,7 +51,8 @@ contains
     !#
     !# is established in this routine (see notes).
     !#
-    !# The system is normalized such that the central diagonal in the new rhs is 1
+    !# System normalized s.t. RHS diagonals are O(1), LHS diagonals O(h^2)
+    !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
     !#
     !########################################################################
     subroutine FDM_Int1_Initialize(x, lhs, rhs, lambda, fdmi)
@@ -178,11 +179,19 @@ contains
             dummy = 1.0_wp/fdmi%rhs(nx - ir + 1, idl)
             fdmi%rhs_t(idl - ir + 1, 1:ndl + 1) = fdmi%rhs_t(idl - ir + 1, 1:ndl + 1)*dummy
 
+            dummy = 1.0_wp/fdmi%rhs(ir, idl)
+            fdmi%rhs(ir, 1:ndl) = fdmi%rhs(ir, 1:ndl)*dummy
+            fdmi%lhs(ir, 1:ndr) = fdmi%lhs(ir, 1:ndr)*dummy
+
+            dummy = 1.0_wp/fdmi%rhs(nx - ir + 1, idl)
+            fdmi%rhs(nx - ir + 1, 1:ndl) = fdmi%rhs(nx - ir + 1, 1:ndl)*dummy
+            fdmi%lhs(nx - ir + 1, 1:ndr) = fdmi%lhs(nx - ir + 1, 1:ndr)*dummy
+
         end do
 
-        ! do ir = 1, nx
-        do ir = 2, nx - 1
-            dummy = 1.0_wp/fdmi%rhs(ir, idl)
+        ! interior points: normalization such that 1. upper-diagonal is 1
+        do ir = max(idr, idl + 1) + 1, nx - max(idr, idl + 1)
+            dummy = 1.0_wp/fdmi%rhs(ir, idl + 1)
 
             fdmi%rhs(ir, 1:ndl) = fdmi%rhs(ir, 1:ndl)*dummy
             fdmi%lhs(ir, 1:ndr) = fdmi%lhs(ir, 1:ndr)*dummy
@@ -316,14 +325,15 @@ contains
     !#
     !# is established in this routine, giving diagonals a-e and g (see notes).
     !#
-    !# The system is normalized such that the central diagonal in the new rhs is 1
+    !# System normalized s.t. RHS diagonals are O(1), LHS diagonals O(h^2)
+    !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
     !#
     !########################################################################
     subroutine FDM_Int2_Initialize(x, lhs, rhs, lambda2, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
         real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
         real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
-        real(wp), intent(in) :: lambda2                  ! system constant
+        real(wp), intent(in) :: lambda2                 ! system constant
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
@@ -512,11 +522,19 @@ contains
             dummy = 1.0_wp/fdmi%rhs(nx - ir + 1, idl)
             fdmi%rhs_t(idl - ir + 1, 1:ndl + 1) = fdmi%rhs_t(idl - ir + 1, 1:ndl + 1)*dummy
 
+            dummy = 1.0_wp/fdmi%rhs(ir, idl)
+            fdmi%rhs(ir, 1:ndl) = fdmi%rhs(ir, 1:ndl)*dummy
+            fdmi%lhs(ir, 1:ndr) = fdmi%lhs(ir, 1:ndr)*dummy
+
+            dummy = 1.0_wp/fdmi%rhs(nx - ir + 1, idl)
+            fdmi%rhs(nx - ir + 1, 1:ndl) = fdmi%rhs(nx - ir + 1, 1:ndl)*dummy
+            fdmi%lhs(nx - ir + 1, 1:ndr) = fdmi%lhs(nx - ir + 1, 1:ndr)*dummy
+
         end do
 
-        ! do ir = 1, nx
-        do ir = 2, nx - 1
-            dummy = 1.0_wp/fdmi%rhs(ir, idl)
+        ! interior points: normalization such that 1. upper-diagonal is 1
+        do ir = max(idr, idl + 1) + 1, nx - max(idr, idl + 1)
+            dummy = 1.0_wp/fdmi%rhs(ir, idl + 1)
 
             fdmi%rhs(ir, 1:ndl) = fdmi%rhs(ir, 1:ndl)*dummy
             fdmi%lhs(ir, 1:ndr) = fdmi%lhs(ir, 1:ndr)*dummy

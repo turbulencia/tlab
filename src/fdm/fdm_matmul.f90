@@ -1,6 +1,7 @@
 !########################################################################
-! Matrix multiplication of n-diagonal matrix with a vector with special boundary conditions.
-! The boundary conditions can extend over n/2+2 points
+! Matrix multiplication of n-diagonal matrix with a vector with special boundary conditions
+! The boundary conditions can extend over n/2 + 2 points
+! The 1. upper-diagonal in interior points is equal to 1
 ! This allows use to handle systems A y = B x in which A amd B differ by up to 2 diagonals (see notes)
 !########################################################################
 module FDM_MatMul
@@ -10,29 +11,29 @@ module FDM_MatMul
     private
 
     ! generic cases
-    public MatMul_3d            ! Calculate f = B u, assuming B is tridiagonal with center diagonal equal to 1
+    public MatMul_3d            ! Calculate f = B u, assuming B is tridiagonal
     public MatMul_3d_add        ! Calculate f = f + B u, assuming B is tridiagonal
-    ! special cases, coefficients are constant in the interior points
-    public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric with 1. upper-diagonal equal to 1
-    public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric with 1. upper-diagonal equal to 1
+    ! special cases where coefficients are constant in the interior points
+    public MatMul_3d_antisym    ! Calculate f = B u, assuming B is tridiagonal, antisymmetric
+    public MatMul_3d_sym        ! Calculate f = B u, assuming B is tridiagonal, symmetric
 
     ! generic cases
-    public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal with center diagonal is 1
+    public MatMul_5d            ! Calculate f = B u, assuming B is pentadiagonal
     public MatMul_5d_add        ! Calculate f = f + B u, assuming B is pentadiagonal
-    ! special cases, coefficients are constant in the interior points
-    public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric with 1. upper-diagonal equal to 1
-    public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric with 1. upper-diagonal equal to 1
+    ! special cases where coefficients are constant in the interior points
+    public MatMul_5d_antisym    ! Calculate f = B u, assuming B is pentadiagonal, antisymmetric
+    public MatMul_5d_sym        ! Calculate f = B u, assuming B is pentadiagonal, symmetric
 
     ! generic cases
     ! tbd when needed
-    ! special cases, coefficients are constant in the interior points
-    public MatMul_7d_antisym    ! Calculate f = B u, assuming B is heptadiagonal, antisymmetric with 1. upper-diagonal equal to 1
-    public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric with 1. upper-diagonal equal to 1
+    ! special cases where coefficients are constant in the interior points
+    public MatMul_7d_antisym    ! Calculate f = B u, assuming B is heptadiagonal, antisymmetric
+    public MatMul_7d_sym        ! Calculate f = B u, assuming B is heptadiagonal, symmetric
 
 contains
     ! #######################################################################
     ! #######################################################################
-    ! Calculate f = B u, assuming B is tri-diagonal with center diagonal is 1
+    ! Calculate f = B u, assuming B is tri-diagonal and 1. upper-diagonal in interior points is equal to 1
     ! Special boundary conditions restricted to 3 points:
     ! r_11 r_12 r_13
     !      r_21 r_22 r_23
@@ -85,7 +86,7 @@ contains
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
         do n = 4, nx - 3
-            f(:, n) = u(:, n - 1)*r1(n) + u(:, n) + u(:, n + 1)*r3(n)
+            f(:, n) = u(:, n - 1)*r1(n) + u(:, n)*r2(n) + u(:, n + 1)
         end do
 
         ! -------------------------------------------------------------------
@@ -115,12 +116,13 @@ contains
     end subroutine MatMul_3d
 
     ! #######################################################################
+    ! #######################################################################
     ! Calculate f = f + B u, assuming B is tri-diagonal
     subroutine MatMul_3d_add(nx, nlines, r1, r2, r3, u, f)
-        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)
-        real(wp), intent(in) :: u(nlines, nx)       ! function u
-        real(wp), intent(inout) :: f(nlines, nx)    ! RHS, f = B u
+        integer(wi), intent(in) :: nx, nlines                       ! nlines linear systems or size n
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)              ! RHS diagonals
+        real(wp), intent(in) :: u(nlines, nx)                       ! function u
+        real(wp), intent(inout) :: f(nlines, nx)                    ! RHS, f = B u
 
         ! -------------------------------------------------------------------
         integer(wi) n
@@ -145,11 +147,12 @@ contains
     end subroutine MatMul_3d_add
 
     ! #######################################################################
+    ! #######################################################################
     subroutine MatMul_3d_antisym(nx, nlines, r1, r2, r3, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, nlines                      ! m linear systems or size n
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)          ! RHS diagonals
-        real(wp), intent(in) :: u(nlines, nx)                      ! function u
-        real(wp), intent(inout) :: f(nlines, nx)                   ! RHS, f = B u
+        integer(wi), intent(in) :: nx, nlines                       ! nlines linear systems or size n
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)              ! RHS diagonals
+        real(wp), intent(in) :: u(nlines, nx)                       ! function u
+        real(wp), intent(inout) :: f(nlines, nx)                    ! RHS, f = B u
         logical, intent(in) :: periodic
         integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
@@ -232,10 +235,10 @@ contains
     end subroutine MatMul_3d_antisym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is symmetric tri-diagonal with 1. upper-diagonal equal to 1
+    ! #######################################################################
     subroutine MatMul_3d_sym(nx, nlines, r1, r2, r3, u, f, periodic, ibc)
-        integer(wi), intent(in) :: nx, nlines                   ! m linear systems or size n
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)    ! RHS diagonals
+        integer(wi), intent(in) :: nx, nlines                   ! nlines linear systems or size n
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx)          ! RHS diagonals
         real(wp), intent(in) :: u(nlines, nx)                   ! function u
         real(wp), intent(out) :: f(nlines, nx)                  ! RHS, f = B u
         logical, intent(in) :: periodic
@@ -286,12 +289,13 @@ contains
     end subroutine MatMul_3d_sym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is penta-diagonal with center diagonal is 1
+    ! #######################################################################
+    ! Calculate f = B u, assuming B is penta-diagonal1. upper-diagonal in interior points is equal to 1
     subroutine MatMul_5d(nx, nlines, r1, r2, r3, r4, r5, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, nlines       ! nlines linear systems or size nx
-        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)    ! RHS diagonals
-        real(wp), intent(in) :: u(nlines, nx)       ! function u
-        real(wp), intent(out) :: f(nlines, nx)      ! RHS, f = B u
+        integer(wi), intent(in) :: nx, nlines                               ! nlines linear systems or size nx
+        real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)      ! RHS diagonals
+        real(wp), intent(in) :: u(nlines, nx)                               ! function u
+        real(wp), intent(out) :: f(nlines, nx)                              ! RHS, f = B u
         integer, intent(in), optional :: ibc
         real(wp), intent(in), optional :: rhs_b(1:4, 0:5), rhs_t(0:3, 1:6)  ! Special bcs at bottom and top
         real(wp), intent(out), optional :: bcs_b(nlines), bcs_t(nlines)
@@ -340,7 +344,7 @@ contains
         ! -------------------------------------------------------------------
         ! Interior points; accelerate
         do n = 5, nx - 4
-            f(:, n) = u(:, n - 2)*r1(n) + u(:, n - 1)*r2(n) + u(:, n) + u(:, n + 1)*r4(n) + u(:, n + 2)*r5(n)
+            f(:, n) = u(:, n - 2)*r1(n) + u(:, n - 1)*r2(n) + u(:, n)*r3(n) + u(:, n + 1) + u(:, n + 2)*r5(n)
         end do
 
         ! -------------------------------------------------------------------
@@ -376,9 +380,10 @@ contains
     end subroutine MatMul_5d
 
     ! #######################################################################
+    ! #######################################################################
     ! Calculate f = f + B u, assuming B is pentadiagonal
     subroutine MatMul_5d_add(nx, nlines, r1, r2, r3, r4, r5, u, f)
-        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
+        integer(wi), intent(in) :: nx, nlines       ! nlines linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)
         real(wp), intent(in) :: u(nlines, nx)       ! function u
         real(wp), intent(inout) :: f(nlines, nx)    ! RHS, f = B u
@@ -406,10 +411,11 @@ contains
     end subroutine MatMul_5d_add
 
     ! #######################################################################
+    ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. upper-diagonal equal to 1
     ! It also assumes equal coefficients in the 2. upper-diagonal for the interior points
     subroutine MatMul_5d_antisym(nx, nlines, r1, r2, r3, r4, r5, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, nlines          ! m linear systems or size n
+        integer(wi), intent(in) :: nx, nlines          ! nlines linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
         real(wp), intent(in) :: u(nlines, nx)          ! function u
         real(wp), intent(inout) :: f(nlines, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
@@ -509,9 +515,9 @@ contains
     end subroutine MatMul_5d_antisym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric penta-diagonal with 1. upper-diagonal equal to 1
+    ! #######################################################################
     subroutine MatMul_5d_sym(nx, nlines, r1, r2, r3, r4, r5, u, f, periodic, ibc)
-        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
+        integer(wi), intent(in) :: nx, nlines       ! nlines linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx)  ! RHS diagonals
         real(wp), intent(in) :: u(nlines, nx)       ! function u
         real(wp), intent(out) :: f(nlines, nx)      ! RHS, f = B u
@@ -581,10 +587,11 @@ contains
     end subroutine MatMul_5d_sym
 
     ! #######################################################################
+    ! #######################################################################
     ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. upper-diagonal equal to 1
     ! It also assumes equal coefficients in the 2. and 3. upper-diagonals for the interior points
     subroutine MatMul_7d_antisym(nx, nlines, r1, r2, r3, r4, r5, r6, r7, u, f, periodic, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        integer(wi), intent(in) :: nx, nlines          ! m linear systems or size n
+        integer(wi), intent(in) :: nx, nlines          ! nlines linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx), r6(nx), r7(nx)  ! RHS diagonals
         real(wp), intent(in) :: u(nlines, nx)          ! function u
         real(wp), intent(inout) :: f(nlines, nx)       ! RHS, f = B u; f_1 and f_n can contain neumann bcs
@@ -699,9 +706,9 @@ contains
     end subroutine MatMul_7d_antisym
 
     ! #######################################################################
-    ! Calculate f = B u, assuming B is antisymmetric hepta-diagonal with 1. upper-diagonal equal to 1
+    ! #######################################################################
     subroutine MatMul_7d_sym(nx, nlines, r1, r2, r3, r4, r5, r6, r7, u, f, periodic, ibc)
-        integer(wi), intent(in) :: nx, nlines       ! m linear systems or size n
+        integer(wi), intent(in) :: nx, nlines       ! nlines linear systems or size n
         real(wp), intent(in) :: r1(nx), r2(nx), r3(nx), r4(nx), r5(nx), r6(nx), r7(nx)  ! RHS diagonals
         real(wp), intent(in) :: u(nlines, nx)       ! function u
         real(wp), intent(out) :: f(nlines, nx)      ! RHS, f = B u
