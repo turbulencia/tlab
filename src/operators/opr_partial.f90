@@ -183,16 +183,16 @@ contains
             end if
 
         case (OPR_P0_INT_VP)
-            call FDM_Interpol(0, nyz, g, p_b, p_c, wrk2d)
+            call FDM_Interpol(0, nyz, g%intl, p_b, p_c, wrk2d)
 
         case (OPR_P0_INT_PV)
-            call FDM_Interpol(1, nyz, g, p_b, p_c, wrk2d)
+            call FDM_Interpol(1, nyz, g%intl, p_b, p_c, wrk2d)
 
         case (OPR_P1_INT_VP)
-            call FDM_Interpol_Der1(0, nyz, g, p_b, p_c, wrk2d)
+            call FDM_Interpol_Der1(0, nyz, g%intl, p_b, p_c, wrk2d)
 
         case (OPR_P1_INT_PV)
-            call FDM_Interpol_Der1(1, nyz, g, p_b, p_c, wrk2d)
+            call FDM_Interpol_Der1(1, nyz, g%intl, p_b, p_c, wrk2d)
 
         case (OPR_P0_IBM)
             call OPR_IBM(0, nyz, g, p_b, p_c)
@@ -308,16 +308,16 @@ contains
                 end if
 
             case (OPR_P0_INT_VP)
-                call FDM_Interpol(0, nxy, g, p_a, p_b, wrk2d)
+                call FDM_Interpol(0, nxy, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P0_INT_PV)
-                call FDM_Interpol(1, nxy, g, p_a, p_b, wrk2d)
+                call FDM_Interpol(1, nxy, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_VP)
-                call FDM_Interpol_Der1(0, nxy, g, p_a, p_b, wrk2d)
+                call FDM_Interpol_Der1(0, nxy, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_PV)
-                call FDM_Interpol_Der1(1, nxy, g, p_a, p_b, wrk2d)
+                call FDM_Interpol_Der1(1, nxy, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P0_IBM)
                 call OPR_IBM(0, nxy, g, p_a, p_b)
@@ -420,16 +420,16 @@ contains
                 end if
 
             case (OPR_P0_INT_VP)
-                call FDM_Interpol(0, nxz, g, p_a, p_b, wrk2d)
+                call FDM_Interpol(0, nxz, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P0_INT_PV)
-                call FDM_Interpol(1, nxz, g, p_a, p_b, wrk2d)
+                call FDM_Interpol(1, nxz, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_VP)
-                call FDM_Interpol_Der1(0, nxz, g, p_a, p_b, wrk2d)
+                call FDM_Interpol_Der1(0, nxz, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P1_INT_PV)
-                call FDM_Interpol_Der1(1, nxz, g, p_a, p_b, wrk2d)
+                call FDM_Interpol_Der1(1, nxz, g%intl, p_a, p_b, wrk2d)
 
             case (OPR_P0_IBM)
                 call OPR_IBM(0, nxz, g, p_a, p_b)

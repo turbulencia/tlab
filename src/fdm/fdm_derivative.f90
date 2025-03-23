@@ -9,10 +9,11 @@ module FDM_Derivative
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use FDM_Com0_Jacobian
+    use FDM_Interpolate, only: fdm_interpol_dt
     implicit none
     private
 
-    ! This type should be split into 2 derivative types
+    ! This type should be split into 2 derivative types and the interpolation data moved to only fdm.
     type, public :: fdm_dt
         sequence
         character*8 name
@@ -41,8 +42,7 @@ module FDM_Derivative
         real(wp), pointer :: lu2(:, :)          ! pointer to LU decomposition for 2. derivative
         logical :: need_1der = .false.          ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
         !
-        real(wp), pointer :: lu0i(:, :)         ! pointer to LU decomposition for interpolation
-        real(wp), pointer :: lu1i(:, :)         ! pointer to LU decomposition for 1. derivative inc. interp.
+        type(fdm_interpol_dt) :: intl
 
     end type fdm_dt
 

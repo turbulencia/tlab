@@ -93,12 +93,6 @@ contains
                        + 5                      ! LU decomposition 2. order, 1 bcs
         end if
 
-        if (stagger_on .and. g%periodic) then
-            inb_grid = inb_grid &
-                       + 5 &                    ! LU decomposition interpolation
-                       + 5                      ! LU decomposition 1. order with interpolation
-        end if
-
         ! call TLab_Allocate_Real(__FILE__, g%memory, [g%size, inb_grid], g%name)
         allocate (g%memory(g%size, inb_grid))
 
@@ -283,12 +277,8 @@ contains
         ! ###################################################################
         if (stagger_on) then
             if (g%periodic) then
-                g%lu0i => g%memory(:, ig:)  ! interpolation
-                ig = ig + 5
-                g%lu1i => g%memory(:, ig:)  ! first interp. derivative
-                ig = ig + 5
 
-                call FDM_Interpol_Initialize(g)
+                call FDM_Interpol_Initialize(nodes, g%jac(:, 1), g%intl)
 
                 ! else
                 !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')
