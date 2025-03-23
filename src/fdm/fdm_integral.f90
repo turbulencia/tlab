@@ -6,7 +6,8 @@
 !########################################################################
 
 module FDM_Integral
-    use TLab_Constants, only: wp, wi, pi_wp, efile, BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, BCS_BOTH
+    use TLab_Constants, only: wp, wi, efile
+    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_MatMul
     use FDM_PROCS
@@ -22,7 +23,7 @@ module FDM_Integral
         real(wp), allocatable :: lhs(:, :)          ! Often overwritten to LU decomposition.
         real(wp), allocatable :: rhs(:, :)
     end type fdm_integral_dt
-    ! This type used in elliptic operators for difference eigenvalues. This can lead to fragmented memory.
+    ! This type is used in elliptic operators for difference eigenvalues. This can lead to fragmented memory.
     ! One could use pointers instead of allocatable for lhs and rhs, and point the pointers to the
     ! corresponding memory space.
 
