@@ -1,7 +1,7 @@
 #include "dns_error.h"
 
 module FDM
-    use TLab_Constants, only: wp, wi, pi_wp, roundoff_wp, efile, wfile
+    use TLab_Constants, only: wp, wi, roundoff_wp, efile, wfile
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     ! use TLab_Memory, only: TLab_Allocate_Real
@@ -273,6 +273,14 @@ contains
         end if
 
         ! ###################################################################
+        ! Check array sizes
+        ! ###################################################################
+        if (ig >= inb_grid) then
+            call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
+            call TLab_Stop(DNS_ERROR_DIMGRID)
+        end if
+
+        ! ###################################################################
         ! interpolation for staggered cases
         ! ###################################################################
         if (stagger_on) then
@@ -288,17 +296,9 @@ contains
 
         end if
 
-! ###################################################################
-! Check array sizes
-! ###################################################################
-        if (ig >= inb_grid) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
-            call TLab_Stop(DNS_ERROR_DIMGRID)
-        end if
-
-! ###################################################################
-! first-order integrals (cases lambda = 0.0_wp)
-! ###################################################################
+        ! ###################################################################
+        ! first-order integrals (cases lambda = 0.0_wp)
+        ! ###################################################################
         if (present(fdmi)) then
             if (g%periodic) then
                 call TLab_Write_ASCII(wfile, __FILE__//'. Integral algorithms not available for periodic cases.')

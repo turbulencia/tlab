@@ -1,8 +1,8 @@
 #include "dns_error.h"
 
 !########################################################################
-! Initialize arrays to calculate boundary-value problems and integrals based on the compact schemes
-! This probably should be OPR_ODE in operators, but need to disentangle it from global fdm_dt...
+! Boundary-value problems and integrals based on the compact schemes.
+! Should we move this to OPR_ODE in operators?
 !########################################################################
 
 module FDM_Integral

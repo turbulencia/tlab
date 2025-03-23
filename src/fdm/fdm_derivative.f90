@@ -1,8 +1,8 @@
 #include "dns_error.h"
 
 module FDM_Derivative
-    use TLab_Constants, only: wp, wi, pi_wp, roundoff_wp, efile, wfile
-    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
+    use TLab_Constants, only: wp, wi, pi_wp, efile, wfile
+    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use FDM_MatMul
     use FDM_ComX_Direct

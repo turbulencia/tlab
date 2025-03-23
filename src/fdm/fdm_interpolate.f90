@@ -1,13 +1,18 @@
 #include "dns_error.h"
 
+!########################################################################
+! Midpoint interpolation using compact schemes and 
+! the corresponding 1. order derivative, used in staggered grid for pressure.
+!########################################################################
+
 module FDM_Interpolate
-    use TLab_Constants, only: wp, wi, efile, wfile
+    use TLab_Constants, only: wp, wi, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use FDM_Com0_Jacobian
     implicit none
     private
 
-    ! I should create a new derived type with interpol data, which is used only here.
+    ! I wonder if the modified wavenumber for stagger_on case should be here...
     type, public :: fdm_interpol_dt
         sequence
         integer mode_fdm                            ! finite-difference method
