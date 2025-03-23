@@ -163,7 +163,7 @@ program VINTEGRAL
                 print *, new_line('a'), 'Bcs case ', ibc
 
                 fdmi(ib)%bc = ibc
-                fdmi(ib)%mode_fdm1 = g%mode_fdm1
+                fdmi(ib)%mode_fdm = g%mode_fdm1
                 call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
 
                 ! bcs
@@ -250,11 +250,11 @@ program VINTEGRAL
         read (*, *) lambda
 
         fdmi(BCS_MIN)%bc = BCS_MIN
-        fdmi(BCS_MIN)%mode_fdm1 = g%mode_fdm1
+        fdmi(BCS_MIN)%mode_fdm = g%mode_fdm1
         call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(BCS_MIN))
 
         fdmi(BCS_MAX)%bc = BCS_MAX
-        fdmi(BCS_MAX)%mode_fdm1 = g%mode_fdm1
+        fdmi(BCS_MAX)%mode_fdm = g%mode_fdm1
         call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi(BCS_MAX))
 
         allocate (bcs(len, 2))
@@ -380,11 +380,11 @@ program VINTEGRAL
                 print *, new_line('a'), 'Bcs case ', ibc
 
                 fdmi(ib)%bc = ibc
-                fdmi(ib)%mode_fdm1 = g%mode_fdm1
+                fdmi(ib)%mode_fdm = g%mode_fdm1
                 call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
 
                 fdmi_test(ib)%bc = fdmi(ib)%bc
-                fdmi_test(ib)%mode_fdm1 = fdmi(ib)%mode_fdm1
+                fdmi_test(ib)%mode_fdm = fdmi(ib)%mode_fdm
                 call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 1.0_wp, fdmi_test(ib))
 
                 call check(fdmi(ib)%rhs, fdmi_test(ib)%rhs, 'integral.dat')
@@ -395,7 +395,7 @@ program VINTEGRAL
 
                 ! checking linearity in lhs
                 fdmi_test_lambda(ib)%bc = fdmi(ib)%bc
-                fdmi_test_lambda(ib)%mode_fdm1 = fdmi(ib)%mode_fdm1
+                fdmi_test_lambda(ib)%mode_fdm = fdmi(ib)%mode_fdm
                 call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_test_lambda(ib))
 
                 call check(fdmi(ib)%lhs + lambda*(fdmi_test(ib)%lhs - fdmi(ib)%lhs), &

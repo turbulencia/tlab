@@ -189,12 +189,12 @@ contains
                     end if
 
                     fdm_int1(BCS_MIN, i, k)%bc = BCS_MIN
-                    fdm_int1(BCS_MIN, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
+                    fdm_int1(BCS_MIN, i, k)%mode_fdm = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                              sqrt(lambda(i, k)), fdm_int1(BCS_MIN, i, k))
 
                     fdm_int1(BCS_MAX, i, k)%bc = BCS_MAX
-                    fdm_int1(BCS_MAX, i, k)%mode_fdm1 = fdm_loc%mode_fdm1
+                    fdm_int1(BCS_MAX, i, k)%mode_fdm = fdm_loc%mode_fdm1
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                              -sqrt(lambda(i, k)), fdm_int1(BCS_MAX, i, k))
 
@@ -806,12 +806,12 @@ contains
                 ndr = fdm_loc%nb_diag_2(2)
 
                 fdm_int1_loc(BCS_MIN)%bc = BCS_MIN
-                fdm_int1_loc(BCS_MIN)%mode_fdm1 = fdm_loc%mode_fdm1
+                fdm_int1_loc(BCS_MIN)%mode_fdm = fdm_loc%mode_fdm1
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                          sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MIN))
 
                 fdm_int1_loc(BCS_MAX)%bc = BCS_MAX
-                fdm_int1_loc(BCS_MAX)%mode_fdm1 = fdm_loc%mode_fdm1
+                fdm_int1_loc(BCS_MAX)%mode_fdm = fdm_loc%mode_fdm1
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%lhs1(:, 1:ndl), fdm_loc%rhs1(:, 1:ndr), &
                                          -sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MAX))
 

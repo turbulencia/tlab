@@ -16,7 +16,7 @@ module FDM_Integral
 
     type, public :: fdm_integral_dt
         sequence
-        integer mode_fdm1                           ! original finite-difference method
+        integer mode_fdm                            ! original finite-difference method; only informative
         real(wp) :: lambda                          ! constant of the equation
         integer :: bc                               ! type of boundary condition, [ BCS_MIN, BCS_MAX ]
         real(wp) :: rhs_b(1:5, 0:7), rhs_t(0:4, 8)  ! # of diagonals is 7, # rows is 7/2+1
