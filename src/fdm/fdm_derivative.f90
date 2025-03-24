@@ -3,7 +3,7 @@
 module FDM_Derivative
     use TLab_Constants, only: wp, wi, pi_wp, efile, wfile
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_MatMul
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
@@ -106,24 +106,8 @@ contains
                 end if
             end do
 
-            if (.not. stagger_on) then
-
-                g%mwn1(:) = 2.0_wp*(coef(3)*sin(wn(:)) + coef(4)*sin(2.0_wp*wn(:)) + coef(5)*sin(3.0_wp*wn(:))) &
-                            /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
-
-            else ! staggered case has different modified wavenumbers!
-
-                select case (g%mode_fdm1)
-
-                case DEFAULT
-                    coef = [9.0_wp/62.0_wp, 0.0_wp, 63.0_wp/62.0_wp, 17.0_wp/62.0_wp, 0.0_wp]
-
-                end select
-
-                g%mwn1(:) = 2.0_wp*(coef(3)*sin(1.0_wp/2.0_wp*wn(:)) + coef(4)/3.0_wp*sin(3.0_wp/2.0_wp*wn(:))) &
-                            /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)))
-
-            end if
+            g%mwn1(:) = 2.0_wp*(coef(3)*sin(wn(:)) + coef(4)*sin(2.0_wp*wn(:)) + coef(5)*sin(3.0_wp*wn(:))) &
+                        /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
 
 #undef wn
 

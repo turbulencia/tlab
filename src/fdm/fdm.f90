@@ -286,7 +286,7 @@ contains
         if (stagger_on) then
             if (g%periodic) then
 
-                call FDM_Interpol_Initialize(nodes, g%jac(:, 1), g%intl)
+                call FDM_Interpol_Initialize(nodes(:), g%jac(:, 1), g%intl, g%mwn1(:))
 
                 ! else
                 !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')

@@ -1,12 +1,13 @@
 #include "dns_error.h"
 
 !########################################################################
-! Midpoint interpolation using compact schemes and 
+! Midpoint interpolation using compact schemes and
 ! the corresponding 1. order derivative, used in staggered grid for pressure.
+! It assumes periodic boundary conditions
 !########################################################################
 
 module FDM_Interpolate
-    use TLab_Constants, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, pi_wp, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use FDM_Com0_Jacobian
     implicit none
@@ -28,19 +29,21 @@ module FDM_Interpolate
 contains
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_Interpol_Initialize(x, dx, var)
+    subroutine FDM_Interpol_Initialize(x, dx, var, wn)
         real(wp), intent(in) :: x(:), dx(:)
         type(fdm_interpol_dt), intent(inout) :: var
+        real(wp), intent(inout) :: wn(:)
 
         ! -------------------------------------------------------------------
-        integer(wi) nx, nd
+        integer(wi) i, nx, nd
+        real(wp) :: coef(5)
 
         !########################################################################
         nx = size(x)
         nd = 3 + 2         ! so far, only tridiagonal systems with periodic bcs are implemented
 
         var%size = nx
-        
+
         !########################################################################
         ! interpolation
         if (allocated(var%lu0i)) deallocate (var%lu0i)
@@ -66,6 +69,27 @@ contains
 
         ! LU decomposition
         call TRIDPFS(nx, var%lu1i(1, 1), var%lu1i(1, 2), var%lu1i(1, 3), var%lu1i(1, 4), var%lu1i(1, 5))
+
+        ! -------------------------------------------------------------------
+        ! modified wavenumbers; staggered case has different modified wavenumbers!
+        do i = 1, nx        ! wavenumbers, the independent variable to construct the modified ones
+            if (i <= nx/2 + 1) then
+                wn(i) = 2.0_wp*pi_wp*real(i - 1, wp)/real(nx, wp)
+            else
+                wn(i) = 2.0_wp*pi_wp*real(i - 1 - nx, wp)/real(nx, wp)
+            end if
+        end do
+
+        select case (var%mode_fdm)
+        case DEFAULT
+            coef = [9.0_wp/62.0_wp, 0.0_wp, 63.0_wp/62.0_wp, 17.0_wp/62.0_wp, 0.0_wp]
+
+        end select
+
+        wn(:) = 2.0_wp*(coef(3)*sin(1.0_wp/2.0_wp*wn(:)) + coef(4)/3.0_wp*sin(3.0_wp/2.0_wp*wn(:))) &
+                /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)))
+
+        wn(:) = wn(:)/dx(1)           ! normalized by dx
 
         return
     end subroutine FDM_Interpol_Initialize
