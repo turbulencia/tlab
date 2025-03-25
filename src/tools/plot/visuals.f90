@@ -1004,6 +1004,12 @@ program VISUALS
                 txc(1:isize_field, 2) = txc(1:isize_field, 2) + txc(1:isize_field, 3) + txc(1:isize_field, 4)
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
+                plot_file = 'GradientRi'//time_str(1:MaskSize)
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 2))
+                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(1, 1), txc(1, 3))
+                txc(1:isize_field, 2) = abs(txc(1:isize_field, 2))/(txc(1:isize_field, 3)**2.0 + small_wp)
+                call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
+
                 plot_file = 'Pressure'//time_str(1:MaskSize)
                 bbackground = 0.0_wp
                 call FI_PRESSURE_BOUSSINESQ(q, s, txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), DCMP_TOTAL)
@@ -1012,6 +1018,7 @@ program VISUALS
                 plot_file = 'PressureGradientY'//time_str(1:MaskSize)
                 call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc(1, 1), txc(1, 2))
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
+                
             end if
 
             ! ###################################################################
@@ -1177,7 +1184,7 @@ contains
                     call TLabMPI_WRITE_PE0_SINGLE(LOC_UNIT_ID, nx, ny, nz, subdomain, field(1, ifield), txc(1, 1), txc(1, 2))
                     if (ims_pro == 0) then
 #else
-                        call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), wrk1d)
+                      call REDUCE_BLOCK_INPLACE(nx, ny, nz, subdomain(1), subdomain(3), subdomain(5), nx_aux, ny_aux, nz_aux, field(1, ifield), wrk1d)
                         write (LOC_UNIT_ID) SNGL(field(1:nx_aux*ny_aux*nz_aux, ifield))
 #endif
                         close (LOC_UNIT_ID)
