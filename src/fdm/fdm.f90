@@ -8,10 +8,26 @@ module FDM
     use FDM_Interpolate
     use FDM_Integral
     implicit none
-    ! private                                   ! I need this to pass fdm_dt to parent modules
-    !                                           to be fixed by decomposing fdm_dt into 3 derived types: der1, der2, interpol
+    private
 
-    type(fdm_dt), public :: g(3)                ! Grid information along 3 directions
+    type, public :: fdm_dt
+        sequence
+        character*8 name
+        integer(wi) size
+        logical :: uniform = .false.
+        logical :: periodic = .false.
+        real(wp) scale
+        !
+        real(wp), allocatable :: nodes(:)
+        real(wp), allocatable :: jac(:, :)      ! grid spacing, Jacobian of 1. order derivative; need aux space for 2. order derivative
+        !
+        type(fdm_derivative_dt) :: der1
+        type(fdm_derivative_dt) :: der2
+        type(fdm_interpol_dt) :: intl
+
+    end type fdm_dt
+
+    type(fdm_dt), public :: g(3)                ! fdm plans along 3 directions
 
     public :: FDM_Initialize
 
@@ -54,12 +70,12 @@ contains
         end if
 
         ! ###################################################################
-        nx = g%size                     ! node number, for clarity below
+        nx = g%size                     ! # of nodes, for clarity below
 
         if (allocated(g%nodes)) deallocate (g%nodes)
         if (allocated(g%jac)) deallocate (g%jac)
         allocate (g%nodes(nx))
-        allocate (g%jac(nx, 1 + 2))     ! I need 2 aux array to calculate the Jacobian for 2. order derivative.
+        allocate (g%jac(nx, 1 + 2))     ! I need 2 aux array to calculate the Jacobian for 2. order derivative; to be fixed
 
         if (nx == 1) then
             g%jac(:, :) = 1.0_wp

@@ -438,7 +438,7 @@ contains
     !# Second derivative uses LE decomposition including diffusivity coefficient
     !########################################################################
     subroutine OPR_Burgers_1D(is, nlines, bcs, g, lu2d, dealiasing, rhoinv, s, u, result, dsdx)
-        use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
+        use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
         integer, intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2, 2)    ! BCs at xmin (1,*) and xmax (2,*):
@@ -522,7 +522,7 @@ contains
 ! ###################################################################
     ! modify incoming fields (fill solids with spline functions, depending on direction)
     subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2, u, result, du)
-        use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
+        use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
         use IBM_VARS
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved

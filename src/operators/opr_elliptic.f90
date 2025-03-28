@@ -15,7 +15,8 @@ module OPR_ELLIPTIC
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_3D, only: p_wrk1d
     use TLab_Pointers_C, only: c_wrk1d, c_wrk3d
-    use FDM, only: fdm_dt, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM, only: fdm_dt
+    use FDM_Derivative, only: FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
     use OPR_FOURIER
     use OPR_ODES

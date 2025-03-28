@@ -12,7 +12,8 @@ program VPARTIAL3D
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g, FDM_Initialize, FDM_COM4_DIRECT, FDM_COM6_JACOBIAN
+    use FDM, only: g, FDM_Initialize
+    use FDM_Derivative, only: FDM_COM4_DIRECT, FDM_COM6_JACOBIAN
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Grid
     use IO_Fields

@@ -20,7 +20,8 @@
 
 program INTERPOL
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: fdm_dt, FDM_Initialize, FDM_COM6_JACOBIAN
+    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM_Derivative, only: FDM_COM6_JACOBIAN
     use FDM_Com0_Jacobian
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 

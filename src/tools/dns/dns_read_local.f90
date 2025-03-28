@@ -4,7 +4,8 @@
 
 subroutine DNS_READ_LOCAL(inifile)
     use TLab_Constants, only: wp, wi, big_wp, efile, lfile, wfile
-    use FDM, only: g, FDM_COM6_DIRECT
+    use FDM, only: g
+    use FDM_Derivative, only: FDM_COM6_DIRECT
     use TLab_Memory, only: jmax, isize_wrk3d, isize_wrk2d, isize_wrk1d, isize_txc_field, inb_txc
     use Avg_Spatial, only: nstatavg
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

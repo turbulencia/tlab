@@ -8,7 +8,7 @@ program VINTEGRAL
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d, wrk2d, txc
     use FDM, only: fdm_dt, FDM_Initialize
-    use FDM, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
     use OPR_PARTIAL
     use OPR_ODES

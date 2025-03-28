@@ -10,7 +10,6 @@ module FDM_Derivative
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
     use FDM_Com0_Jacobian
-    use FDM_Interpolate, only: fdm_interpol_dt
     implicit none
     private
 
@@ -27,26 +26,6 @@ module FDM_Derivative
         real(wp), allocatable :: mwn(:)         ! memory space for modified wavenumbers
         real(wp), allocatable :: lu(:, :)       ! memory space for LU decomposition
     end type fdm_derivative_dt
-
-    ! This type should be split into 2 derivative types and the interpolation data moved to only fdm.
-    type, public :: fdm_dt
-        sequence
-        character*8 name
-        integer(wi) size
-        logical :: uniform = .false.
-        logical :: periodic = .false.
-        real(wp) scale
-        !
-        real(wp), allocatable :: nodes(:)
-        real(wp), allocatable :: jac(:, :)          ! pointer to Jacobians
-        !
-        type(fdm_derivative_dt) :: der1
-        !
-        type(fdm_derivative_dt) :: der2
-        !
-        type(fdm_interpol_dt) :: intl
-
-    end type fdm_dt
 
     public :: FDM_Der1_Initialize
     ! public :: FDM_Der1_CreateSystem

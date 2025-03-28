@@ -7,8 +7,8 @@
 module OPR_PARTIAL
     use TLab_Constants, only: efile, wp, wi, BCS_DN, BCS_ND, BCS_NN
     use FDM, only: fdm_dt
-    use FDM, only: FDM_Der1_Solve, FDM_Der2_Solve
-    use FDM, only: FDM_Interpol, FDM_Interpol_Der1
+    use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
+    use FDM_Interpolate, only: FDM_Interpol, FDM_Interpol_Der1
     use TLab_WorkFlow, only: TLab_Stop, TLab_Write_ASCII
     use IBM_VARS, only: ibm_partial
     use IBM_VARS, only: fld_ibm

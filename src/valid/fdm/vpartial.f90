@@ -5,8 +5,9 @@ program VPARTIAL
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk2d, txc
-    use FDM, only: fdm_dt, FDM_Initialize, FDM_Der1_Solve, FDM_Der2_Solve
-    use FDM, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
+    use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_ComX_Direct
     use FDM_PROCS
     use FDM_MatMul
