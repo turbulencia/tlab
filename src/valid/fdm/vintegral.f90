@@ -346,7 +346,7 @@ program VINTEGRAL
             end select
 
             fdmi(2)%bc = ibc
-            call FDM_Int2_Initialize(g%nodes(:), g%der2%lhs(:, 1:ndl), g%der2%rhs(:, 1:ndr), lambda, fdmi(2))
+            call FDM_Int2_Initialize(g%nodes(:), g%der2, lambda, fdmi(2))
 
             call FDM_Int2_Solve(len, fdmi(2), fdmi(2)%rhs, f, w_n, wrk2d)
             call check(u, w_n, 'integral.dat')

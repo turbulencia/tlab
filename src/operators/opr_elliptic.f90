@@ -228,7 +228,7 @@ contains
                     end if
 
                     ! free memory that is independent of lambda
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k), fdm_int2(i, k))
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), fdm_int2(i, k))
                     rhs_d(:, :) = fdm_int2(i, k)%rhs(:, :)
                     if (allocated(fdm_int2(i, k)%rhs)) deallocate (fdm_int2(i, k)%rhs)
 
@@ -438,7 +438,7 @@ contains
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
                     fdm_int2_loc%bc = ibc_loc
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k), fdm_int2_loc)
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), fdm_int2_loc)
                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, i), u(:, i), wrk2d)
 
                 else                        ! use precalculated LU factorization
@@ -690,7 +690,7 @@ contains
 !                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
 !                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 !                     fdm_int2_loc%bc = ibc_loc
-!                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k), fdm_int2_loc)
+!                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), fdm_int2_loc)
 !                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
 !                 else                        ! use precalculated LU factorization
@@ -923,7 +923,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 fdm_int2_loc%bc = ibc
-                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k) - alpha, fdm_int2_loc)
+                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k) - alpha, fdm_int2_loc)
                 p_wrk1d(1:2, 11) = r_bcs(1:2)
                 p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
                 call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
