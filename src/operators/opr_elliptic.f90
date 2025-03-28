@@ -191,12 +191,12 @@ contains
 
                     fdm_int1(BCS_MIN, i, k)%bc = BCS_MIN
                     fdm_int1(BCS_MIN, i, k)%mode_fdm = fdm_loc%der1%mode_fdm
-                    call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1%lhs(:, 1:ndl), fdm_loc%der1%rhs(:, 1:ndr), &
+                    call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
                                              sqrt(lambda(i, k)), fdm_int1(BCS_MIN, i, k))
 
                     fdm_int1(BCS_MAX, i, k)%bc = BCS_MAX
                     fdm_int1(BCS_MAX, i, k)%mode_fdm = fdm_loc%der1%mode_fdm
-                    call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1%lhs(:, 1:ndl), fdm_loc%der1%rhs(:, 1:ndr), &
+                    call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
                                              -sqrt(lambda(i, k)), fdm_int1(BCS_MAX, i, k))
 
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
@@ -808,12 +808,12 @@ contains
 
                 fdm_int1_loc(BCS_MIN)%bc = BCS_MIN
                 fdm_int1_loc(BCS_MIN)%mode_fdm = fdm_loc%der1%mode_fdm
-                call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1%lhs(:, 1:ndl), fdm_loc%der1%rhs(:, 1:ndr), &
+                call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
                                          sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MIN))
 
                 fdm_int1_loc(BCS_MAX)%bc = BCS_MAX
                 fdm_int1_loc(BCS_MAX)%mode_fdm = fdm_loc%der1%mode_fdm
-                call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1%lhs(:, 1:ndl), fdm_loc%der1%rhs(:, 1:ndr), &
+                call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
                                          -sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MAX))
 
                 select case (ibc)

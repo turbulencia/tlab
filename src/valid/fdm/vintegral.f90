@@ -164,7 +164,7 @@ program VINTEGRAL
 
                 fdmi(ib)%bc = ibc
                 fdmi(ib)%mode_fdm = g%der1%mode_fdm
-                call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), lambda, fdmi(ib))
+                call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, fdmi(ib))
 
                 ! bcs
                 select case (ibc)
@@ -251,11 +251,11 @@ program VINTEGRAL
 
         fdmi(BCS_MIN)%bc = BCS_MIN
         fdmi(BCS_MIN)%mode_fdm = g%der1%mode_fdm
-        call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), lambda, fdmi(BCS_MIN))
+        call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, fdmi(BCS_MIN))
 
         fdmi(BCS_MAX)%bc = BCS_MAX
         fdmi(BCS_MAX)%mode_fdm = g%der1%mode_fdm
-        call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), -lambda, fdmi(BCS_MAX))
+        call FDM_Int1_Initialize(g%nodes(:), g%der1, -lambda, fdmi(BCS_MAX))
 
         allocate (bcs(len, 2))
         ! call random_seed()
@@ -381,11 +381,11 @@ program VINTEGRAL
 
                 fdmi(ib)%bc = ibc
                 fdmi(ib)%mode_fdm = g%der1%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), 0.0_wp, fdmi(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, 0.0_wp, fdmi(ib))
 
                 fdmi_test(ib)%bc = fdmi(ib)%bc
                 fdmi_test(ib)%mode_fdm = fdmi(ib)%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), 1.0_wp, fdmi_test(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, 1.0_wp, fdmi_test(ib))
 
                 call check(fdmi(ib)%rhs, fdmi_test(ib)%rhs, 'integral.dat')
                 ! print*,fdmi(ib)%rhs_b
@@ -396,7 +396,7 @@ program VINTEGRAL
                 ! checking linearity in lhs
                 fdmi_test_lambda(ib)%bc = fdmi(ib)%bc
                 fdmi_test_lambda(ib)%mode_fdm = fdmi(ib)%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), lambda, fdmi_test_lambda(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, lambda, fdmi_test_lambda(ib))
 
                 call check(fdmi(ib)%lhs + lambda*(fdmi_test(ib)%lhs - fdmi(ib)%lhs), &
                            fdmi_test_lambda(ib)%lhs, 'integral.dat')

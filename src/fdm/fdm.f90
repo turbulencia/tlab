@@ -157,7 +157,7 @@ contains
                 do ib = 1, 2
                     fdmi(ib)%mode_fdm = g%der1%mode_fdm
                     fdmi(ib)%bc = bcs_cases(ib)
-                    call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), 0.0_wp, fdmi(ib))
+                    call FDM_Int1_Initialize(g%nodes(:), g%der1, 0.0_wp, fdmi(ib))
 
                 end do
             end if

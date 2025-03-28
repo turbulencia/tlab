@@ -57,10 +57,9 @@ contains
     !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
     !#
     !########################################################################
-    subroutine FDM_Int1_Initialize(x, lhs, rhs, lambda, fdmi)
+    subroutine FDM_Int1_Initialize(x, g, lambda, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
-        real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
-        real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
+        type(fdm_derivative_dt), intent(in) :: g        ! derivative plan to be inverted
         real(wp), intent(in) :: lambda                  ! system constant
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
@@ -68,7 +67,7 @@ contains
         integer(wi) nx, nd
 
         !########################################################################
-        call FDM_Int1_CreateSystem(x, lhs, rhs, lambda, fdmi)
+        call FDM_Int1_CreateSystem(x, g, lambda, fdmi)
 
         ! LU decomposition
         nx = size(fdmi%lhs, 1)              ! # of grid points
@@ -90,10 +89,9 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine FDM_Int1_CreateSystem(x, lhs, rhs, lambda, fdmi)
+    subroutine FDM_Int1_CreateSystem(x, g, lambda, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
-        real(wp), intent(in) :: lhs(:, :)               ! diagonals in lhs, or matrix A
-        real(wp), intent(in) :: rhs(:, :)               ! diagonals in rhs, or matrix B
+        type(fdm_derivative_dt), intent(in) :: g        ! derivative plan to be inverted
         real(wp), intent(in) :: lambda                  ! system constant
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
@@ -103,11 +101,11 @@ contains
         real(wp) dummy, rhsr_b(5, 0:7), rhsr_t(0:4, 8)
 
         ! ###################################################################
-        ndl = size(lhs, 2)
-        idl = size(lhs, 2)/2 + 1        ! center diagonal in lhs
-        ndr = size(rhs, 2)
-        idr = size(rhs, 2)/2 + 1        ! center diagonal in rhs
-        nx = size(lhs, 1)               ! # grid points
+        ndl = g%nb_diag(1)
+        idl = ndl/2 + 1             ! center diagonal in lhs
+        ndr = g%nb_diag(2)
+        idr = ndr/2 + 1             ! center diagonal in rhs
+        nx = g%size                 ! # grid points
 
         ! check sizes
         if (abs(idl - idr) > 1) then
@@ -124,9 +122,9 @@ contains
 
         ! -------------------------------------------------------------------
         ! new rhs diagonals (array A), independent of lambda
-        fdmi%rhs(:, :) = lhs(:, :)
+        fdmi%rhs(:, :) = g%lhs(:, 1:ndl)
 
-        call FDM_Bcs_Reduce(fdmi%bc, fdmi%rhs, rhs, rhsr_b, rhsr_t)
+        call FDM_Bcs_Reduce(fdmi%bc, fdmi%rhs, g%rhs(:,1:ndr), rhsr_b, rhsr_t)
 
         fdmi%rhs_b = 0.0_wp
         fdmi%rhs_t = 0.0_wp
@@ -147,12 +145,12 @@ contains
 
         ! -------------------------------------------------------------------
         ! new lhs diagonals (array C = B + h \lambda A), dependent on lambda
-        fdmi%lhs(:, :) = rhs(:, :)
+        fdmi%lhs(:, :) = g%rhs(:, 1:ndr)
 
-        fdmi%lhs(:, idr) = fdmi%lhs(:, idr) + lambda*lhs(:, idl)                ! center diagonal
+        fdmi%lhs(:, idr) = fdmi%lhs(:, idr) + lambda*g%lhs(:, idl)                ! center diagonal
         do i = 1, idl - 1                                                       ! off-diagonals
-            fdmi%lhs(1 + i:nx, idr - i) = fdmi%lhs(1 + i:nx, idr - i) + lambda*lhs(1 + i:nx, idl - i)
-            fdmi%lhs(1:nx - i, idr + i) = fdmi%lhs(1:nx - i, idr + i) + lambda*lhs(1:nx - i, idl + i)
+            fdmi%lhs(1 + i:nx, idr - i) = fdmi%lhs(1 + i:nx, idr - i) + lambda*g%lhs(1 + i:nx, idl - i)
+            fdmi%lhs(1:nx - i, idr + i) = fdmi%lhs(1:nx - i, idr + i) + lambda*g%lhs(1:nx - i, idl + i)
         end do
 
         select case (fdmi%bc)
@@ -380,7 +378,7 @@ contains
         ndl = g%nb_diag(1)
         idl = ndl/2 + 1             ! center diagonal in lhs
         ndr = g%nb_diag(2)
-        idr = ndr/2 + 1             ! center diagonal in rhs; which is not saved because it is 1
+        idr = ndr/2 + 1             ! center diagonal in rhs
         nx = g%size                 ! # grid points
 
         ! check sizes
