@@ -53,25 +53,25 @@ contains
         case ('x')
             if (ims_pro_ibm_x) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
                 call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobi, isize_nobi_be, nobi, nobi_b, nobi_e, ibm_case_x)
-                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, fld_ibm, result, wrk2d)  ! now with modified u fields
+                call FDM_Der1_Solve(nlines, bcs, g%der1, g%der1%lu, fld_ibm, result, wrk2d)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, u, result, wrk2d)  ! no splines needed
+                call FDM_Der1_Solve(nlines, bcs, g%der1, g%der1%lu, u, result, wrk2d)  ! no splines needed
             end if
 
         case ('y')
             if (ims_pro_ibm_y) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
                 call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobj, isize_nobj_be, nobj, nobj_b, nobj_e, ibm_case_y)
-                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, fld_ibm, result, wrk2d)  ! now with modified u fields
+                call FDM_Der1_Solve(nlines, bcs, g%der1, g%der1%lu, fld_ibm, result, wrk2d)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, u, result, wrk2d)  ! no splines needed
+                call FDM_Der1_Solve(nlines, bcs, g%der1, g%der1%lu, u, result, wrk2d)  ! no splines needed
             end if
 
         case ('z')
             if (ims_pro_ibm_z) then ! only active IBM-Tasks (with objects in their subdomain) enter IBM-routines
                 call IBM_SPLINE_XYZ(is, u, fld_ibm, g, isize_nobk, isize_nobk_be, nobk, nobk_b, nobk_e, ibm_case_z)
-                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, fld_ibm, result, wrk2d)  ! now with modified u fields
+                call FDM_Der1_Solve(nlines, bcs, g%der1, g%der1%lu, fld_ibm, result, wrk2d)  ! now with modified u fields
             else ! idle IBM-Tasks
-                call FDM_Der1_Solve(nlines, bcs, g, g%lu1, u, result, wrk2d)  ! no splines needed
+                call FDM_Der1_Solve(nlines, bcs, g%der1, g%der1%lu, u, result, wrk2d)  ! no splines needed
             end if
 
         end select
@@ -168,18 +168,18 @@ contains
         select case (type)
 
         case (OPR_P2)
-            if (g%der2%need_1der) call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
+            if (g%der2%need_1der) call FDM_Der1_Solve(nyz, bcs(:, 1), g%der1, g%der1%lu, p_b, p_d, wrk2d)
             call FDM_Der2_Solve(nyz, g%der2, g%der2%lu, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P2_P1)
-            call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
+            call FDM_Der1_Solve(nyz, bcs(:, 1), g%der1, g%der1%lu, p_b, p_d, wrk2d)
             call FDM_Der2_Solve(nyz, g%der2, g%der2%lu, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P1)
             if (ibm_partial) then
                 call OPR_PARTIAL1_IBM(nyz, bcs(:, 1), g, p_b, p_c)
             else
-                call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_c, wrk2d)
+                call FDM_Der1_Solve(nyz, bcs(:, 1), g%der1, g%der1%lu, p_b, p_c, wrk2d)
             end if
 
         case (OPR_P0_INT_VP)
@@ -293,18 +293,18 @@ contains
             select case (type)
 
             case (OPR_P2)
-                if (g%der2%need_1der) call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
+                if (g%der2%need_1der) call FDM_Der1_Solve(nxy, bcs(:, 1), g%der1, g%der1%lu, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxy, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
-                call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
+                call FDM_Der1_Solve(nxy, bcs(:, 1), g%der1, g%der1%lu, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxy, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then
                     call OPR_PARTIAL1_IBM(nxy, bcs(:, 1), g, p_a, p_b)
                 else
-                    call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_b, wrk2d)
+                    call FDM_Der1_Solve(nxy, bcs(:, 1), g%der1, g%der1%lu, p_a, p_b, wrk2d)
                 end if
 
             case (OPR_P0_INT_VP)
@@ -405,18 +405,18 @@ contains
             select case (type)
 
             case (OPR_P2)
-                if (g%der2%need_1der) call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
+                if (g%der2%need_1der) call FDM_Der1_Solve(nxz, bcs(:, 1), g%der1, g%der1%lu, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxz, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
-                call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
+                call FDM_Der1_Solve(nxz, bcs(:, 1), g%der1, g%der1%lu, p_a, p_c, wrk2d)
                 call FDM_Der2_Solve(nxz, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then
                     call OPR_PARTIAL1_IBM(nxz, bcs(:, 1), g, p_a, p_b)
                 else
-                    call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_b, wrk2d)
+                    call FDM_Der1_Solve(nxz, bcs(:, 1), g%der1, g%der1%lu, p_a, p_b, wrk2d)
                 end if
 
             case (OPR_P0_INT_VP)

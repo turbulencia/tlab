@@ -5,6 +5,7 @@ module SCAL_LOCAL
     use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
     use Discrete, only: discrete_dt, Discrete_ReadBlock
     use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal
+    use TLab_Grid, only: x, y, z
     use TLab_Time, only: itime, rtime
     use Tlab_Background, only: sbg
     use TLab_Arrays, only: wrk1d
@@ -149,24 +150,20 @@ contains
         ! -------------------------------------------------------------------
         real(wp) yr
 
-        real(wp), dimension(:), pointer :: yn
-
         ! ###################################################################
-        yn => g(2)%nodes
-
         prof_loc = IniS(is)
         prof_loc%delta = 1.0_wp
         prof_loc%mean = 0.0_wp
         do j = 1, jmax
-            prof(j, 1) = Profiles_Calculate(prof_loc, yn(j))
+            prof(j, 1) = Profiles_Calculate(prof_loc, y(j))
         end do
 
         select case (IniS(is)%type)
         case (PROFILE_GAUSSIAN_SURFACE) ! set perturbation and its normal derivative to zero at the boundaries
             do j = 1, jmax
-                yr = 0.5_wp*(yn(j) - yn(1))/IniS(is)%thick
+                yr = 0.5_wp*(y(j) - y(1))/IniS(is)%thick
                 prof(j, 1) = prof(j, 1)*tanh(yr)**2
-                yr = -0.5_wp*(yn(j) - yn(jmax))/IniS(is)%thick
+                yr = -0.5_wp*(y(j) - y(jmax))/IniS(is)%thick
                 prof(j, 1) = prof(j, 1)*tanh(yr)**2
             end do
 
@@ -191,8 +188,8 @@ contains
         idsp = 0; kdsp = 0
 #endif
 
-        xn => g(1)%nodes
-        zn => g(3)%nodes
+        xn => x
+        zn => z
 
         call SCAL_SHAPE(is, wrk1d)
 
@@ -251,8 +248,8 @@ contains
         idsp = 0; kdsp = 0
 #endif
 
-        xn => g(1)%nodes
-        zn => g(3)%nodes
+        xn => x
+        zn => z 
 
         ! ###################################################################
 #define disp(i,k) p_wrk2d(i,k,1)

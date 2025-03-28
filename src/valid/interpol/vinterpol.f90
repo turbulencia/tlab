@@ -46,7 +46,7 @@ program INTERPOL
     g%uniform = .true.
     jmax = 1
     kmax = 1
-    g%mode_fdm1 = FDM_COM6_JACOBIAN
+    g%der1%mode_fdm = FDM_COM6_JACOBIAN
     lambda = 1
 
 ! Input
@@ -112,7 +112,7 @@ program INTERPOL
         wrk1d(i, 1) = x_int(i); 
     end do
     g_pre%size = imaxp; g_pre%scale = x_int(imaxp); g_pre%uniform = g%uniform
-    g_pre%mode_fdm1 = g%mode_fdm1; g_pre%periodic = .false.
+    g_pre%der1%mode_fdm = g%der1%mode_fdm; g_pre%periodic = .false.
     call FDM_Initialize(wrk1d(1:imaxp, 1), g_pre)
 
 ! Define the function + deriv. on both grids

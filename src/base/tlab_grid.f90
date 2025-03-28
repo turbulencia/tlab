@@ -6,7 +6,7 @@ module TLab_Grid
     implicit none
     private
 
-    real(wp), allocatable, public :: x(:), y(:), z(:)
+    real(wp), allocatable, target, public :: x(:), y(:), z(:)
 
     public :: TLab_Grid_Read
     public :: TLab_Grid_Write

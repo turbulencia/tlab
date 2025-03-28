@@ -447,31 +447,31 @@ contains
             end if
             nsize = nmax - nmin + 1
 
-            select case (g%nb_diag_1(2))
+            select case (g%der1%nb_diag(2))
             case (3)
-                call MatMul_3d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t, p_bcs_hb, p_bcs_ht)
+                call MatMul_3d_antisym(g%size, nxz, g%der1%rhs(:, 1), g%der1%rhs(:, 2), g%der1%rhs(:, 3), p_org, p_dst, g%periodic, ibc, g%der1%rhs_b, g%der1%rhs_t, p_bcs_hb, p_bcs_ht)
             case (5)
-                call MatMul_5d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
+                call MatMul_5d_antisym(g%size, nxz, g%der1%rhs(:, 1), g%der1%rhs(:, 2), g%der1%rhs(:, 3), g%der1%rhs(:, 4), g%der1%rhs(:, 5), p_org, p_dst, g%periodic, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
             case (7)
-                call MatMul_7d_antisym(g%size, nxz, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), p_org, p_dst, g%periodic, ibc, g%rhs1_b, g%rhs1_t,  p_bcs_hb, p_bcs_ht)
+                call MatMul_7d_antisym(g%size, nxz, g%der1%rhs(:, 1), g%der1%rhs(:, 2), g%der1%rhs(:, 3), g%der1%rhs(:, 4), g%der1%rhs(:, 5), g%der1%rhs(:, 6), g%der1%rhs(:, 7), p_org, p_dst, g%periodic, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
             end select
 
-            select case (g%nb_diag_1(1))
+            select case (g%der1%nb_diag(1))
             case (3)
-                call TRIDSS(nsize, nxz, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), p_dst(:, nmin:nmax))
+                call TRIDSS(nsize, nxz, g%der1%lu(nmin:nmax, ip + 1), g%der1%lu(nmin:nmax, ip + 2), g%der1%lu(nmin:nmax, ip + 3), p_dst(:, nmin:nmax))
             case (5)
-                call PENTADSS2(nsize, nxz, g%lu1(nmin:nmax, ip + 1), g%lu1(nmin:nmax, ip + 2), g%lu1(nmin:nmax, ip + 3), g%lu1(nmin:nmax, ip + 4), g%lu1(nmin:nmax, ip + 5), p_dst(:, nmin:nmax))
+                call PENTADSS2(nsize, nxz, g%der1%lu(nmin:nmax, ip + 1), g%der1%lu(nmin:nmax, ip + 2), g%der1%lu(nmin:nmax, ip + 3), g%der1%lu(nmin:nmax, ip + 4), g%der1%lu(nmin:nmax, ip + 5), p_dst(:, nmin:nmax))
             end select
 
-            idl = g%nb_diag_1(1)/2 + 1
+            idl = g%der1%nb_diag(1)/2 + 1
             if (any([BCS_ND, BCS_NN] == ibc)) then
                 do ic = 1, idl - 1
-                    p_bcs_hb(:) = p_bcs_hb(:) + g%lu1(1, ip + idl + ic)*p_dst(:, 1 + ic)
+                    p_bcs_hb(:) = p_bcs_hb(:) + g%der1%lu(1, ip + idl + ic)*p_dst(:, 1 + ic)
                 end do
             end if
             if (any([BCS_DN, BCS_NN] == ibc)) then
                 do ic = 1, idl - 1
-                    p_bcs_ht(:) = p_bcs_ht(:) + g%lu1(ny, ip + idl - ic)*p_dst(:, ny - ic)
+                    p_bcs_ht(:) = p_bcs_ht(:) + g%der1%lu(ny, ip + idl - ic)*p_dst(:, ny - ic)
                 end do
             end if
 

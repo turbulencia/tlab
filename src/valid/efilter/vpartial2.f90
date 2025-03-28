@@ -15,7 +15,7 @@ program VPARTIAL2
 ! ###################################################################
     g%size = imax
     g%scale = C_2_R*C_PI_R
-    g%mode_fdm1 = FDM_COM6_JACOBIAN
+    g%der1%mode_fdm = FDM_COM6_JACOBIAN
     g%uniform = .true.
     jmax = 1
     kmax = 1

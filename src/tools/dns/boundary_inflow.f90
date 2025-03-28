@@ -312,7 +312,7 @@ contains
     subroutine BOUNDARY_INFLOW_DISCRETE(etime, inf_rhs)
         use Profiles, only: profiles_dt, Profiles_Calculate, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM
         use TLab_Constants, only: pi_wp
-
+        use TLab_Grid, only: y, z
         real(wp) etime
         real(wp), intent(OUT) :: inf_rhs(jmax, kmax, inb_flow + inb_scal)
 
@@ -323,16 +323,10 @@ contains
         real(wp) yr
         type(profiles_dt) prof_loc
 
-        real(wp), dimension(:), pointer :: y, z
-
         ! ###################################################################
 #ifdef TRACE_ON
         call TLab_Write_ASCII(tfile, 'ENTERING BOUNDARY_INFLOW_DISCRETE')
 #endif
-
-        ! Define pointers
-        y => g(2)%nodes
-        z => g(3)%nodes
 
 #ifdef USE_MPI
         kdsp = ims_offset_k

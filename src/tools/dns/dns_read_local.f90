@@ -624,7 +624,7 @@ subroutine DNS_READ_LOCAL(inifile)
         end do
 
 ! Check if grid is non-uniform
-        if (.not. g(1)%uniform .and. g(1)%mode_fdm1 /= FDM_COM6_DIRECT) then
+        if (.not. g(1)%uniform .and. g(1)%der1%mode_fdm /= FDM_COM6_DIRECT) then
             call TLab_Write_ASCII(efile, 'DNS_READ_LOCAL. Non-uniform grid requires a direct FDM formulation.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if

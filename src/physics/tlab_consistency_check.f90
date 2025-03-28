@@ -35,7 +35,7 @@ subroutine TLab_Consistency_Check()
             call TLab_Write_ASCII(efile, __FILE__//'. Horizontal pressure staggering not implemented for current advection scheme.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
-        if (any([g(1)%mode_fdm1, g(2)%mode_fdm1, g(3)%mode_fdm1] /= FDM_COM6_JACOBIAN)) then
+        if (any([g(1)%der1%mode_fdm, g(2)%der1%mode_fdm, g(3)%der1%mode_fdm] /= FDM_COM6_JACOBIAN)) then
             call TLab_Write_ASCII(efile, __FILE__//'. Horizontal pressure staggering only implemented for compact jacobian 6th-order scheme.')
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if

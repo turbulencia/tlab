@@ -25,15 +25,14 @@ contains
         real(wp), intent(in), optional :: locScale                  ! for consistency check
 
         ! -------------------------------------------------------------------
-        integer(wi) i, ig, nx, ndl, ndr, inb_grid
+        integer(wi) i, nx, ndl, ndr
         integer ib, bcs_cases(2)
-        logical :: periodic_aux
 
         ! ###################################################################
         ! Consistency check
         ! ###################################################################
-        if (g%periodic .and. g%mode_fdm1 == FDM_COM4_DIRECT) g%mode_fdm1 = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
-        if (g%periodic .and. g%mode_fdm1 == FDM_COM6_DIRECT) g%mode_fdm1 = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
+        if (g%periodic .and. g%der1%mode_fdm == FDM_COM4_DIRECT) g%der1%mode_fdm = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
+        if (g%periodic .and. g%der1%mode_fdm == FDM_COM6_DIRECT) g%der1%mode_fdm = FDM_COM6_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%der2%mode_fdm == FDM_COM4_DIRECT) g%der2%mode_fdm = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%der2%mode_fdm == FDM_COM6_DIRECT) g%der2%mode_fdm = FDM_COM6_JACOBIAN_HYPER  ! they are the same for uniform grids.
 
@@ -55,103 +54,38 @@ contains
         end if
 
         ! ###################################################################
-        ! Memory allocation
-        ! ###################################################################
-        inb_grid = 1                            ! Nodes
-
-        inb_grid = inb_grid + 2                 ! I need 2 aux array to calculate the Jacobian for 2. order derivative. To be removed.
-
-        inb_grid = inb_grid &                   ! 1. order derivative
-                   + 1 &                        ! Jacobian
-                   + 5 &                        ! max # of diagonals in LHS
-                   + 7                          ! max # of diagonals in RHS
-        if (g%periodic) inb_grid = inb_grid + 1 ! modified wavenumber
-
-        if (g%periodic) then
-            inb_grid = inb_grid &
-                       + 5 + 2                  ! LU decomposition 1. order
-        else
-            inb_grid = inb_grid &
-                       + 5*4                    ! LU decomposition 1. order, 4 bcs
-        end if
-
-        ! call TLab_Allocate_Real(__FILE__, g%memory, [g%size, inb_grid], g%name)
-        allocate (g%memory(g%size, inb_grid))
-
-        ! ###################################################################
-        ! ###################################################################
         nx = g%size                     ! node number, for clarity below
 
-        ig = 1                          ! Initialize counter to define pointers inside array x
-
-        ! ###################################################################
-        ! Space for node positions
-        ! ###################################################################
-        g%nodes => g%memory(:, ig)      ! Define pointer inside memory space
-
-        ig = ig + 1                     ! Advance counter
-
-        ! ###################################################################
-        ! Space for Jacobians
-        ! ###################################################################
-        g%jac => g%memory(:, ig:)
+        if (allocated(g%nodes)) deallocate (g%nodes)
+        if (allocated(g%jac)) deallocate (g%jac)
+        allocate (g%nodes(nx))
+        allocate (g%jac(nx, 1 + 2))     ! I need 2 aux array to calculate the Jacobian for 2. order derivative.
 
         if (nx == 1) then
             g%jac(:, :) = 1.0_wp
             return
         end if
 
-        ig = ig + 1
-
-        ig = ig + 2                     ! aux array to calculate the Jacobian for 2. order derivative. To be removed.
-
         ! ###################################################################
         ! first-order derivative
         ! ###################################################################
-        g%lhs1 => g%memory(:, ig:)
-        ig = ig + 5
-        g%rhs1 => g%memory(:, ig:)
-        ig = ig + 7
-        if (g%periodic) then                                        ! modified wavenumber
-            g%mwn1 => g%memory(:, ig)
-            ig = ig + 1
-        end if
-        g%lu1 => g%memory(:, ig:)
-
-        if (g%periodic) then
-            ig = ig + g%nb_diag_1(1) + 2
-        else                            ! biased,  different BCs
-            ig = ig + 5*4
-        end if
-
-        ! -------------------------------------------------------------------
         ! uniform grid to calculate Jacobian (used for the stencils below and also as grid spacing in the code).
         g%nodes(:) = [(real(i - 1, wp), i=1, g%size)]
         g%jac(:, 1) = 1.0_wp
 
-        call FDM_Der1_Initialize(g, periodic=.false., bcs_cases=[BCS_DD])
+        call FDM_Der1_Initialize(g%nodes, g%jac(:, 1), g%der1, periodic=.false., bcs_cases=[BCS_DD])
 
         ! Calculating derivative dxds into g%jac(:, 1)
-        periodic_aux = g%periodic
-        g%periodic = .false.
-        call FDM_Der1_Solve(1, [0, 0], g, g%lu1, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
-        g%periodic = periodic_aux
+        g%der1%periodic = .false.
+        call FDM_Der1_Solve(1, [0, 0], g%der1, g%der1%lu, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform
         g%nodes(:) = nodes(1:nx)
 
-        call FDM_Der1_Initialize(g, periodic=g%periodic, bcs_cases=[BCS_DD, BCS_ND, BCS_DN, BCS_NN])
+        call FDM_Der1_Initialize(g%nodes, g%jac(:, 1), g%der1, periodic=g%periodic, bcs_cases=[BCS_DD, BCS_ND, BCS_DN, BCS_NN])
 
-        if (g%periodic) g%mwn1(:) = g%mwn1(:)/g%jac(1, 1)           ! normalized by dx
-
-        ! ###################################################################
-        ! Check array sizes
-        ! ###################################################################
-        if (ig - 1 > inb_grid) then
-            call TLab_Write_ASCII(efile, __FILE__//'. Grid size incorrect.')
-            call TLab_Stop(DNS_ERROR_DIMGRID)
-        end if
+        if (g%periodic) g%der1%mwn(:) = g%der1%mwn(:)/g%jac(1, 1)           ! normalized by dx
 
         ! ###################################################################
         ! second-order derivative
@@ -183,7 +117,7 @@ contains
         if (stagger_on) then
             if (g%periodic) then
 
-                call FDM_Interpol_Initialize(nodes(:), g%jac(:, 1), g%intl, g%mwn1(:))
+                call FDM_Interpol_Initialize(nodes(:), g%jac(:, 1), g%intl, g%der1%mwn(:))
 
                 ! else
                 !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')
@@ -200,14 +134,14 @@ contains
             if (g%periodic) then
                 call TLab_Write_ASCII(wfile, __FILE__//'. Integral algorithms not available for periodic cases.')
             else
-                ndl = g%nb_diag_1(1)
-                ndr = g%nb_diag_1(2)
+                ndl = g%der1%nb_diag(1)
+                ndr = g%der1%nb_diag(2)
 
                 bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
                 do ib = 1, 2
-                    fdmi(ib)%mode_fdm = g%mode_fdm1
+                    fdmi(ib)%mode_fdm = g%der1%mode_fdm
                     fdmi(ib)%bc = bcs_cases(ib)
-                    call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
+                    call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), 0.0_wp, fdmi(ib))
 
                 end do
             end if

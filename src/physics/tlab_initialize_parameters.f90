@@ -129,11 +129,11 @@ subroutine TLab_Initialize_Parameters(inifile)
     call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder1', 'void', sRes)
     if (trim(adjustl(sRes)) == 'void') &
         call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder', 'compactjacobian6', sRes) ! backwards compatibility
-    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%mode_fdm1 = FDM_COM4_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6penta') then; g(1:3)%mode_fdm1 = FDM_COM6_JACOBIAN_PENTA; 
-    elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%mode_fdm1 = FDM_COM4_DIRECT;
-    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%mode_fdm1 = FDM_COM6_DIRECT; 
+    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%der1%mode_fdm = FDM_COM4_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%der1%mode_fdm = FDM_COM6_JACOBIAN; 
+    elseif (trim(adjustl(sRes)) == 'compactjacobian6penta') then; g(1:3)%der1%mode_fdm = FDM_COM6_JACOBIAN_PENTA; 
+    elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%der1%mode_fdm = FDM_COM4_DIRECT;
+    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%der1%mode_fdm = FDM_COM6_DIRECT; 
     else
         call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder1 option.')
         call TLab_Stop(DNS_ERROR_OPTION)
@@ -150,7 +150,7 @@ subroutine TLab_Initialize_Parameters(inifile)
         call TLab_Stop(DNS_ERROR_OPTION)
     end if
 
-    if (g(1)%mode_fdm1 == FDM_COM6_JACOBIAN_PENTA) then     ! CFL_max depends on max[g(ig)%mwn1(:)]
+    if (g(1)%der1%mode_fdm == FDM_COM6_JACOBIAN_PENTA) then     ! CFL_max depends on max[g(ig)%der1%mwn(:)]
         call TLab_Write_ASCII(wfile, __FILE__//'. CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 

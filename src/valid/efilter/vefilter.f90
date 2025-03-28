@@ -19,7 +19,7 @@ program VEFILTER
 ! ###################################################################
     g%size = imax
     g%scale = 2.0_wp*pi_wp
-    g%mode_fdm1 = FDM_COM6_JACOBIAN
+    g%der1%mode_fdm = FDM_COM6_JACOBIAN
     visc = 1.0_wp
     schmidt = 1.0_wp
 
@@ -82,7 +82,7 @@ program VEFILTER
     call OPR_FILTER_INITIALIZE(g, filter)
 
     call OPR_FILTER_1D(1, filter, u, uf)
-    ! call FDM_Der1_Solve(1, [0,0], g, g%lu1, u, uf, wrk2d)
+    ! call FDM_Der1_Solve(1, [0,0],g%der1, g%der1%lu, u, uf, wrk2d)
 
     open (20, file='filter.dat')
     do i = 1, imax
@@ -95,7 +95,7 @@ program VEFILTER
     do ik = 1, (imax - 1)/2
         u = sin(2.0_wp*pi_wp/g%scale*real(ik)*x(:, 1))
         call OPR_FILTER_1D(1, filter, u, uf)
-        ! call FDM_Der1_Solve(1, [0,0], g, g%lu1, u, uf, wrk2d)
+        ! call FDM_Der1_Solve(1, [0,0], g%der1, g%der1%lu, u, uf, wrk2d)
         write (20, *) ik, maxval(uf)
     end do
     close (20)

@@ -466,7 +466,7 @@ contains
         if (ibm_burgers) then
             call OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2d, s, result, dsdx)
         else
-            call FDM_Der1_Solve(nlines, bcs(:, 1), g, g%lu1, s, dsdx, wrk2d)
+            call FDM_Der1_Solve(nlines, bcs(:, 1), g%der1, g%der1%lu, s, dsdx, wrk2d)
             call FDM_Der2_Solve(nlines, g%der2, lu2d, s, result, dsdx, wrk2d)
         end if
 
@@ -568,7 +568,7 @@ contains
 
         end select
 
-        call FDM_Der1_Solve(nlines, bcs(:, 1), g, g%lu1, p_fld, du, wrk2d)
+        call FDM_Der1_Solve(nlines, bcs(:, 1), g%der1, g%der1%lu, p_fld, du, wrk2d)
         call FDM_Der2_Solve(nlines, g%der2, lu2, p_fld, result, du, wrk2d)  ! no splines needed
 
         nullify (p_fld)

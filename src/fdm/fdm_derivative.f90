@@ -36,18 +36,11 @@ module FDM_Derivative
         logical :: uniform = .false.
         logical :: periodic = .false.
         real(wp) scale
-        real(wp), pointer :: memory(:, :)       ! memory space
         !
-        real(wp), pointer :: nodes(:)
-        real(wp), pointer :: jac(:, :)          ! pointer to Jacobians
+        real(wp), allocatable :: nodes(:)
+        real(wp), allocatable :: jac(:, :)          ! pointer to Jacobians
         !
-        integer mode_fdm1                       ! finite-difference method for 1. order derivative
-        integer nb_diag_1(2)                    ! # of left and right diagonals 1. order derivative (max 5/7)
-        real(wp) :: rhs1_b(4, 7), rhs1_t(4, 7)  ! RHS data for Neumann boundary conditions, 1. order derivative max. # of diagonals is 7, # rows is 7/2+1
-        real(wp), pointer :: lhs1(:, :)         ! pointer to LHS for 1. derivative
-        real(wp), pointer :: rhs1(:, :)         ! pointer to RHS for 1. derivative
-        real(wp), pointer :: mwn1(:)            ! pointer to modified wavenumbers
-        real(wp), pointer :: lu1(:, :)          ! pointer to LU decomposition for 1. derivative
+        type(fdm_derivative_dt) :: der1
         !
         type(fdm_derivative_dt) :: der2
         !
@@ -75,8 +68,10 @@ module FDM_Derivative
 contains
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_Der1_Initialize(g, periodic, bcs_cases)
-        type(fdm_dt), intent(inout) :: g
+    subroutine FDM_Der1_Initialize(x, dx, g, periodic, bcs_cases)
+        real(wp), intent(in) :: x(:)                    ! node positions
+        real(wp), intent(in) :: dx(:)                   ! Jacobian
+        type(fdm_derivative_dt), intent(inout) :: g
         logical, intent(in) :: periodic
         integer, intent(in) :: bcs_cases(:)
 
@@ -85,38 +80,45 @@ contains
         integer(wi) nmin, nmax, nsize
 
         ! ###################################################################
-        call FDM_Der1_CreateSystem(g, periodic)
+        call FDM_Der1_CreateSystem(x, dx, g, periodic)
 
         ! -------------------------------------------------------------------
         ! LU decomposition
-        if (periodic) then
-            g%lu1(:, 1:g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
+        if (allocated(g%lu)) deallocate (g%lu)
+        if (g%periodic) then
+            allocate (g%lu(g%size, g%nb_diag(1) + 2))
+        else
+            allocate (g%lu(g%size, 5*4))          ! 4 bcs
+        end if
 
-            select case (g%nb_diag_1(1))
+        if (periodic) then
+            g%lu(:, 1:g%nb_diag(1)) = g%lhs(:, 1:g%nb_diag(1))
+
+            select case (g%nb_diag(1))
             case (3)
-                call TRIDPFS(g%size, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
+                call TRIDPFS(g%size, g%lu(1, 1), g%lu(1, 2), g%lu(1, 3), g%lu(1, 4), g%lu(1, 5))
             case (5)
-                call PENTADPFS(g%size, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
+                call PENTADPFS(g%size, g%lu(1, 1), g%lu(1, 2), g%lu(1, 3), g%lu(1, 4), g%lu(1, 5), g%lu(1, 6), g%lu(1, 7))
             end select
 
         else                            ! biased,  different BCs
             do ib = 1, size(bcs_cases)
                 ip = (ib - 1)*5
 
-                g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
+                g%lu(:, ip + 1:ip + g%nb_diag(1)) = g%lhs(:, 1:g%nb_diag(1))
 
-                call FDM_Bcs_Neumann(bcs_cases(ib), g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
+                call FDM_Bcs_Neumann(bcs_cases(ib), g%lu(:, ip + 1:ip + g%nb_diag(1)), g%rhs(:, 1:g%nb_diag(2)), g%rhs_b, g%rhs_t)
 
                 nmin = 1; nmax = g%size
                 if (any([BCS_ND, BCS_NN] == bcs_cases(ib))) nmin = nmin + 1
                 if (any([BCS_DN, BCS_NN] == bcs_cases(ib))) nmax = nmax - 1
                 nsize = nmax - nmin + 1
 
-                select case (g%nb_diag_1(1))
+                select case (g%nb_diag(1))
                 case (3)
-                    call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
+                    call TRIDFS(nsize, g%lu(nmin:, ip + 1), g%lu(nmin:, ip + 2), g%lu(nmin:, ip + 3))
                 case (5)
-                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                    call PENTADFS2(nsize, g%lu(nmin:, ip + 1), g%lu(nmin:, ip + 2), g%lu(nmin:, ip + 3), g%lu(nmin:, ip + 4), g%lu(nmin:, ip + 5))
                 end select
 
             end do
@@ -128,30 +130,46 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_Der1_CreateSystem(g, periodic)
-        type(fdm_dt), intent(inout) :: g
+    subroutine FDM_Der1_CreateSystem(x, dx, g, periodic)
+        real(wp), intent(in) :: x(:)                    ! node positions
+        real(wp), intent(in) :: dx(:)                   ! Jacobian
+        type(fdm_derivative_dt), intent(inout) :: g
         logical, intent(in) :: periodic
 
         ! -------------------------------------------------------------------
         real(wp) :: coef(5)
         integer(wi) i, nx
+        integer, parameter :: ndl_max = 5, ndr_max = 7
 
         ! ###################################################################
-        select case (g%mode_fdm1)
+        g%size = size(x)                ! # grid points
+        nx = g%size                     ! for code readability
+
+        if (allocated(g%lhs)) deallocate (g%lhs)
+        if (allocated(g%rhs)) deallocate (g%rhs)
+        if (allocated(g%mwn)) deallocate (g%mwn)
+        allocate (g%lhs(nx, ndl_max))
+        allocate (g%rhs(nx, ndr_max))
+        allocate (g%mwn(nx))
+
+        g%periodic = periodic
+
+        ! -------------------------------------------------------------------
+        select case (g%mode_fdm)
         case (FDM_COM4_JACOBIAN)
-            call FDM_C1N4_Jacobian(g%size, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, periodic)
+            call FDM_C1N4_Jacobian(g%size, dx, g%lhs, g%rhs, g%nb_diag, coef, periodic)
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_HYPER)
-            call FDM_C1N6_Jacobian(g%size, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, periodic)
+            call FDM_C1N6_Jacobian(g%size, dx, g%lhs, g%rhs, g%nb_diag, coef, periodic)
 
         case (FDM_COM6_JACOBIAN_PENTA)
-            call FDM_C1N6_Jacobian_Penta(g%size, g%jac, g%lhs1, g%rhs1, g%nb_diag_1, coef, periodic)
+            call FDM_C1N6_Jacobian_Penta(g%size, dx, g%lhs, g%rhs, g%nb_diag, coef, periodic)
 
         case (FDM_COM4_DIRECT)
-            call FDM_C1N4_Direct(g%size, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
+            call FDM_C1N4_Direct(g%size, x, g%lhs, g%rhs, g%nb_diag)
 
         case (FDM_COM6_DIRECT)
-            call FDM_C1N6_Direct(g%size, g%nodes, g%lhs1, g%rhs1, g%nb_diag_1)
+            call FDM_C1N6_Direct(g%size, x, g%lhs, g%rhs, g%nb_diag)
 
         end select
 
@@ -160,7 +178,7 @@ contains
         if (periodic) then
             nx = g%size
 
-#define wn(i) g%mwn1(i)
+#define wn(i) g%mwn(i)
 
             do i = 1, nx        ! wavenumbers, the independent variable to construct the modified ones
                 if (i <= nx/2 + 1) then
@@ -170,8 +188,8 @@ contains
                 end if
             end do
 
-            g%mwn1(:) = 2.0_wp*(coef(3)*sin(wn(:)) + coef(4)*sin(2.0_wp*wn(:)) + coef(5)*sin(3.0_wp*wn(:))) &
-                        /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
+            g%mwn(:) = 2.0_wp*(coef(3)*sin(wn(:)) + coef(4)*sin(2.0_wp*wn(:)) + coef(5)*sin(3.0_wp*wn(:))) &
+                            /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
 
 #undef wn
 
@@ -187,7 +205,7 @@ contains
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
         !                                   0 biased, non-zero
         !                                   1 forced to zero
-        type(fdm_dt), intent(in) :: g
+        type(fdm_derivative_dt), intent(in) :: g
         real(wp), intent(in) :: lu1(:, :)
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(out) :: result(nlines, g%size)
@@ -210,29 +228,29 @@ contains
         end if
         nsize = nmax - nmin + 1
 
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm1)) then
-            select case (g%nb_diag_1(2))
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+            select case (g%nb_diag(2))
             case (3)
-                call MatMul_3d(g%rhs1(:, 1:3), u, result)
+                call MatMul_3d(g%rhs(:, 1:3), u, result)
             case (5)
-                call MatMul_5d(g%rhs1(:, 1:5), u, result)
+                call MatMul_5d(g%rhs(:, 1:5), u, result)
             end select
         else
-            select case (g%nb_diag_1(2))
+            select case (g%nb_diag(2))
             case (3)
-                call MatMul_3d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), &
-                                       u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+                call MatMul_3d_antisym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), &
+                                       u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
             case (5)
-                call MatMul_5d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), &
-                                       u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+                call MatMul_5d_antisym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), &
+                                       u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
             case (7)
-                call MatMul_7d_antisym(g%size, nlines, g%rhs1(:, 1), g%rhs1(:, 2), g%rhs1(:, 3), g%rhs1(:, 4), g%rhs1(:, 5), g%rhs1(:, 6), g%rhs1(:, 7), &
-                                       u, result, g%periodic, ibc, g%rhs1_b, g%rhs1_t)
+                call MatMul_7d_antisym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), g%rhs(:, 6), g%rhs(:, 7), &
+                                       u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
             end select
         end if
 
         if (g%periodic) then
-            select case (g%nb_diag_1(1))
+            select case (g%nb_diag(1))
             case (3)
                 call TRIDPSS(g%size, nlines, lu1(1, 1), lu1(1, 2), lu1(1, 3), lu1(1, 4), lu1(1, 5), &
                              result, wrk2d)
@@ -242,7 +260,7 @@ contains
             end select
 
         else
-            select case (g%nb_diag_1(1))
+            select case (g%nb_diag(1))
             case (3)
                 call TRIDSS(nsize, nlines, lu1(nmin:, ip + 1), lu1(nmin:, ip + 2), lu1(nmin:, ip + 3), &
                             result(:, nmin:))

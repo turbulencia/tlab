@@ -86,11 +86,11 @@ program VINTEGRAL
         close (21)
     end if
 
-    g%mode_fdm1 = FDM_COM6_JACOBIAN     ! default
-    g%der2%mode_fdm = g%mode_fdm1
+    g%der1%mode_fdm = FDM_COM6_JACOBIAN     ! default
+    g%der2%mode_fdm = g%der1%mode_fdm
     call FDM_Initialize(x, g, fdmi)
-    ndr = g%nb_diag_1(2)
-    ndl = g%nb_diag_1(1)
+    ndr = g%der1%nb_diag(2)
+    ndl = g%der1%nb_diag(1)
 
     bcs_aux = 0
 
@@ -148,11 +148,11 @@ program VINTEGRAL
         do im = 1, 5 !size(fdm_cases)
             print *, new_line('a'), fdm_names(im)
 
-            g%mode_fdm1 = fdm_cases(im)
+            g%der1%mode_fdm = fdm_cases(im)
             g%der2%mode_fdm = FDM_COM4_JACOBIAN     ! not used
             call FDM_Initialize(x, g)
-            ndr = g%nb_diag_1(2)
-            ndl = g%nb_diag_1(1)
+            ndr = g%der1%nb_diag(2)
+            ndl = g%der1%nb_diag(1)
 
             f = du1_a
             ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
@@ -163,8 +163,8 @@ program VINTEGRAL
                 print *, new_line('a'), 'Bcs case ', ibc
 
                 fdmi(ib)%bc = ibc
-                fdmi(ib)%mode_fdm = g%mode_fdm1
-                call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(ib))
+                fdmi(ib)%mode_fdm = g%der1%mode_fdm
+                call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), lambda, fdmi(ib))
 
                 ! bcs
                 select case (ibc)
@@ -218,22 +218,22 @@ program VINTEGRAL
             case (BCS_DD)
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
-                ! call OPR_ODE2_Factorize_1_SINGULAR_DD_OLD(g%mode_fdm1, g%size, len, g%nodes, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_DD_OLD(g%der1%mode_fdm, g%size, len, g%nodes, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_Factorize_DD_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN)
                 print *, 'Dirichlet/Neumann'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! call OPR_ODE2_Factorize_1_SINGULAR_DN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_DN_OLD(g%der1%mode_fdm, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_Factorize_DN_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_ND)
                 print *, 'Neumann/Dirichlet'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = u(:, kmax)
-                ! call OPR_ODE2_Factorize_1_SINGULAR_ND_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_ND_OLD(g%der1%mode_fdm, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_Factorize_ND_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! call OPR_ODE2_Factorize_1_SINGULAR_NN_OLD(g%mode_fdm1, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                ! call OPR_ODE2_Factorize_1_SINGULAR_NN_OLD(g%der1%mode_fdm, g%size, len, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_Factorize_NN_Sing(len, fdmi, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
@@ -250,12 +250,12 @@ program VINTEGRAL
         read (*, *) lambda
 
         fdmi(BCS_MIN)%bc = BCS_MIN
-        fdmi(BCS_MIN)%mode_fdm = g%mode_fdm1
-        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi(BCS_MIN))
+        fdmi(BCS_MIN)%mode_fdm = g%der1%mode_fdm
+        call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), lambda, fdmi(BCS_MIN))
 
         fdmi(BCS_MAX)%bc = BCS_MAX
-        fdmi(BCS_MAX)%mode_fdm = g%mode_fdm1
-        call FDM_Int1_Initialize(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), -lambda, fdmi(BCS_MAX))
+        fdmi(BCS_MAX)%mode_fdm = g%der1%mode_fdm
+        call FDM_Int1_Initialize(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), -lambda, fdmi(BCS_MAX))
 
         allocate (bcs(len, 2))
         ! call random_seed()
@@ -278,7 +278,7 @@ program VINTEGRAL
             case (BCS_DD)
                 print *, 'Dirichlet/Dirichlet'
                 bcs(:, 1) = u(:, 1); bcs(:, 2) = u(:, kmax)
-                ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                ! call OPR_ODE2_Factorize_1_REGULAR_DD_OLD(g%der1%mode_fdm, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_Factorize_DD(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             case (BCS_DN) ! not yet developed
                 print *, 'Dirichlet/Neumann'
@@ -289,7 +289,7 @@ program VINTEGRAL
             case (BCS_NN)
                 print *, 'Neumann/Neumann'
                 bcs(:, 1) = du1_n(:, 1); bcs(:, 2) = du1_n(:, kmax)
-                ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g%mode_fdm1, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
+                ! call OPR_ODE2_Factorize_1_REGULAR_NN_OLD(g%der1%mode_fdm, g%size, len, lambda*lambda, g%jac, w_n, f, bcs, dw1_n, wrk1d)
                 call OPR_ODE2_Factorize_NN(len, fdmi, fdmi(BCS_MIN)%rhs, fdmi(BCS_MAX)%rhs, w_n, f, bcs, dw1_n, wrk1d, wrk2d)
             end select
 
@@ -308,7 +308,7 @@ program VINTEGRAL
         allocate (si(g%size, 2))
         allocate (bcs(len, 2))
 
-        g%mode_fdm1 = FDM_COM6_JACOBIAN
+        g%der1%mode_fdm = FDM_COM6_JACOBIAN
         g%der2%mode_fdm = FDM_COM6_DIRECT
         call FDM_Initialize(x, g)
         ndr = g%der2%nb_diag(2)
@@ -369,23 +369,23 @@ program VINTEGRAL
         do im = 1, 5 !size(fdm_cases)
             print *, new_line('a'), fdm_names(im)
 
-            g%mode_fdm1 = fdm_cases(im)
+            g%der1%mode_fdm = fdm_cases(im)
             g%der2%mode_fdm = FDM_COM4_JACOBIAN ! not used
             call FDM_Initialize(x, g)
-            ndr = g%nb_diag_1(2)
-            ndl = g%nb_diag_1(1)
+            ndr = g%der1%nb_diag(2)
+            ndl = g%der1%nb_diag(1)
 
             do ib = 1, 2
                 ibc = bcs_cases(ib)
                 print *, new_line('a'), 'Bcs case ', ibc
 
                 fdmi(ib)%bc = ibc
-                fdmi(ib)%mode_fdm = g%mode_fdm1
-                call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 0.0_wp, fdmi(ib))
+                fdmi(ib)%mode_fdm = g%der1%mode_fdm
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), 0.0_wp, fdmi(ib))
 
                 fdmi_test(ib)%bc = fdmi(ib)%bc
                 fdmi_test(ib)%mode_fdm = fdmi(ib)%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), 1.0_wp, fdmi_test(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), 1.0_wp, fdmi_test(ib))
 
                 call check(fdmi(ib)%rhs, fdmi_test(ib)%rhs, 'integral.dat')
                 ! print*,fdmi(ib)%rhs_b
@@ -396,7 +396,7 @@ program VINTEGRAL
                 ! checking linearity in lhs
                 fdmi_test_lambda(ib)%bc = fdmi(ib)%bc
                 fdmi_test_lambda(ib)%mode_fdm = fdmi(ib)%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%lhs1(:, 1:ndl), g%rhs1(:, 1:ndr), lambda, fdmi_test_lambda(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1%lhs(:, 1:ndl), g%der1%rhs(:, 1:ndr), lambda, fdmi_test_lambda(ib))
 
                 call check(fdmi(ib)%lhs + lambda*(fdmi_test(ib)%lhs - fdmi(ib)%lhs), &
                            fdmi_test_lambda(ib)%lhs, 'integral.dat')

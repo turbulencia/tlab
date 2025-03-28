@@ -112,7 +112,7 @@ contains
         g%size = nmax
         g%uniform = .true.
         g%periodic = .false.
-        g%mode_fdm1 = FDM_COM6_JACOBIAN
+        g%der1%mode_fdm = FDM_COM6_JACOBIAN
         g%der2%mode_fdm = FDM_COM6_JACOBIAN
         call FDM_Initialize(x, g, fdmi)
         ! x(1) is already set

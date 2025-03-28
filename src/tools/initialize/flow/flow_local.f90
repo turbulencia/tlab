@@ -7,6 +7,7 @@ module FLOW_LOCAL
     use Discrete, only: discrete_dt
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Memory, only: inb_wrk2d, inb_txc
+    use TLab_Grid, only: x, y, z
     use TLab_Time, only: itime, rtime
     use TLab_WorkFlow, only: stagger_on
     use FDM, only: g
@@ -187,8 +188,8 @@ contains
         idsp = 0; kdsp = 0
 #endif
 
-        xn => g(1)%nodes
-        zn => g(3)%nodes
+        xn => x
+        zn => z
 
         call FLOW_SHAPE(p_wrk1d)
 
@@ -350,14 +351,11 @@ contains
         integer(wi) bcs(2, 2)
         real(wp) yr
 
-        real(wp), dimension(:), pointer :: yn
-
         ! ###################################################################
         bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
-        yn => g(2)%nodes
         do j = 1, jmax                                              ! Wall-normal velocity
-            profs(j, 1) = Profiles_Calculate(IniK, yn(j))
+            profs(j, 1) = Profiles_Calculate(IniK, y(j))
         end do
         call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), profs(1, 1), profs(1, 2))
         profs(:, 2) = -profs(:, 2)                                  ! Negative of the derivative of f, wall-parallel velocity
@@ -372,7 +370,7 @@ contains
             ! Zero wall-normal derivative of wall-parallel velocity for free-slip and potentialvelocity mode, f=f*tanh
             if (any([BCS_DD, BCS_DN] == flag_wall)) then            ! no-slip at jmin
                 do j = 1, jmax
-                    yr = 0.5_wp*(yn(j) - yn(1))/IniK%thick
+                    yr = 0.5_wp*(y(j) - y(1))/IniK%thick
                     profs(j, 2) = profs(j, 2)*tanh(yr)**2 - &       ! Wall-parallel velocity
                                   profs(j, 1)*tanh(yr)/cosh(yr)**2/IniK%thick
                     profs(j, 1) = profs(j, 1)*tanh(yr)**2           ! Wall-normal velocity
@@ -381,7 +379,7 @@ contains
 
             if (any([BCS_DD, BCS_ND] == flag_wall)) then            ! no-slip at jmax
                 do j = 1, jmax
-                    yr = 0.5_wp*(yn(jmax) - yn(j))/IniK%thick
+                    yr = 0.5_wp*(y(jmax) - y(j))/IniK%thick
                     profs(j, 2) = profs(j, 2)*tanh(yr)**2 + &       ! Wall-parallel velocity
                                   profs(j, 1)*tanh(yr)/cosh(yr)**2/IniK%thick
                     profs(j, 1) = profs(j, 1)*tanh(yr)**2           ! Wall-normal velocity
@@ -434,13 +432,7 @@ contains
         real(wp) xcenter, amplify, params(0)
         type(profiles_dt) :: prof_loc
 
-        real(wp), dimension(:), pointer :: x, y, z
-
         ! ###################################################################
-        ! Define pointers
-        x => g(1)%nodes
-        y => g(2)%nodes
-        z => g(3)%nodes
 
 #ifdef USE_MPI
         idsp = ims_offset_i; kdsp = ims_offset_k
