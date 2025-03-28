@@ -4,8 +4,6 @@ module FDM
     use TLab_Constants, only: wp, wi, roundoff_wp, efile, wfile
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
-    ! use TLab_Memory, only: TLab_Allocate_Real
-    use FDM_PROCS, only: FDM_Bcs_Neumann
     use FDM_Derivative
     use FDM_Interpolate
     use FDM_Integral
@@ -27,10 +25,8 @@ contains
         real(wp), intent(in), optional :: locScale                  ! for consistency check
 
         ! -------------------------------------------------------------------
-        integer(wi) i, ib, ip, ig, nx, ndl, ndr, inb_grid
-        integer(wi) nmin, nmax, nsize, bcs_cases(4)
-
-        integer, parameter :: i1 = 1
+        integer(wi) i, ig, nx, ndl, ndr, inb_grid
+        integer ib, bcs_cases(2)
         logical :: periodic_aux
 
         ! ###################################################################
@@ -116,82 +112,38 @@ contains
         ig = ig + 5
         g%rhs1 => g%memory(:, ig:)
         ig = ig + 7
+        if (g%periodic) then                                        ! modified wavenumber
+            g%mwn1 => g%memory(:, ig)
+            ig = ig + 1
+        end if
+        g%lu1 => g%memory(:, ig:)
+
+        if (g%periodic) then
+            ig = ig + g%nb_diag_1(1) + 2
+        else                            ! biased,  different BCs
+            ig = ig + 5*4
+        end if
 
         ! -------------------------------------------------------------------
         ! uniform grid to calculate Jacobian (used for the stencils below and also as grid spacing in the code).
         g%nodes(:) = [(real(i - 1, wp), i=1, g%size)]
         g%jac(:, 1) = 1.0_wp
 
-        call FDM_Der1_CreateSystem(g, periodic=.false.)
-
-        ! LU decomposition
-        select case (g%nb_diag_1(1))
-        case (3)
-            call TRIDFS(nx, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3))
-        case (5)
-            call PENTADFS2(nx, g%lhs1(:, 1), g%lhs1(:, 2), g%lhs1(:, 3), g%lhs1(:, 4), g%lhs1(:, 5))
-        end select
+        call FDM_Der1_Initialize(g, periodic=.false., bcs_cases=[BCS_DD])
 
         ! Calculating derivative dxds into g%jac(:, 1)
         periodic_aux = g%periodic
         g%periodic = .false.
-        call FDM_Der1_Solve(1, [0, 0], g, g%lhs1, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
+        call FDM_Der1_Solve(1, [0, 0], g, g%lu1, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
         g%periodic = periodic_aux
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform
         g%nodes(:) = nodes(1:nx)
 
-        if (g%periodic) then                                        ! modified wavenumber
-            g%mwn1 => g%memory(:, ig)
-            ig = ig + 1
-        end if
-
-        call FDM_Der1_CreateSystem(g, g%periodic)
+        call FDM_Der1_Initialize(g, periodic=g%periodic, bcs_cases=[BCS_DD, BCS_ND, BCS_DN, BCS_NN])
 
         if (g%periodic) g%mwn1(:) = g%mwn1(:)/g%jac(1, 1)           ! normalized by dx
-
-        ! -------------------------------------------------------------------
-        ! LU decomposition
-        g%lu1 => g%memory(:, ig:)
-
-        g%lu1(:, 1:g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
-        if (g%periodic) then
-            select case (g%nb_diag_1(1))
-            case (3)
-                call TRIDPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
-            case (5)
-                call PENTADPFS(nx, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
-            end select
-
-            ig = ig + g%nb_diag_1(1) + 2
-
-        else                            ! biased,  different BCs
-            bcs_cases(1:4) = [BCS_DD, BCS_ND, BCS_DN, BCS_NN]
-            do ib = 1, 4
-                ip = (ib - 1)*5
-
-                g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
-
-                call FDM_Bcs_Neumann(bcs_cases(ib), g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
-
-                nmin = 1; nmax = nx
-                if (any([BCS_ND, BCS_NN] == bcs_cases(ib))) nmin = nmin + 1
-                if (any([BCS_DN, BCS_NN] == bcs_cases(ib))) nmax = nmax - 1
-                nsize = nmax - nmin + 1
-
-                select case (g%nb_diag_1(1))
-                case (3)
-                    call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
-                case (5)
-                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
-                end select
-
-                ig = ig + 5
-
-            end do
-
-        end if
 
         ! ###################################################################
         ! Check array sizes

@@ -5,6 +5,7 @@ module FDM_Derivative
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_MatMul
+    use FDM_PROCS
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
@@ -54,11 +55,12 @@ module FDM_Derivative
 
     end type fdm_dt
 
-    public :: FDM_Der1_CreateSystem
+    public :: FDM_Der1_Initialize
+    ! public :: FDM_Der1_CreateSystem
     public :: FDM_Der1_Solve
 
     public :: FDM_Der2_Initialize
-    public :: FDM_Der2_CreateSystem
+    ! public :: FDM_Der2_CreateSystem
     public :: FDM_Der2_Solve
 
     integer, parameter, public :: FDM_COM4_JACOBIAN = 4
@@ -71,6 +73,59 @@ module FDM_Derivative
     integer, parameter, public :: FDM_COM4_DIRECT = 17
 
 contains
+    ! ###################################################################
+    ! ###################################################################
+    subroutine FDM_Der1_Initialize(g, periodic, bcs_cases)
+        type(fdm_dt), intent(inout) :: g
+        logical, intent(in) :: periodic
+        integer, intent(in) :: bcs_cases(:)
+
+        ! -------------------------------------------------------------------
+        integer(wi) ib, ip
+        integer(wi) nmin, nmax, nsize
+
+        ! ###################################################################
+        call FDM_Der1_CreateSystem(g, periodic)
+
+        ! -------------------------------------------------------------------
+        ! LU decomposition
+        if (periodic) then
+            g%lu1(:, 1:g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
+
+            select case (g%nb_diag_1(1))
+            case (3)
+                call TRIDPFS(g%size, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5))
+            case (5)
+                call PENTADPFS(g%size, g%lu1(1, 1), g%lu1(1, 2), g%lu1(1, 3), g%lu1(1, 4), g%lu1(1, 5), g%lu1(1, 6), g%lu1(1, 7))
+            end select
+
+        else                            ! biased,  different BCs
+            do ib = 1, size(bcs_cases)
+                ip = (ib - 1)*5
+
+                g%lu1(:, ip + 1:ip + g%nb_diag_1(1)) = g%lhs1(:, 1:g%nb_diag_1(1))
+
+                call FDM_Bcs_Neumann(bcs_cases(ib), g%lu1(:, ip + 1:ip + g%nb_diag_1(1)), g%rhs1(:, 1:g%nb_diag_1(2)), g%rhs1_b, g%rhs1_t)
+
+                nmin = 1; nmax = g%size
+                if (any([BCS_ND, BCS_NN] == bcs_cases(ib))) nmin = nmin + 1
+                if (any([BCS_DN, BCS_NN] == bcs_cases(ib))) nmax = nmax - 1
+                nsize = nmax - nmin + 1
+
+                select case (g%nb_diag_1(1))
+                case (3)
+                    call TRIDFS(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3))
+                case (5)
+                    call PENTADFS2(nsize, g%lu1(nmin:, ip + 1), g%lu1(nmin:, ip + 2), g%lu1(nmin:, ip + 3), g%lu1(nmin:, ip + 4), g%lu1(nmin:, ip + 5))
+                end select
+
+            end do
+
+        end if
+
+        return
+    end subroutine FDM_Der1_Initialize
+
     ! ###################################################################
     ! ###################################################################
     subroutine FDM_Der1_CreateSystem(g, periodic)
