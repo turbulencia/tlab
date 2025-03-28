@@ -1,7 +1,7 @@
 #include "dns_const.h"
 
 program VINTEGRAL
-    use TLab_Constants, only: wp, wi
+    use TLab_Constants, only: wp, wi, fmt_r
     use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Memory, only: imax, jmax, kmax, isize_field, isize_wrk1d, inb_wrk1d, isize_wrk2d, inb_wrk2d, isize_wrk3d, inb_txc, isize_txc_field
     use TLab_WorkFlow, only: TLab_Write_ASCII
@@ -32,7 +32,7 @@ program VINTEGRAL
 
 ! ###################################################################
 ! Initialize
-    imax = 2
+    imax = 1
     jmax = 3
     kmax = 256
     len = imax*jmax
@@ -154,8 +154,8 @@ program VINTEGRAL
             ndr = g%nb_diag_1(2)
             ndl = g%nb_diag_1(1)
 
-            ! f = du1_a
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
+            f = du1_a
+            ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
             f = f + lambda*u
 
             do ib = 1, 2
@@ -416,6 +416,7 @@ contains
         character(len=*), optional :: name
 
         real(wp) dummy, error_l2, error_max
+        character(len=*), parameter :: fmt_loc = '(5(1x, '//fmt_r//'))'
 
         if (present(name)) then
             open (20, file=name)
@@ -426,7 +427,7 @@ contains
         do i = 1, size(u, 2)
             do l = 1, size(u, 1)
                 if (present(name)) then
-                    write (20, 1000) g%nodes(i), u(l, i), w_n(l, i), u(l, i) - w_n(l, i)
+                    write (20, fmt_loc) g%nodes(i), u(l, i), w_n(l, i), u(l, i) - w_n(l, i)
                 end if
                 dummy = dummy + u(l, i)*u(l, i)
                 error_l2 = error_l2 + (u(l, i) - w_n(l, i))**2.0_wp
@@ -443,7 +444,6 @@ contains
         write (*, *) 'Relative Error Linf-norm ...:', error_max/maxval(abs(u))
 
         return
-1000    format(5(1x, e12.5))
     end subroutine check
 
 end program VINTEGRAL
