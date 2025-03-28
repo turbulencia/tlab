@@ -78,15 +78,15 @@ contains
         do ig = 1, 3
             if (g(ig)%size == 1) cycle
 
-            if (g(ig)%nb_diag_2(1) /= 3) then
+            if (g(ig)%der2%nb_diag(1) /= 3) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Undeveloped for more than 3 LHS diagonals in 2. order derivatives.')
                 call TLab_Stop(DNS_ERROR_OPTION)
             end if
 
             if (g(ig)%periodic) then
-                idummy = g(ig)%nb_diag_2(1) + 2
+                idummy = g(ig)%der2%nb_diag(1) + 2
             else
-                idummy = g(ig)%nb_diag_2(1)
+                idummy = g(ig)%der2%nb_diag(1)
             end if
             allocate (fdmDiffusion(ig)%lu(g(ig)%size, idummy, 0:inb_scal))
 
@@ -99,16 +99,16 @@ contains
                 end if
 
                 if (g(ig)%periodic) then                        ! Check routines TRIDPFS and TRIDPSS
-                    fdmDiffusion(ig)%lu(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L; 1. subdiagonal
-                    fdmDiffusion(ig)%lu(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix L; 1/diagonal
-                    fdmDiffusion(ig)%lu(:, 3, is) = g(ig)%lu2(:, 3)         ! matrix U is the same
-                    fdmDiffusion(ig)%lu(:, 4, is) = g(ig)%lu2(:, 4)/dummy   ! matrix L; Additional row/column
-                    fdmDiffusion(ig)%lu(:, 5, is) = g(ig)%lu2(:, 5)         ! matrix U is the same
+                    fdmDiffusion(ig)%lu(:, 1, is) = g(ig)%der2%lu(:, 1)         ! matrix L; 1. subdiagonal
+                    fdmDiffusion(ig)%lu(:, 2, is) = g(ig)%der2%lu(:, 2)*dummy   ! matrix L; 1/diagonal
+                    fdmDiffusion(ig)%lu(:, 3, is) = g(ig)%der2%lu(:, 3)         ! matrix U is the same
+                    fdmDiffusion(ig)%lu(:, 4, is) = g(ig)%der2%lu(:, 4)/dummy   ! matrix L; Additional row/column
+                    fdmDiffusion(ig)%lu(:, 5, is) = g(ig)%der2%lu(:, 5)         ! matrix U is the same
 
                 else                                            ! Check routines TRIDFS and TRIDSS
-                    fdmDiffusion(ig)%lu(:, 1, is) = g(ig)%lu2(:, 1)         ! matrix L is the same
-                    fdmDiffusion(ig)%lu(:, 2, is) = g(ig)%lu2(:, 2)*dummy   ! matrix U; 1/diagonal
-                    fdmDiffusion(ig)%lu(:, 3, is) = g(ig)%lu2(:, 3)/dummy   ! matrix U; 1. superdiagonal
+                    fdmDiffusion(ig)%lu(:, 1, is) = g(ig)%der2%lu(:, 1)         ! matrix L is the same
+                    fdmDiffusion(ig)%lu(:, 2, is) = g(ig)%der2%lu(:, 2)*dummy   ! matrix U; 1/diagonal
+                    fdmDiffusion(ig)%lu(:, 3, is) = g(ig)%der2%lu(:, 3)/dummy   ! matrix U; 1. superdiagonal
 
                 end if
 
@@ -467,7 +467,7 @@ contains
             call OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2d, s, result, dsdx)
         else
             call FDM_Der1_Solve(nlines, bcs(:, 1), g, g%lu1, s, dsdx, wrk2d)
-            call FDM_Der2_Solve(nlines, g, lu2d, s, result, dsdx, wrk2d)
+            call FDM_Der2_Solve(nlines, g%der2, lu2d, s, result, dsdx, wrk2d)
         end if
 
         ! ###################################################################
@@ -569,7 +569,7 @@ contains
         end select
 
         call FDM_Der1_Solve(nlines, bcs(:, 1), g, g%lu1, p_fld, du, wrk2d)
-        call FDM_Der2_Solve(nlines, g, lu2, p_fld, result, du, wrk2d)  ! no splines needed
+        call FDM_Der2_Solve(nlines, g%der2, lu2, p_fld, result, du, wrk2d)  ! no splines needed
 
         nullify (p_fld)
 

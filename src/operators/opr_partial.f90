@@ -168,12 +168,12 @@ contains
         select case (type)
 
         case (OPR_P2)
-            if (g%need_1der) call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
-            call FDM_Der2_Solve(nyz, g, g%lu2, p_b, p_c, p_d, wrk2d)
+            if (g%der2%need_1der) call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
+            call FDM_Der2_Solve(nyz, g%der2, g%der2%lu, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P2_P1)
             call FDM_Der1_Solve(nyz, bcs(:, 1), g, g%lu1, p_b, p_d, wrk2d)
-            call FDM_Der2_Solve(nyz, g, g%lu2, p_b, p_c, p_d, wrk2d)
+            call FDM_Der2_Solve(nyz, g%der2, g%der2%lu, p_b, p_c, p_d, wrk2d)
 
         case (OPR_P1)
             if (ibm_partial) then
@@ -293,12 +293,12 @@ contains
             select case (type)
 
             case (OPR_P2)
-                if (g%need_1der) call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
-                call FDM_Der2_Solve(nxy, g, g%lu2, p_a, p_b, p_c, wrk2d)
+                if (g%der2%need_1der) call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
+                call FDM_Der2_Solve(nxy, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
                 call FDM_Der1_Solve(nxy, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
-                call FDM_Der2_Solve(nxy, g, g%lu2, p_a, p_b, p_c, wrk2d)
+                call FDM_Der2_Solve(nxy, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then
@@ -405,12 +405,12 @@ contains
             select case (type)
 
             case (OPR_P2)
-                if (g%need_1der) call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
-                call FDM_Der2_Solve(nxz, g, g%lu2, p_a, p_b, p_c, wrk2d)
+                if (g%der2%need_1der) call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
+                call FDM_Der2_Solve(nxz, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P2_P1)
                 call FDM_Der1_Solve(nxz, bcs(:, 1), g, g%lu1, p_a, p_c, wrk2d)
-                call FDM_Der2_Solve(nxz, g, g%lu2, p_a, p_b, p_c, wrk2d)
+                call FDM_Der2_Solve(nxz, g%der2, g%der2%lu, p_a, p_b, p_c, wrk2d)
 
             case (OPR_P1)
                 if (ibm_partial) then

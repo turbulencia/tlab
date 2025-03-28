@@ -109,17 +109,17 @@ contains
 
         imode_elliptic = TYPE_FACTORIZE         ! default is the finite-difference method used for the derivatives
         fdm_loc%mode_fdm1 = g(2)%mode_fdm1      ! to impose zero divergence down to round-off error in the interior points
-        fdm_loc%mode_fdm2 = g(2)%mode_fdm2
+        fdm_loc%der2%mode_fdm = g(2)%der2%mode_fdm
 
         call ScanFile_Char(bakfile, inifile, 'Main', 'EllipticOrder', 'void', sRes)
         if (trim(adjustl(sRes)) == 'compactdirect4') then
             imode_elliptic = TYPE_DIRECT
             fdm_loc%mode_fdm1 = FDM_COM4_DIRECT
-            fdm_loc%mode_fdm2 = FDM_COM4_DIRECT
+            fdm_loc%der2%mode_fdm = FDM_COM4_DIRECT
         else if (trim(adjustl(sRes)) == 'compactdirect6') then
             imode_elliptic = TYPE_DIRECT
             fdm_loc%mode_fdm1 = FDM_COM6_DIRECT
-            fdm_loc%mode_fdm2 = FDM_COM6_DIRECT
+            fdm_loc%der2%mode_fdm = FDM_COM6_DIRECT
         end if
 
         ! ###################################################################
@@ -157,8 +157,8 @@ contains
             ! OPR_Poisson => OPR_Poisson_FourierXZ_Direct_Old
             OPR_Helmholtz => OPR_Helmholtz_FourierXZ_Direct
 
-            ndl = fdm_loc%nb_diag_2(1)
-            ndr = fdm_loc%nb_diag_2(2)
+            ndl = fdm_loc%der2%nb_diag(1)
+            ndr = fdm_loc%der2%nb_diag(2)
             nd = ndl
             allocate (fdm_int2(isize_line, kmax))
             call TLab_Allocate_Real(__FILE__, rhs_d, [g(2)%size, nd], 'rhs_d')
@@ -215,9 +215,9 @@ contains
                 case (TYPE_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda(i, k) = g(1)%mwn2(iglobal) + g(3)%mwn2(kglobal)
+                        lambda(i, k) = g(1)%der2%mwn(iglobal) + g(3)%der2%mwn(kglobal)
                     else
-                        lambda(i, k) = g(1)%mwn2(iglobal)
+                        lambda(i, k) = g(1)%der2%mwn(iglobal)
                     end if
 
                     ! Compatibility constraint. The reference value of p at the lower boundary will be set to zero
@@ -228,7 +228,7 @@ contains
                     end if
 
                     ! free memory that is independent of lambda
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), fdm_int2(i, k))
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k), fdm_int2(i, k))
                     rhs_d(:, :) = fdm_int2(i, k)%rhs(:, :)
                     if (allocated(fdm_int2(i, k)%rhs)) deallocate (fdm_int2(i, k)%rhs)
 
@@ -383,8 +383,8 @@ contains
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
 
-        ndl = fdm_loc%nb_diag_2(1)
-        ndr = fdm_loc%nb_diag_2(2)
+        ndl = fdm_loc%der2%nb_diag(1)
+        ndr = fdm_loc%der2%nb_diag(2)
 
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
@@ -438,7 +438,7 @@ contains
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
                     fdm_int2_loc%bc = ibc_loc
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), fdm_int2_loc)
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k), fdm_int2_loc)
                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, i), u(:, i), wrk2d)
 
                 else                        ! use precalculated LU factorization
@@ -634,8 +634,8 @@ contains
 !         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
 !         isize_line = nx/2 + 1
-!         ndl = fdm_loc%nb_diag_2(1)
-!         ndr = fdm_loc%nb_diag_2(2)
+!         ndl = fdm_loc%der2%nb_diag(1)
+!         ndr = fdm_loc%der2%nb_diag(2)
 
 !         ! #######################################################################
 !         ! Fourier transform of forcing term; output of this section in array tmp1
@@ -690,7 +690,7 @@ contains
 !                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
 !                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 !                     fdm_int2_loc%bc = ibc_loc
-!                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k), fdm_int2_loc)
+!                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k), fdm_int2_loc)
 !                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
 !                 else                        ! use precalculated LU factorization
@@ -803,7 +803,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 ndl = fdm_loc%nb_diag_1(1)
-                ndr = fdm_loc%nb_diag_2(2)
+                ndr = fdm_loc%der2%nb_diag(2)
 
                 fdm_int1_loc(BCS_MIN)%bc = BCS_MIN
                 fdm_int1_loc(BCS_MIN)%mode_fdm = fdm_loc%mode_fdm1
@@ -883,8 +883,8 @@ contains
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
         isize_line = nx/2 + 1
-        ndl = fdm_loc%nb_diag_2(1)
-        ndr = fdm_loc%nb_diag_2(2)
+        ndl = fdm_loc%der2%nb_diag(1)
+        ndr = fdm_loc%der2%nb_diag(2)
 
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
@@ -923,7 +923,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 fdm_int2_loc%bc = ibc
-                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%lhs2(:, 1:ndl), fdm_loc%rhs2(:, 1:ndr), lambda(i, k) - alpha, fdm_int2_loc)
+                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2%lhs(:, 1:ndl), fdm_loc%der2%rhs(:, 1:ndr), lambda(i, k) - alpha, fdm_int2_loc)
                 p_wrk1d(1:2, 11) = r_bcs(1:2)
                 p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
                 call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)

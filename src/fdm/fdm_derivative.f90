@@ -13,6 +13,20 @@ module FDM_Derivative
     implicit none
     private
 
+    type, public :: fdm_derivative_dt
+        sequence
+        integer mode_fdm                        ! finite-difference method
+        integer(wi) size                        ! number of grid points, for convenience in the code
+        logical :: periodic = .false.
+        logical :: need_1der = .false.          ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
+        integer nb_diag(2)                      ! # of left and right diagonals  (max 5/7)
+        real(wp) :: rhs_b(4, 7), rhs_t(4, 7)    ! RHS data for Neumann boundary conditions, max. # of diagonals is 7, # rows is 7/2+1
+        real(wp), allocatable :: lhs(:, :)      ! memory space for LHS
+        real(wp), allocatable :: rhs(:, :)      ! memory space for RHS
+        real(wp), allocatable :: mwn(:)         ! memory space for modified wavenumbers
+        real(wp), allocatable :: lu(:, :)       ! memory space for LU decomposition
+    end type fdm_derivative_dt
+
     ! This type should be split into 2 derivative types and the interpolation data moved to only fdm.
     type, public :: fdm_dt
         sequence
@@ -34,13 +48,7 @@ module FDM_Derivative
         real(wp), pointer :: mwn1(:)            ! pointer to modified wavenumbers
         real(wp), pointer :: lu1(:, :)          ! pointer to LU decomposition for 1. derivative
         !
-        integer mode_fdm2                       ! finite-difference method for 2. order derivative
-        integer nb_diag_2(2)                    ! # of left and right diagonals 2. order derivative (max 5/7)
-        real(wp), pointer :: lhs2(:, :)         ! pointer to LHS for 2. derivative
-        real(wp), pointer :: rhs2(:, :)         ! pointer to RHS for 2. derivative
-        real(wp), pointer :: mwn2(:)            ! pointer to modified wavenumbers
-        real(wp), pointer :: lu2(:, :)          ! pointer to LU decomposition for 2. derivative
-        logical :: need_1der = .false.          ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
+        type(fdm_derivative_dt) :: der2
         !
         type(fdm_interpol_dt) :: intl
 
@@ -49,6 +57,7 @@ module FDM_Derivative
     public :: FDM_Der1_CreateSystem
     public :: FDM_Der1_Solve
 
+    public :: FDM_Der2_Initialize
     public :: FDM_Der2_CreateSystem
     public :: FDM_Der2_Solve
 
@@ -194,42 +203,97 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_Der2_CreateSystem(g, periodic)
-        type(fdm_dt), intent(inout) :: g
-        logical, intent(in) :: periodic
+    subroutine FDM_Der2_Initialize(x, dx, g, periodic, uniform)
+        real(wp), intent(in) :: x(:)                    ! node positions
+        real(wp), intent(inout) :: dx(:, :)             ! Jacobians
+        type(fdm_derivative_dt), intent(inout) :: g     ! fdm plan for 2. order derivative
+        logical, intent(in) :: periodic, uniform
+
+        ! ###################################################################
+        call FDM_Der2_CreateSystem(x, dx, g, periodic, uniform)
+
+        ! -------------------------------------------------------------------
+        ! LU decomposition
+        if (allocated(g%lu)) deallocate (g%lu)
+        if (g%periodic) then
+            allocate (g%lu(g%size, g%nb_diag(1) + 2))
+        else
+            allocate (g%lu(g%size, g%nb_diag(1)*1))          ! Only 1 bcs
+        end if
+
+        g%lu(:, 1:g%nb_diag(1)) = g%lhs(:, 1:g%nb_diag(1))
+        if (g%periodic) then
+            select case (g%nb_diag(1))
+            case (3)
+                call TRIDPFS(g%size, g%lu(1, 1), g%lu(1, 2), g%lu(1, 3), g%lu(1, 4), g%lu(1, 5))
+            end select
+
+        else
+            select case (g%nb_diag(1))
+            case (3)
+                call TRIDFS(g%size, g%lu(:, 1), g%lu(:, 2), g%lu(:, 3))
+            end select
+
+        end if
+
+        return
+    end subroutine FDM_Der2_Initialize
+
+    ! ###################################################################
+    ! ###################################################################
+    subroutine FDM_Der2_CreateSystem(x, dx, g, periodic, uniform)
+        real(wp), intent(in) :: x(:)                    ! node positions
+        real(wp), intent(inout) :: dx(:, :)             ! Jacobians
+        type(fdm_derivative_dt), intent(inout) :: g     ! fdm plan for 2. order derivative
+        logical, intent(in) :: periodic, uniform
 
         ! -------------------------------------------------------------------
         real(wp) :: coef(5)
         integer(wi) i, nx
+        integer, parameter :: ndl_max = 5, ndr_max = 7
 
         ! ###################################################################
-        select case (g%mode_fdm2)
+        g%size = size(x)                ! # grid points
+        nx = g%size                     ! for code readability
+
+        if (allocated(g%lhs)) deallocate (g%lhs)
+        if (allocated(g%rhs)) deallocate (g%rhs)
+        if (allocated(g%mwn)) deallocate (g%mwn)
+        allocate (g%lhs(nx, ndl_max))
+        allocate (g%rhs(nx, ndr_max + ndl_max))     ! ndl_max is space for du correction in nonuniform case
+        allocate (g%mwn(nx))
+
+        g%periodic = periodic
+
+        ! -------------------------------------------------------------------
+        select case (g%mode_fdm)
         case (FDM_COM4_JACOBIAN)
-            call FDM_C2N4_Jacobian(g%size, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef, periodic)
-            if (.not. g%uniform) g%need_1der = .true.
+            call FDM_C2N4_Jacobian(g%size, dx, g%lhs, g%rhs, g%nb_diag, coef, periodic)
+            if (.not. uniform) g%need_1der = .true.
 
         case (FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA)
-            call FDM_C2N6_Jacobian(g%size, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef, periodic)
-            if (.not. g%uniform) g%need_1der = .true.
+            call FDM_C2N6_Jacobian(g%size, dx, g%lhs, g%rhs, g%nb_diag, coef, periodic)
+            if (.not. uniform) g%need_1der = .true.
 
         case (FDM_COM6_JACOBIAN_HYPER)
-            call FDM_C2N6_Hyper_Jacobian(g%size, g%jac(:, 2), g%lhs2, g%rhs2, g%nb_diag_2, coef, periodic)
-            if (.not. g%uniform) g%need_1der = .true.
+            call FDM_C2N6_Hyper_Jacobian(g%size, dx, g%lhs, g%rhs, g%nb_diag, coef, periodic)
+            if (.not. uniform) g%need_1der = .true.
 
         case (FDM_COM4_DIRECT)
-            call FDM_C2N4_Direct(g%size, g%nodes, g%lhs2, g%rhs2, g%nb_diag_2)
+            call FDM_C2N4_Direct(g%size, x, g%lhs, g%rhs, g%nb_diag)
+            g%need_1der = .false.
 
         case (FDM_COM6_DIRECT)
-            call FDM_C2N6_Direct(g%size, g%nodes, g%lhs2, g%rhs2, g%nb_diag_2)
+            call FDM_C2N6_Direct(g%size, x, g%lhs, g%rhs, g%nb_diag)
+            g%need_1der = .false.
 
         end select
 
         ! -------------------------------------------------------------------
         ! modified wavenumbers
         if (periodic) then
-            nx = g%size
 
-#define wn(i) g%mwn2(i)
+#define wn(i) g%mwn(i)
 
             do i = 1, nx        ! wavenumbers, the independent variable to construct the modified ones
                 if (i <= nx/2 + 1) then
@@ -239,8 +303,8 @@ contains
                 end if
             end do
 
-            g%mwn2(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wn(:))) + coef(4)*(1.0_wp - cos(2.0_wp*wn(:))) + coef(5)*(1.0_wp - cos(3.0_wp*wn(:)))) &
-                        /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(2.0_wp*wn(:)))
+            g%mwn(:) = 2.0_wp*(coef(3)*(1.0_wp - cos(wn(:))) + coef(4)*(1.0_wp - cos(2.0_wp*wn(:))) + coef(5)*(1.0_wp - cos(3.0_wp*wn(:)))) &
+                       /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(2.0_wp*wn(:)))
 
 #undef wn
 
@@ -251,10 +315,10 @@ contains
 
     ! ###################################################################################
     ! ###################################################################################
-    subroutine FDM_Der2_Solve(nlines, g, lu2, u, result, du, wrk2d)
-        integer(wi), intent(in) :: nlines                  ! # of lines to be solved
-        type(fdm_dt), intent(in) :: g
-        real(wp), intent(in) :: lu2(:, :)
+    subroutine FDM_Der2_Solve(nlines, g, lu, u, result, du, wrk2d)
+        integer(wi), intent(in) :: nlines                   ! # of lines to be solved
+        type(fdm_derivative_dt), intent(in) :: g            ! plan for 2. order derivative
+        real(wp), intent(in) :: lu(:, :)
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(in) :: du(nlines, g%size)          ! 1. derivative for correction in case of Jacobian formulation
         real(wp), intent(out) :: result(nlines, g%size)
@@ -263,37 +327,38 @@ contains
         integer(wi) ip
 
         ! ###################################################################
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm2)) then
-            select case (g%nb_diag_2(2))
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+            select case (g%nb_diag(2))
             case (5)
-                call MatMul_5d(g%rhs2(:, 1:5), u, result)
+                call MatMul_5d(g%rhs(:, 1:5), u, result)
             end select
         else
-            select case (g%nb_diag_2(2))
+            select case (g%nb_diag(2))
             case (5)
-                call MatMul_5d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), &
+                call MatMul_5d_sym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), &
                                    u, result, g%periodic)
             case (7)
-                call MatMul_7d_sym(g%size, nlines, g%rhs2(:, 1), g%rhs2(:, 2), g%rhs2(:, 3), g%rhs2(:, 4), g%rhs2(:, 5), g%rhs2(:, 6), g%rhs2(:, 7), &
+                call MatMul_7d_sym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), g%rhs(:, 6), g%rhs(:, 7), &
                                    u, result, g%periodic)
             end select
-            if (g%need_1der) then
-                ip = g%nb_diag_2(2)      ! add Jacobian correction A_2 dx2 du
-                ! so far, only tridiagonal systems
-                call MatMul_3d_add(g%size, nlines, g%rhs2(:, ip + 1), g%rhs2(:, ip + 2), g%rhs2(:, ip + 3), du, result)
-            end if
+        end if
+
+        if (g%need_1der) then
+            ip = g%nb_diag(2)      ! add Jacobian correction A_2 dx2 du
+            ! so far, only tridiagonal systems
+            call MatMul_3d_add(g%size, nlines, g%rhs(:, ip + 1), g%rhs(:, ip + 2), g%rhs(:, ip + 3), du, result)
         end if
 
         if (g%periodic) then
-            select case (g%nb_diag_2(1))
+            select case (g%nb_diag(1))
             case (3)
-                call TRIDPSS(g%size, nlines, lu2(1, 1), lu2(1, 2), lu2(1, 3), lu2(1, 4), lu2(1, 5), &
+                call TRIDPSS(g%size, nlines, lu(1, 1), lu(1, 2), lu(1, 3), lu(1, 4), lu(1, 5), &
                              result, wrk2d)
             end select
         else
-            select case (g%nb_diag_2(1))
+            select case (g%nb_diag(1))
             case (3)
-                call TRIDSS(g%size, nlines, lu2(:, 1), lu2(:, 2), lu2(:, 3), &
+                call TRIDSS(g%size, nlines, lu(:, 1), lu(:, 2), lu(:, 3), &
                             result)
             end select
         end if

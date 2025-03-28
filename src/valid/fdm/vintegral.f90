@@ -87,7 +87,7 @@ program VINTEGRAL
     end if
 
     g%mode_fdm1 = FDM_COM6_JACOBIAN     ! default
-    g%mode_fdm2 = g%mode_fdm1
+    g%der2%mode_fdm = g%mode_fdm1
     call FDM_Initialize(x, g, fdmi)
     ndr = g%nb_diag_1(2)
     ndl = g%nb_diag_1(1)
@@ -149,7 +149,7 @@ program VINTEGRAL
             print *, new_line('a'), fdm_names(im)
 
             g%mode_fdm1 = fdm_cases(im)
-            g%mode_fdm2 = FDM_COM4_JACOBIAN     ! not used
+            g%der2%mode_fdm = FDM_COM4_JACOBIAN     ! not used
             call FDM_Initialize(x, g)
             ndr = g%nb_diag_1(2)
             ndl = g%nb_diag_1(1)
@@ -309,10 +309,10 @@ program VINTEGRAL
         allocate (bcs(len, 2))
 
         g%mode_fdm1 = FDM_COM6_JACOBIAN
-        g%mode_fdm2 = FDM_COM6_DIRECT
+        g%der2%mode_fdm = FDM_COM6_DIRECT
         call FDM_Initialize(x, g)
-        ndr = g%nb_diag_2(2)
-        ndl = g%nb_diag_2(1)
+        ndr = g%der2%nb_diag(2)
+        ndl = g%der2%nb_diag(1)
 
         ! call random_seed()
         ! call random_number(u)
@@ -346,7 +346,7 @@ program VINTEGRAL
             end select
 
             fdmi(2)%bc = ibc
-            call FDM_Int2_Initialize(g%nodes(:), g%lhs2(:, 1:ndl), g%rhs2(:, 1:ndr), lambda, fdmi(2))
+            call FDM_Int2_Initialize(g%nodes(:), g%der2%lhs(:, 1:ndl), g%der2%rhs(:, 1:ndr), lambda, fdmi(2))
 
             call FDM_Int2_Solve(len, fdmi(2), fdmi(2)%rhs, f, w_n, wrk2d)
             call check(u, w_n, 'integral.dat')
@@ -370,7 +370,7 @@ program VINTEGRAL
             print *, new_line('a'), fdm_names(im)
 
             g%mode_fdm1 = fdm_cases(im)
-            g%mode_fdm2 = FDM_COM4_JACOBIAN ! not used
+            g%der2%mode_fdm = FDM_COM4_JACOBIAN ! not used
             call FDM_Initialize(x, g)
             ndr = g%nb_diag_1(2)
             ndl = g%nb_diag_1(1)

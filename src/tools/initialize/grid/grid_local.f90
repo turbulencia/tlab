@@ -113,7 +113,7 @@ contains
         g%uniform = .true.
         g%periodic = .false.
         g%mode_fdm1 = FDM_COM6_JACOBIAN
-        g%mode_fdm2 = FDM_COM6_JACOBIAN
+        g%der2%mode_fdm = FDM_COM6_JACOBIAN
         call FDM_Initialize(x, g, fdmi)
         ! x(1) is already set
         call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, rhs(:), result(:), aux)

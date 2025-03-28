@@ -89,7 +89,7 @@ program VPARTIAL
     end if
 
     g%mode_fdm1 = FDM_COM6_JACOBIAN     ! default
-    g%mode_fdm2 = g%mode_fdm1
+    g%der2%mode_fdm = g%mode_fdm1
     call FDM_Initialize(x, g)
     ndr = g%nb_diag_1(2)
     ndl = g%nb_diag_1(1)
@@ -174,11 +174,11 @@ program VPARTIAL
             print *, new_line('a'), fdm_names(im)
 
             g%mode_fdm1 = fdm_cases(im)
-            g%mode_fdm2 = fdm_cases(im)
+            g%der2%mode_fdm = fdm_cases(im)
             call FDM_Initialize(x, g)
 
             call FDM_Der1_Solve(len, bcs_aux(:, 1), g, g%lu1, u, du1_n, wrk2d)  ! I need du1_n in Jacobian formulation
-            call FDM_Der2_Solve(len, g, g%lu2, u, du2_n1, du1_n, wrk2d)
+            call FDM_Der2_Solve(len, g%der2, g%der2%lu, u, du2_n1, du1_n, wrk2d)
 
             call check(u, du2_a, du2_n1, 'partial.dat')
 
