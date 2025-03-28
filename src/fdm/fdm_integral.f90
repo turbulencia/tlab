@@ -24,11 +24,9 @@ module FDM_Integral
         real(wp), allocatable :: lhs(:, :)          ! Often overwritten to LU decomposition.
         real(wp), allocatable :: rhs(:, :)
     end type fdm_integral_dt
-    ! This type is used in elliptic operators for difference eigenvalues. This can lead to fragmented memory.
+    ! This type is used in elliptic operators for different eigenvalues. This can lead to fragmented memory.
     ! One could use pointers instead of allocatable for lhs and rhs, and point the pointers to the
     ! corresponding memory space.
-
-    type(fdm_integral_dt), public :: fdm_Int0(2)    ! Global integral plan for lambda = 0
 
     public FDM_Int1_Initialize                      ! Prepare to solve u' +\lambda u = f
     public FDM_Int1_CreateSystem
@@ -57,17 +55,18 @@ contains
     !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
     !#
     !########################################################################
-    subroutine FDM_Int1_Initialize(x, g, lambda, fdmi)
+    subroutine FDM_Int1_Initialize(x, g, lambda, ibc, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
         type(fdm_derivative_dt), intent(in) :: g        ! derivative plan to be inverted
         real(wp), intent(in) :: lambda                  ! system constant
+        integer, intent(in) :: ibc                      ! type of boundary condition
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
         integer(wi) nx, nd
 
         !########################################################################
-        call FDM_Int1_CreateSystem(x, g, lambda, fdmi)
+        call FDM_Int1_CreateSystem(x, g, lambda, ibc, fdmi)
 
         ! LU decomposition
         nx = size(fdmi%lhs, 1)              ! # of grid points
@@ -89,10 +88,11 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine FDM_Int1_CreateSystem(x, g, lambda, fdmi)
+    subroutine FDM_Int1_CreateSystem(x, g, lambda, ibc, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
         type(fdm_derivative_dt), intent(in) :: g        ! derivative plan to be inverted
         real(wp), intent(in) :: lambda                  ! system constant
+        integer, intent(in) :: ibc                      ! type of boundary condition
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
@@ -113,7 +113,9 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
+        fdmi%mode_fdm = g%mode_fdm
         fdmi%lambda = lambda
+        fdmi%bc = ibc
 
         if (allocated(fdmi%lhs)) deallocate (fdmi%lhs)
         if (allocated(fdmi%rhs)) deallocate (fdmi%rhs)
@@ -329,17 +331,18 @@ contains
     !# System normalized s.t. 1. upper-diagonal in B is 1 (except at boundaries)
     !#
     !########################################################################
-    subroutine FDM_Int2_Initialize(x, g, lambda2, fdmi)
+    subroutine FDM_Int2_Initialize(x, g, lambda2, ibc, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
         type(fdm_derivative_dt), intent(in) :: g        ! derivative plan to be inverted
         real(wp), intent(in) :: lambda2                 ! system constant
+        integer, intent(in) :: ibc                      ! type of boundary condition
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
         integer(wi) nx, nd
 
         !########################################################################
-        call FDM_Int2_CreateSystem(x, g, lambda2, fdmi)
+        call FDM_Int2_CreateSystem(x, g, lambda2, ibc, fdmi)
 
         ! LU decomposition
         nx = size(fdmi%lhs, 1)              ! # of grid points
@@ -363,10 +366,11 @@ contains
     !########################################################################
     !########################################################################
     ! Follows FDM_Int1_CreateSystem very much (see notes)
-    subroutine FDM_Int2_CreateSystem(x, g, lambda2, fdmi)
+    subroutine FDM_Int2_CreateSystem(x, g, lambda2, ibc, fdmi)
         real(wp), intent(in) :: x(:)                    ! node positions
         type(fdm_derivative_dt), intent(in) :: g        ! derivative plan to be inverted
         real(wp), intent(in) :: lambda2                 ! system constant
+        integer, intent(in) :: ibc                      ! type of boundary condition
         type(fdm_integral_dt), intent(inout) :: fdmi    ! int_plan to be created; inout because otherwise allocatable arrays are deallocated
 
         ! -------------------------------------------------------------------
@@ -387,7 +391,9 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
+        fdmi%mode_fdm = g%mode_fdm
         fdmi%lambda = lambda2
+        fdmi%bc = ibc
 
         if (allocated(fdmi%lhs)) deallocate (fdmi%lhs)
         if (allocated(fdmi%rhs)) deallocate (fdmi%rhs)

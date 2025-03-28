@@ -16,7 +16,7 @@ program VBURGERS
     use TLabMPI_VARS
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM_Integral, only: fdm_Int0
+    use FDM, only: fdm_Int0
     use NavierStokes, only: NavierStokes_Initialize_Parameters, visc
     use TLab_Grid
     use IO_Fields

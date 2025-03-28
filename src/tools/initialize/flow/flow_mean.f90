@@ -4,7 +4,7 @@
 module FLOW_MEAN
     use TLab_Constants, only: wp, wi, efile
     use FDM, only: g
-    use FDM_Integral, only: fdm_Int0
+    use FDM, only: fdm_Int0
     use TLab_WorkFlow, only: imode_sim
     use TLab_Memory, only: imax, jmax, kmax, inb_scal
     use Tlab_Background, only: qbg, pbg, rbg, tbg, hbg, sbg

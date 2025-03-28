@@ -26,7 +26,7 @@ program VISUALS
     use TLab_Memory, only: isize_wrk3d
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM_Integral, only: fdm_Int0
+    use FDM, only: fdm_Int0
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background

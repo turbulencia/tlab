@@ -189,15 +189,11 @@ contains
                         lambda(i, k) = g(1)%der1%mwn(iglobal)**2.0
                     end if
 
-                    fdm_int1(BCS_MIN, i, k)%bc = BCS_MIN
-                    fdm_int1(BCS_MIN, i, k)%mode_fdm = fdm_loc%der1%mode_fdm
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                             sqrt(lambda(i, k)), fdm_int1(BCS_MIN, i, k))
+                                             sqrt(lambda(i, k)), BCS_MIN, fdm_int1(BCS_MIN, i, k))
 
-                    fdm_int1(BCS_MAX, i, k)%bc = BCS_MAX
-                    fdm_int1(BCS_MAX, i, k)%mode_fdm = fdm_loc%der1%mode_fdm
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                             -sqrt(lambda(i, k)), fdm_int1(BCS_MAX, i, k))
+                                             -sqrt(lambda(i, k)), BCS_MAX, fdm_int1(BCS_MAX, i, k))
 
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                     else                                        ! free memory that is independent of lambda
@@ -223,13 +219,12 @@ contains
 
                     ! Compatibility constraint. The reference value of p at the lower boundary will be set to zero
                     if (iglobal == 1 .and. kglobal == 1) then
-                        fdm_int2(i, k)%bc = BCS_DN
+                        call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), BCS_DN, fdm_int2(i, k))
                     else
-                        fdm_int2(i, k)%bc = BCS_NN
+                        call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), BCS_NN, fdm_int2(i, k))
                     end if
 
                     ! free memory that is independent of lambda
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), fdm_int2(i, k))
                     rhs_d(:, :) = fdm_int2(i, k)%rhs(:, :)
                     if (allocated(fdm_int2(i, k)%rhs)) deallocate (fdm_int2(i, k)%rhs)
 
@@ -438,8 +433,7 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
-                    fdm_int2_loc%bc = ibc_loc
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), fdm_int2_loc)
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), ibc_loc, fdm_int2_loc)
                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, i), u(:, i), wrk2d)
 
                 else                        ! use precalculated LU factorization
@@ -691,7 +685,7 @@ contains
 !                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
 !                     ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
 !                     fdm_int2_loc%bc = ibc_loc
-!                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), fdm_int2_loc)
+!                     call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), ibc_loc, fdm_int2_loc)
 !                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)
 
 !                 else                        ! use precalculated LU factorization
@@ -754,9 +748,6 @@ contains
 
         target tmp1, tmp2
 
-        ! -----------------------------------------------------------------------
-        integer(wi) ndl, ndr
-
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
@@ -803,18 +794,11 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                ndl = fdm_loc%der1%nb_diag(1)
-                ndr = fdm_loc%der2%nb_diag(2)
-
-                fdm_int1_loc(BCS_MIN)%bc = BCS_MIN
-                fdm_int1_loc(BCS_MIN)%mode_fdm = fdm_loc%der1%mode_fdm
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                         sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MIN))
+                                         sqrt(lambda(i, k) - alpha), BCS_MIN, fdm_int1_loc(BCS_MIN))
 
-                fdm_int1_loc(BCS_MAX)%bc = BCS_MAX
-                fdm_int1_loc(BCS_MAX)%mode_fdm = fdm_loc%der1%mode_fdm
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                         -sqrt(lambda(i, k) - alpha), fdm_int1_loc(BCS_MAX))
+                                         -sqrt(lambda(i, k) - alpha), BCS_MAX, fdm_int1_loc(BCS_MAX))
 
                 select case (ibc)
                 case (3) ! Neumann   & Neumann   BCs
@@ -923,8 +907,7 @@ contains
                 j = ny + 2; ip = (j - 1)*isize_line + i; bcs(2) = c_tmp1(ip, k) ! Dirichlet or Neumann
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                fdm_int2_loc%bc = ibc
-                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k) - alpha, fdm_int2_loc)
+                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k) - alpha, ibc, fdm_int2_loc)
                 p_wrk1d(1:2, 11) = r_bcs(1:2)
                 p_wrk1d(ny - 1:ny, 12) = r_bcs(3:4)
                 call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, p_wrk1d(:, 9), p_wrk1d(:, 11), wrk2d)

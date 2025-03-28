@@ -162,9 +162,7 @@ program VINTEGRAL
                 ibc = bcs_cases(ib)
                 print *, new_line('a'), 'Bcs case ', ibc
 
-                fdmi(ib)%bc = ibc
-                fdmi(ib)%mode_fdm = g%der1%mode_fdm
-                call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, fdmi(ib))
+                call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, ibc, fdmi(ib))
 
                 ! bcs
                 select case (ibc)
@@ -249,13 +247,9 @@ program VINTEGRAL
         write (*, *) 'Eigenvalue ?'
         read (*, *) lambda
 
-        fdmi(BCS_MIN)%bc = BCS_MIN
-        fdmi(BCS_MIN)%mode_fdm = g%der1%mode_fdm
-        call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, fdmi(BCS_MIN))
+        call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, BCS_MIN, fdmi(BCS_MIN))
 
-        fdmi(BCS_MAX)%bc = BCS_MAX
-        fdmi(BCS_MAX)%mode_fdm = g%der1%mode_fdm
-        call FDM_Int1_Initialize(g%nodes(:), g%der1, -lambda, fdmi(BCS_MAX))
+        call FDM_Int1_Initialize(g%nodes(:), g%der1, -lambda, BCS_MAX, fdmi(BCS_MAX))
 
         allocate (bcs(len, 2))
         ! call random_seed()
@@ -345,8 +339,7 @@ program VINTEGRAL
                 w_n(:, 1) = du1_n(:, 1); w_n(:, kmax) = du1_n(:, kmax)
             end select
 
-            fdmi(2)%bc = ibc
-            call FDM_Int2_Initialize(g%nodes(:), g%der2, lambda, fdmi(2))
+            call FDM_Int2_Initialize(g%nodes(:), g%der2, lambda, ibc, fdmi(2))
 
             call FDM_Int2_Solve(len, fdmi(2), fdmi(2)%rhs, f, w_n, wrk2d)
             call check(u, w_n, 'integral.dat')
@@ -379,13 +372,9 @@ program VINTEGRAL
                 ibc = bcs_cases(ib)
                 print *, new_line('a'), 'Bcs case ', ibc
 
-                fdmi(ib)%bc = ibc
-                fdmi(ib)%mode_fdm = g%der1%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, 0.0_wp, fdmi(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, 0.0_wp, ibc, fdmi(ib))
 
-                fdmi_test(ib)%bc = fdmi(ib)%bc
-                fdmi_test(ib)%mode_fdm = fdmi(ib)%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, 1.0_wp, fdmi_test(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, 1.0_wp, ibc, fdmi_test(ib))
 
                 call check(fdmi(ib)%rhs, fdmi_test(ib)%rhs, 'integral.dat')
                 ! print*,fdmi(ib)%rhs_b
@@ -394,9 +383,7 @@ program VINTEGRAL
                 ! print*,fdmi_test(ib)%rhs_t
 
                 ! checking linearity in lhs
-                fdmi_test_lambda(ib)%bc = fdmi(ib)%bc
-                fdmi_test_lambda(ib)%mode_fdm = fdmi(ib)%mode_fdm
-                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, lambda, fdmi_test_lambda(ib))
+                call FDM_Int1_CreateSystem(g%nodes(:), g%der1, lambda, fdmi(ib)%bc, fdmi_test_lambda(ib))
 
                 call check(fdmi(ib)%lhs + lambda*(fdmi_test(ib)%lhs - fdmi(ib)%lhs), &
                            fdmi_test_lambda(ib)%lhs, 'integral.dat')

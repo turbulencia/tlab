@@ -30,7 +30,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 #endif
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM, only: g
-    use FDM_Integral, only: fdm_Int0
+    use FDM, only: fdm_Int0
     use Thermodynamics, only: imixture, thermo_param, itransport
     use NavierStokes
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source

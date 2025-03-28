@@ -8,7 +8,7 @@ subroutine RHS_PART_1()
     use TLab_Pointers_3D, only: pointers3d_dt
     use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
-    use FDM_Integral, only: fdm_Int0
+    use FDM, only: fdm_Int0
     use NavierStokes, only: visc, settling, stokes
     use TLab_Arrays
     use DNS_ARRAYS

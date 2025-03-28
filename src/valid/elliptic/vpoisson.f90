@@ -22,7 +22,7 @@ program VPOISSON
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM_Integral, only: fdm_Int0
+    use FDM, only: fdm_Int0
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Tlab_Background, only: TLab_Initialize_Background
     use TLab_Grid

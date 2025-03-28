@@ -27,7 +27,8 @@ module FDM
 
     end type fdm_dt
 
-    type(fdm_dt), public :: g(3)                ! fdm plans along 3 directions
+    type(fdm_dt), public :: g(3)                    ! fdm derivative plans along 3 directions
+    type(fdm_integral_dt), public :: fdm_Int0(2)    ! fdm integral plans along Oy (ode for lambda = 0)
 
     public :: FDM_Initialize
 
@@ -41,7 +42,7 @@ contains
         real(wp), intent(in), optional :: locScale                  ! for consistency check
 
         ! -------------------------------------------------------------------
-        integer(wi) i, nx, ndl, ndr
+        integer(wi) i, nx
         integer ib, bcs_cases(2)
 
         ! ###################################################################
@@ -150,15 +151,9 @@ contains
             if (g%periodic) then
                 call TLab_Write_ASCII(wfile, __FILE__//'. Integral algorithms not available for periodic cases.')
             else
-                ndl = g%der1%nb_diag(1)
-                ndr = g%der1%nb_diag(2)
-
                 bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
                 do ib = 1, 2
-                    fdmi(ib)%mode_fdm = g%der1%mode_fdm
-                    fdmi(ib)%bc = bcs_cases(ib)
-                    call FDM_Int1_Initialize(g%nodes(:), g%der1, 0.0_wp, fdmi(ib))
-
+                    call FDM_Int1_Initialize(g%nodes(:), g%der1, 0.0_wp, bcs_cases(ib), fdmi(ib))
                 end do
             end if
         end if

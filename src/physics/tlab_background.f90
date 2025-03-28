@@ -29,7 +29,7 @@ contains
     subroutine TLab_Initialize_Background(inifile)
         use TLab_Pointers_3D, only: p_wrk1d
         use FDM, only: g
-        use FDM_Integral, only: fdm_Int0
+        use FDM, only: fdm_Int0
         use TLab_WorkFlow, only: imode_sim
         use TLab_Memory, only: inb_scal, inb_scal_array
         use NavierStokes, only: froude, schmidt
