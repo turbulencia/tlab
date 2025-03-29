@@ -16,7 +16,7 @@ contains
 !########################################################################
     subroutine TLab_Grid_Read(name, x, y, z, sizes, scales)
         character*(*) name
-        real(wp), allocatable, intent(out) :: x(:), y(:), z(:)
+        real(wp), allocatable, intent(inout) :: x(:), y(:), z(:)
         integer(wi), intent(in), optional :: sizes(3)
         real(wp), intent(out), optional :: scales(3)
 
@@ -33,17 +33,22 @@ contains
         read (50) locSizes(1:3)
 
         ! -----------------------------------------------------------------------
-        if (present(sizes) .and. any(sizes /= locSizes)) then
-            close (50)
-            write (line, 100) locSizes
-            call TLab_Write_ASCII(efile, __FILE__//'. Dimensions ('//trim(line)//') unmatched.')
-            call TLab_Stop(DNS_ERROR_DIMGRID)
+        if (present(sizes)) then
+            if (any(sizes /= locSizes)) then
+                close (50)
+                write (line, 100) locSizes
+                call TLab_Write_ASCII(efile, __FILE__//'. Dimensions ('//trim(line)//') unmatched.')
+                call TLab_Stop(DNS_ERROR_DIMGRID)
+            end if
         end if
 
         read (50) locScaleS(1:3)
         if (present(scales)) scales = locScales
-        
+
         ! -----------------------------------------------------------------------
+        if (allocated(x)) deallocate (x)
+        if (allocated(y)) deallocate (y)
+        if (allocated(z)) deallocate (z)
         allocate (x(locSizes(1)), y(locSizes(2)), z(locSizes(3)))
         read (50) x
         read (50) y

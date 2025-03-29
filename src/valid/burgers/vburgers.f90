@@ -16,7 +16,6 @@ program VBURGERS
     use TLabMPI_VARS
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM, only: fdm_Int0
     use NavierStokes, only: NavierStokes_Initialize_Parameters, visc
     use TLab_Grid
     use IO_Fields
@@ -57,7 +56,7 @@ program VBURGERS
 
     visc = 1.0_wp/big_wp    ! inviscid
 
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
     call TLab_Initialize_Background(ifile)

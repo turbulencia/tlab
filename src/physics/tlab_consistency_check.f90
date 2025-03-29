@@ -4,9 +4,13 @@
 ! Everything has been read from input file.
 ! Check for cross dependencies and undeveloped options.
 subroutine TLab_Consistency_Check()
-    use TLab_Constants, only: efile, lfile, MAX_VARS
+    use TLab_Constants, only: wi, efile, lfile, MAX_VARS
     use TLab_Memory, only: inb_flow, inb_flow_array, inb_scal
-    use TLab_WorkFlow, only: stagger_on
+    use TLab_Memory, only: imax, jmax, kmax
+    use TLab_WorkFlow, only: stagger_on, imode_sim
+#ifdef USE_MPI
+    use TLabMPI_VARS, only: ims_npro_i, ims_npro_j, ims_npro_k
+#endif
     use TLab_Time, only: rtime
     use OPR_Filters, only: PressureFilter
     use FDM, only: g
@@ -24,9 +28,34 @@ subroutine TLab_Consistency_Check()
     implicit none
 
     ! -------------------------------------------------------------------
-    integer is
+    integer is, ig
+    integer(wi) grid_sizes(3)
+    character(len=32) lstr
 
     ! ###################################################################
+    ! consistency check
+#ifdef USE_MPI
+    grid_sizes = [imax*ims_npro_i, jmax*ims_npro_j, kmax*ims_npro_k]
+#else
+    grid_sizes = [imax, jmax, kmax]
+#endif
+    do ig = 1, 3
+        if (g(ig)%size /= grid_sizes(ig)) then
+            write (lstr, *) ig
+            call TLab_Write_ASCII(efile, __FILE__//'. Grid size mismatch along direction'//trim(adjustl(lstr))//'.')
+            call TLab_Stop(DNS_ERROR_DIMGRID)
+        end if
+    end do
+
+    select case (imode_sim)
+    case (DNS_MODE_TEMPORAL)
+        if (.not. g(1)%periodic) then
+            call TLab_Write_ASCII(efile, __FILE__//'. Grid must be uniform and periodic in direction X for temporal simulation')
+            call TLab_Stop(DNS_ERROR_CHECKUNIFX)
+        end if
+    case (DNS_MODE_SPATIAL)
+    end select
+
     if (stagger_on) then
         if (.not. ((nse_eqns == DNS_EQNS_INCOMPRESSIBLE) .or. (nse_eqns == DNS_EQNS_ANELASTIC))) then
             call TLab_Write_ASCII(efile, __FILE__//'. Horizontal pressure staggering only implemented for anelastic or incompressible mode.')

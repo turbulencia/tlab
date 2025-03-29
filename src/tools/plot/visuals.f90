@@ -337,7 +337,7 @@ program VISUALS
 
     ! ###################################################################
     ! Initialize
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
     allocate (gate(isize_field))

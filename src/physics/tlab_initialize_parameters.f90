@@ -17,12 +17,12 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Memory, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLab_Memory, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+#ifdef USE_MPI
+    use TLabMPI_VARS, only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k
+#endif
     use FDM, only: g
     use IO_Fields
     ! use Avg_Spatial
-#ifdef USE_MPI
-    use TLabMPI_VARS
-#endif
     use OPR_Filters, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, PressureFilter
     use OPR_Filters, only: FILTER_READBLOCK
     implicit none
@@ -150,14 +150,14 @@ subroutine TLab_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#YPeriodic=<yes/no>')
     call TLab_Write_ASCII(bakfile, '#ZPeriodic=<yes/no>')
 
-    call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax', '0', g(1)%size)
-    call ScanFile_Int(bakfile, inifile, 'Grid', 'Jmax', '0', g(2)%size)
-    call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax', '0', g(3)%size)
+    call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax', '0', imax)
+    call ScanFile_Int(bakfile, inifile, 'Grid', 'Jmax', '0', jmax)
+    call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax', '0', kmax)
 
 ! default
-    imax = g(1)%size
-    jmax = g(2)%size
-    kmax = g(3)%size
+    g(1)%size = imax
+    g(2)%size = jmax
+    g(3)%size = kmax
 
     g(1)%name = 'x'
     g(2)%name = 'y'
@@ -188,16 +188,6 @@ subroutine TLab_Initialize_Parameters(inifile)
 
     end do
 
-    ! consistency check
-    select case (imode_sim)
-    case (DNS_MODE_TEMPORAL)
-        if (.not. g(1)%periodic) then
-            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Grid must be uniform and periodic in direction X for temporal simulation')
-            call TLab_Stop(DNS_ERROR_CHECKUNIFX)
-        end if
-    case (DNS_MODE_SPATIAL)
-    end select
-
 ! -------------------------------------------------------------------
 ! Domain decomposition in parallel mode
 ! -------------------------------------------------------------------
@@ -218,6 +208,8 @@ subroutine TLab_Initialize_Parameters(inifile)
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Input imax incorrect')
             call TLab_Stop(DNS_ERROR_KMAXTOTAL)
         end if
+
+        ims_npro_j = 1
 
         ! consistency check
         if (ims_npro_i*ims_npro_k == ims_npro) then
@@ -296,7 +288,11 @@ subroutine TLab_Initialize_Parameters(inifile)
     end if
 
 ! scratch arrays
-    isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
+#ifdef USE_MPI
+    isize_wrk1d = max(imax*ims_npro_i, max(jmax*ims_npro_j, kmax*ims_npro_k))
+#else
+    isize_wrk1d = max(imax, max(jmax, kmax))
+#endif
     isize_wrk2d = max(imax*jmax, max(imax*kmax, jmax*kmax))
     isize_wrk3d = max(isize_field, isize_txc_field)
 

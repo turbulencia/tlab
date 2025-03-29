@@ -115,7 +115,7 @@ program AVERAGES
 #endif
     call Particle_Initialize_Parameters(ifile)
 
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
     call NavierStokes_Initialize_Parameters(ifile)

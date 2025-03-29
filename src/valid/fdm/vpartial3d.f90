@@ -50,7 +50,7 @@ program VPARTIAL3D
     e(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 7)
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_CreatePlan(x, g(1))
     call FDM_CreatePlan(y, g(2))
     call FDM_CreatePlan(z, g(3))

@@ -84,7 +84,7 @@ program PARTICLE_BUILD_PDF
 ! -------------------------------------------------------------------
 ! Read the grid
 ! -------------------------------------------------------------------
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
 !#######################################################################

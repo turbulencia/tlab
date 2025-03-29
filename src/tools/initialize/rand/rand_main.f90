@@ -17,7 +17,7 @@ program INIRAND
     use TLabMPI_VARS, only: ims_pro
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g, FDM_Initialize
+    use FDM, only: FDM_Initialize
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
@@ -40,7 +40,7 @@ program INIRAND
     call TLabMPI_Transpose_Initialize(ifile)
 #endif
 
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
     call NavierStokes_Initialize_Parameters(ifile)

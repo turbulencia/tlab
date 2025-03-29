@@ -34,7 +34,7 @@ program VTGVORTEX
     allocate (q(isize_field, 4))
     allocate (txc(isize_txc_field, 4))
 
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
     call TLab_Initialize_Background(ifile)

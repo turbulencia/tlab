@@ -77,7 +77,7 @@ program VINTERPARTIAL
     allocate (b(imax, jmax, kmax), c(imax, jmax, kmax), d(imax*jmax*kmax))
     allocate (tmp1(isize_txc_field), wrk3d(isize_wrk3d))
 
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call TLab_Grid_Read(gfile, x, y, z)
     call FDM_Initialize(ifile)
 
     bcs = 0
