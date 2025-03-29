@@ -17,8 +17,7 @@ subroutine TLab_Initialize_Parameters(inifile)
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Memory, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLab_Memory, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
-    use FDM
-    use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER, FDM_COM4_DIRECT, FDM_COM6_DIRECT
+    use FDM, only: g
     use IO_Fields
     ! use Avg_Spatial
 #ifdef USE_MPI
