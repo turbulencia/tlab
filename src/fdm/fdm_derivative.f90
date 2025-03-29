@@ -69,6 +69,7 @@ contains
         else
             allocate (g%lu(g%size, 5*4))          ! 4 bcs
         end if
+        g%lu(:, :) = 0.0_wp
 
         if (periodic) then
             g%lu(:, 1:g%nb_diag(1)) = g%lhs(:, 1:g%nb_diag(1))
@@ -130,6 +131,8 @@ contains
         allocate (g%lhs(nx, ndl_max))
         allocate (g%rhs(nx, ndr_max))
         allocate (g%mwn(nx))
+        g%lhs(:, :) = 0.0_wp
+        g%rhs(:, :) = 0.0_wp
 
         g%periodic = periodic
 
@@ -168,7 +171,7 @@ contains
             end do
 
             g%mwn(:) = 2.0_wp*(coef(3)*sin(wn(:)) + coef(4)*sin(2.0_wp*wn(:)) + coef(5)*sin(3.0_wp*wn(:))) &
-                            /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
+                       /(1.0_wp + 2.0_wp*coef(1)*cos(wn(:)) + 2.0_wp*coef(2)*cos(wn(:)))
 
 #undef wn
 
@@ -272,6 +275,7 @@ contains
         else
             allocate (g%lu(g%size, g%nb_diag(1)*1))          ! Only 1 bcs
         end if
+        g%lu(:, :) = 0.0_wp
 
         g%lu(:, 1:g%nb_diag(1)) = g%lhs(:, 1:g%nb_diag(1))
         if (g%periodic) then
@@ -314,6 +318,8 @@ contains
         allocate (g%lhs(nx, ndl_max))
         allocate (g%rhs(nx, ndr_max + ndl_max))     ! ndl_max is space for du correction in nonuniform case
         allocate (g%mwn(nx))
+        g%lhs(:, :) = 0.0_wp
+        g%rhs(:, :) = 0.0_wp
 
         g%periodic = periodic
 

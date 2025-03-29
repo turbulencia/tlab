@@ -21,7 +21,7 @@ program VINTEGRAL
     real(wp), dimension(:, :), pointer :: du1_a => null(), du2_a => null(), du1_n => null(), du2_n => null(), dw1_n => null(), dw2_n => null()
     integer(wi) bcs_aux(2, 2)
     real(wp) :: lambda, wk, x_0
-    integer(wi) :: test_type, ibc, ib, im, ndr, ndl
+    integer(wi) :: test_type, ibc, ib, im
 
     integer :: bcs_cases(4), fdm_cases(5)
     real(wp), allocatable :: bcs(:, :), x(:), si(:, :)
@@ -89,8 +89,6 @@ program VINTEGRAL
     g%der1%mode_fdm = FDM_COM6_JACOBIAN     ! default
     g%der2%mode_fdm = g%der1%mode_fdm
     call FDM_CreatePlan(x, g, fdmi)
-    ndr = g%der1%nb_diag(2)
-    ndl = g%der1%nb_diag(1)
 
     bcs_aux = 0
 
@@ -151,8 +149,6 @@ program VINTEGRAL
             g%der1%mode_fdm = fdm_cases(im)
             g%der2%mode_fdm = FDM_COM4_JACOBIAN     ! not used
             call FDM_CreatePlan(x, g)
-            ndr = g%der1%nb_diag(2)
-            ndl = g%der1%nb_diag(1)
 
             f = du1_a
             ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
@@ -248,7 +244,6 @@ program VINTEGRAL
         read (*, *) lambda
 
         call FDM_Int1_Initialize(g%nodes(:), g%der1, lambda, BCS_MIN, fdmi(BCS_MIN))
-
         call FDM_Int1_Initialize(g%nodes(:), g%der1, -lambda, BCS_MAX, fdmi(BCS_MAX))
 
         allocate (bcs(len, 2))
@@ -305,8 +300,6 @@ program VINTEGRAL
         g%der1%mode_fdm = FDM_COM6_JACOBIAN
         g%der2%mode_fdm = FDM_COM6_DIRECT
         call FDM_CreatePlan(x, g)
-        ndr = g%der2%nb_diag(2)
-        ndl = g%der2%nb_diag(1)
 
         ! call random_seed()
         ! call random_number(u)
@@ -365,8 +358,6 @@ program VINTEGRAL
             g%der1%mode_fdm = fdm_cases(im)
             g%der2%mode_fdm = FDM_COM4_JACOBIAN ! not used
             call FDM_CreatePlan(x, g)
-            ndr = g%der1%nb_diag(2)
-            ndl = g%der1%nb_diag(1)
 
             do ib = 1, 2
                 ibc = bcs_cases(ib)
