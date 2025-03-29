@@ -12,7 +12,7 @@ program VPARTIAL3D
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g, FDM_Initialize
+    use FDM, only: g, FDM_CreatePlan
     use FDM_Derivative, only: FDM_COM4_DIRECT, FDM_COM6_JACOBIAN
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Grid
@@ -51,9 +51,9 @@ program VPARTIAL3D
     f(1:imax, 1:jmax, 1:kmax) => txc(1:imax*jmax*kmax, 8)
 
     call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(x, g(1))
-    call FDM_Initialize(y, g(2))
-    call FDM_Initialize(z, g(3))
+    call FDM_CreatePlan(x, g(1))
+    call FDM_CreatePlan(y, g(2))
+    call FDM_CreatePlan(z, g(3))
 
     bcs = 0
 
@@ -69,14 +69,14 @@ program VPARTIAL3D
 ! ###################################################################
     case (2)
         g(2)%der1%mode_fdm = FDM_COM6_JACOBIAN
-        call FDM_Initialize(wrk1d(:, 2), g(2))
+        call FDM_CreatePlan(wrk1d(:, 2), g(2))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
         call IO_Write_Fields('field.out1', imax, jmax, kmax, itime, 1, a)
 
         g(2)%der1%mode_fdm = FDM_COM4_DIRECT
-        call FDM_Initialize(wrk1d(:, 2), g(2))
+        call FDM_CreatePlan(wrk1d(:, 2), g(2))
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
         ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)
         call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, b, d)

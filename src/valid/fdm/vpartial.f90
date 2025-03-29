@@ -5,7 +5,7 @@ program VPARTIAL
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk2d, txc
-    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
     use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_ComX_Direct
@@ -91,7 +91,7 @@ program VPARTIAL
 
     g%der1%mode_fdm = FDM_COM6_JACOBIAN     ! default
     g%der2%mode_fdm = g%der1%mode_fdm
-    call FDM_Initialize(x, g)
+    call FDM_CreatePlan(x, g)
     ndr = g%der1%nb_diag(2)
     ndl = g%der1%nb_diag(1)
 
@@ -151,7 +151,7 @@ program VPARTIAL
             print *, new_line('a'), fdm_names(im)
 
             g%der1%mode_fdm = fdm_cases(im)
-            call FDM_Initialize(x, g)
+            call FDM_CreatePlan(x, g)
 
             call FDM_Der1_Solve(len, bcs_aux(:, 1), g%der1, g%der1%lu, u, du1_n, wrk2d)
 
@@ -176,7 +176,7 @@ program VPARTIAL
 
             g%der1%mode_fdm = fdm_cases(im)
             g%der2%mode_fdm = fdm_cases(im)
-            call FDM_Initialize(x, g)
+            call FDM_CreatePlan(x, g)
 
             call FDM_Der1_Solve(len, bcs_aux(:, 1), g%der1, g%der1%lu, u, du1_n, wrk2d)  ! I need du1_n in Jacobian formulation
             call FDM_Der2_Solve(len, g%der2, g%der2%lu, u, du2_n1, du1_n, wrk2d)

@@ -15,7 +15,7 @@ module BOUNDARY_INFLOW
     use TLab_Memory, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
     use TLab_WorkFlow, only: flow_on, scal_on
     use NavierStokes, only: nse_eqns
-    use FDM, only: g, FDM_Initialize
+    use FDM, only: g, FDM_CreatePlan
     use TLab_Time, only: rtime, itime
     use NavierStokes, only: visc
     use TLab_Background, only: qbg
@@ -99,9 +99,9 @@ contains
         end if
         if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
             call TLab_Grid_Read('grid.inf', x_inf, y_inf, z_inf, [g_inf(1)%size, g_inf(2)%size, g_inf(3)%size])
-            call FDM_Initialize(x_inf, g_inf(1))
-            call FDM_Initialize(y_inf, g_inf(2))
-            call FDM_Initialize(z_inf, g_inf(3))
+            call FDM_CreatePlan(x_inf, g_inf(1))
+            call FDM_CreatePlan(y_inf, g_inf(2))
+            call FDM_CreatePlan(z_inf, g_inf(3))
         end if
 
         if (.not. allocated(q_inf)) allocate (q_inf(g_inf(1)%size, g_inf(2)%size, g_inf(3)%size, inb_flow_array))

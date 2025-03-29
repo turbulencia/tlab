@@ -20,7 +20,6 @@ program AVERAGES
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM, only: fdm_Int0
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
@@ -115,6 +114,9 @@ program AVERAGES
     call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
+
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(ifile)
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
@@ -348,10 +350,6 @@ program AVERAGES
     ! -------------------------------------------------------------------
     ! Initialize
     ! -------------------------------------------------------------------
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(x, g(1))
-    call FDM_Initialize(y, g(2), fdm_Int0)
-    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)  ! Initialize thermodynamic quantities
 

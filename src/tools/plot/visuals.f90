@@ -335,9 +335,11 @@ program VISUALS
         end if
     end do
 
-    ! -------------------------------------------------------------------
-    ! Allocating memory space
-    ! -------------------------------------------------------------------
+    ! ###################################################################
+    ! Initialize
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(ifile)
+
     allocate (gate(isize_field))
 
 #ifdef USE_MPI
@@ -354,14 +356,6 @@ program VISUALS
     if (imode_ibm == 1) then
         call IBM_ALLOCATE(C_FILE_LOC)
     end if
-
-    ! -------------------------------------------------------------------
-    ! Initialize
-    ! -------------------------------------------------------------------
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(x, g(1))
-    call FDM_Initialize(y, g(2), fdm_Int0)
-    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
 

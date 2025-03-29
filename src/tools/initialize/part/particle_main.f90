@@ -15,12 +15,11 @@ program INIPART
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM, only: fdm_Int0
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
-use Rotation, only: Rotation_Initialize
+    use Rotation, only: Rotation_Initialize
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -46,10 +45,13 @@ use Rotation, only: Rotation_Initialize
 #endif
     call Particle_Initialize_Parameters(ifile)
 
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(ifile)
+
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
-call Rotation_Initialize(ifile)
+    call Rotation_Initialize(ifile)
 
     call TLab_Consistency_Check()
 
@@ -76,14 +78,6 @@ call Rotation_Initialize(ifile)
 
         call Particle_Initialize_Memory(C_FILE_LOC)
 
-        ! -------------------------------------------------------------------
-        ! Read the grid
-        ! -------------------------------------------------------------------
-        call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-        call FDM_Initialize(x, g(1))
-        call FDM_Initialize(y, g(2), fdm_Int0)
-        call FDM_Initialize(z, g(3))
-    
         ! problem if I enter with inb_scal_array = 0
         inb_scal_array = inb_scal
         call TLab_Initialize_Background(ifile)

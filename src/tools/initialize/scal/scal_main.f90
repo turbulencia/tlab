@@ -45,6 +45,10 @@ program INISCAL
     call TLabMPI_Initialize(ifile)
     call TLabMPI_Transpose_Initialize(ifile)
 #endif
+
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(ifile)
+
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
@@ -65,11 +69,6 @@ program INISCAL
     if (norm_ini_radiation /= 0.0_wp) inb_txc = max(inb_txc, 4)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
-
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(x, g(1))
-    call FDM_Initialize(y, g(2), fdm_Int0)
-    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
     do is = 1, size(IniS)

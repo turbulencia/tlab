@@ -22,7 +22,6 @@ program TRANSFIELDS
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM, only: fdm_Int0
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background, qbg, sbg
@@ -86,6 +85,9 @@ program TRANSFIELDS
     call TLabMPI_Initialize(ifile)
     call TLabMPI_Transpose_Initialize(ifile)
 #endif
+
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(ifile)
 
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
@@ -291,11 +293,6 @@ program TRANSFIELDS
     if (fourier_on) inb_txc = max(inb_txc, 1)
 
     call TLab_Initialize_Memory(C_FILE_LOC)
-
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(x, g(1))
-    call FDM_Initialize(y, g(2), fdm_Int0)
-    call FDM_Initialize(z, g(3))
 
     call TLab_Initialize_Background(ifile)
 

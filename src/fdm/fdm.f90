@@ -4,6 +4,7 @@ module FDM
     use TLab_Constants, only: wp, wi, roundoff_wp, efile, wfile
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
+    use TLab_Grid, only: x, y, z
     use FDM_Derivative
     use FDM_Interpolate
     use FDM_Integral
@@ -28,14 +29,66 @@ module FDM
     end type fdm_dt
 
     type(fdm_dt), public :: g(3)                    ! fdm derivative plans along 3 directions
-    type(fdm_integral_dt), public :: fdm_Int0(2)    ! fdm integral plans along Oy (ode for lambda = 0)
+    type(fdm_integral_dt), public, protected :: fdm_Int0(2)    ! fdm integral plans along Oy (ode for lambda = 0)
 
     public :: FDM_Initialize
+    public :: FDM_CreatePlan
 
 contains
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_Initialize(nodes, g, fdmi, locScale)
+    subroutine FDM_Initialize(inifile)
+        character(len=*), optional, intent(in) :: inifile
+
+        ! -------------------------------------------------------------------
+        character(len=32) bakfile, block
+        character(len=512) sRes
+
+        !########################################################################
+        bakfile = trim(adjustl(inifile))//'.bak'
+        block = 'Main'
+
+        call TLab_Write_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
+
+        call ScanFile_Char(bakfile, inifile, block, 'SpaceOrder1', 'void', sRes)
+        if (trim(adjustl(sRes)) == 'void') &
+            call ScanFile_Char(bakfile, inifile, block, 'SpaceOrder', 'compactjacobian6', sRes) ! backwards compatibility
+        if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%der1%mode_fdm = FDM_COM4_JACOBIAN; 
+        elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%der1%mode_fdm = FDM_COM6_JACOBIAN; 
+        elseif (trim(adjustl(sRes)) == 'compactjacobian6penta') then; g(1:3)%der1%mode_fdm = FDM_COM6_JACOBIAN_PENTA; 
+        elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%der1%mode_fdm = FDM_COM4_DIRECT; 
+        elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%der1%mode_fdm = FDM_COM6_DIRECT; 
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong SpaceOrder1 option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        call ScanFile_Char(bakfile, inifile, block, 'SpaceOrder2', 'CompactJacobian6Hyper', sRes)
+        if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%der2%mode_fdm = FDM_COM4_JACOBIAN; 
+        elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%der2%mode_fdm = FDM_COM6_JACOBIAN; 
+        elseif (trim(adjustl(sRes)) == 'compactjacobian6hyper') then; g(1:3)%der2%mode_fdm = FDM_COM6_JACOBIAN_HYPER; 
+        elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%der2%mode_fdm = FDM_COM4_DIRECT; 
+        elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%der2%mode_fdm = FDM_COM6_DIRECT; 
+        else
+            call TLab_Write_ASCII(efile, __FILE__//'. Wrong SpaceOrder2 option.')
+            call TLab_Stop(DNS_ERROR_OPTION)
+        end if
+
+        if (g(1)%der1%mode_fdm == FDM_COM6_JACOBIAN_PENTA) then     ! CFL_max depends on max[g(ig)%der1%mwn(:)]
+            call TLab_Write_ASCII(wfile, __FILE__//'. CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
+        end if
+
+        ! -------------------------------------------------------------------
+        call FDM_CreatePlan(x, g(1))
+        call FDM_CreatePlan(y, g(2), fdm_Int0)
+        call FDM_CreatePlan(z, g(3))
+
+        return
+    end subroutine FDM_Initialize
+
+    ! ###################################################################
+    ! ###################################################################
+    subroutine FDM_CreatePlan(nodes, g, fdmi, locScale)
         real(wp), intent(in) :: nodes(:)                            ! positions of the grid nodes
         type(fdm_dt), intent(inout) :: g                            ! fdm plan for derivatives
         type(fdm_integral_dt), intent(out), optional :: fdmi(2)     ! fdm plan for integrals
@@ -159,6 +212,6 @@ contains
         end if
 
         return
-    end subroutine FDM_Initialize
+    end subroutine FDM_CreatePlan
 
 end module FDM

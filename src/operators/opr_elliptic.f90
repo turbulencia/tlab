@@ -91,7 +91,7 @@ contains
     ! #######################################################################
     ! #######################################################################
     subroutine OPR_Elliptic_Initialize(inifile)
-        use FDM, only: g, FDM_Initialize
+        use FDM, only: g, FDM_CreatePlan
 
         character(len=*), intent(in) :: inifile
 
@@ -125,7 +125,7 @@ contains
 
         ! ###################################################################
         ! Initializing
-        call FDM_Initialize(g(2)%nodes, fdm_loc)
+        call FDM_CreatePlan(g(2)%nodes, fdm_loc)
 
         isize_line = imax/2 + 1
 

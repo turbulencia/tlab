@@ -152,7 +152,7 @@ contains
             end do
 
             ! -----------------------------------------------------------------------
-            ! Density correction term in the burgers operator along Y; see FDM_Initialize
+            ! Density correction term in the burgers operator along Y; see FDM_CreatePlan
             ! we implement it directly in the tridiagonal system
             do is = 0, inb_scal ! case 0 for the velocity
                 fdmDiffusion(2)%lu(:, 2, is) = fdmDiffusion(2)%lu(:, 2, is)*ribackground(:)  ! matrix U; 1/diagonal

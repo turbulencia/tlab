@@ -2,7 +2,7 @@
 
 program VEFILTER
     use TLab_Constants, only: wp, wi, pi_wp
-    use FDM, only: fdm_dt, FDM_Initialize
+    use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_COM6_JACOBIAN
     use NavierStokes, only: visc, schmidt
     use OPR_FILTERS
@@ -53,7 +53,7 @@ program VEFILTER
         ! g%scale = x(imax, 1) - x(1, 1)
     end if
 
-    call FDM_Initialize(wrk1d(1:imax, 1), g)
+    call FDM_CreatePlan(wrk1d(1:imax, 1), g)
 
     ! ###################################################################
 

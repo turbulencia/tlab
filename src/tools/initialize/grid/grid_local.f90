@@ -79,7 +79,7 @@ contains
     !########################################################################
     subroutine BLD_EXP(idir, iseg, x, nmax, w)
         use TLab_Constants, only: BCS_MIN
-        use FDM, only: fdm_dt, FDM_Initialize
+        use FDM, only: fdm_dt, FDM_CreatePlan
         use FDM_Derivative, only: FDM_COM6_JACOBIAN
         use FDM_Integral, only: FDM_Int1_Solve, fdm_integral_dt
         integer(wi), intent(IN) :: idir, iseg, nmax
@@ -115,7 +115,7 @@ contains
         g%periodic = .false.
         g%der1%mode_fdm = FDM_COM6_JACOBIAN
         g%der2%mode_fdm = FDM_COM6_JACOBIAN
-        call FDM_Initialize(x, g, fdmi)
+        call FDM_CreatePlan(x, g, fdmi)
         ! x(1) is already set
         call FDM_Int1_Solve(1, fdmi(BCS_MIN), fdmi(BCS_MIN)%rhs, rhs(:), result(:), aux)
         x(:) = result(:)

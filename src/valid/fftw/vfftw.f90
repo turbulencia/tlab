@@ -42,9 +42,9 @@ program VFFTW
     Img = sqrt(Img)
 
     call TLab_Grid_Read(gfile, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3), [g(1)%size, g(2)%size, g(3)%size] )
-    call FDM_Initialize(wrk1d(:, 1), g(1))
-    call FDM_Initialize(wrk1d(:, 2), g(2))
-    call FDM_Initialize(wrk1d(:, 3), g(3))
+    call FDM_CreatePlan(wrk1d(:, 1), g(1))
+    call FDM_CreatePlan(wrk1d(:, 2), g(2))
+    call FDM_CreatePlan(wrk1d(:, 3), g(3))
 
 ! ###################################################################
 !  Define forcing term

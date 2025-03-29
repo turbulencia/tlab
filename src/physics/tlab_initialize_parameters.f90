@@ -72,13 +72,8 @@ subroutine TLab_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#Type=<temporal/spatial>')
     call TLab_Write_ASCII(bakfile, '#CalculateFlow=<yes/no>')
     call TLab_Write_ASCII(bakfile, '#CalculateScalar=<yes/no>')
-    !
-    call TLab_Write_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
-    !
-    call TLab_Write_ASCII(bakfile, '#ComModeITranspose=<none,asynchronous,sendrecv>')
-    call TLab_Write_ASCII(bakfile, '#ComModeKTranspose=<none,asynchronous,sendrecv>')
 
-! -------------------------------------------------------------------
+    ! -------------------------------------------------------------------
     call ScanFile_Char(bakfile, inifile, 'Main', 'FileFormat', 'MpiIO', sRes)
     if (trim(adjustl(sRes)) == 'mpiio') then; io_fileformat = IO_MPIIO
     elseif (trim(adjustl(sRes)) == 'netcdf') then; io_fileformat = IO_NETCDF
@@ -122,37 +117,6 @@ subroutine TLab_Initialize_Parameters(inifile)
     else
         call TLab_Write_ASCII(efile, C_FILE_LOC//'. Entry Main.CalculateScalar must be yes or no')
         call TLab_Stop(DNS_ERROR_CALCSCALAR)
-    end if
-
-! ###################################################################
-! Finite Differences
-! ###################################################################
-    call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder1', 'void', sRes)
-    if (trim(adjustl(sRes)) == 'void') &
-        call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder', 'compactjacobian6', sRes) ! backwards compatibility
-    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%der1%mode_fdm = FDM_COM4_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%der1%mode_fdm = FDM_COM6_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6penta') then; g(1:3)%der1%mode_fdm = FDM_COM6_JACOBIAN_PENTA; 
-    elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%der1%mode_fdm = FDM_COM4_DIRECT;
-    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%der1%mode_fdm = FDM_COM6_DIRECT; 
-    else
-        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder1 option.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-
-    call ScanFile_Char(bakfile, inifile, 'Main', 'SpaceOrder2', 'CompactJacobian6Hyper', sRes)
-    if (trim(adjustl(sRes)) == 'compactjacobian4') then; g(1:3)%der2%mode_fdm = FDM_COM4_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6') then; g(1:3)%der2%mode_fdm = FDM_COM6_JACOBIAN; 
-    elseif (trim(adjustl(sRes)) == 'compactjacobian6hyper') then; g(1:3)%der2%mode_fdm = FDM_COM6_JACOBIAN_HYPER; 
-    elseif (trim(adjustl(sRes)) == 'compactdirect4') then; g(1:3)%der2%mode_fdm = FDM_COM4_DIRECT; 
-    elseif (trim(adjustl(sRes)) == 'compactdirect6') then; g(1:3)%der2%mode_fdm = FDM_COM6_DIRECT; 
-    else
-        call TLab_Write_ASCII(efile, C_FILE_LOC//'. Wrong SpaceOrder2 option.')
-        call TLab_Stop(DNS_ERROR_OPTION)
-    end if
-
-    if (g(1)%der1%mode_fdm == FDM_COM6_JACOBIAN_PENTA) then     ! CFL_max depends on max[g(ig)%der1%mwn(:)]
-        call TLab_Write_ASCII(wfile, __FILE__//'. CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
     end if
 
 ! ###################################################################

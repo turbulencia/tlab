@@ -40,7 +40,7 @@ program VPARTIAL2
         g%scale = g%nodes(imax) - g%nodes(1)
     end if
 
-    call FDM_Initialize(g, wrk1d)
+    call FDM_CreatePlan(g, wrk1d)
 
 ! ###################################################################
 ! Define the function

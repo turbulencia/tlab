@@ -15,7 +15,6 @@ program DNS
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use FDM, only: fdm_Int0
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
@@ -74,6 +73,9 @@ program DNS
         call IBM_READ_CONSISTENCY_CHECK()
     end if
 
+    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
+    call FDM_Initialize(ifile)
+
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)
     call Gravity_Initialize(ifile)
@@ -94,11 +96,6 @@ program DNS
     ! Initialize memory space and grid data
     ! #######################################################################
     call TLab_Initialize_Memory(__FILE__)
-
-    call TLab_Grid_Read(gfile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    call FDM_Initialize(x, g(1))
-    call FDM_Initialize(y, g(2), fdm_Int0)
-    call FDM_Initialize(z, g(3))
 
     call SpecialForcing_Initialize(ifile)
 
