@@ -2,7 +2,7 @@
 
 module FDM_Derivative
     use TLab_Constants, only: wp, wi, pi_wp, efile, wfile
-    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN
+    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_NONE, BCS_PERIODIC
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_MatMul
     use FDM_PROCS
@@ -180,8 +180,8 @@ contains
         return
     end subroutine FDM_Der1_CreateSystem
 
-! ###################################################################
-! ###################################################################
+    ! ###################################################################
+    ! ###################################################################
     subroutine FDM_Der1_Solve(nlines, bcs, g, lu1, u, result, wrk2d)
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
         integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
@@ -195,11 +195,12 @@ contains
 
         integer(wi) nmin, nmax, nsize, ip, ibc
 
-! ###################################################################
+        ! ###################################################################
         ibc = bcs(1) + bcs(2)*2
         ip = ibc*5
 
         nmin = 1; nmax = g%size
+        if (g%periodic) ibc = BCS_PERIODIC
         if (any([BCS_ND, BCS_NN] == ibc)) then
             result(:, 1) = 0.0_wp      ! homogeneous bcs
             nmin = nmin + 1
@@ -213,18 +214,18 @@ contains
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
             select case (g%nb_diag(2))
             case (3)
-                call MatMul_3d(g%rhs(:, 1:3), u, result)
+                call MatMul_3d(g%rhs(:, 1:3), u, result, ibc=BCS_NONE)
             case (5)
-                call MatMul_5d(g%rhs(:, 1:5), u, result)
+                call MatMul_5d(g%rhs(:, 1:5), u, result, ibc=BCS_NONE)
             end select
         else
             select case (g%nb_diag(2))
             case (3)
-                call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
+                call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, ibc, g%rhs_b, g%rhs_t)
             case (5)
-                call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
+                call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, ibc, g%rhs_b, g%rhs_t)
             case (7)
-                call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
+                call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, ibc, g%rhs_b, g%rhs_t)
             end select
         end if
 
@@ -380,19 +381,26 @@ contains
         real(wp), intent(out) :: wrk2d(*)
 
         integer(wi) ip
+        integer ibc
 
         ! ###################################################################
+        if (g%periodic) then
+            ibc = BCS_PERIODIC
+        else
+            ibc = BCS_DD
+        end if
+
         if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
             select case (g%nb_diag(2))
             case (5)
-                call MatMul_5d(g%rhs(:, 1:5), u, result)
+                call MatMul_5d(g%rhs(:, 1:5), u, result, ibc=BCS_NONE)
             end select
         else
             select case (g%nb_diag(2))
             case (5)
-                call MatMul_5d_sym(g%rhs(:, 1:5), u, result, g%periodic)
+                call MatMul_5d_sym(g%rhs(:, 1:5), u, result, ibc)
             case (7)
-                call MatMul_7d_sym(g%rhs(:, 1:7), u, result, g%periodic)
+                call MatMul_7d_sym(g%rhs(:, 1:7), u, result, ibc)
             end select
         end if
 

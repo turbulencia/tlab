@@ -241,13 +241,13 @@ program VPARTIAL
                 du1_n(:, kmax) = u(:, kmax)
                 select case (g%der1%nb_diag(2))
                 case (3)
-                    call MatMul_3d_antisym(g%der1%rhs(:, 1:3), u, du1_n, g%periodic, &
+                    call MatMul_3d_antisym(g%der1%rhs(:, 1:3), u, du1_n, &
                                            ibc, rhs_b=rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 case (5)
-                    call MatMul_5d_antisym(g%der1%rhs(:, 1:5), u, du1_n, g%periodic, &
+                    call MatMul_5d_antisym(g%der1%rhs(:, 1:5), u, du1_n, &
                                            ibc, rhs_b=rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 case (7)
-                    call MatMul_7d_antisym(g%der1%rhs(:, 1:7), u, du1_n, g%periodic, &
+                    call MatMul_7d_antisym(g%der1%rhs(:, 1:7), u, du1_n,&
                                            ibc, rhs_b=rhsr_b(:, 1:), bcs_b=wrk2d(:, 1), rhs_t=rhsr_t(1:, :), bcs_t=wrk2d(:, 2))
                 end select
 
@@ -331,13 +331,13 @@ program VPARTIAL
 
                 select case (g%der1%nb_diag(2))
                 case (3)
-                    call MatMul_3d_antisym(g%der1%rhs(:, 1:3), u, du1_n, g%periodic, &
+                    call MatMul_3d_antisym(g%der1%rhs(:, 1:3), u, du1_n, &
                                            ibc, rhs_b=g%der1%rhs_b, bcs_b=wrk2d(:, 1), rhs_t=g%der1%rhs_t, bcs_t=wrk2d(:, 2))
                 case (5)
-                    call MatMul_5d_antisym(g%der1%rhs(:, 1:5), u, du1_n, g%periodic, &
+                    call MatMul_5d_antisym(g%der1%rhs(:, 1:5), u, du1_n, &
                                            ibc, rhs_b=g%der1%rhs_b, bcs_b=wrk2d(:, 1), rhs_t=g%der1%rhs_t, bcs_t=wrk2d(:, 2))
                 case (7)
-                    call MatMul_7d_antisym(g%der1%rhs(:, 1:7), u, du1_n, g%periodic, &
+                    call MatMul_7d_antisym(g%der1%rhs(:, 1:7), u, du1_n, &
                                            ibc, rhs_b=g%der1%rhs_b, bcs_b=wrk2d(:, 1), rhs_t=g%der1%rhs_t, bcs_t=wrk2d(:, 2))
                 end select
 

@@ -449,11 +449,11 @@ contains
 
             select case (g%der1%nb_diag(2))
             case (3)
-                call MatMul_3d_antisym(g%der1%rhs(:, 1:3), p_org, p_dst, g%periodic, ibc, g%der1%rhs_b, g%der1%rhs_t, p_bcs_hb, p_bcs_ht)
+                call MatMul_3d_antisym(g%der1%rhs(:, 1:3), p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t, p_bcs_hb, p_bcs_ht)
             case (5)
-                call MatMul_5d_antisym(g%der1%rhs(:, 1:5), p_org, p_dst, g%periodic, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
+                call MatMul_5d_antisym(g%der1%rhs(:, 1:5), p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
             case (7)
-                call MatMul_7d_antisym(g%der1%rhs(:, 1:7), p_org, p_dst, g%periodic, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
+                call MatMul_7d_antisym(g%der1%rhs(:, 1:7), p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
             end select
 
             select case (g%der1%nb_diag(1))
