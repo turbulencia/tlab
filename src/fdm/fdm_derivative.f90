@@ -220,14 +220,11 @@ contains
         else
             select case (g%nb_diag(2))
             case (3)
-                call MatMul_3d_antisym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), &
-                                       u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
+                call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
             case (5)
-                call MatMul_5d_antisym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), &
-                                       u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
+                call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
             case (7)
-                call MatMul_7d_antisym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), g%rhs(:, 6), g%rhs(:, 7), &
-                                       u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
+                call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, g%periodic, ibc, g%rhs_b, g%rhs_t)
             end select
         end if
 
@@ -393,18 +390,16 @@ contains
         else
             select case (g%nb_diag(2))
             case (5)
-                call MatMul_5d_sym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), &
-                                   u, result, g%periodic)
+                call MatMul_5d_sym(g%rhs(:, 1:5), u, result, g%periodic)
             case (7)
-                call MatMul_7d_sym(g%size, nlines, g%rhs(:, 1), g%rhs(:, 2), g%rhs(:, 3), g%rhs(:, 4), g%rhs(:, 5), g%rhs(:, 6), g%rhs(:, 7), &
-                                   u, result, g%periodic)
+                call MatMul_7d_sym(g%rhs(:, 1:7), u, result, g%periodic)
             end select
         end if
 
         if (g%need_1der) then
             ip = g%nb_diag(2)      ! add Jacobian correction A_2 dx2 du
             ! so far, only tridiagonal systems
-            call MatMul_3d_add(g%size, nlines, g%rhs(:, ip + 1), g%rhs(:, ip + 2), g%rhs(:, ip + 3), du, result)
+            call MatMul_3d_add(g%rhs(:, ip + 1:ip + 3), du, result)
         end if
 
         if (g%periodic) then
