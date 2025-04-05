@@ -15,17 +15,30 @@ module FDM_Derivative
 
     type, public :: fdm_derivative_dt
         sequence
-        integer mode_fdm                        ! finite-difference method
-        integer(wi) size                        ! number of grid points, for convenience in the code
+        integer mode_fdm                            ! finite-difference method
+        integer(wi) size                            ! # of grid points, for convenience in the code
         logical :: periodic = .false.
-        logical :: need_1der = .false.          ! In Jacobian formulation, I need 1. order derivative for the 2. order if non-uniform
-        integer nb_diag(2)                      ! # of left and right diagonals  (max 5/7)
-        real(wp) :: rhs_b(4, 7), rhs_t(4, 7)    ! RHS data for Neumann boundary conditions, max. # of diagonals is 7, # rows is 7/2+1
-        real(wp), allocatable :: lhs(:, :)      ! memory space for LHS
-        real(wp), allocatable :: rhs(:, :)      ! memory space for RHS
-        real(wp), allocatable :: mwn(:)         ! memory space for modified wavenumbers
-        real(wp), allocatable :: lu(:, :)       ! memory space for LU decomposition
+        logical :: need_1der = .false.              ! In nonuniform, Jacobian formulation, need 1. order derivative for the 2. order one
+        integer nb_diag(2)                          ! # of left and right diagonals  (max 5/7)
+        real(wp) :: rhs_b(4, 0:7), rhs_t(0:4, 7)    ! Neumann boundary conditions, max. # of diagonals is 7, # rows is 7/2+1
+        real(wp), allocatable :: lhs(:, :)          ! memory space for LHS
+        real(wp), allocatable :: rhs(:, :)          ! memory space for RHS
+        real(wp), allocatable :: mwn(:)             ! memory space for modified wavenumbers
+        real(wp), allocatable :: lu(:, :)           ! memory space for LU decomposition
+        procedure(matmul_interface), pointer, nopass :: matmul  ! matrix multiplication to calculate the right-hand side
     end type fdm_derivative_dt
+
+    abstract interface
+        subroutine matmul_interface(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+            use TLab_Constants, only: wp
+            real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+            real(wp), intent(in) :: u(:, :)                                 ! vector u
+            real(wp), intent(out) :: f(:, :)                                ! vector f = B u
+            integer, intent(in) :: ibc
+            real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
+            real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
+        end subroutine
+    end interface
 
     public :: FDM_Der1_Initialize
     ! public :: FDM_Der1_CreateSystem
@@ -103,6 +116,26 @@ contains
 
             end do
 
+        end if
+
+        ! -------------------------------------------------------------------
+        ! Procedure pointers to matrix multiplication to calculate the right-hand side
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+            select case (g%nb_diag(2))
+            case (3)
+                g%matmul => MatMul_3d
+            case (5)
+                g%matmul => MatMul_5d
+            end select
+        else
+            select case (g%nb_diag(2))
+            case (3)
+                g%matmul => MatMul_3d_antisym
+            case (5)
+                g%matmul => MatMul_5d_antisym
+            case (7)
+                g%matmul => MatMul_7d_antisym
+            end select
         end if
 
         return
@@ -211,23 +244,24 @@ contains
         end if
         nsize = nmax - nmin + 1
 
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
-            select case (g%nb_diag(2))
-            case (3)
-                call MatMul_3d(g%rhs(:, 1:3), u, result, ibc=BCS_NONE)
-            case (5)
-                call MatMul_5d(g%rhs(:, 1:5), u, result, ibc=BCS_NONE)
-            end select
-        else
-            select case (g%nb_diag(2))
-            case (3)
-                call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, ibc, g%rhs_b, g%rhs_t)
-            case (5)
-                call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, ibc, g%rhs_b, g%rhs_t)
-            case (7)
-                call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, ibc, g%rhs_b, g%rhs_t)
-            end select
-        end if
+        call g%matmul(g%rhs, u, result, ibc, g%rhs_b, g%rhs_t)
+        ! if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+        !     select case (g%nb_diag(2))
+        !     case (3)
+        !         call MatMul_3d(g%rhs(:, 1:3), u, result, ibc)!=BCS_NONE)
+        !     case (5)
+        !         call MatMul_5d(g%rhs(:, 1:5), u, result, ibc)!=BCS_NONE)
+        !     end select
+        ! else
+        !     ! select case (g%nb_diag(2))
+        !     ! case (3)
+        !     !     call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, ibc, g%rhs_b, g%rhs_t)
+        !     ! case (5)
+        !     !     call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, ibc, g%rhs_b, g%rhs_t)
+        !     ! case (7)
+        !     !     call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, ibc, g%rhs_b, g%rhs_t)
+        !     ! end select
+        ! end if
 
         if (g%periodic) then
             select case (g%nb_diag(1))
@@ -288,6 +322,22 @@ contains
                 call TRIDFS(g%size, g%lu(:, 1), g%lu(:, 2), g%lu(:, 3))
             end select
 
+        end if
+
+        ! -------------------------------------------------------------------
+        ! Procedure pointers to matrix multiplication to calculate the right-hand side
+        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+            select case (g%nb_diag(2))
+            case (5)
+                g%matmul => MatMul_5d
+            end select
+        else
+            select case (g%nb_diag(2))
+            case (5)
+                g%matmul => MatMul_5d_sym
+            case (7)
+                g%matmul => MatMul_7d_sym
+            end select
         end if
 
         return
@@ -390,19 +440,20 @@ contains
             ibc = BCS_DD
         end if
 
-        if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
-            select case (g%nb_diag(2))
-            case (5)
-                call MatMul_5d(g%rhs(:, 1:5), u, result, ibc=BCS_NONE)
-            end select
-        else
-            select case (g%nb_diag(2))
-            case (5)
-                call MatMul_5d_sym(g%rhs(:, 1:5), u, result, ibc)
-            case (7)
-                call MatMul_7d_sym(g%rhs(:, 1:7), u, result, ibc)
-            end select
-        end if
+        call g%matmul(g%rhs, u, result, ibc)
+        ! if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
+        !     select case (g%nb_diag(2))
+        !     case (5)
+        !         call MatMul_5d(g%rhs(:, 1:5), u, result, ibc)!=BCS_NONE)
+        !     end select
+        ! else
+        !     ! select case (g%nb_diag(2))
+        !     ! case (5)
+        !     !     call MatMul_5d_sym(g%rhs(:, 1:5), u, result, ibc)
+        !     ! case (7)
+        !     !     call MatMul_7d_sym(g%rhs(:, 1:7), u, result, ibc)
+        !     ! end select
+        ! end if
 
         if (g%need_1der) then
             ip = g%nb_diag(2)      ! add Jacobian correction A_2 dx2 du

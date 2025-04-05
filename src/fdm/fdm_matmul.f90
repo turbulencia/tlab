@@ -68,11 +68,12 @@ contains
     !                r_41  1.  r_43         <- interior points start here
     !                     ...  ...  ...
     subroutine MatMul_3d(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
-        real(wp), intent(in), optional :: rhs_b(1:3, 0:3), rhs_t(0:2, 1:4)  ! Special bcs at bottom and top
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
+        ! real(wp), intent(in), optional :: rhs_b(1:3, 0:3), rhs_t(0:2, 1:4)
         real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
@@ -154,11 +155,11 @@ contains
     ! #######################################################################
     ! #######################################################################
     subroutine MatMul_3d_antisym(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
-        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
         real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
@@ -212,11 +213,13 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine MatMul_3d_sym(rhs, u, f, ibc)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+    subroutine MatMul_3d_sym(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
+        real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
         integer(wi) n, nx
@@ -261,11 +264,11 @@ contains
     ! #######################################################################
     ! Calculate f = B u, assuming B is pentadiagonal and 1. upper-diagonal in interior points is equal to 1
     subroutine MatMul_5d(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
-        real(wp), intent(in), optional :: rhs_b(1:4, 0:5), rhs_t(0:3, 1:6)  ! Special bcs at bottom and top
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
         real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
@@ -354,11 +357,11 @@ contains
     ! Calculate f = B u, assuming B is antisymmetric pentadiagonal with 1. upper-diagonal equal to 1
     ! It also assumes equal coefficients in the 2. upper-diagonal for the interior points
     subroutine MatMul_5d_antisym(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
-        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
         real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
@@ -417,11 +420,13 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine MatMul_5d_sym(rhs, u, f, ibc)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+    subroutine MatMul_5d_sym(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
+        real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
         integer(wi) n, nx
@@ -484,11 +489,11 @@ contains
     ! Calculate f = B u, assuming B is antisymmetric heptadiagonal with 1. upper-diagonal equal to 1
     ! It also assumes equal coefficients in the 2. and 3. upper-diagonals for the interior points
     subroutine MatMul_7d_antisym(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
-        real(wp), intent(in), optional :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
         real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
@@ -554,11 +559,13 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine MatMul_7d_sym(rhs, u, f, ibc)
-        real(wp), intent(in) :: rhs(:, :)                                   ! diagonals of B
-        real(wp), intent(in) :: u(:, :)                                     ! vector u
-        real(wp), intent(out) :: f(:, :)                                    ! vector f = B u
+    subroutine MatMul_7d_sym(rhs, u, f, ibc, rhs_b, rhs_t, bcs_b, bcs_t)
+        real(wp), intent(in) :: rhs(:, :)                               ! diagonals of B
+        real(wp), intent(in) :: u(:, :)                                 ! vector u
+        real(wp), intent(out) :: f(:, :)                                ! vector f = B u
         integer, intent(in) :: ibc
+        real(wp), intent(in), optional :: rhs_b(:, 0:), rhs_t(0:, :)    ! Special bcs at bottom, top
+        real(wp), intent(out), optional :: bcs_b(:), bcs_t(:)
 
         ! -------------------------------------------------------------------
         integer(wi) n, nx

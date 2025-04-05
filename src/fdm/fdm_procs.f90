@@ -195,7 +195,8 @@ contains
         integer, intent(in) :: ibc
         real(wp), intent(inout) :: lhs(:, :)
         real(wp), intent(in) :: rhs(:, :)
-        real(wp), intent(inout) :: rhs_b(:, :), rhs_t(:, :)
+        ! real(wp), intent(inout) :: rhs_b(:, :), rhs_t(:, :)
+        real(wp), intent(inout) :: rhs_b(:, 0:), rhs_t(0:, :)
 
         integer(wi) idl, ndl, idr, ndr, ir, ic, nx
         real(wp) dummy
