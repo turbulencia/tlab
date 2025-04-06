@@ -454,6 +454,7 @@ contains
 
         ! -------------------------------------------------------------------
         integer(wi) ij
+        integer ibc
         real(wp), pointer :: uf(:, :), dsf(:, :)
 
         ! ###################################################################
@@ -462,11 +463,13 @@ contains
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
+        ibc = bcs(1, 1) + bcs(2, 1)*2
+
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity
         if (ibm_burgers) then
-            call OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2d, s, result, dsdx)
+            call OPR_PARTIAL2_IBM(is, nlines, ibc, g, lu2d, s, result, dsdx)
         else
-            call FDM_Der1_Solve(nlines, bcs(:, 1), g%der1, g%der1%lu, s, dsdx, wrk2d)
+            call FDM_Der1_Solve(nlines, ibc, g%der1, g%der1%lu, s, dsdx, wrk2d)
             call FDM_Der2_Solve(nlines, g%der2, lu2d, s, result, dsdx, wrk2d)
         end if
 
@@ -521,14 +524,12 @@ contains
 ! ###################################################################
 ! ###################################################################
     ! modify incoming fields (fill solids with spline functions, depending on direction)
-    subroutine OPR_PARTIAL2_IBM(is, nlines, bcs, g, lu2, u, result, du)
+    subroutine OPR_PARTIAL2_IBM(is, nlines, ibc, g, lu2, u, result, du)
         use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
         use IBM_VARS
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
         integer(wi), intent(in) :: nlines       ! # of lines to be solved
-        integer(wi), intent(in) :: bcs(2, 2)     ! BCs at xmin (1,*) and xmax (2,*):
-        !                                       0 biased, non-zero
-        !                                       1 forced to zero
+        integer, intent(in) :: ibc
         type(fdm_dt), intent(in) :: g
         real(wp), intent(in) :: lu2(:, :)
         real(wp), intent(in) :: u(nlines*g%size)
@@ -568,7 +569,7 @@ contains
 
         end select
 
-        call FDM_Der1_Solve(nlines, bcs(:, 1), g%der1, g%der1%lu, p_fld, du, wrk2d)
+        call FDM_Der1_Solve(nlines, ibc, g%der1, g%der1%lu, p_fld, du, wrk2d)
         call FDM_Der2_Solve(nlines, g%der2, lu2, p_fld, result, du, wrk2d)  ! no splines needed
 
         nullify (p_fld)

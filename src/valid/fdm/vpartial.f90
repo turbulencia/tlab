@@ -21,7 +21,6 @@ program VPARTIAL
     real(wp), dimension(:, :), pointer :: u
     real(wp), dimension(:, :), pointer :: du1_a, du1_b, du1_c, du1_n
     real(wp), dimension(:, :), pointer :: du2_a, du2_n1, du2_n2, du2_n3
-    integer(wi) bcs_aux(2, 2)
     real(wp) :: wk, x_0, coef(5)!, dummy
     integer(wi) :: test_type, ibc, ip, ic, ndr, idr, ndl, idl, im
     integer(wi) :: nmin, nmax, nsize
@@ -95,8 +94,6 @@ program VPARTIAL
     ndr = g%der1%nb_diag(2)
     ndl = g%der1%nb_diag(1)
 
-    bcs_aux = 0
-
 ! ###################################################################
 ! Define the function and analytic derivatives
     x_0 = 0.75_wp
@@ -153,7 +150,7 @@ program VPARTIAL
             g%der1%mode_fdm = fdm_cases(im)
             call FDM_CreatePlan(x, g)
 
-            call FDM_Der1_Solve(len, bcs_aux(:, 1), g%der1, g%der1%lu, u, du1_n, wrk2d)
+            call FDM_Der1_Solve(len, BCS_NONE, g%der1, g%der1%lu, u, du1_n, wrk2d)
 
             call check(u, du1_a, du1_n, 'partial.dat')
 
@@ -178,7 +175,7 @@ program VPARTIAL
             g%der2%mode_fdm = fdm_cases(im)
             call FDM_CreatePlan(x, g)
 
-            call FDM_Der1_Solve(len, bcs_aux(:, 1), g%der1, g%der1%lu, u, du1_n, wrk2d)  ! I need du1_n in Jacobian formulation
+            call FDM_Der1_Solve(len, BCS_NONE, g%der1, g%der1%lu, u, du1_n, wrk2d)  ! I need du1_n in Jacobian formulation
             call FDM_Der2_Solve(len, g%der2, g%der2%lu, u, du2_n1, du1_n, wrk2d)
 
             call check(u, du2_a, du2_n1, 'partial.dat')

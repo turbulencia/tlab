@@ -2,7 +2,7 @@
 
 module FDM
     use TLab_Constants, only: wp, wi, roundoff_wp, efile, wfile
-    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX
+    use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, BCS_NONE
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use TLab_Grid, only: x, y, z
     use FDM_Derivative
@@ -186,7 +186,7 @@ contains
 
         ! Calculating derivative dxds into g%jac(:, 1)
         g%der1%periodic = .false.
-        call FDM_Der1_Solve(1, [0, 0], g%der1, g%der1%lu, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
+        call FDM_Der1_Solve(1, BCS_NONE, g%der1, g%der1%lu, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform

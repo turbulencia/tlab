@@ -215,54 +215,60 @@ contains
 
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_Der1_Solve(nlines, bcs, g, lu1, u, result, wrk2d)
+    subroutine FDM_Der1_Solve(nlines, ibc, g, lu1, u, result, wrk2d)
         integer(wi), intent(in) :: nlines   ! # of lines to be solved
-        integer(wi), intent(in) :: bcs(2)   ! BCs at xmin (1) and xmax (2):
-        !                                   0 biased, non-zero
-        !                                   1 forced to zero
+        integer, intent(in) :: ibc          ! Boundary condition [BCS_DD=BCS_NONE, BCS_DN, BCS_ND, BCS_NN]
         type(fdm_derivative_dt), intent(in) :: g
         real(wp), intent(in) :: lu1(:, :)
         real(wp), intent(in) :: u(nlines, g%size)
         real(wp), intent(out) :: result(nlines, g%size)
         real(wp), intent(inout) :: wrk2d(*)
 
-        integer(wi) nmin, nmax, nsize, ip, ibc
+        ! -------------------------------------------------------------------
+        integer(wi) nmin, nmax, nsize, ip
+        integer ibc_loc
 
         ! ###################################################################
-        ibc = bcs(1) + bcs(2)*2
-        ip = ibc*5
+        ibc_loc = ibc
+
+        ip = ibc_loc*5
+
+        if (g%periodic) ibc_loc = BCS_PERIODIC
 
         nmin = 1; nmax = g%size
-        if (g%periodic) ibc = BCS_PERIODIC
-        if (any([BCS_ND, BCS_NN] == ibc)) then
-            result(:, 1) = 0.0_wp      ! homogeneous bcs
+        if (any([BCS_ND, BCS_NN] == ibc_loc)) then
+            result(:, 1) = 0.0_wp                   ! homogeneous Neumann bcs
             nmin = nmin + 1
         end if
-        if (any([BCS_DN, BCS_NN] == ibc)) then
-            result(:, g%size) = 0.0_wp
+        if (any([BCS_DN, BCS_NN] == ibc_loc)) then
+            result(:, g%size) = 0.0_wp              ! homogeneous Neumann bcs
             nmax = nmax - 1
         end if
         nsize = nmax - nmin + 1
 
-        call g%matmul(g%rhs, u, result, ibc, g%rhs_b, g%rhs_t)
+        ! -------------------------------------------------------------------
+        ! Calculate RHS in system of equations A u' = B u
+        call g%matmul(g%rhs, u, result, ibc_loc, g%rhs_b, g%rhs_t)
         ! if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
         !     select case (g%nb_diag(2))
         !     case (3)
-        !         call MatMul_3d(g%rhs(:, 1:3), u, result, ibc)!=BCS_NONE)
+        !         call MatMul_3d(g%rhs(:, 1:3), u, result, ibc_loc)!=BCS_NONE)
         !     case (5)
-        !         call MatMul_5d(g%rhs(:, 1:5), u, result, ibc)!=BCS_NONE)
+        !         call MatMul_5d(g%rhs(:, 1:5), u, result, ibc_loc)!=BCS_NONE)
         !     end select
         ! else
         !     ! select case (g%nb_diag(2))
         !     ! case (3)
-        !     !     call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, ibc, g%rhs_b, g%rhs_t)
+        !     !     call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, ibc_loc, g%rhs_b, g%rhs_t)
         !     ! case (5)
-        !     !     call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, ibc, g%rhs_b, g%rhs_t)
+        !     !     call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, ibc_loc, g%rhs_b, g%rhs_t)
         !     ! case (7)
-        !     !     call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, ibc, g%rhs_b, g%rhs_t)
+        !     !     call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, ibc_loc, g%rhs_b, g%rhs_t)
         !     ! end select
         ! end if
 
+        ! -------------------------------------------------------------------
+        ! Solve for u' in system of equations A u' = B u
         if (g%periodic) then
             select case (g%nb_diag(1))
             case (3)
@@ -430,6 +436,7 @@ contains
         real(wp), intent(out) :: result(nlines, g%size)
         real(wp), intent(out) :: wrk2d(*)
 
+        ! -------------------------------------------------------------------
         integer(wi) ip
         integer ibc
 
@@ -440,6 +447,8 @@ contains
             ibc = BCS_DD
         end if
 
+        ! -------------------------------------------------------------------
+        ! Calculate RHS in system of equations A u' = B u
         call g%matmul(g%rhs, u, result, ibc)
         ! if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
         !     select case (g%nb_diag(2))
@@ -455,12 +464,16 @@ contains
         !     ! end select
         ! end if
 
+        ! -------------------------------------------------------------------
+        ! add Jacobian correction A_2 dx2 du
         if (g%need_1der) then
-            ip = g%nb_diag(2)      ! add Jacobian correction A_2 dx2 du
+            ip = g%nb_diag(2)
             ! so far, only tridiagonal systems
             call MatMul_3d_add(g%rhs(:, ip + 1:ip + 3), du, result)
         end if
 
+        ! -------------------------------------------------------------------
+        ! Solve for u' in system of equations A u' = B u
         if (g%periodic) then
             select case (g%nb_diag(1))
             case (3)
