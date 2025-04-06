@@ -171,6 +171,7 @@ program VPOISSON
         ! call random_number(a)
 
         ! remove 2\Delta x wave
+        call OPR_Filter_Initialize_Parameters(ifile)
         do ig = 1, 3
             call OPR_FILTER_INITIALIZE(g(ig), FilterDomain(ig))
         end do

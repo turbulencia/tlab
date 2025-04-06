@@ -28,7 +28,7 @@ module FDM
 
     end type fdm_dt
 
-    type(fdm_dt), public :: g(3)                    ! fdm derivative plans along 3 directions
+    type(fdm_dt), public, protected :: g(3)                    ! fdm derivative plans along 3 directions
     type(fdm_integral_dt), public, protected :: fdm_Int0(2)    ! fdm integral plans along Oy (ode for lambda = 0)
 
     public :: FDM_Initialize
@@ -43,6 +43,7 @@ contains
         ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
+        integer ig
 
         !########################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
@@ -77,6 +78,44 @@ contains
         if (g(1)%der1%mode_fdm == FDM_COM6_JACOBIAN_PENTA) then     ! CFL_max depends on max[g(ig)%der1%mwn(:)]
             call TLab_Write_ASCII(wfile, __FILE__//'. CompactJacobian6Penta requires adjusted CFL-number depending on alpha and beta values.')
         end if
+
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[Grid]')
+        call TLab_Write_ASCII(bakfile, '#XUniform=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#YUniform=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ZUniform=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#XPeriodic=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#YPeriodic=<yes/no>')
+        call TLab_Write_ASCII(bakfile, '#ZPeriodic=<yes/no>')
+
+        g(1)%name = 'x'
+        g(2)%name = 'y'
+        g(3)%name = 'z'
+
+        do ig = 1, 3
+            call ScanFile_Char(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
+            if (trim(adjustl(sRes)) == 'yes') then; g(ig)%uniform = .true.
+            else if (trim(adjustl(sRes)) == 'no') then; g(ig)%uniform = .false.
+            else
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in Uniform '//g(ig)%name(1:1)//' grid')
+                call TLab_Stop(DNS_ERROR_UNIFORMX)
+            end if
+
+            call ScanFile_Char(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
+            if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
+            else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
+            else
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in Periodic '//g(ig)%name(1:1)//' grid')
+                call TLab_Stop(DNS_ERROR_IBC)
+            end if
+
+            ! consistency check
+            if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Grid must be uniform in periodic direction.')
+                call TLab_Stop(DNS_ERROR_OPTION)
+            end if
+
+        end do
 
         ! -------------------------------------------------------------------
         call FDM_CreatePlan(x, g(1))

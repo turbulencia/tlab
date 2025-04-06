@@ -34,7 +34,7 @@ module OPR_FILTERS
 #ifdef USE_MPI
         type(tmpi_transpose_dt) trp_plan
 #endif
-        real(wp), allocatable :: coeffs(:, :)    ! filted coefficients
+        real(wp), allocatable :: coeffs(:, :)    ! filter coefficients
     end type filter_dt
 
     type(filter_dt), public :: FilterDomain(3)
@@ -43,12 +43,33 @@ module OPR_FILTERS
 
     type(filter_dt), public :: PressureFilter(3)
 
-    public :: FILTER_READBLOCK, OPR_FILTER_INITIALIZE
+    public :: OPR_Filter_Initialize_Parameters, FILTER_READBLOCK, OPR_FILTER_INITIALIZE
     public :: OPR_FILTER
     public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
 
 contains
+    !###################################################################
+    !###################################################################
+    subroutine OPR_Filter_Initialize_Parameters(inifile)
+        character(len=*), intent(in) :: inifile
+
+! -------------------------------------------------------------------
+        character*32 bakfile
+
+! ###################################################################
+        bakfile = trim(adjustl(inifile))//'.bak'
+
+        call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
+        FilterDomainActive(:) = .true.                      ! Variable to eventually allow for control field by field
+        FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin     ! To allow a difference between flow and scalar
+        FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin     ! Can be modified later depending on BCs of equations
+
+        call FILTER_READBLOCK(bakfile, inifile, 'PressureFilter', PressureFilter)
+
+        return
+    end subroutine OPR_Filter_Initialize_Parameters
+
     !###################################################################
     !###################################################################
     subroutine FILTER_READBLOCK(bakfile, inifile, tag, variable)

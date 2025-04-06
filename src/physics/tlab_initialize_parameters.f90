@@ -20,11 +20,7 @@ subroutine TLab_Initialize_Parameters(inifile)
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro, ims_npro_i, ims_npro_j, ims_npro_k
 #endif
-    use FDM, only: g
     use IO_Fields
-    ! use Avg_Spatial
-    use OPR_Filters, only: FilterDomain, FilterDomainActive, FilterDomainBcsFlow, FilterDomainBcsScal, PressureFilter
-    use OPR_Filters, only: FILTER_READBLOCK
     implicit none
 
     character(len=*), intent(in) :: inifile
@@ -32,8 +28,9 @@ subroutine TLab_Initialize_Parameters(inifile)
 ! -------------------------------------------------------------------
     character*512 sRes
     character*32 bakfile
-    integer(wi) ig, idummy
+    integer(wi) idummy
 #ifdef USE_MPI
+    integer(wi) nsize_total
     character*64 lstr
 #endif
 
@@ -143,67 +140,29 @@ subroutine TLab_Initialize_Parameters(inifile)
     call TLab_Write_ASCII(bakfile, '#Jmax=<jmax>')
     call TLab_Write_ASCII(bakfile, '#Kmax=<kmax>')
     call TLab_Write_ASCII(bakfile, '#Kmax(*)=<kmax_proc>')
-    call TLab_Write_ASCII(bakfile, '#XUniform=<yes/no>')
-    call TLab_Write_ASCII(bakfile, '#YUniform=<yes/no>')
-    call TLab_Write_ASCII(bakfile, '#ZUniform=<yes/no>')
-    call TLab_Write_ASCII(bakfile, '#XPeriodic=<yes/no>')
-    call TLab_Write_ASCII(bakfile, '#YPeriodic=<yes/no>')
-    call TLab_Write_ASCII(bakfile, '#ZPeriodic=<yes/no>')
 
     call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax', '0', imax)
     call ScanFile_Int(bakfile, inifile, 'Grid', 'Jmax', '0', jmax)
     call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax', '0', kmax)
-
-! default
-    g(1)%size = imax
-    g(2)%size = jmax
-    g(3)%size = kmax
-
-    g(1)%name = 'x'
-    g(2)%name = 'y'
-    g(3)%name = 'z'
-
-    do ig = 1, 3
-        call ScanFile_Char(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Uniform', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%uniform = .true.
-        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%uniform = .false.
-        else
-            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Error in Uniform '//g(ig)%name(1:1)//' grid')
-            call TLab_Stop(DNS_ERROR_UNIFORMX)
-        end if
-
-        call ScanFile_Char(bakfile, inifile, 'Grid', g(ig)%name(1:1)//'Periodic', 'void', sRes)
-        if (trim(adjustl(sRes)) == 'yes') then; g(ig)%periodic = .true.
-        else if (trim(adjustl(sRes)) == 'no') then; g(ig)%periodic = .false.
-        else
-            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Error in Periodic '//g(ig)%name(1:1)//' grid')
-            call TLab_Stop(DNS_ERROR_IBC)
-        end if
-
-        ! consistency check
-        if (g(ig)%periodic .and. (.not. g(ig)%uniform)) then
-            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Grid must be uniform in periodic direction.')
-            call TLab_Stop(DNS_ERROR_OPTION)
-        end if
-
-    end do
 
 ! -------------------------------------------------------------------
 ! Domain decomposition in parallel mode
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro > 1) then
+        nsize_total = kmax
         call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
-        if (kmax > 0 .and. mod(g(3)%size, kmax) == 0) then
-            ims_npro_k = g(3)%size/kmax
+        if (kmax > 0 .and. mod(nsize_total, kmax) == 0) then
+            ims_npro_k = nsize_total/kmax
         else
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Input kmax incorrect')
             call TLab_Stop(DNS_ERROR_KMAXTOTAL)
         end if
 
+        nsize_total = imax
         call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
-        if (imax > 0 .and. mod(g(1)%size, imax) == 0) then
-            ims_npro_i = g(1)%size/imax
+        if (imax > 0 .and. mod(nsize_total, imax) == 0) then
+            ims_npro_i = nsize_total/imax
         else
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Input imax incorrect')
             call TLab_Stop(DNS_ERROR_KMAXTOTAL)
@@ -224,18 +183,6 @@ subroutine TLab_Initialize_Parameters(inifile)
     end if
 
 #endif
-
-! ###################################################################
-! Filters
-! ###################################################################
-! Domain
-    call FILTER_READBLOCK(bakfile, inifile, 'Filter', FilterDomain)
-    FilterDomainActive(:) = .true.                      ! Variable to eventually allow for control field by field
-    FilterDomainBcsFlow(:) = FilterDomain(2)%BcsMin     ! To allow a difference between flow and scalar
-    FilterDomainBcsScal(:) = FilterDomain(2)%BcsMin     ! Can be modified later depending on BCs of equations
-
-! Pressure
-    call FILTER_READBLOCK(bakfile, inifile, 'PressureFilter', PressureFilter)
 
 ! ###################################################################
 ! specific data for spatial mode

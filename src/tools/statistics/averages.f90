@@ -357,6 +357,7 @@ program AVERAGES
 
     call OPR_Elliptic_Initialize(ifile)
 
+    call OPR_Filter_Initialize_Parameters(ifile)
     do ig = 1, 3
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do

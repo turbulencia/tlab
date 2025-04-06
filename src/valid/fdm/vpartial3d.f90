@@ -12,7 +12,7 @@ program VPARTIAL3D
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g, FDM_CreatePlan
+    use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_COM4_DIRECT, FDM_COM6_JACOBIAN
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Grid
@@ -24,6 +24,7 @@ program VPARTIAL3D
 
     implicit none
 
+    type(fdm_dt) :: g(3)
     real(wp), dimension(:, :), allocatable :: bcs_hb, bcs_ht
     real(wp), dimension(:, :, :), pointer :: a, b, c, d, e, f
 
