@@ -46,10 +46,14 @@ contains
         integer ig
 
         !########################################################################
+        ! Reading
         bakfile = trim(adjustl(inifile))//'.bak'
         block = 'Main'
 
-        call TLab_Write_ASCII(bakfile, '#SpaceOrder=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect6>')
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#['//trim(adjustl(block))//']')
+        call TLab_Write_ASCII(bakfile, '#SpaceOrder1=<CompactJacobian4/CompactJacobian6/CompactJacobian6Penta/CompactDirect4/CompactDirect6>')
+        call TLab_Write_ASCII(bakfile, '#SpaceOrder2=<CompactJacobian4/CompactJacobian6/CompactJacobian6Hyper/CompactDirect4/CompactDirect6>')
 
         call ScanFile_Char(bakfile, inifile, block, 'SpaceOrder1', 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') &
@@ -117,25 +121,29 @@ contains
 
         end do
 
-        ! -------------------------------------------------------------------
+        !########################################################################
+        ! Initializing fdm plan for derivatives
         call FDM_CreatePlan(x, g(1))
-        call FDM_CreatePlan(y, g(2), fdm_Int0)
+        call FDM_CreatePlan(y, g(2))
         call FDM_CreatePlan(z, g(3))
+
+        ! ###################################################################
+        ! Initializing fdm plans for first-order integrals (cases lambda = 0.0_wp)
+        call FDM_Int1_Initialize(y, g(2)%der1, 0.0_wp, BCS_MIN, fdm_Int0(BCS_MIN))
+        call FDM_Int1_Initialize(y, g(2)%der1, 0.0_wp, BCS_MAX, fdm_Int0(BCS_MAX))
 
         return
     end subroutine FDM_Initialize
 
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_CreatePlan(nodes, g, fdmi, locScale)
+    subroutine FDM_CreatePlan(nodes, g, locScale)
         real(wp), intent(in) :: nodes(:)                            ! positions of the grid nodes
         type(fdm_dt), intent(inout) :: g                            ! fdm plan for derivatives
-        type(fdm_integral_dt), intent(out), optional :: fdmi(2)     ! fdm plan for integrals
         real(wp), intent(in), optional :: locScale                  ! for consistency check
 
         ! -------------------------------------------------------------------
         integer(wi) i, nx
-        integer ib, bcs_cases(2)
 
         ! ###################################################################
         ! Consistency check
@@ -234,20 +242,6 @@ contains
 
             end if
 
-        end if
-
-        ! ###################################################################
-        ! first-order integrals (cases lambda = 0.0_wp)
-        ! ###################################################################
-        if (present(fdmi)) then
-            if (g%periodic) then
-                call TLab_Write_ASCII(wfile, __FILE__//'. Integral algorithms not available for periodic cases.')
-            else
-                bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
-                do ib = 1, 2
-                    call FDM_Int1_Initialize(g%nodes(:), g%der1, 0.0_wp, bcs_cases(ib), fdmi(ib))
-                end do
-            end if
         end if
 
         return

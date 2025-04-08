@@ -31,10 +31,12 @@ contains
         real(wp), intent(out) :: rhs(nmax, 3)   ! RHS diagonals
         integer(wi), intent(out) :: nb_diag(2)  ! # diagonals in LHS and RHS
 
+        ! -------------------------------------------------------------------
         real(wp) dummy
         real(wp) coef(6)
         integer(wi) n
 
+        ! #######################################################################
         nb_diag = [3, 3]
 
         ! #######################################################################
@@ -70,9 +72,9 @@ contains
         lhs(n, [2, 1]) = coef(1:2)*dummy            ! am1, a
         rhs(n, [2, 1, 3]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(3)
 
-        do n = 1, 10 !nmax
-            print *, n, lhs(n, :), rhs(n, :)
-        end do
+        ! do n = 1, 10 !nmax
+        !     print *, n, lhs(n, :), rhs(n, :)
+        ! end do
 
         return
     end subroutine FDM_C1N4_Direct

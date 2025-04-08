@@ -46,8 +46,9 @@ contains
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6)
-        integer(wi) n
+        ! integer(wi) n
 
+        ! #######################################################################
         nb_diag = [3, 3]
 
         if (present(periodic)) then
@@ -74,9 +75,9 @@ contains
 
         end if
 
-        do n = 1, 10 !nx
-            print *, n, lhs(n, :), rhs(n, :)
-        end do
+        ! do n = 1, 10 !nx
+        !     print *, n, lhs(n, :), rhs(n, :)
+        ! end do
 
         return
     end subroutine FDM_C1N4_Jacobian

@@ -88,7 +88,9 @@ program VINTEGRAL
 
     g%der1%mode_fdm = FDM_COM6_JACOBIAN     ! default
     g%der2%mode_fdm = g%der1%mode_fdm
-    call FDM_CreatePlan(x, g, fdmi)
+    call FDM_CreatePlan(x, g)
+    call FDM_Int1_Initialize(x, g%der1, 0.0_wp, BCS_MIN, fdmi(BCS_MIN))
+    call FDM_Int1_Initialize(x, g%der1, 0.0_wp, BCS_MAX, fdmi(BCS_MAX))
 
     bcs_aux = 0
 
@@ -103,16 +105,16 @@ program VINTEGRAL
         ! du1_a(:, i) = (2.0_wp*pi_wp/g%scale*wk) &
         !               *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))! + pi_wp/4.0_wp)
 ! Gaussian
-        ! u(:, i) = exp(-(g%nodes(i) - x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
-        ! du1_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*u(:, i)
-        ! du2_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*du1_a(:, i) &
-        !               - 1.0_wp/(g%scale/wk)**2*u(:, i)
+        u(:, i) = exp(-(g%nodes(i) - x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
+        du1_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*u(:, i)
+        du2_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*du1_a(:, i) &
+                      - 1.0_wp/(g%scale/wk)**2*u(:, i)
 ! exponential
         ! u(:, i) = exp(-g%nodes(i)*wk)
         ! du1_a(:, i) = -wk*u(:, i)
 ! step
-        u(:, i) = max(0.0_wp, (g%nodes(i) - g%nodes(kmax/2))*x_0)
-        du1_a(:, i) = (1.0_wp + sign(1.0_wp, g%nodes(i) - g%nodes(kmax/2)))*0.5_wp*x_0
+        ! u(:, i) = max(0.0_wp, (g%nodes(i) - g%nodes(kmax/2))*x_0)
+        ! du1_a(:, i) = (1.0_wp + sign(1.0_wp, g%nodes(i) - g%nodes(kmax/2)))*0.5_wp*x_0
 ! tanh
         ! u(:, i) = x_0*log(1.0_wp + exp((g%nodes(i) - g%nodes(kmax/2))/x_0))
         ! du1_a(:, i) = 0.5_wp*(1.0_wp + tanh(0.5_wp*(g%nodes(i) - g%nodes(kmax/2))/x_0))
@@ -143,7 +145,7 @@ program VINTEGRAL
         im = im + 1; fdm_names(im) = 'Direct 6'
         bcs_cases(1:2) = [BCS_MIN, BCS_MAX]
 
-        do im = 1, 5, 3 !size(fdm_cases)
+        do im = 1, 5 !size(fdm_cases)
             print *, new_line('a'), fdm_names(im)
 
             g%der1%mode_fdm = fdm_cases(im)
