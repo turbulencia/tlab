@@ -57,7 +57,7 @@ contains
         ! print *, n, coef(1:2)
         ! print *, n, coef(3:5)*(x(2) - x(1))
 
-        dummy = 1.0_wp/coef(3)
+        dummy = 1.0_wp/coef(4)
         lhs(n, 2:3) = coef(1:2)*dummy               ! a, ap1
         rhs(n, [2, 3, 1]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(1)
 
@@ -66,14 +66,13 @@ contains
         ! print *, n, coef(1:2)
         ! print *, n, coef(3:5)*(x(2) - x(1))
 
-        dummy = 1.0_wp/coef(3)
+        dummy = 1.0_wp/coef(4)
         lhs(n, [2, 1]) = coef(1:2)*dummy            ! am1, a
         rhs(n, [2, 1, 3]) = coef(3:5)*dummy         ! b, bp1, bp2; bp2 is saved into rhs(3)
 
-        ! do n = 1, nmax
-        !     print *, n, lhs(n, :)
-        !     print *, n, rhs(n, :)
-        ! end do
+        do n = 1, 10 !nmax
+            print *, n, lhs(n, :), rhs(n, :)
+        end do
 
         return
     end subroutine FDM_C1N4_Direct

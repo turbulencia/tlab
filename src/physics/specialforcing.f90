@@ -140,12 +140,11 @@ contains
         end if
 
         !########################################################################
-        ! Local allocation
-        call TLab_Allocate_Real(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
-        call TLab_Allocate_Real(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
-
         select case (forcingProps%type)
         case (TYPE_WAVEMAKER)
+            call TLab_Allocate_Real(__FILE__, tmp_envelope, [imax*jmax, kmax], 'tmp-wave-envelope')
+            call TLab_Allocate_Real(__FILE__, tmp_phase, [imax*jmax, nwaves], 'tmp-wave-phase')
+
 #ifdef USE_MPI
             idsp = ims_offset_i; kdsp = ims_offset_k
 #else

@@ -1,3 +1,3 @@
 FILE(GLOB sourcefiles "../ibm/*.f90")
 add_library(ibm STATIC ${sourcefiles})
-add_dependencies(ibm fdm io utils base)
+add_dependencies(ibm fdm utils base)

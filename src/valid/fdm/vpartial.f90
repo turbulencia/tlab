@@ -104,17 +104,17 @@ program VPARTIAL
         ! u(:, i) = 1.0_wp + sin(2.0_wp*pi_wp/g%scale*wk*g%nodes(i)) ! + pi_wp/4.0_wp)
         ! du1_a(:, i) = (2.0_wp*pi_wp/g%scale*wk) &
         !               *cos(2.0_wp*pi_wp/g%scale*wk*g%nodes(i))! + pi_wp/4.0_wp)
-        ! Gaussian
-        u(:, i) = exp(-(g%nodes(i) - x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
-        du1_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*u(:, i)
-        du2_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*du1_a(:, i) &
-                      - 1.0_wp/(g%scale/wk)**2*u(:, i)
+        ! ! Gaussian
+        ! u(:, i) = exp(-(g%nodes(i) - x_0*g%scale)**2/(2.0_wp*(g%scale/wk)**2))
+        ! du1_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*u(:, i)
+        ! du2_a(:, i) = -(g%nodes(i) - x_0*g%scale)/(g%scale/wk)**2*du1_a(:, i) &
+        !               - 1.0_wp/(g%scale/wk)**2*u(:, i)
         ! ! exponential
         ! u(:, i) = exp(-g%nodes(i)*wk)
         ! du1_a(:, i) = -wk*u(:, i)
-        ! ! step
-        ! u(:, i) = max(0.0_wp, (g%nodes(i) - g%nodes(kmax/2))*x_0)
-        ! du1_a(:, i) = (1.0_wp + sign(1.0_wp, g%nodes(i) - g%nodes(kmax/2)))*0.5_wp*x_0
+        ! step
+        u(:, i) = max(0.0_wp, (g%nodes(i) - g%nodes(kmax/2))*x_0)
+        du1_a(:, i) = (1.0_wp + sign(1.0_wp, g%nodes(i) - g%nodes(kmax/2)))*0.5_wp*x_0
         ! ! tanh
         ! u(:, i) = x_0*log(1.0_wp + exp((g%nodes(i) - g%nodes(kmax/2))/x_0))
         ! du1_a(:, i) = 0.5_wp*(1.0_wp + tanh(0.5_wp*(g%nodes(i) - g%nodes(kmax/2))/x_0))
@@ -141,10 +141,10 @@ program VPARTIAL
         im = im + 1; fdm_names(im) = 'Jacobian 4'
         im = im + 1; fdm_names(im) = 'Jacobian 6'
         im = im + 1; fdm_names(im) = 'Jacobian 6, penta-diagonal'
-        im = im + 1; fdm_names(im) = 'Direct 4'     ! undeveloped
-        im = im + 1; fdm_names(im) = 'Direct 6'     ! undeveloped
+        im = im + 1; fdm_names(im) = 'Direct 4'
+        im = im + 1; fdm_names(im) = 'Direct 6'
 
-        do im = 1, 5 !size(fdm_cases)
+        do im = 1, 5, 3 !size(fdm_cases)
             print *, new_line('a'), fdm_names(im)
 
             g%der1%mode_fdm = fdm_cases(im)

@@ -9,4 +9,4 @@ list(REMOVE_ITEM sourcefiles ${to_remove})
 endif()
 
 add_library(particles STATIC ${sourcefiles})
-add_dependencies(particles thermodynamics io base)
+add_dependencies(particles thermodynamics base)

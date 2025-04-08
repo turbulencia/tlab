@@ -1,4 +1,4 @@
-set(LEVEL1_LIBS io utils base)
+set(LEVEL1_LIBS utils base)
 if (PSFFT_LIB)
 set(LEVEL1_LIBS ${LEVEL1_LIBS} ${PSFFT_LIB} ${FFTWTHREADS_LIB})
 endif()
@@ -22,7 +22,7 @@ endif()
 # Initialization
 FILE(GLOB sourcefiles "initialize/grid/*.f90")
 add_executable(inigrid.x ${sourcefiles})
-target_link_libraries(inigrid.x operators fdm io ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(inigrid.x operators fdm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "initialize/rand/*.f90")
 add_executable(inirand.x ${sourcefiles})
@@ -77,7 +77,7 @@ endif()
 # Transformation
 FILE(GLOB sourcefiles "transform/transgrid.f90")
 add_executable(transgrid.x ${sourcefiles})
-target_link_libraries(transgrid.x operators io ${LEVEL1_LIBS} ${LIBS})
+target_link_libraries(transgrid.x operators ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "transform/transfields.f90")
 add_executable(transfields.x ${sourcefiles})

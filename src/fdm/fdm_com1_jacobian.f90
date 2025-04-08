@@ -46,6 +46,7 @@ contains
 
         ! -------------------------------------------------------------------
         real(wp) coef_bc1(6)
+        integer(wi) n
 
         nb_diag = [3, 3]
 
@@ -72,6 +73,10 @@ contains
             call Create_System_1der(dx, lhs, rhs, coef, coef_bc1)
 
         end if
+
+        do n = 1, 10 !nx
+            print *, n, lhs(n, :), rhs(n, :)
+        end do
 
         return
     end subroutine FDM_C1N4_Jacobian
@@ -277,7 +282,7 @@ contains
             lhs(:, idl + ic) = lhs(:, idl + ic)*cshift(dx(:), +ic)
         end do
 
-        ! normalize such the coefficent in 1. off-diagonal of rhs is 1
+        ! normalize s.t. 1. upper-diagonal is 1
         lhs(:, :) = lhs(:, :)/coef_int(3)
         rhs(:, :) = rhs(:, :)/coef_int(3)
 
