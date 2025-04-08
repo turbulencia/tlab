@@ -7,14 +7,15 @@ program DNS
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_WorkFlow, only: imode_sim, fourier_on, scal_on, flow_on
-    use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Time, only: itime
     use TLab_Arrays
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
-    use FDM, only: g, FDM_Initialize
+    use IO_Fields
+    use TLab_Grid
+    use FDM, only: FDM_Initialize
     use Thermodynamics, only: Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize
@@ -26,6 +27,10 @@ program DNS
     use SpecialForcing, only: SpecialForcing_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
+    use OPR_FOURIER, only: OPR_FOURIER_INITIALIZE
+    use OPR_Elliptic, only: OPR_Elliptic_Initialize
+    use OPR_Burgers, only: OPR_Burgers_Initialize
+    use OPR_FILTERS
     use PARTICLE_VARS
     use PARTICLE_ARRAYS
     use PARTICLE_PROCS
@@ -41,12 +46,6 @@ program DNS
     use DNS_STATISTICS, only: DNS_STATISTICS_INITIALIZE, DNS_STATISTICS_SPATIAL, DNS_STATISTICS_TEMPORAL, mean_flow, mean_scal
     use ParticleTrajectories
     use AVG_SCAL_ZT
-    use TLab_Grid
-    use IO_Fields
-    use OPR_FOURIER
-    use OPR_FILTERS
-    use OPR_Burgers, only: OPR_Burgers_Initialize
-    use OPR_Elliptic, only: OPR_Elliptic_Initialize
     use AVG_PHASE
     use Avg_Spatial, only: IO_READ_AVG_SPATIAL, IO_WRITE_AVG_SPATIAL
     implicit none

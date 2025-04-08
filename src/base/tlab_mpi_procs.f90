@@ -25,7 +25,50 @@ contains
         character(len=32) bakfile, block
         character(len=512) sRes, line
         character*64 lstr
+        integer(wi) nsize_total
 
+        ! #######################################################################
+        ! Domain decomposition in parallel mode
+        bakfile = trim(adjustl(inifile))//'.bak'
+
+        call TLab_Write_ASCII(bakfile, '#')
+        call TLab_Write_ASCII(bakfile, '#[Grid]')
+        call TLab_Write_ASCII(bakfile, '#Imax(*)=<imax_proc>')
+        call TLab_Write_ASCII(bakfile, '#Kmax(*)=<kmax_proc>')
+
+        if (ims_npro > 1) then
+            nsize_total = kmax
+            call ScanFile_Int(bakfile, inifile, 'Grid', 'Kmax(*)', '-1', kmax)
+            if (kmax > 0 .and. mod(nsize_total, kmax) == 0) then
+                ims_npro_k = nsize_total/kmax
+            else
+                call TLab_Write_ASCII(efile, __FILE__//'. Input kmax incorrect')
+                call TLab_Stop(DNS_ERROR_KMAXTOTAL)
+            end if
+    
+            nsize_total = imax
+            call ScanFile_Int(bakfile, inifile, 'Grid', 'Imax(*)', '-1', imax)
+            if (imax > 0 .and. mod(nsize_total, imax) == 0) then
+                ims_npro_i = nsize_total/imax
+            else
+                call TLab_Write_ASCII(efile, __FILE__//'. Input imax incorrect')
+                call TLab_Stop(DNS_ERROR_KMAXTOTAL)
+            end if
+    
+            ims_npro_j = 1
+    
+            ! consistency check
+            if (ims_npro_i*ims_npro_k == ims_npro) then
+                write (lstr, *) ims_npro_i; write (sRes, *) ims_npro_k
+                lstr = trim(adjustl(lstr))//'x'//trim(adjustl(sRes))
+                call TLab_Write_ASCII(lfile, 'Initializing domain partition '//trim(adjustl(lstr)))
+            else
+                call TLab_Write_ASCII(efile, __FILE__//'. Inconsistency in total number of PEs')
+                call TLab_Stop(DNS_ERROR_KMAXTOTAL)
+            end if
+    
+        end if
+    
         ! #######################################################################
         call TLab_Write_ASCII(lfile, 'Creating MPI communicators.')
 

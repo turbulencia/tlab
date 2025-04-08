@@ -8,7 +8,6 @@ module Radiation
     use FDM_Integral, only: FDM_Int1_Solve, fdm_integral_dt
     use NavierStokes, only: nse_eqns
     use TLab_Memory, only: inb_scal_array
-    use TLab_Memory, only: isize_field
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
@@ -75,7 +74,7 @@ contains
     !########################################################################
     !########################################################################
     subroutine Radiation_Initialize(inifile)
-        use TLab_Memory, only: imax, kmax
+        use TLab_Memory, only: imax, jmax, kmax
         character(len=*), intent(in) :: inifile
 
         ! -------------------------------------------------------------------
@@ -213,7 +212,7 @@ contains
         !########################################################################
         ! Local allocation
         allocate (bcs_ht(imax*kmax), bcs_hb(imax*kmax), t_ht(imax*kmax))
-        call TLab_Allocate_Real(__FILE__, tmp_rad, [isize_field, inb_tmp_rad], 'tmp-rad')
+        call TLab_Allocate_Real(__FILE__, tmp_rad, [imax*jmax*kmax, inb_tmp_rad], 'tmp-rad')
 
         ! -------------------------------------------------------------------
         ! Check with previous version; to be removed

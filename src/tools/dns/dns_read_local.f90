@@ -728,7 +728,7 @@ subroutine DNS_READ_LOCAL(inifile)
     if (imode_rhs == EQNS_RHS_NONBLOCKING) inb_txc = max(inb_txc, 15)
 #endif
 
-    isize_wrk3d = max(isize_wrk3d, g_inf(1)%size*g_inf(2)%size*g_inf(3)%size)
+    ! isize_wrk3d = max(isize_wrk3d, g_inf(1)%size*g_inf(2)%size*g_inf(3)%size)
     if (use_tower) then
         isize_wrk3d = max(isize_wrk3d, nitera_save*(g(2)%size + 2))
     end if
