@@ -57,42 +57,29 @@ contains
         integer(wi) isize_stride, isize_disp, isize_fft_z, isize_fft_y, isize_fft_x
 
         ! #######################################################################
-        ! FFTW library
-        ! #######################################################################
-#ifdef USE_FFTW
-
-#ifdef USE_MPI
-        if (ims_npro_i > 1) then
-            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, message='Ox FFTW in Poisson solver.')
-            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, message='extended Ox FFTW in Poisson solver.')
-
-            ! if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
-            if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
-                call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
-                call TLab_Stop(DNS_ERROR_UNDEVELOP)
-            end if
-        end if
+#ifndef USE_FFTW
+        call TLab_Write_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')
+        call TLab_Stop(DNS_ERROR_UNDEVELOP)
 #endif
 
         ! -----------------------------------------------------------------------
         ! Oz direction
         ! -----------------------------------------------------------------------
-#ifdef USE_MPI
-        if (ims_npro_k > 1) then
-            tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz, message='Oz FFTW in Poisson solver.')
-
-            ! isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
-            isize_fft_z = tmpi_plan_poissonz%nlines/2 ! divide by 2 bcs. we work w complex #
-        else
-#endif
-            isize_fft_z = (imax/2 + 1)*(jmax + 2)
-#ifdef USE_MPI
-        end if
-#endif
-
-        isize_stride = isize_fft_z
-
         if (g(3)%size > 1) then
+#ifdef USE_MPI
+            if (ims_npro_k > 1) then
+                tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz/2, locType=MPI_DOUBLE_COMPLEX, message='Oz FFTW in Poisson solver.')
+                isize_fft_z = tmpi_plan_poissonz%nlines
+
+            else
+#endif
+                isize_fft_z = (imax/2 + 1)*(jmax + 2)
+#ifdef USE_MPI
+            end if
+#endif
+
+            isize_stride = isize_fft_z
+
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
                                      txc(:, 1), g(3)%size, isize_stride, 1, &
@@ -117,20 +104,19 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            ! isize_fft_x = ims_size_i(TLAB_MPI_TRP_I_POISSON1)
+            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, message='Ox FFTW in Poisson solver.')
             isize_fft_x = tmpi_plan_poissonx1%nlines
+            isize_disp = (imax/2 + 1)*ims_npro_i
+
+            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, message='extended Ox FFTW in Poisson solver.')
+
+            if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
+                call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
+                call TLab_Stop(DNS_ERROR_UNDEVELOP)
+            end if
         else
 #endif
             isize_fft_x = jmax
-#ifdef USE_MPI
-        end if
-#endif
-
-#ifdef USE_MPI
-        if (ims_npro_i > 1) then
-            isize_disp = (imax/2 + 1)*ims_npro_i
-        else
-#endif
             isize_disp = g(1)%size/2 + 1
 #ifdef _DEBUG
             ! wrk1d(:,2) should be complex with size n/2+1, i.e., n+2 real, but there is space at the end of wrk1d(:,2)
@@ -138,6 +124,7 @@ contains
 #else
             call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:, 1), wrk1d(:, 2), FFTW_MEASURE)
 #endif
+
 #ifdef USE_MPI
         end if
 #endif
@@ -161,11 +148,10 @@ contains
         ! -----------------------------------------------------------------------
         ! Oy direction
         ! -----------------------------------------------------------------------
-        isize_fft_y = imax/2 + 1
-
-        isize_stride = isize_fft_y
-
         if (g(2)%size > 1) then
+            isize_fft_y = imax/2 + 1
+            isize_stride = isize_fft_y
+
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
                                      txc(:, 1), g(2)%size, isize_stride, 1, &
@@ -184,12 +170,6 @@ contains
                                      wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
-
-#else
-        call TLab_Write_ASCII(efile, __FILE__//'. FFTW needed for POISSON solver.')
-        call TLab_Stop(DNS_ERROR_UNDEVELOP)
-
-#endif
 
         return
     end subroutine OPR_FOURIER_INITIALIZE
@@ -544,49 +524,32 @@ contains
 
     !########################################################################
     !########################################################################
-    ! in might be overwritten
+    ! Forward complex FFT in z
     subroutine OPR_FOURIER_F_Z_EXEC(in, out)
-
-#ifdef USE_MPI
-        ! complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
-        complex(wp), dimension(tmpi_plan_poissonz%nlines/2, g(3)%size), target :: in, out
-#else
-        complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
-#endif
+        complex(wp), intent(inout), target :: in(*)     ! in might be overwritten
+        complex(wp), intent(out), target :: out(*)
 
         ! -----------------------------------------------------------------------
-        complex(wp), dimension(:, :), pointer :: p_org, p_dst
-
+        complex(wp), pointer :: p_org(:, :), p_dst(:, :)
         integer(wi) k_old1, k_old2, k_new1, k_new2
-#ifdef USE_MPI
-        ! integer(wi) id
-        real(wp), pointer :: r_in(:) => null(), r_out(:) => null()
-#endif
 
         ! #######################################################################
-        ! Forward complex FFT in z
 #ifdef USE_MPI
-        ! id = TLAB_MPI_TRP_K_POISSON
-
         if (ims_npro_k > 1) then
-            ! Pass memory address from complex array to real array
-            call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
-            call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
-
-            call TLabMPI_TransposeK_Forward(r_in, r_out, tmpi_plan_poissonz)
-            p_org => out
-            p_dst => in
+            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_poissonz)
+            p_org(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
+            p_dst(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
         else
 #endif
-            p_org => in
-            p_dst => out
+            p_org(1:isize_txc_dimz/2, 1:g(3)%size) => in(1:isize_txc_field)
+            p_dst(1:isize_txc_dimz/2, 1:g(3)%size) => out(1:isize_txc_field)
 #ifdef USE_MPI
         end if
 #endif
 
         call dfftw_execute_dft(fft_plan_fz, p_org, p_dst)
 
-        if (fft_reordering) then ! re-shuffle spectra in z
+        if (fft_reordering) then                    ! re-shuffle spectra in z
             do k = 1, g(3)%size/2
                 k_old1 = k + g(3)%size/2
                 k_new1 = k
@@ -603,8 +566,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(r_in, r_out, tmpi_plan_poissonz)
-            nullify (r_in, r_out)
+            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_poissonz)
         end if
 #endif
 
@@ -615,47 +577,29 @@ contains
 
     !########################################################################
     !########################################################################
-    ! in might be overwritten
     subroutine OPR_FOURIER_B_Z_EXEC(in, out)
-
-#ifdef USE_MPI
-        ! complex(wp), dimension(ims_size_k(TLAB_MPI_TRP_K_POISSON)/2, g(3)%size), target :: in, out
-        complex(wp), dimension(tmpi_plan_poissonz%nlines/2, g(3)%size), target :: in, out
-#else
-        complex(wp), dimension(isize_txc_dimz/2, g(3)%size), target :: in, out
-#endif
+        complex(wp), intent(inout), target :: in(*)     ! in might be overwritten
+        complex(wp), intent(out), target :: out(*)
 
         ! -----------------------------------------------------------------------
-        complex(wp), dimension(:, :), pointer :: p_org, p_dst
-
+        complex(wp), pointer :: p_org(:, :), p_dst(:, :)
         integer(wi) k_old1, k_old2, k_new1, k_new2
-#ifdef USE_MPI
-        ! integer(wi) id
-        real(wp), pointer :: r_in(:) => null(), r_out(:) => null()
-#endif
 
         ! #######################################################################
-        ! Forward complex FFT in z
 #ifdef USE_MPI
-        ! id = TLAB_MPI_TRP_K_POISSON
-
         if (ims_npro_k > 1) then
-            ! Pass memory address from complex array to real array
-            call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
-            call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
-
-            call TLabMPI_TransposeK_Forward(r_in, r_out, tmpi_plan_poissonz)
-            p_org => out
-            p_dst => in
+            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_poissonz)
+            p_org(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
+            p_dst(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
         else
 #endif
-            p_org => in
-            p_dst => out
+            p_org(1:isize_txc_dimz/2, 1:g(3)%size) => in(1:isize_txc_field)
+            p_dst(1:isize_txc_dimz/2, 1:g(3)%size) => out(1:isize_txc_field)
 #ifdef USE_MPI
         end if
 #endif
 
-        if (fft_reordering) then ! re-shuffle spectra in z
+        if (fft_reordering) then                    ! re-shuffle spectra in z
             do k = 1, g(3)%size/2
                 k_new1 = k + g(3)%size/2
                 k_old1 = k
@@ -674,8 +618,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(r_in, r_out, tmpi_plan_poissonz)
-            nullify (r_in, r_out)
+            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_poissonz)
         end if
 #endif
 

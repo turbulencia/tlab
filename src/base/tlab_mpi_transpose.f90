@@ -15,7 +15,7 @@ module TLabMPI_Transpose
     public :: TLabMPI_Trp_TypeI_Create, TLabMPI_Trp_TypeK_Create
     public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
-    
+
     type, public :: tmpi_transpose_dt
         ! sequence
         type(MPI_Datatype) :: type_s, type_r                        ! derived send/recv types
@@ -27,6 +27,13 @@ module TLabMPI_Transpose
     type(tmpi_transpose_dt), public :: tmpi_plan_dz
 
     ! -----------------------------------------------------------------------
+    interface TLabMPI_TransposeK_Forward
+        module procedure TLabMPI_TransposeK_Forward_Real, TLabMPI_TransposeK_Forward_Complex
+    end interface TLabMPI_TransposeK_Forward
+    interface TLabMPI_TransposeK_Backward
+        module procedure TLabMPI_TransposeK_Backward_Real, TLabMPI_TransposeK_Backward_Complex
+    end interface TLabMPI_TransposeK_Backward
+
     integer :: trp_mode_i, trp_mode_k                               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
     integer, parameter :: TLAB_MPI_TRP_ASYNCHRONOUS = 1
@@ -326,7 +333,7 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Forward(a, b, trp_plan)
+    subroutine TLabMPI_TransposeK_Forward_Real(a, b, trp_plan)
         real(wp), intent(in) :: a(*)
         real(wp), intent(out) :: b(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -367,11 +374,26 @@ contains
 #endif
 
         return
-    end subroutine TLabMPI_TransposeK_Forward
+    end subroutine TLabMPI_TransposeK_Forward_Real
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Backward(b, a, trp_plan)
+    subroutine TLabMPI_TransposeK_Forward_Complex(a, b, trp_plan)
+        complex(wp), intent(in) :: a(*)
+        complex(wp), intent(out) :: b(*)
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
+
+        ! #######################################################################
+        call Transpose_Kernel_Complex(a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                      b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                      ims_comm_z, trp_sizBlock_k, trp_mode_k)
+
+        return
+    end subroutine TLabMPI_TransposeK_Forward_Complex
+
+    !########################################################################
+    !########################################################################
+    subroutine TLabMPI_TransposeK_Backward_Real(b, a, trp_plan)
         real(wp), intent(in) :: b(*)
         real(wp), intent(out) :: a(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -411,7 +433,22 @@ contains
 #endif
 
         return
-    end subroutine TLabMPI_TransposeK_Backward
+    end subroutine TLabMPI_TransposeK_Backward_Real
+
+    !########################################################################
+    !########################################################################
+    subroutine TLabMPI_TransposeK_Backward_Complex(b, a, trp_plan)
+        complex(wp), intent(in) :: b(*)
+        complex(wp), intent(out) :: a(*)
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
+
+        ! #######################################################################
+        call Transpose_Kernel_Complex(b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                      a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                      ims_comm_z, trp_sizBlock_k, trp_mode_k)
+
+        return
+    end subroutine TLabMPI_TransposeK_Backward_Complex
 
     !########################################################################
     !########################################################################
