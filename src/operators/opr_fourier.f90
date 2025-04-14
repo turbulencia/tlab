@@ -45,8 +45,8 @@ module OPR_FOURIER
     public :: OPR_FOURIER_SPECTRA_3D
 
 contains
-! #######################################################################
-! #######################################################################
+    ! #######################################################################
+    ! #######################################################################
     subroutine OPR_FOURIER_INITIALIZE()
         use TLab_Arrays, only: txc
 #ifdef USE_FFTW
@@ -63,8 +63,8 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, 1, 1, 1, 1, 'Ox FFTW in Poisson solver.')
-            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, 1, 1, 1, 1, 'extended Ox FFTW in Poisson solver.')
+            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, message='Ox FFTW in Poisson solver.')
+            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, message='extended Ox FFTW in Poisson solver.')
 
             ! if (ims_size_i(TLAB_MPI_TRP_I_POISSON1) /= ims_size_i(TLAB_MPI_TRP_I_POISSON2)) then
             if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
@@ -79,7 +79,7 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz, 1, 1, 1, 1, 'Oz FFTW in Poisson solver.')
+            tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz, message='Oz FFTW in Poisson solver.')
 
             ! isize_fft_z = ims_size_k(TLAB_MPI_TRP_K_POISSON)/2 ! divide by 2 bcs. we work w complex #
             isize_fft_z = tmpi_plan_poissonz%nlines/2 ! divide by 2 bcs. we work w complex #
@@ -194,8 +194,8 @@ contains
         return
     end subroutine OPR_FOURIER_INITIALIZE
 
-! #######################################################################
-! #######################################################################
+    ! #######################################################################
+    ! #######################################################################
     subroutine OPR_FOURIER_F(flag_mode, nx, ny, nz, in, out, tmp1)
         integer(wi) :: flag_mode                                ! 1D, 2D or 3D
         integer(wi) :: nx, ny, nz
@@ -236,8 +236,8 @@ contains
         return
     end subroutine OPR_FOURIER_F
 
-! #######################################################################
-! #######################################################################
+    ! #######################################################################
+    ! #######################################################################
     subroutine OPR_FOURIER_B(flag_mode, nx, ny, nz, in, out)
         integer(wi) :: flag_mode  ! 1D, 2D or 3D
         integer(wi) :: nx, ny, nz
@@ -275,10 +275,10 @@ contains
         return
     end subroutine OPR_FOURIER_B
 
-! #######################################################################
-! #######################################################################
-! Calculate spectrum in array in1
-! Calculate correlation in array in2
+    ! #######################################################################
+    ! #######################################################################
+    ! Calculate spectrum in array in1
+    ! Calculate correlation in array in2
     subroutine OPR_FOURIER_CONVOLUTION_FXZ(flag1, flag2, nx, ny, nz, in1, in2, tmp1, tmp2)
         character(len=*), intent(in) :: flag1
         integer(wi), intent(in) :: flag2, nx, ny, nz
@@ -286,7 +286,7 @@ contains
 
         target in1, tmp1, tmp2
 
-! #######################################################################
+        ! #######################################################################
         ! Pass memory address from real array to complex array
         call c_f_pointer(c_loc(in1), c_in1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
@@ -318,7 +318,7 @@ contains
 
         end select
 
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
         if (flag2 == 2) then         ! Calculate correlation in array in2
             if (g(3)%size > 1) then
                 call OPR_FOURIER_B_Z_EXEC(c_in1, c_tmp1)            ! in1 might be overwritten
@@ -328,27 +328,27 @@ contains
             end if
         end if
 
-! -----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
         fft_reordering = .false.
 
         return
     end subroutine OPR_FOURIER_CONVOLUTION_FXZ
-!########################################################################
-!# Forward/Backward Fourier transform of the array a extended by two planes in Oy direction (that is, jmax+2).
-!#
-!# In the case of the pressure solver these planes represent the boundary conditions.
-!#
-!# The transformed complex field is saved to an array with shape
-!# (isize_txc_dimz/2,nz), that is, a stride isize_txc_dimz/2 between z-planes
-!# (z-planes need not be contiguous).
-!#
-!# Each z-plane contains jmax+2 lines of nx/2+1 complex numbers. The first
-!# nx/2 Fourier coefficients are contiguous and the element nx/2+1 is the
-!# Nyquist frequency; if OX MPI decomposition, this element is just a padding used
-!# to homogeneize arrays across PEs with ims_npro_i-PE, which contains then the
-!# Nyquist frequency of the corresponding line.
-!#
-!########################################################################
+    !########################################################################
+    !# Forward/Backward Fourier transform of the array a extended by two planes in Oy direction (that is, jmax+2).
+    !#
+    !# In the case of the pressure solver these planes represent the boundary conditions.
+    !#
+    !# The transformed complex field is saved to an array with shape
+    !# (isize_txc_dimz/2,nz), that is, a stride isize_txc_dimz/2 between z-planes
+    !# (z-planes need not be contiguous).
+    !#
+    !# Each z-plane contains jmax+2 lines of nx/2+1 complex numbers. The first
+    !# nx/2 Fourier coefficients are contiguous and the element nx/2+1 is the
+    !# Nyquist frequency; if OX MPI decomposition, this element is just a padding used
+    !# to homogeneize arrays across PEs with ims_npro_i-PE, which contains then the
+    !# Nyquist frequency of the corresponding line.
+    !#
+    !########################################################################
     subroutine OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, in_bcs_hb, in_bcs_ht, out)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(inout) :: in(nx, (ny + 2)*nz)                  ! We add the boundary conditions at the end of this array

@@ -59,22 +59,22 @@ contains
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            tmpi_plan_x = TLabMPI_Trp_TypeI_Create(nx, npage, 1, 1, 1, 1, 'type-1 Ox interpolation')
+            tmpi_plan_x = TLabMPI_Trp_TypeI_Create(nx, npage, message ='type-1 Ox interpolation')
 
             npage = nz*ny
             if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            tmpi_plan_xback = TLabMPI_Trp_TypeI_Create(nx_dst, npage, 1, 1, 1, 1, 'type-2 Ox interpolation')
+            tmpi_plan_xback = TLabMPI_Trp_TypeI_Create(nx_dst, npage, message ='type-2 Ox interpolation')
         end if
 
         if (ims_npro_k > 1) then
             npage = nx_dst*ny_dst
-            tmpi_plan_z = TLabMPI_Trp_TypeK_Create(nz, npage, 1, 1, 1, 1, 'type-1 Oz interpolation')
+            tmpi_plan_z = TLabMPI_Trp_TypeK_Create(nz, npage, message ='type-1 Oz interpolation')
 
             npage = nx_dst*ny_dst
-            tmpi_plan_zback = TLabMPI_Trp_TypeK_Create(nz_dst, npage, 1, 1, 1, 1, 'type-2 Oz interpolation')
+            tmpi_plan_zback = TLabMPI_Trp_TypeK_Create(nz_dst, npage, message ='type-2 Oz interpolation')
 
         end if
 #endif

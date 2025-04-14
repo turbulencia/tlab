@@ -113,7 +113,7 @@ contains
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
-            FilterInflow(3)%trp_plan = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'inflow filter.')
+            FilterInflow(3)%trp_plan = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, message ='inflow filter.')
         end if
 #endif
 

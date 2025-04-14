@@ -15,10 +15,10 @@ module TLabMPI_Transpose
     public :: TLabMPI_Trp_TypeI_Create, TLabMPI_Trp_TypeK_Create
     public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
     public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
-
+    
     type, public :: tmpi_transpose_dt
         ! sequence
-        type(MPI_Datatype) :: type_s, type_r                        ! send/recv types
+        type(MPI_Datatype) :: type_s, type_r                        ! derived send/recv types
         integer(wi) :: nlines
         integer(wi) :: size3d
         integer(wi), allocatable :: disp_s(:), disp_r(:)            ! send/recv displacements
@@ -26,6 +26,7 @@ module TLabMPI_Transpose
     type(tmpi_transpose_dt), public :: tmpi_plan_dx                 ! general plans used in derivatives and other operators
     type(tmpi_transpose_dt), public :: tmpi_plan_dz
 
+    ! -----------------------------------------------------------------------
     integer :: trp_mode_i, trp_mode_k                               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
     integer, parameter :: TLAB_MPI_TRP_ASYNCHRONOUS = 1
@@ -173,12 +174,12 @@ contains
         ! Create basic transposition plans used for partial X and partial Z; could be in another module...
         if (ims_npro_i > 1) then
             npage = kmax*jmax
-            tmpi_plan_dx = TLabMPI_Trp_TypeI_Create(imax, npage, 1, 1, 1, 1, 'Ox derivatives.')
+            tmpi_plan_dx = TLabMPI_Trp_TypeI_Create(imax, npage, message='Ox derivatives.')
         end if
 
         if (ims_npro_k > 1) then
             npage = imax*jmax
-            tmpi_plan_dz = TLabMPI_Trp_TypeK_Create(kmax, npage, 1, 1, 1, 1, 'Oz derivatives.')
+            tmpi_plan_dz = TLabMPI_Trp_TypeK_Create(kmax, npage, message='Oz derivatives.')
         end if
 
         return
@@ -187,15 +188,15 @@ contains
     ! ######################################################################
     ! ######################################################################
     ! Pointers and types for transposition across processors
-    function TLabMPI_Trp_TypeI_Create(nmax, npage, nd, md, n1, n2, message) result(trp_plan)
+    function TLabMPI_Trp_TypeI_Create(nmax, npage, locType, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
-        integer(wi), intent(in) :: nd, md, n1, n2
+        type(MPI_Datatype), intent(in), optional :: locType
         character(len=*), intent(in), optional :: message
         type(tmpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
         integer(wi) i
-        integer ims_tmp1, ims_tmp2, ims_tmp3
+        integer block_count, block_length, stride_loc
         integer ims_ss, ims_rs
         character*64 str, line
 
@@ -216,21 +217,29 @@ contains
         trp_plan%disp_s(1) = 0
         trp_plan%disp_r(1) = 0
         do i = 2, ims_npro_i
-            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + nmax*nd*trp_plan%nlines
-            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + nmax*md
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + nmax*trp_plan%nlines
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + nmax
         end do
 
         ! #######################################################################
-        ims_tmp1 = trp_plan%nlines*n1 ! count
-        ims_tmp2 = nmax*n2 ! block
-        ims_tmp3 = ims_tmp2  ! stride = block because things are together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_i, trp_plan%type_s, ims_err)
+        block_count = trp_plan%nlines
+        block_length = nmax
+        stride_loc = block_length       ! stride = block_length because things are together
+        if (present(locType)) then
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_s, ims_err)
+        else
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_i, trp_plan%type_s, ims_err)
+        end if
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
-        ims_tmp1 = trp_plan%nlines*n1 ! count
-        ims_tmp2 = nmax*n2 ! block
-        ims_tmp3 = nmax*ims_npro_i*n2 ! stride is a multiple of nmax_total=nmax*ims_npro_i
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_i, trp_plan%type_r, ims_err)
+        block_count = trp_plan%nlines
+        block_length = nmax
+        stride_loc = nmax*ims_npro_i    ! stride is a multiple of nmax_total=nmax*ims_npro_i
+        if (present(locType)) then
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_r, ims_err)
+        else
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_i, trp_plan%type_r, ims_err)
+        end if
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
 
         call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
@@ -248,15 +257,15 @@ contains
 
     !########################################################################
     !########################################################################
-    function TLabMPI_Trp_TypeK_Create(nmax, npage, nd, md, n1, n2, message) result(trp_plan)
+    function TLabMPI_Trp_TypeK_Create(nmax, npage, locType, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
-        integer(wi), intent(in) :: nd, md, n1, n2
+        type(MPI_Datatype), intent(in), optional :: locType
         character(len=*), intent(in), optional :: message
         type(tmpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
         integer(wi) i
-        integer ims_tmp1, ims_tmp2, ims_tmp3
+        integer block_count, block_length, stride_loc
         integer ims_ss, ims_rs
         character*64 str, line
 
@@ -277,21 +286,29 @@ contains
         trp_plan%disp_s(1) = 0
         trp_plan%disp_r(1) = 0
         do i = 2, ims_npro_k
-            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + trp_plan%nlines*nd
-            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + trp_plan%nlines*md*nmax
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + trp_plan%nlines
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + trp_plan%nlines*nmax
         end do
 
         ! #######################################################################
-        ims_tmp1 = nmax*n1                  ! count
-        ims_tmp2 = trp_plan%nlines*n2       ! block
-        ims_tmp3 = npage*n2                 ! stride
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_k, trp_plan%type_s, ims_err)
+        block_count = nmax
+        block_length = trp_plan%nlines
+        stride_loc = npage
+        if (present(locType)) then
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_s, ims_err)
+        else
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_k, trp_plan%type_s, ims_err)
+        end if
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
-        ims_tmp1 = nmax*n1                  ! count
-        ims_tmp2 = trp_plan%nlines*n2       ! block
-        ims_tmp3 = ims_tmp2                 ! stride = block to put things together
-        call MPI_TYPE_VECTOR(ims_tmp1, ims_tmp2, ims_tmp3, trp_datatype_k, trp_plan%type_r, ims_err)
+        block_count = nmax
+        block_length = trp_plan%nlines
+        stride_loc = block_length                 ! stride = block to put things together
+        if (present(locType)) then
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_r, ims_err)
+        else
+            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_k, trp_plan%type_r, ims_err)
+        end if
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
 
         call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
@@ -310,18 +327,8 @@ contains
     !########################################################################
     !########################################################################
     subroutine TLabMPI_TransposeK_Forward(a, b, trp_plan)
-        ! use, intrinsic :: iso_c_binding, only: c_int
-
-        ! interface
-        !     function DNS_USLEEP(useconds) bind(C, name="usleep")
-        !         import
-        !         integer(c_int) :: nb3dfft_nbc_usleep
-        !         integer(c_int), intent(in), value :: useconds
-        !     end function DNS_USLEEP
-        ! end interface
-
-        real(wp), dimension(*), intent(in) :: a
-        real(wp), dimension(*), intent(out) :: b
+        real(wp), intent(in) :: a(*)
+        real(wp), intent(out) :: b(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target b
@@ -365,8 +372,8 @@ contains
     !########################################################################
     !########################################################################
     subroutine TLabMPI_TransposeK_Backward(b, a, trp_plan)
-        real(wp), dimension(*), intent(in) :: b
-        real(wp), dimension(*), intent(out) :: a
+        real(wp), intent(in) :: b(*)
+        real(wp), intent(out) :: a(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
 
         target a
@@ -585,5 +592,63 @@ contains
 
         return
     end subroutine Transpose_Kernel_Single
+
+    !########################################################################
+    !########################################################################
+    subroutine Transpose_Kernel_Complex(a, msend, dsend, tsend, b, mrecv, drecv, trecv, comm, step, mode)
+        complex(wp), intent(in) :: a(*)
+        complex(wp), intent(out) :: b(*)
+
+        type(MPI_Comm), intent(in) :: comm                         ! communicator
+        type(MPI_Datatype), intent(in) :: tsend, trecv                 ! types send/receive
+        integer(wi), intent(in) :: dsend(:), drecv(:)       ! displacements send/receive
+        integer(wi), intent(in) :: msend(:), mrecv(:)       ! maps send/receive
+        integer(wi), intent(in) :: step
+        integer, intent(in) :: mode
+
+        ! -----------------------------------------------------------------------
+        integer(wi) npro
+        integer(wi) j, l, m, ns, nr, ips, ipr
+
+        ! #######################################################################
+        npro = size(dsend(:))
+
+        select case (mode)
+        case (TLAB_MPI_TRP_ASYNCHRONOUS)
+            do j = 1, npro, step
+                l = 0
+                do m = j, min(j + step - 1, npro)
+                    ns = msend(m) + 1; ips = ns - 1
+                    nr = mrecv(m) + 1; ipr = nr - 1
+                    l = l + 1
+                    call MPI_ISEND(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, comm, request(l), ims_err)
+                    l = l + 1
+                    call MPI_IRECV(b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, request(l), ims_err)
+                end do
+                call MPI_WAITALL(l, request, status, ims_err)
+            end do
+
+        case (TLAB_MPI_TRP_SENDRECV)
+            do j = 1, npro, step
+                do m = j, min(j + step - 1, npro)
+                    ns = msend(m) + 1; ips = ns - 1
+                    nr = mrecv(m) + 1; ipr = nr - 1
+                    call MPI_SENDRECV(a(dsend(ns) + 1), 1, tsend, ips, ims_tag, &
+                                      b(drecv(nr) + 1), 1, trecv, ipr, ims_tag, comm, status(1), ims_err)
+                end do
+            end do
+
+        case (TLAB_MPI_TRP_ALLTOALL)
+            types_send(1:npro) = tsend
+            types_recv(1:npro) = trecv
+            call MPI_ALLTOALLW(a, counts, dsend*int(sizeof(1.0_sp)), types_send, &
+                               b, counts, drecv*int(sizeof(1.0_sp)), types_recv, comm, ims_err)
+            ! call MPI_ALLTOALLW(a, spread(1, 1, npro), dsend*int(sizeof(1.0_wp)), spread(tsend, 1, npro), &
+            !                    b, spread(1, 1, npro), drecv*int(sizeof(1.0_wp)), spread(trecv, 1, npro), comm, ims_err)
+
+        end select
+
+        return
+    end subroutine Transpose_Kernel_Complex
 
 end module TLabMPI_Transpose

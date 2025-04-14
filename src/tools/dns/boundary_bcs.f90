@@ -219,7 +219,7 @@ contains
 
                 ! to be checked
                 ! isize_loc = ims_bcs_imax*jmax
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCX) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'Ox BCs transverse terms. '//trim(adjustl(str))//' planes.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCX) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, message ='Ox BCs transverse terms. '//trim(adjustl(str))//' planes.')
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
@@ -232,7 +232,7 @@ contains
 
                 ! to be checked
                 ! isize_loc = imax*ims_bcs_jmax
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCY) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, 1, 1, 1, 1, 'Oy BCs transverse terms. '//trim(adjustl(str))//' planes.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCY) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, message ='Oy BCs transverse terms. '//trim(adjustl(str))//' planes.')
             end if
 #endif
 

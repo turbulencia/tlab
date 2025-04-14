@@ -372,11 +372,11 @@ contains
             select case (idir)
             case (1)
                 idummy = item%size*jmax
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Ox BCs explicit filter.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, message ='Ox BCs explicit filter.')
 
             case (2)
                 idummy = imax*item%size
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, 1, 1, 1, 1, 'Oy BCs explicit filter.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, message ='Oy BCs explicit filter.')
 
             end select
         end if
