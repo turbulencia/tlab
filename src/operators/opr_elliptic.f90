@@ -80,7 +80,7 @@ module OPR_ELLIPTIC
     real(wp), allocatable :: lambda(:, :)
 
     complex(wp), pointer :: c_tmp1(:, :) => null(), c_tmp2(:, :) => null()
-    integer(wi) i, k, iglobal, kglobal, isize_line
+    integer(wi) i, k, iglobal, kglobal, isize_line, ip
 
 contains
     ! #######################################################################
@@ -256,6 +256,7 @@ contains
         target tmp1, tmp2
 
         ! -----------------------------------------------------------------------
+        real(wp) bcs(2, 2)
         real(wp), pointer :: u(:, :) => null(), v(:, :) => null(), f(:, :) => null()
 
         ! #######################################################################
@@ -265,6 +266,9 @@ contains
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
+        p(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
+        p(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
+
         if (g(3)%size > 1) then
             call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten; cannot use wrk3d
@@ -285,9 +289,11 @@ contains
 #endif
 
             ! Make x direction last one and leave y direction first
-            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny, isize_line, c_tmp2(:, k), ny)
 
-            f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)
             v(1:2*ny, 1:isize_line) => tmp1(1:2*ny*isize_line, k)
             u(1:2*ny, 1:isize_line) => wrk3d(1:2*ny*isize_line)
 
@@ -297,23 +303,29 @@ contains
 #else
                 iglobal = i
 #endif
+                ! Boundary conditions
+                ip = 2*ny
+                ! bcs(1:2, 1) = f(ip + 1:ip + 2, i)       ! bottom bcs
+                ! bcs(1:2, 2) = f(ip + 3:ip + 4, i)       ! top bcs
+                bcs(1:2, 1) = f(1:2, i)                 ! bottom bcs
+                bcs(1:2, 2) = f(ip - 1:ip, i)           ! top bcs
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
-                                                   u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                                                   u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
-                                                   u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                                                   u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
                     end if
 
                 end select
@@ -366,7 +378,7 @@ contains
         target tmp1, tmp2
 
         ! -----------------------------------------------------------------------
-        integer(wi) ibc_loc, ip
+        integer(wi) ibc_loc
         integer(wi), parameter :: bcs_p(2, 2) = 0                       ! For partial_y at the end
         real(wp), pointer :: u(:, :) => null(), f(:, :) => null()
 
@@ -377,6 +389,9 @@ contains
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
+        p(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
+        p(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
+
         if (g(3)%size > 1) then
             call OPR_FOURIER_F_X_EXEC(nx, ny, nz, p, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten; cannot use wrk3d
@@ -397,9 +412,11 @@ contains
 #endif
 
             ! Make x direction last one and leave y direction first
-            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny, isize_line, c_tmp2(:, k), ny)
 
-            f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)
             u(1:2*ny, 1:isize_line) => wrk3d(1:2*ny*isize_line)
 
             do i = 1, isize_line
@@ -409,10 +426,12 @@ contains
                 iglobal = i
 #endif
 
-                ! BCs
+                ! Boundary conditions
                 ip = 2*ny
-                u(1:2, i) = f(ip + 1:ip + 2, i)
-                u(ip - 1:ip, i) = f(ip + 3:ip + 4, i)
+                ! u(1:2, i) = f(ip + 1:ip + 2, i)
+                ! u(ip - 1:ip, i) = f(ip + 3:ip + 4, i)
+                u(1:2, i) = f(1:2, i)
+                u(ip - 1:ip, i) = f(ip - 1:ip, i)
 
                 ! Compatibility constraint for singular modes. 2nd order FDMs are non-zero at Nyquist
                 ! The reference value of p at the lower boundary is set to zero
@@ -477,7 +496,7 @@ contains
         integer, intent(in) :: ibc
         type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(in) :: alpha
-        real(wp), intent(inout) :: a(nx, ny, nz)                        ! Forcing term, and solution field p
+        real(wp), intent(inout) :: a(nx, ny, nz)                        ! Forcing term, and solution field
         real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
         real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
         real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)          ! Boundary-condition fields
@@ -485,6 +504,7 @@ contains
         target tmp1, tmp2
 
         ! -----------------------------------------------------------------------
+        real(wp) bcs(2, 2)
         real(wp), pointer :: u(:, :) => null(), v(:, :) => null(), f(:, :) => null()
 
         ! #######################################################################
@@ -494,6 +514,9 @@ contains
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
+        a(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
+        a(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
+
         if (g(3)%size > 1) then
             call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
@@ -514,9 +537,11 @@ contains
 #endif
 
             ! Make x direction last one and leave y direction first
+            ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
             call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
 
-            f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)
             v(1:2*ny, 1:isize_line) => tmp1(1:2*ny*isize_line, k)
             u(1:2*ny, 1:isize_line) => wrk3d(1:2*ny*isize_line)
 
@@ -526,6 +551,13 @@ contains
 #else
                 iglobal = i
 #endif
+
+                ! Boundary conditions
+                ip = 2*ny
+                ! bcs(1:2, 1) = f(ip + 1:ip + 2, i)       ! bottom bcs
+                ! bcs(1:2, 2) = f(ip + 3:ip + 4, i)       ! top bcs
+                bcs(1:2, 1) = f(1:2, i)                 ! bottom bcs
+                bcs(1:2, 2) = f(ip - 1:ip, i)           ! top bcs
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
@@ -537,11 +569,11 @@ contains
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     call OPR_ODE2_Factorize_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
-                                               u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                                               u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     call OPR_ODE2_Factorize_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
-                                               u(:, i), f(:, i), f(2*ny + 1:, i), v(:, i), wrk1d, wrk2d)
+                                               u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
                 end select
 
             end do
@@ -572,7 +604,7 @@ contains
         integer, intent(in) :: ibc
         type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(in) :: alpha
-        real(wp), intent(inout) :: a(nx, ny, nz)                        ! Forcing term, and solution field p
+        real(wp), intent(inout) :: a(nx, ny, nz)                        ! Forcing term, and solution field
         real(wp), intent(inout) :: tmp1(isize_txc_dimz, nz)             ! FFT of forcing term
         real(wp), intent(inout) :: tmp2(isize_txc_dimz, nz)             ! Aux array for FFT
         real(wp), intent(in) :: bcs_hb(nx, nz), bcs_ht(nx, nz)          ! Boundary-condition fields
@@ -590,6 +622,9 @@ contains
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
+        a(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
+        a(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
+
         if (g(3)%size > 1) then
             call OPR_FOURIER_F_X_EXEC(nx, ny, nz, a, bcs_hb, bcs_ht, c_tmp2)
             call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
@@ -610,9 +645,11 @@ contains
 #endif
 
             ! Make x direction last one and leave y direction first
-            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny, isize_line, c_tmp2(:, k), ny)
 
-            f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)
             u(1:2*ny, 1:isize_line) => wrk3d(1:2*ny*isize_line)
 
             do i = 1, isize_line
@@ -622,10 +659,12 @@ contains
                 iglobal = i
 #endif
 
-                ! BCs
+                ! Boundary conditions
                 ip = 2*ny
-                u(1:2, i) = f(ip + 1:ip + 2, i)
-                u(ip - 1:ip, i) = f(ip + 3:ip + 4, i)
+                ! u(1:2, i) = f(ip + 1:ip + 2, i)
+                ! u(ip - 1:ip, i) = f(ip + 3:ip + 4, i)
+                u(1:2, i) = f(1:2, i)
+                u(ip - 1:ip, i) = f(ip - 1:ip, i)
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k) - alpha, ibc, fdm_int2_loc)
