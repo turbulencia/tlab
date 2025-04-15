@@ -108,7 +108,7 @@ contains
             isize_fft_x = tmpi_plan_poissonx1%nlines
             isize_disp = (imax/2 + 1)*ims_npro_i
 
-           tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, isize_txc_dimx, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
+            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, isize_txc_dimx, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
 
             if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
@@ -472,6 +472,8 @@ contains
             end do
 
             ! Transpose array
+            ! call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2_tmp)
+            ! c_out(g(1)%size/2 + 1, :) = 0.0_wp
             call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2)
 
             ! reorganize a (FFTW make a stride in a already before)

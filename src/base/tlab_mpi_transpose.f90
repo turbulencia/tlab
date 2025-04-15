@@ -202,15 +202,17 @@ contains
     ! ######################################################################
     ! ######################################################################
     ! Pointers and types for transposition across processors
-    function TLabMPI_Trp_TypeI_Create(nmax, npage, locType, message) result(trp_plan)
+    function TLabMPI_Trp_TypeI_Create(nmax, npage, locStride, locType, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
+        integer(wi), intent(in), optional :: locStride
         type(MPI_Datatype), intent(in), optional :: locType
         character(len=*), intent(in), optional :: message
         type(tmpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
         integer(wi) i
-        integer block_count, block_length, stride_loc
+        type(MPI_Datatype) :: datatype
+        integer block_count, block_length, stride
         integer ims_ss, ims_rs
         character*64 str, line
 
@@ -227,35 +229,33 @@ contains
             call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
+        block_count = trp_plan%nlines
+        block_length = nmax
+
         ! Calculate array displacements in Forward Send/Receive
         trp_plan%disp_s(1) = 0
         trp_plan%disp_r(1) = 0
         do i = 2, ims_npro_i
-            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + nmax*trp_plan%nlines
-            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + nmax
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + block_length*block_count
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + block_length
         end do
 
         ! #######################################################################
-        block_count = trp_plan%nlines
-        block_length = nmax
-        stride_loc = block_length       ! stride = block_length because things are together
         if (present(locType)) then
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_s, ims_err)
+            datatype = locType
         else
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_i, trp_plan%type_s, ims_err)
+            datatype = trp_datatype_i
         end if
+
+        stride = block_length       ! stride = block_length because things are together
+        call MPI_TYPE_VECTOR(block_count, block_length, stride, datatype, trp_plan%type_s, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
-        block_count = trp_plan%nlines
-        block_length = nmax
-        stride_loc = nmax*ims_npro_i    ! stride is a multiple of nmax_total=nmax*ims_npro_i
-        if (present(locType)) then
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_r, ims_err)
-        else
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_i, trp_plan%type_r, ims_err)
-        end if
+        stride = nmax*ims_npro_i    ! stride is a multiple of nmax_total=nmax*ims_npro_i
+        call MPI_TYPE_VECTOR(block_count, block_length, stride, datatype, trp_plan%type_r, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
 
+        ! -----------------------------------------------------------------------
         call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
         call MPI_TYPE_SIZE(trp_plan%type_r, ims_rs, ims_err)
 
@@ -271,15 +271,17 @@ contains
 
     !########################################################################
     !########################################################################
-    function TLabMPI_Trp_TypeK_Create(nmax, npage, locType, message) result(trp_plan)
+    function TLabMPI_Trp_TypeK_Create(nmax, npage, locStride, locType, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
+        integer(wi), intent(in), optional :: locStride
         type(MPI_Datatype), intent(in), optional :: locType
         character(len=*), intent(in), optional :: message
         type(tmpi_transpose_dt) :: trp_plan
 
         ! -----------------------------------------------------------------------
         integer(wi) i
-        integer block_count, block_length, stride_loc
+        type(MPI_Datatype) :: datatype
+        integer block_count, block_length, stride
         integer ims_ss, ims_rs
         character*64 str, line
 
@@ -296,35 +298,33 @@ contains
             call TLab_Stop(DNS_ERROR_PARPARTITION)
         end if
 
+        block_count = nmax
+        block_length = trp_plan%nlines
+
         ! Calculate array displacements in Forward Send/Receive
         trp_plan%disp_s(1) = 0
         trp_plan%disp_r(1) = 0
         do i = 2, ims_npro_k
-            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + trp_plan%nlines
-            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + trp_plan%nlines*nmax
+            trp_plan%disp_s(i) = trp_plan%disp_s(i - 1) + block_length
+            trp_plan%disp_r(i) = trp_plan%disp_r(i - 1) + block_length*block_count
         end do
 
         ! #######################################################################
-        block_count = nmax
-        block_length = trp_plan%nlines
-        stride_loc = npage
         if (present(locType)) then
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_s, ims_err)
+            datatype = locType
         else
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_k, trp_plan%type_s, ims_err)
+            datatype = trp_datatype_i
         end if
+
+        stride = npage
+        call MPI_TYPE_VECTOR(block_count, block_length, stride, datatype, trp_plan%type_s, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_s, ims_err)
 
-        block_count = nmax
-        block_length = trp_plan%nlines
-        stride_loc = block_length                 ! stride = block to put things together
-        if (present(locType)) then
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, locType, trp_plan%type_r, ims_err)
-        else
-            call MPI_TYPE_VECTOR(block_count, block_length, stride_loc, trp_datatype_k, trp_plan%type_r, ims_err)
-        end if
+        stride = block_length       ! stride = block_length to put things together
+        call MPI_TYPE_VECTOR(block_count, block_length, stride, datatype, trp_plan%type_r, ims_err)
         call MPI_TYPE_COMMIT(trp_plan%type_r, ims_err)
 
+        ! -----------------------------------------------------------------------
         call MPI_TYPE_SIZE(trp_plan%type_s, ims_ss, ims_err)
         call MPI_TYPE_SIZE(trp_plan%type_r, ims_rs, ims_err)
 
