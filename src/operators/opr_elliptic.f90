@@ -538,7 +538,7 @@ contains
 
             ! Make x direction last one and leave y direction first
             ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
-            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny, isize_line, c_tmp2(:, k), ny)
 
             ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
             f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)

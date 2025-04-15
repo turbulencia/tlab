@@ -108,7 +108,7 @@ contains
             isize_fft_x = tmpi_plan_poissonx1%nlines
             isize_disp = (imax/2 + 1)*ims_npro_i
 
-            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, isize_txc_dimx, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
+           tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, isize_txc_dimx, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
 
             if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
@@ -339,10 +339,10 @@ contains
         target out
 
         ! -----------------------------------------------------------------------
-        integer(wi) ip, j, isize_line
+        integer(wi) isize_line
 
 #ifdef USE_MPI
-        integer(wi) i, iold, inew
+        integer(wi) i, iold, inew, ip, j
         complex(wp), pointer :: wrk1(:, :) => null(), wrk2(:, :) => null(), out_aux(:, :) => null()
         real(wp), pointer :: r_out(:) => null()
 #endif
@@ -362,9 +362,9 @@ contains
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
             out_aux(1:nx/2 + 1, 1:(ny + 2)*nz) => out(1:isize_txc_dimz/2*nz, 1)
 
-            ! Add bcs at the end of array a; there must be space !
-            in(:, ny*nz + 1:(ny + 1)*nz) = in_bcs_hb(:, 1:nz)
-            in(:, (ny + 1)*nz + 1:(ny + 2)*nz) = in_bcs_ht(:, 1:nz)
+            ! ! Add bcs at the end of array a; there must be space !
+            ! in(:, ny*nz + 1:(ny + 1)*nz) = in_bcs_hb(:, 1:nz)
+            ! in(:, (ny + 1)*nz + 1:(ny + 2)*nz) = in_bcs_ht(:, 1:nz)
 
             ! Transpose array a into b
             call TLabMPI_TransposeI_Forward(in(:, 1), r_out(:), tmpi_plan_poissonx1)
@@ -390,25 +390,33 @@ contains
             call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_poissonx2)
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
-            wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
+            ! wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
+
+            ! do k = nz, 2, -1                    ! Backwards loop to overwrite freed space
+            !     j = ny + 2                      ! top BC
+            !     ip = isize_line*(j - 1) + 1
+            !     out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
+            !     ip = ip - isize_line            ! bottom BC
+            !     out(ip:ip + isize_line - 1, k) = wrk2(:, k)
+            !     do j = ny, 1, -1                ! ny lines of field
+            !         ip = ip - isize_line
+            !         out(ip:ip + isize_line - 1, k) = out_aux(:, j + ny*(k - 1))
+            !     end do
+            ! end do
+            ! k = 1                               ! first plane; only move BCs
+            ! j = ny + 2                          ! top BC
+            ! ip = isize_line*(j - 1) + 1         ! top BC
+            ! out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
+            ! ip = ip - isize_line                ! bottom BC
+            ! out(ip:ip + isize_line - 1, k) = wrk2(:, k)
 
             do k = nz, 2, -1                    ! Backwards loop to overwrite freed space
-                j = ny + 2                      ! top BC
-                ip = isize_line*(j - 1) + 1
-                out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
-                ip = ip - isize_line            ! bottom BC
-                out(ip:ip + isize_line - 1, k) = wrk2(:, k)
+                ip = isize_line*ny + 1
                 do j = ny, 1, -1                ! ny lines of field
                     ip = ip - isize_line
                     out(ip:ip + isize_line - 1, k) = out_aux(:, j + ny*(k - 1))
                 end do
             end do
-            k = 1                               ! first plane; only move BCs
-            j = ny + 2                          ! top BC
-            ip = isize_line*(j - 1) + 1         ! top BC
-            out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
-            ip = ip - isize_line                ! bottom BC
-            out(ip:ip + isize_line - 1, k) = wrk2(:, k)
 
             nullify (wrk1, wrk2, r_out, out_aux)
 
@@ -420,10 +428,10 @@ contains
             !########################################################################
             do k = 1, nz
                 call dfftw_execute_dft_r2c(fft_plan_fx, in(:, 1 + ny*(k - 1)), out(:, k))
-                j = 1 + ny; ip = (j - 1)*isize_line + 1
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(ip:, k))
-                j = 2 + ny; ip = (j - 1)*isize_line + 1
-                call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(ip:, k))
+                ! j = 1 + ny; ip = (j - 1)*isize_line + 1
+                ! call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(ip:, k))
+                ! j = 2 + ny; ip = (j - 1)*isize_line + 1
+                ! call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(ip:, k))
             end do
 
 #ifdef USE_MPI
