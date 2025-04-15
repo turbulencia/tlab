@@ -30,7 +30,7 @@ subroutine OPR_CHECK()
 
 #ifdef USE_MPI
     real(wp) dummy
-    integer(wi) idummy !, id
+    integer(wi) idummy
 #endif
 
 ! ###################################################################
@@ -44,11 +44,9 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
-        ! id = TLAB_MPI_TRP_I_PARTIAL
-
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call TLabMPI_TransposeI_Forward(q(1, 1), wrk3d, tmpi_plan_dx)
-        call TLabMPI_TransposeI_Backward(wrk3d, q(1, 2), tmpi_plan_dx)
+        call TLabMPI_TransposeI_Forward(q(:, 1), wrk3d, tmpi_plan_dx)
+        call TLabMPI_TransposeI_Backward(wrk3d, q(:, 2), tmpi_plan_dx)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt

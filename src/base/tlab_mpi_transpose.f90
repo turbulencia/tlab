@@ -27,13 +27,6 @@ module TLabMPI_Transpose
     type(tmpi_transpose_dt), public :: tmpi_plan_dz
 
     ! -----------------------------------------------------------------------
-    interface TLabMPI_TransposeK_Forward
-        module procedure TLabMPI_TransposeK_Forward_Real, TLabMPI_TransposeK_Forward_Complex
-    end interface TLabMPI_TransposeK_Forward
-    interface TLabMPI_TransposeK_Backward
-        module procedure TLabMPI_TransposeK_Backward_Real, TLabMPI_TransposeK_Backward_Complex
-    end interface TLabMPI_TransposeK_Backward
-
     integer :: trp_mode_i, trp_mode_k                               ! Mode of transposition
     integer, parameter :: TLAB_MPI_TRP_NONE = 0
     integer, parameter :: TLAB_MPI_TRP_ASYNCHRONOUS = 1
@@ -48,11 +41,25 @@ module TLabMPI_Transpose
 
     type(MPI_Datatype) :: trp_datatype_i, trp_datatype_k            ! Transposition in double or single precision
 
-    real(wp), allocatable, target :: wrk_mpi(:)             ! 3D work array for MPI; maybe in tlab_memory
+    real(wp), allocatable, target :: wrk_mpi(:)                     ! 3D work array
     real(sp), pointer :: a_wrk(:) => null(), b_wrk(:) => null()
 
     type(MPI_Status), allocatable :: status(:)
     type(MPI_Request), allocatable :: request(:)
+
+    interface TLabMPI_TransposeK_Forward
+        module procedure TLabMPI_TransposeK_Forward_Real, TLabMPI_TransposeK_Forward_Complex
+    end interface TLabMPI_TransposeK_Forward
+    interface TLabMPI_TransposeK_Backward
+        module procedure TLabMPI_TransposeK_Backward_Real, TLabMPI_TransposeK_Backward_Complex
+    end interface TLabMPI_TransposeK_Backward
+
+    interface TLabMPI_TransposeI_Forward
+        module procedure TLabMPI_TransposeI_Forward_Real, TLabMPI_TransposeI_Forward_Complex
+    end interface TLabMPI_TransposeI_Forward
+    interface TLabMPI_TransposeI_Backward
+        module procedure TLabMPI_TransposeI_Backward_Real, TLabMPI_TransposeI_Backward_Complex
+    end interface TLabMPI_TransposeI_Backward
 
 contains
 
@@ -363,9 +370,9 @@ contains
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                  b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                  ims_comm_z, trp_sizBlock_k, trp_mode_k)
+            call Transpose_Kernel_Double(a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                         b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                         ims_comm_z, trp_sizBlock_k, trp_mode_k)
         end if
 
 #ifdef PROFILE_ON
@@ -422,9 +429,9 @@ contains
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                  a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                  ims_comm_z, trp_sizBlock_k, trp_mode_k)
+            call Transpose_Kernel_Double(b, maps_recv_k(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                         a, maps_send_k(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                         ims_comm_z, trp_sizBlock_k, trp_mode_k)
         end if
 
 #ifdef PROFILE_ON
@@ -452,7 +459,7 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Forward(a, b, trp_plan)
+    subroutine TLabMPI_TransposeI_Forward_Real(a, b, trp_plan)
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -474,17 +481,32 @@ contains
             b(1:size) = real(b_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                  b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                  ims_comm_x, trp_sizBlock_i, trp_mode_i)
+            call Transpose_Kernel_Double(a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                         b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                         ims_comm_x, trp_sizBlock_i, trp_mode_i)
         end if
 
         return
-    end subroutine TLabMPI_TransposeI_Forward
+    end subroutine TLabMPI_TransposeI_Forward_Real
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Backward(b, a, trp_plan)
+    subroutine TLabMPI_TransposeI_Forward_Complex(a, b, trp_plan)
+        complex(wp), intent(in) :: a(*)
+        complex(wp), intent(out) :: b(*)
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
+
+        ! #######################################################################
+        call Transpose_Kernel_Complex(a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                      b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                      ims_comm_x, trp_sizBlock_i, trp_mode_i)
+
+        return
+    end subroutine TLabMPI_TransposeI_Forward_Complex
+
+    !########################################################################
+    !########################################################################
+    subroutine TLabMPI_TransposeI_Backward_Real(b, a, trp_plan)
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
         real(wp), intent(in) :: b(*)
         real(wp), intent(out) :: a(*)
@@ -507,17 +529,32 @@ contains
             a(1:size) = real(a_wrk(1:size), dp)
             nullify (a_wrk, b_wrk)
         else
-            call Transpose_Kernel(b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
-                                  a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
-                                  ims_comm_x, trp_sizBlock_i, trp_mode_i)
+            call Transpose_Kernel_Double(b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                         a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                         ims_comm_x, trp_sizBlock_i, trp_mode_i)
         end if
 
         return
-    end subroutine TLabMPI_TransposeI_Backward
+    end subroutine TLabMPI_TransposeI_Backward_Real
 
     !########################################################################
     !########################################################################
-    subroutine Transpose_Kernel(a, msend, dsend, tsend, b, mrecv, drecv, trecv, comm, step, mode)
+    subroutine TLabMPI_TransposeI_Backward_Complex(b, a, trp_plan)
+        complex(wp), intent(in) :: b(*)
+        complex(wp), intent(out) :: a(*)
+        type(tmpi_transpose_dt), intent(in) :: trp_plan
+
+        ! #######################################################################
+        call Transpose_Kernel_Complex(b, maps_recv_i(:), trp_plan%disp_r(:), trp_plan%type_r, &
+                                      a, maps_send_i(:), trp_plan%disp_s(:), trp_plan%type_s, &
+                                      ims_comm_x, trp_sizBlock_i, trp_mode_i)
+
+        return
+    end subroutine TLabMPI_TransposeI_Backward_Complex
+
+    !########################################################################
+    !########################################################################
+    subroutine Transpose_Kernel_Double(a, msend, dsend, tsend, b, mrecv, drecv, trecv, comm, step, mode)
         real(wp), intent(in) :: a(*)
         real(wp), intent(out) :: b(*)
 
@@ -570,7 +607,7 @@ contains
         end select
 
         return
-    end subroutine Transpose_Kernel
+    end subroutine Transpose_Kernel_Double
 
     !########################################################################
     !########################################################################

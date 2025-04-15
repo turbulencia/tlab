@@ -108,7 +108,7 @@ contains
             isize_fft_x = tmpi_plan_poissonx1%nlines
             isize_disp = (imax/2 + 1)*ims_npro_i
 
-            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax + 2, isize_txc_dimx, message='extended Ox FFTW in Poisson solver.')
+           tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, isize_txc_dimx, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
 
             if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
@@ -357,8 +357,6 @@ contains
         if (ims_npro_i > 1) then
 
             ! Pass memory address from complex array to real array
-            ! id = TLAB_MPI_TRP_I_POISSON1
-            ! call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, ims_size_i(id)])
             call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_poissonx1%nlines])
             call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
@@ -369,15 +367,12 @@ contains
             in(:, (ny + 1)*nz + 1:(ny + 2)*nz) = in_bcs_ht(:, 1:nz)
 
             ! Transpose array a into b
-            ! id = TLAB_MPI_TRP_I_POISSON1
-            call TLabMPI_TransposeI_Forward(in, r_out, tmpi_plan_poissonx1)
+            call TLabMPI_TransposeI_Forward(in(:, 1), r_out(:), tmpi_plan_poissonx1)
 
             ! ims_trp_plan_i(id)%nlines FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
-            ! id = TLAB_MPI_TRP_I_POISSON1
-            ! do k = 1, ims_size_i(id)
             do k = 1, tmpi_plan_poissonx1%nlines
                 inew = (nx/2 + 1)*ims_npro_i
                 iold = g(1)%size/2 + 1
@@ -392,8 +387,7 @@ contains
             end do
 
             ! Transpose array back
-            ! id = TLAB_MPI_TRP_I_POISSON2
-            call TLabMPI_TransposeI_Backward(wrk3d, r_out, tmpi_plan_poissonx2)
+            call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_poissonx2)
 
             ! Reorganize array out. Backwards line-by-line to overwrite freed space.
             wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
@@ -421,7 +415,7 @@ contains
         else
 #endif
 
-            ! #######################################################################
+            !#######################################################################
             ! No Ox Parallel Decomposition
             !########################################################################
             do k = 1, nz
@@ -478,12 +472,9 @@ contains
             end do
 
             ! Transpose array
-            ! id = TLAB_MPI_TRP_I_POISSON2
-            call TLabMPI_TransposeI_Forward(r_in, out, tmpi_plan_poissonx2)
+            call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2)
 
             ! reorganize a (FFTW make a stride in a already before)
-            ! id = TLAB_MPI_TRP_I_POISSON1
-            ! do k = 1, ims_size_i(id)
             do k = 1, tmpi_plan_poissonx1%nlines
                 do ip = 2, ims_npro_i
                     do i = 1, nx/2
@@ -501,8 +492,7 @@ contains
             call dfftw_execute_dft_c2r(fft_plan_bx, c_out, r_in)
 
             ! Transpose array wrk into out
-            ! id = TLAB_MPI_TRP_I_POISSON1
-            call TLabMPI_TransposeI_Backward(r_in, out, tmpi_plan_poissonx1)
+            call TLabMPI_TransposeI_Backward(r_in(:), out(:, 1), tmpi_plan_poissonx1)
 
             nullify (in_aux, r_in, c_out)
 
