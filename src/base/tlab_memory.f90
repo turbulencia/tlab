@@ -1,3 +1,5 @@
+#include "dns_error.h"
+
 ! ###################################################################
 ! ###################################################################
 module TLab_Arrays
@@ -101,9 +103,6 @@ end module TLab_Pointers_C
 
 ! ###################################################################
 ! ###################################################################
-#include "dns_const.h"
-#include "dns_error.h"
-
 module TLab_Memory
     use TLab_Constants, only: sp, wp, wi, longi, lfile, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -114,7 +113,7 @@ module TLab_Memory
     ! Arrays sizes
     ! fields
     integer(wi), public :: imax, jmax, kmax     ! number of grid nodes per direction locally per processor
-    integer(wi), public :: isize_field = 0          ! =imax*jmax*kmax, 3D fields sizes locally per processor
+    integer(wi), public :: isize_field = 0      ! =imax*jmax*kmax, 3D fields sizes locally per processor
     integer(wi), public :: inb_flow             ! # of prognostic 3d flow fields (flow evolution equations)
     integer(wi), public :: inb_flow_array       ! >= inb_flow, # of prognostic and diagnostic 3d flow arrays
     integer(wi), public :: inb_scal             ! # of prognostic 3d scal fields (scal evolution equations)
@@ -177,25 +176,28 @@ contains
         ! auxiliar array txc for intermediate calculations
         isize_txc_field = imax*jmax*kmax
         if (fourier_on) then
-            isize_txc_dimz = (imax + 2)*(jmax + 2)
-            isize_txc_dimx = kmax*(jmax + 2)
-            isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
-#ifdef USE_MPI
-            if (ims_npro_k > 1) then
-                if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
-                    isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
-                    isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
-                end if
-                isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
-            end if
-            if (ims_npro_i > 1) then
-                if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
-                    isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
-                    isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
-                end if
-                isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
-            end if
-#endif
+            ! isize_txc_dimz = (imax + 2)*(jmax + 2)
+            ! isize_txc_dimx = kmax*(jmax + 2)
+            ! isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
+            isize_txc_dimz = (imax + 2)*jmax            ! Add space for Nyquist frequency
+            isize_txc_dimx = kmax*jmax
+            isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
+! #ifdef USE_MPI
+!             ! if (ims_npro_k > 1) then
+!             !     if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
+!             !         isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
+!             !         isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
+!             !     end if
+!             !     isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
+!             ! end if
+!             ! if (ims_npro_i > 1) then
+!             !     if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
+!             !         isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
+!             !         isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
+!             !     end if
+!             !     isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
+!             ! end if
+! #endif
             if (mod(imax, 2) /= 0) then
                 call TLab_Write_ASCII(efile, C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
                 call TLab_Stop(DNS_ERROR_DIMGRID)
