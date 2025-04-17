@@ -232,7 +232,7 @@ contains
 
     !########################################################################
     !#
-    !# Solve Lap p = f using Fourier in xOz planes, to rewritte the problem as
+    !# Solve Lap p = f using Fourier in xOz planes, to rewrite the problem as
     !#     \hat{p}''-\lambda \hat{p} = \hat{f}
     !#
     !# where \lambda = kx^2+kz^2
@@ -257,11 +257,12 @@ contains
 
         ! -----------------------------------------------------------------------
         real(wp) bcs(2, 2)
-        real(wp), pointer :: u(:, :) => null(), v(:, :) => null(), f(:, :) => null()
+        real(wp), pointer :: u(:, :, :) => null(), v(:, :, :) => null(), f(:, :, :) => null(), p_wrk3d(:, :) => null()
 
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+        p_wrk3d(1:isize_txc_dimz, 1:nz) => wrk3d(1:isize_txc_dimz*nz)
 
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
@@ -278,6 +279,11 @@ contains
 
         tmp1 = tmp1*norm
 
+        call TLab_Transpose_COMPLEX(c_tmp1, isize_line, ny*nz, isize_line, c_tmp2, ny*nz)
+        f(1:2*ny, 1:nz, 1:isize_line) => tmp2(1:2*ny*isize_line*nz, 1)
+        v(1:2*ny, 1:nz, 1:isize_line) => tmp1(1:2*ny*isize_line*nz, 1)
+        u(1:2*ny, 1:nz, 1:isize_line) => p_wrk3d(1:2*ny*isize_line*nz, 1)
+
         ! ###################################################################
         ! Solve FDE \hat{p}''-\lambda \hat{p} = \hat{f}
         ! ###################################################################
@@ -288,14 +294,14 @@ contains
             kglobal = k
 #endif
 
-            ! Make x direction last one and leave y direction first
-            ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
-            call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny, isize_line, c_tmp2(:, k), ny)
+            ! ! Make x direction last one and leave y direction first
+            ! ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny + 2, isize_line, c_tmp2(:, k), ny + 2)
+            ! call TLab_Transpose_COMPLEX(c_tmp1(:, k), isize_line, ny, isize_line, c_tmp2(:, k), ny)
 
-            ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
-            f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)
-            v(1:2*ny, 1:isize_line) => tmp1(1:2*ny*isize_line, k)
-            u(1:2*ny, 1:isize_line) => wrk3d(1:2*ny*isize_line)
+            ! ! f(1:2*(ny + 2), 1:isize_line) => tmp2(1:2*(ny + 2)*isize_line, k)
+            ! f(1:2*ny, 1:isize_line) => tmp2(1:2*ny*isize_line, k)
+            ! v(1:2*ny, 1:isize_line) => tmp1(1:2*ny*isize_line, k)
+            ! u(1:2*ny, 1:isize_line) => p_wrk3d(1:2*ny*isize_line, k)
 
             do i = 1, isize_line
 #ifdef USE_MPI
@@ -307,35 +313,38 @@ contains
                 ip = 2*ny
                 ! bcs(1:2, 1) = f(ip + 1:ip + 2, i)       ! bottom bcs
                 ! bcs(1:2, 2) = f(ip + 3:ip + 4, i)       ! top bcs
-                bcs(1:2, 1) = f(1:2, i)                 ! bottom bcs
-                bcs(1:2, 2) = f(ip - 1:ip, i)           ! top bcs
+                bcs(1:2, 1) = f(1:2, k, i)                 ! bottom bcs
+                bcs(1:2, 2) = f(ip - 1:ip, k, i)           ! top bcs
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
-                                                   u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
+                                                   u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
-                                                   u(:, i), f(:, i), bcs, v(:, i), wrk1d, wrk2d)
+                                                   u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     end if
 
                 end select
 
             end do
 
-            if (present(dpdy)) call TLab_Transpose_COMPLEX(c_tmp1(:, k), ny, isize_line, ny, c_tmp2(:, k), isize_line)
-            call TLab_Transpose_COMPLEX(c_wrk3d, ny, isize_line, ny, c_tmp1(:, k), isize_line)
+            ! if (present(dpdy)) call TLab_Transpose_COMPLEX(c_tmp1(:, k), ny, isize_line, ny, c_tmp2(:, k), isize_line)
+            ! call TLab_Transpose_COMPLEX(c_wrk3d(:, k), ny, isize_line, ny, c_tmp1(:, k), isize_line)
 
         end do
+
+        if (present(dpdy)) call TLab_Transpose_COMPLEX(c_tmp1, ny*nz, isize_line, ny*nz, c_tmp2, isize_line)
+        call TLab_Transpose_COMPLEX(c_wrk3d, ny*nz, isize_line, ny*nz, c_tmp1, isize_line)
 
         ! ###################################################################
         ! Fourier field p (based on array tmp1)
