@@ -49,7 +49,7 @@ program VISUALS
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
     use OPR_PARTIAL
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
@@ -364,7 +364,7 @@ program VISUALS
     call OPR_Elliptic_Initialize(ifile)
 
     if (fourier_on .and. inb_txc >= 1) then ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE()
+        call OPR_Fourier_Initialize()
     end if
 
     call OPR_Filter_Initialize_Parameters(ifile)

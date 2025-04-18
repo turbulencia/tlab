@@ -1,14 +1,10 @@
-#ifdef USE_MPI
 #include "dns_error.h"
 
-#endif
-
-module OPR_FOURIER
+module OPR_Fourier
     use TLab_Constants, only: wp, wi, efile
-    use TLab_Memory, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+    use TLab_Memory, only: isize_txc_field, isize_txc_dimz
     use TLab_Memory, only: imax, jmax, kmax
-    use FDM, only: g
-    use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
+    use TLab_Arrays, only: wrk3d
     use TLab_Pointers_C, only: c_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
@@ -18,11 +14,20 @@ module OPR_FOURIER
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro, ims_err
     use TLabMPI_Transpose
 #endif
-
+    use FDM, only: g
     implicit none
     private
 
-    integer(8) :: fft_plan_fx, fft_plan_bx!, fft_plan_fx_bcs
+    public :: OPR_Fourier_Initialize
+    public :: OPR_Fourier_F_X_EXEC, OPR_Fourier_B_X_EXEC    ! Main routines, used in Poisson solver; optimize
+    public :: OPR_Fourier_F_Z_EXEC, OPR_Fourier_B_Z_EXEC
+    public :: OPR_Fourier_F                                 ! Minor routines, less frequently used
+    public :: OPR_Fourier_B
+    public :: OPR_Fourier_CONVOLUTION_FXZ
+    public :: OPR_Fourier_SPECTRA_3D
+
+    ! -----------------------------------------------------------------------
+    integer(8) :: fft_plan_fx, fft_plan_bx
     integer(8) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
     integer(8) :: fft_plan_fz, fft_plan_bz
 #ifdef USE_MPI
@@ -35,19 +40,10 @@ module OPR_FOURIER
     integer(wi) k
     complex(wp), pointer :: c_in(:, :) => null(), c_out(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:, :) => null(), c_in1(:, :) => null()
 
-    ! public :: fft_plan_fy1d, fft_plan_by1d ! vertical spectral pressure filter
-    public :: OPR_FOURIER_INITIALIZE
-    public :: OPR_FOURIER_F_X_EXEC, OPR_FOURIER_B_X_EXEC    ! Main routines, used in Poisson solver, frequently used and hence optimized
-    public :: OPR_FOURIER_F_Z_EXEC, OPR_FOURIER_B_Z_EXEC
-    public :: OPR_FOURIER_F                                 ! Minor routines, less frequently used
-    public :: OPR_FOURIER_B
-    public :: OPR_FOURIER_CONVOLUTION_FXZ
-    public :: OPR_FOURIER_SPECTRA_3D
-
 contains
     ! #######################################################################
     ! #######################################################################
-    subroutine OPR_FOURIER_INITIALIZE()
+    subroutine OPR_Fourier_Initialize()
         use TLab_Arrays, only: txc
 #ifdef USE_FFTW
 #include "fftw3.f"
@@ -62,18 +58,24 @@ contains
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
 #endif
 
+        if (mod(imax, 2) /= 0) then
+            call TLab_Write_ASCII(efile, __FILE__//'. Imax must be a multiple of 2 for the FFT operations.')
+            call TLab_Stop(DNS_ERROR_DIMGRID)
+        end if
+
         ! -----------------------------------------------------------------------
         ! Oz direction
         ! -----------------------------------------------------------------------
         if (g(3)%size > 1) then
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-               tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz/2, locType=MPI_DOUBLE_COMPLEX, message='Oz FFTW in Poisson solver.')
+                tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz/2, &
+                                                              locType=MPI_DOUBLE_COMPLEX, &
+                                                              message='Oz FFTW in Poisson solver.')
                 isize_fft_z = tmpi_plan_poissonz%nlines
 
             else
 #endif
-! isize_fft_z = (imax/2 + 1)*(jmax + 2)
                 isize_fft_z = (imax/2 + 1)*jmax
 #ifdef USE_MPI
             end if
@@ -84,19 +86,23 @@ contains
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
                                      txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, FFTW_FORWARD, FFTW_ESTIMATE)
+                                     wrk3d, g(3)%size, isize_stride, 1, &
+                                     FFTW_FORWARD, FFTW_ESTIMATE)
 
             call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
                                      txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_ESTIMATE)
+                                     wrk3d, g(3)%size, isize_stride, 1, &
+                                     FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
             call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
                                      txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, FFTW_FORWARD, FFTW_MEASURE)
+                                     wrk3d, g(3)%size, isize_stride, 1, &
+                                     FFTW_FORWARD, FFTW_MEASURE)
 
             call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
                                      txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
+                                     wrk3d, g(3)%size, isize_stride, 1, &
+                                     FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
 
@@ -105,11 +111,11 @@ contains
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, isize_txc_dimx, message='Ox FFTW in Poisson solver.')
+            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, jmax*kmax, message='Ox FFTW in Poisson solver.')
             isize_fft_x = tmpi_plan_poissonx1%nlines
             isize_disp = (imax/2 + 1)*ims_npro_i
 
- tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, isize_txc_dimx, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
+            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, jmax*kmax, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
 
             if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
@@ -117,15 +123,8 @@ contains
             end if
         else
 #endif
-            ! isize_fft_x = jmax
             isize_fft_x = jmax*kmax
             isize_disp = g(1)%size/2 + 1
-! #ifdef _DEBUG
-!             ! wrk1d(:,2) should be complex with size n/2+1, i.e., n+2 real, but there is space at the end of wrk1d(:,2)
-!             call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:, 1), wrk1d(:, 2), FFTW_ESTIMATE)
-! #else
-!             call dfftw_plan_dft_r2c_1d(fft_plan_fx_bcs, g(1)%size, wrk1d(:, 1), wrk1d(:, 2), FFTW_MEASURE)
-! #endif
 
 #ifdef USE_MPI
         end if
@@ -134,17 +133,21 @@ contains
 #ifdef _DEBUG
         call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
                                      txc(:, 1), g(1)%size, 1, g(1)%size, &
-                                     wrk3d, g(1)%size/2 + 1, 1, isize_disp, FFTW_ESTIMATE)
+                                     wrk3d, g(1)%size/2 + 1, 1, isize_disp, &
+                                     FFTW_ESTIMATE)
         call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
                                      txc(:, 1), g(1)%size/2 + 1, 1, isize_disp, &
-                                     wrk3d, g(1)%size, 1, g(1)%size, FFTW_ESTIMATE)
+                                     wrk3d, g(1)%size, 1, g(1)%size, &
+                                     FFTW_ESTIMATE)
 #else
         call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
                                      txc(:, 1), g(1)%size, 1, g(1)%size, &
-                                     wrk3d, g(1)%size/2 + 1, 1, isize_disp, FFTW_MEASURE)
+                                     wrk3d, g(1)%size/2 + 1, 1, isize_disp, &
+                                     FFTW_MEASURE)
         call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
                                      txc(:, 1), g(1)%size/2 + 1, 1, isize_disp, &
-                                     wrk3d, g(1)%size, 1, g(1)%size, FFTW_MEASURE)
+                                     wrk3d, g(1)%size, 1, g(1)%size, &
+                                     FFTW_MEASURE)
 #endif
 
         ! -----------------------------------------------------------------------
@@ -157,166 +160,31 @@ contains
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
                                      txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, FFTW_FORWARD, FFTW_ESTIMATE)
+                                     wrk3d, g(2)%size, isize_stride, 1, &
+                                     FFTW_FORWARD, FFTW_ESTIMATE)
 
             call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
                                      txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_ESTIMATE)
+                                     wrk3d, g(2)%size, isize_stride, 1, &
+                                     FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
                                      txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, FFTW_FORWARD, FFTW_MEASURE)
+                                     wrk3d, g(2)%size, isize_stride, 1, &
+                                     FFTW_FORWARD, FFTW_MEASURE)
 
             call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
                                      txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, FFTW_BACKWARD, FFTW_MEASURE)
+                                     wrk3d, g(2)%size, isize_stride, 1, &
+                                     FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
 
         return
-    end subroutine OPR_FOURIER_INITIALIZE
+    end subroutine OPR_Fourier_Initialize
 
-    ! #######################################################################
-    ! #######################################################################
-    subroutine OPR_FOURIER_F(flag_mode, nx, ny, nz, in, out, tmp1)
-        integer(wi) :: flag_mode                                ! 1D, 2D or 3D
-        integer(wi) :: nx, ny, nz
-        real(wp), intent(INOUT) :: in(isize_txc_field)          ! extended w/ BCs below
-        real(wp), intent(OUT) :: out(isize_txc_dimz, nz)
-        real(wp), intent(INOUT) :: tmp1(isize_txc_dimz, nz)
-
-        target out, tmp1
-
-        ! #######################################################################
-        ! Pass memory address from real array to complex array
-        call c_f_pointer(c_loc(out), c_out, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
-
-        wrk2d(:, 1:2) = 0.0_wp          ! BCs
-
-        if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
-            if (g(3)%size > 1) then
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out)
-                call OPR_FOURIER_F_Z_EXEC(c_out, c_tmp1) ! out might be overwritten
-            else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1)
-            end if
-
-            do k = 1, nz
-                call dfftw_execute_dft(fft_plan_fy, c_tmp1(:, k), c_out(:, k))
-            end do
-
-        else
-            if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_tmp1)
-                call OPR_FOURIER_F_Z_EXEC(c_tmp1, c_out) ! tmp1 might be overwritten
-            else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, wrk2d(1, 1), wrk2d(1, 2), c_out)
-            end if
-        end if
-
-        return
-    end subroutine OPR_FOURIER_F
-
-    ! #######################################################################
-    ! #######################################################################
-    subroutine OPR_FOURIER_B(flag_mode, nx, ny, nz, in, out)
-        integer(wi) :: flag_mode  ! 1D, 2D or 3D
-        integer(wi) :: nx, ny, nz
-        real(wp), intent(INOUT) :: in(isize_txc_dimz, nz)
-        real(wp), intent(OUT) :: out(isize_txc_field)
-
-        target in
-
-        ! #######################################################################
-        ! Pass memory address from real array to complex array
-        call c_f_pointer(c_loc(in), c_in, shape=[isize_txc_dimz/2, nz])
-
-        if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
-            do k = 1, nz
-                call dfftw_execute_dft(fft_plan_by, c_in(:, k), c_wrk3d(:, k))
-            end do
-
-            if (g(3)%size > 1) then
-                call OPR_FOURIER_B_Z_EXEC(c_wrk3d, c_in)            ! wrk3d might be overwritten
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_in, out)    ! c_in might be overwritten
-            else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
-            end if
-
-        else
-            if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
-                call OPR_FOURIER_B_Z_EXEC(c_in, c_wrk3d)            ! in might be overwritten
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
-            else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_in, out)    ! c_in might be overwritten
-            end if
-
-        end if
-
-        return
-    end subroutine OPR_FOURIER_B
-
-    ! #######################################################################
-    ! #######################################################################
-    ! Calculate spectrum in array in1
-    ! Calculate correlation in array in2
-    subroutine OPR_FOURIER_CONVOLUTION_FXZ(flag1, flag2, nx, ny, nz, in1, in2, tmp1, tmp2)
-        character(len=*), intent(in) :: flag1
-        integer(wi), intent(in) :: flag2, nx, ny, nz
-        real(wp), dimension(isize_txc_field), intent(INOUT) :: in1, in2, tmp1, tmp2
-
-        target in1, tmp1, tmp2
-
-        ! #######################################################################
-        ! Pass memory address from real array to complex array
-        call c_f_pointer(c_loc(in1), c_in1, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
-
-        wrk2d(:, 1:2) = 0.0_wp          ! BCs
-        fft_reordering = .true.
-
-        if (g(3)%size > 1) then
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp2)
-            call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
-        else
-            call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in1, wrk2d(1, 1), wrk2d(1, 2), c_tmp1)
-        end if
-
-        select case (trim(adjustl(flag1)))
-
-        case ('auto')        ! Auto-spectra
-            c_in1 = c_tmp1*conjg(c_tmp1)
-
-        case ('cross')       ! Cross-spectra
-            if (g(3)%size > 1) then
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_tmp2)
-                call OPR_FOURIER_F_Z_EXEC(c_tmp2, c_in1) ! tmp2 might be overwritten
-            else
-                call OPR_FOURIER_F_X_EXEC(nx, ny, nz, in2, wrk2d(1, 1), wrk2d(1, 2), c_in1)
-            end if
-            c_in1 = c_in1*conjg(c_tmp1)
-
-        end select
-
-        ! -----------------------------------------------------------------------
-        if (flag2 == 2) then         ! Calculate correlation in array in2
-            if (g(3)%size > 1) then
-                call OPR_FOURIER_B_Z_EXEC(c_in1, c_tmp1)            ! in1 might be overwritten
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_tmp1, in2)  ! tmp1 might be overwritten
-            else
-                call OPR_FOURIER_B_X_EXEC(nx, ny, nz, c_in1, in2)   ! c_in1 might be overwritten
-            end if
-        end if
-
-        ! -----------------------------------------------------------------------
-        fft_reordering = .false.
-
-        return
-    end subroutine OPR_FOURIER_CONVOLUTION_FXZ
     !########################################################################
-    !# Forward/Backward Fourier transform of the array a.
+    !# Forward/Backward Fourier transform.
     !#
     !# Each z-plane contains jmax lines of nx/2+1 complex numbers. The first
     !# nx/2 Fourier coefficients are contiguous and the element nx/2+1 is the
@@ -325,113 +193,52 @@ contains
     !# Nyquist frequency of the corresponding line.
     !#
     !########################################################################
-    subroutine OPR_FOURIER_F_X_EXEC(nx, ny, nz, in, in_bcs_hb, in_bcs_ht, out)
+    subroutine OPR_Fourier_F_X_EXEC(nx, ny, nz, in, out)
         integer(wi), intent(in) :: nx, ny, nz
-        ! real(wp), intent(inout) :: in(nx, (ny + 2)*nz)                  ! We add the boundary conditions at the end of this array
-        real(wp), intent(in) :: in(nx, ny*nz)
-        real(wp), intent(in) :: in_bcs_hb(nx, nz)                       ! bottom boundary conditions
-        real(wp), intent(in) :: in_bcs_ht(nx, nz)                       ! top boundary conditions
+        real(wp), intent(in) :: in(nx*ny*nz)
         complex(wp), intent(out) :: out(isize_txc_dimz/2, nz)
 
         target out
 
         ! -----------------------------------------------------------------------
-        integer(wi) isize_line
-
 #ifdef USE_MPI
-        integer(wi) i, iold, inew, ip, j
-        complex(wp), pointer :: wrk1(:, :) => null()!, out_aux(:, :) => null()!, wrk2(:, :) => null()
+        integer(wi) i, iold, inew, ip, isize_line
+        complex(wp), pointer :: wrk1(:, :) => null()
         real(wp), pointer :: r_out(:) => null()
 #endif
 
         ! #######################################################################
-        isize_line = nx/2 + 1
 
-        !########################################################################
-        ! Ox Parallel Decomposition
-        !########################################################################
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-
-            ! Pass memory address from complex array to real array
             call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_poissonx1%nlines])
-            ! call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, (ny + 2)*nz])
-            ! call c_f_pointer(c_loc(wrk3d), wrk2, shape=[nx/2 + 1, ny*nz])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
-            ! out_aux(1:nx/2 + 1, 1:(ny + 2)*nz) => out(1:isize_txc_dimz/2*nz, 1)
-            ! out_aux(1:nx/2 + 1, 1:ny*nz) => out(1:isize_txc_dimz/2*nz, 1)
 
-            ! ! Add bcs at the end of array a; there must be space !
-            ! in(:, ny*nz + 1:(ny + 1)*nz) = in_bcs_hb(:, 1:nz)
-            ! in(:, (ny + 1)*nz + 1:(ny + 2)*nz) = in_bcs_ht(:, 1:nz)
+            call TLabMPI_TransposeI_Forward(in(:), r_out(:), tmpi_plan_poissonx1)
 
-            ! Transpose array a into b
-            call TLabMPI_TransposeI_Forward(in(:, 1), r_out(:), tmpi_plan_poissonx1)
-
-            ! ims_trp_plan_i(id)%nlines FFTWs
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
+            isize_line = nx/2 + 1
             do k = 1, tmpi_plan_poissonx1%nlines
-                inew = (nx/2 + 1)*ims_npro_i
+                inew = isize_line*ims_npro_i
                 iold = g(1)%size/2 + 1
                 wrk1(inew, k) = wrk1(iold, k)
                 do ip = ims_npro_i, 2, -1
                     do i = nx/2, 1, -1
-                        inew = (ip - 1)*(nx/2 + 1) + i
+                        inew = (ip - 1)*isize_line + i
                         iold = (ip - 1)*nx/2 + i
                         wrk1(inew, k) = wrk1(iold, k)
                     end do
                 end do
             end do
 
-            ! Transpose array back
             call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_poissonx2)
 
-            ! Reorganize array out. Backwards line-by-line to overwrite freed space.
-            ! wrk2(:, 1:2*nz) = out_aux(:, ny*nz + 1:ny*nz + 2*nz)        ! Save BCs data in aux array
-
-            ! do k = nz, 2, -1                    ! Backwards loop to overwrite freed space
-            !     j = ny + 2                      ! top BC
-            !     ip = isize_line*(j - 1) + 1
-            !     out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
-            !     ip = ip - isize_line            ! bottom BC
-            !     out(ip:ip + isize_line - 1, k) = wrk2(:, k)
-            !     do j = ny, 1, -1                ! ny lines of field
-            !         ip = ip - isize_line
-            !         out(ip:ip + isize_line - 1, k) = out_aux(:, j + ny*(k - 1))
-            !     end do
-            ! end do
-            ! k = 1                               ! first plane; only move BCs
-            ! j = ny + 2                          ! top BC
-            ! ip = isize_line*(j - 1) + 1         ! top BC
-            ! out(ip:ip + isize_line - 1, k) = wrk2(:, k + nz)
-            ! ip = ip - isize_line                ! bottom BC
-            ! out(ip:ip + isize_line - 1, k) = wrk2(:, k)
-
-            ! do k = nz, 2, -1                    ! Backwards loop to overwrite freed space
-            !     ip = isize_line*ny + 1
-            !     do j = ny, 1, -1                ! ny lines of field
-            !         ip = ip - isize_line
-            !         out(ip:ip + isize_line - 1, k) = out_aux(:, j + ny*(k - 1))
-            !     end do
-            ! end do
-
-            nullify (wrk1, r_out)!, out_aux)
+            nullify (wrk1, r_out)
 
         else
 #endif
-
-            !#######################################################################
-            ! No Ox Parallel Decomposition
-            !########################################################################
-            ! do k = 1, nz
-            !     call dfftw_execute_dft_r2c(fft_plan_fx, in(:, 1 + ny*(k - 1)), out(:, k))
-            !     ! j = 1 + ny; ip = (j - 1)*isize_line + 1
-            !     ! call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_hb(:, k), out(ip:, k))
-            !     ! j = 2 + ny; ip = (j - 1)*isize_line + 1
-            !     ! call dfftw_execute_dft_r2c(fft_plan_fx_bcs, in_bcs_ht(:, k), out(ip:, k))
-            ! end do
             call dfftw_execute_dft_r2c(fft_plan_fx, in, out)
 
 #ifdef USE_MPI
@@ -439,81 +246,54 @@ contains
 #endif
 
         return
-    end subroutine OPR_FOURIER_F_X_EXEC
+    end subroutine OPR_Fourier_F_X_EXEC
 
     !########################################################################
     !########################################################################
-    ! in might be overwritten
-    subroutine OPR_FOURIER_B_X_EXEC(nx, ny, nz, in, out)
+    subroutine OPR_Fourier_B_X_EXEC(nx, ny, nz, in, out)
         integer(wi) nx, ny, nz
         complex(wp), intent(in) :: in(isize_txc_dimz/2, nz)
-        real(wp), intent(out) :: out(nx*ny, nz)
+        real(wp), intent(out) :: out(nx*ny*nz)
 
         target in, out
 
         ! -----------------------------------------------------------------------
 #ifdef USE_MPI
-        integer(wi) i, j, ip, iold, inew, isize_line
+        integer(wi) i, ip, iold, inew, isize_line
         real(wp), pointer :: r_in(:) => null()
-        ! complex(wp), pointer :: in_aux(:, :) => null()
 #endif
 
         !########################################################################
-        ! Ox Parallel Decomposition
-        !########################################################################
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-
-            ! Pass memory address from complex array to real array
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), c_out, shape=[(nx/2 + 1)*ims_npro_i, nz])
-            ! in_aux(1:nx/2 + 1, 1:(ny + 2)*nz) => in(1:isize_txc_dimz/2*nz, 1)
 
-            ! ! Reorganize array in. Forward line-by-line to overwrite freed space. BCs are ignored.
-            ! isize_line = nx/2 + 1
-            ! do k = 2, nz
-            !     ip = 1
-            !     do j = 1, ny
-            !         in_aux(:, j + ny*(k - 1)) = in(ip:ip + isize_line - 1, k)
-            !         ip = ip + isize_line
-            !     end do
-            ! end do
-
-            ! Transpose array
-            ! call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2_tmp)
-            ! c_out(g(1)%size/2 + 1, :) = 0.0_wp
             call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2)
 
             ! reorganize a (FFTW make a stride in a already before)
+            isize_line = nx/2 + 1
             do k = 1, tmpi_plan_poissonx1%nlines
                 do ip = 2, ims_npro_i
                     do i = 1, nx/2
-                        iold = (ip - 1)*(nx/2 + 1) + i
+                        iold = (ip - 1)*isize_line + i
                         inew = (ip - 1)*nx/2 + i
                         c_out(inew, k) = c_out(iold, k)
                     end do
                 end do
-                iold = ims_npro_i*(nx/2 + 1)
+                iold = ims_npro_i*isize_line
                 inew = g(1)%size/2 + 1
                 c_out(inew, k) = c_out(iold, k)
             end do
 
-            ! ims_size_i(id) FFTWs
             call dfftw_execute_dft_c2r(fft_plan_bx, c_out, r_in)
 
-            ! Transpose array wrk into out
-            call TLabMPI_TransposeI_Backward(r_in(:), out(:, 1), tmpi_plan_poissonx1)
+            call TLabMPI_TransposeI_Backward(r_in(:), out(:), tmpi_plan_poissonx1)
 
             nullify (r_in, c_out)
 
         else
 #endif
-            !########################################################################
-            ! No Ox Parallel Decomposition
-            !########################################################################
-            ! do k = 1, nz
-            !     call dfftw_execute_dft_c2r(fft_plan_bx, in(:, k), out(:, k))
-            ! end do
             call dfftw_execute_dft_c2r(fft_plan_bx, in, out)
 
 #ifdef USE_MPI
@@ -521,12 +301,11 @@ contains
 #endif
 
         return
-    end subroutine OPR_FOURIER_B_X_EXEC
+    end subroutine OPR_Fourier_B_X_EXEC
 
     !########################################################################
     !########################################################################
-    ! Forward complex FFT in z
-    subroutine OPR_FOURIER_F_Z_EXEC(in, out)
+    subroutine OPR_Fourier_F_Z_EXEC(in, out)
         complex(wp), intent(inout), target :: in(*)     ! in might be overwritten
         complex(wp), intent(out), target :: out(*)
 
@@ -574,11 +353,11 @@ contains
         nullify (p_org, p_dst)
 
         return
-    end subroutine OPR_FOURIER_F_Z_EXEC
+    end subroutine OPR_Fourier_F_Z_EXEC
 
     !########################################################################
     !########################################################################
-    subroutine OPR_FOURIER_B_Z_EXEC(in, out)
+    subroutine OPR_Fourier_B_Z_EXEC(in, out)
         complex(wp), intent(inout), target :: in(*)     ! in might be overwritten
         complex(wp), intent(out), target :: out(*)
 
@@ -626,11 +405,148 @@ contains
         nullify (p_org, p_dst)
 
         return
-    end subroutine OPR_FOURIER_B_Z_EXEC
+    end subroutine OPR_Fourier_B_Z_EXEC
 
     ! #######################################################################
     ! #######################################################################
-    subroutine OPR_FOURIER_SPECTRA_3D(nx, ny, nz, isize_psd, u, psd)
+    subroutine OPR_Fourier_F(flag_mode, nx, ny, nz, in, out, tmp1)
+        integer(wi) :: flag_mode                                ! 1D, 2D or 3D
+        integer(wi) :: nx, ny, nz
+        real(wp), intent(INOUT) :: in(isize_txc_field)          ! extended w/ BCs below
+        real(wp), intent(OUT) :: out(isize_txc_dimz, nz)
+        real(wp), intent(INOUT) :: tmp1(isize_txc_dimz, nz)
+
+        target out, tmp1
+
+        ! #######################################################################
+        ! Pass memory address from real array to complex array
+        call c_f_pointer(c_loc(out), c_out, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
+
+        if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
+            if (g(3)%size > 1) then
+                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_out)
+                call OPR_Fourier_F_Z_EXEC(c_out, c_tmp1) ! out might be overwritten
+            else
+                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_tmp1)
+            end if
+
+            do k = 1, nz
+                call dfftw_execute_dft(fft_plan_fy, c_tmp1(:, k), c_out(:, k))
+            end do
+
+        else
+            if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
+                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_tmp1)
+                call OPR_Fourier_F_Z_EXEC(c_tmp1, c_out) ! tmp1 might be overwritten
+            else
+                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_out)
+            end if
+        end if
+
+        return
+    end subroutine OPR_Fourier_F
+
+    ! #######################################################################
+    ! #######################################################################
+    subroutine OPR_Fourier_B(flag_mode, nx, ny, nz, in, out)
+        integer(wi) :: flag_mode  ! 1D, 2D or 3D
+        integer(wi) :: nx, ny, nz
+        real(wp), intent(INOUT) :: in(isize_txc_dimz, nz)
+        real(wp), intent(OUT) :: out(isize_txc_field)
+
+        target in
+
+        ! #######################################################################
+        ! Pass memory address from real array to complex array
+        call c_f_pointer(c_loc(in), c_in, shape=[isize_txc_dimz/2, nz])
+
+        if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
+            do k = 1, nz
+                call dfftw_execute_dft(fft_plan_by, c_in(:, k), c_wrk3d(:, k))
+            end do
+
+            if (g(3)%size > 1) then
+                call OPR_Fourier_B_Z_EXEC(c_wrk3d, c_in)            ! wrk3d might be overwritten
+                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_in, out)    ! c_in might be overwritten
+            else
+                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
+            end if
+
+        else
+            if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
+                call OPR_Fourier_B_Z_EXEC(c_in, c_wrk3d)            ! in might be overwritten
+                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
+            else
+                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_in, out)    ! c_in might be overwritten
+            end if
+
+        end if
+
+        return
+    end subroutine OPR_Fourier_B
+
+    ! #######################################################################
+    ! #######################################################################
+    ! Calculate spectrum in array in1
+    ! Calculate correlation in array in2
+    subroutine OPR_Fourier_CONVOLUTION_FXZ(flag1, flag2, nx, ny, nz, in1, in2, tmp1, tmp2)
+        character(len=*), intent(in) :: flag1
+        integer(wi), intent(in) :: flag2, nx, ny, nz
+        real(wp), dimension(isize_txc_field), intent(INOUT) :: in1, in2, tmp1, tmp2
+
+        target in1, tmp1, tmp2
+
+        ! #######################################################################
+        ! Pass memory address from real array to complex array
+        call c_f_pointer(c_loc(in1), c_in1, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+
+        fft_reordering = .true.
+
+        if (g(3)%size > 1) then
+            call OPR_Fourier_F_X_EXEC(nx, ny, nz, in1, c_tmp2)
+            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
+        else
+            call OPR_Fourier_F_X_EXEC(nx, ny, nz, in1, c_tmp1)
+        end if
+
+        select case (trim(adjustl(flag1)))
+
+        case ('auto')        ! Auto-spectra
+            c_in1 = c_tmp1*conjg(c_tmp1)
+
+        case ('cross')       ! Cross-spectra
+            if (g(3)%size > 1) then
+                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in2, c_tmp2)
+                call OPR_Fourier_F_Z_EXEC(c_tmp2, c_in1) ! tmp2 might be overwritten
+            else
+                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in2, c_in1)
+            end if
+            c_in1 = c_in1*conjg(c_tmp1)
+
+        end select
+
+        ! -----------------------------------------------------------------------
+        if (flag2 == 2) then         ! Calculate correlation in array in2
+            if (g(3)%size > 1) then
+                call OPR_Fourier_B_Z_EXEC(c_in1, c_tmp1)            ! in1 might be overwritten
+                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, in2)  ! tmp1 might be overwritten
+            else
+                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_in1, in2)   ! c_in1 might be overwritten
+            end if
+        end if
+
+        ! -----------------------------------------------------------------------
+        fft_reordering = .false.
+
+        return
+    end subroutine OPR_Fourier_CONVOLUTION_FXZ
+
+    ! #######################################################################
+    ! #######################################################################
+    subroutine OPR_Fourier_SPECTRA_3D(nx, ny, nz, isize_psd, u, psd)
         integer(wi), intent(IN) :: nx, ny, nz, isize_psd
         real(wp), intent(IN) :: u(isize_txc_dimz, nz)
         real(wp), intent(OUT) :: psd(isize_psd)
@@ -693,6 +609,6 @@ contains
 #endif
 
         return
-    end subroutine OPR_FOURIER_SPECTRA_3D
+    end subroutine OPR_Fourier_SPECTRA_3D
 
-end module OPR_FOURIER
+end module OPR_Fourier

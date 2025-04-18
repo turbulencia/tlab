@@ -13,7 +13,7 @@ module OPR_FILTERS
     use Filters_Compact
     use Filters_Explicit
     use Filters_Tophat
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_PARTIAL
     use OPR_ELLIPTIC
 #ifdef USE_MPI
@@ -323,19 +323,19 @@ contains
         case (DNS_FILTER_BAND)
             dummy = 1.0_wp/real(f(1)%size*f(3)%size, wp)
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)  !I need extended arrays
-            call OPR_FOURIER_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
+            call OPR_Fourier_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
             call c_f_pointer(c_loc(txc(1, 2)), c_tmp, shape=[isize_txc_dimz/2, nz])
             call OPR_FILTER_BAND_2D(nx, ny, nz, f(1)%parameters, c_tmp)
-            call OPR_FOURIER_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
+            call OPR_Fourier_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 3)*dummy
 
         case (DNS_FILTER_ERF)
             dummy = 1.0_wp/real(f(1)%size*f(3)%size, wp)
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)  !I need extended arrays
-            call OPR_FOURIER_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
+            call OPR_Fourier_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
             call c_f_pointer(c_loc(txc(1, 2)), c_tmp, shape=[isize_txc_dimz/2, nz])
             call OPR_FILTER_ERF_2D(nx, ny, nz, f(1)%parameters, c_tmp)
-            call OPR_FOURIER_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
+            call OPR_Fourier_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 3)*dummy
 
         case default

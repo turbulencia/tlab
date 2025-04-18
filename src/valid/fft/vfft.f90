@@ -9,7 +9,7 @@ program VFFT
     use TLab_Memory, only: imax, jmax, kmax
     use TLab_Memory, only: isize_txc_dimz
     use TLab_WorkFlow, only: TLab_Write_ASCII
-    use OPR_FOURIER
+    use OPR_Fourier
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
@@ -51,7 +51,7 @@ call TLabMPI_Transpose_Initialize(ifile)
         wrk3d(isize_fft3d), &
         wrk2d(isize_fft3d))
 
-    call OPR_FOURIER_INITIALIZE()
+    call OPR_Fourier_Initialize()
 
     call FFT_CHECK(2, err_count, case_count, &
                    trans, &

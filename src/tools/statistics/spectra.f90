@@ -62,7 +62,7 @@ program SPECTRA
     use IBM_VARS
     use TLab_Grid
     use IO_Fields
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
@@ -419,7 +419,7 @@ program SPECTRA
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
     if (fourier_on) then
-        call OPR_FOURIER_INITIALIZE()
+        call OPR_Fourier_Initialize()
     end if
 
     call OPR_CHECK()
@@ -628,11 +628,11 @@ program SPECTRA
 
                 txc(1:isize_field, 1) = vars(iv1)%field(1:isize_field)
                 if (iv2 == iv1) then
-                    call OPR_FOURIER_CONVOLUTION_FXZ('auto', flag_mode, imax, jmax, kmax, &
+                    call OPR_Fourier_CONVOLUTION_FXZ('auto', flag_mode, imax, jmax, kmax, &
                                                      txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 else
                     txc(1:isize_field, 2) = vars(iv2)%field(1:isize_field)
-                    call OPR_FOURIER_CONVOLUTION_FXZ('cross', flag_mode, imax, jmax, kmax, &
+                    call OPR_Fourier_CONVOLUTION_FXZ('cross', flag_mode, imax, jmax, kmax, &
                                                      txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
                 end if
 
@@ -774,9 +774,9 @@ program SPECTRA
 
             do iv = 1, nfield
                 txc(1:isize_field, 1) = vars(iv)%field(1:isize_field)
-                call OPR_FOURIER_F(3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
+                call OPR_Fourier_F(3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
 
-                call OPR_FOURIER_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv))
+                call OPR_Fourier_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv))
             end do
 
             outr = outr*norm*norm

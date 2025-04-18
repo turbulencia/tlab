@@ -17,7 +17,7 @@ program VPARTIAL3D
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Grid
     use IO_Fields
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_PARTIAL
     use OPR_ELLIPTIC
     use Averages

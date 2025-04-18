@@ -124,7 +124,7 @@ module TLab_Memory
     integer(wi), public :: isize_wrk2d = 0, inb_wrk2d           ! 2D scratch arrays
     integer(wi), public :: isize_wrk3d = 0                      ! 3D scratch array (only 1)
     integer(wi), public :: isize_txc_field = 0, inb_txc         ! 3D arrays for intermediate calculations
-    integer(wi), public :: isize_txc_dimx = 0, isize_txc_dimz   ! partition for MPI data transposition
+    integer(wi), public :: isize_txc_dimz                       ! partition for MPI data transposition
 
     character*128 :: str, line
     integer :: ierr
@@ -171,37 +171,20 @@ contains
         character(len=*), intent(in) :: C_FILE_LOC
 
         ! ###################################################################
+        ! loop counters over the whole domain are integer*4
+        if (isize_txc_field > huge(imax)) then
+            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
+            call TLab_Stop(DNS_ERROR_UNDEVELOP)
+        end if
+
+        ! ###################################################################
         isize_field = imax*jmax*kmax
 
         ! auxiliar array txc for intermediate calculations
         isize_txc_field = imax*jmax*kmax
         if (fourier_on) then
-            ! isize_txc_dimz = (imax + 2)*(jmax + 2)
-            ! isize_txc_dimx = kmax*(jmax + 2)
-            ! isize_txc_field = isize_txc_dimz*kmax ! space for FFTW lib
             isize_txc_dimz = (imax + 2)*jmax            ! Add space for Nyquist frequency
-            isize_txc_dimx = kmax*jmax
             isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
-! #ifdef USE_MPI
-!             ! if (ims_npro_k > 1) then
-!             !     if (mod(isize_txc_dimz, (2*ims_npro_k)) /= 0) then ! add space for MPI transposition
-!             !         isize_txc_dimz = isize_txc_dimz/(2*ims_npro_k)
-!             !         isize_txc_dimz = (isize_txc_dimz + 1)*(2*ims_npro_k)
-!             !     end if
-!             !     isize_txc_field = max(isize_txc_field, isize_txc_dimz*kmax)
-!             ! end if
-!             ! if (ims_npro_i > 1) then
-!             !     if (mod(isize_txc_dimx, (2*ims_npro_i)) /= 0) then ! add space for MPI transposition
-!             !         isize_txc_dimx = isize_txc_dimx/(2*ims_npro_i)
-!             !         isize_txc_dimx = (isize_txc_dimx + 1)*(2*ims_npro_i)
-!             !     end if
-!             !     isize_txc_field = max(isize_txc_field, isize_txc_dimx*(imax + 2))
-!             ! end if
-! #endif
-            if (mod(imax, 2) /= 0) then
-                call TLab_Write_ASCII(efile, C_FILE_LOC//'. Imax must be a multiple of 2 for the FFT operations.')
-                call TLab_Stop(DNS_ERROR_DIMGRID)
-            end if
         end if
 
         ! scratch arrays
@@ -213,13 +196,6 @@ contains
         isize_wrk2d = max(imax*jmax, max(imax*kmax, jmax*kmax))
         isize_wrk3d = max(isize_wrk3d, isize_field)
         isize_wrk3d = max(isize_wrk3d, isize_txc_field)
-
-        ! ###################################################################
-        ! loop counters over the whole domain are integer*4
-        if (isize_txc_field > huge(imax)) then
-            call TLab_Write_ASCII(efile, C_FILE_LOC//'. Integer model of 4 bytes is not big enough.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
 
         ! ###################################################################
         call TLab_Allocate_Real(C_FILE_LOC, q, [isize_field, inb_flow_array], 'flow')

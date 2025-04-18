@@ -35,7 +35,7 @@ program PDFS
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
     use OPR_PARTIAL
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
@@ -278,7 +278,7 @@ program PDFS
     end do
 
     if (fourier_on) then         ! For Poisson solver
-        call OPR_FOURIER_INITIALIZE()
+        call OPR_Fourier_Initialize()
     end if
 
     call OPR_CHECK()

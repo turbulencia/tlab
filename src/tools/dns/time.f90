@@ -17,7 +17,7 @@ module TIME
     use TLab_WorkFlow, only: flow_on, scal_on, fourier_on, stagger_on
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Memory, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
-    use TLab_Memory, only: isize_txc_field, isize_txc_dimx, isize_txc_dimz
+    use TLab_Memory, only: isize_txc_field, isize_txc_dimz
     use TLab_Time, only: rtime
     use FDM, only: g
     use NavierStokes, only: nse_eqns, nse_advection, nse_viscous, nse_diffusion

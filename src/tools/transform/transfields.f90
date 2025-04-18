@@ -31,7 +31,7 @@ program TRANSFIELDS
     use IO_Fields
     use OPR_FILTERS
     use OPR_INTERPOLATORS
-    use OPR_FOURIER
+    use OPR_Fourier
     use TLab_Grid
 
     implicit none
@@ -316,7 +316,7 @@ program TRANSFIELDS
         end do
     end if
 
-    if (fourier_on) call OPR_FOURIER_INITIALIZE()
+    if (fourier_on) call OPR_Fourier_Initialize()
 
     call OPR_CHECK()
 

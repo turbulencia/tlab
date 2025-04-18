@@ -4,7 +4,7 @@ program VTGVORTEX
     use TLab_Constants, only: wp, wi
     use TLAB_VARS
     use IO_Fields
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_ELLIPTIC
     use TLab_Sources
@@ -44,7 +44,7 @@ program VTGVORTEX
     call OPR_Elliptic_Initialize(ifile)
 
 ! ###################################################################
-    call OPR_FOURIER_INITIALIZE()
+    call OPR_Fourier_Initialize()
 
     write (*, *) '1-ICs / 2-Error ?'; read (*, *) iopt
 

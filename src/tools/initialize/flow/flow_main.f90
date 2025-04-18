@@ -29,7 +29,7 @@ program INIFLOW
     use THERMO_CALORIC
     use TLab_Grid
     use IO_Fields
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_Elliptic, only: OPR_Elliptic_Initialize
     use FLOW_LOCAL
@@ -72,7 +72,7 @@ program INIFLOW
         call OPR_Elliptic_Initialize(ifile)
 
         if (fourier_on .and. g(1)%periodic .and. g(3)%periodic) then
-            call OPR_FOURIER_INITIALIZE()
+            call OPR_Fourier_Initialize()
 
         else
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. CG routines needed.')

@@ -28,7 +28,7 @@ program APRIORI
     use TLab_Grid
     use IO_Fields
     use OPR_FILTERS
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_PARTIAL
 
     implicit none
@@ -206,7 +206,7 @@ program APRIORI
 ! -------------------------------------------------------------------
 ! Initialize Poisson solver
 ! -------------------------------------------------------------------
-    if (fourier_on) call OPR_FOURIER_INITIALIZE()
+    if (fourier_on) call OPR_Fourier_Initialize()
 
     call OPR_CHECK()
 

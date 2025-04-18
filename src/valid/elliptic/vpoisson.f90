@@ -27,7 +27,7 @@ program VPOISSON
     use TLab_Grid
     use IO_Fields
     use OPR_PARTIAL
-    use OPR_FOURIER
+    use OPR_Fourier
     use OPR_FILTERS
     use OPR_ELLIPTIC
     use Averages
@@ -84,7 +84,7 @@ program VPOISSON
 
     bcs = 0
 
-    call OPR_FOURIER_INITIALIZE()
+    call OPR_Fourier_Initialize()
     call OPR_CHECK()
 
     print*, '1. Poisson routines'

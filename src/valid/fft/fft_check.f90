@@ -16,8 +16,8 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     use FDM, only: g
     use TLab_Memory, only: imax, jmax, kmax
     use TLab_Constants, only: lfile, wp, wi
-    use TLab_Memory, only: isize_txc_dimx, isize_txc_dimz
-    use OPR_FOURIER
+    use TLab_Memory, only: isize_txc_dimz
+    use OPR_Fourier
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_VARS
@@ -47,7 +47,7 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
     isize_fft3d = (imax + 2)*(jmax + 2)*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)
 
-    call OPR_FOURIER_INITIALIZE()
+    call OPR_Fourier_Initialize()
 
     norm = C_1_R/M_REAL(g(1)%size*g(3)%size)
 
@@ -100,11 +100,11 @@ subroutine FFT_CHECK(check_mode, err_count, case_count, &
 
     tmp2(:) = C_0_R
     trans(:) = C_0_R
-    call OPR_FOURIER_F(i2, imax, jmax, kmax, tmp1, tmp2, trans)
+    call OPR_Fourier_F(i2, imax, jmax, kmax, tmp1, tmp2, trans)
 
     tmp4(:) = tmp2(:)
     tmp3(:) = C_0_R
-    call OPR_FOURIER_B(i2, imax, jmax, kmax, tmp4, tmp3)
+    call OPR_Fourier_B(i2, imax, jmax, kmax, tmp4, tmp3)
 
     ip = imax*jmax*kmax
     residual = maxval(abs(norm*tmp3(1:ip) - tmp1(1:ip)))

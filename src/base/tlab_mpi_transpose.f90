@@ -3,7 +3,7 @@
 ! Circular transposition across directional communicators
 module TLabMPI_Transpose
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi, sizeofreal
-    use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimx, isize_txc_dimz
+    use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d, isize_txc_dimz
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc

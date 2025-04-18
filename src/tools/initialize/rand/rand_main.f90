@@ -23,7 +23,7 @@ program INIRAND
     use TLab_Background, only: TLab_Initialize_Background
     use TLab_Grid
     use IO_Fields
-    use OPR_FOURIER
+    use OPR_Fourier
     use RAND_LOCAL
 
     implicit none
@@ -65,7 +65,7 @@ program INIRAND
     seed = -abs(seed)
 
     if (fourier_on) then
-        call OPR_FOURIER_INITIALIZE()
+        call OPR_Fourier_Initialize()
     end if
 
     call OPR_CHECK()

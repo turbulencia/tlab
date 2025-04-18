@@ -6,7 +6,7 @@ module RAND_LOCAL
     use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Averages, only: AVG1V2D
-    use OPR_FOURIER
+    use OPR_Fourier
     implicit none
     save
 
@@ -52,9 +52,9 @@ contains
             if (g(2)%size == 1) then; idim = 2; ! 2D Fourier transform
             else; idim = 3; end if     ! 3D Fourier transform
 
-            if (ipdf > 0) call OPR_FOURIER_F(idim, imax, jmax, kmax, tmp2, tmp1, tmp3)
+            if (ipdf > 0) call OPR_Fourier_F(idim, imax, jmax, kmax, tmp2, tmp1, tmp3)
             call RAND_PSD(imax, jmax, kmax, tmp1)
-            call OPR_FOURIER_B(idim, imax, jmax, kmax, tmp1, tmp2)
+            call OPR_Fourier_B(idim, imax, jmax, kmax, tmp1, tmp2)
 
         end if
 

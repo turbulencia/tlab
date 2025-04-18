@@ -10,7 +10,7 @@ subroutine OPR_CHECK()
     use TLab_WorkFlow, only: fourier_on
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Arrays
-    use OPR_FOURIER
+    use OPR_Fourier
 #ifdef USE_MPI
     use TLab_Time, only: itime
     use mpi_f08
@@ -103,8 +103,8 @@ subroutine OPR_CHECK()
 
 !     fft_reordering = .true.
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call OPR_FOURIER_F(2, imax, jmax, kmax, txc(1, 3), txc(1, 1), txc(1, 2))
-        call OPR_FOURIER_B(2, imax, jmax, kmax, txc(1, 1), txc(1, 2))
+        call OPR_Fourier_F(2, imax, jmax, kmax, txc(1, 3), txc(1, 1), txc(1, 2))
+        call OPR_Fourier_B(2, imax, jmax, kmax, txc(1, 1), txc(1, 2))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 !     fft_reordering = .false.
 

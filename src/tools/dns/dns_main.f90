@@ -27,7 +27,7 @@ program DNS
     use SpecialForcing, only: SpecialForcing_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use Tlab_Background, only: TLab_Initialize_Background, pbg, rbg
-    use OPR_FOURIER, only: OPR_FOURIER_INITIALIZE
+    use OPR_Fourier, only: OPR_Fourier_Initialize
     use OPR_Elliptic, only: OPR_Elliptic_Initialize
     use OPR_Burgers, only: OPR_Burgers_Initialize
     use OPR_FILTERS
@@ -136,7 +136,7 @@ program DNS
         call OPR_FILTER_INITIALIZE(g(ig), PressureFilter(ig))
     end do
 
-    if (fourier_on) call OPR_FOURIER_INITIALIZE()
+    if (fourier_on) call OPR_Fourier_Initialize()
 
     call OPR_CHECK()
 
