@@ -123,7 +123,7 @@ contains
 
         isize_line = imax/2 + 1
 
-        allocate (lambda(isize_line, kmax))
+        allocate (lambda(kmax, isize_line))
         norm = 1.0_wp/real(g(1)%size*g(3)%size, wp)
 
         select case (imode_elliptic)
@@ -134,7 +134,7 @@ contains
             ndl = fdm_loc%der1%nb_diag(1)
             ndr = fdm_loc%der1%nb_diag(2)
             nd = ndl
-            allocate (fdm_int1(2, isize_line, kmax))
+            allocate (fdm_int1(2, kmax, isize_line))
             call TLab_Allocate_Real(__FILE__, rhs_b, [g(2)%size, nd], 'rhs_b')
             call TLab_Allocate_Real(__FILE__, rhs_t, [g(2)%size, nd], 'rhs_t')
 
@@ -153,72 +153,71 @@ contains
             ndl = fdm_loc%der2%nb_diag(1)
             ndr = fdm_loc%der2%nb_diag(2)
             nd = ndl
-            allocate (fdm_int2(isize_line, kmax))
+            allocate (fdm_int2(kmax, isize_line))
             call TLab_Allocate_Real(__FILE__, rhs_d, [g(2)%size, nd], 'rhs_d')
 
         end select
 
-        do k = 1, kmax
+        do i = 1, isize_line
 #ifdef USE_MPI
-            kglobal = k + ims_offset_k
+            iglobal = i + ims_offset_i/2
 #else
-            kglobal = k
+            iglobal = i
 #endif
-
-            do i = 1, isize_line
+            do k = 1, kmax
 #ifdef USE_MPI
-                iglobal = i + ims_offset_i/2
+                kglobal = k + ims_offset_k
 #else
-                iglobal = i
+                kglobal = k
 #endif
 
                 select case (imode_elliptic)
                 case (TYPE_FACTORIZE)
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda(i, k) = g(1)%der1%mwn(iglobal)**2.0 + g(3)%der1%mwn(kglobal)**2.0
+                        lambda(k, i) = g(1)%der1%mwn(iglobal)**2.0 + g(3)%der1%mwn(kglobal)**2.0
                     else
-                        lambda(i, k) = g(1)%der1%mwn(iglobal)**2.0
+                        lambda(k, i) = g(1)%der1%mwn(iglobal)**2.0
                     end if
 
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                             sqrt(lambda(i, k)), BCS_MIN, fdm_int1(BCS_MIN, i, k))
+                                             sqrt(lambda(k, i)), BCS_MIN, fdm_int1(BCS_MIN, k, i))
 
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                             -sqrt(lambda(i, k)), BCS_MAX, fdm_int1(BCS_MAX, i, k))
+                                             -sqrt(lambda(k, i)), BCS_MAX, fdm_int1(BCS_MAX, k, i))
 
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
                     else                                        ! free memory that is independent of lambda
-                        rhs_b(:, :) = fdm_int1(BCS_MIN, i, k)%rhs(:, :)
-                        if (allocated(fdm_int1(BCS_MIN, i, k)%rhs)) deallocate (fdm_int1(BCS_MIN, i, k)%rhs)
+                        rhs_b(:, :) = fdm_int1(BCS_MIN, k, i)%rhs(:, :)
+                        if (allocated(fdm_int1(BCS_MIN, k, i)%rhs)) deallocate (fdm_int1(BCS_MIN, k, i)%rhs)
 
-                        rhs_t(:, :) = fdm_int1(BCS_MAX, i, k)%rhs(:, :)
-                        if (allocated(fdm_int1(BCS_MAX, i, k)%rhs)) deallocate (fdm_int1(BCS_MAX, i, k)%rhs)
+                        rhs_t(:, :) = fdm_int1(BCS_MAX, k, i)%rhs(:, :)
+                        if (allocated(fdm_int1(BCS_MAX, k, i)%rhs)) deallocate (fdm_int1(BCS_MAX, k, i)%rhs)
 
                     end if
 
                     ! idr = ndr/2 + 1
-                    ! fdm_int1(:, i, k)%lhs(:, idr) = fdm_int1(:, i, k)%lhs(:, idr)*norm
-                    ! fdm_int1(:, i, k)%lhs(:, idr + 1:ndr) = fdm_int1(:, i, k)%lhs(:, idr + 1:ndr)/norm
+                    ! fdm_int1(:, k, i)%lhs(:, idr) = fdm_int1(:, k, i)%lhs(:, idr)*norm
+                    ! fdm_int1(:, k, i)%lhs(:, idr + 1:ndr) = fdm_int1(:, k, i)%lhs(:, idr + 1:ndr)/norm
 
                 case (TYPE_DIRECT)     ! only for case BCS_NN
                     ! Define \lambda based on modified wavenumbers (real)
                     if (g(3)%size > 1) then
-                        lambda(i, k) = g(1)%der2%mwn(iglobal) + g(3)%der2%mwn(kglobal)
+                        lambda(k, i) = g(1)%der2%mwn(iglobal) + g(3)%der2%mwn(kglobal)
                     else
-                        lambda(i, k) = g(1)%der2%mwn(iglobal)
+                        lambda(k, i) = g(1)%der2%mwn(iglobal)
                     end if
 
                     ! Compatibility constraint. The reference value of p at the lower boundary will be set to zero
                     if (iglobal == 1 .and. kglobal == 1) then
-                        call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), BCS_DN, fdm_int2(i, k))
+                        call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), BCS_DN, fdm_int2(k, i))
                     else
-                        call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), BCS_NN, fdm_int2(i, k))
+                        call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), BCS_NN, fdm_int2(k, i))
                     end if
 
                     ! free memory that is independent of lambda
-                    rhs_d(:, :) = fdm_int2(i, k)%rhs(:, :)
-                    if (allocated(fdm_int2(i, k)%rhs)) deallocate (fdm_int2(i, k)%rhs)
+                    rhs_d(:, :) = fdm_int2(k, i)%rhs(:, :)
+                    if (allocated(fdm_int2(k, i)%rhs)) deallocate (fdm_int2(k, i)%rhs)
 
                 end select
 
@@ -305,17 +304,17 @@ contains
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, i, k), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, k, i), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     else
-                        call OPR_ODE2_Factorize_NN(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
+                        call OPR_ODE2_Factorize_NN(2, fdm_int1(:, k, i), rhs_b, rhs_t, &
                                                    u(:, k, i), f(:, k, i), bcs, v(1:, k, i), wrk1d, wrk2d)
                     end if
 
                 case (BCS_DD) ! Dirichlet & Dirichlet BCs
                     if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
-                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, i, k), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
+                        call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, k, i), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     else
-                        call OPR_ODE2_Factorize_DD(2, fdm_int1(:, i, k), rhs_b, rhs_t, &
+                        call OPR_ODE2_Factorize_DD(2, fdm_int1(:, k, i), rhs_b, rhs_t, &
                                                    u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     end if
 
@@ -432,11 +431,11 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k), ibc_loc, fdm_int2_loc)
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), ibc_loc, fdm_int2_loc)
                     call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, k, i), u(:, k, i), wrk2d)
 
                 else                        ! use precalculated LU factorization
-                    call FDM_Int2_Solve(2, fdm_int2(i, k), rhs_d, f(:, k, i), u(:, k, i), wrk2d)
+                    call FDM_Int2_Solve(2, fdm_int2(k, i), rhs_d, f(:, k, i), u(:, k, i), wrk2d)
 
                 end if
 
@@ -541,10 +540,10 @@ contains
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                         sqrt(lambda(i, k) - alpha), BCS_MIN, fdm_int1_loc(BCS_MIN))
+                                         sqrt(lambda(k, i) - alpha), BCS_MIN, fdm_int1_loc(BCS_MIN))
 
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
-                                         -sqrt(lambda(i, k) - alpha), BCS_MAX, fdm_int1_loc(BCS_MAX))
+                                         -sqrt(lambda(k, i) - alpha), BCS_MAX, fdm_int1_loc(BCS_MAX))
 
                 select case (ibc)
                 case (BCS_NN) ! Neumann   & Neumann   BCs
@@ -643,7 +642,7 @@ contains
                 u(2*ny - 1:2*ny, k, i) = f(2*ny - 1:2*ny, k, i)
 
                 ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(i, k) - alpha, ibc, fdm_int2_loc)
+                call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i) - alpha, ibc, fdm_int2_loc)
                 call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, k, i), u(:, k, i), wrk2d)
 
             end do
