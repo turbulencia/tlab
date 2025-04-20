@@ -6,7 +6,7 @@ program VTGVORTEX
     use IO_Fields
     use OPR_Fourier
     use OPR_Burgers, only: OPR_Burgers_Initialize
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use TLab_Sources
 
     implicit none

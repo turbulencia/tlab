@@ -40,7 +40,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use IBM_VARS, only: imode_ibm, imode_ibm_scal, ibm_burgers
     use OPR_PARTIAL
     use OPR_Burgers
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use OPR_FILTERS
     use AVG_PHASE
 

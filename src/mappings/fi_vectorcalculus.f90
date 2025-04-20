@@ -70,7 +70,7 @@ contains
 !#
 !########################################################################
     subroutine FI_SOLENOIDAL(nx, ny, nz, u, v, w, tmp1, tmp2, tmp3)
-        use OPR_ELLIPTIC
+        use OPR_Elliptic
 
         integer(wi), intent(IN) :: nx, ny, nz
         real(wp), intent(INOUT) :: u(nx, ny, nz), v(nx, ny, nz), w(nx, ny, nz)

@@ -18,7 +18,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use BOUNDARY_BCS
     use BOUNDARY_BUFFER
 

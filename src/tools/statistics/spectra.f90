@@ -65,7 +65,7 @@ program SPECTRA
     use OPR_Fourier
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use Averages, only: AVG1V2D, COV2V2D
 #ifdef USE_OPENMP
     use OMP_LIB

@@ -38,7 +38,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_2(kex, kim, kco)
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use TLab_Sources
     implicit none
 

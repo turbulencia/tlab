@@ -15,7 +15,7 @@ module OPR_FILTERS
     use Filters_Tophat
     use OPR_Fourier
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_offset_i, ims_offset_k
     use TLabMPI_Transpose

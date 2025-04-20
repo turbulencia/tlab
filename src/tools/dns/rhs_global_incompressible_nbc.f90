@@ -31,7 +31,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use TIME, only: rkm_substep, rkm_endstep, dte
     use DNS_LOCAL, only: use_tower
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use TLab_Sources
     use DNS_TOWER
     use AVG_PHASE

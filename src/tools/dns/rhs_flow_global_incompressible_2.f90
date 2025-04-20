@@ -20,7 +20,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_2()
     use TIME, only: dte
     use IBM_VARS, only: imode_ibm, ibm_partial
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
 

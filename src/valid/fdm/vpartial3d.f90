@@ -19,7 +19,7 @@ program VPARTIAL3D
     use IO_Fields
     use OPR_Fourier
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use Averages
 
     implicit none

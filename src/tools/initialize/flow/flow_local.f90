@@ -26,7 +26,7 @@ module FLOW_LOCAL
 #endif
     use FI_VECTORCALCULUS
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use OPR_Filters, only: PressureFilter
     use Discrete, only: Discrete_ReadBlock
     implicit none

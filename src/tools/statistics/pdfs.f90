@@ -38,7 +38,7 @@ program PDFS
     use OPR_Fourier
     use OPR_FILTERS
     use OPR_Burgers, only: OPR_Burgers_Initialize
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
 
     implicit none
 

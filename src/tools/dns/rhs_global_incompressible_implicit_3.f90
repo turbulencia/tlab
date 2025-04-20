@@ -42,7 +42,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use OPR_PARTIAL
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use Gravity, only: bbackground, Gravity_Buoyancy
 
     implicit none

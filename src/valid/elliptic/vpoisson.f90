@@ -29,7 +29,7 @@ program VPOISSON
     use OPR_PARTIAL
     use OPR_Fourier
     use OPR_FILTERS
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use Averages
 
     implicit none

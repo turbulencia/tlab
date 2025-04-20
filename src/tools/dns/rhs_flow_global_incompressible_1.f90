@@ -27,7 +27,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_1()
     use BOUNDARY_BCS
     use OPR_PARTIAL
     use OPR_Burgers
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
 
     implicit none
 

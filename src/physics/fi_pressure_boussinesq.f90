@@ -17,7 +17,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use IBM_VARS, only: imode_ibm, ibm_burgers
     use OPR_PARTIAL
     use OPR_Burgers
-    use OPR_ELLIPTIC
+    use OPR_Elliptic
     use TLab_Sources
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
     use Rotation, only: Rotation_Coriolis
