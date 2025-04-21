@@ -69,8 +69,6 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
     if (ims_npro_k > 1) then
-        ! id = TLAB_MPI_TRP_K_PARTIAL
-
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
         call TLabMPI_TransposeK_Forward(q(:, 1), wrk3d, tmpi_plan_dz)
@@ -98,15 +96,12 @@ subroutine OPR_CHECK()
 ! -------------------------------------------------------------------
     if (fourier_on) then
 
-        wrk2d(:, 1:2) = 0.0_wp
         txc(1:isize_field, 3) = q(1:isize_field, 1)
 
-!     fft_reordering = .true.
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         call OPR_Fourier_F(2, imax, jmax, kmax, txc(1, 3), txc(1, 1), txc(1, 2))
         call OPR_Fourier_B(2, imax, jmax, kmax, txc(1, 1), txc(1, 2))
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
-!     fft_reordering = .false.
 
         q(1:isize_field, 2) = txc(1:isize_field, 2)
 

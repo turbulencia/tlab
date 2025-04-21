@@ -7,7 +7,7 @@ module OPR_Elliptic
     use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: lfile
 #ifdef USE_MPI
-    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i
 #endif
     use TLab_Memory, only: TLab_Allocate_Real
     use TLab_Memory, only: imax, jmax, kmax, isize_txc_field
@@ -79,6 +79,7 @@ module OPR_Elliptic
 
     complex(wp), pointer :: c_tmp1(:) => null(), c_tmp2(:) => null()
     integer(wi) i, k, iglobal, kglobal, isize_line
+    integer(wi) fft_offset_i
 
 contains
     ! #######################################################################
@@ -160,10 +161,16 @@ contains
 
         do i = 1, isize_line
 #ifdef USE_MPI
-            iglobal = i + ims_offset_i/2
+            ! fft_offset_i = ims_offset_i/2
+            fft_offset_i = ims_pro_i*(imax/2 + 1)
+
+            iglobal = i + fft_offset_i
 #else
+            fft_offset_i = 0
             iglobal = i
 #endif
+            if (iglobal > g(1)%size/2 + 1) exit
+
             do k = 1, kmax
 #ifdef USE_MPI
                 kglobal = k + ims_offset_k
@@ -285,10 +292,12 @@ contains
 
         do i = 1, isize_line
 #ifdef USE_MPI
-            iglobal = i + ims_offset_i/2
+            iglobal = i + fft_offset_i
 #else
             iglobal = i
 #endif
+            if (iglobal > g(1)%size/2 + 1) exit
+
             do k = 1, nz
 #ifdef USE_MPI
                 kglobal = k + ims_offset_k
@@ -404,10 +413,11 @@ contains
 
         do i = 1, isize_line
 #ifdef USE_MPI
-            iglobal = i + ims_offset_i/2
+            iglobal = i + fft_offset_i
 #else
             iglobal = i
 #endif
+            if (iglobal > g(1)%size/2 + 1) exit
 
             do k = 1, nz
 #ifdef USE_MPI
@@ -523,10 +533,12 @@ contains
 
         do i = 1, isize_line
 #ifdef USE_MPI
-            iglobal = i + ims_offset_i/2
+            iglobal = i + fft_offset_i
 #else
             iglobal = i
 #endif
+            if (iglobal > g(1)%size/2 + 1) exit
+
             do k = 1, nz
 #ifdef USE_MPI
                 kglobal = k + ims_offset_k
@@ -626,10 +638,12 @@ contains
 
         do i = 1, isize_line
 #ifdef USE_MPI
-            iglobal = i + ims_offset_i/2
+            iglobal = i + fft_offset_i
 #else
             iglobal = i
 #endif
+            if (iglobal > g(1)%size/2 + 1) exit
+
             do k = 1, nz
 #ifdef USE_MPI
                 kglobal = k + ims_offset_k

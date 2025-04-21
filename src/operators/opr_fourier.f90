@@ -35,7 +35,8 @@ module OPR_Fourier
     type(tmpi_transpose_dt), public :: tmpi_plan_poissonz
 #endif
 
-    logical :: fft_reordering
+    logical :: fft_reordering_k = .false.
+    logical :: fft_reordering_i = .false.
 
     integer(wi) k
     complex(wp), pointer :: c_in(:, :) => null(), c_out(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:, :) => null(), c_in1(:, :) => null()
@@ -154,8 +155,8 @@ contains
         ! Oy direction
         ! -----------------------------------------------------------------------
         if (g(2)%size > 1) then
-            isize_fft_y = imax/2 + 1
-            isize_stride = isize_fft_y
+            isize_fft_y = imax/2 + 1    !(imax/2 + 1)*kmax
+            isize_stride = imax/2 + 1
 
 #ifdef _DEBUG
             call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
@@ -218,20 +219,21 @@ contains
 
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
-            ! reorganize wrk1 (FFTW make a stride in wrk1 already before)
-            isize_line = nx/2 + 1
-            do k = 1, tmpi_plan_poissonx1%nlines
-                inew = isize_line*ims_npro_i
-                iold = g(1)%size/2 + 1
-                wrk1(inew, k) = wrk1(iold, k)
-                do ip = ims_npro_i, 2, -1
-                    do i = nx/2, 1, -1
-                        inew = (ip - 1)*isize_line + i
-                        iold = (ip - 1)*nx/2 + i
-                        wrk1(inew, k) = wrk1(iold, k)
+            if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
+                isize_line = nx/2 + 1
+                do k = 1, tmpi_plan_poissonx1%nlines
+                    inew = isize_line*ims_npro_i
+                    iold = g(1)%size/2 + 1
+                    wrk1(inew, k) = wrk1(iold, k)
+                    do ip = ims_npro_i, 2, -1
+                        do i = nx/2, 1, -1
+                            inew = (ip - 1)*isize_line + i
+                            iold = (ip - 1)*nx/2 + i
+                            wrk1(inew, k) = wrk1(iold, k)
+                        end do
                     end do
                 end do
-            end do
+            end if
 
             call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_poissonx2)
 
@@ -271,20 +273,21 @@ contains
 
             call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2)
 
-            ! reorganize a (FFTW make a stride in a already before)
-            isize_line = nx/2 + 1
-            do k = 1, tmpi_plan_poissonx1%nlines
-                do ip = 2, ims_npro_i
-                    do i = 1, nx/2
-                        iold = (ip - 1)*isize_line + i
-                        inew = (ip - 1)*nx/2 + i
-                        c_out(inew, k) = c_out(iold, k)
+            if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
+                isize_line = nx/2 + 1
+                do k = 1, tmpi_plan_poissonx1%nlines
+                    do ip = 2, ims_npro_i
+                        do i = 1, nx/2
+                            iold = (ip - 1)*isize_line + i
+                            inew = (ip - 1)*nx/2 + i
+                            c_out(inew, k) = c_out(iold, k)
+                        end do
                     end do
+                    iold = ims_npro_i*isize_line
+                    inew = g(1)%size/2 + 1
+                    c_out(inew, k) = c_out(iold, k)
                 end do
-                iold = ims_npro_i*isize_line
-                inew = g(1)%size/2 + 1
-                c_out(inew, k) = c_out(iold, k)
-            end do
+            end if
 
             call dfftw_execute_dft_c2r(fft_plan_bx, c_out, r_in)
 
@@ -329,7 +332,7 @@ contains
 
         call dfftw_execute_dft(fft_plan_fz, p_org, p_dst)
 
-        if (fft_reordering) then                    ! re-shuffle spectra in z
+        if (fft_reordering_k) then                    ! re-shuffle spectra in z
             do k = 1, g(3)%size/2
                 k_old1 = k + g(3)%size/2
                 k_new1 = k
@@ -379,7 +382,7 @@ contains
         end if
 #endif
 
-        if (fft_reordering) then                    ! re-shuffle spectra in z
+        if (fft_reordering_k) then                    ! re-shuffle spectra in z
             do k = 1, g(3)%size/2
                 k_new1 = k + g(3)%size/2
                 k_old1 = k
@@ -423,6 +426,8 @@ contains
         call c_f_pointer(c_loc(out), c_out, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
 
+        fft_reordering_i = .true.
+
         if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
             if (g(3)%size > 1) then
                 call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_out)
@@ -434,6 +439,7 @@ contains
             do k = 1, nz
                 call dfftw_execute_dft(fft_plan_fy, c_tmp1(:, k), c_out(:, k))
             end do
+            ! call dfftw_execute_dft(fft_plan_fy, c_tmp1, c_out)
 
         else
             if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
@@ -443,6 +449,8 @@ contains
                 call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_out)
             end if
         end if
+
+        fft_reordering_i = .false.
 
         return
     end subroutine OPR_Fourier_F
@@ -461,10 +469,13 @@ contains
         ! Pass memory address from real array to complex array
         call c_f_pointer(c_loc(in), c_in, shape=[isize_txc_dimz/2, nz])
 
+        fft_reordering_i = .true.
+
         if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
             do k = 1, nz
                 call dfftw_execute_dft(fft_plan_by, c_in(:, k), c_wrk3d(:, k))
             end do
+            ! call dfftw_execute_dft(fft_plan_by, c_in, c_wrk3d)
 
             if (g(3)%size > 1) then
                 call OPR_Fourier_B_Z_EXEC(c_wrk3d, c_in)            ! wrk3d might be overwritten
@@ -482,6 +493,8 @@ contains
             end if
 
         end if
+
+        fft_reordering_i = .false.
 
         return
     end subroutine OPR_Fourier_B
@@ -503,7 +516,8 @@ contains
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
 
-        fft_reordering = .true.
+        fft_reordering_k = .true.
+        fft_reordering_i = .true.
 
         if (g(3)%size > 1) then
             call OPR_Fourier_F_X_EXEC(nx, ny, nz, in1, c_tmp2)
@@ -539,7 +553,8 @@ contains
         end if
 
         ! -----------------------------------------------------------------------
-        fft_reordering = .false.
+        fft_reordering_k = .false.
+        fft_reordering_i = .false.
 
         return
     end subroutine OPR_Fourier_CONVOLUTION_FXZ
