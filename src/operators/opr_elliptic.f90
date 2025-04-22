@@ -63,7 +63,8 @@ module OPR_Elliptic
     procedure(OPR_Helmholtz_dt), pointer :: OPR_Helmholtz
 
     real(wp) norm
-    integer(wi) i_sing(2), k_sing(2)                                ! singular global modes
+    integer(wi) i_sing(2), k_sing(2)                                ! singular modes
+    integer(wi) i, k, i_max, isize_line
 
     type(fdm_dt) fdm_loc                                            ! scheme used for the elliptic solvers
 
@@ -78,8 +79,7 @@ module OPR_Elliptic
     real(wp), allocatable :: lambda(:, :)
 
     complex(wp), pointer :: c_tmp1(:) => null(), c_tmp2(:) => null()
-    integer(wi) i, k, iglobal, kglobal, isize_line
-    integer(wi) fft_offset_i
+    real(wp), pointer :: p_wrk3d(:, :, :) => null()
 
 contains
     ! #######################################################################
@@ -98,6 +98,9 @@ contains
         integer(wi) :: ndl, ndr, nd
         character*512 sRes
         character*32 bakfile
+
+        integer(wi) iglobal, kglobal
+        integer(wi) fft_offset_i, fft_offset_k
 
         ! ###################################################################
         ! Reading
@@ -139,12 +142,12 @@ contains
             call TLab_Allocate_Real(__FILE__, rhs_b, [g(2)%size, nd], 'rhs_b')
             call TLab_Allocate_Real(__FILE__, rhs_t, [g(2)%size, nd], 'rhs_t')
 
-            if (.not. stagger_on) then
-                i_sing = [1, g(1)%size/2 + 1]
-                k_sing = [1, g(3)%size/2 + 1]
-            else                    ! In case of staggering only one singular mode + different modified wavenumbers
-                i_sing = [1, 1]
+            if (stagger_on) then
+                i_sing = [1, 1]                 ! only one singular mode + different modified wavenumbers
                 k_sing = [1, 1]
+            else
+                i_sing = [1, g(1)%size/2 + 1]   ! global indexes, transformed below to task-local indexes.
+                k_sing = [1, g(3)%size/2 + 1]
             end if
 
         case (TYPE_DIRECT)
@@ -157,23 +160,36 @@ contains
             allocate (fdm_int2(kmax, isize_line))
             call TLab_Allocate_Real(__FILE__, rhs_d, [g(2)%size, nd], 'rhs_d')
 
+            i_sing = [1, 1]                     ! 2nd order FDMs are non-zero at Nyquist
+            k_sing = [1, 1]
+
         end select
 
-        do i = 1, isize_line
 #ifdef USE_MPI
-            ! fft_offset_i = ims_offset_i/2
-            fft_offset_i = ims_pro_i*(imax/2 + 1)
+        ! fft_offset_i = ims_offset_i/2
+        fft_offset_i = ims_pro_i*isize_line
+        fft_offset_k = ims_offset_k
+
+#else
+        fft_offset_i = 0
+        fft_offset_k = 0
+#endif
+
+        i_sing = i_sing - [fft_offset_i, fft_offset_i]              ! Singular modes in task-local variables
+        k_sing = k_sing - [fft_offset_k, fft_offset_k]
+        i_max = min(g(1)%size/2 + 1 - fft_offset_i, isize_line)     ! Maximum mode is x direction
+
+        do i = 1, i_max
+#ifdef USE_MPI
 
             iglobal = i + fft_offset_i
 #else
-            fft_offset_i = 0
             iglobal = i
 #endif
-            if (iglobal > g(1)%size/2 + 1) exit
 
             do k = 1, kmax
 #ifdef USE_MPI
-                kglobal = k + ims_offset_k
+                kglobal = k + fft_offset_k
 #else
                 kglobal = k
 #endif
@@ -193,7 +209,7 @@ contains
                     call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
                                              -sqrt(lambda(k, i)), BCS_MAX, fdm_int1(BCS_MAX, k, i))
 
-                    if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
+                    if (any(i_sing == i) .and. any(k_sing == k)) then
                     else                                        ! free memory that is independent of lambda
                         rhs_b(:, :) = fdm_int1(BCS_MIN, k, i)%rhs(:, :)
                         if (allocated(fdm_int1(BCS_MIN, k, i)%rhs)) deallocate (fdm_int1(BCS_MIN, k, i)%rhs)
@@ -216,7 +232,7 @@ contains
                     end if
 
                     ! Compatibility constraint. The reference value of p at the lower boundary will be set to zero
-                    if (iglobal == 1 .and. kglobal == 1) then
+                    if (any(i_sing == i) .and. any(k_sing == k)) then
                         call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), BCS_DN, fdm_int2(k, i))
                     else
                         call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), BCS_NN, fdm_int2(k, i))
@@ -237,6 +253,7 @@ contains
     !########################################################################
     !#
     !# Solve Lap p = f using Fourier in xOz planes, to rewrite the problem as
+    !#
     !#     \hat{p}''-\lambda \hat{p} = \hat{f}
     !#
     !# where \lambda = kx^2+kz^2
@@ -258,7 +275,6 @@ contains
 
         ! -----------------------------------------------------------------------
         real(wp) bcs(2, 2)
-        real(wp), pointer :: p_wrk3d(:, :, :) => null()
 
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_field])
@@ -268,12 +284,12 @@ contains
         ! #######################################################################
         ! Fourier transform of forcing term; output of this section in array tmp1
         ! #######################################################################
-        p(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
+        p(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)           ! Passing boundary conditions in forcing array
         p(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
 
         if (g(3)%size > 1) then
             call OPR_Fourier_F_X_EXEC(nx, ny, nz, p, c_tmp2)
-            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten; cannot use wrk3d
+            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1)   ! tmp2 might be overwritten; cannot use wrk3d
         else
             call OPR_Fourier_F_X_EXEC(nx, ny, nz, p, c_tmp1)
         end if
@@ -290,37 +306,23 @@ contains
 #define v(j,k,i) tmp1(j,k,i)
 #define u(j,k,i) p_wrk3d(j,k,i)
 
-        do i = 1, isize_line
-#ifdef USE_MPI
-            iglobal = i + fft_offset_i
-#else
-            iglobal = i
-#endif
-            if (iglobal > g(1)%size/2 + 1) exit
-
+        ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+        do i = 1, i_max
             do k = 1, nz
-#ifdef USE_MPI
-                kglobal = k + ims_offset_k
-#else
-                kglobal = k
-#endif
+                bcs(1:2, 1) = f(1:2, k, i)                  ! bottom boundary conditions
+                bcs(1:2, 2) = f(2*ny - 1:2*ny, k, i)        ! top boundary conditions
 
-                ! Boundary conditions
-                bcs(1:2, 1) = f(1:2, k, i)                  ! bottom bcs
-                bcs(1:2, 2) = f(2*ny - 1:2*ny, k, i)        ! top bcs
-
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 select case (ibc)
-                case (BCS_NN) ! Neumann   & Neumann   BCs
-                    if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
+                case (BCS_NN)       ! Neumann & Neumann boundary conditions
+                    if (any(i_sing == i) .and. any(k_sing == k)) then
                         call OPR_ODE2_Factorize_NN_Sing(2, fdm_int1(:, k, i), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_NN(2, fdm_int1(:, k, i), rhs_b, rhs_t, &
                                                    u(:, k, i), f(:, k, i), bcs, v(1:, k, i), wrk1d, wrk2d)
                     end if
 
-                case (BCS_DD) ! Dirichlet & Dirichlet BCs
-                    if (any(i_sing == iglobal) .and. any(k_sing == kglobal)) then
+                case (BCS_DD)       ! Dirichlet & Dirichlet boundary conditions
+                    if (any(i_sing == i) .and. any(k_sing == k)) then
                         call OPR_ODE2_Factorize_DD_Sing(2, fdm_int1(:, k, i), u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                     else
                         call OPR_ODE2_Factorize_DD(2, fdm_int1(:, k, i), rhs_b, rhs_t, &
@@ -355,7 +357,7 @@ contains
             end if
         end if
 
-        nullify (c_tmp1, c_tmp2)
+        nullify (c_tmp1, c_tmp2, p_wrk3d)
 #undef f
 #undef v
 #undef u
@@ -378,9 +380,7 @@ contains
         target tmp1, tmp2
 
         ! -----------------------------------------------------------------------
-        integer(wi) ibc_loc
         integer(wi), parameter :: bcs_p(2, 2) = 0                       ! For partial_y at the end
-        real(wp), pointer :: p_wrk3d(:, :, :) => null()
 
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_field])
@@ -411,43 +411,24 @@ contains
 #define f(j,k,i) tmp2(j,k,i)
 #define u(j,k,i) p_wrk3d(j,k,i)
 
-        do i = 1, isize_line
-#ifdef USE_MPI
-            iglobal = i + fft_offset_i
-#else
-            iglobal = i
-#endif
-            if (iglobal > g(1)%size/2 + 1) exit
-
+        ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+        do i = 1, i_max
             do k = 1, nz
-#ifdef USE_MPI
-                kglobal = k + ims_offset_k
-#else
-                kglobal = k
-#endif
+                u(1:2, k, i) = f(1:2, k, i)                         ! bottom boundary conditions
+                u(2*ny - 1:2*ny, k, i) = f(2*ny - 1:2*ny, k, i)     ! top boundary conditions
 
-                ! Boundary conditions
-                u(1:2, k, i) = f(1:2, k, i)
-                u(2*ny - 1:2*ny, k, i) = f(2*ny - 1:2*ny, k, i)
+                select case (ibc)
+                case (BCS_NN)           ! use precalculated LU factorization
+                    ! Compatibility constraint for singular modes. The reference value of p at bottom is set to zero
+                    if (any(i_sing == i) .and. any(k_sing == k)) u(1:2, k, i) = 0.0_wp
 
-                ! Compatibility constraint for singular modes. 2nd order FDMs are non-zero at Nyquist
-                ! The reference value of p at the lower boundary is set to zero
-                if (iglobal == 1 .and. kglobal == 1 .and. ibc == BCS_NN) then
-                    ibc_loc = BCS_DN
-                    u(1:2, k, i) = 0.0_wp
-                else
-                    ibc_loc = ibc
-                end if
-
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
-                if (ibc /= BCS_NN) then     ! Need to calculate and factorize LHS
-                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), ibc_loc, fdm_int2_loc)
-                    call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, k, i), u(:, k, i), wrk2d)
-
-                else                        ! use precalculated LU factorization
                     call FDM_Int2_Solve(2, fdm_int2(k, i), rhs_d, f(:, k, i), u(:, k, i), wrk2d)
 
-                end if
+                case default            ! Need to calculate and factorize LHS
+                    call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i), ibc, fdm_int2_loc)
+                    call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, k, i), u(:, k, i), wrk2d)
+
+                end select
 
             end do
         end do
@@ -468,7 +449,7 @@ contains
             call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs_p, g(2), p, dpdy)
         end if
 
-        nullify (c_tmp1, c_tmp2)
+        nullify (c_tmp1, c_tmp2, p_wrk3d)
 #undef f
 #undef u
 
@@ -477,10 +458,9 @@ contains
 
     !########################################################################
     !#
-    !# Solve Lap a + lpha a = f using Fourier in xOz planes, to rewritte
-    !# the problem as
+    !# Solve Lap a + \alpha a = f using Fourier in xOz planes, to rewrite the problem as
     !#
-    !#      \hat{a}''-(\lambda-lpha) \hat{a} = \hat{f}
+    !#      \hat{a}''-(\lambda-\alpha) \hat{a} = \hat{f}
     !#
     !# where \lambda = kx^2+kz^2
     !#
@@ -499,7 +479,6 @@ contains
 
         ! -----------------------------------------------------------------------
         real(wp) bcs(2, 2)
-        real(wp), pointer :: p_wrk3d(:, :, :) => null()
 
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_field])
@@ -522,7 +501,7 @@ contains
         tmp1 = tmp1*norm
 
         ! ###################################################################
-        ! Solve FDE (\hat{p}')'-(\lambda+lpha) \hat{p} = \hat{f}
+        ! Solve FDE (\hat{p}')'-(\lambda+\alpha) \hat{p} = \hat{f}
         ! ###################################################################
         ! Make x direction last one and leave y direction first
         call TLab_Transpose_COMPLEX(c_tmp1, isize_line, ny*nz, isize_line, c_tmp2, ny*nz)
@@ -531,26 +510,12 @@ contains
 #define v(j,k,i) tmp1(j,k,i)
 #define u(j,k,i) p_wrk3d(j,k,i)
 
-        do i = 1, isize_line
-#ifdef USE_MPI
-            iglobal = i + fft_offset_i
-#else
-            iglobal = i
-#endif
-            if (iglobal > g(1)%size/2 + 1) exit
-
+        ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+        do i = 1, i_max
             do k = 1, nz
-#ifdef USE_MPI
-                kglobal = k + ims_offset_k
-#else
-                kglobal = k
-#endif
+                bcs(1:2, 1) = f(1:2, k, i)                  ! bottom boundary conditions
+                bcs(1:2, 2) = f(2*ny - 1:2*ny, k, i)        ! top boundary conditions
 
-                ! Boundary conditions
-                bcs(1:2, 1) = f(1:2, k, i)                  ! bottom bcs
-                bcs(1:2, 2) = f(2*ny - 1:2*ny, k, i)        ! top bcs
-
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 call FDM_Int1_Initialize(fdm_loc%nodes(:), fdm_loc%der1, &
                                          sqrt(lambda(k, i) - alpha), BCS_MIN, fdm_int1_loc(BCS_MIN))
 
@@ -558,11 +523,11 @@ contains
                                          -sqrt(lambda(k, i) - alpha), BCS_MAX, fdm_int1_loc(BCS_MAX))
 
                 select case (ibc)
-                case (BCS_NN) ! Neumann   & Neumann   BCs
+                case (BCS_NN)
                     call OPR_ODE2_Factorize_NN(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
                                                u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
 
-                case (BCS_DD) ! Dirichlet & Dirichlet BCs
+                case (BCS_DD)
                     call OPR_ODE2_Factorize_DD(2, fdm_int1_loc, fdm_int1_loc(BCS_MIN)%rhs, fdm_int1_loc(BCS_MAX)%rhs, &
                                                u(:, k, i), f(:, k, i), bcs, v(:, k, i), wrk1d, wrk2d)
                 end select
@@ -582,7 +547,7 @@ contains
             call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, a)
         end if
 
-        nullify (c_tmp1, c_tmp2)
+        nullify (c_tmp1, c_tmp2, p_wrk3d)
 #undef f
 #undef v
 #undef u
@@ -605,7 +570,6 @@ contains
         target tmp1, tmp2
 
         ! -----------------------------------------------------------------------
-        real(wp), pointer :: p_wrk3d(:, :, :) => null()
 
         ! #######################################################################
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_field])
@@ -628,7 +592,7 @@ contains
         tmp1 = tmp1*norm
 
         ! ###################################################################
-        ! Solve FDE \hat{p}''-(\lambda+lpha) \hat{p} = \hat{f}
+        ! Solve FDE \hat{p}''-(\lambda+\alpha) \hat{p} = \hat{f}
         ! ###################################################################
         ! Make x direction last one and leave y direction first
         call TLab_Transpose_COMPLEX(c_tmp1, isize_line, ny*nz, isize_line, c_tmp2, ny*nz)
@@ -636,26 +600,13 @@ contains
 #define f(j,k,i) tmp2(j,k,i)
 #define u(j,k,i) p_wrk3d(j,k,i)
 
-        do i = 1, isize_line
-#ifdef USE_MPI
-            iglobal = i + fft_offset_i
-#else
-            iglobal = i
-#endif
-            if (iglobal > g(1)%size/2 + 1) exit
-
+        ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
+        do i = 1, i_max
             do k = 1, nz
-#ifdef USE_MPI
-                kglobal = k + ims_offset_k
-#else
-                kglobal = k
-#endif
-
                 ! Boundary conditions
                 u(1:2, k, i) = f(1:2, k, i)
                 u(2*ny - 1:2*ny, k, i) = f(2*ny - 1:2*ny, k, i)
 
-                ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
                 call FDM_Int2_Initialize(fdm_loc%nodes(:), fdm_loc%der2, lambda(k, i) - alpha, ibc, fdm_int2_loc)
                 call FDM_Int2_Solve(2, fdm_int2_loc, fdm_int2_loc%rhs, f(:, k, i), u(:, k, i), wrk2d)
 
@@ -674,7 +625,7 @@ contains
             call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, a)
         end if
 
-        nullify (c_tmp1, c_tmp2)
+        nullify (c_tmp1, c_tmp2, p_wrk3d)
 #undef f
 #undef u
 
