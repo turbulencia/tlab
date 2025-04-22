@@ -61,6 +61,7 @@ program INIFLOW
 
     call Iniflow_Initialize_Parameters(ifile)
 
+    ! #######################################################################
     call TLab_Initialize_Memory(C_FILE_LOC)
 
     call TLab_Initialize_Background(ifile)
@@ -85,7 +86,7 @@ program INIFLOW
     itime = 0; rtime = 0.0_wp; q = 0.0_wp
 
     ! ###################################################################
-    call TLab_Write_ASCII(lfile, 'Initializing velocity.')
+    call TLab_Write_ASCII(lfile, 'Initializing velocity fields.')
 
     call VELOCITY_MEAN(q(1, 1), q(1, 2), q(1, 3))
 

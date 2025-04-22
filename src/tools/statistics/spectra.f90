@@ -40,6 +40,7 @@ program SPECTRA
     use TLab_Arrays
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start, fourier_on, flow_on, scal_on
     use TLab_Memory, only: TLab_Initialize_Memory
+    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_VARS, only: ims_err
@@ -119,11 +120,9 @@ program SPECTRA
     integer(wi) iopt_size
     real(wp) opt_vec(iopt_size_max)
 
-    integer, parameter :: i0 = 0 !, i1 = 1, i2 = 2, i3 = 3
+    integer, parameter :: i0 = 0 
 
-! #ifdef USE_MPI
-!     integer(wi) id
-! #endif
+    complex(wp), pointer :: c_tmp2(:) => null()
 
     real(wp) params(1)
 
@@ -336,7 +335,7 @@ program SPECTRA
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        tmpi_plan_z = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, message ='type-2 Oz spectra integration.')
+        tmpi_plan_z = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, message='type-2 Oz spectra integration.')
 
     end if
 #endif
@@ -772,11 +771,12 @@ program SPECTRA
 ! ###################################################################
         else if (opt_main == 5) then
 
+            call c_f_pointer(c_loc(txc(:, 2)), c_tmp2, shape=[isize_txc_field/2])
             do iv = 1, nfield
                 txc(1:isize_field, 1) = vars(iv)%field(1:isize_field)
                 call OPR_Fourier_F(3, imax, jmax, kmax, txc(1, 1), txc(1, 2), txc(1, 3))
 
-                call OPR_Fourier_SPECTRA_3D(imax, jmax, kmax, isize_spec2dr, txc(1, 2), outr(1, iv))
+                call OPR_Fourier_ComputePSD(imax, jmax, kmax, c_tmp2, outr(1:isize_spec2dr, iv))
             end do
 
             outr = outr*norm*norm

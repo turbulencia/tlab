@@ -1,7 +1,7 @@
 #include "dns_error.h"
 
 module OPR_Fourier
-    use TLab_Constants, only: wp, wi, efile
+    use TLab_Constants, only: wp, wi, pi_wp, efile
     use TLab_Memory, only: isize_txc_field, isize_txc_dimz
     use TLab_Memory, only: imax, jmax, kmax
     use TLab_Arrays, only: wrk3d
@@ -24,7 +24,8 @@ module OPR_Fourier
     public :: OPR_Fourier_F                                 ! Minor routines, less frequently used
     public :: OPR_Fourier_B
     public :: OPR_Fourier_CONVOLUTION_FXZ
-    public :: OPR_Fourier_SPECTRA_3D
+    public :: OPR_Fourier_ComputePSD
+    public :: OPR_Fourier_SetPSD
 
     ! -----------------------------------------------------------------------
     integer(8) :: fft_plan_fx, fft_plan_bx
@@ -187,7 +188,7 @@ contains
     !#
     !# Each z-plane contains jmax lines of nx/2+1 complex numbers. The element nx/2+1 is the
     !# Nyquist frequency.
-    !# If OX MPI decomposition, one can reorganize modes 
+    !# If OX MPI decomposition, one can reorganize modes
     !# to homogeneize arrays across PEs.
     !#
     !########################################################################
@@ -558,17 +559,20 @@ contains
 
     ! #######################################################################
     ! #######################################################################
-    subroutine OPR_Fourier_SPECTRA_3D(nx, ny, nz, isize_psd, u, psd)
-        integer(wi), intent(IN) :: nx, ny, nz, isize_psd
-        real(wp), intent(IN) :: u(isize_txc_dimz, nz)
-        real(wp), intent(OUT) :: psd(isize_psd)
+    subroutine OPR_Fourier_ComputePSD(nx, ny, nz, u, psd)
+        integer(wi), intent(in) :: nx, ny, nz
+        complex(wp), intent(in) :: u(nx/2 + 1, ny, nz)
+        real(wp), intent(out) :: psd(:)
 
         ! -----------------------------------------------------------------------
-        integer(wi) i, j, r, iglobal, kglobal, ip
+        integer(wi) i, j, r, iglobal, kglobal
         real(wp) fr, fi, fj, fk
+#ifdef USE_MPI
+        integer(wi) isize_psd
+#endif
 
         ! #######################################################################
-        psd = 0.0_wp
+        psd(:) = 0.0_wp
 
         do k = 1, nz
 #ifdef USE_MPI
@@ -576,13 +580,17 @@ contains
 #else
             kglobal = k
 #endif
-            if (kglobal <= g(3)%size/2 + 1) then; fk = real(kglobal - 1, wp)
-            else; fk = -real(g(3)%size + 1 - kglobal, wp)
+            if (kglobal <= g(3)%size/2 + 1) then
+                fk = real(kglobal - 1, wp)
+            else
+                fk = -real(g(3)%size + 1 - kglobal, wp)
             end if
 
             do j = 1, ny
-                if (j <= g(2)%size/2 + 1) then; fj = real(j - 1, wp)
-                else; fj = -real(g(2)%size + 1 - j, wp)
+                if (j <= g(2)%size/2 + 1) then
+                    fj = real(j - 1, wp)
+                else
+                    fj = -real(g(2)%size + 1 - j, wp)
                 end if
 
                 do i = 1, nx/2 + 1
@@ -591,22 +599,17 @@ contains
 #else
                     iglobal = i
 #endif
-                    if (iglobal <= g(1)%size/2 + 1) then; fi = real(iglobal - 1, wp)
-                    else; fi = -real(g(1)%size + 1 - iglobal, wp)
-                    end if
+                    fi = real(iglobal - 1, wp)
 
                     fr = ceiling(sqrt(real(fi**2 + fj**2 + fk**2, wp)))
 
                     ! -----------------------------------------------------------------------
                     ! psd
-                    ! -----------------------------------------------------------------------
-                    ip = (nx + 2)*(j - 1) + 2*i
-
                     r = int(fr)
                     if (r == 0) then ! zero is not written
-                        !              print*, i,j,k, r
+                        ! print *, i, j, k, r
                     else
-                        psd(r) = psd(r) + u(ip - 1, k)**2 + u(ip, k)**2
+                        psd(r) = psd(r) + abs(u(i, j, k))**2
                     end if
 
                 end do
@@ -614,6 +617,7 @@ contains
         end do
 
 #ifdef USE_MPI
+        isize_psd = size(psd)
         call MPI_Reduce(psd, wrk3d, isize_psd, MPI_REAL8, MPI_SUM, 0, MPI_COMM_WORLD, ims_err)
         if (ims_pro == 0) then
             psd(1:isize_psd) = wrk3d(1:isize_psd)
@@ -621,6 +625,96 @@ contains
 #endif
 
         return
-    end subroutine OPR_Fourier_SPECTRA_3D
+    end subroutine OPR_Fourier_ComputePSD
+
+    ! #######################################################################
+    ! #######################################################################
+    subroutine OPR_Fourier_SetPSD(nx, ny, nz, u, psd, locPhase)
+        use Distributions
+
+        integer(wi) nx, ny, nz
+        complex(wp), intent(inout) :: u(nx/2 + 1, ny, nz)
+        type(distributions_dt), intent(in) :: psd
+        real(wp), intent(in), optional :: locPhase(nx/2 + 1, ny, nz)
+
+        ! -----------------------------------------------------------------------
+        integer(wi) i, j, iglobal, jglobal, kglobal
+        real(wp) pow_dst, pow_org, phase
+        real(wp) f, fi, fj, fk
+
+        ! #######################################################################
+        do k = 1, nz
+#ifdef USE_MPI
+            kglobal = k + ims_offset_k
+#else
+            kglobal = k
+#endif
+            if (kglobal <= g(3)%size/2 + 1) then
+                fk = real(kglobal - 1, wp)/g(3)%scale
+            else
+                fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale
+            end if
+
+            do j = 1, ny
+                jglobal = j ! No MPI decomposition along Oy
+                if (jglobal <= g(2)%size/2 + 1) then
+                    fj = real(jglobal - 1, wp)/g(2)%scale
+                else
+                    fj = -real(g(2)%size + 1 - jglobal, wp)/g(2)%scale
+                end if
+
+                do i = 1, nx/2 + 1
+#ifdef USE_MPI
+                    iglobal = i + ims_offset_i/2
+#else
+                    iglobal = i
+#endif
+                    fi = real(iglobal - 1, wp)/g(1)%scale
+
+                    f = sqrt(fi**2 + fj**2 + fk**2)
+
+                    ! -----------------------------------------------------------------------
+                    ! target psd
+                    pow_dst = Distributions_Compute(psd, f)
+
+                    if (f == 0.0_wp) then
+                        pow_dst = 0.0_wp
+
+                    else
+                        if (g(2)%size == 1 .or. g(3)%size == 1) then ! 2D spectrum
+                            pow_dst = pow_dst/(pi_wp*f)
+                        else
+                            pow_dst = pow_dst/(2*pi_wp*f**2)
+                        end if
+
+                    end if
+
+                    ! -----------------------------------------------------------------------
+                    ! phase and scaling of complex data
+                    if (pow_dst > 0.0_wp) pow_dst = sqrt(pow_dst)
+
+                    if (present(locPhase)) then
+                        if (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) then
+                            phase = 0.0_wp
+                        else
+                            phase = (locPhase(i, j, k) - 0.5_wp)*2.0_wp*pi_wp
+                        end if
+                        u(i, j, k) = cmplx(pow_dst*cos(phase), pow_dst*sin(phase), wp)
+
+                    else
+                        pow_org = abs(u(i, j, k))
+
+                        if (pow_org > 0.0_wp) pow_dst = pow_dst/pow_org
+
+                        u(i, j, k) = u(i, j, k)*pow_dst
+
+                    end if
+
+                end do
+            end do
+        end do
+
+        return
+    end subroutine OPR_Fourier_SetPSD
 
 end module OPR_Fourier
