@@ -7,13 +7,12 @@
 program VFFT
     use TLab_Constants, only: wp, wi
     use TLab_Memory, only: imax, jmax, kmax
-    use TLab_Memory, only: isize_txc_dimz
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use OPR_Fourier
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
 #endif
 
     implicit none
@@ -33,11 +32,11 @@ use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
     call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Transpose_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
 
-    isize_fft3d = isize_txc_dimz*kmax
+    isize_fft3d = (imax + 2)*jmax*kmax
     isize_trn3d = (imax/2)*jmax*(2*kmax)
 
     allocate ( &

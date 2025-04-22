@@ -603,7 +603,6 @@ contains
         ! Solve for each (kx,kz) a system of 1 complex equation as 2 independent real equations
         do i = 1, i_max
             do k = 1, nz
-                ! Boundary conditions
                 u(1:2, k, i) = f(1:2, k, i)
                 u(2*ny - 1:2*ny, k, i) = f(2*ny - 1:2*ny, k, i)
 

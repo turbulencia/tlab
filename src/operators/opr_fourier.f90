@@ -31,8 +31,8 @@ module OPR_Fourier
     integer(8) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
     integer(8) :: fft_plan_fz, fft_plan_bz
 #ifdef USE_MPI
-    type(tmpi_transpose_dt), public :: tmpi_plan_poissonx1, tmpi_plan_poissonx2
-    type(tmpi_transpose_dt), public :: tmpi_plan_poissonz
+    type(tmpi_transpose_dt), public :: tmpi_plan_fftx
+    type(tmpi_transpose_dt), public :: tmpi_plan_fftz
 #endif
 
     logical :: fft_reordering_k = .false.
@@ -66,14 +66,13 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Oz direction
-        ! -----------------------------------------------------------------------
         if (g(3)%size > 1) then
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                tmpi_plan_poissonz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz/2, &
-                                                              locType=MPI_DOUBLE_COMPLEX, &
-                                                              message='Oz FFTW in Poisson solver.')
-                isize_fft_z = tmpi_plan_poissonz%nlines
+                tmpi_plan_fftz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz/2, &
+                                                          locType=MPI_DOUBLE_COMPLEX, &
+                                                          message='Oz FFTW in Poisson solver.')
+                isize_fft_z = tmpi_plan_fftz%nlines
 
             else
 #endif
@@ -109,19 +108,19 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Ox direction
-        ! -----------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            tmpi_plan_poissonx1 = TLabMPI_Trp_TypeI_Create(imax, jmax*kmax, message='Ox FFTW in Poisson solver.')
-            isize_fft_x = tmpi_plan_poissonx1%nlines
-            isize_disp = (imax/2 + 1)*ims_npro_i
+            ! Extended with the Nyquist frequency
+            tmpi_plan_fftx = TLabMPI_Trp_TypeI_Create(imax/2 + 1, jmax*kmax, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
 
-            tmpi_plan_poissonx2 = TLabMPI_Trp_TypeI_Create(imax/2 + 1, jmax*kmax, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
-
-            if (tmpi_plan_poissonx1%nlines /= tmpi_plan_poissonx2%nlines) then
+            if (tmpi_plan_fftx%nlines /= tmpi_plan_dx%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
                 call TLab_Stop(DNS_ERROR_UNDEVELOP)
             end if
+
+            isize_fft_x = tmpi_plan_dx%nlines
+            isize_disp = (imax/2 + 1)*ims_npro_i
+
         else
 #endif
             isize_fft_x = jmax*kmax
@@ -153,7 +152,6 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Oy direction
-        ! -----------------------------------------------------------------------
         if (g(2)%size > 1) then
             isize_fft_y = imax/2 + 1    !(imax/2 + 1)*kmax
             isize_stride = imax/2 + 1
@@ -187,11 +185,10 @@ contains
     !########################################################################
     !# Forward/Backward Fourier transform.
     !#
-    !# Each z-plane contains jmax lines of nx/2+1 complex numbers. The first
-    !# nx/2 Fourier coefficients are contiguous and the element nx/2+1 is the
-    !# Nyquist frequency; if OX MPI decomposition, this element is just a padding used
-    !# to homogeneize arrays across PEs with ims_npro_i-PE, which contains then the
-    !# Nyquist frequency of the corresponding line.
+    !# Each z-plane contains jmax lines of nx/2+1 complex numbers. The element nx/2+1 is the
+    !# Nyquist frequency.
+    !# If OX MPI decomposition, one can reorganize modes 
+    !# to homogeneize arrays across PEs.
     !#
     !########################################################################
     subroutine OPR_Fourier_F_X_EXEC(nx, ny, nz, in, out)
@@ -212,16 +209,16 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_poissonx1%nlines])
+            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_dx%nlines])!tmpi_plan_fftx1%nlines])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeI_Forward(in(:), r_out(:), tmpi_plan_poissonx1)
+            call TLabMPI_TransposeI_Forward(in(:), r_out(:), tmpi_plan_dx) !fftx1)
 
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
                 isize_line = nx/2 + 1
-                do k = 1, tmpi_plan_poissonx1%nlines
+                do k = 1, tmpi_plan_dx%nlines !tmpi_plan_fftx1%nlines
                     inew = isize_line*ims_npro_i
                     iold = g(1)%size/2 + 1
                     wrk1(inew, k) = wrk1(iold, k)
@@ -235,7 +232,7 @@ contains
                 end do
             end if
 
-            call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_poissonx2)
+            call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_fftx)
 
             nullify (wrk1, r_out)
 
@@ -271,11 +268,11 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), c_out, shape=[(nx/2 + 1)*ims_npro_i, nz])
 
-            call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_poissonx2)
+            call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_fftx)
 
             if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
                 isize_line = nx/2 + 1
-                do k = 1, tmpi_plan_poissonx1%nlines
+                do k = 1, tmpi_plan_dx%nlines !tmpi_plan_fftx1%nlines
                     do ip = 2, ims_npro_i
                         do i = 1, nx/2
                             iold = (ip - 1)*isize_line + i
@@ -291,7 +288,7 @@ contains
 
             call dfftw_execute_dft_c2r(fft_plan_bx, c_out, r_in)
 
-            call TLabMPI_TransposeI_Backward(r_in(:), out(:), tmpi_plan_poissonx1)
+            call TLabMPI_TransposeI_Backward(r_in(:), out(:), tmpi_plan_dx) !tmpi_plan_fftx1)
 
             nullify (r_in, c_out)
 
@@ -319,9 +316,9 @@ contains
         ! #######################################################################
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_poissonz)
-            p_org(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
-            p_dst(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
+            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_fftz)
+            p_org(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
+            p_dst(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
         else
 #endif
             p_org(1:isize_txc_dimz/2, 1:g(3)%size) => in(1:isize_txc_field)
@@ -349,7 +346,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_poissonz)
+            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_fftz)
         end if
 #endif
 
@@ -371,9 +368,9 @@ contains
         ! #######################################################################
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_poissonz)
-            p_org(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
-            p_dst(1:tmpi_plan_poissonz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
+            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_fftz)
+            p_org(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
+            p_dst(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
         else
 #endif
             p_org(1:isize_txc_dimz/2, 1:g(3)%size) => in(1:isize_txc_field)
@@ -401,7 +398,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_poissonz)
+            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_fftz)
         end if
 #endif
 
