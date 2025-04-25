@@ -1,7 +1,8 @@
 #include "dns_error.h"
 
 module RAND_LOCAL
-    use TLab_Constants, only: wp, wi, efile, lfile
+    use TLab_Constants, only: wp, wi, big_wp
+    use TLab_Constants, only: efile, lfile
     use TLab_Memory, only: imax, jmax, kmax, isize_field, isize_txc_field, inb_txc
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
 #ifdef USE_MPI
@@ -61,7 +62,8 @@ contains
         else if (trim(adjustl(sRes)) == 'gaussian') then; psd%type = TYPE_DF_GAUSSIAN
         end if
 
-        psd%parameters(:) = 0.0_wp
+        psd%parameters(1) = 0.0_wp
+        psd%parameters(2:3) = [0.0_wp, big_wp]
         call ScanFile_Char(bakfile, inifile, 'Broadband', 'f0', '1.0', sRes)
         idummy = 3
         call LIST_REAL(sRes, idummy, psd%parameters)
@@ -121,7 +123,7 @@ contains
         complex(wp), pointer :: c_tmp1(:) => null()
         target tmp1
 
-    ! ###################################################################
+        ! ###################################################################
         select case (pdf%type)
         case (TYPE_DF_UNIFORM)
             do i = 1, isize_field

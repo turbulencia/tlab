@@ -7,11 +7,10 @@ module OPR_Fourier
     use TLab_Arrays, only: wrk3d
     use TLab_Pointers_C, only: c_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
+    use, intrinsic :: iso_c_binding
 #ifdef USE_MPI
-    use mpi_f08
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
-    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro, ims_err
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
     use TLabMPI_Transpose
 #endif
     use FDM, only: g
@@ -25,12 +24,12 @@ module OPR_Fourier
     public :: OPR_Fourier_B
     public :: OPR_Fourier_CONVOLUTION_FXZ
     public :: OPR_Fourier_ComputePSD
-    public :: OPR_Fourier_SetPSD
+    public :: OPR_Fourier_SetPSD, OPR_Fourier_SetPSD_2d
 
     ! -----------------------------------------------------------------------
-    integer(8) :: fft_plan_fx, fft_plan_bx
-    integer(8) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
-    integer(8) :: fft_plan_fz, fft_plan_bz
+    type(c_ptr) :: fft_plan_fx, fft_plan_bx
+    type(c_ptr) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
+    type(c_ptr) :: fft_plan_fz, fft_plan_bz
 #ifdef USE_MPI
     type(tmpi_transpose_dt), public :: tmpi_plan_fftx
     type(tmpi_transpose_dt), public :: tmpi_plan_fftz
@@ -40,17 +39,20 @@ module OPR_Fourier
     logical :: fft_reordering_i = .false.
 
     integer(wi) k
-    complex(wp), pointer :: c_in(:, :) => null(), c_out(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:, :) => null(), c_in1(:, :) => null()
+    complex(wp), pointer :: c_in(:, :) => null(), c_out(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:) => null(), c_in1(:,:) => null()
 
 contains
     ! #######################################################################
     ! #######################################################################
     subroutine OPR_Fourier_Initialize()
-        use TLab_Arrays, only: txc
-#ifdef USE_FFTW
-#include "fftw3.f"
+#ifdef USE_MPI
+        use mpi_f08, only: MPI_DOUBLE_COMPLEX
 #endif
+        use TLab_Arrays, only: txc
 
+#ifdef USE_FFTW
+#include "fftw3.f03"
+#endif
         ! -----------------------------------------------------------------------
         integer(wi) isize_stride, isize_disp, isize_fft_z, isize_fft_y, isize_fft_x
 
@@ -195,7 +197,7 @@ contains
     subroutine OPR_Fourier_F_X_EXEC(nx, ny, nz, in, out)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: in(nx*ny*nz)
-        complex(wp), intent(out) :: out(isize_txc_dimz/2, nz)
+        complex(wp), intent(out) :: out(isize_txc_field)
 
         target out
 
@@ -210,16 +212,16 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_dx%nlines])!tmpi_plan_fftx1%nlines])
+            call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_dx%nlines])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeI_Forward(in(:), r_out(:), tmpi_plan_dx) !fftx1)
+            call TLabMPI_TransposeI_Forward(in(:), r_out(:), tmpi_plan_dx)
 
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
             if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
                 isize_line = nx/2 + 1
-                do k = 1, tmpi_plan_dx%nlines !tmpi_plan_fftx1%nlines
+                do k = 1, tmpi_plan_dx%nlines
                     inew = isize_line*ims_npro_i
                     iold = g(1)%size/2 + 1
                     wrk1(inew, k) = wrk1(iold, k)
@@ -233,7 +235,7 @@ contains
                 end do
             end if
 
-            call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:, 1), tmpi_plan_fftx)
+            call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:), tmpi_plan_fftx)
 
             nullify (wrk1, r_out)
 
@@ -252,7 +254,7 @@ contains
     !########################################################################
     subroutine OPR_Fourier_B_X_EXEC(nx, ny, nz, in, out)
         integer(wi) nx, ny, nz
-        complex(wp), intent(in) :: in(isize_txc_dimz/2, nz)
+        complex(wp), intent(in) :: in(isize_txc_field)
         real(wp), intent(out) :: out(nx*ny*nz)
 
         target in, out
@@ -269,7 +271,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), c_out, shape=[(nx/2 + 1)*ims_npro_i, nz])
 
-            call TLabMPI_TransposeI_Forward(in(:, 1), c_out(:, 1), tmpi_plan_fftx)
+            call TLabMPI_TransposeI_Forward(in(:), c_out(:, 1), tmpi_plan_fftx)
 
             if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
                 isize_line = nx/2 + 1
@@ -512,7 +514,7 @@ contains
         ! Pass memory address from real array to complex array
         call c_f_pointer(c_loc(in1), c_in1, shape=[isize_txc_dimz/2, nz])
         call c_f_pointer(c_loc(tmp1), c_tmp1, shape=[isize_txc_dimz/2, nz])
-        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_dimz/2, nz])
+        call c_f_pointer(c_loc(tmp2), c_tmp2, shape=[isize_txc_field])
 
         fft_reordering_k = .true.
         fft_reordering_i = .true.
@@ -560,6 +562,10 @@ contains
     ! #######################################################################
     ! #######################################################################
     subroutine OPR_Fourier_ComputePSD(nx, ny, nz, u, psd)
+#ifdef USE_MPI
+        use mpi_f08
+        use TLabMPI_VARS, only: ims_pro, ims_err
+#endif
         integer(wi), intent(in) :: nx, ny, nz
         complex(wp), intent(in) :: u(nx/2 + 1, ny, nz)
         real(wp), intent(out) :: psd(:)
@@ -716,5 +722,56 @@ contains
 
         return
     end subroutine OPR_Fourier_SetPSD
+
+    ! #######################################################################
+    ! #######################################################################
+    subroutine OPR_Fourier_SetPSD_2d(nx, ny, nz, u, psd)
+        use Distributions
+
+        integer(wi) nx, ny, nz
+        complex(wp), intent(inout) :: u(nx/2 + 1, ny, nz)
+        type(distributions_dt), intent(in) :: psd
+
+        ! -----------------------------------------------------------------------
+        integer(wi) i, iglobal, kglobal
+        real(wp) pow_dst
+        real(wp) f, fi, fk
+
+        ! #######################################################################
+        do k = 1, nz
+#ifdef USE_MPI
+            kglobal = k + ims_offset_k
+#else
+            kglobal = k
+#endif
+            if (kglobal <= g(3)%size/2 + 1) then
+                fk = real(kglobal - 1, wp)/g(3)%scale
+            else
+                fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale
+            end if
+
+            do i = 1, nx/2 + 1
+#ifdef USE_MPI
+                iglobal = i + ims_offset_i/2
+#else
+                iglobal = i
+#endif
+                fi = real(iglobal - 1, wp)/g(1)%scale
+
+                f = sqrt(fi**2 + fk**2)
+
+                ! -----------------------------------------------------------------------
+                ! target psd
+                pow_dst = Distributions_Compute(psd, f)
+
+                ! -----------------------------------------------------------------------
+                ! scaling of complex data
+                u(i, :, k) = u(i, :, k)*pow_dst
+
+            end do
+        end do
+
+        return
+    end subroutine OPR_Fourier_SetPSD_2d
 
 end module OPR_Fourier

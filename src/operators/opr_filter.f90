@@ -5,9 +5,9 @@
 #endif
 
 module OPR_FILTERS
-    use TLab_Constants, only: wp, wi, MAX_PARS, MAX_VARS
+    use TLab_Constants, only: wp, wi, big_wp, MAX_PARS, MAX_VARS
     use FDM, only: fdm_dt
-    use TLab_Memory, only: isize_txc_field, isize_txc_dimz
+    use TLab_Memory, only: isize_txc_field
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Filters_Compact
@@ -20,6 +20,7 @@ module OPR_FILTERS
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k, ims_offset_i, ims_offset_k
     use TLabMPI_Transpose
 #endif
+    use Distributions
     implicit none
     private
 
@@ -47,6 +48,9 @@ module OPR_FILTERS
     public :: OPR_FILTER
     public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
+
+    ! -----------------------------------------------------------------------
+    type(distributions_dt) :: psd
 
 contains
     !###################################################################
@@ -279,7 +283,7 @@ contains
         real(wp) dummy
         integer(wi) k, flag_bcs, n, bcs(2, 2), nxy, ip_b, ip_t
 
-        complex(wp), pointer :: c_tmp(:, :) => null()
+        complex(wp), pointer :: c_tmp(:) => null()
         real(wp), dimension(:, :, :), pointer :: p_bcs
         target txc
 
@@ -314,27 +318,33 @@ contains
             end if
 
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)*f(1)%parameters(2)  !I need extended arrays
-            ! call OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), &
-            !                        txc(1, 1), txc(1, 2), txc(1, 3), &
-            !                        p_bcs(:, :, 1), p_bcs(:, :, 2))
             call OPR_Helmholtz(nx, ny, nz, g, flag_bcs, f(1)%parameters(2), txc(1, 1), txc(1, 2), txc(1, 3), p_bcs(:, :, 1), p_bcs(:, :, 2))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 1)
 
         case (DNS_FILTER_BAND)
+            psd%type = TYPE_DF_UNIFORM
+            psd%parameters(1:2) = f(1)%parameters(1:2)
             dummy = 1.0_wp/real(f(1)%size*f(3)%size, wp)
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)  !I need extended arrays
             call OPR_Fourier_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
-            call c_f_pointer(c_loc(txc(1, 2)), c_tmp, shape=[isize_txc_dimz/2, nz])
-            call OPR_FILTER_BAND_2D(nx, ny, nz, f(1)%parameters, c_tmp)
+            call c_f_pointer(c_loc(txc(:, 2)), c_tmp, shape=[isize_txc_field])
+            call OPR_Fourier_SetPSD_2d(nx, ny, nz, c_tmp, psd)
+            ! call OPR_FILTER_BAND_2D(nx, ny, nz, f(1)%parameters, c_tmp)
             call OPR_Fourier_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 3)*dummy
 
-        case (DNS_FILTER_ERF)
+        case (DNS_FILTER_ERF)                   ! Spectral filter with smooth (error-function) transition
+            psd%type = TYPE_DF_ERF
+            psd%mean = f(1)%parameters(1)       ! cut-off
+            psd%sigma = f(1)%parameters(2)      ! width of transition in logarithmic wavenumber space
+            !                                     the sign determines whether it is low pass or high pass
+            psd%parameters(1:2) = [0.0_wp, big_wp]
             dummy = 1.0_wp/real(f(1)%size*f(3)%size, wp)
             txc(1:nx*ny*nz, 1) = u(1:nx*ny*nz, 1, 1)  !I need extended arrays
             call OPR_Fourier_F(2, nx, ny, nz, txc(1, 1), txc(1, 2), txc(1, 3))
-            call c_f_pointer(c_loc(txc(1, 2)), c_tmp, shape=[isize_txc_dimz/2, nz])
-            call OPR_FILTER_ERF_2D(nx, ny, nz, f(1)%parameters, c_tmp)
+            call c_f_pointer(c_loc(txc(:, 2)), c_tmp, shape=[isize_txc_field])
+            call OPR_Fourier_SetPSD_2d(nx, ny, nz, c_tmp, psd)
+            ! call OPR_FILTER_ERF_2D(nx, ny, nz, f(1)%parameters, c_tmp)
             call OPR_Fourier_B(2, nx, ny, nz, txc(1, 2), txc(1, 3))
             u(1:nx*ny*nz, 1, 1) = txc(1:nx*ny*nz, 3)*dummy
 
@@ -623,129 +633,129 @@ contains
         return
     end subroutine OPR_FILTER_Z
 
-    !########################################################################
-    !Spectral band filter
-    !########################################################################
-    subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
-        use FDM, only: g
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: spc_param(*)
-        complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
+!     !########################################################################
+!     !Spectral band filter
+!     !########################################################################
+!     subroutine OPR_FILTER_BAND_2D(nx, ny, nz, spc_param, a)
+!         use FDM, only: g
+!         integer(wi), intent(in) :: nx, ny, nz
+!         real(wp), intent(in) :: spc_param(*)
+!         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
-        !-----------------------------------------------------------------------
-        integer(wi) i, j, k, iglobal, kglobal, ip
-        real(wp) fi, fk, f
+!         !-----------------------------------------------------------------------
+!         integer(wi) i, j, k, iglobal, kglobal, ip
+!         real(wp) fi, fk, f
 
-        !#######################################################################
-        do k = 1, nz
-#ifdef USE_MPI
-            kglobal = k + ims_offset_k
-#else
-            kglobal = k
-#endif
-            if (kglobal <= g(3)%size/2 + 1) then; fk = real(kglobal - 1, wp)/g(3)%scale
-            else; fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale; end if
+!         !#######################################################################
+!         do k = 1, nz
+! #ifdef USE_MPI
+!             kglobal = k + ims_offset_k
+! #else
+!             kglobal = k
+! #endif
+!             if (kglobal <= g(3)%size/2 + 1) then; fk = real(kglobal - 1, wp)/g(3)%scale
+!             else; fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale; end if
 
-            do i = 1, nx/2 + 1
-#ifdef USE_MPI
-                iglobal = i + ims_offset_i/2
-#else
-                iglobal = i
-#endif
-                fi = real(iglobal - 1, wp)/g(1)%scale
+!             do i = 1, nx/2 + 1
+! #ifdef USE_MPI
+!                 iglobal = i + ims_offset_i/2
+! #else
+!                 iglobal = i
+! #endif
+!                 fi = real(iglobal - 1, wp)/g(1)%scale
 
-                f = sqrt(fi**2 + fk**2)
+!                 f = sqrt(fi**2 + fk**2)
 
-                !apply spectral cutoff
-                do j = 1, ny
-                    ip = (j - 1)*(nx/2 + 1) + i
-                    if ((f - spc_param(1))*(spc_param(2) - f) < 0.0_wp) a(ip, k) = 0.0_wp
-                end do
+!                 !apply spectral cutoff
+!                 do j = 1, ny
+!                     ip = (j - 1)*(nx/2 + 1) + i
+!                     if ((f - spc_param(1))*(spc_param(2) - f) < 0.0_wp) a(ip, k) = 0.0_wp
+!                 end do
 
-            end do
-        end do
+!             end do
+!         end do
 
-        return
-    end subroutine OPR_FILTER_BAND_2D
+!         return
+!     end subroutine OPR_FILTER_BAND_2D
 
-    !########################################################################
-    !#
-    !# Spectral filter with smooth (error-function) transition.
-    !# The error function filter-response function is imposed
-    !# in logarithmic wavenumber space.
-    !#
-    !########################################################################
-    !# ARGUMENTS
-    !#
-    !#    spc_param(1) physical frequency for transition
-    !#                 > 0: High-pass
-    !#                 < 0: Low-pass
-    !#    spc_param(2) width of transition in logarithmic wavenumber space
-    !#    spc_param(3) normalise wavenumers in z-direction
-    !#
-    !########################################################################
-    subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
-        use FDM, only: g
-        integer(wi), intent(in) :: nx, ny, nz
-        real(wp), intent(in) :: spc_param(*)
-        complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
+!     !########################################################################
+!     !#
+!     !# Spectral filter with smooth (error-function) transition.
+!     !# The error function filter-response function is imposed
+!     !# in logarithmic wavenumber space.
+!     !#
+!     !########################################################################
+!     !# ARGUMENTS
+!     !#
+!     !#    spc_param(1) physical frequency for transition
+!     !#                 > 0: High-pass
+!     !#                 < 0: Low-pass
+!     !#    spc_param(2) width of transition in logarithmic wavenumber space
+!     !#    spc_param(3) normalise wavenumers in z-direction
+!     !#
+!     !########################################################################
+!     subroutine OPR_FILTER_ERF_2D(nx, ny, nz, spc_param, a)
+!         use FDM, only: g
+!         integer(wi), intent(in) :: nx, ny, nz
+!         real(wp), intent(in) :: spc_param(*)
+!         complex(wp), intent(inout) :: a(isize_txc_dimz/2, nz)
 
-        !-----------------------------------------------------------------------
-        integer(wi) i, j, k, iglobal, kglobal, ip
-        integer(wi) sign_pass, off_pass
-        real(wp) fi, fk, f, fcut_log, damp
+!         !-----------------------------------------------------------------------
+!         integer(wi) i, j, k, iglobal, kglobal, ip
+!         integer(wi) sign_pass, off_pass
+!         real(wp) fi, fk, f, fcut_log, damp
 
-        !#######################################################################
-        if (spc_param(1) > 0) then; 
-            sign_pass = 1    !HIGHPASS
-            off_pass = 0
-        else                 !spc_param(1) <= 0
-            sign_pass = -1    !LOWPASS
-            off_pass = 1
-        end if
+!         !#######################################################################
+!         if (spc_param(1) > 0) then; 
+!             sign_pass = 1    !HIGHPASS
+!             off_pass = 0
+!         else                 !spc_param(1) <= 0
+!             sign_pass = -1    !LOWPASS
+!             off_pass = 1
+!         end if
 
-        fcut_log = log(abs(spc_param(1)))
-        do k = 1, nz
-#ifdef USE_MPI
-            kglobal = k + ims_offset_k
-#else
-            kglobal = k
-#endif
-            if (kglobal <= g(3)%size/2 + 1) then
-                fk = real(kglobal - 1, wp)/g(3)%scale/spc_param(3)
-            else
-                fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale/spc_param(3)
-            end if
+!         fcut_log = log(abs(spc_param(1)))
+!         do k = 1, nz
+! #ifdef USE_MPI
+!             kglobal = k + ims_offset_k
+! #else
+!             kglobal = k
+! #endif
+!             if (kglobal <= g(3)%size/2 + 1) then
+!                 fk = real(kglobal - 1, wp)/g(3)%scale/spc_param(3)
+!             else
+!                 fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale/spc_param(3)
+!             end if
 
-            do i = 1, nx/2 + 1
-#ifdef USE_MPI
-                iglobal = i + ims_offset_i/2
-#else
-                iglobal = i
-#endif
-                fi = real(iglobal - 1, wp)/g(1)%scale
+!             do i = 1, nx/2 + 1
+! #ifdef USE_MPI
+!                 iglobal = i + ims_offset_i/2
+! #else
+!                 iglobal = i
+! #endif
+!                 fi = real(iglobal - 1, wp)/g(1)%scale
 
-                f = sqrt(fi**2 + fk**2)
-                if (f > 0.0_wp) then
-                    damp = (erf((log(f) - fcut_log)/spc_param(2)) + 1.0_wp)/2.0_wp
-                else
-                    damp = 0.0_wp; 
-                end if
+!                 f = sqrt(fi**2 + fk**2)
+!                 if (f > 0.0_wp) then
+!                     damp = (erf((log(f) - fcut_log)/spc_param(2)) + 1.0_wp)/2.0_wp
+!                 else
+!                     damp = 0.0_wp; 
+!                 end if
 
-                !Set to high- or low-pass
-                !high-pass: damp = 0.0 + damp
-                !low-pass:  damp = 1.0 - damp
-                damp = off_pass + sign_pass*damp
+!                 !Set to high- or low-pass
+!                 !high-pass: damp = 0.0 + damp
+!                 !low-pass:  damp = 1.0 - damp
+!                 damp = off_pass + sign_pass*damp
 
-                !apply filter
-                do j = 1, ny
-                    ip = (j - 1)*(nx/2 + 1) + i
-                    a(ip, k) = damp*a(ip, k)
-                end do
-            end do
-        end do
+!                 !apply filter
+!                 do j = 1, ny
+!                     ip = (j - 1)*(nx/2 + 1) + i
+!                     a(ip, k) = damp*a(ip, k)
+!                 end do
+!             end do
+!         end do
 
-        return
-    end subroutine OPR_FILTER_ERF_2D
+!         return
+!     end subroutine OPR_FILTER_ERF_2D
 
 end module OPR_FILTERS

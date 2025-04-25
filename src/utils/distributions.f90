@@ -18,9 +18,10 @@ module Distributions
     integer, parameter, public :: TYPE_DF_QUARTIC = 3
     integer, parameter, public :: TYPE_DF_QUADRATIC = 4
     integer, parameter, public :: TYPE_DF_GAUSSIAN = 6
+    integer, parameter, public :: TYPE_DF_ERF = 7
 
     public :: Distributions_Compute
-    
+
 contains
     function Distributions_Compute(locVar, x) result(f)
         type(distributions_dt), intent(in) :: locVar
@@ -38,9 +39,6 @@ contains
         case (TYPE_DF_UNIFORM)
             f = 1.0_wp
 
-        case (2)
-            f = (x/x0)**4/(1.0_wp + 12.0_wp/5.0_wp*(x/x0)**2)**(17.0_wp/6.0_wp)
-
         case (TYPE_DF_QUARTIC)
             f = x**4*exp(-2.0_wp*(x/x0)**2)
 
@@ -50,12 +48,18 @@ contains
         case (TYPE_DF_GAUSSIAN)
             f = exp(-0.5_wp*((x - x0)/x1)**2)/(x1*sqrt(2.0_wp*pi_wp))
 
+            ! case ()
+            !     f = (x/x0)**4/(1.0_wp + 12.0_wp/5.0_wp*(x/x0)**2)**(17.0_wp/6.0_wp)
+
+        case (TYPE_DF_ERF)
+            f = 0.5_wp*(erf((log(f) - x0)/x1) + 1.0_wp)
+
         case default
 
         end select
 
         ! -----------------------------------------------------------------------
-        if ((x - locVar%parameters(1))*(locVar%parameters(2) - x) > 0.0_wp) f = 0.0_wp ! Clip
+        if ((x - locVar%parameters(1))*(locVar%parameters(2) - x) < 0.0_wp) f = 0.0_wp ! Clip
 
         return
     end function Distributions_Compute

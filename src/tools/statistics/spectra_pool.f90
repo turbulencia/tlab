@@ -196,14 +196,12 @@ contains
 ! need to know about domain decomposition in x b/o
 ! nyquist frequency and zero frequency account different for the variance
 #ifdef USE_MPI
-        ! use mpi_f08
         use TLabMPI_VARS, only: ims_offset_i, ims_pro_i, ims_npro_i, ims_err
 #endif
 
         implicit none
 
         integer(wi), intent(IN) :: nx, ny, nz, nblock
-        ! complex(wp), dimension(isize_txc_dimz/2, nz), intent(IN) :: in, tmp1
         real(wp), intent(in) :: in(isize_txc_dimz, nz), tmp1(isize_txc_dimz, nz)
         real(wp), dimension(nx/2, ny/nblock, 2*nz), intent(OUT) :: out ! Amplitude (1:nz) and Phase (nz+1:2*nz)
         real(wp), dimension(ny, 2) :: variance
