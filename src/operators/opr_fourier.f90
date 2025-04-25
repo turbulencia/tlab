@@ -72,7 +72,7 @@ contains
         if (g(3)%size > 1) then
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                tmpi_plan_fftz = TLabMPI_Trp_TypeK_Create(kmax, isize_txc_dimz/2, &
+                tmpi_plan_fftz = TLabMPI_Trp_PlanK(kmax, isize_txc_dimz/2, &
                                                           locType=MPI_DOUBLE_COMPLEX, &
                                                           message='Oz FFTW in Poisson solver.')
                 isize_fft_z = tmpi_plan_fftz%nlines
@@ -114,7 +114,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             ! Extended with the Nyquist frequency
-            tmpi_plan_fftx = TLabMPI_Trp_TypeI_Create(imax/2 + 1, jmax*kmax, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
+            tmpi_plan_fftx = TLabMPI_Trp_PlanI(imax/2 + 1, jmax*kmax, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
 
             if (tmpi_plan_fftx%nlines /= tmpi_plan_dx%nlines) then
                 call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
@@ -215,7 +215,7 @@ contains
             call c_f_pointer(c_loc(wrk3d), wrk1, shape=[(nx/2 + 1)*ims_npro_i, tmpi_plan_dx%nlines])
             call c_f_pointer(c_loc(out), r_out, shape=[isize_txc_field])
 
-            call TLabMPI_TransposeI_Forward(in(:), r_out(:), tmpi_plan_dx)
+            call TLabMPI_Trp_ExecI_Forward(in(:), r_out(:), tmpi_plan_dx)
 
             call dfftw_execute_dft_r2c(fft_plan_fx, r_out, wrk1)
 
@@ -235,7 +235,7 @@ contains
                 end do
             end if
 
-            call TLabMPI_TransposeI_Backward(wrk1(:, 1), out(:), tmpi_plan_fftx)
+            call TLabMPI_Trp_ExecI_Backward(wrk1(:, 1), out(:), tmpi_plan_fftx)
 
             nullify (wrk1, r_out)
 
@@ -271,7 +271,7 @@ contains
             call c_f_pointer(c_loc(in), r_in, shape=[isize_txc_field])
             call c_f_pointer(c_loc(out), c_out, shape=[(nx/2 + 1)*ims_npro_i, nz])
 
-            call TLabMPI_TransposeI_Forward(in(:), c_out(:, 1), tmpi_plan_fftx)
+            call TLabMPI_Trp_ExecI_Forward(in(:), c_out(:, 1), tmpi_plan_fftx)
 
             if (fft_reordering_i) then      ! reorganize a (FFTW make a stride in a already before)
                 isize_line = nx/2 + 1
@@ -291,7 +291,7 @@ contains
 
             call dfftw_execute_dft_c2r(fft_plan_bx, c_out, r_in)
 
-            call TLabMPI_TransposeI_Backward(r_in(:), out(:), tmpi_plan_dx) !tmpi_plan_fftx1)
+            call TLabMPI_Trp_ExecI_Backward(r_in(:), out(:), tmpi_plan_dx) !tmpi_plan_fftx1)
 
             nullify (r_in, c_out)
 
@@ -319,7 +319,7 @@ contains
         ! #######################################################################
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_fftz)
+            call TLabMPI_Trp_ExecK_Forward(in, out, tmpi_plan_fftz)
             p_org(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
             p_dst(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
         else
@@ -349,7 +349,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_fftz)
+            call TLabMPI_Trp_ExecK_Backward(in, out, tmpi_plan_fftz)
         end if
 #endif
 
@@ -371,7 +371,7 @@ contains
         ! #######################################################################
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(in, out, tmpi_plan_fftz)
+            call TLabMPI_Trp_ExecK_Forward(in, out, tmpi_plan_fftz)
             p_org(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
             p_dst(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
         else
@@ -401,7 +401,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(in, out, tmpi_plan_fftz)
+            call TLabMPI_Trp_ExecK_Backward(in, out, tmpi_plan_fftz)
         end if
 #endif
 

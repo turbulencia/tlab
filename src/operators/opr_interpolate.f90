@@ -59,22 +59,22 @@ contains
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            tmpi_plan_x = TLabMPI_Trp_TypeI_Create(nx, npage, message ='type-1 Ox interpolation')
+            tmpi_plan_x = TLabMPI_Trp_PlanI(nx, npage, message ='type-1 Ox interpolation')
 
             npage = nz*ny
             if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            tmpi_plan_xback = TLabMPI_Trp_TypeI_Create(nx_dst, npage, message ='type-2 Ox interpolation')
+            tmpi_plan_xback = TLabMPI_Trp_PlanI(nx_dst, npage, message ='type-2 Ox interpolation')
         end if
 
         if (ims_npro_k > 1) then
             npage = nx_dst*ny_dst
-            tmpi_plan_z = TLabMPI_Trp_TypeK_Create(nz, npage, message ='type-1 Oz interpolation')
+            tmpi_plan_z = TLabMPI_Trp_PlanK(nz, npage, message ='type-1 Oz interpolation')
 
             npage = nx_dst*ny_dst
-            tmpi_plan_zback = TLabMPI_Trp_TypeK_Create(nz_dst, npage, message ='type-2 Oz interpolation')
+            tmpi_plan_zback = TLabMPI_Trp_PlanK(nz_dst, npage, message ='type-2 Oz interpolation')
 
         end if
 #endif
@@ -131,7 +131,7 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             u_tmp2(1:nx*ny*nz) = u_org(1:nx*ny*nz) ! Need additional space for transposition
-            call TLabMPI_TransposeI_Forward(u_tmp2, u_tmp1, tmpi_plan_x)
+            call TLabMPI_Trp_ExecI_Forward(u_tmp2, u_tmp1, tmpi_plan_x)
 
             p_a => u_tmp1
             p_b => u_tmp2
@@ -161,7 +161,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Backward(u_tmp2, u_tmp1, tmpi_plan_xback)
+            call TLabMPI_Trp_ExecI_Backward(u_tmp2, u_tmp1, tmpi_plan_xback)
             u_dst(1:nx_dst*ny*nz) = u_tmp1(1:nx_dst*ny*nz)
         end if
 #endif
@@ -195,7 +195,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(u_org, u_tmp2, tmpi_plan_z)
+            call TLabMPI_Trp_ExecK_Forward(u_org, u_tmp2, tmpi_plan_z)
 
             p_a => u_tmp2
             p_b => u_tmp1
@@ -242,7 +242,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(u_tmp1, u_dst, tmpi_plan_zback)
+            call TLabMPI_Trp_ExecK_Backward(u_tmp1, u_dst, tmpi_plan_zback)
         end if
 #endif
         nullify (p_a, p_b)

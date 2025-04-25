@@ -139,7 +139,7 @@ contains
         use TLab_Memory, only: inb_scal_array
         use TLabMPI_VARS, only: ims_npro_k
         use TLabMPI_VARS, only: ims_bcs_imax, ims_bcs_jmax
-        use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
+        use TLabMPI_Transpose, only: TLabMPI_Trp_PlanK
 #endif
 
 ! -------------------------------------------------------------------
@@ -219,7 +219,7 @@ contains
 
                 ! to be checked
                 ! isize_loc = ims_bcs_imax*jmax
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCX) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, message ='Ox BCs transverse terms. '//trim(adjustl(str))//' planes.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCX) = TLabMPI_Trp_PlanK(kmax, isize_loc, message ='Ox BCs transverse terms. '//trim(adjustl(str))//' planes.')
             end if
 
             if (.not. g(2)%periodic) then ! Required for NRBCs in Oy
@@ -232,7 +232,7 @@ contains
 
                 ! to be checked
                 ! isize_loc = imax*ims_bcs_jmax
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCY) = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, message ='Oy BCs transverse terms. '//trim(adjustl(str))//' planes.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_NRBCY) = TLabMPI_Trp_PlanK(kmax, isize_loc, message ='Oy BCs transverse terms. '//trim(adjustl(str))//' planes.')
             end if
 #endif
 

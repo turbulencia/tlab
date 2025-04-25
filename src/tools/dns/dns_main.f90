@@ -11,7 +11,7 @@ program DNS
     use TLab_Arrays
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use IO_Fields
     use TLab_Grid
@@ -64,7 +64,7 @@ program DNS
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
     call IBM_READ_INI(ifile)

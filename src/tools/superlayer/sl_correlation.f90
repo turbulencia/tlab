@@ -15,7 +15,7 @@ program SL_CORRELATION
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use IO_Fields
@@ -65,7 +65,7 @@ program SL_CORRELATION
     call TLab_Initialize_Parameters('tlab.ini')
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
 
     call NavierStokes_Initialize_Parameters(ifile)

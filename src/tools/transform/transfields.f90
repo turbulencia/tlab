@@ -19,7 +19,7 @@ program TRANSFIELDS
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics
@@ -83,7 +83,7 @@ program TRANSFIELDS
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
 
     call TLab_Grid_Read(gfile, x, y, z)

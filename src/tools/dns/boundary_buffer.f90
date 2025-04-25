@@ -32,7 +32,7 @@ module BOUNDARY_BUFFER
     use mpi_f08
     use TLabMPI_VARS
     use TLabMPI_PROCS, only: TLabMPI_Panic
-    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
+    use TLabMPI_Transpose, only: TLabMPI_Trp_PlanK
 #endif
 
     implicit none
@@ -372,11 +372,11 @@ contains
             select case (idir)
             case (1)
                 idummy = item%size*jmax
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, message ='Ox BCs explicit filter.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_OUTBCS) = TLabMPI_Trp_PlanK(kmax, idummy, message ='Ox BCs explicit filter.')
 
             case (2)
                 idummy = imax*item%size
-                ! ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_TypeK_Create(kmax, idummy, message ='Oy BCs explicit filter.')
+                ! ims_trp_plan_k(TLAB_MPI_TRP_K_TOPBCS) = TLabMPI_Trp_PlanK(kmax, idummy, message ='Oy BCs explicit filter.')
 
             end select
         end if

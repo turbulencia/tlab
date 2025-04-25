@@ -216,7 +216,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(s, result, tmpi_plan_dx)
+            call TLabMPI_Trp_ExecI_Forward(s, result, tmpi_plan_dx)
             p_a => result
             p_b => tmp1
             p_c => wrk3d
@@ -264,7 +264,7 @@ contains
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Backward(p_c, result, tmpi_plan_dx)
+            call TLabMPI_Trp_ExecI_Backward(p_c, result, tmpi_plan_dx)
         end if
 #endif
 
@@ -385,7 +385,7 @@ contains
         ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Forward(s, tmp1, tmpi_plan_dz)
+            call TLabMPI_Trp_ExecK_Forward(s, tmp1, tmpi_plan_dz)
             p_a => tmp1
             p_b => result
             p_c => wrk3d
@@ -422,7 +422,7 @@ contains
         ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
-            call TLabMPI_TransposeK_Backward(p_c, result, tmpi_plan_dz)
+            call TLabMPI_Trp_ExecK_Backward(p_c, result, tmpi_plan_dz)
         end if
 #endif
 

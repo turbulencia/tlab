@@ -45,8 +45,8 @@ subroutine OPR_CHECK()
 #ifdef USE_MPI
     if (ims_npro_i > 1) then
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
-        call TLabMPI_TransposeI_Forward(q(:, 1), wrk3d, tmpi_plan_dx)
-        call TLabMPI_TransposeI_Backward(wrk3d, q(:, 2), tmpi_plan_dx)
+        call TLabMPI_Trp_ExecI_Forward(q(:, 1), wrk3d, tmpi_plan_dx)
+        call TLabMPI_Trp_ExecI_Backward(wrk3d, q(:, 2), tmpi_plan_dx)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt
@@ -71,9 +71,9 @@ subroutine OPR_CHECK()
     if (ims_npro_k > 1) then
         call SYSTEM_CLOCK(t_srt, PROC_CYCLES, MAX_CYCLES)
         idummy = itime; itime = -1  ! set itime to -1 for this call to trigger interruption
-        call TLabMPI_TransposeK_Forward(q(:, 1), wrk3d, tmpi_plan_dz)
+        call TLabMPI_Trp_ExecK_Forward(q(:, 1), wrk3d, tmpi_plan_dz)
         itime = idummy
-        call TLabMPI_TransposeK_Backward(wrk3d, q(:, 2), tmpi_plan_dz)
+        call TLabMPI_Trp_ExecK_Backward(wrk3d, q(:, 2), tmpi_plan_dz)
         call SYSTEM_CLOCK(t_end, PROC_CYCLES, MAX_CYCLES)
 
         idummy = t_end - t_srt

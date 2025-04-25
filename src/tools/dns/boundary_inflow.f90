@@ -34,7 +34,7 @@ module BOUNDARY_INFLOW
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_k
     use TLabMPI_PROCS, only: TLabMPI_Panic
-    use TLabMPI_Transpose, only: TLabMPI_Trp_TypeK_Create
+    use TLabMPI_Transpose, only: TLabMPI_Trp_PlanK
 #endif
     use OPR_PARTIAL
 
@@ -113,7 +113,7 @@ contains
 #ifdef USE_MPI
         if (FilterInflow(1)%type /= DNS_FILTER_NONE) then !  Required for inflow explicit filter
             isize_loc = FilterInflow(1)%size*FilterInflow(2)%size
-            FilterInflow(3)%trp_plan = TLabMPI_Trp_TypeK_Create(kmax, isize_loc, message ='inflow filter.')
+            FilterInflow(3)%trp_plan = TLabMPI_Trp_PlanK(kmax, isize_loc, message ='inflow filter.')
         end if
 #endif
 

@@ -17,7 +17,7 @@ program PARTICLE_BUILD_PDF
     use IO_Fields
 #ifdef USE_MPI
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
@@ -45,7 +45,7 @@ program PARTICLE_BUILD_PDF
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
     call NavierStokes_Initialize_Parameters(ifile)
     call Thermodynamics_Initialize_Parameters(ifile)

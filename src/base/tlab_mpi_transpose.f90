@@ -1,6 +1,6 @@
 #include "dns_error.h"
 
-! Circular transposition across directional communicators
+! Circular transposition within directional communicators
 module TLabMPI_Transpose
     use TLab_Constants, only: lfile, efile, wp, dp, sp, wi, sizeofreal
     use TLab_Memory, only: imax, jmax, kmax, isize_wrk3d
@@ -11,10 +11,10 @@ module TLabMPI_Transpose
     implicit none
     private
 
-    public :: TLabMPI_Transpose_Initialize
-    public :: TLabMPI_Trp_TypeI_Create, TLabMPI_Trp_TypeK_Create
-    public :: TLabMPI_TransposeK_Forward, TLabMPI_TransposeK_Backward
-    public :: TLabMPI_TransposeI_Forward, TLabMPI_TransposeI_Backward
+    public :: TLabMPI_Trp_Initialize
+    public :: TLabMPI_Trp_PlanI, TLabMPI_Trp_PlanK
+    public :: TLabMPI_Trp_ExecK_Forward, TLabMPI_Trp_ExecK_Backward
+    public :: TLabMPI_Trp_ExecI_Forward, TLabMPI_Trp_ExecI_Backward
 
     type, public :: tmpi_transpose_dt
         ! sequence
@@ -47,25 +47,25 @@ module TLabMPI_Transpose
     type(MPI_Status), allocatable :: status(:)
     type(MPI_Request), allocatable :: request(:)
 
-    interface TLabMPI_TransposeK_Forward
-        module procedure TLabMPI_TransposeK_Forward_Real, TLabMPI_TransposeK_Forward_Complex
-    end interface TLabMPI_TransposeK_Forward
-    interface TLabMPI_TransposeK_Backward
-        module procedure TLabMPI_TransposeK_Backward_Real, TLabMPI_TransposeK_Backward_Complex
-    end interface TLabMPI_TransposeK_Backward
+    interface TLabMPI_Trp_ExecK_Forward
+        module procedure TLabMPI_Trp_ExecK_Forward_Real, TLabMPI_Trp_ExecK_Forward_Complex
+    end interface TLabMPI_Trp_ExecK_Forward
+    interface TLabMPI_Trp_ExecK_Backward
+        module procedure TLabMPI_Trp_ExecK_Backward_Real, TLabMPI_Trp_ExecK_Backward_Complex
+    end interface TLabMPI_Trp_ExecK_Backward
 
-    interface TLabMPI_TransposeI_Forward
-        module procedure TLabMPI_TransposeI_Forward_Real, TLabMPI_TransposeI_Forward_Complex
-    end interface TLabMPI_TransposeI_Forward
-    interface TLabMPI_TransposeI_Backward
-        module procedure TLabMPI_TransposeI_Backward_Real, TLabMPI_TransposeI_Backward_Complex
-    end interface TLabMPI_TransposeI_Backward
+    interface TLabMPI_Trp_ExecI_Forward
+        module procedure TLabMPI_Trp_ExecI_Forward_Real, TLabMPI_Trp_ExecI_Forward_Complex
+    end interface TLabMPI_Trp_ExecI_Forward
+    interface TLabMPI_Trp_ExecI_Backward
+        module procedure TLabMPI_Trp_ExecI_Backward_Real, TLabMPI_Trp_ExecI_Backward_Complex
+    end interface TLabMPI_Trp_ExecI_Backward
 
 contains
 
     ! ######################################################################
     ! ######################################################################
-    subroutine TLabMPI_Transpose_Initialize(inifile)
+    subroutine TLabMPI_Trp_Initialize(inifile)
         character(len=*), intent(in) :: inifile
 
         ! -----------------------------------------------------------------------
@@ -188,21 +188,21 @@ contains
         ! Create basic transposition plans used for partial X and partial Z; could be in another module...
         if (ims_npro_i > 1) then
             npage = kmax*jmax
-            tmpi_plan_dx = TLabMPI_Trp_TypeI_Create(imax, npage, message='Ox derivatives.')
+            tmpi_plan_dx = TLabMPI_Trp_PlanI(imax, npage, message='Ox derivatives.')
         end if
 
         if (ims_npro_k > 1) then
             npage = imax*jmax
-            tmpi_plan_dz = TLabMPI_Trp_TypeK_Create(kmax, npage, message='Oz derivatives.')
+            tmpi_plan_dz = TLabMPI_Trp_PlanK(kmax, npage, message='Oz derivatives.')
         end if
 
         return
-    end subroutine TLabMPI_Transpose_Initialize
+    end subroutine TLabMPI_Trp_Initialize
 
     ! ######################################################################
     ! ######################################################################
     ! Pointers and types for transposition across processors
-    function TLabMPI_Trp_TypeI_Create(nmax, npage, locStride, locType, message) result(trp_plan)
+    function TLabMPI_Trp_PlanI(nmax, npage, locStride, locType, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in), optional :: locStride
         type(MPI_Datatype), intent(in), optional :: locType
@@ -267,11 +267,11 @@ contains
         end if
 
         return
-    end function TLabMPI_Trp_TypeI_Create
+    end function TLabMPI_Trp_PlanI
 
     !########################################################################
     !########################################################################
-    function TLabMPI_Trp_TypeK_Create(nmax, npage, locStride, locType, message) result(trp_plan)
+    function TLabMPI_Trp_PlanK(nmax, npage, locStride, locType, message) result(trp_plan)
         integer(wi), intent(in) :: npage, nmax
         integer(wi), intent(in), optional :: locStride
         type(MPI_Datatype), intent(in), optional :: locType
@@ -336,11 +336,11 @@ contains
         end if
 
         return
-    end function TLabMPI_Trp_TypeK_Create
+    end function TLabMPI_Trp_PlanK
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Forward_Real(a, b, trp_plan)
+    subroutine TLabMPI_Trp_ExecK_Forward_Real(a, b, trp_plan)
         real(wp), intent(in) :: a(*)
         real(wp), intent(out) :: b(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -381,11 +381,11 @@ contains
 #endif
 
         return
-    end subroutine TLabMPI_TransposeK_Forward_Real
+    end subroutine TLabMPI_Trp_ExecK_Forward_Real
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Forward_Complex(a, b, trp_plan)
+    subroutine TLabMPI_Trp_ExecK_Forward_Complex(a, b, trp_plan)
         complex(wp), intent(in) :: a(*)
         complex(wp), intent(out) :: b(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -396,11 +396,11 @@ contains
                                       ims_comm_z, trp_sizBlock_k, trp_mode_k)
 
         return
-    end subroutine TLabMPI_TransposeK_Forward_Complex
+    end subroutine TLabMPI_Trp_ExecK_Forward_Complex
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Backward_Real(b, a, trp_plan)
+    subroutine TLabMPI_Trp_ExecK_Backward_Real(b, a, trp_plan)
         real(wp), intent(in) :: b(*)
         real(wp), intent(out) :: a(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -440,11 +440,11 @@ contains
 #endif
 
         return
-    end subroutine TLabMPI_TransposeK_Backward_Real
+    end subroutine TLabMPI_Trp_ExecK_Backward_Real
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeK_Backward_Complex(b, a, trp_plan)
+    subroutine TLabMPI_Trp_ExecK_Backward_Complex(b, a, trp_plan)
         complex(wp), intent(in) :: b(*)
         complex(wp), intent(out) :: a(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -455,11 +455,11 @@ contains
                                       ims_comm_z, trp_sizBlock_k, trp_mode_k)
 
         return
-    end subroutine TLabMPI_TransposeK_Backward_Complex
+    end subroutine TLabMPI_Trp_ExecK_Backward_Complex
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Forward_Real(a, b, trp_plan)
+    subroutine TLabMPI_Trp_ExecI_Forward_Real(a, b, trp_plan)
         real(wp), dimension(*), intent(in) :: a
         real(wp), dimension(*), intent(out) :: b
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -487,11 +487,11 @@ contains
         end if
 
         return
-    end subroutine TLabMPI_TransposeI_Forward_Real
+    end subroutine TLabMPI_Trp_ExecI_Forward_Real
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Forward_Complex(a, b, trp_plan)
+    subroutine TLabMPI_Trp_ExecI_Forward_Complex(a, b, trp_plan)
         complex(wp), intent(in) :: a(*)
         complex(wp), intent(out) :: b(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -502,11 +502,11 @@ contains
                                       ims_comm_x, trp_sizBlock_i, trp_mode_i)
 
         return
-    end subroutine TLabMPI_TransposeI_Forward_Complex
+    end subroutine TLabMPI_Trp_ExecI_Forward_Complex
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Backward_Real(b, a, trp_plan)
+    subroutine TLabMPI_Trp_ExecI_Backward_Real(b, a, trp_plan)
         use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
         real(wp), intent(in) :: b(*)
         real(wp), intent(out) :: a(*)
@@ -535,11 +535,11 @@ contains
         end if
 
         return
-    end subroutine TLabMPI_TransposeI_Backward_Real
+    end subroutine TLabMPI_Trp_ExecI_Backward_Real
 
     !########################################################################
     !########################################################################
-    subroutine TLabMPI_TransposeI_Backward_Complex(b, a, trp_plan)
+    subroutine TLabMPI_Trp_ExecI_Backward_Complex(b, a, trp_plan)
         complex(wp), intent(in) :: b(*)
         complex(wp), intent(out) :: a(*)
         type(tmpi_transpose_dt), intent(in) :: trp_plan
@@ -550,7 +550,7 @@ contains
                                       ims_comm_x, trp_sizBlock_i, trp_mode_i)
 
         return
-    end subroutine TLabMPI_TransposeI_Backward_Complex
+    end subroutine TLabMPI_Trp_ExecI_Backward_Complex
 
     !########################################################################
     !########################################################################

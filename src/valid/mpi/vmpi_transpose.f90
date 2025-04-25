@@ -109,7 +109,7 @@ program VMPI
     end if
 
     call TLabMPI_Initialize(ifile)
-call TLabMPI_Transpose_Initialize(ifile)
+call TLabMPI_Trp_Initialize(ifile)
 
     allocate (a(imax*jmax*kmax, 18)) ! Number of 3d arrays commonly used in the code
     allocate (wrk3d(imax*jmax*kmax))
@@ -124,13 +124,13 @@ call TLabMPI_Transpose_Initialize(ifile)
 
     if (ims_npro_k > 1) then
         id = TLAB_MPI_TRP_K_PARTIAL
-        call TLabMPI_TransposeK_Forward(a(1, 1), wrk3d, id)
-        call TLabMPI_TransposeK_Backward(wrk3d, a(1, 2), id)
+        call TLabMPI_Trp_ExecK_Forward(a(1, 1), wrk3d, id)
+        call TLabMPI_Trp_ExecK_Backward(wrk3d, a(1, 2), id)
     end if
     if (ims_npro_i > 1) then
         id = TLAB_MPI_TRP_I_PARTIAL
-        call TLabMPI_TransposeI_Forward(a(1, 1), wrk3d, id)
-        call TLabMPI_TransposeI_Backward(wrk3d, a(1, 2), id)
+        call TLabMPI_Trp_ExecI_Forward(a(1, 1), wrk3d, id)
+        call TLabMPI_Trp_ExecI_Backward(wrk3d, a(1, 2), id)
     end if
 
     if (IMS_PRO == 0) then
@@ -149,8 +149,8 @@ call TLabMPI_Transpose_Initialize(ifile)
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
-            call TLabMPI_TransposeI_Forward(a(1, 1), wrk3d, id)
-            call TLabMPI_TransposeI_Backward(wrk3d, a(1, 2), id)
+            call TLabMPI_Trp_ExecI_Forward(a(1, 1), wrk3d, id)
+            call TLabMPI_Trp_ExecI_Backward(wrk3d, a(1, 2), id)
 
             call system_clock(t_end, PROC_CYCLES, MAX_CYCLES)
 
@@ -179,8 +179,8 @@ call TLabMPI_Transpose_Initialize(ifile)
 
             call system_clock(t_srt, PROC_CYCLES, MAX_CYCLES)
 
-            call TLabMPI_TransposeK_Forward(a(1, 1), wrk3d, id)
-            call TLabMPI_TransposeK_Backward(wrk3d, a(1, 2), id)
+            call TLabMPI_Trp_ExecK_Forward(a(1, 1), wrk3d, id)
+            call TLabMPI_Trp_ExecK_Backward(wrk3d, a(1, 2), id)
 
             call system_clock(t_end, PROC_CYCLES, MAX_CYCLES)
 
@@ -431,7 +431,7 @@ end subroutine TLabMPI_TypeK_Create
 
 ! ###################################################################
 ! ###################################################################
-subroutine TLabMPI_TransposeK_Forward(a, b, dsend, drecv, tsend, trecv)
+subroutine TLabMPI_Trp_ExecK_Forward(a, b, dsend, drecv, tsend, trecv)
 
     use TLabMPI_VARS, only: ims_npro_k, ims_pro_k
     use TLabMPI_VARS, only: ims_comm_z
@@ -489,11 +489,11 @@ subroutine TLabMPI_TransposeK_Forward(a, b, dsend, drecv, tsend, trecv)
     call TLabMPI_TagUpdate
 
     return
-end subroutine TLabMPI_TransposeK_Forward
+end subroutine TLabMPI_Trp_ExecK_Forward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TransposeI_Forward(a, b, dsend, drecv, tsend, trecv)
+subroutine TLabMPI_Trp_ExecI_Forward(a, b, dsend, drecv, tsend, trecv)
 
     use TLabMPI_VARS, only: ims_npro_i, ims_pro_i
     use TLabMPI_VARS, only: ims_comm_x
@@ -542,11 +542,11 @@ subroutine TLabMPI_TransposeI_Forward(a, b, dsend, drecv, tsend, trecv)
     call TLabMPI_TagUpdate
 
     return
-end subroutine TLabMPI_TransposeI_Forward
+end subroutine TLabMPI_Trp_ExecI_Forward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TransposeK_Backward(b, a, dsend, drecv, tsend, trecv)
+subroutine TLabMPI_Trp_ExecK_Backward(b, a, dsend, drecv, tsend, trecv)
 
     use TLabMPI_VARS, only: ims_npro_k, ims_pro_k
     use TLabMPI_VARS, only: ims_comm_z
@@ -604,11 +604,11 @@ subroutine TLabMPI_TransposeK_Backward(b, a, dsend, drecv, tsend, trecv)
     call TLabMPI_TagUpdate
 
     return
-end subroutine TLabMPI_TransposeK_Backward
+end subroutine TLabMPI_Trp_ExecK_Backward
 
 !########################################################################
 !########################################################################
-subroutine TLabMPI_TransposeI_Backward(b, a, dsend, drecv, tsend, trecv)
+subroutine TLabMPI_Trp_ExecI_Backward(b, a, dsend, drecv, tsend, trecv)
 
     use TLabMPI_VARS, only: ims_npro_i, ims_pro_i
     use TLabMPI_VARS, only: ims_comm_x
@@ -657,7 +657,7 @@ subroutine TLabMPI_TransposeI_Backward(b, a, dsend, drecv, tsend, trecv)
     call TLabMPI_TagUpdate
 
     return
-end subroutine TLabMPI_TransposeI_Backward
+end subroutine TLabMPI_Trp_ExecI_Backward
 
 !########################################################################
 !########################################################################

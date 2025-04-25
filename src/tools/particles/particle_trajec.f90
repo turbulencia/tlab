@@ -34,7 +34,7 @@ program PARTICLE_TRAJEC
     use TLabMPI_VARS, only: ims_err
     use TLabMPI_VARS, only: ims_pro, ims_npro
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
@@ -78,7 +78,7 @@ use Rotation, only: Rotation_Initialize
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
 

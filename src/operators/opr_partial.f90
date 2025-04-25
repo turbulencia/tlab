@@ -131,7 +131,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
-            call TLabMPI_TransposeI_Forward(u, result, tmpi_plan_dx)
+            call TLabMPI_Trp_ExecI_Forward(u, result, tmpi_plan_dx)
             p_a => result
             p_b => wrk3d
             p_c => result
@@ -219,9 +219,9 @@ contains
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
             if (type == OPR_P2_P1) then ! only if you really want first derivative back
-                call TLabMPI_TransposeI_Backward(p_c, tmp1, tmpi_plan_dx)
+                call TLabMPI_Trp_ExecI_Backward(p_c, tmp1, tmpi_plan_dx)
             end if
-            call TLabMPI_TransposeI_Backward(p_b, result, tmpi_plan_dx)
+            call TLabMPI_Trp_ExecI_Backward(p_b, result, tmpi_plan_dx)
         end if
 #endif
 
@@ -268,7 +268,7 @@ contains
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Forward(u, result, tmpi_plan_dz)
+                call TLabMPI_Trp_ExecK_Forward(u, result, tmpi_plan_dz)
                 p_a => result
                 if (any([OPR_P2, OPR_P2_P1] == type)) then
                     p_b => tmp1
@@ -331,9 +331,9 @@ contains
 ! Put arrays back in the order in which they came in
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
-                call TLabMPI_TransposeK_Backward(p_b, result, tmpi_plan_dz)
+                call TLabMPI_Trp_ExecK_Backward(p_b, result, tmpi_plan_dz)
                 if (type == OPR_P2_P1) then
-                    call TLabMPI_TransposeK_Backward(p_c, tmp1, tmpi_plan_dz)
+                    call TLabMPI_Trp_ExecK_Backward(p_c, tmp1, tmpi_plan_dz)
                 end if
             end if
 #endif

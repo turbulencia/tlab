@@ -22,7 +22,7 @@ program VISUALS
     use mpi_f08
     use TLabMPI_VARS, only: ims_pro, ims_pro_i, ims_pro_k, ims_comm_x, ims_comm_z
     use TLabMPI_PROCS, only: TLabMPI_Initialize
-    use TLabMPI_Transpose, only: TLabMPI_Transpose_Initialize
+    use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
     use TLab_Memory, only: isize_wrk3d
 #endif
     use FDM, only: g, FDM_Initialize
@@ -112,7 +112,7 @@ program VISUALS
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
     call Particle_Initialize_Parameters(ifile)
 

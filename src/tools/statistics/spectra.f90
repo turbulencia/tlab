@@ -135,7 +135,7 @@ program SPECTRA
     call TLab_Initialize_Parameters(ifile)
 #ifdef USE_MPI
     call TLabMPI_Initialize(ifile)
-    call TLabMPI_Transpose_Initialize(ifile)
+    call TLabMPI_Trp_Initialize(ifile)
 #endif
 
     call TLab_Grid_Read(gfile, x, y, z)
@@ -335,7 +335,7 @@ program SPECTRA
             isize_aux = ims_npro_k*(jmax_aux/ims_npro_k + 1)
         end if
 
-        tmpi_plan_z = TLabMPI_Trp_TypeK_Create(kmax, isize_aux, message='type-2 Oz spectra integration.')
+        tmpi_plan_z = TLabMPI_Trp_PlanK(kmax, isize_aux, message='type-2 Oz spectra integration.')
 
     end if
 #endif
