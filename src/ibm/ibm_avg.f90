@@ -56,7 +56,7 @@ subroutine IBM_AVG_GAMMA(gamma_0, gamma_1, eps, tmp1)
 
     ! ================================================================== !
     ! horizontal average - compute gamma_1
-    call AVG_IK_V(imax, jmax, kmax, jmax, eps, gamma_1, tmp1(1:jmax))
+    call AVG_IK_V(imax, jmax, kmax, eps, gamma_1, tmp1(1:jmax))
 
     gamma_0(:) = 1.0_wp - gamma_1(:) 
 

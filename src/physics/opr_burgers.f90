@@ -1,19 +1,18 @@
 #include "dns_const.h"
 #include "dns_error.h"
-#ifdef USE_MPI
 
-#endif
+! Apply the non-linear operator N(u)(s) = visc* d^2/dx^2 s - u d/dx s
 
 module OPR_Burgers
     use TLab_Constants, only: wp, wi, efile, lfile
-    use FDM, only: fdm_dt, g
     use IBM_VARS, only: ibm_burgers
+    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Arrays, only: wrk2d, wrk3d
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_Transpose
 #endif
-    use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use TLab_Arrays, only: wrk2d, wrk3d
+    use FDM, only: fdm_dt, g
     use NavierStokes, only: visc, schmidt
     use OPR_FILTERS
     use OPR_Partial
@@ -26,11 +25,11 @@ module OPR_Burgers
     public :: OPR_Burgers_Y
     public :: OPR_Burgers_Z
 
-    ! Apply the non-linear operator N(u)(s) = visc* d^2/dx^2 s - u d/dx s
     ! the argument ivel indicates 2 options:
     integer, parameter, public :: OPR_B_SELF = 0        ! velocity component is the scalar itself, the transposed velocity is returned
     integer, parameter, public :: OPR_B_U_IN = 1        ! velocity component is passed through u, or u_t if transposed required
 
+    ! -----------------------------------------------------------------------
     type(filter_dt) :: Dealiasing(3)
     real(wp), allocatable, target :: wrkdea(:, :)       ! Work arrays for dealiasing (scratch space)
 

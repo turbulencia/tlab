@@ -114,7 +114,7 @@ program VPOISSON
         a = f
         ! For Neumann conditions, we need to satisfy the compatibility constraint dpdy_top-dpdy_bottom=int f
         ! mean = AVG_IK(imax, 1, kmax, 1, bcs_hb)
-        ! call AVG_IK_V(imax, jmax, kmax, jmax, a, wrk1d(:, 1), wrk1d(:, 2))
+        ! call AVG_IK_V(imax, jmax, kmax, a, wrk1d(:, 1), wrk1d(:, 2))
         ! delta = mean + Int_Simpson(wrk1d(1:jmax,1), g(2)%nodes(1:jmax))
         ! mean = AVG_IK(imax, 1, kmax, 1, bcs_ht)
         ! bcs_ht = bcs_ht - mean + delta

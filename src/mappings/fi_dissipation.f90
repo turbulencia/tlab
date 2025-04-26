@@ -34,7 +34,7 @@ subroutine FI_DISSIPATION(nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
 ! 11
     p_wrk3d = 2.0_wp*tmp1 - tmp4 ! )*vis
     ! if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
         end do
@@ -44,8 +44,8 @@ subroutine FI_DISSIPATION(nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
 ! 22
     p_wrk3d = 2.0_wp*tmp2 - tmp4 ! )*vis
     ! if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
-        call AVG_IK_V(nx, ny, nz, ny, v, wrk1d(1, 3), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, v, wrk1d(1, 3), wrk1d(1, 2))
         call OPR_Partial_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
@@ -57,7 +57,7 @@ subroutine FI_DISSIPATION(nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
 ! 33
     p_wrk3d = 2.0_wp*tmp3 - tmp4 ! )*vis
     ! if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
         end do
@@ -71,8 +71,8 @@ subroutine FI_DISSIPATION(nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     ! if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
-        call AVG_IK_V(nx, ny, nz, ny, u, wrk1d(1, 3), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, u, wrk1d(1, 3), wrk1d(1, 2))
         call OPR_Partial_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
@@ -87,7 +87,7 @@ subroutine FI_DISSIPATION(nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     ! if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)
         end do
@@ -100,8 +100,8 @@ subroutine FI_DISSIPATION(nx, ny, nz, u, v, w, eps, tmp1, tmp2, tmp3, tmp4)
 
     p_wrk3d = tmp1 + tmp2 ! )*vis
     ! if (flag == 1) then
-        call AVG_IK_V(nx, ny, nz, ny, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
-        call AVG_IK_V(nx, ny, nz, ny, w, wrk1d(1, 3), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, p_wrk3d, wrk1d(1, 1), wrk1d(1, 2))
+        call AVG_IK_V(nx, ny, nz, w, wrk1d(1, 3), wrk1d(1, 2))
         call OPR_Partial_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 3), wrk1d(1, 2))
         do j = 1, ny
             p_wrk3d(:, j, :) = p_wrk3d(:, j, :) - wrk1d(j, 1)

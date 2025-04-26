@@ -298,11 +298,11 @@ contains
 !########################################################################
 !########################################################################
 ! Vector form
-    subroutine AVG_IK_V(nx, ny, nz, jm, a, avg, wrk)
-        integer(wi), intent(in)    :: nx, ny, nz, jm
+    subroutine AVG_IK_V(nx, ny, nz, a, avg, wrk)
+        integer(wi), intent(in)    :: nx, ny, nz
         real(wp),    intent(in)    :: a(nx, ny, nz)
-        real(wp),    intent(out)   :: avg(jm)
-        real(wp),    intent(inout) :: wrk(jm)
+        real(wp),    intent(out)   :: avg(ny)
+        real(wp),    intent(inout) :: wrk(ny)
 
         ! -------------------------------------------------------------------
         integer(wi) i, j, k

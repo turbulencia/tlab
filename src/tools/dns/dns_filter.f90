@@ -41,10 +41,10 @@ subroutine DNS_FILTER()
 
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
         call FI_RTKE(imax, jmax, kmax, q, wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, Tke0(1), wrk1d)
+        call AVG_IK_V(imax, jmax, kmax, wrk3d, Tke0(1), wrk1d)
         call FI_DISSIPATION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
-        call AVG_IK_V(imax, jmax, kmax, jmax, txc(:, 1), Eps0(1), wrk1d)
+        call AVG_IK_V(imax, jmax, kmax, txc(:, 1), Eps0(1), wrk1d)
     end if
 
     ! -------------------------------------------------------------------
@@ -89,10 +89,10 @@ subroutine DNS_FILTER()
     ! statistics
     if (imode_sim == DNS_MODE_TEMPORAL .and. mod(itime - nitera_first, nitera_stats) == 0) then
         call FI_RTKE(imax, jmax, kmax, q, wrk3d)
-        call AVG_IK_V(imax, jmax, kmax, jmax, wrk3d, Tke1(1), wrk1d)
+        call AVG_IK_V(imax, jmax, kmax, wrk3d, Tke1(1), wrk1d)
         call FI_DISSIPATION(imax, jmax, kmax, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5))
         txc(1:isize_field, 1) = txc(1:isize_field, 1)*visc
-        call AVG_IK_V(imax, jmax, kmax, jmax, txc, Eps1(1), wrk1d)
+        call AVG_IK_V(imax, jmax, kmax, txc, Eps1(1), wrk1d)
 
         write (fname, *) itime; fname = 'kin'//trim(adjustl(fname))
         call IO_WRITE_AVERAGES(fname, itime, rtime, jmax, 4, 1, g(2)%nodes, varnames, groupnames, mean)
@@ -135,25 +135,25 @@ subroutine FI_RTKE(nx, ny, nz, q, ke)
     ! #######################################################################
     select case (nse_eqns)
     case (DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL)
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 5), rR(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, q(1, 1, 1, 5), rR(1), aux(1))
 
         ke = q(:, :, :, 5)*q(:, :, :, 1)
-        call AVG_IK_V(nx, ny, nz, ny, ke, fU(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ke, fU(1), aux(1))
         fU(:) = fU(:)/rR(:)
 
         ke = q(:, :, :, 5)*q(:, :, :, 2)
-        call AVG_IK_V(nx, ny, nz, ny, ke, fV(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ke, fV(1), aux(1))
         fV(:) = fV(:)/rR(:)
 
         ke = q(:, :, :, 5)*q(:, :, :, 3)
-        call AVG_IK_V(nx, ny, nz, ny, ke, fW(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, ke, fW(1), aux(1))
         fW(:) = fW(:)/rR(:)
 
     case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
         rR(:) = rbackground(:)
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 1), fU(1), aux(1))
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 2), fV(1), aux(1))
-        call AVG_IK_V(nx, ny, nz, ny, q(1, 1, 1, 3), fW(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, q(1, 1, 1, 1), fU(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, q(1, 1, 1, 2), fV(1), aux(1))
+        call AVG_IK_V(nx, ny, nz, q(1, 1, 1, 3), fW(1), aux(1))
 
     end select
 
