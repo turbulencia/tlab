@@ -125,17 +125,11 @@ contains
         ! Put arrays back in the order in which they came in
 #ifdef USE_ESSL
         call DGETMO(p_c, nyz, nyz, g%size, p_b, g%size)
+        if (type == OPR_P2_P1) call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
 #else
         call TLab_Transpose(p_c, nyz, g%size, nyz, p_b, g%size)
+        if (type == OPR_P2_P1) call TLab_Transpose(p_d, nyz, g%size, nyz, p_c, g%size)
 #endif
-
-        if (type == OPR_P2_P1) then
-#ifdef USE_ESSL
-            call DGETMO(p_d, nyz, nyz, g%size, p_c, g%size)
-#else
-            call TLab_Transpose(p_d, nyz, g%size, nyz, p_c, g%size)
-#endif
-        end if
 
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
@@ -364,16 +358,11 @@ contains
             if (nz > 1) then
 #ifdef USE_ESSL
                 call DGETMO(p_b, nz, nz, nxy, result, nxy)
+                if (type == OPR_P2_P1) call DGETMO(p_c, nz, nz, nxy, tmp1, nxy)
 #else
                 call TLab_Transpose(p_b, nz, nxy, nz, result, nxy)
+                if (type == OPR_P2_P1) call TLab_Transpose(p_c, nz, nxy, nz, tmp1, nxy)
 #endif
-                if (type == OPR_P2_P1) then
-#ifdef USE_ESSL
-                    call DGETMO(p_c, nz, nz, nxy, tmp1, nxy)
-#else
-                    call TLab_Transpose(p_c, nz, nxy, nz, tmp1, nxy)
-#endif
-                end if
             end if
 
             nullify (p_a, p_b)

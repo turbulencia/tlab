@@ -9,7 +9,7 @@ program VPARTIAL
     use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
     use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_ComX_Direct
-    use FDM_PROCS
+    use FDM_Base
     use FDM_MatMul
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian

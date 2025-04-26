@@ -5,7 +5,7 @@
 ! Based on Lagrange polynomial for non-uniform grids
 ! Calculation of RHS for different stencil lengths and bcs (periodic|biased)
 !########################################################################
-module FDM_PROCS
+module FDM_Base
     use TLab_Constants, only: wp, wi, BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -390,4 +390,4 @@ contains
         return
     end subroutine FDM_Bcs_Reduce
 
-end module FDM_PROCS
+end module FDM_Base

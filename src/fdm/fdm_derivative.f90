@@ -5,7 +5,7 @@ module FDM_Derivative
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_NONE, BCS_PERIODIC
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM_MatMul
-    use FDM_PROCS
+    use FDM_Base
     use FDM_ComX_Direct
     use FDM_Com1_Jacobian
     use FDM_Com2_Jacobian
