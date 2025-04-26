@@ -78,7 +78,7 @@ contains
     !########################################################################
     subroutine LargeScaleForcing_Subsidence(locProps, nx, ny, nz, a, source)
         use TLab_Arrays, only: wrk1d
-        use OPR_PARTIAL, only: OPR_PARTIAL_Y
+        use OPR_Partial, only: OPR_Partial_Y
         use Averages, only: AVG1V2D_V
         use FDM, only: g
 
@@ -98,7 +98,7 @@ contains
         case (TYPE_SUB_CONSTANT_LOCAL)
             wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*locProps%parameters(1)      ! subsidence velocity
 
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), a, source)
+            call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), a, source)
 
             do j = 1, ny
                 source(:, j, :) = source(:, j, :)*wrk1d(j, 1)
@@ -108,7 +108,7 @@ contains
             wrk1d(1:ny, 1) = g(2)%nodes(1:ny)*locProps%parameters(1)      ! subsidence velocity
 
             call AVG1V2D_V(nx, ny, nz, 1, a, wrk1d(:, 2), wrk1d(1, 3))     ! Calculate averaged scalar into wrk1d(:,2)
-            call OPR_PARTIAL_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 2), wrk1d(1, 3))
+            call OPR_Partial_Y(OPR_P1, 1, ny, 1, bcs, g(2), wrk1d(1, 2), wrk1d(1, 3))
 
             do j = 1, ny
                 source(:, j, :) = wrk1d(j, 3)*wrk1d(j, 1)

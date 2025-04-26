@@ -26,13 +26,7 @@ module BOUNDARY_BCS
 
     logical, public :: BcsDrift
 
-    ! type arrays
-    !     real(wp), allocatable :: lu(:, :)
-    !     real(wp), allocatable :: rhs(:, :)
-    ! end type arrays
-    ! type(arrays) bcs(3)
     integer(wi) nmin, nmax, nsize
-    ! real(wp) rhs1_b(4, 7), rhs1_t(4, 7)
     public :: BOUNDARY_BCS_NEUMANN_Y
 
     public :: BOUNDARY_BCS_SURFACE_Y
@@ -178,33 +172,9 @@ contains
         allocate (BcsScalKmax%ref(imax, jmax, inb_scal_array + 1))
 
 ! #######################################################################
-! Incompressible mode
-! #######################################################################
-        if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
-
-            ! LU decomposition for the 3 possible neumann boudary conditions
-            ! ny = g(2)%size
-
-            ! do is = 1, 3
-            !     allocate (bcs(is)%lu(ny, 5))
-            !     allocate (bcs(is)%rhs(ny, 7))
-
-            !     call FDM_C1N6_Jacobian(ny, g(2)%jac, bcs(is)%lu(:, :), bcs(is)%rhs(:, :), coef, g(2)%periodic)
-            !     call FDM_Bcs_Neumann(is, bcs(is)%lu(:, 1:3), bcs(is)%rhs(:, 1:5), rhs1_b, rhs1_t)
-
-            !     nmin = 1; nmax = ny
-            !     if (any([BCS_ND, BCS_NN] == is)) nmin = nmin + 1
-            !     if (any([BCS_DN, BCS_NN] == is)) nmax = nmax - 1
-            !     nsize = nmax - nmin + 1
-
-            !     call TRIDFS(nsize, bcs(is)%lu(nmin:nmax, 1), bcs(is)%lu(nmin:nmax, 2), bcs(is)%lu(nmin:nmax, 3))
-
-            ! end do
-
-        else
-! #######################################################################
 ! Compressible mode
 ! #######################################################################
+        if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) then
 #ifdef USE_MPI
 ! -------------------------------------------------------------------
 ! Characteristic BCs
@@ -382,7 +352,7 @@ contains
 
 !########################################################################
 !# Calculate the boundary values of a field s.t. the normal derivative is zero
-!# Routine format extracted from OPR_PARTIAL_Y
+!# Routine format extracted from OPR_Partial_Y
 !########################################################################
     subroutine BOUNDARY_BCS_NEUMANN_Y(ibc, nx, ny, nz, g, u, bcs_hb, bcs_ht, tmp1)
         use FDM, only: fdm_dt
@@ -447,15 +417,12 @@ contains
             end if
             nsize = nmax - nmin + 1
 
-            select case (g%der1%nb_diag(2))
-            case (3)
-                call MatMul_3d_antisym(g%der1%rhs(:, 1:3), p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t, p_bcs_hb, p_bcs_ht)
-            case (5)
-                call MatMul_5d_antisym(g%der1%rhs(:, 1:5), p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
-            case (7)
-                call MatMul_7d_antisym(g%der1%rhs(:, 1:7), p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t,  p_bcs_hb, p_bcs_ht)
-            end select
+            ! -------------------------------------------------------------------
+            ! Calculate RHS in system of equations A u' = B u
+            call g%der1%matmul(g%der1%rhs, p_org, p_dst, ibc, g%der1%rhs_b, g%der1%rhs_t, p_bcs_hb, p_bcs_ht)
 
+            ! -------------------------------------------------------------------
+            ! Solve for u' in system of equations A u' = B u
             select case (g%der1%nb_diag(1))
             case (3)
                 call TRIDSS(nsize, nxz, g%der1%lu(nmin:nmax, ip + 1), g%der1%lu(nmin:nmax, ip + 2), g%der1%lu(nmin:nmax, ip + 3), p_dst(:, nmin:nmax))
@@ -508,7 +475,7 @@ contains
         use NavierStokes, only: visc, schmidt
         use FDM, only: g
         use Averages, only: AVG1V2D
-        use OPR_PARTIAL
+        use OPR_Partial
 
         integer(wi) is
         integer(wi), dimension(2, 2), intent(IN) :: bcs          ! Boundary conditions from derivative operator
@@ -527,7 +494,7 @@ contains
         nxy = imax*jmax
 
         ! vertical derivative of scalar for flux at the boundaries
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp1)
 
         ! ------------------------------------------------------------
         ! Bottom Boundary

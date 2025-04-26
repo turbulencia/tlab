@@ -19,7 +19,7 @@ program VBURGERS
     use NavierStokes, only: NavierStokes_Initialize_Parameters, visc
     use TLab_Grid
     use IO_Fields
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Burgers
     use OPR_FILTERS
     use TLab_Background, only: TLab_Initialize_Background
@@ -73,7 +73,7 @@ program VBURGERS
     visc = 1.0_wp/big_wp
 
 ! ###################################################################
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+    call OPR_Partial_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
     do k = 1, kmax
         do j = 1, jmax
             do i = 1, imax
@@ -99,7 +99,7 @@ program VBURGERS
     call IO_Write_Fields('fieldX.dif', imax, jmax, kmax, itime, 1, c, io_header_s(1:1))
 
 ! ###################################################################
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c)
+    call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, b, c)
     do k = 1, kmax
         do j = 1, jmax
             do i = 1, imax
@@ -127,7 +127,7 @@ program VBURGERS
 ! ###################################################################
     if (g(3)%size > 1) then
 
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, b, c)
+        call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, b, c)
         do k = 1, kmax
             do j = 1, jmax
                 do i = 1, imax

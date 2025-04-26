@@ -5,7 +5,7 @@ subroutine SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
                               use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
-    use OPR_PARTIAL
+    use OPR_Partial
     use FI_GRADIENT_EQN
 
     implicit none
@@ -47,9 +47,9 @@ subroutine SL_NORMAL_GRADIENT(isl, nmax, istep, kstep, ibuffer_npy, &
 ! Normal analysis
 ! -------------------------------------------------------------------
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, u)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, v)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, w)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, u)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, v)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, w)
 
 ! -------------------------------------------------------------------
 ! TkStat file

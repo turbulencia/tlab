@@ -18,7 +18,7 @@ program VPARTIAL3D
     use TLab_Grid
     use IO_Fields
     use OPR_Fourier
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Elliptic
     use Averages
 
@@ -71,16 +71,16 @@ program VPARTIAL3D
     case (2)
         g(2)%der1%mode_fdm = FDM_COM6_JACOBIAN
         call FDM_CreatePlan(wrk1d(:, 2), g(2))
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, c)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, a)
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, a, c)
         call IO_Write_Fields('field.out1', imax, jmax, kmax, itime, 1, a)
 
         g(2)%der1%mode_fdm = FDM_COM4_DIRECT
         call FDM_CreatePlan(wrk1d(:, 2), g(2))
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, b, d)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), f, d)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), d, b)
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), f, b, d)
         call IO_Write_Fields('field.out2', imax, jmax, kmax, itime, 1, b)
 
         ! -------------------------------------------------------------------

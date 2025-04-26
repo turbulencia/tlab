@@ -20,7 +20,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hq, hs
     use Thermodynamics, only: CRATIO_INV
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
 
@@ -52,15 +52,15 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
     hq(:,5) = hq(:,5) - 2.0_wp*tmp5
 
 ! -------------------------------------------------------------------
 ! u-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     do i = 1, imax*jmax*kmax
         hq(i,1) = hq(i,1) - (tmp2(i) + tmp3(i) + tmp4(i) + u(i)*tmp5(i)) + g1*rho(i)
         hq(i,2) = hq(i,2) - v(i)*tmp5(i)
@@ -98,15 +98,15 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5)
     hq(:,5) = hq(:,5) - 2.0_wp*tmp5
 
 ! -------------------------------------------------------------------
 ! v-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     do i = 1, imax*jmax*kmax
         hq(i,1) = hq(i,1) - u(i)*tmp5(i)
         hq(i,2) = hq(i,2) - (tmp2(i) + tmp3(i) + tmp4(i) + v(i)*tmp5(i)) + g2*rho(i)
@@ -144,15 +144,15 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5)
     hq(:,5) = hq(:,5) - 2.0_wp*tmp5
 
 ! -------------------------------------------------------------------
 ! w-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     do i = 1, imax*jmax*kmax
         hq(i,1) = hq(i,1) - u(i)*tmp5(i)
         hq(i,2) = hq(i,2) - v(i)*tmp5(i)
@@ -191,9 +191,9 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
             tmp1(i) = dummy*u(i)
             tmp5(i) = (dummy - CRATIO_INV*p(i))/rho(i)
         end do
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
         hq(:,4) = hq(:,4) - (tmp2 + tmp3 + tmp4) + CRATIO_INV*rho*(g1*u + g2*v + g3*w)
 
 ! -------------------------------------------------------------------
@@ -208,9 +208,9 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
             tmp1(i) = dummy*u(i)
             tmp5(i) = dummy/rho(i)
         end do
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
         hq(:,4) = hq(:,4) - (tmp2 + tmp3 + tmp4)
     end if
 
@@ -218,27 +218,27 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
 ! Additional convective part due to skewsymmetric formulation
 ! ###################################################################
 ! energy equation (array tmp5)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp5, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp5, tmp2)
     hq(:,4) = hq(:,4) - rho*(u*tmp2 + v*tmp3 + w*tmp4)
 
 ! u-momentum equation
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp2)
     hq(:,1) = hq(:,1) - 0.5_wp*rho*(u*tmp2 + v*tmp3 + w*tmp4)
 
 ! v-momentum equation
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2)
     hq(:,2) = hq(:,2) - 0.5_wp*rho*(u*tmp2 + v*tmp3 + w*tmp4)
 
 ! w-momentum equation
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp2)
     hq(:,3) = hq(:,3) - 0.5_wp*rho*(u*tmp2 + v*tmp3 + w*tmp4)
 
 #ifdef TRACE_ON

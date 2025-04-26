@@ -25,7 +25,7 @@ module FLOW_LOCAL
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
 #endif
     use FI_VECTORCALCULUS
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Elliptic
     use OPR_Filters, only: PressureFilter
     use Discrete, only: Discrete_ReadBlock
@@ -283,15 +283,15 @@ contains
             bcs2 = 0
             if (any([BCS_DD, BCS_DN] == flag_wall)) bcs2(1, 1) = 1 ! no-slip at ymin
             if (any([BCS_DD, BCS_ND] == flag_wall)) bcs2(2, 1) = 1 ! no-slip at ymax
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs2, g(2), az, u)
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), ay, tmp4)
+            call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs2, g(2), az, u)
+            call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), ay, tmp4)
             u = u - tmp4
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), ax, v)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), az, tmp4)
+            call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), ax, v)
+            call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), az, tmp4)
             v = v - tmp4
             if (g(3)%size > 1) then
-                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), ay, w)
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs2, g(2), ax, tmp4)
+                call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), ay, w)
+                call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs2, g(2), ax, tmp4)
                 w = w - tmp4
             end if
 
@@ -309,14 +309,14 @@ contains
             ! Solve lap(u) = - (rot(vort))_x
             if (g(1)%periodic .and. g(3)%periodic) then
                 bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
-                call OPR_Poisson(imax, jmax, kmax, g, flag_wall, u, tmp4, tmp5, bcs_hb, bcs_ht)
+                call OPR_Poisson(imax, jmax, kmax, flag_wall, u, tmp4, tmp5, bcs_hb, bcs_ht)
             else                                        ! General treatment; undevelop
             end if
 
             ! Solve lap(v) = - (rot(vort))_y with no penetration bcs
             if (g(1)%periodic .and. g(3)%periodic) then
                 bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
-                call OPR_Poisson(imax, jmax, kmax, g, BCS_DD, v, tmp4, tmp5, bcs_hb, bcs_ht)
+                call OPR_Poisson(imax, jmax, kmax, BCS_DD, v, tmp4, tmp5, bcs_hb, bcs_ht)
             else                                        ! General treatment; undevelop
             end if
 
@@ -324,7 +324,7 @@ contains
             if (g(3)%size > 1) then
                 if (g(1)%periodic .and. g(3)%periodic) then
                     bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
-                    call OPR_Poisson(imax, jmax, kmax, g, flag_wall, w, tmp4, tmp5, bcs_hb, bcs_ht)
+                    call OPR_Poisson(imax, jmax, kmax, flag_wall, w, tmp4, tmp5, bcs_hb, bcs_ht)
                 else                                    ! General treatment; undevelop
                 end if
             end if
@@ -357,7 +357,7 @@ contains
         do j = 1, jmax                                              ! Wall-normal velocity
             profs(j, 1) = Profiles_Calculate(IniK, y(j))
         end do
-        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), profs(1, 1), profs(1, 2))
+        call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), profs(1, 1), profs(1, 2))
         profs(:, 2) = -profs(:, 2)                                  ! Negative of the derivative of f, wall-parallel velocity
 
         select case (IniK%type)
@@ -552,27 +552,27 @@ contains
 
         ! terms with u
         txc1 = rho*u*u; txc2 = rho*u*v; txc3 = rho*u*w
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc3, txc4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc2, txc3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc1, txc2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc3, txc4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc2, txc3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc1, txc2)
         txc2 = 2.0_wp*(txc4 + txc3) + txc2
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc2, txc4)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), txc2, txc4)
 
         ! terms with v
         txc1 = rho*v*v; txc2 = rho*v*w
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc2, txc3)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc1, txc2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc2, txc3)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc1, txc2)
         txc2 = txc2 + 2.0_wp*txc3
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc2, txc1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), txc2, txc1)
         txc4 = txc4 + txc1
 
         ! terms with w
         txc1 = rho*w*w
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc1, txc2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc1, txc2)
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc2, txc1)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), txc2, txc1)
         txc4 = txc4 + txc1
 
         ! Solve Poisson equation; pprime contains fluctuating p' (BCs are equal to zero!)
@@ -581,7 +581,7 @@ contains
 
             allocate (bcs_hb(imax*kmax), bcs_ht(imax*kmax))
             bcs_hb = 0.0_wp; bcs_ht = 0.0_wp
-            call OPR_Poisson(imax, jmax, kmax, g, 0, pprime, txc1, txc2, bcs_hb, bcs_ht)
+            call OPR_Poisson(imax, jmax, kmax, 0, pprime, txc1, txc2, bcs_hb, bcs_ht)
         else                                      ! General treatment
             ! Undevelop
         end if

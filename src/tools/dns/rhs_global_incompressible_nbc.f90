@@ -30,7 +30,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
     use BOUNDARY_BCS
     use TIME, only: rkm_substep, rkm_endstep, dte
     use DNS_LOCAL, only: use_tower
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Elliptic
     use TLab_Sources
     use DNS_TOWER
@@ -534,7 +534,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         if (nse_eqns == DNS_EQNS_ANELASTIC) then
             call Thermo_Anelastic_WEIGHT_INPLACE(imax, jmax, kmax, rbackground, tmp11)
         end if
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp11, tmp12)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp11, tmp12)
         t_ser = t_ser + (t_tmp + MPI_WTime())
         !
         do while (finished /= 24)
@@ -616,8 +616,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_NBC(u, v, w, s, &
         end if
     end if
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp12, tmp41)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp12, tmp42)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp12, tmp41)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp12, tmp42)
 
 
     if (nse_eqns == DNS_EQNS_ANELASTIC) then

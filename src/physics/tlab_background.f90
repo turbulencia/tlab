@@ -352,7 +352,7 @@ contains
 !# In this subroutine, the density field is a given input.
 !#
 !# The calculation of v assumes ymean_rel_u equal to 0.5. This section
-!# should also be rewritten in terms of OPR_PARTIAL_ and QUAD routines.
+!# should also be rewritten in terms of OPR_Partial_ and QUAD routines.
 !#
 !########################################################################
     subroutine FLOW_SPATIAL_VELOCITY(imax, jmax, prof_loc, diam_u, &

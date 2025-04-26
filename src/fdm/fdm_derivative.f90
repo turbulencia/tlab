@@ -249,23 +249,6 @@ contains
         ! -------------------------------------------------------------------
         ! Calculate RHS in system of equations A u' = B u
         call g%matmul(g%rhs, u, result, ibc_loc, g%rhs_b, g%rhs_t)
-        ! if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
-        !     select case (g%nb_diag(2))
-        !     case (3)
-        !         call MatMul_3d(g%rhs(:, 1:3), u, result, ibc_loc)!=BCS_NONE)
-        !     case (5)
-        !         call MatMul_5d(g%rhs(:, 1:5), u, result, ibc_loc)!=BCS_NONE)
-        !     end select
-        ! else
-        !     ! select case (g%nb_diag(2))
-        !     ! case (3)
-        !     !     call MatMul_3d_antisym(g%rhs(:, 1:3), u, result, ibc_loc, g%rhs_b, g%rhs_t)
-        !     ! case (5)
-        !     !     call MatMul_5d_antisym(g%rhs(:, 1:5), u, result, ibc_loc, g%rhs_b, g%rhs_t)
-        !     ! case (7)
-        !     !     call MatMul_7d_antisym(g%rhs(:, 1:7), u, result, ibc_loc, g%rhs_b, g%rhs_t)
-        !     ! end select
-        ! end if
 
         ! -------------------------------------------------------------------
         ! Solve for u' in system of equations A u' = B u
@@ -450,25 +433,9 @@ contains
         ! -------------------------------------------------------------------
         ! Calculate RHS in system of equations A u' = B u
         call g%matmul(g%rhs, u, result, ibc)
-        ! if (any([FDM_COM4_DIRECT, FDM_COM6_DIRECT] == g%mode_fdm)) then
-        !     select case (g%nb_diag(2))
-        !     case (5)
-        !         call MatMul_5d(g%rhs(:, 1:5), u, result, ibc)!=BCS_NONE)
-        !     end select
-        ! else
-        !     ! select case (g%nb_diag(2))
-        !     ! case (5)
-        !     !     call MatMul_5d_sym(g%rhs(:, 1:5), u, result, ibc)
-        !     ! case (7)
-        !     !     call MatMul_7d_sym(g%rhs(:, 1:7), u, result, ibc)
-        !     ! end select
-        ! end if
 
-        ! -------------------------------------------------------------------
-        ! add Jacobian correction A_2 dx2 du
-        if (g%need_1der) then
-            ip = g%nb_diag(2)
-            ! so far, only tridiagonal systems
+        if (g%need_1der) then           ! add Jacobian correction A_2 dx2 du
+            ip = g%nb_diag(2)           ! so far, only tridiagonal systems
             call MatMul_3d_add(g%rhs(:, ip + 1:ip + 3), du, result)
         end if
 

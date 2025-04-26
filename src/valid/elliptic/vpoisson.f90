@@ -26,7 +26,7 @@ program VPOISSON
     use Tlab_Background, only: TLab_Initialize_Background
     use TLab_Grid
     use IO_Fields
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Fourier
     use OPR_FILTERS
     use OPR_Elliptic
@@ -131,27 +131,27 @@ program VPOISSON
         end select
 
         if (type_of_operator == 1) then
-            call OPR_Poisson(imax, jmax, kmax, g, ibc, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+            call OPR_Poisson(imax, jmax, kmax, ibc, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
         else if (type_of_operator == 2) then
-            call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+            call OPR_Helmholtz(imax, jmax, kmax, ibc, lambda, a, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
 
         end if
 
         ! -------------------------------------------------------------------
         ! With the calculated a, we calculate the b = lap a
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, txc(:, 1))
+        ! call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        ! call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        call OPR_Partial_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, txc(:, 1))
 
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, e)
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, e, txc(:, 1))
+        ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, e)
+        call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, e, txc(:, 1))
         b = b + e
 
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, e)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, e, txc(:, 1))
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, e)
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, e, txc(:, 1))
         b = b + e
 
         if (type_of_operator == 2) then
@@ -177,18 +177,18 @@ program VPOISSON
         end do
         call OPR_FILTER(imax, jmax, kmax, FilterDomain, a, txc)
 
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
-        ! call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
+        ! call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+        ! call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), c, b)
+        call OPR_Partial_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), a, b, c)
 
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
+        ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), c, d)
+        call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), a, d, c)
         b = b + d
 
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
-        ! call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, c)
+        ! call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), c, d)
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), a, d, c)
         b = b + d
 
         ! ! Creating a field
@@ -232,11 +232,11 @@ program VPOISSON
 
             e = b       ! to save b for other cases in the loop
             if (type_of_operator == 1) then
-                call OPR_Poisson(imax, jmax, kmax, g, ibc, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
+                call OPR_Poisson(imax, jmax, kmax, ibc, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht, d)
 
             else if (type_of_operator == 2) then
-                call OPR_Helmholtz(imax, jmax, kmax, g, ibc, lambda, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), e, d)
+                call OPR_Helmholtz(imax, jmax, kmax, ibc, lambda, e, txc(1, 1), txc(1, 2), bcs_hb, bcs_ht)
+                call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), e, d)
 
             end if
 

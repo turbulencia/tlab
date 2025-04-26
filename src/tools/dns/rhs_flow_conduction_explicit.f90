@@ -23,7 +23,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     use THERMO_CALORIC
     use DNS_ARRAYS, only: hq
     use BOUNDARY_BCS
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
 ! -------------------------------------------------------------------
@@ -45,9 +45,9 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
     call THERMO_CALORIC_ENTHALPY(imax*jmax*kmax, s, T, tmp4)
 
 ! total flux
-    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp4, tmp3, tmp5)
-    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp4, tmp2, tmp5)
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp4, tmp1, tmp5)
+    call OPR_Partial_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp4, tmp3, tmp5)
+    call OPR_Partial_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp4, tmp2, tmp5)
+    call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp4, tmp1, tmp5)
     hq(:,4) = hq(:,4) + cond*vis*(tmp1 + tmp2 + tmp3)
 
 #ifdef TRACE_ON

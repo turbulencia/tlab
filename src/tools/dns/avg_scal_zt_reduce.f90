@@ -39,7 +39,7 @@ module AVG_SCAL_ZT
     use Thermodynamics, only: itransport
     use TLab_Arrays, only: wrk2d, wrk3d
     use Averages, only: SUM1V1D_V
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
     private
@@ -125,8 +125,8 @@ contains
 #define m_rho_x       tmp9
 #define m_rho_y       tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, tmp7)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp8)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, tmp7)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_rho_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_rho_y)
@@ -147,8 +147,8 @@ contains
 #define m_u_x        tmp9
 #define m_v_y        tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp7)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp8)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp7)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_u_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_v_y)
@@ -169,8 +169,8 @@ contains
 #define m_w_x        tmp9
 #define m_w_y        tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp7)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp8)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp7)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_w_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_w_y)
@@ -191,8 +191,8 @@ contains
 #define m_v_x        tmp9
 #define m_u_y        tmp10
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp7)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp8)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp7)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp8)
 
         call REDUCE(imax, jmax, kmax, tmp7, nstatavg, statavg, m_v_x)
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_u_y)
@@ -233,9 +233,9 @@ contains
         ! #  Pressure gradient terms
         ! ##################################################################
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, tmp7)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp8)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p, tmp9)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, tmp7)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp8)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p, tmp9)
 
 #define m_p_x tmp10
 #define m_p_y tmp11
@@ -702,9 +702,9 @@ contains
 
         call REDUCE(imax, jmax, kmax, z1, nstatavg, statavg, m_z1)
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp2)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp3)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp4)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp2)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp3)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp4)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -716,7 +716,7 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp5, tmp6)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp5, tmp6)
 
 #define m_fxx tmp7
 
@@ -767,7 +767,7 @@ contains
                 tmp5(j) = tmp3(j)
             end do
         end if
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp6)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp6)
 
 #define m_fyy tmp7
 
@@ -819,7 +819,7 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp6)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp5, tmp6)
 
 #define m_fzz tmp7
 
@@ -1129,9 +1129,9 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp6)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp7)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp8)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1, tmp6)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1, tmp7)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), z1, tmp8)
 
 #define m_z1_x tmp9
 #define m_z1_y tmp10
@@ -1142,8 +1142,8 @@ contains
         call REDUCE(imax, jmax, kmax, tmp8, nstatavg, statavg, m_z1_z)
 
         ! Cross terms xy
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp6)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp7)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp6)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp7)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -1155,8 +1155,8 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp1)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp1)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2)
 
 #define m_v_x tmp8
 #define m_u_y tmp6
@@ -1223,8 +1223,8 @@ contains
 
         ! Cross terms xz
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp6)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp7)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp6)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp7)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -1236,8 +1236,8 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp2)
 
 #define m_w_x tmp8
 #define m_u_z tmp6
@@ -1302,8 +1302,8 @@ contains
 
         ! Cross terms yz
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp6)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp7)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp6)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp7)
 
         if (itransport == EQNS_TRANS_POWERLAW) then
             do j = 1, kmax*imax*jmax
@@ -1315,8 +1315,8 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2)
 
 #define m_w_y tmp8
 #define m_v_z tmp6
@@ -1381,7 +1381,7 @@ contains
 
         ! Cross terms xx
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
 
 #define m_u_x tmp8
 
@@ -1415,7 +1415,7 @@ contains
 
         ! Cross terms yy
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
 
 #define m_v_y tmp8
         call REDUCE(imax, jmax, kmax, tmp2, nstatavg, statavg, m_v_y)
@@ -1448,7 +1448,7 @@ contains
 
         ! Cross terms zz
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
 #define m_w_z tmp8
         call REDUCE(imax, jmax, kmax, tmp3, nstatavg, statavg, m_w_z)
@@ -1497,9 +1497,9 @@ contains
             end do
         end if
 
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3)
 
 #define m_tau_xx_x tmp4
 #define m_tau_yy_y tmp5

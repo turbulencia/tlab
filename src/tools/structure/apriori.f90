@@ -29,7 +29,7 @@ program APRIORI
     use IO_Fields
     use OPR_FILTERS
     use OPR_Fourier
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
 
@@ -308,17 +308,17 @@ program APRIORI
             nfield = nfield + 1; vars(nfield)%field => txc(:, 8); vars(nfield)%tag = 'Wy'
             nfield = nfield + 1; vars(nfield)%field => txc(:, 9); vars(nfield)%tag = 'Wz'
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 1), txc(1, 1))
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 1), txc(1, 2))
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 1), txc(1, 3))
+            call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 1), txc(1, 1))
+            call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 1), txc(1, 2))
+            call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 1), txc(1, 3))
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 2), txc(1, 4))
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 2), txc(1, 5))
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 2), txc(1, 6))
+            call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 2), txc(1, 4))
+            call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 2), txc(1, 5))
+            call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 2), txc(1, 6))
 
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 3), txc(1, 7))
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 3), txc(1, 8))
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 3), txc(1, 9))
+            call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), q(:, 3), txc(1, 7))
+            call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), q(:, 3), txc(1, 8))
+            call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), q(:, 3), txc(1, 9))
 
             do is = 1, nfield
                 call OPR_FILTER(imax, jmax, kmax, FilterDomain, txc(1, is), txc(1, 10))

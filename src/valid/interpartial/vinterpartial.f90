@@ -31,7 +31,7 @@ program VINTERPARTIAL
 #endif
     use FDM, only: g, FDM_Initialize, FDM_CreatePlan
     use NavierStokes, only: NavierStokes_Initialize_Parameters
-    use OPR_PARTIAL
+    use OPR_Partial
     use TLab_Grid
 
     implicit none
@@ -90,8 +90,8 @@ program VINTERPARTIAL
 ! x-direction: Interpolation + interpolatory 1st derivative
 ! ###################################################################
 ! Interpolation: vel. <--> pre. grid
-    call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), a, a_int)
-    call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), a_int, b)
+    call OPR_Partial_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), a, a_int)
+    call OPR_Partial_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), a_int, b)
 ! Difference field and error
     a_dif = a - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
@@ -109,9 +109,9 @@ program VINTERPARTIAL
     ! CALL IO_Write_Fields('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
-    call OPR_PARTIAL_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), a, a_int)
-    call OPR_PARTIAL_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), a_int, b)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+    call OPR_Partial_X(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(1), a, a_int)
+    call OPR_Partial_X(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(1), a_int, b)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
 ! Difference field and error
     a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
@@ -126,9 +126,9 @@ program VINTERPARTIAL
     ! CALL IO_Write_Fields('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
 ! -------------------------------------------------------------------
 ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
-    call OPR_PARTIAL_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), a, a_int)
-    call OPR_PARTIAL_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), a_int, b)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
+    call OPR_Partial_X(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(1), a, a_int)
+    call OPR_Partial_X(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(1), a_int, b)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, c)
 ! Difference field and error
     a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
@@ -146,8 +146,8 @@ program VINTERPARTIAL
 ! ###################################################################
     if (g(3)%size > 1) then
         ! Interpolation: vel. <--> pre. grid
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), a, a_int)
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), a_int, b)
+        call OPR_Partial_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), a, a_int)
+        call OPR_Partial_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), a_int, b)
         ! Difference field and error
         a_dif = a - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
@@ -166,9 +166,9 @@ program VINTERPARTIAL
         ! CALL IO_Write_Fields('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
         ! -------------------------------------------------------------------
         ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
-        call OPR_PARTIAL_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), a, a_int)
-        call OPR_PARTIAL_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), a_int, b)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_Partial_Z(OPR_P1_INT_VP, imax, jmax, kmax, bcs, g(3), a, a_int)
+        call OPR_Partial_Z(OPR_P0_INT_PV, imax, jmax, kmax, bcs, g(3), a_int, b)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
         ! Difference field and error
         a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI
@@ -183,9 +183,9 @@ program VINTERPARTIAL
         ! CALL IO_Write_Fields('field.dif', IO_SCAL, imax,jmax,kmax, 1, a_dif)
         ! -------------------------------------------------------------------
         ! 1st interp. deriv + Interpolation: vel. <--> pre. grid
-        call OPR_PARTIAL_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), a, a_int)
-        call OPR_PARTIAL_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), a_int, b)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
+        call OPR_Partial_Z(OPR_P0_INT_VP, imax, jmax, kmax, bcs, g(3), a, a_int)
+        call OPR_Partial_Z(OPR_P1_INT_PV, imax, jmax, kmax, bcs, g(3), a_int, b)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, c)
         ! Difference field and error
         a_dif = c - b; error = sum(a_dif**2); dummy = sum(a**2)
 #ifdef USE_MPI

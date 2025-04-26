@@ -23,7 +23,7 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV
     use BOUNDARY_BCS
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
 
@@ -45,24 +45,24 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 ! First derivatives in energy equation
 ! ###################################################################
     dummy = CRATIO_INV*visc
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp3)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp3)
     hq(:, 4) = hq(:, 4) + dummy*vis*((tmp2 + tmp3)*(tmp2 + tmp3))
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
     hq(:, 4) = hq(:, 4) + dummy*vis*((tmp2 + tmp3)*(tmp2 + tmp3))
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp2)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp3)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp2)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp3)
     hq(:, 4) = hq(:, 4) + dummy*vis*((tmp2 + tmp3)*(tmp2 + tmp3))
 
 ! ###################################################################
 ! Dilatation part
 ! ###################################################################
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
 ! -------------------------------------------------------------------
 ! energy equation
@@ -79,22 +79,22 @@ subroutine RHS_FLOW_VISCOUS_EXPLICIT()
 ! ###################################################################
 ! Laplacian terms in the momentum equation
 ! ###################################################################
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), u, tmp1, tmp4)
-    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), u, tmp2, tmp4)
-    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), u, tmp3, tmp4)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), tmp5, tmp4)
+    call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), u, tmp1, tmp4)
+    call OPR_Partial_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), u, tmp2, tmp4)
+    call OPR_Partial_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), u, tmp3, tmp4)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), tmp5, tmp4)
     hq(:, 1) = hq(:, 1) + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), v, tmp1, tmp4)
-    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), v, tmp2, tmp4)
-    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), v, tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), tmp5, tmp4)
+    call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), v, tmp1, tmp4)
+    call OPR_Partial_Y(OPR_P2, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), v, tmp2, tmp4)
+    call OPR_Partial_Z(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 3), g(3), v, tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), tmp5, tmp4)
     hq(:, 2) = hq(:, 2) + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), w, tmp1, tmp4)
-    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), w, tmp2, tmp4)
-    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), w, tmp3, tmp4)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), tmp5, tmp4)
+    call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 1), g(1), w, tmp1, tmp4)
+    call OPR_Partial_Y(OPR_P2, imax, jmax, kmax, bcs_out(:, :, 2), g(2), w, tmp2, tmp4)
+    call OPR_Partial_Z(OPR_P2, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), w, tmp3, tmp4)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), tmp5, tmp4)
     hq(:, 3) = hq(:, 3) + vis*visc*(tmp1 + tmp2 + tmp3 + c13*tmp4)
 
 #ifdef TRACE_ON

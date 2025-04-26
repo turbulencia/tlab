@@ -6,19 +6,19 @@ module OPR_Elliptic
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: BCS_DD, BCS_DN, BCS_ND, BCS_NN, BCS_NONE, BCS_MIN, BCS_MAX, BCS_BOTH
     use TLab_Constants, only: lfile
-#ifdef USE_MPI
-    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i
-#endif
     use TLab_Memory, only: TLab_Allocate_Real
     use TLab_Memory, only: imax, jmax, kmax, isize_txc_field
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_C, only: c_wrk3d
+#ifdef USE_MPI
+    use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i
+#endif
     use FDM, only: fdm_dt
     use FDM_Integral
     use OPR_Fourier
     use OPR_ODES
-    use OPR_PARTIAL, only: OPR_PARTIAL_Y
+    use OPR_Partial, only: OPR_Partial_Y
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private
@@ -30,12 +30,11 @@ module OPR_Elliptic
     ! -----------------------------------------------------------------------
     procedure(OPR_Poisson_interface) :: OPR_Poisson_dt      ! Implicit pointer (Procedure type)
     abstract interface
-        subroutine OPR_Poisson_interface(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+        subroutine OPR_Poisson_interface(nx, ny, nz, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
             use TLab_Constants, only: wi, wp
             use FDM, only: fdm_dt
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
-            type(fdm_dt), intent(in) :: g(3)
             real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
             real(wp), intent(inout), target :: tmp1(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
             real(wp), intent(inout), target :: tmp2(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
@@ -47,12 +46,11 @@ module OPR_Elliptic
 
     procedure(OPR_Helmholtz_interface) :: OPR_Helmholtz_dt  ! Implicit pointer (Procedure type)
     abstract interface
-        subroutine OPR_Helmholtz_interface(nx, ny, nz, g, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
+        subroutine OPR_Helmholtz_interface(nx, ny, nz, ibc, alpha, p, tmp1, tmp2, bcs_hb, bcs_ht)
             use TLab_Constants, only: wi, wp
             use FDM, only: fdm_dt
             integer(wi), intent(in) :: nx, ny, nz
             integer, intent(in) :: ibc                                      ! Dirichlet/Neumman BCs at jmin/jmax: BCS_DD, BCS_ND, BCS_DN, BCS_NN
-            type(fdm_dt), intent(in) :: g(3)
             real(wp), intent(in) :: alpha
             real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
             real(wp), intent(inout), target :: tmp1(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
@@ -261,10 +259,9 @@ contains
     !# The reference value of p at the lower boundary is set to zero
     !#
     !########################################################################
-    subroutine OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    subroutine OPR_Poisson_FourierXZ_Factorize(nx, ny, nz, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc
-        type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
         real(wp), intent(inout) :: tmp1(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
         real(wp), intent(inout) :: tmp2(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
@@ -287,11 +284,11 @@ contains
         p(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)           ! Passing boundary conditions in forcing array
         p(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
 
-        if (g(3)%size > 1) then
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, p, c_tmp2)
-            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1)   ! tmp2 might be overwritten; cannot use wrk3d
+        if (fft_z_on) then
+            call OPR_Fourier_X_Forward(nx, ny, nz, p, c_tmp2)
+            call OPR_Fourier_Z_Forward(c_tmp2, c_tmp1)   ! tmp2 might be overwritten; cannot use wrk3d
         else
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, p, c_tmp1)
+            call OPR_Fourier_X_Forward(nx, ny, nz, p, c_tmp1)
         end if
 
         tmp1 = tmp1*norm
@@ -340,20 +337,20 @@ contains
         ! ###################################################################
         ! Fourier field p (based on array tmp1)
         ! ###################################################################
-        if (g(3)%size > 1) then
-            call OPR_Fourier_B_Z_EXEC(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
+        if (fft_z_on) then
+            call OPR_Fourier_Z_Backward(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
         else
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, p)    ! tmp2 might be overwritten
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_tmp1, p)    ! tmp2 might be overwritten
         end if
 
         ! Fourier derivatives (based on array tmp2)
         if (present(dpdy)) then
-            if (g(3)%size > 1) then
-                call OPR_Fourier_B_Z_EXEC(c_tmp2, c_wrk3d)              ! tmp2 might be overwritten
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, dpdy)    ! wrk3d might be overwritten
+            if (fft_z_on) then
+                call OPR_Fourier_Z_Backward(c_tmp2, c_wrk3d)              ! tmp2 might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, dpdy)    ! wrk3d might be overwritten
             else
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp2, dpdy)     ! tmp2 might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_tmp2, dpdy)     ! tmp2 might be overwritten
             end if
         end if
 
@@ -367,10 +364,10 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Poisson_FourierXZ_Direct(nx, ny, nz, g, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+    subroutine OPR_Poisson_FourierXZ_Direct(nx, ny, nz, ibc, p, tmp1, tmp2, bcs_hb, bcs_ht, dpdy)
+        use FDM, only: g
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc
-        type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(inout) :: p(nx, ny, nz)                        ! Forcing term, and solution field p
         real(wp), intent(inout) :: tmp1(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
         real(wp), intent(inout) :: tmp2(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
@@ -393,11 +390,11 @@ contains
         p(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
         p(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
 
-        if (g(3)%size > 1) then
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, p, c_tmp2)
-            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten; cannot use wrk3d
+        if (fft_z_on) then
+            call OPR_Fourier_X_Forward(nx, ny, nz, p, c_tmp2)
+            call OPR_Fourier_Z_Forward(c_tmp2, c_tmp1) ! tmp2 might be overwritten; cannot use wrk3d
         else
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, p, c_tmp1)
+            call OPR_Fourier_X_Forward(nx, ny, nz, p, c_tmp1)
         end if
 
         tmp1 = tmp1*norm
@@ -438,15 +435,15 @@ contains
         ! ###################################################################
         ! Fourier field p (based on array tmp1)
         ! ###################################################################
-        if (g(3)%size > 1) then
-            call OPR_Fourier_B_Z_EXEC(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
+        if (fft_z_on) then
+            call OPR_Fourier_Z_Backward(c_tmp1, c_wrk3d)          ! tmp1 might be overwritten
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, p)   ! wrk3d might be overwritten
         else
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, p)    ! tmp1 might be overwritten
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_tmp1, p)    ! tmp1 might be overwritten
         end if
 
         if (present(dpdy)) then
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs_p, g(2), p, dpdy)
+            call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs_p, g(2), p, dpdy)
         end if
 
         nullify (c_tmp1, c_tmp2, p_wrk3d)
@@ -465,10 +462,9 @@ contains
     !# where \lambda = kx^2+kz^2
     !#
     !########################################################################
-    subroutine OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+    subroutine OPR_Helmholtz_FourierXZ_Factorize(nx, ny, nz, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc
-        type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(in) :: alpha
         real(wp), intent(inout) :: a(nx, ny, nz)                        ! Forcing term, and solution field
         real(wp), intent(inout) :: tmp1(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
@@ -491,11 +487,11 @@ contains
         a(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
         a(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
 
-        if (g(3)%size > 1) then
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, a, c_tmp2)
-            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
+        if (fft_z_on) then
+            call OPR_Fourier_X_Forward(nx, ny, nz, a, c_tmp2)
+            call OPR_Fourier_Z_Forward(c_tmp2, c_tmp1) ! tmp2 might be overwritten
         else
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, a, c_tmp1)
+            call OPR_Fourier_X_Forward(nx, ny, nz, a, c_tmp1)
         end if
 
         tmp1 = tmp1*norm
@@ -540,11 +536,11 @@ contains
         ! ###################################################################
         ! Fourier field a (based on array tmp1)
         ! ###################################################################
-        if (g(3)%size > 1) then
-            call OPR_Fourier_B_Z_EXEC(c_tmp1, c_wrk3d) ! tmp1 might be overwritten
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, a)
+        if (fft_z_on) then
+            call OPR_Fourier_Z_Backward(c_tmp1, c_wrk3d) ! tmp1 might be overwritten
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, a)
         else
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, a)
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_tmp1, a)
         end if
 
         nullify (c_tmp1, c_tmp2, p_wrk3d)
@@ -557,10 +553,9 @@ contains
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Helmholtz_FourierXZ_Direct(nx, ny, nz, g, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
+    subroutine OPR_Helmholtz_FourierXZ_Direct(nx, ny, nz, ibc, alpha, a, tmp1, tmp2, bcs_hb, bcs_ht)
         integer(wi), intent(in) :: nx, ny, nz
         integer, intent(in) :: ibc
-        type(fdm_dt), intent(in) :: g(3)
         real(wp), intent(in) :: alpha
         real(wp), intent(inout) :: a(nx, ny, nz)                        ! Forcing term, and solution field
         real(wp), intent(inout) :: tmp1(2*ny, nz, nx/2 + 1)             ! Aux array for FFT
@@ -582,11 +577,11 @@ contains
         a(1:nx, 1, 1:nz) = bcs_hb(1:nx, 1:nz)       ! Passing boundary conditions in forcing array
         a(1:nx, ny, 1:nz) = bcs_ht(1:nx, 1:nz)
 
-        if (g(3)%size > 1) then
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, a, c_tmp2)
-            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
+        if (fft_z_on) then
+            call OPR_Fourier_X_Forward(nx, ny, nz, a, c_tmp2)
+            call OPR_Fourier_Z_Forward(c_tmp2, c_tmp1) ! tmp2 might be overwritten
         else
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, a, c_tmp1)
+            call OPR_Fourier_X_Forward(nx, ny, nz, a, c_tmp1)
         end if
 
         tmp1 = tmp1*norm
@@ -617,11 +612,11 @@ contains
         ! ###################################################################
         ! Fourier field a (based on array tmp1)
         ! ###################################################################
-        if (g(3)%size > 1) then
-            call OPR_Fourier_B_Z_EXEC(c_tmp1, c_wrk3d) ! tmp1 might be overwritten
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, a)
+        if (fft_z_on) then
+            call OPR_Fourier_Z_Backward(c_tmp1, c_wrk3d) ! tmp1 might be overwritten
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, a)
         else
-            call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, a)
+            call OPR_Fourier_X_Backward(nx, ny, nz, c_tmp1, a)
         end if
 
         nullify (c_tmp1, c_tmp2, p_wrk3d)

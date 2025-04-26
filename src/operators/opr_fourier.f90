@@ -7,26 +7,32 @@ module OPR_Fourier
     use TLab_Arrays, only: wrk3d
     use TLab_Pointers_C, only: c_wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use TLab_Grid
     use, intrinsic :: iso_c_binding
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_k
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k
     use TLabMPI_Transpose
 #endif
-    use FDM, only: g
     implicit none
     private
 
     public :: OPR_Fourier_Initialize
-    public :: OPR_Fourier_F_X_EXEC, OPR_Fourier_B_X_EXEC    ! Main routines, used in Poisson solver; optimize
-    public :: OPR_Fourier_F_Z_EXEC, OPR_Fourier_B_Z_EXEC
-    public :: OPR_Fourier_F                                 ! Minor routines, less frequently used
+    public :: OPR_Fourier_X_Forward, OPR_Fourier_X_Backward     ! Main routines, used in Poisson solver; optimize
+    public :: OPR_Fourier_Z_Forward, OPR_Fourier_Z_Backward
+    public :: OPR_Fourier_F                                     ! Minor routines, less frequently used
     public :: OPR_Fourier_B
     public :: OPR_Fourier_CONVOLUTION_FXZ
     public :: OPR_Fourier_ComputePSD
     public :: OPR_Fourier_SetPSD, OPR_Fourier_SetPSD_2d
 
+    logical, public :: fft_x_on = .false.                       ! Switch on and off the FFT in the corresponding directions.
+    logical, public :: fft_y_on = .false.
+    logical, public :: fft_z_on = .false.
+
     ! -----------------------------------------------------------------------
+    integer(wi) size_fft_x, size_fft_y, size_fft_z
+
     type(c_ptr) :: fft_plan_fx, fft_plan_bx
     type(c_ptr) :: fft_plan_fy, fft_plan_by!, fft_plan_fy1d, fft_plan_by1d
     type(c_ptr) :: fft_plan_fz, fft_plan_bz
@@ -39,7 +45,8 @@ module OPR_Fourier
     logical :: fft_reordering_i = .false.
 
     integer(wi) k
-    complex(wp), pointer :: c_in(:, :) => null(), c_out(:, :) => null(), c_tmp1(:, :) => null(), c_tmp2(:) => null(), c_in1(:,:) => null()
+    complex(wp), pointer :: c_tmp1(:, :) => null(), c_in(:, :) => null(), c_out(:, :) => null(), c_in1(:, :) => null()
+    complex(wp), pointer :: c_tmp2(:) => null()
 
 contains
     ! #######################################################################
@@ -54,7 +61,7 @@ contains
 #include "fftw3.f03"
 #endif
         ! -----------------------------------------------------------------------
-        integer(wi) isize_stride, isize_disp, isize_fft_z, isize_fft_y, isize_fft_x
+        integer(wi) stride, isize_disp, nlines
 
         ! #######################################################################
 #ifndef USE_FFTW
@@ -69,115 +76,130 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Oz direction
-        if (g(3)%size > 1) then
+        size_fft_z = size(z(:))
+
+        if (size_fft_z > 1) then
+            fft_z_on = .true.
+
 #ifdef USE_MPI
             if (ims_npro_k > 1) then
                 tmpi_plan_fftz = TLabMPI_Trp_PlanK(kmax, isize_txc_dimz/2, &
-                                                          locType=MPI_DOUBLE_COMPLEX, &
-                                                          message='Oz FFTW in Poisson solver.')
-                isize_fft_z = tmpi_plan_fftz%nlines
+                                                   locType=MPI_DOUBLE_COMPLEX, &
+                                                   message='Oz FFTW in Poisson solver.')
+                nlines = tmpi_plan_fftz%nlines
 
             else
 #endif
-                isize_fft_z = (imax/2 + 1)*jmax
+                nlines = (imax/2 + 1)*jmax
 #ifdef USE_MPI
             end if
 #endif
 
-            isize_stride = isize_fft_z
+            stride = nlines
 
 #ifdef _DEBUG
-            call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_fz, 1, size_fft_z, nlines, &
+                                     txc(:, 1), size_fft_z, stride, 1, &
+                                     wrk3d, size_fft_z, stride, 1, &
                                      FFTW_FORWARD, FFTW_ESTIMATE)
 
-            call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_bz, 1, size_fft_z, nlines, &
+                                     txc(:, 1), size_fft_z, stride, 1, &
+                                     wrk3d, size_fft_z, stride, 1, &
                                      FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
-            call dfftw_plan_many_dft(fft_plan_fz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_fz, 1, size_fft_z, nlines, &
+                                     txc(:, 1), size_fft_z, stride, 1, &
+                                     wrk3d, size_fft_z, stride, 1, &
                                      FFTW_FORWARD, FFTW_MEASURE)
 
-            call dfftw_plan_many_dft(fft_plan_bz, 1, g(3)%size, isize_fft_z, &
-                                     txc(:, 1), g(3)%size, isize_stride, 1, &
-                                     wrk3d, g(3)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_bz, 1, size_fft_z, nlines, &
+                                     txc(:, 1), size_fft_z, stride, 1, &
+                                     wrk3d, size_fft_z, stride, 1, &
                                      FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
 
         ! -----------------------------------------------------------------------
         ! Ox direction
+        size_fft_x = size(x(:))
+        if (size_fft_x > 1) then
+            fft_x_on = .true.
+
 #ifdef USE_MPI
-        if (ims_npro_i > 1) then
-            ! Extended with the Nyquist frequency
-            tmpi_plan_fftx = TLabMPI_Trp_PlanI(imax/2 + 1, jmax*kmax, locType=MPI_DOUBLE_COMPLEX, message='extended Ox FFTW in Poisson solver.')
+            if (ims_npro_i > 1) then
+                ! Extended with the Nyquist frequency
+                tmpi_plan_fftx = TLabMPI_Trp_PlanI(imax/2 + 1, jmax*kmax, &
+                                                   locType=MPI_DOUBLE_COMPLEX, &
+                                                   message='extended Ox FFTW in Poisson solver.')
 
-            if (tmpi_plan_fftx%nlines /= tmpi_plan_dx%nlines) then
-                call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
-                call TLab_Stop(DNS_ERROR_UNDEVELOP)
-            end if
+                if (tmpi_plan_fftx%nlines /= tmpi_plan_dx%nlines) then
+                    call TLab_Write_ASCII(efile, __FILE__//'. Error in the size in the transposition arrays.')
+                    call TLab_Stop(DNS_ERROR_UNDEVELOP)
+                end if
 
-            isize_fft_x = tmpi_plan_dx%nlines
-            isize_disp = (imax/2 + 1)*ims_npro_i
+                nlines = tmpi_plan_dx%nlines
+                isize_disp = (imax/2 + 1)*ims_npro_i
 
-        else
+            else
 #endif
-            isize_fft_x = jmax*kmax
-            isize_disp = g(1)%size/2 + 1
+                nlines = jmax*kmax
+                isize_disp = size_fft_x/2 + 1
 
 #ifdef USE_MPI
-        end if
+            end if
 #endif
 
 #ifdef _DEBUG
-        call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:, 1), g(1)%size, 1, g(1)%size, &
-                                     wrk3d, g(1)%size/2 + 1, 1, isize_disp, &
-                                     FFTW_ESTIMATE)
-        call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:, 1), g(1)%size/2 + 1, 1, isize_disp, &
-                                     wrk3d, g(1)%size, 1, g(1)%size, &
-                                     FFTW_ESTIMATE)
+            call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, size_fft_x, nlines, &
+                                         txc(:, 1), size_fft_x, 1, size_fft_x, &
+                                         wrk3d, size_fft_x/2 + 1, 1, isize_disp, &
+                                         FFTW_ESTIMATE)
+            call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, size_fft_x, nlines, &
+                                         txc(:, 1), size_fft_x/2 + 1, 1, isize_disp, &
+                                         wrk3d, size_fft_x, 1, size_fft_x, &
+                                         FFTW_ESTIMATE)
 #else
-        call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:, 1), g(1)%size, 1, g(1)%size, &
-                                     wrk3d, g(1)%size/2 + 1, 1, isize_disp, &
-                                     FFTW_MEASURE)
-        call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, g(1)%size, isize_fft_x, &
-                                     txc(:, 1), g(1)%size/2 + 1, 1, isize_disp, &
-                                     wrk3d, g(1)%size, 1, g(1)%size, &
-                                     FFTW_MEASURE)
+            call dfftw_plan_many_dft_r2c(fft_plan_fx, 1, size_fft_x, nlines, &
+                                         txc(:, 1), size_fft_x, 1, size_fft_x, &
+                                         wrk3d, size_fft_x/2 + 1, 1, isize_disp, &
+                                         FFTW_MEASURE)
+            call dfftw_plan_many_dft_c2r(fft_plan_bx, 1, size_fft_x, nlines, &
+                                         txc(:, 1), size_fft_x/2 + 1, 1, isize_disp, &
+                                         wrk3d, size_fft_x, 1, size_fft_x, &
+                                         FFTW_MEASURE)
 #endif
+
+        end if
 
         ! -----------------------------------------------------------------------
         ! Oy direction
-        if (g(2)%size > 1) then
-            isize_fft_y = imax/2 + 1    !(imax/2 + 1)*kmax
-            isize_stride = imax/2 + 1
+        size_fft_y = size(y(:))
+        if (size_fft_y > 1) then
+            fft_y_on = .true.
+
+            nlines = imax/2 + 1    !(imax/2 + 1)*kmax
+            stride = imax/2 + 1
 
 #ifdef _DEBUG
-            call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
-                                     txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_fy, 1, size_fft_y, nlines, &
+                                     txc(:, 1), size_fft_y, stride, 1, &
+                                     wrk3d, size_fft_y, stride, 1, &
                                      FFTW_FORWARD, FFTW_ESTIMATE)
 
-            call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
-                                     txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_by, 1, size_fft_y, nlines, &
+                                     txc(:, 1), size_fft_y, stride, 1, &
+                                     wrk3d, size_fft_y, stride, 1, &
                                      FFTW_BACKWARD, FFTW_ESTIMATE)
 #else
-            call dfftw_plan_many_dft(fft_plan_fy, 1, g(2)%size, isize_fft_y, &
-                                     txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_fy, 1, size_fft_y, nlines, &
+                                     txc(:, 1), size_fft_y, stride, 1, &
+                                     wrk3d, size_fft_y, stride, 1, &
                                      FFTW_FORWARD, FFTW_MEASURE)
 
-            call dfftw_plan_many_dft(fft_plan_by, 1, g(2)%size, isize_fft_y, &
-                                     txc(:, 1), g(2)%size, isize_stride, 1, &
-                                     wrk3d, g(2)%size, isize_stride, 1, &
+            call dfftw_plan_many_dft(fft_plan_by, 1, size_fft_y, nlines, &
+                                     txc(:, 1), size_fft_y, stride, 1, &
+                                     wrk3d, size_fft_y, stride, 1, &
                                      FFTW_BACKWARD, FFTW_MEASURE)
 #endif
         end if
@@ -194,7 +216,7 @@ contains
     !# to homogeneize arrays across PEs.
     !#
     !########################################################################
-    subroutine OPR_Fourier_F_X_EXEC(nx, ny, nz, in, out)
+    subroutine OPR_Fourier_X_Forward(nx, ny, nz, in, out)
         integer(wi), intent(in) :: nx, ny, nz
         real(wp), intent(in) :: in(nx*ny*nz)
         complex(wp), intent(out) :: out(isize_txc_field)
@@ -223,7 +245,7 @@ contains
                 isize_line = nx/2 + 1
                 do k = 1, tmpi_plan_dx%nlines
                     inew = isize_line*ims_npro_i
-                    iold = g(1)%size/2 + 1
+                    iold = size_fft_x/2 + 1
                     wrk1(inew, k) = wrk1(iold, k)
                     do ip = ims_npro_i, 2, -1
                         do i = nx/2, 1, -1
@@ -248,11 +270,11 @@ contains
 #endif
 
         return
-    end subroutine OPR_Fourier_F_X_EXEC
+    end subroutine OPR_Fourier_X_Forward
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Fourier_B_X_EXEC(nx, ny, nz, in, out)
+    subroutine OPR_Fourier_X_Backward(nx, ny, nz, in, out)
         integer(wi) nx, ny, nz
         complex(wp), intent(in) :: in(isize_txc_field)
         real(wp), intent(out) :: out(nx*ny*nz)
@@ -284,7 +306,7 @@ contains
                         end do
                     end do
                     iold = ims_npro_i*isize_line
-                    inew = g(1)%size/2 + 1
+                    inew = size_fft_x/2 + 1
                     c_out(inew, k) = c_out(iold, k)
                 end do
             end if
@@ -304,11 +326,11 @@ contains
 #endif
 
         return
-    end subroutine OPR_Fourier_B_X_EXEC
+    end subroutine OPR_Fourier_X_Backward
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Fourier_F_Z_EXEC(in, out)
+    subroutine OPR_Fourier_Z_Forward(in, out)
         complex(wp), intent(inout), target :: in(*)     ! in might be overwritten
         complex(wp), intent(out), target :: out(*)
 
@@ -320,12 +342,12 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             call TLabMPI_Trp_ExecK_Forward(in, out, tmpi_plan_fftz)
-            p_org(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
-            p_dst(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
+            p_org(1:tmpi_plan_fftz%nlines, 1:size_fft_z) => out(1:isize_txc_field)
+            p_dst(1:tmpi_plan_fftz%nlines, 1:size_fft_z) => in(1:isize_txc_field)
         else
 #endif
-            p_org(1:isize_txc_dimz/2, 1:g(3)%size) => in(1:isize_txc_field)
-            p_dst(1:isize_txc_dimz/2, 1:g(3)%size) => out(1:isize_txc_field)
+            p_org(1:isize_txc_dimz/2, 1:size_fft_z) => in(1:isize_txc_field)
+            p_dst(1:isize_txc_dimz/2, 1:size_fft_z) => out(1:isize_txc_field)
 #ifdef USE_MPI
         end if
 #endif
@@ -333,16 +355,16 @@ contains
         call dfftw_execute_dft(fft_plan_fz, p_org, p_dst)
 
         if (fft_reordering_k) then                    ! re-shuffle spectra in z
-            do k = 1, g(3)%size/2
-                k_old1 = k + g(3)%size/2
+            do k = 1, size_fft_z/2
+                k_old1 = k + size_fft_z/2
                 k_new1 = k
                 k_old2 = k
-                k_new2 = k + g(3)%size/2
+                k_new2 = k + size_fft_z/2
 
                 p_org(:, k_new1) = p_dst(:, k_old1)
                 p_org(:, k_new2) = p_dst(:, k_old2)
             end do
-            do k = 1, g(3)%size
+            do k = 1, size_fft_z
                 p_dst(:, k) = p_org(:, k)
             end do
         end if
@@ -356,11 +378,11 @@ contains
         nullify (p_org, p_dst)
 
         return
-    end subroutine OPR_Fourier_F_Z_EXEC
+    end subroutine OPR_Fourier_Z_Forward
 
     !########################################################################
     !########################################################################
-    subroutine OPR_Fourier_B_Z_EXEC(in, out)
+    subroutine OPR_Fourier_Z_Backward(in, out)
         complex(wp), intent(inout), target :: in(*)     ! in might be overwritten
         complex(wp), intent(out), target :: out(*)
 
@@ -372,27 +394,27 @@ contains
 #ifdef USE_MPI
         if (ims_npro_k > 1) then
             call TLabMPI_Trp_ExecK_Forward(in, out, tmpi_plan_fftz)
-            p_org(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => out(1:isize_txc_field)
-            p_dst(1:tmpi_plan_fftz%nlines, 1:g(3)%size) => in(1:isize_txc_field)
+            p_org(1:tmpi_plan_fftz%nlines, 1:size_fft_z) => out(1:isize_txc_field)
+            p_dst(1:tmpi_plan_fftz%nlines, 1:size_fft_z) => in(1:isize_txc_field)
         else
 #endif
-            p_org(1:isize_txc_dimz/2, 1:g(3)%size) => in(1:isize_txc_field)
-            p_dst(1:isize_txc_dimz/2, 1:g(3)%size) => out(1:isize_txc_field)
+            p_org(1:isize_txc_dimz/2, 1:size_fft_z) => in(1:isize_txc_field)
+            p_dst(1:isize_txc_dimz/2, 1:size_fft_z) => out(1:isize_txc_field)
 #ifdef USE_MPI
         end if
 #endif
 
         if (fft_reordering_k) then                    ! re-shuffle spectra in z
-            do k = 1, g(3)%size/2
-                k_new1 = k + g(3)%size/2
+            do k = 1, size_fft_z/2
+                k_new1 = k + size_fft_z/2
                 k_old1 = k
                 k_new2 = k
-                k_old2 = k + g(3)%size/2
+                k_old2 = k + size_fft_z/2
 
                 p_dst(:, k_new1) = p_org(:, k_old1)
                 p_dst(:, k_new2) = p_org(:, k_old2)
             end do
-            do k = 1, g(3)%size
+            do k = 1, size_fft_z
                 p_org(:, k) = p_dst(:, k)
             end do
         end if
@@ -408,7 +430,7 @@ contains
         nullify (p_org, p_dst)
 
         return
-    end subroutine OPR_Fourier_B_Z_EXEC
+    end subroutine OPR_Fourier_Z_Backward
 
     ! #######################################################################
     ! #######################################################################
@@ -428,12 +450,12 @@ contains
 
         fft_reordering_i = .true.
 
-        if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
-            if (g(3)%size > 1) then
-                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_out)
-                call OPR_Fourier_F_Z_EXEC(c_out, c_tmp1) ! out might be overwritten
+        if (flag_mode == 3 .and. size_fft_y > 1) then ! 3D FFT (unless 2D sim)
+            if (size_fft_z > 1) then
+                call OPR_Fourier_X_Forward(nx, ny, nz, in, c_out)
+                call OPR_Fourier_Z_Forward(c_out, c_tmp1) ! out might be overwritten
             else
-                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_tmp1)
+                call OPR_Fourier_X_Forward(nx, ny, nz, in, c_tmp1)
             end if
 
             do k = 1, nz
@@ -442,11 +464,11 @@ contains
             ! call dfftw_execute_dft(fft_plan_fy, c_tmp1, c_out)
 
         else
-            if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
-                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_tmp1)
-                call OPR_Fourier_F_Z_EXEC(c_tmp1, c_out) ! tmp1 might be overwritten
+            if (flag_mode == 2 .and. size_fft_z > 1) then ! 2D FFT (unless 1D sim)
+                call OPR_Fourier_X_Forward(nx, ny, nz, in, c_tmp1)
+                call OPR_Fourier_Z_Forward(c_tmp1, c_out) ! tmp1 might be overwritten
             else
-                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in, c_out)
+                call OPR_Fourier_X_Forward(nx, ny, nz, in, c_out)
             end if
         end if
 
@@ -471,25 +493,25 @@ contains
 
         fft_reordering_i = .true.
 
-        if (flag_mode == 3 .and. g(2)%size > 1) then ! 3D FFT (unless 2D sim)
+        if (flag_mode == 3 .and. size_fft_y > 1) then ! 3D FFT (unless 2D sim)
             do k = 1, nz
                 call dfftw_execute_dft(fft_plan_by, c_in(:, k), c_wrk3d(:, k))
             end do
             ! call dfftw_execute_dft(fft_plan_by, c_in, c_wrk3d)
 
-            if (g(3)%size > 1) then
-                call OPR_Fourier_B_Z_EXEC(c_wrk3d, c_in)            ! wrk3d might be overwritten
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_in, out)    ! c_in might be overwritten
+            if (size_fft_z > 1) then
+                call OPR_Fourier_Z_Backward(c_wrk3d, c_in)            ! wrk3d might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_in, out)    ! c_in might be overwritten
             else
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
             end if
 
         else
-            if (flag_mode == 2 .and. g(3)%size > 1) then ! 2D FFT (unless 1D sim)
-                call OPR_Fourier_B_Z_EXEC(c_in, c_wrk3d)            ! in might be overwritten
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
+            if (flag_mode == 2 .and. size_fft_z > 1) then ! 2D FFT (unless 1D sim)
+                call OPR_Fourier_Z_Backward(c_in, c_wrk3d)            ! in might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_wrk3d, out) ! wrk3d might be overwritten
             else
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_in, out)    ! c_in might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_in, out)    ! c_in might be overwritten
             end if
 
         end if
@@ -519,11 +541,11 @@ contains
         fft_reordering_k = .true.
         fft_reordering_i = .true.
 
-        if (g(3)%size > 1) then
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, in1, c_tmp2)
-            call OPR_Fourier_F_Z_EXEC(c_tmp2, c_tmp1) ! tmp2 might be overwritten
+        if (size_fft_z > 1) then
+            call OPR_Fourier_X_Forward(nx, ny, nz, in1, c_tmp2)
+            call OPR_Fourier_Z_Forward(c_tmp2, c_tmp1) ! tmp2 might be overwritten
         else
-            call OPR_Fourier_F_X_EXEC(nx, ny, nz, in1, c_tmp1)
+            call OPR_Fourier_X_Forward(nx, ny, nz, in1, c_tmp1)
         end if
 
         select case (trim(adjustl(flag1)))
@@ -532,11 +554,11 @@ contains
             c_in1 = c_tmp1*conjg(c_tmp1)
 
         case ('cross')       ! Cross-spectra
-            if (g(3)%size > 1) then
-                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in2, c_tmp2)
-                call OPR_Fourier_F_Z_EXEC(c_tmp2, c_in1) ! tmp2 might be overwritten
+            if (size_fft_z > 1) then
+                call OPR_Fourier_X_Forward(nx, ny, nz, in2, c_tmp2)
+                call OPR_Fourier_Z_Forward(c_tmp2, c_in1) ! tmp2 might be overwritten
             else
-                call OPR_Fourier_F_X_EXEC(nx, ny, nz, in2, c_in1)
+                call OPR_Fourier_X_Forward(nx, ny, nz, in2, c_in1)
             end if
             c_in1 = c_in1*conjg(c_tmp1)
 
@@ -544,11 +566,11 @@ contains
 
         ! -----------------------------------------------------------------------
         if (flag2 == 2) then         ! Calculate correlation in array in2
-            if (g(3)%size > 1) then
-                call OPR_Fourier_B_Z_EXEC(c_in1, c_tmp1)            ! in1 might be overwritten
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_tmp1, in2)  ! tmp1 might be overwritten
+            if (size_fft_z > 1) then
+                call OPR_Fourier_Z_Backward(c_in1, c_tmp1)            ! in1 might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_tmp1, in2)  ! tmp1 might be overwritten
             else
-                call OPR_Fourier_B_X_EXEC(nx, ny, nz, c_in1, in2)   ! c_in1 might be overwritten
+                call OPR_Fourier_X_Backward(nx, ny, nz, c_in1, in2)   ! c_in1 might be overwritten
             end if
         end if
 
@@ -586,17 +608,17 @@ contains
 #else
             kglobal = k
 #endif
-            if (kglobal <= g(3)%size/2 + 1) then
+            if (kglobal <= size_fft_z/2 + 1) then
                 fk = real(kglobal - 1, wp)
             else
-                fk = -real(g(3)%size + 1 - kglobal, wp)
+                fk = -real(size_fft_z + 1 - kglobal, wp)
             end if
 
             do j = 1, ny
-                if (j <= g(2)%size/2 + 1) then
+                if (j <= size_fft_y/2 + 1) then
                     fj = real(j - 1, wp)
                 else
-                    fj = -real(g(2)%size + 1 - j, wp)
+                    fj = -real(size_fft_y + 1 - j, wp)
                 end if
 
                 do i = 1, nx/2 + 1
@@ -637,6 +659,7 @@ contains
     ! #######################################################################
     subroutine OPR_Fourier_SetPSD(nx, ny, nz, u, psd, locPhase)
         use Distributions
+        use FDM, only: g
 
         integer(wi) nx, ny, nz
         complex(wp), intent(inout) :: u(nx/2 + 1, ny, nz)
@@ -655,18 +678,18 @@ contains
 #else
             kglobal = k
 #endif
-            if (kglobal <= g(3)%size/2 + 1) then
+            if (kglobal <= size_fft_z/2 + 1) then
                 fk = real(kglobal - 1, wp)/g(3)%scale
             else
-                fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale
+                fk = -real(size_fft_z + 1 - kglobal, wp)/g(3)%scale
             end if
 
             do j = 1, ny
                 jglobal = j ! No MPI decomposition along Oy
-                if (jglobal <= g(2)%size/2 + 1) then
+                if (jglobal <= size_fft_y/2 + 1) then
                     fj = real(jglobal - 1, wp)/g(2)%scale
                 else
-                    fj = -real(g(2)%size + 1 - jglobal, wp)/g(2)%scale
+                    fj = -real(size_fft_y + 1 - jglobal, wp)/g(2)%scale
                 end if
 
                 do i = 1, nx/2 + 1
@@ -687,7 +710,7 @@ contains
                         pow_dst = 0.0_wp
 
                     else
-                        if (g(2)%size == 1 .or. g(3)%size == 1) then ! 2D spectrum
+                        if (size_fft_y == 1 .or. size_fft_z == 1) then ! 2D spectrum
                             pow_dst = pow_dst/(pi_wp*f)
                         else
                             pow_dst = pow_dst/(2*pi_wp*f**2)
@@ -700,7 +723,7 @@ contains
                     if (pow_dst > 0.0_wp) pow_dst = sqrt(pow_dst)
 
                     if (present(locPhase)) then
-                        if (iglobal == 1 .or. iglobal == g(1)%size/2 + 1) then
+                        if (iglobal == 1 .or. iglobal == size_fft_x/2 + 1) then
                             phase = 0.0_wp
                         else
                             phase = (locPhase(i, j, k) - 0.5_wp)*2.0_wp*pi_wp
@@ -727,6 +750,7 @@ contains
     ! #######################################################################
     subroutine OPR_Fourier_SetPSD_2d(nx, ny, nz, u, psd)
         use Distributions
+        use FDM, only: g
 
         integer(wi) nx, ny, nz
         complex(wp), intent(inout) :: u(nx/2 + 1, ny, nz)
@@ -744,10 +768,10 @@ contains
 #else
             kglobal = k
 #endif
-            if (kglobal <= g(3)%size/2 + 1) then
+            if (kglobal <= size_fft_z/2 + 1) then
                 fk = real(kglobal - 1, wp)/g(3)%scale
             else
-                fk = -real(g(3)%size + 1 - kglobal, wp)/g(3)%scale
+                fk = -real(size_fft_z + 1 - kglobal, wp)/g(3)%scale
             end if
 
             do i = 1, nx/2 + 1

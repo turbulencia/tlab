@@ -41,7 +41,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use NavierStokes
     use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
     use Rotation, only: coriolis
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
 
@@ -460,9 +460,9 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call AVG_IK_V(imax, jmax, kmax, jmax, v, rV(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, w, rW(1), wrk1d)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rU(1), rU_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rV(1), rV_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rW(1), rW_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rU(1), rU_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rV(1), rV_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rW(1), rW_y(1))
 
     U_y1(:) = rU_y(:)
     V_y1(:) = rV_y(:)
@@ -499,14 +499,14 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     rVf(:) = rV(:) - fV(:)
     rWf(:) = rW(:) - fW(:)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rR(1), rR_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fU(1), fU_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fV(1), fV_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rR(1), rR_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fU(1), fU_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fV(1), fV_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
 
     ! Pressure
     call AVG_IK_V(imax, jmax, kmax, jmax, p_loc, rP(1), wrk1d)
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rP(1), rP_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rP(1), rP_y(1))
 
     ! #######################################################################
     ! Main covariances (do not overwrite dudz; it contains p for incompressible case)
@@ -553,12 +553,12 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         Ryz(:) = Ryz(:)/rR(:)
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxx(1), Rxx_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ryy(1), Ryy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rzz(1), Rzz_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxy(1), Rxy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxz(1), Rxz_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ryz(1), Ryz_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxx(1), Rxx_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ryy(1), Ryy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rzz(1), Rzz_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxy(1), Rxy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rxz(1), Rxz_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ryz(1), Ryz_y(1))
 
     ! Density
     if (.not. (nse_eqns == DNS_EQNS_INCOMPRESSIBLE)) then
@@ -575,7 +575,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         dvdx = dudx*dudx
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdx, rR2(1), wrk1d)
 
-        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rR2(1), rR2_y(1))
+        call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rR2(1), rR2_y(1))
 
         ! Density Fluctuations Budget
         do j = 1, jmax
@@ -668,17 +668,17 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! dwdz = dw/dz ; dp/dz
     ! ###################################################################
     ! Pressure convection term
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p_loc, dwdx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p_loc, dwdy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p_loc, dwdz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p_loc, dwdx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p_loc, dwdy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p_loc, dwdz)
     p_wrk3d = u*dwdx + v*dwdy + w*dwdz
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, ugradp(1), wrk1d)
 
     ! Pressure Strain Terms
     ! 9 derivatives are here recomputed; ok, this routine is not called that often
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, dudx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, dvdy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, dwdz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, dudx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, dvdy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, dwdz)
     dudx = dvdz*dudx ! dvdz contains the pressure fluctuation
     dvdy = dvdz*dvdy ! no need to substract rV_y
     dwdz = dvdz*dwdz
@@ -689,12 +689,12 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     PIyy(:) = PIyy(:)*2.0_wp
     PIzz(:) = PIzz(:)*2.0_wp
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, dudy)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, dvdx)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, dwdz) !dudz not free
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, dwdx)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, dudx) !dvdz not free
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, dvdy)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, dudy)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, dvdx)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, dwdz) !dudz not free
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, dwdx)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, dudx) !dvdz not free
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, dvdy)
     dudy = dvdz*(dudy + dvdx) ! no need to substract rU_y
     dwdz = dvdz*(dwdz + dwdx)
     dudx = dvdz*(dudx + dvdy) ! no need to substract rW_y
@@ -740,7 +740,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         call Thermo_Anelastic_THETA_V(imax, jmax, kmax, s, dvdz, p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, dvdz, potem_eq(1), wrk1d)
 
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T_LOC(1, 1, 1), dudz)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T_LOC(1, 1, 1), dudz)
 
         call Thermo_Anelastic_LAPSE_EQU(imax, jmax, kmax, s, dwdz, p_wrk3d)
         call AVG_IK_V(imax, jmax, kmax, jmax, dwdz, lapse_eq(1), wrk1d)
@@ -757,7 +757,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         bfreq_fr(:) = bfreq_fr(:)*buoyancy%vector(2)
 
         call Thermo_Anelastic_VAPOR_PRESSURE(imax, jmax, kmax, s, dudz)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dudz, dudy)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dudz, dudy)
         ! dwdz should contains lapse_fr, since lapse_dew = lapse_fr when saturated
         call Thermo_Anelastic_DEWPOINT(imax, jmax, kmax, s, dudy, p_wrk3d, dwdz)
         call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, dewpoint(1), wrk1d)
@@ -799,7 +799,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         fs(:) = fs(:)/rR(:)
         fT(:) = fT(:)/rR(:)
 
-        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rT(1), rT_y(1))
+        call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rT(1), rT_y(1))
 
         ! Turbulent Mach number
         M_t(:) = sqrt((Rxx(:) + Ryy(:) + Rzz(:))/c2(:))
@@ -859,7 +859,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         ! -------------------------------------------------------------------
         ! Buoyancy frequency & saturation pressure
         ! -------------------------------------------------------------------
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, dvdy)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, dvdy)
 
         call Thermo_Psat_Polynomial(imax*jmax*kmax, T, dvdz)
         call THERMO_CP(imax*jmax*kmax, s, GAMMA_LOC(:, :, :), dvdx)
@@ -877,8 +877,8 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
         lapse_fr(:) = -lapse_fr(:)*buoyancy%vector(2)*CRATIO_INV
 
         if (imixture == MIXT_TYPE_AIRWATER) then
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T, dudz)
-            call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 2), dudy)
+            call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T, dudz)
+            call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 1, 1, 2), dudy)
 
             ! To be done
             ! call THERMO_AIRWATER_LAPSE_EQU(s, T, p_loc, dudz, dudy, dvdx, dvdy)!, dwdy, dwdz, p_wrk3d)
@@ -944,7 +944,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
 
             !        pmod(:) =-rP_y(:) + SIGN(rB(:),buoyancy%vector(2))
 
-            call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rB(1), rB_y(1))
+            call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rB(1), rB_y(1))
 
         end if
 
@@ -974,17 +974,17 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call TLab_Write_ASCII(tfile, 'AVG_FLOW_TEMPORAL_LAYER: Section 3')
 #endif
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, dudx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, dudy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, dudz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, dudx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, dudy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, dudz)
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, dvdx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, dvdy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, dvdz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, dvdx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, dvdy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, dvdz)
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, dwdx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, dwdy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, dwdz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, dwdx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, dwdy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, dwdz)
 
     ! ###################################################################
     ! Vorticity
@@ -1203,9 +1203,9 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     end do
     Tau_yz(:) = Tau_yz(:)*visc
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_xy(1), Tau_xy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yy(1), Tau_yy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yz(1), Tau_yz_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_xy(1), Tau_xy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yy(1), Tau_yy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yz(1), Tau_yz_y(1))
 
     ! -------------------------------------------------------------------
     ! Contribution to turbulent transport terms
@@ -1248,16 +1248,16 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, wrk1d(1, 2), wrk1d)
     Tyzy(:) = Tyzy(:) - wrk1d(1:jmax, 2)*visc
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Txxy(1), Txxy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tyyy(1), Tyyy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tzzy(1), Tzzy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Txyy(1), Txyy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Txzy(1), Txzy_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tyzy(1), Tyzy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Txxy(1), Txxy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tyyy(1), Tyyy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tzzy(1), Tzzy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Txyy(1), Txyy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Txzy(1), Txzy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tyzy(1), Tyzy_y(1))
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ty1(1), Ty1_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ty2(1), Ty2_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ty3(1), Ty3_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ty1(1), Ty1_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ty2(1), Ty2_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Ty3(1), Ty3_y(1))
 
     ! -------------------------------------------------------------------
     ! Contribution to dissipation

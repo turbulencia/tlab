@@ -25,7 +25,7 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     use mpi_f08
     use TLabMPI_VARS
 #endif
-    use OPR_PARTIAL
+    use OPR_Partial
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
@@ -111,9 +111,9 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     end do
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
@@ -134,9 +134,9 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     call FI_INVARIANT_P(imax, jmax, kmax, u, v, w, txc(1, 1), txc(1, 4))
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
@@ -160,9 +160,9 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     end do
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
@@ -187,9 +187,9 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     end do
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
@@ -222,9 +222,9 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
     end do
 
 ! Calculate gradient of conditioning field; normal stored in u,v,w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), a, txc(1, 4))
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), a, txc(1, 5))
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), a, txc(1, 6))
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &

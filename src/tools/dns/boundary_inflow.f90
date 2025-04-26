@@ -36,7 +36,7 @@ module BOUNDARY_INFLOW
     use TLabMPI_PROCS, only: TLabMPI_Panic
     use TLabMPI_Transpose, only: TLabMPI_Trp_PlanK
 #endif
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
     private
@@ -167,14 +167,14 @@ contains
 
             if (flow_on) then
                 do is = 1, inb_flow
-                    call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), q_inf(1, 1, 1, is), txc)
+                    call OPR_Partial_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), q_inf(1, 1, 1, is), txc)
                     q_inf(:, :, :, is) = -txc(:, :, :)*qbg(1)%mean
                 end do
             end if
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call OPR_PARTIAL_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), s_inf(1, 1, 1, is), txc)
+                    call OPR_Partial_X(OPR_P1, g_inf(1)%size, g_inf(2)%size, kmax, bcs, g_inf(1), s_inf(1, 1, 1, is), txc)
                     s_inf(:, :, :, is) = -txc(:, :, :)*qbg(1)%mean
                 end do
             end if

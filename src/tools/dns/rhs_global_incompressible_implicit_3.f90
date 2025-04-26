@@ -41,7 +41,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     use DNS_LOCAL, only: remove_divergence
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Elliptic
     use Gravity, only: bbackground, Gravity_Buoyancy
 
@@ -111,8 +111,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! #######################################################################
     ! h3   contains explicit nonlinear w-tendency (nonlinear operator N(u_n))
     if (g(3)%size > 1) then
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, h3)
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp3, tmp2) ! tmp2 used for BCs below
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, h3)
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), w, tmp3, tmp2) ! tmp2 used for BCs below
 
         do k = 1, kmax
             ip = (k - 1)*imax*jmax + 1; 
@@ -123,7 +123,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
             bcs_ht(1:imax, k, 6) = BcsFlowJmax%ref(1:imax, k, 3) + visc_tot*dte*tmp2(ip:ip + imax - 1) - dte*1.0_wp; 
         end do
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
         do ij = 1, isize_field
             h3(ij) = -u(ij)*h3(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
         end do
@@ -155,8 +155,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Diffusion and convection terms in Ox momentum eqn
 ! #######################################################################
 ! h1 contains explicit nonlinear u-tendency
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, h1)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp3, tmp2) ! tmp2 used for BCs below
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, h1)
+    call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), u, tmp3, tmp2) ! tmp2 used for BCs below
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; 
@@ -167,7 +167,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
         bcs_ht(1:imax, k, 4) = BcsFlowJmax%ref(1:imax, k, 1) + visc_tot*dte*tmp2(ip:ip + imax - 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp3)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp3)
     do ij = 1, isize_field
         h1(ij) = -u(ij)*h1(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
     end do
@@ -197,8 +197,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Diffusion and convection terms in Oy momentum eqn
 ! #######################################################################
 !   h2 contains explicit nonlinear v-tendency
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, h2)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), v, tmp3, tmp2) ! tmp2 used for BCs below
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, h2)
+    call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), v, tmp3, tmp2) ! tmp2 used for BCs below
 
     do k = 1, kmax
         ip = (k - 1)*imax*jmax + 1; 
@@ -207,7 +207,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
         bcs_ht(1:imax, k, 5) = 0.0_wp + visc_tot*dte*tmp2(ip:ip + imax - 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp3)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp3)
     do ij = 1, isize_field
         h2(ij) = -u(ij)*h2(ij) - v(ij)*tmp2(ij) - w(ij)*tmp3(ij)
     end do
@@ -234,9 +234,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     end if
 
 ! old pressure tendencies
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp8, tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp8, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp8, tmp3)
     do ij = 1, isize_field
         h1(ij) = h1(ij) - tmp1(ij)
         h2(ij) = h2(ij) - tmp2(ij)
@@ -262,16 +262,16 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
         do is = 1, inb_scal
             diff = visc_exp/schmidt(is)
             tmp4 = hs(:, is)
-            call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is))
-            call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp6, tmp5)
-!        CALL OPR_PARTIAL_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s,       tmp6,     tmp5)
+            call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, is), hs(1, is))
+            call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, is), tmp6, tmp5)
+!        CALL OPR_Partial_Y(OPR_P2_P1, imax,jmax,kmax, bcs, g(2), s,       tmp6,     tmp5)
             do k = 1, kmax
                 ! ip=(k-1)*imax*jmax+1; bcs_hb(1:imax,k,3)= 0.0_wp + visc_tot*dte*tmp6(ip:ip+imax-1)
                 ! ip=ip+(jmax-1)*imax;  bcs_ht(1:imax,k,3)= 0.0_wp + visc_tot*dte*tmp6(ip:ip+imax-1)
                 ip = (k - 1)*imax*jmax + 1; BcsFlowJmin%ref(1:imax, k, 2) = 0.0_wp + visc_tot*dte*tmp6(ip:ip + imax - 1)
                 ip = ip + (jmax - 1)*imax; BcsFlowJmax%ref(1:imax, k, 2) = 0.0_wp + visc_tot*dte*tmp6(ip:ip + imax - 1)
             end do
-            call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6)
+            call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, is), tmp6)
             do ij = 1, isize_field; 
                 hs(ij, is) = -u(ij)*hs(ij, is) - v(ij)*tmp5(ij) - w(ij)*tmp6(ij)
             end do
@@ -310,7 +310,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
             ip_b = 1; ip_t = 1 + imax*kmax
             ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, beta, &
             !                        tmp7, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
-            call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp7, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
+            call OPR_Helmholtz(imax, jmax, kmax, 0, beta, tmp7, tmp5, tmp6, wrk2d(ip_b, 1), wrk2d(ip_t, 1))
 
             do ij = 1, isize_field
                 s(ij, is) = tmp7(ij)*beta - kef*s(ij, is)
@@ -335,9 +335,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     !                                        tmp2, tmp5, tmp6, bcs_hb(1, 1, 5), bcs_ht(1, 1, 5))
     ! call OPR_Helmholtz_FourierXZ_Factorize(imax, jmax, kmax, g, 0, beta, &
     !                                        tmp3, tmp5, tmp6, bcs_hb(1, 1, 6), bcs_ht(1, 1, 6))
-    call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp1, tmp5, tmp6, bcs_hb(1, 1, 4), bcs_ht(1, 1, 4))
-    call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp2, tmp5, tmp6, bcs_hb(1, 1, 5), bcs_ht(1, 1, 5))
-    call OPR_Helmholtz(imax, jmax, kmax, g, 0, beta, tmp3, tmp5, tmp6, bcs_hb(1, 1, 6), bcs_ht(1, 1, 6))
+    call OPR_Helmholtz(imax, jmax, kmax, 0, beta, tmp1, tmp5, tmp6, bcs_hb(1, 1, 4), bcs_ht(1, 1, 4))
+    call OPR_Helmholtz(imax, jmax, kmax, 0, beta, tmp2, tmp5, tmp6, bcs_hb(1, 1, 5), bcs_ht(1, 1, 5))
+    call OPR_Helmholtz(imax, jmax, kmax, 0, beta, tmp3, tmp5, tmp6, bcs_hb(1, 1, 6), bcs_ht(1, 1, 6))
 
     do ij = 1, isize_field
         u(ij) = tmp1(ij)*beta - kef*u(ij)
@@ -354,9 +354,9 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
 ! Pressure term
 ! #######################################################################
     if (remove_divergence) then ! remove residual divergence
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
     end if
 
 ! -----------------------------------------------------------------------
@@ -374,7 +374,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     end do
 
 ! pressure in tmp8, Oy derivative in tmp3
-    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    call OPR_Poisson(imax, jmax, kmax, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! update pressure with correction from pressure solver
     do ij = 1, isize_field
@@ -382,8 +382,8 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_3(kex, kim, kco, &
     end do
 
 ! horizontal derivatives
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient

@@ -560,7 +560,7 @@ subroutine DNS_READ_LOCAL(inifile)
         bcs_visc_kmin = DNS_BCS_NONE; bcs_visc_kmax = DNS_BCS_NONE
     end if
 
-! BCs for OPR_PARTIAL at xmin (1,*) and xmax (2,*)
+! BCs for OPR_Partial at xmin (1,*) and xmax (2,*)
     bcs_inf = 0                                    ! default is biased non-zero; if 1, set to zero
     if (bcs_visc_imin == 1) bcs_inf(1, 2, 1) = 1 ! Inflow conditions
     if (bcs_visc_imax == 1) bcs_inf(2, 2, 1) = 1

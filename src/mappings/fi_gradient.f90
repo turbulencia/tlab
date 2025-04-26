@@ -9,7 +9,7 @@ module FI_GRADIENT_EQN
     use TLab_Constants, only: wp, wi
     use FDM, only: g
     use IBM_VARS, only: imode_ibm, ibm_partial
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
     private
 
@@ -30,13 +30,13 @@ contains
         real(wp), intent(inout) :: tmp1(nx*ny*nz)
 
 ! ###################################################################
-        ! IBM   (if .true., OPR_PARTIAL_X/Y/Z uses modified fields for derivatives)
+        ! IBM   (if .true., OPR_Partial_X/Y/Z uses modified fields for derivatives)
         if (imode_ibm == 1) ibm_partial = .true.
 
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, result)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, tmp1)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), s, result)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, tmp1)
         result = result*result + tmp1*tmp1
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, tmp1)
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, tmp1)
         result = result + tmp1*tmp1
 
         if (imode_ibm == 1) then
@@ -60,34 +60,34 @@ contains
 ! ###################################################################
 ! Vorticity vector
 ! ###################################################################
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, grad_x)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, grad_y)
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, grad_z)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), s, grad_x)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, grad_y)
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, grad_z)
 
 ! ###################################################################
 ! Production term
 ! ###################################################################
 ! Ux, Vy, Wz
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), u, tmp1)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), v, tmp2)
         result = tmp1*grad_x*grad_x + tmp2*grad_y*grad_y
 
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp2)
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), w, tmp2)
         result = result + tmp2*grad_z*grad_z
 
 ! Uy, Vx
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp2)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), v, tmp1)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), u, tmp2)
         result = result + (tmp1 + tmp2)*grad_x*grad_y
 
 ! Uz, Wx
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), w, tmp1)
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), u, tmp2)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), w, tmp1)
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), u, tmp2)
         result = result + (tmp1 + tmp2)*grad_x*grad_z
 
 ! Vz, Wy
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), w, tmp1)
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), v, tmp2)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), w, tmp1)
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), v, tmp2)
         result = -(result + (tmp1 + tmp2)*grad_y*grad_z)
 
         return
@@ -106,27 +106,27 @@ contains
 
 ! ###################################################################
 ! G_x
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), s, grad)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), s, grad)
 
-        call OPR_PARTIAL_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
-        call OPR_PARTIAL_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
+        call OPR_Partial_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
+        call OPR_Partial_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
         result = grad*(tmp1 + tmp2 + tmp3)
 
 ! G_y
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, grad)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), s, grad)
 
-        call OPR_PARTIAL_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
-        call OPR_PARTIAL_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
+        call OPR_Partial_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
+        call OPR_Partial_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
         result = result + grad*(tmp1 + tmp2 + tmp3)
 
 ! G_z
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, grad)
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), s, grad)
 
-        call OPR_PARTIAL_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
-        call OPR_PARTIAL_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
+        call OPR_Partial_Z(OPR_P2, nx, ny, nz, bcs, g(3), grad, tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P2, nx, ny, nz, bcs, g(2), grad, tmp2, tmp4)
+        call OPR_Partial_X(OPR_P2, nx, ny, nz, bcs, g(1), grad, tmp1, tmp4)
         result = result + grad*(tmp1 + tmp2 + tmp3)
 
         return

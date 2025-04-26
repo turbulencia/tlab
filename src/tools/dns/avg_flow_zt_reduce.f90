@@ -37,7 +37,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Averages, only: SUM1V1D_V
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
     real(wp), dimension(imax, jmax, kmax, *), intent(IN), target :: q
@@ -390,9 +390,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc =
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, sc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, rc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, qc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, sc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, rc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, qc)
 
     call REDUCE(imax, jmax, kmax, sc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, rc, nstatavg, statavg, yc)
@@ -790,8 +790,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = field tau_yz
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, wc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, wc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tc)
 
     do j = 1, imax*jmax*kmax
         oc(j, 1, 1) = oc(j, 1, 1) + wc(j, 1, 1)
@@ -1285,8 +1285,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = field tau_yz
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, vc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, vc)
 
     do j = 1, imax*jmax*kmax
         uc(j, 1, 1) = uc(j, 1, 1) + tc(j, 1, 1)
@@ -1724,8 +1724,8 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = field tau_yz
     ! ######################################################
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, zc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, yc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, zc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, yc)
 
     do j = 1, imax*jmax*kmax
         pc(j, 1, 1) = zc(j, 1, 1) + yc(j, 1, 1)
@@ -2122,44 +2122,44 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc =
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), sc, vc)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), oc, wc)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), uc, tc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), sc, vc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), oc, wc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), uc, tc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, wc, nstatavg, statavg, yc)
     call REDUCE(imax, jmax, kmax, tc, nstatavg, statavg, zc)
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), oc, vc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), oc, vc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, wc)
     do j = 1, NNstat*kmax
         xc(j, 1, 1) = xc(j, 1, 1) + wc(j, 1, 1)
     end do
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rc, vc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rc, vc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, wc)
     do j = 1, NNstat*kmax
         yc(j, 1, 1) = yc(j, 1, 1) + wc(j, 1, 1)
     end do
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), pc, vc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), pc, vc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, wc)
     do j = 1, NNstat*kmax
         zc(j, 1, 1) = zc(j, 1, 1) + wc(j, 1, 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), uc, vc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), uc, vc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, wc)
     do j = 1, NNstat*kmax
         xc(j, 1, 1) = xc(j, 1, 1) + wc(j, 1, 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), pc, vc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), pc, vc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, wc)
     do j = 1, NNstat*kmax
         yc(j, 1, 1) = yc(j, 1, 1) + wc(j, 1, 1)
     end do
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), qc, vc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), qc, vc)
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, wc)
     do j = 1, NNstat*kmax
         zc(j, 1, 1) = zc(j, 1, 1) + wc(j, 1, 1)
@@ -2332,9 +2332,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = phi
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, oc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, uc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, pc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, oc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, uc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, pc)
 
     call REDUCE(imax, jmax, kmax, oc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, uc, nstatavg, statavg, yc)
@@ -2381,13 +2381,13 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = phi
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, oc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, uc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, oc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, uc)
 
     call REDUCE(imax, jmax, kmax, oc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, uc, nstatavg, statavg, yc)
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, oc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, oc)
 
     call REDUCE(imax, jmax, kmax, oc, nstatavg, statavg, zc)
 
@@ -2432,13 +2432,13 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = phi
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, oc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, uc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, oc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, uc)
 
     call REDUCE(imax, jmax, kmax, oc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, uc, nstatavg, statavg, yc)
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, oc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, oc)
 
     call REDUCE(imax, jmax, kmax, oc, nstatavg, statavg, zc)
 
@@ -2529,9 +2529,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc =
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, sc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, rc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), rho, qc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, sc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, rc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), rho, qc)
 
     call REDUCE(imax, jmax, kmax, sc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, rc, nstatavg, statavg, yc)
@@ -2906,9 +2906,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc =
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, sc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, rc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p, qc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, sc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, rc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), p, qc)
 
     call REDUCE(imax, jmax, kmax, sc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, rc, nstatavg, statavg, yc)
@@ -3073,9 +3073,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc =
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), T, vc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T, wc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), T, tc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), T, vc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), T, wc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), T, tc)
 
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, wc, nstatavg, statavg, yc)
@@ -3142,9 +3142,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc =
     ! ######################################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), vc, xc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), wc, yc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tc, zc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), vc, xc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), wc, yc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tc, zc)
 
     call REDUCE(imax, jmax, kmax, xc, nstatavg, statavg, vc)
     call REDUCE(imax, jmax, kmax, yc, nstatavg, statavg, wc)
@@ -3276,9 +3276,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     ! # pc = dwdz
     ! #################################
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, qc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, oc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, uc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, qc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, oc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, uc)
 
     call REDUCE(imax, jmax, kmax, uc, nstatavg, statavg, pc)
     call REDUCE(imax, jmax, kmax, oc, nstatavg, statavg, uc)
@@ -3332,9 +3332,9 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
         yc(j, 1, 1) = rho(j, 1, 1)*v(j, 1, 1)*T(j, 1, 1)**2.0_wp
         zc(j, 1, 1) = rho(j, 1, 1)*w(j, 1, 1)*T(j, 1, 1)**2.0_wp
     end do
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), xc, vc)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), yc, wc)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), zc, tc)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), xc, vc)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), yc, wc)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), zc, tc)
 
     call REDUCE(imax, jmax, kmax, vc, nstatavg, statavg, xc)
     call REDUCE(imax, jmax, kmax, wc, nstatavg, statavg, yc)

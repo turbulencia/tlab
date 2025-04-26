@@ -19,7 +19,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Arrays, only: wrk1d, wrk2d
     use Thermodynamics, only: RRATIO_INV, gama0, mach
-    use OPR_PARTIAL
+    use OPR_Partial
     use Integration, only: Int_Simpson
     implicit none
 
@@ -988,7 +988,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
 !         DO j = 1,jmax
 !            wrk1d(j,1) = fU(n,j)
 !         ENDDO
-!         CALL OPR_PARTIAL_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2))
+!         CALL OPR_Partial_Y(OPR_P1, i1,jmax,i1, bcs, g(2), wrk1d(1,1), wrk1d(1,2))
 !         delta_w_u(n) = (fU(n,jmax)-fU(n,1)) / MINVAL(wrk1d(1:jmax,2))
 !      ENDDO
 !
@@ -1117,7 +1117,7 @@ subroutine AVG_FLOW_SPATIAL_LAYER(itxc, jmin_loc, jmax_loc, mean1d, stat)
         do j = 1, jmax
             wrk1d(j, 1) = fU(n, j)
         end do
-        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2))
+        call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2))
         delta_w_u(n) = (fU(n, jmax/2 + 1) - U2)/abs(minval(wrk1d(1:jmax, 2)))
         delta_w_d(n) = (fU(n, jmax/2) - U2)/abs(maxval(wrk1d(1:jmax, 2)))
     end do

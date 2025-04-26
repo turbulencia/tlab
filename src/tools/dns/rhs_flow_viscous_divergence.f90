@@ -21,7 +21,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV
     use BOUNDARY_BCS
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
 
@@ -51,9 +51,9 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! diagonal terms
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
     if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xx(i) = c23*vis(i)*(2.0_wp*tmp1(i) - (tmp2(i) + tmp3(i)))
@@ -75,8 +75,8 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! off-diagonal terms
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
     if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
             tau_xy(i) = visc*vis(i)*(tmp1(i) + tmp2(i))
@@ -88,8 +88,8 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 
     end if
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp1)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp2)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp1)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp2)
 
     if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
@@ -102,8 +102,8 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp1)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp1)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
 
     if (nse_eqns == DNS_EQNS_INTERNAL) then ! internal energy equation
         do i = 1, imax*jmax*kmax
@@ -119,19 +119,19 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
 ! ###################################################################
 ! Momentum equation
 ! ###################################################################
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), tau_xx(:), tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tau_xy(:), tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tau_xz(:), tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 1), g(1), tau_xx(:), tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tau_xy(:), tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tau_xz(:), tmp3)
     hq(:, 1) = hq(:, 1) + tmp1 + tmp2 + tmp3
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tau_xy(:), tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), tau_yy(:), tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tau_yz(:), tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tau_xy(:), tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 2), g(2), tau_yy(:), tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tau_yz(:), tmp3)
     hq(:, 2) = hq(:, 2) + tmp1 + tmp2 + tmp3
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tau_xz(:), tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tau_yz(:), tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), tau_zz(:), tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tau_xz(:), tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tau_yz(:), tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_inf(:, :, 3), g(3), tau_zz(:), tmp3)
     hq(:, 3) = hq(:, 3) + tmp1 + tmp2 + tmp3
 
 ! ###################################################################
@@ -146,9 +146,9 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
             tau_yy(i) = tau_xy(i)*u(i) + tau_yy(i)*v(i) + tau_yz(i)*w(i)
             tau_zz(i) = tau_xz(i)*u(i) + tau_yz(i)*v(i) + tau_zz(i)*w(i)
         end do
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tau_xx(:), tmp3)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tau_yy(:), tmp2)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tau_zz(:), tmp1)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tau_xx(:), tmp3)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tau_yy(:), tmp2)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tau_zz(:), tmp1)
         hq(:, 4) = hq(:, 4) + CRATIO_INV*(tmp1 + tmp2 + tmp3)
 
     end if

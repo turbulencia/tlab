@@ -8,7 +8,7 @@ module Microphysics
     use TLab_Memory, only: inb_scal_array
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
-    use OPR_PARTIAL, only: OPR_PARTIAL_Y
+    use OPR_Partial, only: OPR_Partial_Y
     use OPR_ODES
     implicit none
     private
@@ -158,7 +158,7 @@ contains
 
             end select
 
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
+            call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
             if (present(flux)) flux = -tmp1
 
         case (TYPE_SED_AIRWATERSIMPLIFIED)
@@ -168,11 +168,11 @@ contains
             !     tmp1 = locProps%parameters(is)*s_active
             ! end if
 
-            ! call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
+            ! call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g, tmp1, source)
             ! if (present(flux)) flux = -tmp1
 
             ! the previous formulation yields oscillations at sharp gradients
-            call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g, s_active, tmp1)
+            call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g, s_active, tmp1)
             if (exponent > 0.0_wp) tmp1 = tmp1*(s_active**exponent)
             source = locProps%parameters(is)*dummy*tmp1
 

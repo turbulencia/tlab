@@ -10,7 +10,7 @@ program VINTEGRAL
     use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_ODES
 
     implicit none
@@ -153,7 +153,7 @@ program VINTEGRAL
             call FDM_CreatePlan(x, g)
 
             f = du1_a
-            ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
+            ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, f)
             f = f + lambda*u
 
             do ib = 1, 2
@@ -176,7 +176,7 @@ program VINTEGRAL
 
                 ! check the calculation of the derivative at the boundary
                 print *, dw1_n(:, 1)
-                call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, w_n, dw1_n)
+                call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, w_n, dw1_n)
                 select case (ibc)
                 case (BCS_MIN)
                     print *, dw1_n(:, 1)
@@ -199,9 +199,9 @@ program VINTEGRAL
 
         ! f = du2_a
         ! du1_n = du1_a ! I need it for the boundary conditions
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
-        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
+        ! call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
         f = du2_n
 
         bcs_cases(1:4) = [BCS_DD, BCS_DN, BCS_ND, BCS_NN]
@@ -254,9 +254,9 @@ program VINTEGRAL
 
         ! f = du2_a - lambda*lambda*u
         ! du1_n = du1_a ! I need it for the boundary conditions
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
-        ! call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
+        ! call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
         f = du2_n - lambda*lambda*u
 
         bcs_cases(1:2) = [BCS_DD, BCS_NN]!, BCS_DN, BCS_ND]
@@ -308,9 +308,9 @@ program VINTEGRAL
 
         ! f = du2_a - lambda*u
         ! du1_n = du1_a ! I need it for the boundary conditions
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
-        ! call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
+        ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, u, du1_n)
+        ! call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_aux, g, du1_n, du2_n)
+        call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs_aux, g, u, du2_n, du1_n)
         f = du2_n - lambda*u
 
         bcs_cases(1:4) = [BCS_DD, BCS_NN, BCS_DN, BCS_ND]

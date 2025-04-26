@@ -18,7 +18,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use Gravity, only: buoyancy
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS
-    use OPR_PARTIAL
+    use OPR_Partial
 #ifdef USE_MPI
     use TLabMPI_VARS
 #endif
@@ -163,11 +163,11 @@ contains
 ! ###################################################################
 ! Flow
 ! ###################################################################
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, txc(1, 1, 1, 2))
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, txc(1, 1, 1, 5))
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, txc(1, 1, 1, 1))
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, txc(1, 1, 1, 3))
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, txc(1, 1, 1, 4))
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, txc(1, 1, 1, 2))
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), p, txc(1, 1, 1, 5))
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), rho, txc(1, 1, 1, 1))
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, txc(1, 1, 1, 3))
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, txc(1, 1, 1, 4))
 
 ! -------------------------------------------------------------------
 ! Nonreflective BCs at xmin
@@ -294,7 +294,7 @@ contains
             if (imixture == MIXT_TYPE_AIRWATER) then; inb_scal_loc = inb_scal + 1
             else; inb_scal_loc = inb_scal; end if
             do is = 1, inb_scal_loc
-                call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1(1, 1, 1, is), txc(1, 1, 1, 3))
+                call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), z1(1, 1, 1, is), txc(1, 1, 1, 3))
 
 ! -------------------------------------------------------------------
 ! Nonreflective BCs at xmin
@@ -572,11 +572,11 @@ contains
 ! ###################################################################
 ! Flow
 ! ###################################################################
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp3)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp5)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), rho, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp2)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp3)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, tmp5)
 
 ! -------------------------------------------------------------------
 ! BCs at ymin
@@ -682,7 +682,7 @@ contains
             else; inb_scal_loc = inb_scal; end if
 
             do is = 1, inb_scal_loc
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1(1, 1, 1, is), tmp2)
+                call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), z1(1, 1, 1, is), tmp2)
 
 ! -------------------------------------------------------------------
 ! BCs at ymin
@@ -2063,15 +2063,15 @@ contains
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-        call OPR_PARTIAL_Y(OPR_P1, ims_bcs_imax, jmax, kmax, bcs, g(2), tmp1, ddy)
+        call OPR_Partial_Y(OPR_P1, ims_bcs_imax, jmax, kmax, bcs, g(2), tmp1, ddy)
 ! Needs to be checked
         call TLab_Write_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_X. To be checked')
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (TLAB_MPI_TRP_K_NRBCX-1)*100
-        call OPR_PARTIAL_Z(OPR_P1_BCS, ims_bcs_imax, jmax, kmax, bcs, g(3), tmp1, ddz)
+        call OPR_Partial_Z(OPR_P1_BCS, ims_bcs_imax, jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
-        call OPR_PARTIAL_Y(OPR_P1, ip, jmax, kmax, bcs, g(2), tmp1, ddy)
-        call OPR_PARTIAL_Z(OPR_P1, ip, jmax, kmax, bcs, g(3), tmp1, ddz)
+        call OPR_Partial_Y(OPR_P1, ip, jmax, kmax, bcs, g(2), tmp1, ddy)
+        call OPR_Partial_Z(OPR_P1, ip, jmax, kmax, bcs, g(3), tmp1, ddz)
 #endif
         ip = 0
 
@@ -2215,15 +2215,15 @@ contains
 ! Construct t1-t5
 ! -------------------------------------------------------------------
 #ifdef USE_MPI
-        call OPR_PARTIAL_X(OPR_P1, imax, ims_bcs_jmax, kmax, bcs, g(1), tmp1, ddx)
+        call OPR_Partial_X(OPR_P1, imax, ims_bcs_jmax, kmax, bcs, g(1), tmp1, ddx)
 ! Needs to be checked
         call TLab_Write_ASCII(efile, 'BOUNDARY_BCS_TRANSVERSE_Y. To be checked')
         call TLab_Stop(DNS_ERROR_UNDEVELOP)
 !  imode_fdm_loc = imode_fdm + (TLAB_MPI_TRP_K_NRBCY-1)*100
-        call OPR_PARTIAL_Z(OPR_P1_BCS, imax, ims_bcs_jmax, kmax, bcs, g(3), tmp1, ddz)
+        call OPR_Partial_Z(OPR_P1_BCS, imax, ims_bcs_jmax, kmax, bcs, g(3), tmp1, ddz)
 #else
-        call OPR_PARTIAL_X(OPR_P1, imax, ip, kmax, bcs, g(1), tmp1, ddx)
-        call OPR_PARTIAL_Z(OPR_P1, imax, ip, kmax, bcs, g(3), tmp1, ddz)
+        call OPR_Partial_X(OPR_P1, imax, ip, kmax, bcs, g(1), tmp1, ddx)
+        call OPR_Partial_Z(OPR_P1, imax, ip, kmax, bcs, g(3), tmp1, ddz)
 #endif
         ip = 0
 

@@ -20,7 +20,7 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
-    use OPR_PARTIAL
+    use OPR_Partial
     use BOUNDARY_BCS
     implicit none
 
@@ -54,15 +54,15 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
 ! diffusion velocities in special cases
     if (imixture == MIXT_TYPE_AIRWATER) then
         tmp4 = (s(:, 1) - s(:, 2))/(1.0_wp - s(:, 2))
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
 
 ! standard diffusion velocities
     else
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp3)
 
     end if
 
@@ -98,9 +98,9 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
     tmp2 = diff*vis*tmp2
     tmp3 = diff*vis*tmp3
 
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp1, tmp2)
     hs(:, is) = hs(:, is) + tmp2 + tmp3 + tmp4
 
 ! ###################################################################
@@ -111,9 +111,9 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
         else; diff = visc/schmidt(3); end if
 
 ! gradient of liquid content
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, 2), tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 2), tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, 2), tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(1, 2), tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(1, 2), tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(1, 2), tmp3)
 
 ! enthalpy equation
         do i = 1, imax*jmax*kmax
@@ -136,9 +136,9 @@ subroutine RHS_SCAL_DIFFUSION_DIVERGENCE(is)
             tmp3(i) = diff*vis(i)*tmp3(i)*dummy
         end do
 
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp2, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp1, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), tmp2, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), tmp1, tmp2)
         hs(:, is) = hs(:, is) + tmp2 + tmp3 + tmp4
 
     end if

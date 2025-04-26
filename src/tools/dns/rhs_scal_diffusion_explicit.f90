@@ -20,7 +20,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs, hq
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
     integer, intent(in) :: is
@@ -43,9 +43,9 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
     end if
 
 ! ###################################################################
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), s(:, is), tmp1, tmp4)
-    call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), s(:, is), tmp2, tmp4)
-    call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), s(:, is), tmp3, tmp4)
+    call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs, g(1), s(:, is), tmp1, tmp4)
+    call OPR_Partial_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), s(:, is), tmp2, tmp4)
+    call OPR_Partial_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), s(:, is), tmp3, tmp4)
     hs(:, is) = hs(:, is) + diff*vis*(tmp1 + tmp2 + tmp3)
 
 ! -------------------------------------------------------------------
@@ -67,12 +67,12 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
         hq(:, 4) = hq(:, 4) + vis*tmp4*(tmp1 + tmp2 + tmp3)
 
 ! cross-gradients
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6)
         hq(:, 4) = hq(:, 4) + vis*(tmp1*tmp4 + tmp2*tmp5 + tmp3*tmp6)
 
     end if

@@ -16,7 +16,7 @@ module OPR_Burgers
     use TLab_Arrays, only: wrk2d, wrk3d
     use NavierStokes, only: visc, schmidt
     use OPR_FILTERS
-    use OPR_PARTIAL
+    use OPR_Partial
     use LargeScaleForcing, only: subsidenceProps, TYPE_SUB_CONSTANT_LOCAL
     implicit none
     private
@@ -467,7 +467,7 @@ contains
 
         ! dsdx: 1st derivative; result: 2nd derivative including diffusivity
         if (ibm_burgers) then
-            call OPR_PARTIAL2_IBM(is, nlines, ibc, g, lu2d, s, result, dsdx)
+            call OPR_Partial2_IBM(is, nlines, ibc, g, lu2d, s, result, dsdx)
         else
             call FDM_Der1_Solve(nlines, ibc, g%der1, g%der1%lu, s, dsdx, wrk2d)
             call FDM_Der2_Solve(nlines, g%der2, lu2d, s, result, dsdx, wrk2d)
@@ -524,7 +524,7 @@ contains
 ! ###################################################################
 ! ###################################################################
     ! modify incoming fields (fill solids with spline functions, depending on direction)
-    subroutine OPR_PARTIAL2_IBM(is, nlines, ibc, g, lu2, u, result, du)
+    subroutine OPR_Partial2_IBM(is, nlines, ibc, g, lu2, u, result, du)
         use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
         use IBM_VARS
         integer(wi), intent(in) :: is           ! scalar index; if 0, then velocity
@@ -575,6 +575,6 @@ contains
         nullify (p_fld)
 
         return
-    end subroutine OPR_PARTIAL2_IBM
+    end subroutine OPR_Partial2_IBM
 
 end module OPR_Burgers

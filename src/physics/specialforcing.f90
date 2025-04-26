@@ -263,7 +263,7 @@ contains
     !########################################################################
     subroutine Forcing_Sinusoidal_NoSlip(nx, ny, nz, time, visc, g, h1, h2, tmp1, tmp2, tmp3, tmp4)
         use FDM, only: fdm_dt
-        use OPR_PARTIAL, only: OPR_PARTIAL_X, OPR_PARTIAL_Y
+        use OPR_Partial, only: OPR_Partial_X, OPR_Partial_Y
 
         integer(wi) nx, ny, nz
         real(wp) time, visc
@@ -296,17 +296,17 @@ contains
         tmp2 = tmp2*cos(2.0_wp*pi_wp*time)
 
         ! Diffusion and convection terms in Ox momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, nx, ny, nz, bcs, g(2), tmp1, tmp4, tmp3)
+        call OPR_Partial_Y(OPR_P2_P1, nx, ny, nz, bcs, g(2), tmp1, tmp4, tmp3)
         h1 = h1 - visc*(tmp4) + (tmp3*tmp2)
 
-        call OPR_PARTIAL_X(OPR_P2_P1, nx, ny, nz, bcs, g(1), tmp1, tmp4, tmp3)
+        call OPR_Partial_X(OPR_P2_P1, nx, ny, nz, bcs, g(1), tmp1, tmp4, tmp3)
         h1 = h1 - visc*(tmp4) + (tmp3*tmp1)
 
         ! Diffusion and convection terms in Oy momentum eqn
-        call OPR_PARTIAL_Y(OPR_P2_P1, nx, ny, nz, bcs, g(2), tmp2, tmp4, tmp3)
+        call OPR_Partial_Y(OPR_P2_P1, nx, ny, nz, bcs, g(2), tmp2, tmp4, tmp3)
         h2 = h2 - visc*(tmp4) + (tmp3*tmp2)
 
-        call OPR_PARTIAL_X(OPR_P2_P1, nx, ny, nz, bcs, g(1), tmp2, tmp4, tmp3)
+        call OPR_Partial_X(OPR_P2_P1, nx, ny, nz, bcs, g(1), tmp2, tmp4, tmp3)
         h2 = h2 - visc*(tmp4) + (tmp3*tmp1)
 
         ! #######################################################################
@@ -321,8 +321,8 @@ contains
         end do
 
         ! Pressure gradient
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), tmp1, tmp2)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp1, tmp3)
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), tmp1, tmp2)
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), tmp1, tmp3)
 
         h1 = h1 + tmp2
         h2 = h2 + tmp3

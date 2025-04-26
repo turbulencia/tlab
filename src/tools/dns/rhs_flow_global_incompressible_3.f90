@@ -17,7 +17,7 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
     use DNS_ARRAYS, only: hq
     use TIME, only: dte
-    use OPR_PARTIAL
+    use OPR_Partial
     use OPR_Elliptic
     use BOUNDARY_BCS
     use BOUNDARY_BUFFER
@@ -44,21 +44,21 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     end if
 
     do iq = 1, iq_max
-        call OPR_PARTIAL_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3)
-        call OPR_PARTIAL_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2)
-        call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1)
+        call OPR_Partial_Z(OPR_P2, imax, jmax, kmax, bcs, g(3), q(:, iq), tmp6, tmp3)
+        call OPR_Partial_Y(OPR_P2, imax, jmax, kmax, bcs, g(2), q(:, iq), tmp5, tmp2)
+        call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs, g(1), q(:, iq), tmp4, tmp1)
         hq(:, iq) = hq(:, iq) + visc*(tmp6 + tmp5 + tmp4)
 
         tmp6 = q(:, iq)*w
         tmp5 = q(:, iq)*v
         tmp4 = q(:, iq)*u
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp6, tmp3)
 !  For iq = 2, i.e., in the wall-normal direction
 !  BCs s.t. to make sure that product vd/dy(v) at the boundary is zero because v is zero.
 !  bcs_loc = 1
-!  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs_loc, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+!  CALL OPR_Partial_Y(OPR_P1, imax,jmax,kmax, bcs_loc, g(2), tmp5, tmp2, wrk3d, wrk2d,wrk3d)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp5, tmp2)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
         hq(:, iq) = hq(:, iq) - (tmp3 + tmp2 + tmp1)
 
     end do
@@ -66,9 +66,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
 ! -----------------------------------------------------------------------
 ! Dilatation term for Bcs
 ! -----------------------------------------------------------------------
-!  CALL OPR_PARTIAL_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
-!  CALL OPR_PARTIAL_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_Partial_Z(OPR_P1, imax,jmax,kmax, bcs, g(3), w, tmp3, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_Partial_Y(OPR_P1, imax,jmax,kmax, bcs, g(2), v, tmp2, wrk3d, wrk2d,wrk3d)
+!  CALL OPR_Partial_X(OPR_P1, imax,jmax,kmax, bcs, g(1), u, tmp1, wrk3d, wrk2d,wrk3d)
 !  DO k = 1,kmax
 !     DO i = 1,imax
 !        ij = i                 + imax*jmax*(k-1) ! bottom
@@ -97,9 +97,9 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     tmp1 = hq(:, 1) + alpha*u
     tmp2 = hq(:, 2) + alpha*v
     tmp3 = hq(:, 3) + alpha*w
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp5)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp6)
 
 ! forcing term
     tmp1 = tmp6 + tmp5 + tmp4
@@ -110,11 +110,11 @@ subroutine RHS_FLOW_GLOBAL_INCOMPRESSIBLE_3()
     BcsFlowJmax%ref(:, :, 2) = p_bcs(:, jmax, :)
 
 ! pressure in tmp1, Oy derivative in tmp3
-    call OPR_Poisson(imax, jmax, kmax, g, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
+    call OPR_Poisson(imax, jmax, kmax, BCS_NN, tmp1, tmp2, tmp4, BcsFlowJmin%ref(1, 1, 2), BcsFlowJmax%ref(1, 1, 2), tmp3)
 
 ! horizontal derivatives
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp1, tmp4)
 
 ! -----------------------------------------------------------------------
 ! Add pressure gradient

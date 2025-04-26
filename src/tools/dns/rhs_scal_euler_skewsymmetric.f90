@@ -12,7 +12,7 @@ subroutine RHS_SCAL_EULER_SKEWSYMMETRIC(is)
     use TLab_Pointers
     use TLab_Arrays, only: s
     use DNS_ARRAYS, only: hs
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
     integer, intent(in) :: is
@@ -29,15 +29,15 @@ subroutine RHS_SCAL_EULER_SKEWSYMMETRIC(is)
         tmp2(i) = dummy*v(i)
         tmp1(i) = dummy*u(i)
     end do
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     hs(:, is) = hs(:, is) - (tmp2 + tmp3 + tmp4)
 
 ! convective part
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:,is), tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:,is), tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:,is), tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:,is), tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:,is), tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:,is), tmp2)
     hs(:, is) = hs(:, is) - 0.5_wp*rho*(u*tmp2 + v*tmp3 + w*tmp4)
 
     return

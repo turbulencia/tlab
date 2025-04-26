@@ -4,7 +4,7 @@
 !#
 !# Modified from RHS_SCAL_EULER_SKEWSYMMETRIC to include diffusion terms
 !# from RHS_SCAL_DIFFUSION_EXPLICIT and avoid duplication of derivatives
-!# in routines OPR_PARTIAL_XX, OPR_PARTIAL_YY, OPR_PARTIAL_ZZ.
+!# in routines OPR_Partial_XX, OPR_Partial_YY, OPR_Partial_ZZ.
 !# Internal energy formulation only.
 !# Additional convective part due to skewsymmetric formulation Y_i d(\rho u_k)/dx_k
 !# done in RHS_FLOW_GLOBAL_2
@@ -26,7 +26,7 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     use DNS_ARRAYS, only: hs, hq
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use BOUNDARY_BCS
-    use OPR_PARTIAL
+    use OPR_Partial
 
 #ifdef USE_OPENMP
     use OMP_LIB
@@ -61,9 +61,9 @@ subroutine RHS_SCAL_GLOBAL_2(is)
     end do
 !$omp end do
 !$omp end parallel
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
 !$omp parallel default( shared ) private( i )
 !$omp do
     do i = 1, imax*jmax*kmax
@@ -75,9 +75,9 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 ! ###################################################################
 ! convective part + diffusion
 ! ###################################################################
-    call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), s(:, is), tmp6, tmp3)
-    call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), s(:, is), tmp5, tmp2)
-    call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), s(:, is), tmp4, tmp1)
+    call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 3), g(3), s(:, is), tmp6, tmp3)
+    call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 2), g(2), s(:, is), tmp5, tmp2)
+    call OPR_Partial_X(OPR_P2_P1, imax, jmax, kmax, bcs_out(:, :, 1), g(1), s(:, is), tmp4, tmp1)
 
 !$omp parallel default( shared ) private( i )
 !$omp do
@@ -113,12 +113,12 @@ subroutine RHS_SCAL_GLOBAL_2(is)
 !$omp end parallel
 
 ! cross-gradients
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5)
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp1)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s(:, is), tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s(:, is), tmp5)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s(:, is), tmp6)
 !$omp parallel default( shared ) private( i )
 !$omp do
         do i = 1, imax*jmax*kmax

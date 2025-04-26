@@ -17,7 +17,7 @@ subroutine RHS_PART_1()
     use PARTICLE_INTERPOLATE
     use Thermodynamics, only: thermo_param
     use Radiation
-    use OPR_PARTIAL
+    use OPR_Partial
     use FI_GRADIENT_EQN
     ! use PARTICLE_TINIA
 
@@ -62,16 +62,16 @@ subroutine RHS_PART_1()
         dummy = -thermo_param(1)
 
 !LAPLACE Xi
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), s(1, 1), txc(1, 6), txc(1, 3))
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, 1), txc(1, 5), txc(1, 3))
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(1, 1), txc(1, 4), txc(1, 3))
+        call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), s(1, 1), txc(1, 6), txc(1, 3))
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, 1), txc(1, 5), txc(1, 3))
+        call OPR_Partial_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(1, 1), txc(1, 4), txc(1, 3))
 
         txc(:, 1) = visc*dummy*(txc(:, 4) + txc(:, 5) + txc(:, 6))
 
 !LAPLACE delta
-        call OPR_PARTIAL_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), s(1, 2), txc(1, 6), txc(1, 3))
-        call OPR_PARTIAL_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, 2), txc(1, 5), txc(1, 3))
-        call OPR_PARTIAL_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(1, 2), txc(1, 4), txc(1, 3))
+        call OPR_Partial_Z(OPR_P2_P1, imax, jmax, kmax, bcs, g(3), s(1, 2), txc(1, 6), txc(1, 3))
+        call OPR_Partial_Y(OPR_P2_P1, imax, jmax, kmax, bcs, g(2), s(1, 2), txc(1, 5), txc(1, 3))
+        call OPR_Partial_X(OPR_P2_P1, imax, jmax, kmax, bcs, g(1), s(1, 2), txc(1, 4), txc(1, 3))
 
         txc(:, 1) = txc(:, 1) + (visc*dummy2*(txc(:, 4) + txc(:, 5) + txc(:, 6))) !first eq. without ds/dxi
         txc(:, 2) = 1.0_wp - dummy*s(:, 1) - dummy2*s(:, 2) !xi field in txc(1,2)

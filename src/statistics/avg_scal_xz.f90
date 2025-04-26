@@ -38,7 +38,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use Radiation
     use Microphysics
     use FI_GRADIENT_EQN
-    use OPR_PARTIAL
+    use OPR_Partial
 
     implicit none
 
@@ -333,13 +333,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rU(1), rU_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rV(1), rV_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rW(1), rW_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rU(1), rU_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rV(1), rV_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rW(1), rW_y(1))
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fU(1), fU_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fV(1), fV_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fU(1), fU_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fV(1), fV_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fW(1), fW_y(1))
 
     dsdx = v*u
     if (any([DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL] == nse_eqns)) dsdx = dsdx*rho
@@ -367,8 +367,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
         fS(:) = fS(:)/rR(:)
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rS(1), rS_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fS(1), fS_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rS(1), rS_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fS(1), fS_y(1))
 
     ! -----------------------------------------------------------------------
     ! Moments
@@ -403,7 +403,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
 
     end if
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fS2(1), Rss_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), fS2(1), Rss_y(1))
 
     ! -----------------------------------------------------------------------
     ! Cross terms
@@ -424,9 +424,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Rsv(:) = Rsv(:)/rR(:)
     Rsw(:) = Rsw(:)/rR(:)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsu(1), Rsu_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsv(1), Rsv_y(1))
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsw(1), Rsw_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsu(1), Rsu_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsv(1), Rsv_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Rsw(1), Rsw_y(1))
 
     ! -----------------------------------------------------------------------
     ! turbulent transport terms
@@ -445,9 +445,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Pressure terms in transport equations
     call AVG_IK_V(imax, jmax, kmax, jmax, p_loc, rP(1), wrk1d)
 
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
     do j = 1, jmax
         tmp1(:, j, :) = (p_loc(:, j, :) - rP(j))*(s_local(:, j, :) - fS(j))
         dsdx(:, j, :) = (p_loc(:, j, :) - rP(j))*dsdx(:, j, :)
@@ -459,7 +459,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdy, PIsv(1), wrk1d)
     call AVG_IK_V(imax, jmax, kmax, jmax, dsdz, PIsw(1), wrk1d)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rP(1), aux(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), rP(1), aux(1))
     Gsv(:) = (rS(:) - fS(:))*aux(:)
 
     ! #######################################################################
@@ -516,7 +516,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
             tmp2 = dsdz*tmp2*dummy         ! evaporation source
 
             if (sedimentationProps%active(is) .or. infraredProps%active(is)) then ! preparing correction terms into dsdz
-                call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1)
+                call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), dsdx, tmp1)
                 dsdz = dsdz*tmp1
             end if
 
@@ -601,9 +601,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Derivatives
     ! #######################################################################
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), s_local, dsdx)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), s_local, dsdy)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), s_local, dsdz)
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdx*dsdx + dsdy*dsdy + dsdz*dsdz
@@ -612,9 +612,9 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Ess(:) = Ess(:)*diff*2.0_wp
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), u, tmp1)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), v, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), w, tmp3)
 
     ! Transport term
     p_wrk3d = (tmp2*2.0_wp - tmp1 - tmp3)*c23*visc
@@ -625,7 +625,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     end do
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tsvy2(1), wrk1d)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yy(1), Tau_yy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yy(1), Tau_yy_y(1))
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdx*((tmp1*2.0_wp - tmp2 - tmp3)*c23*visc + tmp1*diff)
@@ -641,8 +641,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Esw(1), wrk1d)
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp1)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), v, tmp2)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), u, tmp1)
 
     ! Transport term
     p_wrk3d = (tmp1 + tmp2)*visc
@@ -653,7 +653,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     end do
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tsuy2(1), wrk1d)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yx(1), Tau_yx_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yx(1), Tau_yx_y(1))
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdy*((tmp1 + tmp2)*visc + tmp1*diff)
@@ -667,8 +667,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Esv(:) = Esv(:) + aux(:)
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), w, tmp3)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), v, tmp2)
 
     ! Transport term
     p_wrk3d = (tmp3 + tmp2)*visc
@@ -679,7 +679,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     end do
     call AVG_IK_V(imax, jmax, kmax, jmax, p_wrk3d, Tswy2(1), wrk1d)
 
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yz(1), Tau_yz_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Tau_yz(1), Tau_yz_y(1))
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdz*((tmp3 + tmp2)*visc + tmp2*diff)
@@ -693,8 +693,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Esw(:) = Esw(:) + aux(:)
 
     ! -----------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp3)
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp1)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), w, tmp3)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), u, tmp1)
 
     ! Dissipation terms; mean terms substracted below
     p_wrk3d = dsdz*((tmp3 + tmp1)*visc + tmp1*diff)
@@ -756,7 +756,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     Tswy2(:) = Tswy2(:) - aux(:)*diff
 
     Fy(:) = Fy(:)*diff
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Fy(1), Fy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), Fy(1), Fy_y(1))
 
     ! Contribution to dissipation
     Ess(:) = (Ess(:) - Fy(:)*rS_y(:) - Fy(:)*rS_y(:))/rR(:)
@@ -789,13 +789,13 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! #######################################################################
     ! Transport terms
     aux(:) = Tssy1(:) + Tssy2(:)
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tssy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tssy_y(1))
     aux(:) = Tsuy1(:) + Tsuy2(:)
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tsuy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tsuy_y(1))
     aux(:) = Tsvy1(:) + Tsvy2(:) + Tsvy3(:)
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tsvy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tsvy_y(1))
     aux(:) = Tswy1(:) + Tswy2(:)
-    call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tswy_y(1))
+    call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), aux(1), Tswy_y(1))
 
     ! Convective terms
     Css(:) = -fV(:)*Rss_y(:)

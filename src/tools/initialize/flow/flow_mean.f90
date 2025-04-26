@@ -17,7 +17,7 @@ module FLOW_MEAN
     use THERMO_THERMAL
     use THERMO_AIRWATER
     use Profiles
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
     private
 
@@ -204,13 +204,13 @@ contains
                 ! Calculate density from hydrostatic equilibrium
                 ! assuming a volumetric force along OY
                 ! -------------------------------------------------------------------
-                ! AIRWATER case. Routine OPR_PARTIAL_Y introduces small errors in equilibrium
+                ! AIRWATER case. Routine OPR_Partial_Y introduces small errors in equilibrium
                 if (imixture == MIXT_TYPE_AIRWATER) then
                     call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, T, rho)
 
                     ! General case
                 else
-                    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc)
+                    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), p, txc)
                     dummy = 1.0_wp/buoyancy%vector(2)
                     rho(:, :, :) = rho(:, :, :) + txc(:, :, :)*dummy
                 end if

@@ -2,7 +2,7 @@
 program VPARTIAL2
     use TLab_Constants, only: wp, wi
     use FDM, only: fdm_dt
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
     type(fdm_dt) :: g
@@ -54,9 +54,9 @@ program VPARTIAL2
 ! ###################################################################
     bcs(:, 1) = 0
     bcs(:, 2) = 1
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs(1, 1), g, u, tmp)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs(1, 2), g, tmp, du1)
-    call OPR_PARTIAL_X(OPR_P2, imax, jmax, kmax, bcs, g, u, du2, tmp)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs(1, 1), g, u, tmp)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs(1, 2), g, tmp, du1)
+    call OPR_Partial_X(OPR_P2, imax, jmax, kmax, bcs, g, u, du2, tmp)
 
     open (20, file='partial.dat')
     do i = 1, imax

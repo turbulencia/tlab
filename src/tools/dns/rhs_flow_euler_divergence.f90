@@ -12,7 +12,7 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
     use DNS_ARRAYS, only: hq
     use Thermodynamics, only: CRATIO_INV
     use Gravity, only: buoyancy
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
 ! -------------------------------------------------------------------
@@ -40,15 +40,15 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp4, tmp5)
     hq(:,5) = hq(:,5) - tmp5
 
 ! -------------------------------------------------------------------
 ! u-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     hq(:,1) = hq(:,1) - (tmp2 + tmp3 + tmp4) + g1*rho
 
 ! ###################################################################
@@ -64,15 +64,15 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp4, tmp5)
     hq(:,5) = hq(:,5) - tmp5
 
 ! -------------------------------------------------------------------
 ! v-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     hq(:,2) = hq(:,2) - (tmp2 + tmp3 + tmp4) + g2*rho
 
 ! ###################################################################
@@ -88,15 +88,15 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
 ! -------------------------------------------------------------------
 ! mass
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp4, tmp5)
     hq(:,5) = hq(:,5) - tmp5
 
 ! -------------------------------------------------------------------
 ! w-momentum
 ! -------------------------------------------------------------------
-    call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-    call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-    call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+    call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+    call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+    call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
     hq(:,3) = hq(:,3) - (tmp2 + tmp3 + tmp4) + g3*rho
 
 ! ###################################################################
@@ -112,9 +112,9 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
             tmp2(i) = dummy*v(i)
             tmp1(i) = dummy*u(i)
         end do
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
         hq(:,4) = hq(:,4) - (tmp2 + tmp3 + tmp4) + CRATIO_INV*rho*(g1*u + g2*v + g3*w)
 
 ! -------------------------------------------------------------------
@@ -128,9 +128,9 @@ subroutine RHS_FLOW_EULER_DIVERGENCE()
             tmp2(i) = dummy*v(i)
             tmp1(i) = dummy*u(i)
         end do
-        call OPR_PARTIAL_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
-        call OPR_PARTIAL_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
-        call OPR_PARTIAL_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
+        call OPR_Partial_Z(OPR_P1, imax, jmax, kmax, bcs, g(3), tmp3, tmp4)
+        call OPR_Partial_Y(OPR_P1, imax, jmax, kmax, bcs, g(2), tmp2, tmp3)
+        call OPR_Partial_X(OPR_P1, imax, jmax, kmax, bcs, g(1), tmp1, tmp2)
         hq(:,4) = hq(:,4) - (tmp2 + tmp3 + tmp4)
 
     end if

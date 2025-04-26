@@ -3,7 +3,7 @@ subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
                             use TLab_Constants, only: wp, wi
 
     use TLAB_VARS
-    use OPR_PARTIAL
+    use OPR_Partial
     use FI_STRAIN_EQN
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
@@ -46,7 +46,7 @@ subroutine SL_CORRELATION_1(ilog, u, v, w, z1, corr, &
         do j = 1, jmax
             wrk1d(j, 1) = AVG1V2D(imax, jmax, kmax, j, i1, u)
         end do
-        call OPR_PARTIAL_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2))
+        call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), wrk1d(1, 1), wrk1d(1, 2))
         delta_w = delta_u/maxval(abs(wrk1d(1:jmax, 2)))
     end if
 

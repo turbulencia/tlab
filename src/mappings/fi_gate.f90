@@ -7,7 +7,7 @@ subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
     use FI_VECTORCALCULUS, only: FI_CURL
     use FI_GRADIENT_EQN
     use FI_VORTICITY_EQN
-    use OPR_PARTIAL
+    use OPR_Partial
     implicit none
 
     integer(wi), intent(IN) :: opt_cond, opt_cond_relative, opt_cond_scal
@@ -47,11 +47,11 @@ subroutine FI_GATE(opt_cond, opt_cond_relative, opt_cond_scal, &
         call FI_CURL(nx, ny, nz, q(1, 1), q(1, 2), q(1, 3), txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
 
         txc(:, 4) = s(:, opt_cond_scal)
-        call OPR_PARTIAL_X(OPR_P1, nx, ny, nz, bcs, g(1), txc(1, 4), txc(1, 5))
+        call OPR_Partial_X(OPR_P1, nx, ny, nz, bcs, g(1), txc(1, 4), txc(1, 5))
         txc(:, 1) = txc(:, 1)*txc(:, 5)
-        call OPR_PARTIAL_Y(OPR_P1, nx, ny, nz, bcs, g(2), txc(1, 4), txc(1, 5))
+        call OPR_Partial_Y(OPR_P1, nx, ny, nz, bcs, g(2), txc(1, 4), txc(1, 5))
         txc(:, 1) = txc(:, 1) + txc(:, 2)*txc(:, 5)
-        call OPR_PARTIAL_Z(OPR_P1, nx, ny, nz, bcs, g(3), txc(1, 4), txc(1, 5))
+        call OPR_Partial_Z(OPR_P1, nx, ny, nz, bcs, g(3), txc(1, 4), txc(1, 5))
         txc(:, 1) = txc(:, 1) + txc(:, 3)*txc(:, 5)
 
         txc(:, 1) = txc(:, 1)*txc(:, 1)
