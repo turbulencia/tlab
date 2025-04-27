@@ -409,7 +409,7 @@ contains
 !# logs_data11 Maximum dilatation
 !########################################################################
     subroutine DNS_LOGS_INITIALIZE()
-        use Thermodynamics, only: imixture
+        use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER
         use NavierStokes, only: damkohler
 
         integer ip
@@ -453,7 +453,7 @@ contains
 !########################################################################
 
     subroutine DNS_LOGS()
-        use Thermodynamics, only: imixture, NEWTONRAPHSON_ERROR
+        use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER, NEWTONRAPHSON_ERROR
         use NavierStokes, only: damkohler
 #ifdef USE_MPI
         use mpi_f08

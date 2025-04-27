@@ -7,7 +7,7 @@ module Microphysics
     use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
     use TLab_Memory, only: inb_scal_array
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use Thermodynamics, only: imixture
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use OPR_Partial, only: OPR_Partial_Y, OPR_P1
     use OPR_ODES
     implicit none

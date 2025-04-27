@@ -10,9 +10,10 @@
 module THERMO_CALORIC
     use TLab_Constants, only: wp, wi, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use Thermodynamics, only: imixture, gama0, CRATIO_INV, THERMO_R, MAX_NSP, NSP
+    use Thermodynamics, only: gama0, CRATIO_INV, THERMO_R, MAX_NSP, NSP
     use Thermodynamics, only: NCP, THERMO_AI, THERMO_TLIM
     use Thermodynamics, only: Cd, Cdv, Cvl, Ld, Ldv, Lvl, Rd, Rdv, Rv
+    use Thermodynamics, only: imixture, MIXT_TYPE_NONE, MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH, MIXT_TYPE_QUASIBS, MIXT_TYPE_AIRWATER
     use THERMO_AIRWATER
     implicit none
     private

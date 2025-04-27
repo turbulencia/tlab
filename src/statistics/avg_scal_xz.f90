@@ -24,7 +24,8 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use FDM, only: g
     use FDM, only: fdm_Int0
-    use Thermodynamics, only: imixture, thermo_param, itransport, EQNS_TRANS_POWERLAW, EQNS_TRANS_SUTHERLAND
+    use Thermodynamics, only: thermo_param, itransport, EQNS_TRANS_POWERLAW, EQNS_TRANS_SUTHERLAND
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use THERMO_ANELASTIC, only: Thermo_Anelastic_WEIGHT_INPLACE, Thermo_Anelastic_BUOYANCY, ribackground
     use THERMO_AIRWATER
     use NavierStokes

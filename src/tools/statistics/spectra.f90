@@ -49,7 +49,8 @@ program SPECTRA
     use TLabMPI_Transpose
 #endif
     use FDM, only: g, FDM_Initialize
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: imixture, MIXT_TYPE_NONE, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL, DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC
     use NavierStokes, only: froude
     use NavierStokes, only: NavierStokes_Initialize_Parameters

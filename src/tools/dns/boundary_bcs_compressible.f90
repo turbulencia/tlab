@@ -14,7 +14,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use Tlab_Background, only: qbg
     use FDM, only: g
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
-    use Thermodynamics, only: imixture, CRATIO_INV, THERMO_AI
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER, CRATIO_INV, THERMO_AI
     use Gravity, only: buoyancy
     use BOUNDARY_INFLOW
     use BOUNDARY_BCS

@@ -8,8 +8,9 @@
 
 module THERMO_THERMAL
     use TLab_Constants, only: wp, wi
-    use Thermodynamics, only: imixture, THERMO_R, RRATIO_INV, RRATIO, NSP
+    use Thermodynamics, only: THERMO_R, RRATIO_INV, RRATIO, NSP
     use Thermodynamics, only: Rd, Rdv, Rv
+    use Thermodynamics, only: imixture, MIXT_TYPE_NONE, MIXT_TYPE_BS, MIXT_TYPE_BSZELDOVICH, MIXT_TYPE_QUASIBS, MIXT_TYPE_AIRWATER
     implicit none
     private
 

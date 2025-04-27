@@ -20,7 +20,8 @@ program AVERAGES
     use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: imixture, MIXT_TYPE_NONE, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_QUADRATIC, EQNS_BOD_BILINEAR, EQNS_BOD_EXPLICIT

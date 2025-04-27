@@ -11,7 +11,7 @@ module Radiation
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_Memory, only: TLab_Allocate_Real
-    use Thermodynamics, only: imixture
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use OPR_ODES
     use Integration
     implicit none

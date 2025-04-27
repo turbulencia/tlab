@@ -9,7 +9,7 @@ module PLANES
     use TLab_Arrays, only: q, s, wrk1d, wrk2d, wrk3d, txc
     use IBM_VARS, only: imode_ibm, ibm_partial
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, scal_on
-    use Thermodynamics, only: imixture
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER
     use Thermo_Anelastic
     use IO_Fields
     use FI_VORTICITY_EQN

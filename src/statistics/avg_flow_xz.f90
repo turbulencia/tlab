@@ -27,7 +27,9 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use TLab_Arrays, only: wrk1d
     use TLab_Pointers_3D, only: u, v, w, rho, T, e, rho, vis, p_wrk3d
     use FDM, only: g
-    use Thermodynamics, only: imode_thermo, THERMO_TYPE_ANELASTIC, THERMO_TYPE_COMPRESSIBLE, imixture, itransport, EQNS_TRANS_POWERLAW
+    use Thermodynamics, only: imode_thermo, THERMO_TYPE_ANELASTIC, THERMO_TYPE_COMPRESSIBLE
+    use Thermodynamics, only: itransport, EQNS_TRANS_POWERLAW
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER
     use Thermodynamics, only: PREF_1000, CRATIO_INV
     use Thermodynamics, only: Thermo_Psat_Polynomial
     use Thermo_Anelastic

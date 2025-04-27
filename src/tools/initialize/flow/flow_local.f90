@@ -422,7 +422,7 @@ contains
     !# Together discrete and broadband in one procedure
     !########################################################################
     subroutine DENSITY_FLUCTUATION(s, p, rho, T, h)
-        use Thermodynamics, only: imixture
+        use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER
 
         real(wp), dimension(imax, jmax, kmax) :: T, h, rho, p
         real(wp), dimension(imax, jmax, kmax, *) :: s

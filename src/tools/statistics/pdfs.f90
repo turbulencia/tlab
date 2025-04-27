@@ -18,7 +18,8 @@ program PDFS
     use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
     use FDM, only: g, FDM_Initialize
-    use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: Thermodynamics_Initialize_Parameters
+    use Thermodynamics, only: imixture, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, EQNS_BOD_EXPLICIT

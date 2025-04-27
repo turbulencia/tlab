@@ -68,6 +68,11 @@ module BOUNDARY_BUFFER
     public :: BOUNDARY_BUFFER_RELAX_SCAL_I
     public :: BOUNDARY_BUFFER_FILTER
 
+    integer, parameter, public :: DNS_BUFFER_NONE = 0
+    integer, parameter, public :: DNS_BUFFER_RELAX = 1
+    integer, parameter, public :: DNS_BUFFER_FILTER = 2
+    integer, parameter, public :: DNS_BUFFER_BOTH = 3
+
     ! -------------------------------------------------------------------
     integer(wi), parameter :: FORM_POWER_MIN = 1
     integer(wi), parameter :: FORM_POWER_MAX = 2

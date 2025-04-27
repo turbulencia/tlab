@@ -32,6 +32,21 @@ module Thermodynamics
 
     ! Thermodynamic description of the mixture
     integer(wi), public :: imixture
+    integer, parameter, public :: MIXT_TYPE_NONE = 0
+    integer, parameter, public :: MIXT_TYPE_BS = 1
+    integer, parameter, public :: MIXT_TYPE_PETERS1991 = 2
+    integer, parameter, public :: MIXT_TYPE_PETERS1988 = 3
+    integer, parameter, public :: MIXT_TYPE_UNIDECOMP = 4
+    integer, parameter, public :: MIXT_TYPE_BSZELDOVICH = 5
+    integer, parameter, public :: MIXT_TYPE_ONESTEP = 6
+    integer, parameter, public :: MIXT_TYPE_BILGER1997 = 7
+    integer, parameter, public :: MIXT_TYPE_QUASIBS = 8
+    integer, parameter, public :: MIXT_TYPE_AIR = 9
+    integer, parameter, public :: MIXT_TYPE_AIRVAPOR = 10
+    integer, parameter, public :: MIXT_TYPE_AIRWATER = 11
+    integer, parameter, public :: MIXT_TYPE_AIRWATER_LINEAR = 12
+    integer, parameter, public :: MIXT_TYPE_CHEMKIN = 13
+
     character*128 :: chemkin_file                       ! File with thermodynamic data, if used
 
     integer, parameter, public :: MAX_NSP = 10          ! Maximum number of components (species) in a mixture

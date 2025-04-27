@@ -17,6 +17,7 @@ module Thermo_Anelastic
     use Thermodynamics, only: GRATIO, scaleheightinv   ! anelastic parameters
     use Thermodynamics, only: THERMO_PSAT, NPSAT, Thermo_Psat_Polynomial
     use Thermodynamics, only: Rv, Rd, Rdv, Cd, Cdv, Lv0, Ld, Ldv, Cvl, Cdl, Cl, rd_ov_rv, PREF_1000
+    use Thermodynamics, only: MIXT_TYPE_AIR, MIXT_TYPE_AIRVAPOR, MIXT_TYPE_AIRWATER
     implicit none
     private
 
