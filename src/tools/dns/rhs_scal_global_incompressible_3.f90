@@ -10,7 +10,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_3(is)
     use TLab_Constants, only: wp, wi
     use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
-    use NavierStokes, only: nse_diffusion
+    use NavierStokes, only: nse_diffusion, EQNS_NONE
     use NavierStokes, only: visc, schmidt
     use TLab_Arrays, only: s
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6

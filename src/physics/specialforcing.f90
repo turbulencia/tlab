@@ -85,7 +85,7 @@ contains
         end if
 
         forcingProps%vector(:) = 0.0_wp; forcingProps%active(:) = .false.
-        if (forcingProps%type /= EQNS_NONE) then
+        if (forcingProps%type /= TYPE_NONE) then
             call ScanFile_Char(bakfile, inifile, block, 'Vector', '1.0, 0.0, 0.0', sRes)
             idummy = 3
             call LIST_REAL(sRes, idummy, forcingProps%vector)

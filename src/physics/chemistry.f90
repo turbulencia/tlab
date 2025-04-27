@@ -22,7 +22,7 @@ module Chemistry
     public :: Chemistry_Initialize
     public :: Chemistry_Source
 
-    integer, parameter :: TYPE_NONE = 0
+    integer, parameter :: TYPE_CHEM_NONE = 0
     integer, parameter :: TYPE_QUADRATIC = 1
     integer, parameter :: TYPE_QUADRATIC3 = 2
     integer, parameter :: TYPE_LAYEREDRELAXATION = 3
@@ -55,7 +55,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#Parameters=<value>')
 
         call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; chemistryProps%type = TYPE_NONE
+        if (trim(adjustl(sRes)) == 'none') then; chemistryProps%type = TYPE_CHEM_NONE
         elseif (trim(adjustl(sRes)) == 'quadratic') then; chemistryProps%type = TYPE_QUADRATIC; 
         elseif (trim(adjustl(sRes)) == 'quadratic3') then; chemistryProps%type = TYPE_QUADRATIC3; 
         elseif (trim(adjustl(sRes)) == 'layeredrelaxation') then; chemistryProps%type = TYPE_LAYEREDRELAXATION; 
@@ -65,7 +65,7 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        if (chemistryProps%type /= EQNS_NONE) then
+        if (chemistryProps%type /= TYPE_CHEM_NONE) then
             chemistryProps%parameters(:) = 0.0_wp
             call ScanFile_Char(bakfile, inifile, block, 'Parameters', '1.0', sRes)
             idummy = MAX_PARS

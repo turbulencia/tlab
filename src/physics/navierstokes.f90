@@ -13,6 +13,7 @@ module NavierStokes
     integer, parameter, public :: DNS_EQNS_ANELASTIC = 3
 
     integer, public, protected :: nse_advection, nse_viscous, nse_diffusion ! formulation of Burgers operator
+    integer, parameter, public :: EQNS_NONE = 0
     integer, parameter, public :: EQNS_DIVERGENCE = 1
     integer, parameter, public :: EQNS_SKEWSYMMETRIC = 2
     integer, parameter, public :: EQNS_CONVECTIVE = 3

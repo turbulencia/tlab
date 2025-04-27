@@ -23,7 +23,7 @@ subroutine TLab_Consistency_Check()
     use Microphysics
     use Chemistry
     use SpecialForcing
-    use LargeScaleForcing, only: subsidenceProps
+    ! use LargeScaleForcing, only: subsidenceProps
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     implicit none
 
@@ -82,14 +82,13 @@ subroutine TLab_Consistency_Check()
             call TLab_Stop(DNS_ERROR_UNDEVELOP)
         end if
 
-        if ((infraredProps%type /= EQNS_NONE) .or. &
-            (sedimentationProps%type /= EQNS_NONE) .or. &
-            (infraredProps%type /= EQNS_NONE) .or. &
-            (chemistryProps%type /= EQNS_NONE) .or. &
-            (subsidenceProps%type /= EQNS_NONE)) then
-            call TLab_Write_ASCII(efile, __FILE__//'. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
-            call TLab_Stop(DNS_ERROR_UNDEVELOP)
-        end if
+        ! if ((infraredProps%type /= EQNS_RAD_NONE) .or. &
+        !     (sedimentationProps%type /= TYPE_SED_NONE) .or. &
+        !     (chemistryProps%type /= TYPE_CHEM_NONE) .or. &
+        !     (subsidenceProps%type /= EQNS_SUB_NONE)) then
+        !     call TLab_Write_ASCII(efile, __FILE__//'. IBM not implemented for infraredProps, sedimentationProps, chemistry, subsidence.')
+        !     call TLab_Stop(DNS_ERROR_UNDEVELOP)
+        ! end if
     end if
 
     ! ###################################################################

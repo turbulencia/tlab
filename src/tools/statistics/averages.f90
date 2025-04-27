@@ -24,7 +24,7 @@ program AVERAGES
     use Thermodynamics, only: imixture, MIXT_TYPE_NONE, MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
-    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_QUADRATIC, EQNS_BOD_BILINEAR, EQNS_BOD_EXPLICIT
+    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_NONE, EQNS_BOD_QUADRATIC, EQNS_BOD_BILINEAR, EQNS_BOD_EXPLICIT
     use Rotation, only: Rotation_Initialize
     use Thermo_Anelastic
     use Radiation
@@ -635,7 +635,7 @@ program AVERAGES
 
             ! result vector in txc4, txc5, txc6
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
-                if (buoyancy%type == EQNS_NONE) then
+                if (buoyancy%type == EQNS_BOD_NONE) then
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
                     if (buoyancy%type == EQNS_BOD_EXPLICIT) then

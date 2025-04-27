@@ -48,7 +48,7 @@ module Radiation
     public :: Radiation_Initialize
     public :: Radiation_Infrared_Y
 
-    integer, parameter :: TYPE_NONE = 0
+    integer, parameter, public :: TYPE_RAD_NONE = 0
     integer, parameter :: TYPE_IR_GRAY_LIQUID = 1
     integer, parameter :: TYPE_IR_GRAY = 2
     integer, parameter :: TYPE_IR_BAND = 3
@@ -99,7 +99,7 @@ contains
         call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'TermRadiation', 'None', sRes)               ! backwards compatibility, to be removed
-        if (trim(adjustl(sRes)) == 'none') then; infraredProps%type = TYPE_NONE
+        if (trim(adjustl(sRes)) == 'none') then; infraredProps%type = TYPE_RAD_NONE
         else if (trim(adjustl(sRes)) == 'grayliquid') then; infraredProps%type = TYPE_IR_GRAY_LIQUID
         else if (trim(adjustl(sRes)) == 'gray') then; infraredProps%type = TYPE_IR_GRAY
         else if (trim(adjustl(sRes)) == 'band') then; infraredProps%type = TYPE_IR_BAND
@@ -110,7 +110,7 @@ contains
         end if
 
         infraredProps%active = .false.
-        if (infraredProps%type /= TYPE_NONE) then
+        if (infraredProps%type /= TYPE_RAD_NONE) then
             call ScanFile_Int(bakfile, inifile, block, 'Scalar', '1', idummy)         ! in which evolution equation radiation acts
             infraredProps%active(idummy) = .true.
 

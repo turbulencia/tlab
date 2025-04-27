@@ -93,6 +93,7 @@ module Thermodynamics
 
     ! Transport phenomena
     integer, public :: itransport                       ! variable viscosity
+    integer, parameter, public :: EQNS_TRANS_NONE = 0
     integer, parameter, public :: EQNS_TRANS_POWERLAW = 21
     integer, parameter, public :: EQNS_TRANS_SUTHERLAND = 22
 
@@ -176,9 +177,9 @@ contains
             call ScanFile_Char(bakfile, inifile, block, 'Transport', 'None', sRes)
             if (trim(adjustl(sRes)) == 'sutherland') then; itransport = EQNS_TRANS_SUTHERLAND; 
             elseif (trim(adjustl(sRes)) == 'powerlaw') then; itransport = EQNS_TRANS_POWERLAW; 
-            else; itransport = EQNS_NONE; end if
+            else; itransport = EQNS_TRANS_NONE; end if
 
-            if (imixture /= EQNS_NONE) then
+            if (imixture /= EQNS_TRANS_NONE) then
                 thermo_param(:) = 0.0_wp
                 call ScanFile_Char(bakfile, inifile, block, 'Parameters', '1.0', sRes)
                 idummy = MAX_PROF

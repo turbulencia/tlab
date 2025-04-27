@@ -18,7 +18,7 @@ subroutine RHS_FLOW_GLOBAL_2()
 #endif
     use TLab_Memory, only: imax, jmax, kmax, inb_scal
     use FDM, only: g
-    use NavierStokes, only: nse_diffusion
+    use NavierStokes, only: nse_diffusion, EQNS_NONE
     use NavierStokes, only: visc, prandtl
     use Gravity, only: buoyancy
     use TLab_Arrays, only: s

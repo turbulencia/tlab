@@ -28,7 +28,7 @@ module Microphysics
     public :: Microphysics_Initialize
     public :: Microphysics_Sedimentation
 
-    integer, parameter :: TYPE_NONE = 0
+    integer, parameter :: TYPE_SED_NONE = 0
     integer, parameter :: TYPE_SED_AIRWATER = 1
     integer, parameter :: TYPE_SED_AIRWATERSIMPLIFIED = 2
 
@@ -62,7 +62,7 @@ contains
         call ScanFile_Char(bakfile, inifile, 'Sedimentation', 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'TermTransport', 'None', sRes)               ! backwards compatibility, to be removed
-        if (trim(adjustl(sRes)) == 'none') then; sedimentationProps%type = TYPE_NONE
+        if (trim(adjustl(sRes)) == 'none') then; sedimentationProps%type = TYPE_SED_NONE
         elseif (trim(adjustl(sRes)) == 'airwater') then; sedimentationProps%type = TYPE_SED_AIRWATER
         elseif (trim(adjustl(sRes)) == 'airwatersimplified') then; sedimentationProps%type = TYPE_SED_AIRWATERSIMPLIFIED
         else
@@ -71,7 +71,7 @@ contains
         end if
 
         sedimentationProps%active = .false.
-        if (sedimentationProps%type /= EQNS_NONE) then
+        if (sedimentationProps%type /= TYPE_SED_NONE) then
             if (any([MIXT_TYPE_AIRWATER, MIXT_TYPE_AIRWATER_LINEAR] == imixture)) then
                 sedimentationProps%active = .true.           ! All scalars are affected
             end if
@@ -93,7 +93,7 @@ contains
         ! By default, sedimentation is caused by last scalar
         sedimentationProps%scalar = inb_scal_array
 
-        if (sedimentationProps%type /= EQNS_NONE) then
+        if (sedimentationProps%type /= TYPE_SED_NONE) then
             if (settling > 0.0_wp) then
                 sedimentationProps%parameters = sedimentationProps%parameters*settling ! adding the settling number in the parameter definitions
             else

@@ -16,7 +16,7 @@ subroutine RHS_FLOW_CONDUCTION_EXPLICIT()
 #endif
     use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
-    use NavierStokes, only: nse_diffusion
+    use NavierStokes, only: nse_diffusion, EQNS_NONE
     use NavierStokes, only: visc, prandtl
     use TLab_Pointers
     use TLab_Arrays, only: s

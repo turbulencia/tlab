@@ -11,6 +11,7 @@ module Rotation
     public :: Rotation_Initialize
     public :: Rotation_Coriolis
 
+    integer, parameter, public :: EQNS_COR_NONE = 0
     integer, parameter, public :: EQNS_COR_EXPLICIT = 4
     integer, parameter, public :: EQNS_COR_NORMALIZED = 12
 
@@ -49,7 +50,7 @@ contains
         call ScanFile_Char(bakfile, inifile, block, 'Type', 'void', sRes)
         if (trim(adjustl(sRes)) == 'void') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'TermCoriolis', 'none', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_NONE
+        if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_COR_NONE
         else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_COR_EXPLICIT
         else if (trim(adjustl(sRes)) == 'normalized') then; coriolis%type = EQNS_COR_NORMALIZED
         else
@@ -58,7 +59,7 @@ contains
         end if
 
         coriolis%vector(:) = 0.0_wp; coriolis%active = .false.
-        if (coriolis%type /= EQNS_NONE) then
+        if (coriolis%type /= EQNS_COR_NONE) then
             call ScanFile_Char(bakfile, inifile, 'Rotation', 'Vector', '0.0,1.0,0.0', sRes)
             idummy = 3
             call LIST_REAL(sRes, idummy, coriolis%vector)

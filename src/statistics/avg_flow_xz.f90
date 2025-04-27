@@ -36,7 +36,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use THERMO_AIRWATER
     use THERMO_CALORIC
     use NavierStokes
-    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_EXPLICIT
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_NONE, EQNS_BOD_EXPLICIT
     use Rotation, only: coriolis
     use OPR_Partial
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1
@@ -914,7 +914,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     ! ###################################################################
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
 
-        if (buoyancy%type /= EQNS_NONE) then
+        if (buoyancy%type /= EQNS_BOD_NONE) then
             if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                 call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, dudx)
             else

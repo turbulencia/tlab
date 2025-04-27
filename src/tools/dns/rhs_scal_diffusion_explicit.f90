@@ -14,7 +14,7 @@ subroutine RHS_SCAL_DIFFUSION_EXPLICIT(is)
 #endif
     use TLab_Memory, only: imax, jmax, kmax
     use FDM, only: g
-    use NavierStokes, only: nse_diffusion
+    use NavierStokes, only: nse_diffusion, EQNS_NONE
     use NavierStokes, only: visc, prandtl, schmidt
     use Thermodynamics, only: imixture, THERMO_AI, THERMO_TLIM, NSP, NCP
     use TLab_Pointers

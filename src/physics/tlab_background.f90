@@ -37,7 +37,7 @@ contains
         use Thermo_Anelastic
         use Profiles, only: Profiles_ReadBlock
         use Profiles, only: PROFILE_NONE, PROFILE_EKMAN_U, PROFILE_EKMAN_U_P, PROFILE_EKMAN_V
-        use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy
+        use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Hydrostatic_Enthalpy, EQNS_BOD_NONE
 
         character(len=*), intent(in) :: inifile
 
@@ -213,7 +213,7 @@ contains
 
         end if
 
-        if (buoyancy%type /= EQNS_NONE) then
+        if (buoyancy%type /= EQNS_BOD_NONE) then
             allocate (bbackground(g(2)%size))                   ! buoyancy profiles
 
             bbackground(:) = 0.0_wp
@@ -232,7 +232,7 @@ contains
         end do
 
         ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
-        if (buoyancy%type /= EQNS_NONE) then
+        if (buoyancy%type /= EQNS_BOD_NONE) then
             sbg(is) = sbg(1)
             sbg(is)%mean = (bbackground(1) + bbackground(g(2)%size))/froude
             sbg(is)%delta = abs(bbackground(1) - bbackground(g(2)%size))/froude

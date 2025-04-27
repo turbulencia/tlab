@@ -23,7 +23,7 @@ program INISCAL
     use TLab_Background, only: TLab_Initialize_Background
     use Gravity, only: Gravity_Initialize
     use Rotation, only: Rotation_Initialize
-    use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y, radterm_dt
+    use Radiation, only: Radiation_Initialize, infraredProps, Radiation_Infrared_Y, radterm_dt, TYPE_RAD_NONE
     use LargeScaleForcing, only: LargeScaleForcing_Initialize
     use THERMO_AIRWATER
     use Thermo_Anelastic
@@ -117,7 +117,7 @@ program INISCAL
 
     ! ###################################################################
     ! Initial radiation effect as an accumulation during a certain interval of time
-    if (infraredProps%type /= EQNS_NONE .and. norm_ini_radiation /= 0.0_wp) then
+    if (infraredProps%type /= TYPE_RAD_NONE .and. norm_ini_radiation /= 0.0_wp) then
         norm_ini_radiation = norm_ini_radiation/infraredProps%auxiliar(1)
         localInfraredProps = infraredProps
         localInfraredProps%auxiliar(:) = localInfraredProps%auxiliar(:)*norm_ini_radiation

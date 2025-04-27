@@ -25,6 +25,7 @@ module Gravity
     type(term_dt), public, protected :: buoyancy
     real(wp), allocatable, public :: bbackground(:)
 
+    integer, parameter, public :: EQNS_BOD_NONE = 0
     integer, parameter, public :: EQNS_BOD_EXPLICIT = 4
     integer, parameter, public :: EQNS_BOD_HOMOGENEOUS = 5
     integer, parameter, public :: EQNS_BOD_LINEAR = 6
@@ -64,7 +65,7 @@ contains
         call ScanFile_Char(bakfile, inifile, block, 'Type', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'TermBodyForce', 'none', sRes)                 ! backwards compatibility, to be removed
-        if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_NONE
+        if (trim(adjustl(sRes)) == 'none') then; buoyancy%type = EQNS_BOD_NONE
         else if (trim(adjustl(sRes)) == 'explicit') then; buoyancy%type = EQNS_BOD_EXPLICIT
         else if (trim(adjustl(sRes)) == 'homogeneous') then; buoyancy%type = EQNS_BOD_HOMOGENEOUS
         else if (trim(adjustl(sRes)) == 'linear') then; buoyancy%type = EQNS_BOD_LINEAR
@@ -79,7 +80,7 @@ contains
 
         if (any([EQNS_BOD_LINEAR, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC] == buoyancy%type) .and. inb_scal == 0) then
             call TLab_Write_ASCII(wfile, __FILE__//'. Zero scalars; setting TermBodyForce equal to none.')
-            buoyancy%type = EQNS_NONE
+            buoyancy%type = EQNS_BOD_NONE
         end if
 
         buoyancy%vector = 0.0_wp
@@ -99,7 +100,7 @@ contains
             call TLab_Stop(DNS_ERROR_OPTION)
         end if
 
-        if (buoyancy%type /= EQNS_NONE) then
+        if (buoyancy%type /= EQNS_BOD_NONE) then
 
             buoyancy%parameters(:) = 0.0_wp
             call ScanFile_Char(bakfile, inifile, block, 'Parameters', '0.0', sRes)

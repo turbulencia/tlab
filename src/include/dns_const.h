@@ -15,9 +15,6 @@
 #define DNS_MODE_TEMPORAL       1
 #define DNS_MODE_SPATIAL        2
 
-! Equation terms
-#define EQNS_NONE                   0
-
 ! Boundary conditions
 #define DNS_BCS_PERIODIC    0
 

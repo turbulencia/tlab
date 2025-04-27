@@ -14,7 +14,7 @@ subroutine RHS_SCAL_GLOBAL_INCOMPRESSIBLE_1(is)
 #endif
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use FDM, only: g
-    use NavierStokes, only: nse_diffusion
+    use NavierStokes, only: nse_diffusion, EQNS_NONE
     use NavierStokes, only: visc, schmidt
     use TLab_Arrays, only: s
     use TLab_Pointers, only: u, v, w, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
