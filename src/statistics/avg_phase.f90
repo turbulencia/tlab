@@ -13,7 +13,7 @@ module AVG_PHASE
     use TLab_Time, only: rtime
     use NavierStokes, only: visc, froude, rossby, prandtl
     use Thermodynamics, only: mach
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use TLab_Memory, only: inb_flow, inb_scal
     use TLAB_ARRAYS, only: q, s
     use TLab_Arrays, only: wrk2d, wrk3d

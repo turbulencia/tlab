@@ -20,7 +20,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_1()
     use TLab_Constants, only: tfile
 #endif
     use TLab_Constants, only: wp, wi, BCS_NN
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use FDM, only: g
     use TLab_WorkFlow, only: stagger_on

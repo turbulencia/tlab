@@ -6,7 +6,6 @@
 program INIFLOW
     use TLab_Constants, only: wp, wi
     use TLab_Constants, only: ifile, gfile, lfile, efile, wfile, tag_flow, tag_scal
-    use NavierStokes, only: nse_eqns
     use TLab_Memory, only: imax, jmax, kmax, isize_field
     use TLab_Memory, only: inb_flow, inb_scal
     use TLab_Time, only: itime, rtime
@@ -21,6 +20,7 @@ program INIFLOW
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use NavierStokes, only: NavierStokes_Initialize_Parameters
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use Gravity, only: Gravity_Initialize
     use Rotation, only: Rotation_Initialize
     use LargeScaleForcing, only: LargeScaleForcing_Initialize

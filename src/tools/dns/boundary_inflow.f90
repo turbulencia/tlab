@@ -14,7 +14,7 @@ module BOUNDARY_INFLOW
 #endif
     use TLab_Memory, only: imax, jmax, kmax, inb_flow, inb_scal, inb_flow_array, inb_scal_array
     use TLab_WorkFlow, only: flow_on, scal_on
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use FDM, only: g, FDM_CreatePlan
     use TLab_Time, only: rtime, itime
     use NavierStokes, only: visc

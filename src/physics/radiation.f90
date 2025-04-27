@@ -6,7 +6,7 @@ module Radiation
     use TLab_Constants, only: BCS_MAX, BCS_MIN
     use TLab_Grid, only: y
     use FDM_Integral, only: FDM_Int1_Solve, fdm_integral_dt
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
     use TLab_Memory, only: inb_scal_array
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

@@ -4,7 +4,7 @@
 module Microphysics
     use TLab_Constants, only: wp, wi, pi_wp, efile, MAX_VARS, MAX_PARS
     use FDM, only: fdm_dt
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
     use TLab_Memory, only: inb_scal_array
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture

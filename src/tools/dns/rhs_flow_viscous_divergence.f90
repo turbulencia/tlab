@@ -14,7 +14,7 @@ subroutine RHS_FLOW_VISCOUS_DIVERGENCE()
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLab_Memory, only: imax, jmax, kmax
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use FDM, only: g
     use NavierStokes, only: visc
     use TLab_Pointers

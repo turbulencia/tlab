@@ -62,7 +62,7 @@ contains
         use TLab_Pointers, only: pointers_dt
         use FDM, only: g
         use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal_array
-        use NavierStokes, only: nse_eqns
+        use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
         use TLab_WorkFlow, only: scal_on
         use NavierStokes, only: froude, schmidt
         use TLab_Time, only: itime, rtime
@@ -161,7 +161,7 @@ contains
                 ! if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
                 if (stats_buoyancy) then
-                    if (buoyancy%type == EQNS_EXPLICIT) then
+                    if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                         call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, hq(1, 1))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp

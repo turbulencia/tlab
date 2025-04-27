@@ -29,7 +29,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use TLab_Constants, only: tfile
 #endif
     use TLab_Memory, only: imax, jmax, kmax
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use FDM, only: g
     use NavierStokes, only: visc
     use Thermodynamics, only: itransport, EQNS_TRANS_POWERLAW, EQNS_TRANS_SUTHERLAND

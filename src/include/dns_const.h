@@ -15,20 +15,10 @@
 #define DNS_MODE_TEMPORAL       1
 #define DNS_MODE_SPATIAL        2
 
-! Equations mode
-#define DNS_EQNS_TOTAL              0
-#define DNS_EQNS_INTERNAL           1
-#define DNS_EQNS_INCOMPRESSIBLE     2
-#define DNS_EQNS_ANELASTIC          3
-
 ! Equation terms
 #define EQNS_NONE                   0
 
-#define EQNS_DIVERGENCE             1
-#define EQNS_SKEWSYMMETRIC          2
-#define EQNS_CONVECTIVE             3
-#define EQNS_EXPLICIT               4
-
+#define EQNS_BOD_EXPLICIT           4
 #define EQNS_BOD_HOMOGENEOUS        5
 #define EQNS_BOD_LINEAR             6
 #define EQNS_BOD_BILINEAR           7

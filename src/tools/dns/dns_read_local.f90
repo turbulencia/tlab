@@ -21,7 +21,8 @@ subroutine DNS_READ_LOCAL(inifile)
     use AVG_PHASE
     use OPR_Filters, only: FilterDomain, PressureFilter
     use Discrete, only: Discrete_ReadBlock
-
+    use NavierStokes, only: DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
+    
     implicit none
 
     character*(*) inifile

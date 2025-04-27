@@ -6,7 +6,7 @@
 module TLab_Sources
     use TLab_Constants, only: wp, wi, small_wp
     use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal, inb_scal_array
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
     use FDM, only: g
     use FDM, only: fdm_Int0
     use TLab_OpenMP
@@ -61,7 +61,7 @@ contains
             ! -----------------------------------------------------------------------
             if (buoyancy%active(iq)) then
 
-                if (buoyancy%type == EQNS_EXPLICIT) then
+                if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                     call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, tmp1)
 
                 else

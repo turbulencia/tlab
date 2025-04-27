@@ -9,7 +9,7 @@ module BOUNDARY_BCS_COMPRESSIBLE
     use TLab_Constants, only: efile, wp, wi
     use TLab_Memory, only: imax, jmax, kmax, inb_scal_array
     use TLab_Memory, only: inb_flow, inb_scal
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use TLab_WorkFlow, only: imode_sim, scal_on, flow_on
     use Tlab_Background, only: qbg
     use FDM, only: g

@@ -463,7 +463,7 @@ program AVERAGES
                 ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
                 if (buoyancy%type == EQNS_BOD_QUADRATIC .or. buoyancy%type == EQNS_BOD_BILINEAR .or. &
                     imixture == MIXT_TYPE_AIRWATER .or. imixture == MIXT_TYPE_AIRWATER_LINEAR) then
-                    if (buoyancy%type == EQNS_EXPLICIT) then
+                    if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                         call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 7))
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
@@ -637,7 +637,7 @@ program AVERAGES
                 if (buoyancy%type == EQNS_NONE) then
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
-                    if (buoyancy%type == EQNS_EXPLICIT) then
+                    if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                         call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp

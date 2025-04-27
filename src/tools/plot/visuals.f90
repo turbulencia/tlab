@@ -508,7 +508,7 @@ program VISUALS
             if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
                 if (opt_vec(iv) == 6) then ! density
                     plot_file = 'Density'//time_str(1:MaskSize)
-                    if (buoyancy%type == EQNS_EXPLICIT) then
+                    if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                         call Thermo_Anelastic_DENSITY(imax, jmax, kmax, s, txc(1, 1), wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
@@ -736,7 +736,7 @@ program VISUALS
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 1), wrk3d)
 
                 plot_file = 'LogPotentialEnstrophy'//time_str(1:MaskSize)
-                if (buoyancy%type == EQNS_EXPLICIT) then
+                if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                     call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 4))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
@@ -849,7 +849,7 @@ program VISUALS
             ! ###################################################################
             if (opt_vec(iv) == iscal_offset + 12) then
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
-                if (buoyancy%type == EQNS_EXPLICIT) then
+                if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                     call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp
@@ -982,7 +982,7 @@ program VISUALS
                 call IO_WRITE_VISUALS(plot_file, opt_format, imax, jmax, kmax, 1, subdomain, txc(1, 2), wrk3d)
 
                 plot_file = 'Buoyancy'//time_str(1:MaskSize)
-                if (buoyancy%type == EQNS_EXPLICIT) then
+                if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                     call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp

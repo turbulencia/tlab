@@ -20,9 +20,8 @@ module TIME
     use TLab_Memory, only: isize_txc_field
     use TLab_Time, only: rtime
     use FDM, only: g
-    use NavierStokes, only: nse_eqns, nse_advection, nse_viscous, nse_diffusion
+    use NavierStokes
     use TLab_Memory, only: inb_flow, inb_scal
-    use NavierStokes, only: visc, prandtl, schmidt
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use TLab_OpenMP
     use PARTICLE_VARS

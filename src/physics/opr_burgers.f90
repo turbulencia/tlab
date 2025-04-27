@@ -52,7 +52,7 @@ contains
     subroutine OPR_Burgers_Initialize(inifile)
         use TLab_Memory, only: isize_field, imax, jmax, kmax
         use TLab_Memory, only: TLab_Allocate_Real
-        use NavierStokes, only: nse_eqns
+        use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
         use TLab_Memory, only: inb_scal
 #ifdef USE_MPI
         use TLabMPI_VARS, only: ims_pro_i, ims_npro_i, ims_pro_k, ims_npro_k

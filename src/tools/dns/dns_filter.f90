@@ -5,7 +5,7 @@
 subroutine DNS_FILTER()
 
     use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_flow, inb_scal
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use TLab_WorkFlow, only: imode_sim
     use NavierStokes, only: visc
     use TLab_Time, only: itime, rtime
@@ -117,7 +117,7 @@ end subroutine DNS_FILTER
 
 subroutine FI_RTKE(nx, ny, nz, q, ke)
     use TLab_Constants, only: wp, wi
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL, DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
     use TLab_Memory, only: inb_flow
     use TLab_Arrays, only: wrk1d
     use THERMO_ANELASTIC, only : rbackground

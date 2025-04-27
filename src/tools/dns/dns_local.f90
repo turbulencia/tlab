@@ -93,7 +93,7 @@ contains
 !########################################################################
     subroutine DNS_BOUNDS_CONTROL()
         use TLab_Constants, only: efile, lfile
-        use NavierStokes, only: nse_eqns
+        use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL, DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
         use TLab_WorkFlow, only: stagger_on
         use TLab_Memory, only: imax, jmax, kmax
         use TLab_Arrays

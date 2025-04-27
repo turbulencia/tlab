@@ -9,7 +9,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use TLab_Constants, only: wp, wi, BCS_NN
     use FDM, only: g
     use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_txc
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC
     use TLab_WorkFlow, only: stagger_on
     use Rotation, only: coriolis
     use TLAB_ARRAYS, only: wrk1d
@@ -165,7 +165,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     ! Buoyancy Forcing term
     if (decomposition == DCMP_BUOYANCY) then
         do iq = 1, 3
-            if (buoyancy%type == EQNS_EXPLICIT) then
+            if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                 call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, tmp1)
             else
                 if (buoyancy%active(iq)) then

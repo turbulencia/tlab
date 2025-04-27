@@ -6,8 +6,17 @@ module NavierStokes
     implicit none
     private
 
-    integer, public, protected :: nse_eqns                          ! set of equations to be solved: internal energy, total energy, anelastic, Boussinesq
-    integer, public, protected :: nse_advection, nse_viscous, nse_diffusion ! formulation of the Burgers operator
+    integer, public, protected :: nse_eqns                                  ! formulation: internal energy, total energy, anelastic, Boussinesq
+    integer, parameter, public :: DNS_EQNS_TOTAL = 0
+    integer, parameter, public :: DNS_EQNS_INTERNAL = 1
+    integer, parameter, public :: DNS_EQNS_INCOMPRESSIBLE = 2
+    integer, parameter, public :: DNS_EQNS_ANELASTIC = 3
+
+    integer, public, protected :: nse_advection, nse_viscous, nse_diffusion ! formulation of Burgers operator
+    integer, parameter, public :: EQNS_DIVERGENCE = 1
+    integer, parameter, public :: EQNS_SKEWSYMMETRIC = 2
+    integer, parameter, public :: EQNS_CONVECTIVE = 3
+    integer, parameter, public :: EQNS_EXPLICIT = 4
 
     ! Nondimensional numbers
     real(wp), public :: visc, schmidt(MAX_VARS)                     ! molecular transport

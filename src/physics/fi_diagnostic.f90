@@ -8,7 +8,7 @@
 subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use TLab_Constants, only: wp, wi
     use TLab_Memory, only: inb_flow_array, inb_flow, inb_scal_array, inb_scal
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
     use TLab_Arrays, only: wrk1d, wrk3d
     use Thermodynamics
     use Gravity, only: buoyancy, bbackground

@@ -11,6 +11,7 @@ module Rotation
     public :: Rotation_Initialize
     public :: Rotation_Coriolis
 
+    integer, parameter, public :: EQNS_COR_EXPLICIT = 4
     integer, parameter, public :: EQNS_COR_NORMALIZED = 12
 
     ! -------------------------------------------------------------------
@@ -49,7 +50,7 @@ contains
         if (trim(adjustl(sRes)) == 'void') &
             call ScanFile_Char(bakfile, inifile, 'Main', 'TermCoriolis', 'none', sRes)
         if (trim(adjustl(sRes)) == 'none') then; coriolis%type = EQNS_NONE
-        else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_EXPLICIT
+        else if (trim(adjustl(sRes)) == 'explicit') then; coriolis%type = EQNS_COR_EXPLICIT
         else if (trim(adjustl(sRes)) == 'normalized') then; coriolis%type = EQNS_COR_NORMALIZED
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Wrong TermCoriolis option.')
@@ -114,7 +115,7 @@ contains
         ! Coriolis. Remember that coriolis%vector already contains the Rossby #.
         ! -----------------------------------------------------------------------
         select case (locProps%type)
-        case (EQNS_EXPLICIT)
+        case (EQNS_COR_EXPLICIT)
             do ii = 1, field_sz
                 r(ii, 1) = r(ii, 1) + locProps%vector(3)*u(ii, 2) - locProps%vector(2)*u(ii, 3)
                 r(ii, 2) = r(ii, 2) + locProps%vector(1)*u(ii, 3) - locProps%vector(3)*u(ii, 1)

@@ -765,7 +765,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     ! Source terms in transport equations
     ! #######################################################################
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
-        if (buoyancy%type == EQNS_EXPLICIT) then
+        if (buoyancy%type == EQNS_BOD_EXPLICIT) then
             call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, p_wrk3d)
         else
             call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, p_wrk3d, bbackground)

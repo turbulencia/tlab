@@ -50,7 +50,8 @@ program SPECTRA
 #endif
     use FDM, only: g, FDM_Initialize
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
-    use NavierStokes, only: nse_eqns, froude
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL, DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC
+    use NavierStokes, only: froude
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
     use Rotation, only: Rotation_Initialize
@@ -560,7 +561,7 @@ program SPECTRA
         if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
             call FI_PRESSURE_BOUSSINESQ(q, s, p_aux, txc(1, 1), txc(1, 2), txc(1, 3), DCMP_TOTAL)
             if (flag_buoyancy == 1) then
-                if (buoyancy%type == EQNS_EXPLICIT) then
+                if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                     call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, s(1, inb_scal_array))
                 else
                     wrk1d(1:jmax, 1) = 0.0_wp

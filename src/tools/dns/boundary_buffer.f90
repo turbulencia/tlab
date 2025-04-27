@@ -18,7 +18,7 @@ module BOUNDARY_BUFFER
 #ifdef TRACE_ON
     use TLab_Constants, only: tfile
 #endif
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_TOTAL, DNS_EQNS_INTERNAL
     use TLab_WorkFlow, only: imode_sim
     use TLab_Memory, only: imax, jmax, kmax, inb_flow, inb_scal, isize_field
     use FDM, only: g

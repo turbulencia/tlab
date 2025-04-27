@@ -32,7 +32,7 @@ module AVG_SCAL_ZT
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLab_Memory, only: isize_field, imax, jmax, kmax, inb_scal, isize_wrk2d
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use FDM, only: g
     use Avg_Spatial
     use NavierStokes, only: visc

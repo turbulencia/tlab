@@ -13,7 +13,7 @@ subroutine RHS_FLOW_EULER_SKEWSYMMETRIC()
     use TLab_WorkFlow, only: TLab_Write_ASCII
 #endif
     use TLab_Memory, only: imax, jmax, kmax, inb_scal
-    use NavierStokes, only: nse_eqns
+    use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL
     use Gravity, only: buoyancy
     use FDM, only: g
     use TLab_Pointers

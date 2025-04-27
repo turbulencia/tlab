@@ -402,7 +402,7 @@ program PDFS
                 if (buoyancy%type == EQNS_NONE) then
                     txc(:, 4) = 0.0_wp; txc(:, 5) = 0.0_wp; txc(:, 6) = 0.0_wp
                 else
-                    if (buoyancy%type == EQNS_EXPLICIT) then
+                    if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                         call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, wrk3d)
                     else
                         wrk1d(1:jmax, 1) = 0.0_wp
@@ -699,7 +699,7 @@ program PDFS
             call TLab_Write_ASCII(lfile, 'Computing analysis of B and V...')
 
             ifield = ifield + 1; vars(ifield)%field => txc(:, 1); vars(ifield)%tag = 'b'; ibc(ifield) = 1
-            if (buoyancy%type == EQNS_EXPLICIT) then
+            if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                 call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, txc(1, 1))
             else
                 wrk1d(1:jmax, 1) = 0.0_wp

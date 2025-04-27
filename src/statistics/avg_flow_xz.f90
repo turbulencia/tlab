@@ -913,7 +913,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     if (any([DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC] == nse_eqns)) then
 
         if (buoyancy%type /= EQNS_NONE) then
-            if (buoyancy%type == EQNS_EXPLICIT) then
+            if (buoyancy%type == EQNS_BOD_EXPLICIT) then
                 call Thermo_Anelastic_BUOYANCY(imax, jmax, kmax, s, dudx)
             else
                 call Gravity_Buoyancy(buoyancy, imax, jmax, kmax, s, dudx, bbackground)
