@@ -10,6 +10,7 @@ module OPR_FILTERS
     use TLab_Memory, only: isize_txc_field
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
+    use FLT_Base
     use Filters_Compact
     use Filters_Explicit
     use Filters_Tophat
@@ -48,6 +49,17 @@ module OPR_FILTERS
     public :: OPR_FILTER
     public :: OPR_FILTER_X, OPR_FILTER_Y, OPR_FILTER_Z
     public :: OPR_FILTER_1D
+
+    integer, parameter, public :: DNS_FILTER_NONE = 0
+    integer, parameter, public :: DNS_FILTER_COMPACT = 1
+    integer, parameter, public :: DNS_FILTER_6E = 2
+    integer, parameter, public :: DNS_FILTER_4E = 3
+    integer, parameter, public :: DNS_FILTER_ADM = 4
+    integer, parameter, public :: DNS_FILTER_HELMHOLTZ = 5
+    integer, parameter, public :: DNS_FILTER_BAND = 6
+    integer, parameter, public :: DNS_FILTER_ERF = 7
+    integer, parameter, public :: DNS_FILTER_TOPHAT = 8
+    integer, parameter, public :: DNS_FILTER_COMPACT_CUTOFF = 9
 
     ! -----------------------------------------------------------------------
     type(distributions_dt) :: psd
@@ -706,7 +718,7 @@ contains
 !         real(wp) fi, fk, f, fcut_log, damp
 
 !         !#######################################################################
-!         if (spc_param(1) > 0) then; 
+!         if (spc_param(1) > 0) then;
 !             sign_pass = 1    !HIGHPASS
 !             off_pass = 0
 !         else                 !spc_param(1) <= 0
@@ -739,7 +751,7 @@ contains
 !                 if (f > 0.0_wp) then
 !                     damp = (erf((log(f) - fcut_log)/spc_param(2)) + 1.0_wp)/2.0_wp
 !                 else
-!                     damp = 0.0_wp; 
+!                     damp = 0.0_wp;
 !                 end if
 
 !                 !Set to high- or low-pass

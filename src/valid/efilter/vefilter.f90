@@ -5,6 +5,7 @@ program VEFILTER
     use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_COM6_JACOBIAN
     use NavierStokes, only: visc, schmidt
+    use FLT_Base
     use OPR_FILTERS
 
     implicit none

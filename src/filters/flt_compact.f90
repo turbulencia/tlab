@@ -3,6 +3,7 @@
 ! Compact filters following Lele, JCP, 1992
 module Filters_Compact
     use TLab_Constants, only: wp, wi
+    use FLT_Base
     implicit none
     private
 

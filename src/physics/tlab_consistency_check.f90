@@ -12,7 +12,7 @@ subroutine TLab_Consistency_Check()
     use TLabMPI_VARS, only: ims_npro_i, ims_npro_j, ims_npro_k
 #endif
     use TLab_Time, only: rtime
-    use OPR_Filters, only: PressureFilter
+    use OPR_Filters, only: PressureFilter, DNS_FILTER_NONE
     use FDM, only: g
     use FDM_Derivative, only: FDM_COM6_JACOBIAN
     use IBM_VARS, only: imode_ibm

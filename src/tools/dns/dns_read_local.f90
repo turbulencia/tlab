@@ -19,7 +19,7 @@ subroutine DNS_READ_LOCAL(inifile)
     use PLANES
     use IBM_VARS, only: imode_ibm, ibm_geo
     use AVG_PHASE
-    use OPR_Filters, only: FilterDomain, PressureFilter
+    use OPR_Filters, only: FilterDomain, PressureFilter, DNS_FILTER_NONE
     use Discrete, only: Discrete_ReadBlock
     use NavierStokes, only: DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
     

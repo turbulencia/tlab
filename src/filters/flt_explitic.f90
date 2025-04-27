@@ -1,5 +1,6 @@
 module Filters_Explicit
     use TLab_Constants, only: wp, wi
+    use FLT_Base
     implicit none
     private
 

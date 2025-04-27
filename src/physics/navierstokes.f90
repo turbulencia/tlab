@@ -36,7 +36,8 @@ contains
         use TLab_Memory, only: inb_flow, inb_flow_array, inb_scal, inb_scal_array
         use TLab_Memory, only: inb_wrk1d, inb_wrk2d
         use Thermodynamics, only: mach
-        use OPR_Filters, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
+        use FLT_Base
+        use OPR_Filters !, only: FilterDomain, FilterDomainBcsFlow, FilterDomainBcsScal
         ! use Avg_Spatial
         implicit none
 
