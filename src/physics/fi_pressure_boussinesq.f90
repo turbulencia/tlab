@@ -19,7 +19,7 @@ subroutine FI_PRESSURE_BOUSSINESQ(q, s, p, tmp1, tmp2, tmp, decomposition)
     use OPR_Burgers
     use OPR_Elliptic
     use TLab_Sources
-    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, EQNS_BOD_EXPLICIT
     use Rotation, only: Rotation_Coriolis
     use OPR_FILTERS
 

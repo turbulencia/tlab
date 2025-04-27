@@ -53,7 +53,7 @@ program SPECTRA
     use NavierStokes, only: nse_eqns, DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL, DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC
     use NavierStokes, only: froude
     use NavierStokes, only: NavierStokes_Initialize_Parameters
-    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy
+    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, EQNS_BOD_BILINEAR, EQNS_BOD_EXPLICIT, EQNS_BOD_QUADRATIC
     use Rotation, only: Rotation_Initialize
     use TLab_Background, only: TLab_Initialize_Background
     use LargeScaleForcing, only: LargeScaleForcing_Initialize

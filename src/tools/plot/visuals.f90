@@ -30,7 +30,7 @@ program VISUALS
     use Thermodynamics, only: imixture, NSP, THERMO_SPNAME, Thermodynamics_Initialize_Parameters
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
-    use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use Gravity, only: Gravity_Initialize, buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_EXPLICIT
     use Rotation, only: Rotation_Initialize
     use Thermo_Anelastic
     use THERMO_AIRWATER

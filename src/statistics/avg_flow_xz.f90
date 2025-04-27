@@ -34,7 +34,7 @@ subroutine AVG_FLOW_XZ(q, s, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwd
     use THERMO_AIRWATER
     use THERMO_CALORIC
     use NavierStokes
-    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_EXPLICIT
     use Rotation, only: coriolis
     use OPR_Partial
     use IBM_VARS, only: imode_ibm, gamma_0, gamma_1

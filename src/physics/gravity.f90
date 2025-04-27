@@ -25,12 +25,13 @@ module Gravity
     type(term_dt), public, protected :: buoyancy
     real(wp), allocatable, public :: bbackground(:)
 
-    ! integer, parameter :: EQNS_BOD_HOMOGENEOUS = 5
-    ! integer, parameter :: EQNS_BOD_LINEAR = 6
-    ! integer, parameter :: EQNS_BOD_BILINEAR = 7
-    ! integer, parameter :: EQNS_BOD_QUADRATIC = 8
-    ! integer, parameter :: EQNS_BOD_NORMALIZEDMEAN = 9
-    ! integer, parameter :: EQNS_BOD_SUBTRACTMEAN = 10
+    integer, parameter, public :: EQNS_BOD_EXPLICIT = 4
+    integer, parameter, public :: EQNS_BOD_HOMOGENEOUS = 5
+    integer, parameter, public :: EQNS_BOD_LINEAR = 6
+    integer, parameter, public :: EQNS_BOD_BILINEAR = 7
+    integer, parameter, public :: EQNS_BOD_QUADRATIC = 8
+    integer, parameter, public :: EQNS_BOD_NORMALIZEDMEAN = 9
+    integer, parameter, public :: EQNS_BOD_SUBTRACTMEAN = 10
 
     public :: Gravity_Initialize
     public :: Gravity_Hydrostatic_Enthalpy

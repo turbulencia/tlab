@@ -6,7 +6,7 @@ module DNS_STATISTICS
     use TLab_Constants, only: MAX_AVG_TEMPORAL, wp, wi, small_wp
     use TLab_Memory, only: jmax, inb_scal, isize_txc_field, inb_txc, isize_wrk2d
     use Thermodynamics
-    use Gravity, only: buoyancy, Gravity_Buoyancy
+    use Gravity, only: buoyancy, Gravity_Buoyancy, EQNS_BOD_EXPLICIT, EQNS_BOD_BILINEAR, EQNS_BOD_QUADRATIC
     implicit none
     save
     private

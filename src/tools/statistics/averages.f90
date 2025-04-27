@@ -23,7 +23,7 @@ program AVERAGES
     use Thermodynamics, only: imixture, Thermodynamics_Initialize_Parameters
     use NavierStokes
     use TLab_Background, only: TLab_Initialize_Background
-    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use Gravity, only: Gravity_Initialize, buoyancy, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_QUADRATIC, EQNS_BOD_BILINEAR, EQNS_BOD_EXPLICIT
     use Rotation, only: Rotation_Initialize
     use Thermo_Anelastic
     use Radiation

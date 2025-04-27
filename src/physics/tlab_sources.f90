@@ -11,7 +11,7 @@ module TLab_Sources
     use FDM, only: fdm_Int0
     use TLab_OpenMP
     use Thermo_Anelastic
-    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, EQNS_BOD_EXPLICIT
     use Rotation, only: coriolis, Rotation_Coriolis
     use Radiation
     use Microphysics

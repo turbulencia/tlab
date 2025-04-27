@@ -11,7 +11,7 @@ subroutine FI_DIAGNOSTIC(nx, ny, nz, q, s)
     use NavierStokes, only: nse_eqns, DNS_EQNS_ANELASTIC, DNS_EQNS_INCOMPRESSIBLE
     use TLab_Arrays, only: wrk1d, wrk3d
     use Thermodynamics
-    use Gravity, only: buoyancy, bbackground
+    use Gravity, only: buoyancy, bbackground, EQNS_BOD_NORMALIZEDMEAN, EQNS_BOD_SUBTRACTMEAN
     use THERMO_THERMAL
     use THERMO_CALORIC
     use THERMO_AIRWATER

@@ -18,14 +18,6 @@
 ! Equation terms
 #define EQNS_NONE                   0
 
-#define EQNS_BOD_EXPLICIT           4
-#define EQNS_BOD_HOMOGENEOUS        5
-#define EQNS_BOD_LINEAR             6
-#define EQNS_BOD_BILINEAR           7
-#define EQNS_BOD_QUADRATIC          8
-#define EQNS_BOD_NORMALIZEDMEAN     9
-#define EQNS_BOD_SUBTRACTMEAN      10
-
 ! Boundary conditions
 #define DNS_BCS_PERIODIC    0
 

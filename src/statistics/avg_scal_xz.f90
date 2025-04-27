@@ -28,7 +28,7 @@ subroutine AVG_SCAL_XZ(is, q, s, s_local, dsdx, dsdy, dsdz, tmp1, tmp2, tmp3, me
     use THERMO_ANELASTIC, only: Thermo_Anelastic_WEIGHT_INPLACE, Thermo_Anelastic_BUOYANCY, ribackground
     use THERMO_AIRWATER
     use NavierStokes
-    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source
+    use Gravity, only: buoyancy, bbackground, Gravity_Buoyancy, Gravity_Buoyancy_Source, EQNS_BOD_EXPLICIT
     use Rotation, only: coriolis
     use Radiation
     use Microphysics
