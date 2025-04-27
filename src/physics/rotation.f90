@@ -8,6 +8,12 @@ module Rotation
     implicit none
     private
 
+    public :: Rotation_Initialize
+    public :: Rotation_Coriolis
+
+    integer, parameter, public :: EQNS_COR_NORMALIZED = 12
+
+    ! -------------------------------------------------------------------
     type term_dt
         sequence
         integer type
@@ -18,9 +24,6 @@ module Rotation
         real(wp) vector(3)
     end type term_dt
     type(term_dt), public :: coriolis
-
-    public :: Rotation_Initialize
-    public :: Rotation_Coriolis
 
 contains
     !########################################################################

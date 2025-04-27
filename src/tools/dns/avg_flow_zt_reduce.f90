@@ -32,7 +32,7 @@ subroutine AVG_FLOW_ZT_REDUCE(q, hq, txc, mean1d)
     use NavierStokes, only: nse_eqns
     use FDM, only: g
     use NavierStokes, only: visc
-    use Thermodynamics, only: itransport
+    use Thermodynamics, only: itransport, EQNS_TRANS_POWERLAW, EQNS_TRANS_SUTHERLAND
     use Avg_Spatial
     use TLab_Arrays, only: wrk2d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop

@@ -1,9 +1,3 @@
-#include "dns_const.h"
-#include "dns_error.h"
-#ifdef USE_MPI
-
-#endif
-
 module OPR_Partial
     use TLab_Constants, only: wp, wi
     use TLab_Arrays, only: wrk2d, wrk3d
@@ -21,6 +15,15 @@ module OPR_Partial
     public :: OPR_Partial_X
     public :: OPR_Partial_Y
     public :: OPR_Partial_Z
+
+    integer, parameter, public :: OPR_P1 = 1                ! 1. order derivative
+    integer, parameter, public :: OPR_P2 = 2                ! 2. order derivative
+    integer, parameter, public :: OPR_P2_P1 = 3             ! 2. and 1.order derivatives
+    integer, parameter, public :: OPR_P1_INT_VP = 5         ! 1.order int. derivative    (vel.<->pre.)
+    integer, parameter, public :: OPR_P1_INT_PV = 6
+    integer, parameter, public :: OPR_P0_INT_VP = 7         ! interpolation              (vel.<->pre.)
+    integer, parameter, public :: OPR_P0_INT_PV = 8
+    integer, parameter, public :: OPR_P0_IBM = 9            ! Immersed boundary method
 
 contains
     ! ###################################################################

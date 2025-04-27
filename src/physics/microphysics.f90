@@ -8,7 +8,7 @@ module Microphysics
     use TLab_Memory, only: inb_scal_array
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use Thermodynamics, only: imixture
-    use OPR_Partial, only: OPR_Partial_Y
+    use OPR_Partial, only: OPR_Partial_Y, OPR_P1
     use OPR_ODES
     implicit none
     private

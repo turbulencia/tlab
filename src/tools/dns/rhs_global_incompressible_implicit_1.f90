@@ -29,7 +29,7 @@ subroutine RHS_GLOBAL_INCOMPRESSIBLE_IMPLICIT_1(kex, kim, kco, &
     use TLab_Memory, only: isize_field, isize_txc_field, inb_scal, inb_flow
     use NavierStokes, only: visc, schmidt, rossby
     use Gravity, only: buoyancy
-    use Rotation, only: coriolis
+    use Rotation, only: coriolis, EQNS_COR_NORMALIZED
     use TLab_Arrays, only: wrk2d, wrk3d
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, scal_on
     use TIME, only: dte

@@ -11,7 +11,7 @@ subroutine DNS_READ_LOCAL(inifile)
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
     use PARTICLE_VARS
     use DNS_LOCAL
-    use TIME, only: rkm_mode, dtime, cfla, cfld, cflr
+    use TIME
     use BOUNDARY_BUFFER
     use BOUNDARY_BCS
     use BOUNDARY_INFLOW

@@ -263,7 +263,7 @@ contains
     !########################################################################
     subroutine Forcing_Sinusoidal_NoSlip(nx, ny, nz, time, visc, g, h1, h2, tmp1, tmp2, tmp3, tmp4)
         use FDM, only: fdm_dt
-        use OPR_Partial, only: OPR_Partial_X, OPR_Partial_Y
+        use OPR_Partial, only: OPR_Partial_X, OPR_Partial_Y, OPR_P1, OPR_P2_P1
 
         integer(wi) nx, ny, nz
         real(wp) time, visc

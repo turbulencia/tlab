@@ -1,5 +1,3 @@
-#include "dns_const.h"
-
 ! # Solvers for boundary value problems of
 ! # linear ordinary differential equations with constant coefficients
 ! #

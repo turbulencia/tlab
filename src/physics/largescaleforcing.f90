@@ -78,7 +78,7 @@ contains
     !########################################################################
     subroutine LargeScaleForcing_Subsidence(locProps, nx, ny, nz, a, source)
         use TLab_Arrays, only: wrk1d
-        use OPR_Partial, only: OPR_Partial_Y
+        use OPR_Partial, only: OPR_Partial_Y, OPR_P1
         use Averages, only: AVG1V2D_V
         use FDM, only: g
 

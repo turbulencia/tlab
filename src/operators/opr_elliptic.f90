@@ -1,5 +1,5 @@
-#include "dns_const.h"
 #include "dns_error.h"
+
 ! Split the routines into the ones that are initialized and the ones that not?
 ! If not initialized, you can enter with any jmax, but the periodic directions need to be the global ones because of OPR_Fourier.
 module OPR_Elliptic
@@ -18,7 +18,7 @@ module OPR_Elliptic
     use FDM_Integral
     use OPR_Fourier
     use OPR_ODES
-    use OPR_Partial, only: OPR_Partial_Y
+    use OPR_Partial, only: OPR_Partial_Y, OPR_P1
     use, intrinsic :: iso_c_binding, only: c_f_pointer, c_loc
     implicit none
     private

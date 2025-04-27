@@ -78,6 +78,8 @@ module Thermodynamics
 
     ! Transport phenomena
     integer, public :: itransport                       ! variable viscosity
+    integer, parameter, public :: EQNS_TRANS_POWERLAW = 21
+    integer, parameter, public :: EQNS_TRANS_SUTHERLAND = 22
 
     public :: Thermodynamics_Initialize_Parameters
     public :: Thermo_Psat_Polynomial, Thermo_dPsat_Polynomial

@@ -46,6 +46,17 @@ module TIME
     public :: TIME_RUNGEKUTTA
     public :: TIME_COURANT
 
+    ! Runge-Kutta method
+    integer, parameter, public :: RKM_EXP3 = 3
+    integer, parameter, public :: RKM_EXP4 = 4
+    integer, parameter, public :: RKM_IMP3_DIFFUSION = 5
+    integer, parameter, public :: RKM_IMP3_SOURCE = 6
+    integer, parameter, public :: RKM_IMP3_DIFFSOURCE = 7
+
+    integer, parameter, public :: EQNS_RHS_SPLIT = 18
+    integer, parameter, public :: EQNS_RHS_COMBINED = 19
+    integer, parameter, public :: EQNS_RHS_NONBLOCKING = 20
+
     ! -------------------------------------------------------------------
     real(wp) etime                              ! time at each substep
 
@@ -353,7 +364,7 @@ contains
 !########################################################################
     subroutine TIME_COURANT()
         use DNS_LOCAL, only: logs_data
-        use Thermodynamics, only: gama0, itransport
+        use Thermodynamics, only: gama0, itransport, EQNS_TRANS_POWERLAW
         use TLab_Pointers_3D, only: u, v, w, p_wrk3d, p, rho, vis
 
         ! -------------------------------------------------------------------
@@ -394,7 +405,7 @@ contains
                     k_glo = k + kdsp
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = abs(u(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                            p_wrk3d(i, j, k) = abs(u(i, j, k))*ds(1)%one_ov_ds1(i + idsp) &
                                                + abs(v(i, j, k))*ds(2)%one_ov_ds1(j) &
                                                + abs(w(i, j, k))*ds(3)%one_ov_ds1(k_glo)
                         end do
@@ -404,7 +415,7 @@ contains
                 do k = 1, kmax
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = abs(u(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                            p_wrk3d(i, j, k) = abs(u(i, j, k))*ds(1)%one_ov_ds1(i + idsp) &
                                                + abs(v(i, j, k))*ds(2)%one_ov_ds1(j)
                         end do
                     end do
@@ -421,7 +432,7 @@ contains
                     k_glo = k + kdsp
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*ds(1)%one_ov_ds1(i + idsp) &
                                                + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*ds(2)%one_ov_ds1(j) &
                                                + (abs(w(i, j, k)) + p_wrk3d(i, j, k))*ds(3)%one_ov_ds1(k_glo)
                         end do
@@ -431,7 +442,7 @@ contains
                 do k = 1, kmax
                     do j = 1, jmax
                         do i = 1, imax
-                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*ds(1)%one_ov_ds1(i+idsp) &
+                            p_wrk3d(i, j, k) = (abs(u(i, j, k)) + p_wrk3d(i, j, k))*ds(1)%one_ov_ds1(i + idsp) &
                                                + (abs(v(i, j, k)) + p_wrk3d(i, j, k))*ds(2)%one_ov_ds1(j)
                         end do
                     end do
@@ -464,7 +475,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j) + ds(3)%one_ov_ds2(k_glo))*vis(i, j, k)/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i + idsp) + ds(2)%one_ov_ds2(j) + ds(3)%one_ov_ds2(k_glo))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -472,7 +483,7 @@ contains
                     do k = 1, kmax
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j))*vis(i, j, k)/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i + idsp) + ds(2)%one_ov_ds2(j))*vis(i, j, k)/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -484,7 +495,7 @@ contains
                         k_glo = k + kdsp
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j) + ds(3)%one_ov_ds2(k_glo))/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i + idsp) + ds(2)%one_ov_ds2(j) + ds(3)%one_ov_ds2(k_glo))/rho(i, j, k)
                             end do
                         end do
                     end do
@@ -492,7 +503,7 @@ contains
                     do k = 1, kmax
                         do j = 1, jmax
                             do i = 1, imax
-                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i+idsp) + ds(2)%one_ov_ds2(j))/rho(i, j, k)
+                                p_wrk3d(i, j, k) = (ds(1)%one_ov_ds2(i + idsp) + ds(2)%one_ov_ds2(j))/rho(i, j, k)
                             end do
                         end do
                     end do

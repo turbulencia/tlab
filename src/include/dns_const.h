@@ -36,35 +36,6 @@
 #define EQNS_BOD_NORMALIZEDMEAN     9
 #define EQNS_BOD_SUBTRACTMEAN      10
 
-#define EQNS_COR_NORMALIZED        12
-
-#define EQNS_RHS_SPLIT             18
-#define EQNS_RHS_COMBINED          19
-#define EQNS_RHS_NONBLOCKING       20
-
-#define EQNS_TRANS_POWERLAW             21
-#define EQNS_TRANS_SUTHERLAND           22
-
-#define EQNS_RAND_MULTIPLY              31 
-
-! Operators
-#define OPR_P1                1
-#define OPR_P2                2
-#define OPR_P2_P1             3
-#define OPR_P1_BCS            4
-#define OPR_P1_INT_VP         5
-#define OPR_P1_INT_PV         6
-#define OPR_P0_INT_VP         7
-#define OPR_P0_INT_PV         8
-#define OPR_P0_IBM            9
-
-! Runge-Kutta method
-#define RKM_EXP3              3
-#define RKM_EXP4              4
-#define RKM_IMP3_DIFFUSION    5
-#define RKM_IMP3_SOURCE       6
-#define RKM_IMP3_DIFFSOURCE   7
-
 ! Boundary conditions
 #define DNS_BCS_PERIODIC    0
 

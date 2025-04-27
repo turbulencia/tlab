@@ -36,7 +36,7 @@ module AVG_SCAL_ZT
     use FDM, only: g
     use Avg_Spatial
     use NavierStokes, only: visc
-    use Thermodynamics, only: itransport
+    use Thermodynamics, only: itransport, EQNS_TRANS_POWERLAW, EQNS_TRANS_SUTHERLAND
     use TLab_Arrays, only: wrk2d, wrk3d
     use Averages, only: SUM1V1D_V
     use OPR_Partial
