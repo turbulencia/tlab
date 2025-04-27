@@ -73,7 +73,6 @@ contains
         character(len=32) bakfile, block
         character(len=512) sRes
 
-        integer(wi) :: bcs_flow_jmin, bcs_flow_jmax
  integer :: IniKvalid(6) = [PROFILE_NONE, PROFILE_GAUSSIAN, PROFILE_GAUSSIAN_ANTISYM, PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_SURFACE, PROFILE_PARABOLIC_SURFACE]
 
         ! ###################################################################
@@ -129,17 +128,17 @@ contains
         ! Boundary conditions for the perturbation
         flag_wall = 0
         call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'freeslip', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmin = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmin = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmin = DNS_BCS_NEUMANN; flag_wall = flag_wall + 1
+        if (trim(adjustl(sRes)) == 'none') then
+        else if (trim(adjustl(sRes)) == 'noslip') then
+        else if (trim(adjustl(sRes)) == 'freeslip') then; flag_wall = flag_wall + 1
         else
             call TLab_Write_ASCII(efile, __FILE__//'. BoundaryConditions.VelocityJmin.')
             call TLab_Stop(DNS_ERROR_IBC)
         end if
         call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'VelocityJmax', 'freeslip', sRes)
-        if (trim(adjustl(sRes)) == 'none') then; bcs_flow_jmax = DNS_BCS_NONE
-        else if (trim(adjustl(sRes)) == 'noslip') then; bcs_flow_jmax = DNS_BCS_DIRICHLET
-        else if (trim(adjustl(sRes)) == 'freeslip') then; bcs_flow_jmax = DNS_BCS_NEUMANN; flag_wall = flag_wall + 2
+        if (trim(adjustl(sRes)) == 'none') then
+        else if (trim(adjustl(sRes)) == 'noslip') then
+        else if (trim(adjustl(sRes)) == 'freeslip') then; flag_wall = flag_wall + 2
         else
             call TLab_Write_ASCII(efile, __FILE__//'. BoundaryConditions.VelocityJmax.')
             call TLab_Stop(DNS_ERROR_IBC)

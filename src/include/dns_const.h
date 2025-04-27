@@ -15,19 +15,6 @@
 #define DNS_MODE_TEMPORAL       1
 #define DNS_MODE_SPATIAL        2
 
-! Boundary conditions
-#define DNS_BCS_PERIODIC    0
-
-#define DNS_BCS_NONE        0
-#define DNS_BCS_NR          1
-#define DNS_BCS_INFLOW      2
-#define DNS_BCS_DIRICHLET   3
-#define DNS_BCS_NEUMANN     4
-
-! Surface Models
-#define DNS_SFC_STATIC      0
-#define DNS_SFC_LINEAR      1
-
 ! Cubic Splines
 #define CS_BCS_PERIODIC 0
 #define CS_BCS_CLAMPED  1

@@ -2,9 +2,11 @@
 #include "dns_const.h"
 
 module NavierStokes
-    use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_PROF, MAX_VARS
+    use TLab_Constants, only: wp, wi, lfile, efile, wfile, MAX_VARS
     implicit none
     private
+
+    public :: NavierStokes_Initialize_Parameters
 
     integer, public, protected :: nse_eqns                                  ! formulation: internal energy, total energy, anelastic, Boussinesq
     integer, parameter, public :: DNS_EQNS_TOTAL = 0
@@ -28,8 +30,6 @@ module NavierStokes
     real(wp), public, protected :: stokes                           ! particle inertial effects
     real(wp), public, protected :: settling                         ! sedimentation effects
 
-    public :: NavierStokes_Initialize_Parameters
-
 contains
     subroutine NavierStokes_Initialize_Parameters(inifile)
         use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -44,17 +44,17 @@ contains
 
         character(len=*), intent(in) :: inifile
 
-! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
         character(len=32) bakfile, block
         character(len=512) sRes
         character*64 lstr
         integer(wi) is, idummy
         real(wp) dummy, reynolds
 
-! ###################################################################
+        ! ###################################################################
         bakfile = trim(adjustl(inifile))//'.bak'
 
-! ###################################################################
+        ! ###################################################################
         block = 'Main'
 
         call TLab_Write_ASCII(bakfile, '#')
@@ -64,7 +64,7 @@ contains
         call TLab_Write_ASCII(bakfile, '#TermViscous=<divergence/explicit>')
         call TLab_Write_ASCII(bakfile, '#TermDiffusion=<divergence/explicit>')
 
-! -------------------------------------------------------------------
+        ! -------------------------------------------------------------------
         call ScanFile_Char(bakfile, inifile, 'Main', 'Equations', 'internal', sRes)
         if (trim(adjustl(sRes)) == 'total') then; nse_eqns = DNS_EQNS_TOTAL
         elseif (trim(adjustl(sRes)) == 'internal') then; nse_eqns = DNS_EQNS_INTERNAL
@@ -122,7 +122,7 @@ contains
 
         end select
 
-! ###################################################################
+        ! ###################################################################
         block = 'Parameters'
 
         call TLab_Write_ASCII(bakfile, '#')
@@ -201,7 +201,7 @@ contains
 
         end select
 
-! ###################################################################
+        ! ###################################################################
         if (FilterDomain(1)%type == DNS_FILTER_HELMHOLTZ .and. &
             all([DNS_FILTER_BCS_DIRICHLET, DNS_FILTER_BCS_SOLID, DNS_FILTER_BCS_NEUMANN] /= FilterDomain(2)%BcsMin)) then
             call ScanFile_Char(bakfile, inifile, 'BoundaryConditions', 'VelocityJmin', 'void', sRes)
@@ -226,12 +226,12 @@ contains
 
         end if
 
-! ###################################################################
-! Initialization of array sizes
-! ###################################################################
+        ! ###################################################################
+        ! Initialization of array sizes
+        ! ###################################################################
         call TLab_Write_ASCII(bakfile, '#')
 
-! prognostic and diagnostic variables
+        ! prognostic and diagnostic variables
         select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
             inb_flow = 3                            ! space for u, v, w
@@ -246,7 +246,7 @@ contains
         inb_scal_array = inb_scal ! Default is that array contains only the prognostic variables;
         !                           can be changed in Thermodynamics_Initialize_Parameters(ifile)
 
-! scratch arrays
+        ! scratch arrays
         inb_wrk1d = 18
 
         inb_wrk2d = 3

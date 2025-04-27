@@ -38,6 +38,17 @@ module BOUNDARY_BCS
     public :: BOUNDARY_BCS_SCAL_READBLOCK, BOUNDARY_BCS_FLOW_READBLOCK
     public :: BOUNDARY_BCS_INITIALIZE
 
+    ! Boundary conditions
+    integer, parameter, public :: DNS_BCS_NONE = 0
+    integer, parameter, public :: DNS_BCS_NR = 1
+    integer, parameter, public :: DNS_BCS_INFLOW = 2
+    integer, parameter, public :: DNS_BCS_DIRICHLET = 3
+    integer, parameter, public :: DNS_BCS_NEUMANN = 4
+
+    ! Surface Models
+    integer, parameter, public :: DNS_SFC_STATIC = 0
+    integer, parameter, public :: DNS_SFC_LINEAR = 1
+
 contains
 ! ###################################################################
 ! ###################################################################
