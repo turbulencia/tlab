@@ -8,12 +8,12 @@ module TLab_Grid
 
     type, public :: grid_dt
         sequence
+        character*8 name
+        integer(wi) size
+        logical :: uniform = .false.
+        logical :: periodic = .false.
+        real(wp) scale
         real(wp), allocatable :: nodes(:)
-        integer(wi) :: size
-        real(wp) :: scale
-        logical :: periodic
-        logical :: uniform
-        character(len=8) :: name
     end type
     type(grid_dt), public :: x, y, z
 

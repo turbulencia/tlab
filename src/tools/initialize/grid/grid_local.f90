@@ -88,7 +88,7 @@ contains
 
         ! -----------------------------------------------------------------------
         type(grid_dt) x_loc
-        type(fdm_dt) fdm
+        type(fdm_dt) fdm_loc
         type(fdm_integral_dt) fdmi
         real(wp) st(3), df(3), delta(3)             ! superposition of up to 3 modes, each with 3 parameters
         integer(wi) im
@@ -118,13 +118,13 @@ contains
         if (allocated(x_loc%nodes)) deallocate (x_loc%nodes)
         allocate (x_loc%nodes(1:nmax))
         x_loc%nodes(:) = x(:)
-        fdm%size = nmax
-        fdm%uniform = .true.
-        fdm%periodic = .false.
-        fdm%der1%mode_fdm = FDM_COM6_JACOBIAN
-        fdm%der2%mode_fdm = FDM_COM6_JACOBIAN
-        call FDM_CreatePlan(x_loc, fdm)
-        call FDM_Int1_Initialize(x, fdm%der1, 0.0_wp, BCS_MIN, fdmi)
+        ! fdm%size = nmax
+        fdm_loc%uniform = .true.
+        fdm_loc%periodic = .false.
+        fdm_loc%der1%mode_fdm = FDM_COM6_JACOBIAN
+        fdm_loc%der2%mode_fdm = FDM_COM6_JACOBIAN
+        call FDM_CreatePlan(x_loc, fdm_loc)
+        call FDM_Int1_Initialize(x, fdm_loc%der1, 0.0_wp, BCS_MIN, fdmi)
         ! x(1) is already set
         call FDM_Int1_Solve(1, fdmi, fdmi%rhs, rhs(:), result(:), aux)
         x(:) = result(:)
