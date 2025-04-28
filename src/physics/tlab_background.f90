@@ -28,7 +28,7 @@ contains
 !########################################################################
     subroutine TLab_Initialize_Background(inifile)
         use TLab_Pointers_3D, only: p_wrk1d
-        use FDM, only: g
+        use TLab_Grid, only: y
         use FDM, only: fdm_Int0
         use TLab_WorkFlow, only: imode_sim
         use TLab_Memory, only: inb_scal, inb_scal_array
@@ -178,47 +178,47 @@ contains
         end if
 
         do is = 1, size(qbg)
-            if (qbg(is)%relative) qbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*qbg(is)%ymean_rel
+            if (qbg(is)%relative) qbg(is)%ymean = y%nodes(1) + y%scale*qbg(is)%ymean_rel
         end do
-        if (pbg%relative) pbg%ymean = g(2)%nodes(1) + g(2)%scale*pbg%ymean_rel
-        if (rbg%relative) rbg%ymean = g(2)%nodes(1) + g(2)%scale*rbg%ymean_rel
-        if (tbg%relative) tbg%ymean = g(2)%nodes(1) + g(2)%scale*tbg%ymean_rel
-        if (hbg%relative) hbg%ymean = g(2)%nodes(1) + g(2)%scale*hbg%ymean_rel
+        if (pbg%relative) pbg%ymean = y%nodes(1) + y%scale*pbg%ymean_rel
+        if (rbg%relative) rbg%ymean = y%nodes(1) + y%scale*rbg%ymean_rel
+        if (tbg%relative) tbg%ymean = y%nodes(1) + y%scale*tbg%ymean_rel
+        if (hbg%relative) hbg%ymean = y%nodes(1) + y%scale*hbg%ymean_rel
         do is = 1, size(sbg)
-            if (sbg(is)%relative) sbg(is)%ymean = g(2)%nodes(1) + g(2)%scale*sbg(is)%ymean_rel
+            if (sbg(is)%relative) sbg(is)%ymean = y%nodes(1) + y%scale*sbg(is)%ymean_rel
         end do
 
         ! #######################################################################
         ! -----------------------------------------------------------------------
         ! Construct reference  profiles
-        allocate (sbackground(g(2)%size, inb_scal_array))   ! scalar profiles
+        allocate (sbackground(y%size, inb_scal_array))   ! scalar profiles
 
         do is = 1, inb_scal
-            do j = 1, g(2)%size
-                sbackground(j, is) = Profiles_Calculate(sbg(is), g(2)%nodes(j))
+            do j = 1, y%size
+                sbackground(j, is) = Profiles_Calculate(sbg(is), y%nodes(j))
             end do
         end do
 
         if (imode_thermo == THERMO_TYPE_ANELASTIC) then     ! thermodynamic profiles
-            allocate (epbackground(g(2)%size))
-            allocate (tbackground(g(2)%size))
-            allocate (pbackground(g(2)%size))
-            allocate (rbackground(g(2)%size))
-            allocate (ribackground(g(2)%size))
+            allocate (epbackground(y%size))
+            allocate (tbackground(y%size))
+            allocate (pbackground(y%size))
+            allocate (rbackground(y%size))
+            allocate (ribackground(y%size))
 
-            call Gravity_Hydrostatic_Enthalpy(fdm_Int0, g(2)%nodes, sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d)
+            call Gravity_Hydrostatic_Enthalpy(fdm_Int0, y%nodes(:), sbackground, epbackground, tbackground, pbackground, pbg%ymean, pbg%mean, p_wrk1d)
 
-            call Thermo_Anelastic_DENSITY(1, g(2)%size, 1, sbackground, rbackground, p_wrk1d)
+            call Thermo_Anelastic_DENSITY(1, y%size, 1, sbackground, rbackground, p_wrk1d)
             ribackground = 1.0_wp/rbackground
 
         end if
 
         if (buoyancy%type /= EQNS_BOD_NONE) then
-            allocate (bbackground(g(2)%size))                   ! buoyancy profiles
+            allocate (bbackground(y%size))                   ! buoyancy profiles
 
             bbackground(:) = 0.0_wp
             if (buoyancy%active(2)) then
-                call Gravity_Buoyancy(buoyancy, 1, g(2)%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
+                call Gravity_Buoyancy(buoyancy, 1, y%size, 1, sbackground(:, 1), p_wrk1d, bbackground)
                 bbackground(:) = p_wrk1d(:, 1)
             end if
 
@@ -234,8 +234,8 @@ contains
         ! Buoyancy as next scalar, current value of counter is=inb_scal_array+1
         if (buoyancy%type /= EQNS_BOD_NONE) then
             sbg(is) = sbg(1)
-            sbg(is)%mean = (bbackground(1) + bbackground(g(2)%size))/froude
-            sbg(is)%delta = abs(bbackground(1) - bbackground(g(2)%size))/froude
+            sbg(is)%mean = (bbackground(1) + bbackground(y%size))/froude
+            sbg(is)%delta = abs(bbackground(1) - bbackground(y%size))/froude
             schmidt(is) = schmidt(1)
         end if
 
@@ -243,11 +243,11 @@ contains
         if (imode_thermo == THERMO_TYPE_ANELASTIC) then
             if (imixture == MIXT_TYPE_AIRWATER) then
                 is = is + 1
-                call Thermo_Anelastic_THETA_L(1, g(2)%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
-                ! call Thermo_Anelastic_THETA_E(1, g(2)%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
+                call Thermo_Anelastic_THETA_L(1, y%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
+                ! call Thermo_Anelastic_THETA_E(1, y%size, 1, sbackground, p_wrk1d(:, 1), p_wrk1d(:, 2))
                 sbg(is) = sbg(1)
-                sbg(is)%mean = (p_wrk1d(1, 1) + p_wrk1d(g(2)%size, 1))*0.5_wp
-                sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(g(2)%size, 1))
+                sbg(is)%mean = (p_wrk1d(1, 1) + p_wrk1d(y%size, 1))*0.5_wp
+                sbg(is)%delta = abs(p_wrk1d(1, 1) - p_wrk1d(y%size, 1))
                 schmidt(is) = schmidt(1)
             end if
         end if

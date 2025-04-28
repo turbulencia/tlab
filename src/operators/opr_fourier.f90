@@ -659,7 +659,6 @@ contains
     ! #######################################################################
     subroutine OPR_Fourier_SetPSD(nx, ny, nz, u, psd, locPhase)
         use Distributions
-        use FDM, only: g
 
         integer(wi) nx, ny, nz
         complex(wp), intent(inout) :: u(nx/2 + 1, ny, nz)
@@ -679,17 +678,17 @@ contains
             kglobal = k
 #endif
             if (kglobal <= size_fft_z/2 + 1) then
-                fk = real(kglobal - 1, wp)/g(3)%scale
+                fk = real(kglobal - 1, wp)/z%scale
             else
-                fk = -real(size_fft_z + 1 - kglobal, wp)/g(3)%scale
+                fk = -real(size_fft_z + 1 - kglobal, wp)/z%scale
             end if
 
             do j = 1, ny
                 jglobal = j ! No MPI decomposition along Oy
                 if (jglobal <= size_fft_y/2 + 1) then
-                    fj = real(jglobal - 1, wp)/g(2)%scale
+                    fj = real(jglobal - 1, wp)/y%scale
                 else
-                    fj = -real(size_fft_y + 1 - jglobal, wp)/g(2)%scale
+                    fj = -real(size_fft_y + 1 - jglobal, wp)/y%scale
                 end if
 
                 do i = 1, nx/2 + 1
@@ -698,7 +697,7 @@ contains
 #else
                     iglobal = i
 #endif
-                    fi = real(iglobal - 1, wp)/g(1)%scale
+                    fi = real(iglobal - 1, wp)/x%scale
 
                     f = sqrt(fi**2 + fj**2 + fk**2)
 
@@ -750,7 +749,6 @@ contains
     ! #######################################################################
     subroutine OPR_Fourier_SetPSD_2d(nx, ny, nz, u, psd)
         use Distributions
-        use FDM, only: g
 
         integer(wi) nx, ny, nz
         complex(wp), intent(inout) :: u(nx/2 + 1, ny, nz)
@@ -769,9 +767,9 @@ contains
             kglobal = k
 #endif
             if (kglobal <= size_fft_z/2 + 1) then
-                fk = real(kglobal - 1, wp)/g(3)%scale
+                fk = real(kglobal - 1, wp)/z%scale
             else
-                fk = -real(size_fft_z + 1 - kglobal, wp)/g(3)%scale
+                fk = -real(size_fft_z + 1 - kglobal, wp)/z%scale
             end if
 
             do i = 1, nx/2 + 1
@@ -780,7 +778,7 @@ contains
 #else
                 iglobal = i
 #endif
-                fi = real(iglobal - 1, wp)/g(1)%scale
+                fi = real(iglobal - 1, wp)/x%scale
 
                 f = sqrt(fi**2 + fk**2)
 

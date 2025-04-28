@@ -44,7 +44,6 @@ program TRANSFIELDS
     ! Additional local arrays
     type(grid_dt), target :: g_dst(3)
     type(grid_dt), pointer :: x_dst => g_dst(1), y_dst => g_dst(2), z_dst => g_dst(3)       ! to be cleaned
-    ! real(wp), allocatable, save :: x_dst(:), y_dst(:), z_dst(:)
     real(wp), allocatable, save :: q_dst(:, :), s_dst(:, :)
 
     real(wp), allocatable, save :: x_aux(:), y_aux(:), z_aux(:)
@@ -62,7 +61,6 @@ program TRANSFIELDS
     character*512 sRes
     integer(wi) subdomain(6)
 
-    ! type(fdm_dt), dimension(3) :: g_dst
     integer(wi) imax_dst, jmax_dst, kmax_dst
 
     logical :: flag_crop = .false., flag_extend = .false.
@@ -302,12 +300,6 @@ program TRANSFIELDS
     if (flow_on) call TLab_Allocate_Real(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
     if (scal_on) call TLab_Allocate_Real(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
 
-    ! if (opt_main == 3) then
-    !     allocate (x_dst(g_dst(1)%size))
-    !     allocate (y_dst(g_dst(2)%size))
-    !     allocate (z_dst(g_dst(3)%size))
-    ! end if
-
     ! ###################################################################
     ! Initialize operators and reference data
     ! ###################################################################
@@ -334,9 +326,9 @@ program TRANSFIELDS
     ! Initialize remeshing
     ! -------------------------------------------------------------------
     if (opt_main == 3) then
-        call TLab_Grid_Read('grid.trn', x_dst, y_dst, z_dst, [g_dst(1)%size, g_dst(2)%size, g_dst(3)%size])!, scales)
-        g_dst(1:3)%scale = [x_dst%scale, y%scale, z%scale] !scales(1:3)
-
+        call TLab_Grid_Read('grid.trn', x_dst, y_dst, z_dst, [g_dst(1)%size, g_dst(2)%size, g_dst(3)%size])
+        g_dst(1:3)%periodic = g(1:3)%periodic
+        
         tolerance = 0.001_wp    ! percentage of grid spacing
 
 #define xn(i) x%nodes(i)
@@ -540,8 +532,8 @@ program TRANSFIELDS
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                     end if
-                    call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
-                                         g, x_aux, y_aux, z_aux, x_dst%nodes, y_dst%nodes, z_dst%nodes, &
+                    call OPR_INTERPOLATE(imax, jmax_aux, kmax, &
+                                         x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
                                          txc_aux, q_dst(:, iq), txc(:, 2))
                 end do
             end if
@@ -560,8 +552,8 @@ program TRANSFIELDS
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                     end if
-                    call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
-                                         g, x_aux, y_aux, z_aux, x_dst%nodes, y_dst%nodes, z_dst%nodes, &
+                    call OPR_INTERPOLATE(imax, jmax_aux, kmax,  &
+                                         x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
                                          txc_aux, s_dst(:, is), txc(:, 2))
                 end do
             end if

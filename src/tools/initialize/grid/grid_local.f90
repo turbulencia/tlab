@@ -113,14 +113,11 @@ contains
         end do
         !
         x_loc%size = nmax
-        x_loc%uniform = .true.
-        x_loc%periodic = .false.
         if (allocated(x_loc%nodes)) deallocate (x_loc%nodes)
-        allocate (x_loc%nodes(1:nmax))
+        allocate (x_loc%nodes(x_loc%size))
         x_loc%nodes(:) = x(:)
-        ! fdm%size = nmax
-        fdm_loc%uniform = .true.
-        fdm_loc%periodic = .false.
+        x_loc%scale = x_loc%nodes(x_loc%size) - x_loc%nodes(1)
+
         fdm_loc%der1%mode_fdm = FDM_COM6_JACOBIAN
         fdm_loc%der2%mode_fdm = FDM_COM6_JACOBIAN
         call FDM_CreatePlan(x_loc, fdm_loc)

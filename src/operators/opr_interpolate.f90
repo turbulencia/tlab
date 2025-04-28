@@ -31,26 +31,29 @@ module OPR_INTERPOLATORS
 contains
 !########################################################################
 !########################################################################
-    subroutine OPR_INTERPOLATE(nx, ny, nz, nx_dst, ny_dst, nz_dst, &
-                               g, x_org, y_org, z_org, x_dst, y_dst, z_dst, u_org, u_dst, txc)
+    subroutine OPR_INTERPOLATE(nx, ny, nz, x_org, y_org, z_org, x_dst, y_dst, z_dst, u_org, u_dst, txc)
+        use TLab_Grid, only: grid_dt
 
-        integer(wi) nx, ny, nz, nx_dst, ny_dst, nz_dst
-        type(fdm_dt), intent(IN) :: g(3)
+        integer(wi) nx, ny, nz
+        type(grid_dt), intent(IN) :: x_dst, y_dst, z_dst
         real(wp), dimension(nx + 1), intent(INOUT) :: x_org
         real(wp), dimension(ny + 1), intent(INOUT) :: y_org
         real(wp), dimension(nz + 1), intent(INOUT) :: z_org
-        real(wp), dimension(*), intent(IN) :: x_dst, y_dst, z_dst
         real(wp), dimension(nx*ny*nz), intent(IN) :: u_org
-        real(wp), dimension(nx_dst*ny_dst*nz_dst), intent(OUT) :: u_dst
+        real(wp), dimension(:), intent(OUT) :: u_dst
         real(wp), dimension(isize_txc_field, *), intent(INOUT) :: txc
 
 ! -------------------------------------------------------------------
-
+        integer(wi) nx_dst, ny_dst, nz_dst
 #ifdef USE_MPI
         integer(wi) npage
 #endif
 
 ! ###################################################################
+        nx_dst = x_dst%size
+        ny_dst = y_dst%size
+        nz_dst = z_dst%size
+
 ! This should be OPR_INTERPOLATE_INITIALIZE
 #ifdef USE_MPI
         if (ims_npro_i > 1) then
@@ -59,44 +62,44 @@ contains
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            tmpi_plan_x = TLabMPI_Trp_PlanI(nx, npage, message ='type-1 Ox interpolation')
+            tmpi_plan_x = TLabMPI_Trp_PlanI(nx, npage, message='type-1 Ox interpolation')
 
             npage = nz*ny
             if (mod(npage, ims_npro_i) /= 0) then ! add space for MPI transposition
                 npage = npage/ims_npro_i
                 npage = (npage + 1)*ims_npro_i
             end if
-            tmpi_plan_xback = TLabMPI_Trp_PlanI(nx_dst, npage, message ='type-2 Ox interpolation')
+            tmpi_plan_xback = TLabMPI_Trp_PlanI(nx_dst, npage, message='type-2 Ox interpolation')
         end if
 
         if (ims_npro_k > 1) then
             npage = nx_dst*ny_dst
-            tmpi_plan_z = TLabMPI_Trp_PlanK(nz, npage, message ='type-1 Oz interpolation')
+            tmpi_plan_z = TLabMPI_Trp_PlanK(nz, npage, message='type-1 Oz interpolation')
 
             npage = nx_dst*ny_dst
-            tmpi_plan_zback = TLabMPI_Trp_PlanK(nz_dst, npage, message ='type-2 Oz interpolation')
+            tmpi_plan_zback = TLabMPI_Trp_PlanK(nz_dst, npage, message='type-2 Oz interpolation')
 
         end if
 #endif
 
 ! #######################################################################
 ! Always interpolating along Ox
-        if (g(1)%size > 1) then
-            call OPR_INTERPOLATE_X(nx, ny, nz, nx_dst, g(1)%periodic, g(1)%scale, x_org, x_dst, &
+        if (x_dst%size > 1) then
+            call OPR_INTERPOLATE_X(nx, ny, nz, nx_dst, x_dst%periodic, x_dst%scale, x_org, x_dst%nodes, &
                                    u_org, txc(1, 1), txc(1, 2), txc(1, 3))
         else
             txc(1:nx*ny*nz, 1) = u_org(1:nx*ny*nz)
         end if
 
-        if (g(2)%size > 1) then
-            call OPR_INTERPOLATE_Y(nx_dst, ny, nz, ny_dst, g(2)%periodic, g(2)%scale, y_org, y_dst, &
+        if (y_dst%size > 1) then
+            call OPR_INTERPOLATE_Y(nx_dst, ny, nz, ny_dst, y_dst%periodic, y_dst%scale, y_org, y_dst%nodes, &
                                    txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4))
         else
             txc(1:nx_dst*ny*nz, 2) = txc(1:nx_dst*ny*nz, 1)
         end if
 
-        if (g(3)%size > 1) then
-            call OPR_INTERPOLATE_Z(nx_dst, ny_dst, nz, nz_dst, g(3)%periodic, g(3)%scale, z_org, z_dst, &
+        if (z_dst%size > 1) then
+            call OPR_INTERPOLATE_Z(nx_dst, ny_dst, nz, nz_dst, z_dst%periodic, z_dst%scale, z_org, z_dst%nodes, &
                                    txc(1, 2), u_dst, txc(1, 1), txc(1, 3))
         else
             u_dst(1:nx_dst*ny_dst*nz_dst) = txc(1:nx_dst*ny_dst*nz_dst, 2)

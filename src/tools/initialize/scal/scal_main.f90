@@ -16,7 +16,7 @@ program INISCAL
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
-    use FDM, only: g, FDM_Initialize
+    use FDM, only: FDM_Initialize
     use FDM, only: fdm_Int0
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
@@ -72,7 +72,7 @@ program INISCAL
 
     call TLab_Initialize_Background(ifile)
     do is = 1, size(IniS)
-        if (IniS(is)%relative) IniS(is)%ymean = g(2)%nodes(1) + g(2)%scale*IniS(is)%ymean_rel
+        if (IniS(is)%relative) IniS(is)%ymean = y%nodes(1) + y%scale*IniS(is)%ymean_rel
     end do
 
     ! ###################################################################

@@ -19,7 +19,7 @@ module TIME
     use TLab_Memory, only: isize_wrk1d, isize_wrk2d, isize_wrk3d
     use TLab_Memory, only: isize_txc_field
     use TLab_Time, only: rtime
-    use FDM, only: g
+    use TLab_Grid, only: x, y, z
     use NavierStokes
     use TLab_Memory, only: inb_flow, inb_scal
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop
@@ -77,7 +77,8 @@ contains
 ! ###################################################################
 ! ###################################################################
     subroutine TIME_INITIALIZE()
-
+        use FDM, only: g
+        
         integer ig
 
         ! ###################################################################
@@ -168,9 +169,9 @@ contains
             do j = 1, jmax
                 do i = 1, imax
                     dummy = 0.0_wp
-                    if (g(1)%size > 1) dummy = dummy + ds(1)%one_ov_ds2(i + idsp)
-                    if (g(2)%size > 1) dummy = dummy + ds(2)%one_ov_ds2(j + jdsp)
-                    if (g(3)%size > 1) dummy = dummy + ds(3)%one_ov_ds2(k + kdsp)
+                    if (x%size > 1) dummy = dummy + ds(1)%one_ov_ds2(i + idsp)
+                    if (y%size > 1) dummy = dummy + ds(2)%one_ov_ds2(j + jdsp)
+                    if (z%size > 1) dummy = dummy + ds(3)%one_ov_ds2(k + kdsp)
                     dx2i = max(dx2i, dummy)
                 end do
             end do
@@ -399,7 +400,7 @@ contains
         ! -------------------------------------------------------------------
         select case (nse_eqns)
         case (DNS_EQNS_INCOMPRESSIBLE, DNS_EQNS_ANELASTIC)
-            if (g(3)%size > 1) then
+            if (z%size > 1) then
                 do k = 1, kmax
                     k_glo = k + kdsp
                     do j = 1, jmax
@@ -426,7 +427,7 @@ contains
             ! -------------------------------------------------------------------
         case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
             p_wrk3d = sqrt(gama0*p(:, :, :)/rho(:, :, :)) ! sound speed; positiveness of p and rho checked in routine DNS_CONTROL
-            if (g(3)%size > 1) then
+            if (z%size > 1) then
                 do k = 1, kmax
                     k_glo = k + kdsp
                     do j = 1, jmax
@@ -469,7 +470,7 @@ contains
             ! -------------------------------------------------------------------
         case (DNS_EQNS_INTERNAL, DNS_EQNS_TOTAL)
             if (itransport == EQNS_TRANS_POWERLAW) then
-                if (g(3)%size > 1) then
+                if (z%size > 1) then
                     do k = 1, kmax
                         k_glo = k + kdsp
                         do j = 1, jmax
@@ -489,7 +490,7 @@ contains
                 end if
 
             else ! constant dynamic viscosity
-                if (g(3)%size > 1) then
+                if (z%size > 1) then
                     do k = 1, kmax
                         k_glo = k + kdsp
                         do j = 1, jmax
@@ -788,13 +789,13 @@ contains
 #endif
         end if
 
-        if (.not. g(2)%periodic) then
+        if (.not. y%periodic) then
             call BOUNDARY_BCS_Y(isize_field, M2_max, rho, u, v, w, p, GAMMA_LOC(1), s, &
                                 hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, &
                                 txc(1, 1), txc(1, 2), txc(1, 3), txc(1, 4), txc(1, 5), AUX_LOC(:))
         end if
 
-        if (.not. g(1)%periodic) then
+        if (.not. x%periodic) then
             call BOUNDARY_BCS_X(isize_field, M2_max, etime, rho, u, v, w, p, GAMMA_LOC(1), s, &
                                 hq(1, 5), hq(1, 1), hq(1, 2), hq(1, 3), hq(1, 4), hs, txc, AUX_LOC(:))
         end if
@@ -940,28 +941,28 @@ contains
             if (ims_pro_i == 0) then !Take care of periodic boundary conditions west
                 if (nzone_west /= 0) then
                     l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) = &
-                        l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + g(1)%scale
+                        l_q(nzone_grid + 1:nzone_grid + nzone_west, 1) + x%scale
                 end if
             end if
 
             if (ims_pro_i == (ims_npro_i - 1)) then !Take care of periodic boundary conditions east
                 if (nzone_east /= 0) then
                     l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) = &
-                        l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - g(1)%scale
+                        l_q(nzone_grid + nzone_west + 1:nzone_grid + nzone_west + nzone_east, 1) - x%scale
                 end if
             end if
 
             call PARTICLE_MPI_SEND_RECV_I(nzone_grid, nzone_west, nzone_east, l_q, l_hq, l_g%tags, l_g%np)
 
         else
-            x_right = g(1)%nodes(1) + g(1)%scale
+            x_right = x%nodes(1) + x%scale
 
             do i = 1, l_g%np
                 if (l_q(i, 1) > x_right) then
-                    l_q(i, 1) = l_q(i, 1) - g(1)%scale
+                    l_q(i, 1) = l_q(i, 1) - x%scale
 
-                elseif (l_q(i, 1) < g(1)%nodes(1)) then
-                    l_q(i, 1) = l_q(i, 1) + g(1)%scale
+                elseif (l_q(i, 1) < x%nodes(1)) then
+                    l_q(i, 1) = l_q(i, 1) + x%scale
 
                 end if
 
@@ -978,14 +979,14 @@ contains
             if (ims_pro_k == 0) then !Take care of periodic boundary conditions south
                 if (nzone_south /= 0) then
                     l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) = &
-                        l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + g(3)%scale
+                        l_q(nzone_grid + 1:nzone_grid + nzone_south, 3) + z%scale
                 end if
             end if
 
             if (ims_pro_k == (ims_npro_k - 1)) then !Take care of periodic boundary conditions north
                 if (nzone_north /= 0) then
                     l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) = &
-                        l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - g(3)%scale
+                        l_q(nzone_grid + nzone_south + 1:nzone_grid + nzone_south + nzone_north, 3) - z%scale
                 end if
             end if
 
@@ -994,14 +995,14 @@ contains
         else
             call MPI_BARRIER(MPI_COMM_WORLD, ims_err)
 
-            z_right = g(3)%nodes(1) + g(3)%scale
+            z_right = z%nodes(1) + z%scale
 
             do i = 1, l_g%np
                 if (l_q(i, 3) > z_right) then
-                    l_q(i, 3) = l_q(i, 3) - g(3)%scale
+                    l_q(i, 3) = l_q(i, 3) - z%scale
 
-                elseif (l_q(i, 3) < g(3)%nodes(1)) then
-                    l_q(i, 3) = l_q(i, 3) + g(3)%scale
+                elseif (l_q(i, 3) < z%nodes(1)) then
+                    l_q(i, 3) = l_q(i, 3) + z%scale
 
                 end if
 
@@ -1012,23 +1013,23 @@ contains
 #else
         !#######################################################################
         ! Serial; would it be faster to use MOD?
-        x_right = g(1)%nodes(1) + g(1)%scale
-        z_right = g(3)%nodes(1) + g(3)%scale
+        x_right = x%nodes(1) + x%scale
+        z_right = z%nodes(1) + z%scale
 
         do i = 1, l_g%np
             if (l_q(i, 1) > x_right) then
-                l_q(i, 1) = l_q(i, 1) - g(1)%scale
+                l_q(i, 1) = l_q(i, 1) - x%scale
 
-            elseif (l_q(i, 1) < g(1)%nodes(1)) then
-                l_q(i, 1) = l_q(i, 1) + g(1)%scale
+            elseif (l_q(i, 1) < x%nodes(1)) then
+                l_q(i, 1) = l_q(i, 1) + x%scale
 
             end if
 
             if (l_q(i, 3) > z_right) then
-                l_q(i, 3) = l_q(i, 3) - g(3)%scale
+                l_q(i, 3) = l_q(i, 3) - z%scale
 
-            elseif (l_q(i, 3) < g(3)%nodes(1)) then
-                l_q(i, 3) = l_q(i, 3) + g(3)%scale
+            elseif (l_q(i, 3) < z%nodes(1)) then
+                l_q(i, 3) = l_q(i, 3) + z%scale
 
             end if
 
@@ -1036,15 +1037,15 @@ contains
 
 #endif
 
-        y_right = g(2)%nodes(1) + g(2)%scale
+        y_right = y%nodes(1) + y%scale
         select case (part_bcs)
         case (PART_BCS_SPECULAR)
             do i = 1, l_g%np
                 if (l_q(i, 2) > y_right) then
                     l_q(i, 2) = 2*y_right - l_q(i, 2)
                     l_q(i, 5) = -l_q(i, 5)
-                elseif (l_q(i, 2) < g(2)%nodes(1)) then
-                    l_q(i, 2) = 2*g(2)%nodes(1) - l_q(i, 2)
+                elseif (l_q(i, 2) < y%nodes(1)) then
+                    l_q(i, 2) = 2*y%nodes(1) - l_q(i, 2)
                     l_q(i, 5) = -l_q(i, 5)
                 end if
             end do
@@ -1053,8 +1054,8 @@ contains
             do i = 1, l_g%np
                 if (l_q(i, 2) > y_right) then
                     l_q(i, 2) = y_right
-                elseif (l_q(i, 2) < g(2)%nodes(1)) then
-                    l_q(i, 2) = g(2)%nodes(1)
+                elseif (l_q(i, 2) < y%nodes(1)) then
+                    l_q(i, 2) = y%nodes(1)
                 end if
             end do
 
@@ -1063,7 +1064,7 @@ contains
         !#######################################################################
         ! Recalculating closest node below in Y direction
         !#######################################################################
-        call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
+        call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, y%size, y%nodes)
 
         return
     end subroutine TIME_SUBSTEP_PARTICLE

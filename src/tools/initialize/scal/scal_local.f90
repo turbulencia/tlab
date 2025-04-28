@@ -210,8 +210,8 @@ contains
             end do
 
         case (PERT_LAYER_DISCRETE)
-            wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
-            wz_1 = 2.0_wp*pi_wp/g(3)%scale
+            wx_1 = 2.0_wp*pi_wp/x%scale ! Fundamental wavelengths
+            wz_1 = 2.0_wp*pi_wp/z%scale
 
             p_wrk2d = 0.0_wp
             do im = 1, fp%size
@@ -273,8 +273,8 @@ contains
             disp(:, :) = disp(:, :) - dummy
 
         case (PERT_PLANE_DISCRETE, PERT_DELTA_DISCRETE, PERT_FLUX_DISCRETE)
-            wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
-            wz_1 = 2.0_wp*pi_wp/g(3)%scale
+            wx_1 = 2.0_wp*pi_wp/x%scale ! Fundamental wavelengths
+            wz_1 = 2.0_wp*pi_wp/z%scale
 
             do im = 1, fp%size
                 wx = real(fp%modex(im), wp)*wx_1
@@ -304,8 +304,8 @@ contains
         if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > 0.0_wp) then
             do k = 1, kmax
                 do i = 1, imax
-                    xcenter = g(1)%nodes(i + idsp) - g(1)%scale*fp%phasex(1) - g(1)%nodes(1)
-                    if (g(3)%size > 1) then; zcenter = g(3)%nodes(k + kdsp) - g(3)%scale*fp%phasez(1) - g(3)%nodes(1)
+                    xcenter = g(1)%nodes(i + idsp) - x%scale*fp%phasex(1) - g(1)%nodes(1)
+                    if (g(3)%size > 1) then; zcenter = g(3)%nodes(k + kdsp) - z%scale*fp%phasez(1) - g(3)%nodes(1)
                     else; zcenter = 0.0_wp; end if
                     rcenter = sqrt(xcenter**2 + zcenter**2)
                     amplify = exp(-0.5_wp*(rcenter/fp%parameters(1))**2)

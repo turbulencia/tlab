@@ -120,7 +120,10 @@ contains
             end if
 
         end do
-
+        x%periodic = g(1)%periodic
+        y%periodic = g(2)%periodic
+        z%periodic = g(3)%periodic
+        
         !########################################################################
         ! Initializing fdm plan for derivatives
         call FDM_CreatePlan(x, g(1))

@@ -194,8 +194,8 @@ contains
 
         call FLOW_SHAPE(p_wrk1d)
 
-        wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
-        wz_1 = 2.0_wp*pi_wp/g(3)%scale
+        wx_1 = 2.0_wp*pi_wp/x%scale ! Fundamental wavelengths
+        wz_1 = 2.0_wp*pi_wp/z%scale
 
         p_wrk2d = 0.0_wp
         do im = 1, fp%size
@@ -465,8 +465,8 @@ contains
             disp(:, :) = disp(:, :) - dummy
 
         case (PERT_DISCRETE)
-            wx_1 = 2.0_wp*pi_wp/g(1)%scale ! Fundamental wavelengths
-            wz_1 = 2.0_wp*pi_wp/g(3)%scale
+            wx_1 = 2.0_wp*pi_wp/x%scale ! Fundamental wavelengths
+            wz_1 = 2.0_wp*pi_wp/z%scale
 
             do im = 1, fp%size
                 wx = real(fp%modex(im), wp)*wx_1
@@ -487,7 +487,7 @@ contains
         if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > 0.0_wp) then
             do k = 1, kmax
                 do i = 1, imax
-                    xcenter = xn(i) - g(1)%scale*0.5_wp - xn(1)
+                    xcenter = xn(i) - x%scale*0.5_wp - xn(1)
                     amplify = exp(-0.5_wp*(xcenter/fp%parameters(1))**2)
                     disp(i, k) = disp(i, k)*amplify
                 end do
@@ -502,8 +502,8 @@ contains
             do k = 1, kmax
                 do i = 1, imax
                     prof_loc%ymean = tbg%ymean + disp(i, k)
-                    prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
-                    prof_loc%mean = tbg%mean + 0.5_wp*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
+                    prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*y%scale
+                    prof_loc%mean = tbg%mean + 0.5_wp*(tbg%uslope + tbg%lslope)*disp(i, k)*y%scale
                     do j = 1, jmax
                         T(i, j, k) = Profiles_Calculate(prof_loc, yn(j))
                     end do
@@ -523,8 +523,8 @@ contains
             do k = 1, kmax
                 do i = 1, imax
                     prof_loc%ymean = hbg%ymean + disp(i, k)
-                    prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*g(2)%scale
-                    prof_loc%mean = hbg%mean + 0.5_wp*(hbg%uslope + hbg%lslope)*disp(i, k)*g(2)%scale
+                    prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*y%scale
+                    prof_loc%mean = hbg%mean + 0.5_wp*(hbg%uslope + hbg%lslope)*disp(i, k)*y%scale
                     do j = 1, jmax
                         h(i, j, k) = Profiles_Calculate(prof_loc, yn(j))
                     end do

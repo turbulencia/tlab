@@ -65,7 +65,7 @@ program INIFLOW
     call TLab_Initialize_Memory(C_FILE_LOC)
 
     call TLab_Initialize_Background(ifile)
-    if (IniK%relative) IniK%ymean = g(2)%nodes(1) + g(2)%scale*IniK%ymean_rel
+    if (IniK%relative) IniK%ymean = y%nodes(1) + y%scale*IniK%ymean_rel
 
     call OPR_Burgers_Initialize(ifile)
 

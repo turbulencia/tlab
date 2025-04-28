@@ -14,7 +14,7 @@ program INIPART
     use TLabMPI_PROCS, only: TLabMPI_Initialize
     use TLabMPI_Transpose, only: TLabMPI_Trp_Initialize
 #endif
-    use FDM, only: g, FDM_Initialize
+    use FDM, only: FDM_Initialize
     use Thermodynamics
     use NavierStokes, only: NavierStokes_Initialize_Parameters
     use TLab_Background, only: TLab_Initialize_Background
@@ -81,7 +81,7 @@ program INIPART
         ! problem if I enter with inb_scal_array = 0
         inb_scal_array = inb_scal
         call TLab_Initialize_Background(ifile)
-        if (IniP%relative) IniP%ymean = g(2)%nodes(1) + g(2)%scale*IniP%ymean_rel
+        if (IniP%relative) IniP%ymean = y%nodes(1) + y%scale*IniP%ymean_rel
 
         call Particle_Initialize_Fields()
 
@@ -104,8 +104,8 @@ contains
         use TLab_Pointers, only: pointers_dt
         use TLab_Pointers_3D, only: pointers3d_dt
         use TLab_Memory, only: imax, jmax, kmax, inb_scal
+        use TLab_Grid, only: x, y, z
         use Tlab_Background, only: sbg
-        use FDM, only: g
         use PARTICLE_TYPES, only: particle_dt
         use PARTICLE_VARS
         use PARTICLE_INTERPOLATE
@@ -180,17 +180,17 @@ contains
         call random_seed(PUT=x_seed)
 
 #ifdef USE_MPI
-        xref = g(1)%nodes(ims_offset_i + 1)
-        xscale = g(1)%scale/real(ims_npro_i, wp)
-        zref = g(3)%nodes(ims_offset_k + 1)
-        zscale = g(3)%scale/real(ims_npro_k, wp)
+        xref = x%nodes(ims_offset_i + 1)
+        xscale = x%scale/real(ims_npro_i, wp)
+        zref = z%nodes(ims_offset_k + 1)
+        zscale = z%scale/real(ims_npro_k, wp)
 #else
-        xref = g(1)%nodes(1)
-        xscale = g(1)%scale
-        zref = g(3)%nodes(1)
-        zscale = g(3)%scale
+        xref = x%nodes(1)
+        xscale = x%scale
+        zref = z%nodes(1)
+        zscale = z%scale
 #endif
-        if (g(3)%size == 1) zscale = 0.0_wp ! 2D case
+        if (z%size == 1) zscale = 0.0_wp ! 2D case
 
 !########################################################################
 ! Particle position
@@ -220,8 +220,8 @@ contains
 
             y_limits(1) = IniP%ymean - 0.5_wp*IniP%diam
             y_limits(2) = IniP%ymean + 0.5_wp*IniP%diam
-            call LOCATE_Y(2, y_limits, j_limits, g(2)%size, g(2)%nodes)
-            dy_loc = g(2)%nodes(j_limits(2)) - g(2)%nodes(j_limits(1))
+            call LOCATE_Y(2, y_limits, j_limits, y%size, y%nodes)
+            dy_loc = y%nodes(j_limits(2)) - y%nodes(j_limits(1))
 
             i = 1
             do while (i <= l_g%np)
@@ -242,7 +242,7 @@ contains
 
                     l_q(i, 1) = xref + rnd_number(1)*xscale
                     l_q(i, 3) = zref + rnd_number(3)*zscale
-                    l_q(i, 2) = g(2)%nodes(rnd_scal(2)) + dy_frac*dy_loc
+                    l_q(i, 2) = y%nodes(rnd_scal(2)) + dy_frac*dy_loc
 
                     i = i + 1
 
@@ -253,7 +253,7 @@ contains
         end select
 
 ! Calculating closest node below in Y direction
-        call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, g(2)%size, g(2)%nodes)
+        call LOCATE_Y(l_g%np, l_q(1, 2), l_g%nodes, y%size, y%nodes)
 
 !########################################################################
 ! Remaining particle properties

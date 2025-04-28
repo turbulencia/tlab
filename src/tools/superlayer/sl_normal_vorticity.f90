@@ -20,7 +20,6 @@
 subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_size, &
                                threshold, ibuffer_npy, u, v, w, p, z1, a, sl, profiles, txc, mean, wrk1d, wrk2d, wrk3d)
     use TLab_Constants, only: wp, wi
-    use TLAB_VARS
 #ifdef USE_MPI
     use mpi_f08
     use TLabMPI_VARS
@@ -117,8 +116,8 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
-         g(1)%scale, g(3)%scale, normal_factor, &
-         g(1)%nodes, g(2)%nodes, g(3)%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
+         x%scale, z%scale, normal_factor, &
+         x%nodes, y%nodes, z%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -140,8 +139,8 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
-         g(1)%scale, g(3)%scale, normal_factor, &
-         g(1)%nodes, g(2)%nodes, g(3)%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
+         x%scale, z%scale, normal_factor, &
+         x%nodes, y%nodes, z%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -166,8 +165,8 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
-         g(1)%scale, g(3)%scale, normal_factor, &
-         g(1)%nodes, g(2)%nodes, g(3)%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
+         x%scale, z%scale, normal_factor, &
+         x%nodes, y%nodes, z%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -193,8 +192,8 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
-         g(1)%scale, g(3)%scale, normal_factor, &
-         g(1)%nodes, g(2)%nodes, g(3)%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
+         x%scale, z%scale, normal_factor, &
+         x%nodes, y%nodes, z%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
 
 ! ###################################################################
 ! Normal analysis:
@@ -228,8 +227,8 @@ subroutine SL_NORMAL_VORTICITY(isl, ith, iavg, nmax, istep, kstep, nfield, itxc_
 
     call SL_NORMAL_SAMPLE &
         (imax, jmax, kmax, nmax, istep, kstep, nfield_loc, nfield, &
-         g(1)%scale, g(3)%scale, normal_factor, &
-         g(1)%nodes, g(2)%nodes, g(3)%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
+         x%scale, z%scale, normal_factor, &
+         x%nodes, y%nodes, z%nodes, sl, txc, profiles(ipfield, 1, 1, 1), txc(1, 4), txc(1, 5), txc(1, 6))
 
 ! ###################################################################
 ! Output averages

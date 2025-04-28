@@ -10,7 +10,7 @@ module TLab_Grid
         sequence
         character*8 name
         integer(wi) size
-        logical :: uniform = .false.
+        ! logical :: uniform = .true.
         logical :: periodic = .false.
         real(wp) scale
         real(wp), allocatable :: nodes(:)
