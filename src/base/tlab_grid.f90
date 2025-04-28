@@ -6,7 +6,16 @@ module TLab_Grid
     implicit none
     private
 
-    real(wp), allocatable, target, public :: x(:), y(:), z(:)
+    type, public :: grid_dt
+        sequence
+        real(wp), allocatable :: nodes(:)
+        integer(wi) :: size
+        real(wp) :: scale
+        logical :: periodic
+        logical :: uniform
+        character(len=8) :: name
+    end type
+    type(grid_dt), public :: x, y, z
 
     public :: TLab_Grid_Read
     public :: TLab_Grid_Write
@@ -14,15 +23,12 @@ module TLab_Grid
 contains
 !########################################################################
 !########################################################################
-    subroutine TLab_Grid_Read(name, x, y, z, sizes, scales)
+    subroutine TLab_Grid_Read(name, x, y, z, sizes)
         character*(*) name
-        real(wp), allocatable, intent(inout) :: x(:), y(:), z(:)
+        type(grid_dt), intent(inout) :: x, y, z
         integer(wi), intent(in), optional :: sizes(3)
-        real(wp), intent(out), optional :: scales(3)
 
         ! -----------------------------------------------------------------------
-        integer(wi) locSizes(3)
-        real(wp) locScales(3)
         character*(32) line
 
         ! #######################################################################
@@ -30,29 +36,29 @@ contains
         rewind (50)
 
         ! -----------------------------------------------------------------------
-        read (50) locSizes(1:3)
+        read (50) x%size, y%size, z%size
 
-        ! -----------------------------------------------------------------------
-        if (present(sizes)) then
-            if (any(sizes /= locSizes)) then
+        if (present(sizes)) then        ! check
+            if (any([x%size, y%size, z%size] /= sizes)) then
                 close (50)
-                write (line, 100) locSizes
+                write (line, 100) x%size, y%size, z%size
                 call TLab_Write_ASCII(efile, __FILE__//'. Dimensions ('//trim(line)//') unmatched.')
                 call TLab_Stop(DNS_ERROR_DIMGRID)
             end if
         end if
 
-        read (50) locScaleS(1:3)
-        if (present(scales)) scales = locScales
+        read (50) x%scale, y%scale, z%scale
+
+        if (allocated(x%nodes)) deallocate (x%nodes)
+        if (allocated(y%nodes)) deallocate (y%nodes)
+        if (allocated(z%nodes)) deallocate (z%nodes)
+        allocate (x%nodes(x%size), y%nodes(y%size), z%nodes(z%size))
+
+        read (50) x%nodes(:)
+        read (50) y%nodes(:)
+        read (50) z%nodes(:)
 
         ! -----------------------------------------------------------------------
-        if (allocated(x)) deallocate (x)
-        if (allocated(y)) deallocate (y)
-        if (allocated(z)) deallocate (z)
-        allocate (x(locSizes(1)), y(locSizes(2)), z(locSizes(3)))
-        read (50) x
-        read (50) y
-        read (50) z
         close (50)
 
         return
@@ -63,29 +69,20 @@ contains
 
 !########################################################################
 !########################################################################
-    subroutine TLab_Grid_Write(name, imax, jmax, kmax, scalex, scaley, scalez, x, y, z)
+    subroutine TLab_Grid_Write(name, x, y, z)
         character*(*) name
-        integer(wi) imax, jmax, kmax
-        real(wp) scalex, scaley, scalez
-        real(wp), intent(in) :: x(imax), y(jmax), z(kmax)
-
-        ! -----------------------------------------------------------------------
-        real(wp) scale(3)
+        type(grid_dt), intent(in) :: x, y, z
 
         !########################################################################
         open (unit=51, file=name, form='unformatted', status='unknown')
 
-        ! -----------------------------------------------------------------------
-        scale(1) = scalex
-        scale(2) = scaley
-        scale(3) = scalez
-        write (51) imax, jmax, kmax
-        write (51) scale
+        write (51) x%size, y%size, z%size
+        write (51) x%scale, y%scale, z%scale
 
-        ! -----------------------------------------------------------------------
-        write (51) x
-        write (51) y
-        write (51) z
+        write (51) x%nodes(1:x%size)
+        write (51) y%nodes(1:y%size)
+        write (51) z%nodes(1:z%size)
+
         close (51)
 
         return

@@ -1,18 +1,16 @@
 program TRANSGRID
     use TLab_Constants, only: wp, wi
-    use FDM, only: fdm_dt
-    use TLab_Grid
+    use TLab_Grid, only: grid_dt, TLab_Grid_Read, TLab_Grid_Write
     implicit none
 
-    type(fdm_dt), dimension(3) :: g, g_ref
+    type(grid_dt), dimension(3) :: g, g_ref
 
-    integer(wi) option, direction, n, isize_wrk1d
+    integer(wi) option, id, n, isize_wrk1d
     character*32 ifile, ffile, sfile, file_ref
     logical flag_exit
 
-    real(wp), dimension(:, :), allocatable :: wrk1d
+    real(wp), allocatable :: wrk1d(:, :)
     real(wp) offset, factor1, factor2
-    real(wp), allocatable :: x_ref(:), y_ref(:), z_ref(:)
 
     ! ###################################################################
     ! Initialize and read reference data
@@ -27,19 +25,10 @@ program TRANSGRID
     ffile = trim(adjustl(ifile))//'.trn'
     sfile = trim(adjustl(ffile))//'.sts'
 
-    call RD_GRIDSIZE(ifile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale)
+    call TLab_Grid_Read(ifile, g(1), g(2), g(3))
 
     isize_wrk1d = max(g(1)%size, max(g(2)%size, g(3)%size))
-
-    allocate (g(1)%nodes(2*g(1)%size)) ! Allocation of memory is doubled to allow introduction of planes
-    allocate (g(2)%nodes(2*g(2)%size))
-    allocate (g(3)%nodes(2*g(3)%size))
     allocate (wrk1d(isize_wrk1d, 3))
-
-    call TLab_Grid_Read(ifile, x, y, z, [g(1)%size, g(2)%size, g(3)%size])
-    g(1)%nodes(1:g(1)%size) = x(1:g(1)%size)
-    g(2)%nodes(1:g(2)%size) = y(1:g(2)%size)
-    g(3)%nodes(1:g(3)%size) = z(1:g(3)%size)
 
     ! #######################################################################
     ! Main loop
@@ -61,69 +50,58 @@ program TRANSGRID
 
         if (option < 9) then
             write (*, '(/,"Direction (1 for x, 2 for y, 3 for z) ? ", $)')
-            read (*, *) direction
+            read (*, *) id
         end if
 
         select case (option)
 
         case (0)
-            open (23, file=trim(adjustl(g(direction)%name))//'.dat')
-            do n = 1, g(direction)%size
-                write (23, *) g(direction)%nodes(n)
+            open (23, file=trim(adjustl(g(id)%name))//'.dat')
+            do n = 1, g(id)%size
+                write (23, *) g(id)%nodes(n)
             end do
             close (23)
 
         case (1)
             write (*, '(/,"Offset ? ", $)')
             read (*, *) offset
-            g(direction)%nodes(:) = g(direction)%nodes(:) + offset
+            g(id)%nodes(:) = g(id)%nodes(:) + offset
 
         case (2)
             write (*, '(/,"Scaling factor ? ", $)')
             read (*, *) factor1
-            g(direction)%nodes(:) = g(direction)%nodes(1) + (g(direction)%nodes(:) - g(direction)%nodes(1))*factor1
-            g(direction)%scale = g(direction)%scale*factor1
+            g(id)%nodes(:) = g(id)%nodes(1) + (g(id)%nodes(:) - g(id)%nodes(1))*factor1
+            g(id)%scale = g(id)%scale*factor1
 
         case (3) ! Dropping planes
-            call TRANS_DROP_PLANES(g(direction)%size, g(direction)%nodes, g(direction)%scale)
+            call TRANS_DROP_PLANES(g(id)%size, g(id)%nodes, g(id)%scale)
 
         case (4) ! Introducing planes
-            call TRANS_ADD_PLANES(g(direction)%size, g(direction)%nodes, g(direction)%scale)
-            flag_exit = .true. ! Exit directly to avoid memory allocation problems
+            ! Allocation of memory is doubled to allow introduction of planes
+            wrk1d(1:g(id)%size, 1) = g(id)%nodes(1:g(id)%size)
+            if (allocated(g(id)%nodes)) deallocate (g(id)%nodes)
+            allocate (g(id)%nodes(1:2*g(id)%size))
+            g(id)%nodes(1:g(id)%size) = wrk1d(1:g(id)%size, 1)
 
-        case (5) ! Transfering
+            call TRANS_ADD_PLANES(g(id)%size, g(id)%nodes, g(id)%scale)
+
+        case (5) ! Transferring in particular direction from another grid file
             write (*, '(/,"Reference file to copy the data from ? ", $)')
             read (*, *) file_ref
 
-            call RD_GRIDSIZE(file_ref, g_ref(1)%size, g_ref(2)%size, g_ref(3)%size, g_ref(1)%scale, g_ref(2)%scale, g_ref(3)%scale)
-            do n = 1, 3
-                if (g_ref(n)%size > 2*g(n)%size) then
-                    write (*, *) 'Error. Reference grid too big.'
-                    stop
-                else
-                    allocate (g_ref(n)%nodes(g_ref(n)%size))
-                end if
-            end do
-            call TLab_Grid_Read(ifile, x_ref, y_ref, z_ref, [g_ref(1)%size, g_ref(2)%size, g_ref(3)%size])
+            call TLab_Grid_Read(ifile, g_ref(1), g_ref(2), g_ref(3))
 
-            g(direction)%size = g_ref(direction)%size
-            g(direction)%scale = g_ref(direction)%scale
-            select case (direction)
-            case (1)
-                g(direction)%nodes(1:g(direction)%size) = x_ref(1:g(direction)%size)
-            case (2)
-                g(direction)%nodes(1:g(direction)%size) = y_ref(1:g(direction)%size)
-            case (3)
-                g(direction)%nodes(1:g(direction)%size) = z_ref(1:g(direction)%size)
-            end select
-
-            flag_exit = .true. ! Exit directly to avoid memory allocation problems
+            g(id)%size = g_ref(id)%size
+            g(id)%scale = g_ref(id)%scale
+            if (allocated(g(id)%nodes)) deallocate (g(id)%nodes)
+            allocate (g(id)%nodes(1:g_ref(id)%size))
+            g(id)%nodes(1:g(id)%size) = g_ref(id)%nodes(1:g(id)%size)
 
         case (6) ! Stretching
             write (*, '(/,"Stretching parameters? ", $)')
             read (*, *) factor1, factor2
 
-            g(direction)%nodes = g(direction)%nodes*(1.0_wp + factor1*exp(-factor2*g(direction)%nodes))
+            g(id)%nodes = g(id)%nodes*(1.0_wp + factor1*exp(-factor2*g(id)%nodes))
 
         case (9)
             flag_exit = .true.
@@ -136,38 +114,15 @@ program TRANSGRID
     ! Statistics and writing the data
     ! #######################################################################
     if (option > 0) then
-        do direction = 1, 3
-            call TRANS_DATA(sfile, g(direction), wrk1d(:, 1), wrk1d(:, 2))
+        do id = 1, 3
+            call TRANS_DATA(sfile, g(id), wrk1d(:, 1), wrk1d(:, 2))
         end do
-        call TLab_Grid_Write(ffile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
+        call TLab_Grid_Write(ffile, g(1), g(2), g(3))
     end if
 
     stop
 
 contains
-
-    ! ###################################################################
-    ! ###################################################################
-    subroutine RD_GRIDSIZE(name, imax, jmax, kmax, scalex, scaley, scalez)
-        implicit none
-
-        character*(*) name
-        integer(wi) imax, jmax, kmax
-        real(wp) scalex, scaley, scalez
-
-        real(wp) scale(3)
-
-        open (50, file=name, status='old', form='unformatted')
-        rewind (50)
-        read (50) imax, jmax, kmax
-        read (50) scale
-        scalex = scale(1)
-        scaley = scale(2)
-        scalez = scale(3)
-        close (50)
-
-        return
-    end subroutine RD_GRIDSIZE
 
     ! ###################################################################
     ! ###################################################################
@@ -368,7 +323,7 @@ contains
 
             correction = scale - a(nmax)
             if (correction > tolerance) then
-                write (*, *) "ERROR 2: Periodic direction. Use other option."
+                write (*, *) "ERROR 2: Periodic id. Use other option."
                 stop
             end if
             do n = nmax, 1, -1
@@ -394,9 +349,7 @@ contains
     ! ###################################################################
     ! ###################################################################
     subroutine TRANS_DATA(name, grid, work1, work2)
-        implicit none
-
-        type(fdm_dt) grid
+        type(grid_dt) grid
 
         character*(*) name
         real(wp) work1(*), work2(*)

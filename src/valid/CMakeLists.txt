@@ -1,8 +1,8 @@
 set(LEVEL1_LIBS utils base)
 
-FILE(GLOB sourcefiles "efilter/*.f90")
-add_executable(vefilter.x efilter/vefilter.f90)
-target_link_libraries(vefilter.x physics operators  thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
+# FILE(GLOB sourcefiles "efilter/*.f90")
+# add_executable(vefilter.x efilter/vefilter.f90)
+# target_link_libraries(vefilter.x physics operators  thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "fdm/vpartial.f90")
 add_executable(vpartial.x ${sourcefiles})
@@ -24,13 +24,13 @@ FILE(GLOB sourcefiles "burgers/*.f90")
 add_executable(vburgers.x ${sourcefiles})
 target_link_libraries(vburgers.x physics mappings operators thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
 
-FILE(GLOB sourcefiles "interpol/*.f90")
-add_executable(vinterpol.x ${sourcefiles})
-target_link_libraries(vinterpol.x operators filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
+# FILE(GLOB sourcefiles "interpol/*.f90")
+# add_executable(vinterpol.x ${sourcefiles})
+# target_link_libraries(vinterpol.x operators filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
 
-FILE(GLOB sourcefiles "interpartial/*.f90")
-add_executable(vinterpartial.x ${sourcefiles})
-target_link_libraries(vinterpartial.x physics operators thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
+# FILE(GLOB sourcefiles "interpartial/*.f90")
+# add_executable(vinterpartial.x ${sourcefiles})
+# target_link_libraries(vinterpartial.x physics operators thermodynamics filters fdm ibm ${LEVEL1_LIBS} ${LIBS})
 
 FILE(GLOB sourcefiles "integration/*.f90")
 add_executable(vintegration.x ${sourcefiles})

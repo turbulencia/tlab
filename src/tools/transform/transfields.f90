@@ -42,7 +42,9 @@ program TRANSFIELDS
 
     ! -------------------------------------------------------------------
     ! Additional local arrays
-    real(wp), allocatable, save :: x_dst(:), y_dst(:), z_dst(:)
+    type(grid_dt), target :: g_dst(3)
+    type(grid_dt), pointer :: x_dst => g_dst(1), y_dst => g_dst(2), z_dst => g_dst(3)       ! to be cleaned
+    ! real(wp), allocatable, save :: x_dst(:), y_dst(:), z_dst(:)
     real(wp), allocatable, save :: q_dst(:, :), s_dst(:, :)
 
     real(wp), allocatable, save :: x_aux(:), y_aux(:), z_aux(:)
@@ -60,7 +62,7 @@ program TRANSFIELDS
     character*512 sRes
     integer(wi) subdomain(6)
 
-    type(fdm_dt), dimension(3) :: g_dst
+    ! type(fdm_dt), dimension(3) :: g_dst
     integer(wi) imax_dst, jmax_dst, kmax_dst
 
     logical :: flag_crop = .false., flag_extend = .false.
@@ -73,7 +75,7 @@ program TRANSFIELDS
     integer(wi) iopt_size
     real(wp) opt_vec(iopt_size_max)
 
-    real(wp) params(1), scales(3)
+    real(wp) params(1)!, scales(3)
 
     ! ###################################################################
     bakfile = trim(adjustl(ifile))//'.bak'
@@ -300,11 +302,11 @@ program TRANSFIELDS
     if (flow_on) call TLab_Allocate_Real(__FILE__, q_dst, [imax_dst*jmax_dst*kmax_dst, inb_flow], 'flow-dst')
     if (scal_on) call TLab_Allocate_Real(__FILE__, s_dst, [imax_dst*jmax_dst*kmax_dst, inb_scal_dst], 'scal-dst')
 
-    if (opt_main == 3) then
-        allocate (x_dst(g_dst(1)%size))
-        allocate (y_dst(g_dst(2)%size))
-        allocate (z_dst(g_dst(3)%size))
-    end if
+    ! if (opt_main == 3) then
+    !     allocate (x_dst(g_dst(1)%size))
+    !     allocate (y_dst(g_dst(2)%size))
+    !     allocate (z_dst(g_dst(3)%size))
+    ! end if
 
     ! ###################################################################
     ! Initialize operators and reference data
@@ -332,19 +334,23 @@ program TRANSFIELDS
     ! Initialize remeshing
     ! -------------------------------------------------------------------
     if (opt_main == 3) then
-        call TLab_Grid_Read('grid.trn', x_dst, y_dst, z_dst, [g_dst(1)%size, g_dst(2)%size, g_dst(3)%size], scales)
-        g_dst(1:3)%scale = scales(1:3)
+        call TLab_Grid_Read('grid.trn', x_dst, y_dst, z_dst, [g_dst(1)%size, g_dst(2)%size, g_dst(3)%size])!, scales)
+        g_dst(1:3)%scale = [x_dst%scale, y%scale, z%scale] !scales(1:3)
 
         tolerance = 0.001_wp    ! percentage of grid spacing
 
+#define xn(i) x%nodes(i)
+#define yn(i) y%nodes(i)
+#define zn(i) z%nodes(i)
+
         ! Check grids; Ox and Oz directions are assumed to be periodic
-        dummy = (g_dst(1)%scale - g(1)%scale)/(x(g(1)%size) - x(g(1)%size - 1))
+        dummy = (g_dst(1)%scale - g(1)%scale)/(xn(g(1)%size) - xn(g(1)%size - 1))
         if (abs(dummy) > tolerance) then
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Ox scales are not equal at the end.')
             call TLab_Stop(DNS_ERROR_GRID_SCALE)
         end if
 
-        dummy = (g_dst(3)%scale - g(3)%scale)/(z(g(3)%size) - z(g(3)%size - 1))
+        dummy = (g_dst(3)%scale - g(3)%scale)/(zn(g(3)%size) - zn(g(3)%size - 1))
         if (abs(dummy) > tolerance) then
             call TLab_Write_ASCII(efile, C_FILE_LOC//'. Oz scales are not equal')
             call TLab_Stop(DNS_ERROR_GRID_SCALE)
@@ -353,7 +359,7 @@ program TRANSFIELDS
         ! In the Oy direction, we allow to have a different box
         jmax_aux = g(2)%size; subdomain = 0
 
-        dummy = (y_dst(g_dst(2)%size) - y(g(2)%size))/(y(g(2)%size) - y(g(2)%size - 1))
+        dummy = (y_dst%nodes(g_dst(2)%size) - yn(g(2)%size))/(yn(g(2)%size) - yn(g(2)%size - 1))
         if (dummy > tolerance) then                 ! Extend
             flag_extend = .true.
             subdomain(4) = int(dummy) + 1           ! # planes to add at the top
@@ -361,14 +367,14 @@ program TRANSFIELDS
         else if (dummy < -tolerance) then           ! Crop
             flag_crop = .true.
             do j = jmax - 1, 1, -1
-                if ((g(2)%nodes(j) - y_dst(g_dst(2)%size))*(g(2)%nodes(j + 1) - y_dst(g_dst(2)%size)) < 0.0_wp) exit
+                if ((g(2)%nodes(j) - y_dst%nodes(g_dst(2)%size))*(g(2)%nodes(j + 1) - y_dst%nodes(g_dst(2)%size)) < 0.0_wp) exit
             end do
             subdomain(4) = j + 1                    ! top plane of cropped region
             jmax_aux = subdomain(4)
             subdomain(3) = 1
         end if
 
-        dummy = (y_dst(1) - y(1))/(y(2) - y(1))
+        dummy = (y_dst%nodes(1) - yn(1))/(yn(2) - yn(1))
         if (dummy < -tolerance) then                ! Extend
             flag_extend = .true.
             subdomain(3) = int(abs(dummy)) + 1      ! # planes to add at the bottom
@@ -376,7 +382,7 @@ program TRANSFIELDS
         else if (dummy > tolerance) then            ! Crop
             flag_crop = .true.
             do j = 1, jmax - 1, 1
-                if ((g(2)%nodes(j) - y_dst(1))*(g(2)%nodes(j + 1) - y_dst(1)) < 0.0_wp) exit
+                if ((g(2)%nodes(j) - y_dst%nodes(1))*(g(2)%nodes(j + 1) - y_dst%nodes(1)) < 0.0_wp) exit
             end do
             subdomain(3) = j                        ! bottom plane of cropped region
             jmax_aux = jmax_aux - subdomain(3) + 1
@@ -413,8 +419,8 @@ program TRANSFIELDS
         allocate (z_aux(g(3)%size + 1))
         allocate (y_aux(jmax_aux + 1))
 
-        x_aux(1:g(1)%size) = x(1:g(1)%size)  ! need extra space in cubic splines
-        z_aux(1:g(3)%size) = z(1:g(3)%size)  ! need extra space in cubic splines
+        x_aux(1:g(1)%size) = xn(1:g(1)%size)  ! need extra space in cubic splines
+        z_aux(1:g(3)%size) = zn(1:g(3)%size)  ! need extra space in cubic splines
 
         ! Creating grid
         if (flag_crop) then
@@ -424,16 +430,16 @@ program TRANSFIELDS
             call TLab_Write_ASCII(lfile, 'Croping below '//trim(adjustl(str))//' for remeshing...')
             call TRANS_CROP(1, jmax, 1, subdomain, g(2)%nodes, y_aux)
 
-            y_aux(1) = y_dst(1)                 ! Using min and max of new grid
-            y_aux(jmax_aux) = y_dst(g_dst(2)%size)
+            y_aux(1) = y_dst%nodes(1)                 ! Using min and max of new grid
+            y_aux(jmax_aux) = y_dst%nodes(g_dst(2)%size)
 
         else
-            y_aux(1 + subdomain(3):g(2)%size + subdomain(3)) = y(1:g(2)%size) ! we need extra space
+            y_aux(1 + subdomain(3):g(2)%size + subdomain(3)) = yn(1:g(2)%size) ! we need extra space
 
             if (subdomain(4) > 0) then
                 write (str, '(I3)') subdomain(4)
                 call TLab_Write_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the top for remeshing...')
-                dummy = (y_dst(g_dst(2)%size) - y(g(2)%size))/real(subdomain(4)) ! distributing the points uniformly
+                dummy = (y_dst%nodes(g_dst(2)%size) - yn(g(2)%size))/real(subdomain(4)) ! distributing the points uniformly
                 do ip = g(2)%size + subdomain(3) + 1, g(2)%size + subdomain(3) + subdomain(4)
                     y_aux(ip) = y_aux(ip - 1) + dummy
                 end do
@@ -442,7 +448,7 @@ program TRANSFIELDS
             if (subdomain(3) > 0) then
                 write (str, '(I3)') subdomain(3)
                 call TLab_Write_ASCII(lfile, 'Adding '//trim(adjustl(str))//' planes at the bottom for remeshing...')
-                dummy = (y_dst(1) - y(1))/real(subdomain(3))
+                dummy = (y_dst%nodes(1) - yn(1))/real(subdomain(3))
                 do ip = subdomain(3), 1, -1
                     y_aux(ip) = y_aux(ip + 1) + dummy ! dummy is negative
                 end do
@@ -527,15 +533,15 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                               + (y_aux(1) - y(subdomain(3)))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1) - y(subdomain(3)))
+                                               + (y_aux(1) - yn(subdomain(3)))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(yn(subdomain(3) + 1) - yn(subdomain(3)))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-                       + (y_aux(jmax_aux) - y(subdomain(4) - 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4)) - y(subdomain(4) - 1))
+                    + (y_aux(jmax_aux) - yn(subdomain(4) - 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(yn(subdomain(4)) - yn(subdomain(4) - 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, q(:, iq), txc_aux)
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
-                                         g, x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
+                                         g, x_aux, y_aux, z_aux, x_dst%nodes, y_dst%nodes, z_dst%nodes, &
                                          txc_aux, q_dst(:, iq), txc(:, 2))
                 end do
             end if
@@ -547,15 +553,15 @@ program TRANSFIELDS
                         call TRANS_CROP(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                         do k = 1, kmax
                             txc_aux(:, 1, k) = txc_aux(:, 1, k) &
-                                               + (y_aux(1) - y(subdomain(3)))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(y(subdomain(3) + 1) - y(subdomain(3)))
+                                               + (y_aux(1) - yn(subdomain(3)))*(txc_aux(:, 2, k) - txc_aux(:, 1, k))/(yn(subdomain(3) + 1) - yn(subdomain(3)))
                             txc_aux(:, jmax_aux, k) = txc_aux(:, jmax_aux - 1, k) &
-                       + (y_aux(jmax_aux) - y(subdomain(4) - 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(y(subdomain(4)) - y(subdomain(4) - 1))
+                    + (y_aux(jmax_aux) - yn(subdomain(4) - 1))*(txc_aux(:, jmax_aux, k) - txc_aux(:, jmax_aux - 1, k))/(yn(subdomain(4)) - yn(subdomain(4) - 1))
                         end do
                     else
                         call TRANS_EXTEND(imax, jmax, kmax, subdomain, s(:, is), txc_aux)
                     end if
                     call OPR_INTERPOLATE(imax, jmax_aux, kmax, imax_dst, jmax_dst, kmax_dst, &
-                                         g, x_aux, y_aux, z_aux, x_dst, y_dst, z_dst, &
+                                         g, x_aux, y_aux, z_aux, x_dst%nodes, y_dst%nodes, z_dst%nodes, &
                                          txc_aux, s_dst(:, is), txc(:, 2))
                 end do
             end if
@@ -615,19 +621,19 @@ program TRANSFIELDS
             ! Blend
             ! ###################################################################
         case (7)
-            if (it == 1) opt_vec(2) = y(1) + opt_vec(2)*g(2)%scale
+            if (it == 1) opt_vec(2) = yn(1) + opt_vec(2)*g(2)%scale
             write (sRes, *) opt_vec(2), opt_vec(3); sRes = 'Blending with '//trim(adjustl(sRes))
             call TLab_Write_ASCII(lfile, sRes)
 
             if (scal_on) then
                 do is = 1, inb_scal
-                    call TRANS_BLEND(imax, jmax, kmax, opt_vec(2), y, s(1, is), s_dst(1, is))
+                    call TRANS_BLEND(imax, jmax, kmax, opt_vec(2), y%nodes, s(1, is), s_dst(1, is))
                 end do
             end if
 
             if (flow_on) then ! Blended fields have rtime from last velocity field
                 do iq = 1, inb_flow
-                    call TRANS_BLEND(imax, jmax, kmax, opt_vec(2), y, q(1, iq), q_dst(1, iq))
+                    call TRANS_BLEND(imax, jmax, kmax, opt_vec(2), y%nodes, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
@@ -640,14 +646,14 @@ program TRANSFIELDS
             if (flow_on) then
                 do iq = 1, inb_flow
                     call TLab_Write_ASCII(lfile, 'Adding mean flow profiles...')
-                    call TRANS_ADD_MEAN(0, iq, imax, jmax, kmax, y, q(1, iq), q_dst(1, iq))
+                    call TRANS_ADD_MEAN(0, iq, imax, jmax, kmax, y%nodes, q(1, iq), q_dst(1, iq))
                 end do
             end if
 
             if (scal_on) then
                 do is = 1, inb_scal
                     call TLab_Write_ASCII(lfile, 'Adding mean scal profiles...')
-                    call TRANS_ADD_MEAN(1, is, imax, jmax, kmax, y, s(1, is), s_dst(1, is))
+                    call TRANS_ADD_MEAN(1, is, imax, jmax, kmax, y%nodes, s(1, is), s_dst(1, is))
                 end do
             end if
 

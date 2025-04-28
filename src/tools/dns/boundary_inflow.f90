@@ -41,8 +41,9 @@ module BOUNDARY_INFLOW
     implicit none
     private
 
+    type(grid_dt) :: x_inf, y_inf, z_inf
     type(fdm_dt), public :: g_inf(3)
-    real(wp), allocatable :: x_inf(:), y_inf(:), z_inf(:)
+    ! real(wp), allocatable :: x_inf(:), y_inf(:), z_inf(:)
     real(wp), allocatable :: q_inf(:, :, :, :), s_inf(:, :, :, :)
 
     integer(wi), public :: inflow_mode, inflow_ifield
@@ -97,7 +98,7 @@ contains
             g_inf(1)%periodic = .true.
             g_inf(1)%uniform = .true.
         end if
-        if (g_inf(1)%size > 1 .and. .not. allocated(x_inf)) then ! Grid set only when entering the first time
+        if (g_inf(1)%size > 1 .and. .not. allocated(x_inf%nodes)) then ! Grid set only when entering the first time
             call TLab_Grid_Read('grid.inf', x_inf, y_inf, z_inf, [g_inf(1)%size, g_inf(2)%size, g_inf(3)%size])
             call FDM_CreatePlan(x_inf, g_inf(1))
             call FDM_CreatePlan(y_inf, g_inf(2))
@@ -346,16 +347,16 @@ contains
         case (PROFILE_GAUSSIAN)
             prof_loc%ymean = qbg(1)%ymean
             do j = 1, jmax
-                yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
+                yr = y%nodes(j) - prof_loc%ymean
+                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y%nodes(j))
                 wrk1d(j, 2) = yr/(prof_loc%thick**2)*wrk1d(j, 1) ! Derivative of f
             end do
 
         case (PROFILE_GAUSSIAN_SYM, PROFILE_GAUSSIAN_ANTISYM)
             prof_loc%ymean = qbg(1)%ymean - 0.5_wp*qbg(1)%diam
             do j = 1, jmax
-                yr = y(j) - prof_loc%ymean
-                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y(j))
+                yr = y%nodes(j) - prof_loc%ymean
+                wrk1d(j, 1) = Profiles_Calculate(prof_loc, y%nodes(j))
                 wrk1d(j, 2) = -yr/(prof_loc%thick**2)*wrk1d(j, 1)
             end do
 
@@ -364,8 +365,8 @@ contains
             elseif (fp%type == PROFILE_GAUSSIAN_SYM) then; factorx = 1.0_wp ! Sinuous
             end if
             do j = 1, jmax
-                yr = y(j) - prof_loc%ymean
-                dummy = Profiles_Calculate(prof_loc, y(j))
+                yr = y%nodes(j) - prof_loc%ymean
+                dummy = Profiles_Calculate(prof_loc, y%nodes(j))
                 wrk1d(j, 1) = wrk1d(j, 1) + dummy
                 wrk1d(j, 2) = wrk1d(j, 2) + yr/(prof_loc%thick**2)*dummy
             end do
@@ -391,9 +392,9 @@ contains
             end if
 
             do k = 1, kmax
-                wrk2d(k, 2) = wrk2d(k, 2) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))
-                wrk2d(k, 1) = wrk2d(k, 1) + fp%amplitude(im)*sin(wx*xaux + fp%phasex(im))*cos(wz*z(kdsp + k) + fp%phasez(im))*factorx
-                wrk2d(k, 3) = wrk2d(k, 3) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*sin(wz*z(kdsp + k) + fp%phasez(im))*factorz
+                wrk2d(k, 2) = wrk2d(k, 2) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*cos(wz*z%nodes(kdsp + k) + fp%phasez(im))
+                wrk2d(k, 1) = wrk2d(k, 1) + fp%amplitude(im)*sin(wx*xaux + fp%phasex(im))*cos(wz*z%nodes(kdsp + k) + fp%phasez(im))*factorx
+                wrk2d(k, 3) = wrk2d(k, 3) + fp%amplitude(im)*cos(wx*xaux + fp%phasex(im))*sin(wz*z%nodes(kdsp + k) + fp%phasez(im))*factorz
             end do
 
         end do

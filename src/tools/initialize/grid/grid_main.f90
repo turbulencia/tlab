@@ -4,11 +4,10 @@
 #define C_FILE_LOC "INIGRID"
 
 program INIGRID
-    use FDM, only: fdm_dt
     use TLab_Constants, only: wp, gfile, ifile, lfile, efile
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, TLab_Start
     use TLab_Arrays, only: wrk1d, wrk2d
-    use TLab_Grid
+    use TLab_Grid, only: grid_dt, TLab_Grid_Write
     use GRID_LOCAL
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_pro
@@ -16,8 +15,7 @@ program INIGRID
     implicit none
 
     character*32 sfile, bakfile
-    type(fdm_dt) :: g(3)
-    ! real(wp), allocatable :: wrk1d(:, :)
+    type(grid_dt) :: g(3)
     integer(wi) idir, iseg, isize_wrk1d, n, nmax, iloc
     real(wp) scale_old, scale_new, ds
     character(len=16), parameter :: block(3) = ['IniGridOx', 'IniGridOy', 'IniGridOz']
@@ -152,7 +150,7 @@ program INIGRID
         ! Writing data
         ! #######################################################################
         call TLab_Write_ASCII(lfile, 'Writing grid.')
-        call TLab_Grid_Write(gfile, g(1)%size, g(2)%size, g(3)%size, g(1)%scale, g(2)%scale, g(3)%scale, g(1)%nodes, g(2)%nodes, g(3)%nodes)
+        call TLab_Grid_Write(gfile, g(1), g(2), g(3))
 
 #ifdef USE_MPI
     end if

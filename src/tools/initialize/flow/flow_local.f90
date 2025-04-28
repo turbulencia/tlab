@@ -61,7 +61,7 @@ module FLOW_LOCAL
     integer(wi) i, j, k
     integer(wi) im, idsp, kdsp
     real(wp) wx, wz, wx_1, wz_1
-    real(wp), dimension(:), pointer :: xn, zn
+    ! real(wp), dimension(:), pointer :: xn, zn
 
 contains
 
@@ -187,8 +187,10 @@ contains
         idsp = 0; kdsp = 0
 #endif
 
-        xn => x
-        zn => z
+#define xn(i) x%nodes(i)
+#define zn(k) z%nodes(k)
+        ! xn => x
+        ! zn => z
 
         call FLOW_SHAPE(p_wrk1d)
 
@@ -227,6 +229,9 @@ contains
         end do
 
         if (norm_ini_u >= 0.0_wp) call FLOW_NORMALIZE(u, v, w)
+
+#undef xn
+#undef zn
 
         return
     end subroutine VELOCITY_DISCRETE
@@ -350,11 +355,13 @@ contains
         integer(wi) bcs(2, 2)
         real(wp) yr
 
+#define yn(j) y%nodes(j)
+
         ! ###################################################################
         bcs = 0 ! Boundary conditions for derivative operator set to biased, non-zero
 
         do j = 1, jmax                                              ! Wall-normal velocity
-            profs(j, 1) = Profiles_Calculate(IniK, y(j))
+            profs(j, 1) = Profiles_Calculate(IniK, yn(j))
         end do
         call OPR_Partial_Y(OPR_P1, 1, jmax, 1, bcs, g(2), profs(1, 1), profs(1, 2))
         profs(:, 2) = -profs(:, 2)                                  ! Negative of the derivative of f, wall-parallel velocity
@@ -369,7 +376,7 @@ contains
             ! Zero wall-normal derivative of wall-parallel velocity for free-slip and potentialvelocity mode, f=f*tanh
             if (any([BCS_DD, BCS_DN] == flag_wall)) then            ! no-slip at jmin
                 do j = 1, jmax
-                    yr = 0.5_wp*(y(j) - y(1))/IniK%thick
+                    yr = 0.5_wp*(yn(j) - yn(1))/IniK%thick
                     profs(j, 2) = profs(j, 2)*tanh(yr)**2 - &       ! Wall-parallel velocity
                                   profs(j, 1)*tanh(yr)/cosh(yr)**2/IniK%thick
                     profs(j, 1) = profs(j, 1)*tanh(yr)**2           ! Wall-normal velocity
@@ -378,7 +385,7 @@ contains
 
             if (any([BCS_DD, BCS_ND] == flag_wall)) then            ! no-slip at jmax
                 do j = 1, jmax
-                    yr = 0.5_wp*(y(jmax) - y(j))/IniK%thick
+                    yr = 0.5_wp*(yn(jmax) - yn(j))/IniK%thick
                     profs(j, 2) = profs(j, 2)*tanh(yr)**2 + &       ! Wall-parallel velocity
                                   profs(j, 1)*tanh(yr)/cosh(yr)**2/IniK%thick
                     profs(j, 1) = profs(j, 1)*tanh(yr)**2           ! Wall-normal velocity
@@ -386,6 +393,8 @@ contains
             end if
 
         end select
+
+#undef yn
 
         return
     end subroutine FLOW_SHAPE
@@ -442,6 +451,9 @@ contains
         ! ###################################################################
         ! Center plane displacement
         ! ###################################################################
+#define yn(j) y%nodes(j)
+#define xn(i) x%nodes(i)
+#define zn(k) z%nodes(k)
 #define disp(i,k) p_wrk2d(i,k,1)
 
         disp(:, :) = 0.0_wp
@@ -461,8 +473,8 @@ contains
                 wz = real(fp%modez(im), wp)*wz_1
 
                 do k = 1, kmax
-                    disp(:, k) = disp(:, k) + fp%amplitude(im)*cos(wx*x(idsp + 1:idsp + imax) + fp%phasex(im)) &
-                                 *cos(wz*z(kdsp + k) + fp%phasez(im))
+                    disp(:, k) = disp(:, k) + fp%amplitude(im)*cos(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im)) &
+                                 *cos(wz*zn(kdsp + k) + fp%phasez(im))
                 end do
 
             end do
@@ -475,7 +487,7 @@ contains
         if (fp%type == PROFILE_GAUSSIAN .and. fp%parameters(1) > 0.0_wp) then
             do k = 1, kmax
                 do i = 1, imax
-                    xcenter = x(i) - g(1)%scale*0.5_wp - x(1)
+                    xcenter = xn(i) - g(1)%scale*0.5_wp - xn(1)
                     amplify = exp(-0.5_wp*(xcenter/fp%parameters(1))**2)
                     disp(i, k) = disp(i, k)*amplify
                 end do
@@ -493,7 +505,7 @@ contains
                     prof_loc%delta = tbg%delta + (tbg%uslope - tbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = tbg%mean + 0.5_wp*(tbg%uslope + tbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        T(i, j, k) = Profiles_Calculate(prof_loc, y(j))
+                        T(i, j, k) = Profiles_Calculate(prof_loc, yn(j))
                     end do
                 end do
             end do
@@ -514,7 +526,7 @@ contains
                     prof_loc%delta = hbg%delta + (hbg%uslope - hbg%lslope)*disp(i, k)*g(2)%scale
                     prof_loc%mean = hbg%mean + 0.5_wp*(hbg%uslope + hbg%lslope)*disp(i, k)*g(2)%scale
                     do j = 1, jmax
-                        h(i, j, k) = Profiles_Calculate(prof_loc, y(j))
+                        h(i, j, k) = Profiles_Calculate(prof_loc, yn(j))
                     end do
                 end do
             end do
@@ -526,6 +538,11 @@ contains
             call THERMO_THERMAL_DENSITY(imax*jmax*kmax, s, p, T, rho)
 
         end if
+
+#undef xn
+#undef yn
+#undef zn
+#undef disp
 
         return
     end subroutine DENSITY_FLUCTUATION

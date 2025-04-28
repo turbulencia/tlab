@@ -5,6 +5,7 @@ program VPARTIAL
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk2d, txc
+    use TLab_Grid, only: grid_dt
     use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_Der1_Solve, FDM_Der2_Solve
     use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM6_JACOBIAN_HYPER, FDM_COM4_DIRECT, FDM_COM6_DIRECT
@@ -28,9 +29,9 @@ program VPARTIAL
 
     integer, parameter :: i1 = 1
     integer :: bcs_cases(4), fdm_cases(5)
-    real(wp), allocatable :: x(:)
     character(len=32) :: fdm_names(5)
 
+    type(grid_dt) :: x
     type(fdm_dt) g
 
 ! ###################################################################
@@ -40,8 +41,9 @@ program VPARTIAL
     kmax = 256
     len = imax*jmax
 
-    g%size = kmax
-    g%scale = 1.0_wp
+    x%size = kmax
+    x%scale = 1.0_wp
+    allocate (x%nodes(kmax))
 
     isize_field = imax*jmax*kmax
     isize_txc_field = isize_field
@@ -53,7 +55,6 @@ program VPARTIAL
     inb_txc = 9
 
     call TLab_Initialize_Memory(__FILE__)
-    allocate (x(kmax))
 
     u(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 1)
 
@@ -75,15 +76,15 @@ program VPARTIAL
 !  ###################################################################
     if (g%periodic) then
         do i = 1, kmax
-            x(i) = real(i - 1, wp)/real(kmax, wp)*g%scale
+            x%nodes(i) = real(i - 1, wp)/real(kmax, wp)*g%scale
         end do
     else
         ! do i = 1, kmax
-        !     x(i) = real(i - 1, wp)/real(kmax - 1, wp)*g%scale
+        !     x%nodes(i) = real(i - 1, wp)/real(kmax - 1, wp)*g%scale
         ! end do
         open (21, file='y.dat')
         do i = 1, kmax
-            read (21, *) x(i)
+            read (21, *) x%nodes(i)
         end do
         close (21)
     end if

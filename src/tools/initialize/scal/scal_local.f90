@@ -2,7 +2,7 @@
 #include "dns_error.h"
 
 module SCAL_LOCAL
-    use TLab_Constants, only: wfile,efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
+    use TLab_Constants, only: wfile, efile, lfile, wp, wi, pi_wp, big_wp, MAX_VARS
     use Discrete, only: discrete_dt, Discrete_ReadBlock
     use TLab_Memory, only: imax, jmax, kmax, isize_field, inb_scal
     use TLab_Grid, only: x, y, z
@@ -50,7 +50,7 @@ module SCAL_LOCAL
     integer(wi) i, j, k
     integer(wi) im, idsp, kdsp
     real(wp) wx, wz, wx_1, wz_1
-    real(wp), dimension(:), pointer :: xn, zn
+    ! real(wp), dimension(:), pointer :: xn, zn
 
 contains
 
@@ -81,13 +81,13 @@ contains
         call ScanFile_Char(bakfile, inifile, 'IniFields', 'Scalar', 'None', sRes)
         if (trim(adjustl(sRes)) == 'none') then; flag_s = 0
         else if (trim(adjustl(sRes)) == 'layerbroadband') then; flag_s = PERT_LAYER_BROADBAND
-        else if (trim(adjustl(sRes)) == 'layerdiscrete')  then; flag_s = PERT_LAYER_DISCRETE
+        else if (trim(adjustl(sRes)) == 'layerdiscrete') then; flag_s = PERT_LAYER_DISCRETE
         else if (trim(adjustl(sRes)) == 'planebroadband') then; flag_s = PERT_PLANE_BROADBAND
-        else if (trim(adjustl(sRes)) == 'planediscrete')  then; flag_s = PERT_PLANE_DISCRETE
+        else if (trim(adjustl(sRes)) == 'planediscrete') then; flag_s = PERT_PLANE_DISCRETE
         else if (trim(adjustl(sRes)) == 'deltabroadband') then; flag_s = PERT_DELTA_BROADBAND
-        else if (trim(adjustl(sRes)) == 'deltadiscrete')  then; flag_s = PERT_DELTA_DISCRETE
-        else if (trim(adjustl(sRes)) == 'fluxbroadband')  then; flag_s = PERT_FLUX_BROADBAND
-        else if (trim(adjustl(sRes)) == 'fluxdiscrete')   then; flag_s = PERT_FLUX_DISCRETE
+        else if (trim(adjustl(sRes)) == 'deltadiscrete') then; flag_s = PERT_DELTA_DISCRETE
+        else if (trim(adjustl(sRes)) == 'fluxbroadband') then; flag_s = PERT_FLUX_BROADBAND
+        else if (trim(adjustl(sRes)) == 'fluxdiscrete') then; flag_s = PERT_FLUX_DISCRETE
         else
             call TLab_Write_ASCII(efile, __FILE__//'. Scalar forcing type unknown')
             call TLab_Stop(DNS_ERROR_OPTION)
@@ -150,24 +150,28 @@ contains
         ! -------------------------------------------------------------------
         real(wp) yr
 
+#define yn(j) y%nodes(j)
+
         ! ###################################################################
         prof_loc = IniS(is)
         prof_loc%delta = 1.0_wp
         prof_loc%mean = 0.0_wp
         do j = 1, jmax
-            prof(j, 1) = Profiles_Calculate(prof_loc, y(j))
+            prof(j, 1) = Profiles_Calculate(prof_loc, yn(j))
         end do
 
         select case (IniS(is)%type)
         case (PROFILE_GAUSSIAN_SURFACE) ! set perturbation and its normal derivative to zero at the boundaries
             do j = 1, jmax
-                yr = 0.5_wp*(y(j) - y(1))/IniS(is)%thick
+                yr = 0.5_wp*(yn(j) - yn(1))/IniS(is)%thick
                 prof(j, 1) = prof(j, 1)*tanh(yr)**2
-                yr = -0.5_wp*(y(j) - y(jmax))/IniS(is)%thick
+                yr = -0.5_wp*(yn(j) - yn(jmax))/IniS(is)%thick
                 prof(j, 1) = prof(j, 1)*tanh(yr)**2
             end do
 
         end select
+
+#undef yn
 
         return
     end subroutine SCAL_SHAPE
@@ -188,8 +192,10 @@ contains
         idsp = 0; kdsp = 0
 #endif
 
-        xn => x
-        zn => z
+        ! xn => x%nodes
+        ! zn => z%nodes
+#define xn(i) x%nodes(i)
+#define zn(k) z%nodes(k)
 
         call SCAL_SHAPE(is, wrk1d)
 
@@ -229,6 +235,9 @@ contains
 
         s = s + p_wrk3d
 
+#undef xn
+#undef zn
+
         return
     end subroutine SCAL_FLUCTUATION_VOLUME
 
@@ -248,10 +257,12 @@ contains
         idsp = 0; kdsp = 0
 #endif
 
-        xn => x
-        zn => z 
+        ! xn => x%nodes
+        ! zn => z%nodes
 
         ! ###################################################################
+#define xn(i) x%nodes(i)
+#define zn(k) z%nodes(k)
 #define disp(i,k) p_wrk2d(i,k,1)
 
         disp(:, :) = 0.0_wp
@@ -274,7 +285,7 @@ contains
                     else; dummy = 0.5_wp/(wx*fp%parameters(2)); end if
                     do k = 1, kmax
                         disp(:, k) = disp(:, k) &
-                                  + fp%amplitude(im)*tanh(dummy*cos(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im))*cos(wz*zn(kdsp + k) + fp%phasez(im)))
+                                     + fp%amplitude(im)*tanh(dummy*cos(wx*xn(idsp + 1:idsp + imax) + fp%phasex(im))*cos(wz*zn(kdsp + k) + fp%phasez(im)))
                     end do
 
                 else
@@ -346,6 +357,8 @@ contains
 
         end select
 
+#undef nx
+#undef zn
 #undef disp
 
         return

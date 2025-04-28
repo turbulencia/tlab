@@ -76,7 +76,7 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Oz direction
-        size_fft_z = size(z(:))
+        size_fft_z = z%size
 
         if (size_fft_z > 1) then
             fft_z_on = .true.
@@ -122,7 +122,7 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Ox direction
-        size_fft_x = size(x(:))
+        size_fft_x = x%size
         if (size_fft_x > 1) then
             fft_x_on = .true.
 
@@ -174,7 +174,7 @@ contains
 
         ! -----------------------------------------------------------------------
         ! Oy direction
-        size_fft_y = size(y(:))
+        size_fft_y = y%size
         if (size_fft_y > 1) then
             fft_y_on = .true.
 

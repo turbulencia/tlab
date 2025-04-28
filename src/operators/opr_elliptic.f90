@@ -11,6 +11,7 @@ module OPR_Elliptic
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
     use TLab_Arrays, only: wrk1d, wrk2d, wrk3d
     use TLab_Pointers_C, only: c_wrk3d
+    use TLab_Grid, only: y
 #ifdef USE_MPI
     use TLabMPI_VARS, only: ims_offset_i, ims_offset_k, ims_pro_i
 #endif
@@ -121,7 +122,7 @@ contains
 
         ! ###################################################################
         ! Initializing
-        call FDM_CreatePlan(g(2)%nodes, fdm_loc)
+        call FDM_CreatePlan(y, fdm_loc)
 
         isize_line = imax/2 + 1
 

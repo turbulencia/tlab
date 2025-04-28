@@ -7,6 +7,7 @@ program VINTEGRAL
     use TLab_WorkFlow, only: TLab_Write_ASCII
     use TLab_Memory, only: TLab_Initialize_Memory, TLab_Allocate_Real
     use TLab_Arrays, only: wrk1d, wrk2d, txc
+    use TLab_Grid, only: grid_dt
     use FDM, only: fdm_dt, FDM_CreatePlan
     use FDM_Derivative, only: FDM_COM4_JACOBIAN, FDM_COM6_JACOBIAN, FDM_COM6_JACOBIAN_PENTA, FDM_COM4_DIRECT, FDM_COM6_DIRECT
     use FDM_Integral
@@ -24,9 +25,10 @@ program VINTEGRAL
     integer(wi) :: test_type, ibc, ib, im
 
     integer :: bcs_cases(4), fdm_cases(5)
-    real(wp), allocatable :: bcs(:, :), x(:), si(:, :)
+    real(wp), allocatable :: bcs(:, :), si(:, :)
     character(len=32) :: fdm_names(5)
 
+    type(grid_dt) :: x
     type(fdm_dt) :: g
     type(fdm_integral_dt) :: fdmi(2), fdmi_test(2), fdmi_test_lambda(2)
 
@@ -37,8 +39,9 @@ program VINTEGRAL
     kmax = 256
     len = imax*jmax
 
-    g%size = kmax
-    g%scale = 1.0_wp
+    x%size = kmax
+    x%scale = 1.0_wp
+    allocate (x%nodes(kmax))
 
     isize_field = imax*jmax*kmax
     isize_txc_field = isize_field
@@ -50,7 +53,6 @@ program VINTEGRAL
     inb_txc = 9
 
     call TLab_Initialize_Memory(__FILE__)
-    allocate (x(kmax))
 
     u(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 1)
     w_n(1:len, 1:kmax) => txc(1:imax*jmax*kmax, 2)
@@ -73,15 +75,15 @@ program VINTEGRAL
     ! ###################################################################
     if (g%periodic) then
         do i = 1, kmax
-            x(i) = real(i - 1, wp)/real(kmax, wp)*g%scale
+            x%nodes(i) = real(i - 1, wp)/real(kmax, wp)*g%scale
         end do
     else
         ! do i = 1, kmax
-        !     x(i) = real(i - 1, wp)/real(kmax - 1, wp)*g%scale
+        !     x%nodes(i) = real(i - 1, wp)/real(kmax - 1, wp)*g%scale
         ! end do
         open (21, file='y.dat')
         do i = 1, kmax
-            read (21, *) x(i)
+            read (21, *) x%nodes(i)
         end do
         close (21)
     end if
@@ -89,8 +91,8 @@ program VINTEGRAL
     g%der1%mode_fdm = FDM_COM6_JACOBIAN     ! default
     g%der2%mode_fdm = g%der1%mode_fdm
     call FDM_CreatePlan(x, g)
-    call FDM_Int1_Initialize(x, g%der1, 0.0_wp, BCS_MIN, fdmi(BCS_MIN))
-    call FDM_Int1_Initialize(x, g%der1, 0.0_wp, BCS_MAX, fdmi(BCS_MAX))
+    call FDM_Int1_Initialize(x%nodes, g%der1, 0.0_wp, BCS_MIN, fdmi(BCS_MIN))
+    call FDM_Int1_Initialize(x%nodes, g%der1, 0.0_wp, BCS_MAX, fdmi(BCS_MAX))
 
     bcs_aux = 0
 

@@ -45,23 +45,23 @@ contains
         real(wp), intent(INOUT) :: x(nmax), work(nmax)
 
         ! -----------------------------------------------------------------------
-        real(wp) st(3), f(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
+        real(wp) st(3), f(3), delta(3)              ! superposition of up to 3 modes, each with 3 parameters
         integer(wi) im
 
         ! #######################################################################
         ! define local variables for readability below; strides of 3
-        st = g_build(idir)%vals(1 :: 3, iseg)     ! transition point in uniform grid
-        f = g_build(idir)%vals(2 :: 3, iseg)     ! ratio dx(i)/dx_0
+        st = g_build(idir)%vals(1 :: 3, iseg)       ! transition point in uniform grid
+        f = g_build(idir)%vals(2 :: 3, iseg)        ! ratio dx(i)/dx_0
         delta = g_build(idir)%vals(3 :: 3, iseg)
 
         ! create mapping from grid s to grid x
         work = 0.0_wp
-        do im = 1, 3                           ! 3 modes at most
+        do im = 1, 3                                ! 3 modes at most
             if (abs(delta(im)) > 0.0_wp) then
                 work(:) = work(:) + (f(im) - 1.0_wp)*delta(im)*log(exp((x(:) - st(im))/delta(im)) + 1.0_wp)
             end if
         end do
-        work = work - work(1) ! Integration constant
+        work = work - work(1)                       ! Integration constant
 
         x = x + work
 
@@ -79,6 +79,7 @@ contains
     !########################################################################
     subroutine BLD_EXP(idir, iseg, x, nmax, w)
         use TLab_Constants, only: BCS_MIN
+        use TLab_Grid, only: grid_dt
         use FDM, only: fdm_dt, FDM_CreatePlan
         use FDM_Derivative, only: FDM_COM6_JACOBIAN
         use FDM_Integral, only: FDM_Int1_Initialize, FDM_Int1_Solve, fdm_integral_dt
@@ -86,9 +87,10 @@ contains
         real(wp), intent(INOUT) :: x(nmax), w(nmax, 8)
 
         ! -----------------------------------------------------------------------
-        type(fdm_dt) g
+        type(grid_dt) x_loc
+        type(fdm_dt) fdm
         type(fdm_integral_dt) fdmi
-        real(wp) st(3), df(3), delta(3)    ! superposition of up to 3 modes, each with 3 parameters
+        real(wp) st(3), df(3), delta(3)             ! superposition of up to 3 modes, each with 3 parameters
         integer(wi) im
         real(wp) ds, aux(2)
 
@@ -104,19 +106,25 @@ contains
 #define rhs(j)    w(j,7)
 #define result(j) w(j,8)
         rhs(:) = 1.0_wp
-        do im = 1, 3               ! 3 modes at most
+        do im = 1, 3                                ! 3 modes at most
             if (abs(delta(im)) > 0.0_wp) then
                 rhs(:) = rhs(:)*(exp((x(:) - st(im))/delta(im)) + 1.0_wp)**(df(im)*delta(im))
             end if
         end do
         !
-        g%size = nmax
-        g%uniform = .true.
-        g%periodic = .false.
-        g%der1%mode_fdm = FDM_COM6_JACOBIAN
-        g%der2%mode_fdm = FDM_COM6_JACOBIAN
-        call FDM_CreatePlan(x, g)
-        call FDM_Int1_Initialize(x, g%der1, 0.0_wp, BCS_MIN, fdmi)
+        x_loc%size = nmax
+        x_loc%uniform = .true.
+        x_loc%periodic = .false.
+        if (allocated(x_loc%nodes)) deallocate (x_loc%nodes)
+        allocate (x_loc%nodes(1:nmax))
+        x_loc%nodes(:) = x(:)
+        fdm%size = nmax
+        fdm%uniform = .true.
+        fdm%periodic = .false.
+        fdm%der1%mode_fdm = FDM_COM6_JACOBIAN
+        fdm%der2%mode_fdm = FDM_COM6_JACOBIAN
+        call FDM_CreatePlan(x_loc, fdm)
+        call FDM_Int1_Initialize(x, fdm%der1, 0.0_wp, BCS_MIN, fdmi)
         ! x(1) is already set
         call FDM_Int1_Solve(1, fdmi, fdmi%rhs, rhs(:), result(:), aux)
         x(:) = result(:)

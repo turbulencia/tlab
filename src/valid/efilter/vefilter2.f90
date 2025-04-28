@@ -25,7 +25,8 @@ program VEFILTER2
     allocate (cx(imax*5), cy(jmax*5), cz(kmax_total*5))
 
 ! ###################################################################
-    call TLab_Grid_Read(gfile, imax, jmax, kmax_total, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    ! call TLab_Grid_Read(gfile, imax, jmax, kmax_total, g(1)%scale, g(2)%scale, g(3)%scale, wrk1d(:, 1), wrk1d(:, 2), wrk1d(:, 3))
+    call TLab_Stop() ! needs to be rewritten
 
     ! CALL FLT4E_INI(g(1)%scale, x, cx)
     ! CALL FLT4E_INI(g(2)%scale, y, cy)

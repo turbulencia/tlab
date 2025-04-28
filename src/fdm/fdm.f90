@@ -4,7 +4,7 @@ module FDM
     use TLab_Constants, only: wp, wi, roundoff_wp, efile, wfile
     use TLab_Constants, only: BCS_DD, BCS_ND, BCS_DN, BCS_NN, BCS_MIN, BCS_MAX, BCS_NONE
     use TLab_WorkFlow, only: TLab_Write_ASCII, TLab_Stop, stagger_on
-    use TLab_Grid, only: x, y, z
+    use TLab_Grid, only: x, y, z, grid_dt
     use FDM_Derivative
     use FDM_Interpolate
     use FDM_Integral
@@ -129,16 +129,17 @@ contains
 
         ! ###################################################################
         ! Initializing fdm plans for first-order integrals (cases lambda = 0.0_wp)
-        call FDM_Int1_Initialize(y, g(2)%der1, 0.0_wp, BCS_MIN, fdm_Int0(BCS_MIN))
-        call FDM_Int1_Initialize(y, g(2)%der1, 0.0_wp, BCS_MAX, fdm_Int0(BCS_MAX))
+        call FDM_Int1_Initialize(y%nodes(:), g(2)%der1, 0.0_wp, BCS_MIN, fdm_Int0(BCS_MIN))
+        call FDM_Int1_Initialize(y%nodes(:), g(2)%der1, 0.0_wp, BCS_MAX, fdm_Int0(BCS_MAX))
 
         return
     end subroutine FDM_Initialize
 
     ! ###################################################################
     ! ###################################################################
-    subroutine FDM_CreatePlan(nodes, g, locScale)
-        real(wp), intent(in) :: nodes(:)                            ! positions of the grid nodes
+    subroutine FDM_CreatePlan(x, g, locScale)
+        type(grid_dt) :: x
+        ! real(wp), intent(in) :: nodes(:)                            ! positions of the grid nodes
         type(fdm_dt), intent(inout) :: g                            ! fdm plan for derivatives
         real(wp), intent(in), optional :: locScale                  ! for consistency check
 
@@ -153,10 +154,10 @@ contains
         if (g%periodic .and. g%der2%mode_fdm == FDM_COM4_DIRECT) g%der2%mode_fdm = FDM_COM4_JACOBIAN        ! they are the same for uniform grids.
         if (g%periodic .and. g%der2%mode_fdm == FDM_COM6_DIRECT) g%der2%mode_fdm = FDM_COM6_JACOBIAN_HYPER  ! they are the same for uniform grids.
 
-        g%size = size(nodes)
+        g%size = x%size !size(nodes)
 
         if (g%size > 1) then
-            g%scale = nodes(g%size) - nodes(1)
+            g%scale = x%nodes(g%size) - x%nodes(1)
             if (g%periodic) g%scale = g%scale*(1.0_wp + 1.0_wp/real(g%size - 1, wp))
         else
             g%scale = 1.0_wp  ! to avoid conditionals and NaN in some of the calculations below
@@ -194,11 +195,11 @@ contains
 
         ! Calculating derivative dxds into g%jac(:, 1)
         g%der1%periodic = .false.
-        call FDM_Der1_Solve(1, BCS_NONE, g%der1, g%der1%lu, nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
+        call FDM_Der1_Solve(1, BCS_NONE, g%der1, g%der1%lu, x%nodes, g%jac(:, 1), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform
-        g%nodes(:) = nodes(1:nx)
+        g%nodes(:) = x%nodes(1:nx)
 
         call FDM_Der1_Initialize(g%nodes, g%jac(:, 1), g%der1, periodic=g%periodic, bcs_cases=[BCS_DD, BCS_ND, BCS_DN, BCS_NN])
 
@@ -217,11 +218,11 @@ contains
 
         ! Calculating derivative d2xds2 into g%jac(:, 3)
         g%der2%periodic = .false.
-        call FDM_Der2_Solve(1, g%der2, g%der2%lu, nodes, g%jac(:, 3), g%jac(:, 2), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
+        call FDM_Der2_Solve(1, g%der2, g%der2%lu, x%nodes, g%jac(:, 3), g%jac(:, 2), g%jac(:, 2)) !g%jac(:, 2) is used as aux array...
 
         ! -------------------------------------------------------------------
         ! Actual grid; possibly nonuniform
-        g%nodes(:) = nodes(1:nx)
+        g%nodes(:) = x%nodes(1:nx)
         g%jac(:, 2) = g%jac(:, 1)
 
         call FDM_Der2_Initialize(g%nodes, g%jac(:, 2:), g%der2, g%periodic, g%uniform)
@@ -234,7 +235,7 @@ contains
         if (stagger_on) then
             if (g%periodic) then
 
-                call FDM_Interpol_Initialize(nodes(:), g%jac(:, 1), g%intl, g%der1%mwn(:))
+                call FDM_Interpol_Initialize(x%nodes(:), g%jac(:, 1), g%intl, g%der1%mwn(:))
 
                 ! else
                 !     call TLab_Write_ASCII(efile, 'Staggered grid only along periodic directions.')
