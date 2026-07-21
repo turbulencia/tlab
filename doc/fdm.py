@@ -72,7 +72,7 @@ def fdm2_c6_A(n, kc):
 # a uniform grid
 # Input arguments:
 #    - n:   number of grid points
-#    - kc:  Type of scheme: =48./7. clasical with c=0, =np.pi**2. Lamballais2011
+#    - kc:  Type of scheme: =48./7. classical with c=0, =np.pi**2. Lamballais2011
 # Output arguments:
 #    - l:   vectors with the diagonals of the LHS system matrix
     l = np.empty( (3,n) )
@@ -120,7 +120,7 @@ def fdm2_c6_B(n, kc):
 # a uniform grid
 # Input arguments:
 #    - n: number of grid points
-#    - kc:  Type of scheme: =48./7. clasical with c=0, =np.pi**2. Lamballais2011
+#    - kc:  Type of scheme: =48./7. classical with c=0, =np.pi**2. Lamballais2011
 # Output arguments:
 #    - r: vectors with the diagonals of the RHS system matrix
     r = np.empty( (7,n) )
@@ -227,4 +227,3 @@ def fdm1_c6_wavenumber( w ):
     den = 1. + 2. *alpha *np.cos( w )
     
     return num /den
-
